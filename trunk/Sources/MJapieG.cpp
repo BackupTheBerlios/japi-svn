@@ -13,7 +13,6 @@ MJapieApp::MJapieApp(
 	: mQuit(false)
 	, mQuitPending(false)
 {
-	gtk_init(&argc, &argv);
 }
 
 MJapieApp::~MJapieApp()
@@ -51,6 +50,8 @@ int main(int argc, char* argv[])
 {
 	try
 	{
+		gtk_init(&argc, &argv);
+
 		gApp = new MJapieApp(argc, argv);
 		
 		gApp->DoNew();
