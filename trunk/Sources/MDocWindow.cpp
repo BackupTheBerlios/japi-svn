@@ -47,6 +47,19 @@ MDocWindow::MDocWindow(
 	mStatusbar = gtk_statusbar_new();
 	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
 	
+	// content
+	
+	GtkWidget* scroller = gtk_scrolled_window_new(nil, nil);
+	gtk_box_pack_start(GTK_BOX(mVBox), scroller, true, true, 0);
+	
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	
+	// image
+	GtkWidget* image = gtk_image_new_from_file("/Users/maarten/Pictures/wallpaper-de-ring-3.jpg");
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
+	
+	
 	gtk_widget_show_all(GetGtkWidget());
 	
 	mNext = sFirst;
