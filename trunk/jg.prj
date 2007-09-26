@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<project>
+	<syspaths>
+		<path>/usr/include</path>
+		<path>/usr/include/libxml2</path>
+		<path>/usr/include/c++/4.0.0</path>
+		<path>/usr/pkg/include/gtk-2.0</path>
+		<path>/usr/pkg/lib/gtk-2.0/include</path>
+		<path>/usr/pkg/include/atk-1.0</path>
+		<path>/usr/pkg/include/cairo</path>
+		<path>/usr/pkg/include/pango-1.0</path>
+		<path>/usr/pkg/include/glib/glib-2.0</path>
+		<path>/usr/pkg/lib/glib-2.0/include</path>
+		<path>/usr/pkg/include/freetype2</path>
+		<path>/usr/pkg/include</path>
+		<path>/usr/pkg/include/libpng12</path>
+		<path>/usr/X11R6/include</path>
+	</syspaths>
+	<userpaths>
+		<path>Sources</path>
+	</userpaths>
+	<libpaths>
+		<path>/usr/lib</path>
+		<path>/usr/local/lib</path>
+		<path>/usr/pkg/lib</path>
+	</libpaths>
+	<frameworks/>
+	<files>
+		<group name="Sources">
+			<file>MJapieG.cpp</file>
+			<file>MWindow.cpp</file>
+			<file>MDocument.cpp</file>
+			<file>MDocWindow.cpp</file>
+		</group>
+		<group name="Libraries">
+			<file>libxml2.dylib</file>
+			<file>libgtk-x11-2.0.dylib</file>
+			<file>libgdk-x11-2.0.dylib</file>
+			<file>libatk-1.0.dylib</file>
+			<file>libgdk_pixbuf-2.0.dylib</file>
+			<file>libm.dylib</file>
+			<file>libpangocairo-1.0.dylib</file>
+			<file>libpango-1.0.dylib</file>
+			<file>libcairo.dylib</file>
+			<file>libgobject-2.0.dylib</file>
+			<file>libgmodule-2.0.dylib</file>
+			<file>libglib-2.0.dylib</file>
+			<file>libintl.dylib</file>
+			<file>libiconv.dylib</file>
+		</group>
+	</files>
+	<package/>
+	<targets>
+		<target kind="Executable" arch="ppc" name="JG PPC Debug" linkTarget="jg" debug="true">
+			<bundle>
+				<name>japie</name>
+				<type>    </type>
+				<creator>    </creator>
+			</bundle>
+			<defines>
+				<define>DEBUG</define>
+				<define>XTHREADS</define>
+			</defines>
+			<warnings>
+				<warning>all</warning>
+			</warnings>
+		</target>
+		<target kind="Executable" arch="ppc" name="JG PPC Release" linkTarget="japie" debug="true">
+			<bundle>
+				<name>japie</name>
+			</bundle>
+			<defines>
+				<define>NDEBUG</define>
+				<define>XTHREADS</define>
+			</defines>
+			<cflags>
+				<cflag>-O3</cflag>
+			</cflags>
+			<warnings>
+				<warning>all</warning>
+			</warnings>
+		</target>
+	</targets>
+</project>

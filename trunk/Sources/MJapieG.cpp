@@ -1,5 +1,5 @@
 #include "MJapieG.h"
-#include "MWindow.h"
+#include "MDocWindow.h"
 
 #include <iostream>
 
@@ -32,7 +32,7 @@ void MJapieApp::RunEventLoop()
 
 void MJapieApp::DoNew()
 {
-	MWindow* w = new MWindow();
+	MWindow* w = new MDocWindow(nil);
 	w->Select();
 }
 

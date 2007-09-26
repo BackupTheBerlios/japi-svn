@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include <list>
 
+#include "MTypes.h"
+
 #define nil NULL
 
 class MWindow;

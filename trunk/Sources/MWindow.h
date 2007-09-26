@@ -13,6 +13,8 @@ class MWindow
 	void			Hide();
 	void			Select();
 
+	GtkWidget*		GetGtkWidget()			{ return mWindow; }
+
   protected:
 
 	virtual void	OnDestroy();
