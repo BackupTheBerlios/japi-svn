@@ -12,9 +12,9 @@ SYSINCPATHS	=
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
 CFLAGS		= -fsigned-char -g
 CFLAGS		+= -fmessage-length=120 -fdiagnostics-show-location=every-line
-CFLAGS		+= $(shell /usr/pkg/bin/pkg-config --cflags gtk+-2.0)
+CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0)
 LDFLAGS		= -fdata-sections -g
-LDFLAGS		+= $(shell /usr/pkg/bin/pkg-config --libs gtk+-2.0)
+LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
 CC			= c++
 OPT			+= -O3
 
@@ -30,6 +30,10 @@ endif
 LDFLAGS += $(addprefix -L, $(LIBPATHS)) 
 
 Sources = \
+	./Sources/MDocument.cpp  \
+	./Sources/MHandler.cpp \
+	./Sources/MMenu.cpp \
+	./Sources/MDocWindow.cpp \
 	./Sources/MJapieG.cpp \
 	./Sources/MWindow.cpp \
 

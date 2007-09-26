@@ -1,6 +1,7 @@
 #include "MJapieG.h"
 
 #include <sstream>
+#include <cassert>
 
 #include "MDocument.h"
 #include "MDocWindow.h"
@@ -56,7 +57,7 @@ MDocWindow::MDocWindow(
 		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	
 	// image
-	GtkWidget* image = gtk_image_new_from_file("/Users/maarten/Pictures/wallpaper-de-ring-3.jpg");
+	GtkWidget* image = gtk_image_new_from_file("wallpaper-de-ring-3.jpg");
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
 	
 	
