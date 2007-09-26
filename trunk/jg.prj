@@ -31,6 +31,8 @@
 			<file>MWindow.cpp</file>
 			<file>MDocument.cpp</file>
 			<file>MDocWindow.cpp</file>
+			<file>MMenu.cpp</file>
+			<file>MHandler.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>

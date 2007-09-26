@@ -3,7 +3,7 @@
 
 #include "MCallbacks.h"
 
-class MWindow
+class MWindow : public MHandler
 {
   public:
 					MWindow();
@@ -12,8 +12,22 @@ class MWindow
 	void			Show();
 	void			Hide();
 	void			Select();
+	
+	virtual void	Close();
+
+	void			SetTitle(
+						const std::string&	inTitle);
+	std::string		GetTitle() const;
 
 	GtkWidget*		GetGtkWidget()			{ return mWindow; }
+
+	virtual bool	UpdateCommandStatus(
+						uint32			inCommand,
+						bool&			outEnabled,
+						bool&			outChecked);
+
+	virtual bool	ProcessCommand(
+						uint32			inCommand);
 
   protected:
 

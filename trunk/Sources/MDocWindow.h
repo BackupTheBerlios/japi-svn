@@ -2,6 +2,7 @@
 #define MDOCWINDOW_H
 
 #include "MWindow.h"
+#include "MMenu.h"
 
 class MDocument;
 class MMenubar;
@@ -9,22 +10,40 @@ class MMenubar;
 class MDocWindow : public MWindow
 {
   public:
-				MDocWindow(
-					MDocument*		inDocument);
+					MDocWindow(
+						MDocument*		inDocument);
 
 	static MDocWindow*
-				DisplayDocument(
-					MDocument*		inDocument);
+					DisplayDocument(
+						MDocument*		inDocument);
 
-	MDocument*	GetDocument()		{ return mDocument; }
+	static MDocWindow*
+					GetFirstDocWindow()	{ return sFirst; }
+
+	MDocument*		GetDocument()		{ return mDocument; }
+
+	virtual bool	UpdateCommandStatus(
+						uint32			inCommand,
+						bool&			outEnabled,
+						bool&			outChecked);
+
+	virtual bool	ProcessCommand(
+						uint32			inCommand);
+
+	static std::string
+					GetUntitledTitle();
 
   protected:
 
-	virtual		~MDocWindow();
+	virtual			~MDocWindow();
 
-	MDocument*	mDocument;
-	GtkWidget*	mVBox;
-	MMenubar*	mMenubar;
+	MDocument*		mDocument;
+	GtkWidget*		mVBox;
+	GtkWidget*		mStatusbar;
+	MMenubar		mMenubar;
+	
+	static MDocWindow*	sFirst;
+	MDocWindow*			mNext;
 };
 
 #endif

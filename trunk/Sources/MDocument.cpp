@@ -8,12 +8,16 @@ using namespace std;
 MDocument* MDocument::sFirst;
 
 MDocument::MDocument()
+	: mSpecified(false)
+	, mDirty(false)
 {	
 }
 
 MDocument::MDocument(
 	const MURL&		inURL)
 	: mURL(inURL)
+	, mSpecified(true)
+	, mDirty(false)
 {
 }
 

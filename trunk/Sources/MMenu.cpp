@@ -37,6 +37,8 @@ struct MMenuItem
 						MMenu*			inMenu,
 						MMenu*			inSubMenu);
 
+					MMenuItem();
+
 	virtual			~MMenuItem();
 
 	void			ItemCallback();
@@ -48,6 +50,8 @@ struct MMenuItem
 	uint32			mCommand;
 	MMenu*			mMenu;
 	MMenu*			mSubMenu;
+	bool			mEnabled;
+	bool			mChecked;
 };
 
 MMenuItem::MMenuItem(
@@ -60,6 +64,8 @@ MMenuItem::MMenuItem(
 	, mCommand(inCommand)
 	, mMenu(inMenu)
 	, mSubMenu(nil)
+	, mEnabled(true)
+	, mChecked(false)
 {
 	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
 	mCallback.Connect(mGtkMenuItem, "activate");
@@ -75,9 +81,25 @@ MMenuItem::MMenuItem(
 	, mCommand(0)
 	, mMenu(inMenu)
 	, mSubMenu(inSubMenu)
+	, mEnabled(true)
+	, mChecked(false)
 {
 	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), inSubMenu->GetGtkMenu());
+	gtk_widget_show(mGtkMenuItem);
+}
+
+MMenuItem::MMenuItem()
+	: mCallback(this, &MMenuItem::ItemCallback)
+	, mGtkMenuItem(nil)
+	, mLabel("-")
+	, mCommand(0)
+	, mMenu(nil)
+	, mSubMenu(nil)
+	, mEnabled(true)
+	, mChecked(false)
+{
+	mGtkMenuItem = gtk_separator_menu_item_new();
 	gtk_widget_show(mGtkMenuItem);
 }
 
@@ -90,6 +112,11 @@ MMenuItem::~MMenuItem()
 void MMenuItem::ItemCallback()
 {
 	cout << "Callback for item " << MCommandToString(mCommand) << endl;
+	if (mMenu != nil and mMenu->GetTarget() != nil)
+	{
+		if (not mMenu->GetTarget()->ProcessCommand(mCommand))
+			cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
+	}
 }
 
 // --------------------------------------------------------------------
@@ -101,6 +128,7 @@ MMenu::MMenu(
 	, mGtkAccel(nil)
 	, mParent(nil)
 	, mLabel(inLabel)
+	, mTarget(nil)
 {
 	mGtkMenu = gtk_menu_new();
 
@@ -127,6 +155,12 @@ void MMenu::AddItem(
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
 }
 
+void MMenu::AddSeparator()
+{
+	mItems.push_back(new MMenuItem());
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
+}
+
 void MMenu::AddMenu(
 	MMenu*			inMenu)
 {
@@ -134,19 +168,82 @@ void MMenu::AddMenu(
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
 }
 
+void MMenu::SetTarget(
+	MHandler*		inTarget)
+{
+	mTarget = inTarget;
+	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
+	{
+		if ((*mi)->mSubMenu != nil)
+			(*mi)->mSubMenu->SetTarget(inTarget);
+	}
+}
+
+void MMenu::UpdateCommandStatus()
+{
+	if (mTarget == nil)
+		return;
+	
+	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
+	{
+		MMenuItem* item = *mi;
+		
+		if (item->mCommand != 0)
+		{
+			bool enabled = item->mEnabled;
+			bool checked = item->mChecked;
+			
+			if (mTarget->UpdateCommandStatus(item->mCommand, enabled, checked))
+			{
+				if (enabled != item->mEnabled)
+				{
+					gtk_widget_set_sensitive(item->mGtkMenuItem, enabled);
+					item->mEnabled = enabled;
+				}
+			
+//				if (enabled != item->mEnabled)
+//				{
+//					gtk_widget_set_sensitive(item->mGtkMenuItem, enabled);
+//					item->mEnabled = enabled;
+//				}
+			}
+		}
+		
+		if ((*mi)->mSubMenu != nil)
+			(*mi)->mSubMenu->UpdateCommandStatus();
+	}
+}
+
 // --------------------------------------------------------------------
 
 MMenubar::MMenubar(
+	MHandler*		inTarget,
 	GtkWidget*		inContainer)
+	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
+	, mTarget(inTarget)
 {
 	mGtkMenubar = gtk_menu_bar_new();
 	mGtkAccel = gtk_accel_group_new();
 
 	gtk_box_pack_start(GTK_BOX(inContainer), mGtkMenubar, false, false, 0);
+	
+	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
 }
 
 void MMenubar::AddMenu(
 	MMenu*				inMenu)
 {
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), inMenu->GetGtkMenuItem());
+	inMenu->SetTarget(mTarget);
+	
+	mMenus.push_back(inMenu);
+}
+
+bool MMenubar::OnButtonPress(
+	GdkEventButton*		inEvent)
+{
+	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
+		(*m)->UpdateCommandStatus();
+	
+	return false;
 }

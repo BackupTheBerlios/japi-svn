@@ -2,12 +2,14 @@
 
 #include <iostream>
 
+#include "MCommands.h"
 #include "MWindow.h"
 
 using namespace std;
 
 MWindow::MWindow()
-	: mOnDestroy(this, &MWindow::OnDestroy)
+	: MHandler(gApp)
+	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
 {
 	mWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -18,6 +20,7 @@ MWindow::MWindow()
 
 MWindow::~MWindow()
 {
+	cout << "deleting MWindow" << endl;
 }
 	
 void MWindow::Show()
@@ -34,6 +37,23 @@ void MWindow::Select()
 	gtk_window_present(GTK_WINDOW(mWindow));
 }
 
+void MWindow::Close()
+{
+	gtk_widget_destroy(GetGtkWidget());
+}
+
+void MWindow::SetTitle(
+	const string&	inTitle)
+{
+	gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), inTitle.c_str());
+}
+
+string MWindow::GetTitle() const
+{
+	string result;
+	return result;
+}
+
 void MWindow::OnDestroy()
 {
 	cout << "destroy" << endl;
@@ -43,6 +63,34 @@ void MWindow::OnDestroy()
 bool MWindow::OnDelete(
 	GdkEvent*		inEvent)
 {
-	cout << "delete_event" << endl;
+	Close();
 	return false;
 }
+
+bool MWindow::UpdateCommandStatus(
+	uint32			inCommand,
+	bool&			outEnabled,
+	bool&			outChecked)
+{
+	return MHandler::UpdateCommandStatus(inCommand, outEnabled, outChecked);
+}
+
+bool MWindow::ProcessCommand(
+	uint32			inCommand)
+{
+	bool result = true;	
+	
+	switch (inCommand)
+	{
+		case cmd_Close:
+			Close();
+			break;
+		
+		default:
+			result = MHandler::ProcessCommand(inCommand);
+			break;
+	}
+	
+	return result;
+}
+	

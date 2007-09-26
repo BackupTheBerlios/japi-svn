@@ -38,6 +38,9 @@
 const uint32 cmd_New =					'new ';
 const uint32 cmd_Open =					'open';
 const uint32 cmd_Quit =					'quit';
+const uint32 cmd_Close =				'clos';
+const uint32 cmd_Save =					'save';
+const uint32 cmd_SaveAs =				'sava';
 
 // private commands
 

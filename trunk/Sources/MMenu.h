@@ -18,18 +18,22 @@ class MMenu
 	void			AddItem(
 						const std::string&	inLabel,
 						uint32				inCommand);
+	
+	void			AddSeparator();
 
 	virtual void	AddMenu(
 						MMenu*				inMenu);
 
-	// called by MMenuItem
-	void			InvokeItem(
-						uint32				inCommand);
-	
+	void			SetTarget(
+						MHandler*			inHandler);
+
+	void			UpdateCommandStatus();
+
 	GtkWidget*		GetGtkMenu()			{ return mGtkMenu; }
 	GtkWidget*		GetGtkMenuItem()		{ return mGtkMenuItem; }
 	GtkAccelGroup*	GetGtkAccelerator()		{ return mGtkAccel; }
 	std::string		GetLabel()				{ return mLabel; }
+	MHandler*		GetTarget()				{ return mTarget; }
 	
   protected:
 	GtkWidget*		mGtkMenu;
@@ -38,20 +42,31 @@ class MMenu
 	MMenu*			mParent;
 	std::string		mLabel;
 	MMenuItemList	mItems;
+	MHandler*		mTarget;
 };
 
 class MMenubar
 {
   public:
 					MMenubar(
+						MHandler*			inTarget,
 						GtkWidget*			inContainer);
 
 	void			AddMenu(
 						MMenu*				inMenu);
 
   private:
+	
+	bool			OnButtonPress(
+						GdkEventButton*		inEvent);
+	
+	MSlot<bool(GdkEventButton*)>
+					mOnButtonPressEvent;
 	GtkWidget*		mGtkMenubar;
 	GtkAccelGroup*	mGtkAccel;
+	MHandler*		mTarget;
+	std::list<MMenu*>
+					mMenus;
 };
 
 #endif

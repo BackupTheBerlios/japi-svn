@@ -5,35 +5,48 @@
 #include <list>
 
 #include "MTypes.h"
+#include "MHandler.h"
 
 #define nil NULL
 
 class MWindow;
 
-class MJapieApp
+class MJapieApp : public MHandler
 {
   public:
-				MJapieApp(
-					int				argc,
-					char*			argv[]);
-				~MJapieApp();
+					MJapieApp(
+						int				argc,
+						char*			argv[]);
+					~MJapieApp();
 	
-	void		RecycleWindow(
-					MWindow*		inWindow);
+	void			RecycleWindow(
+						MWindow*		inWindow);
 
-	void		DoQuit();
-	void		DoNew();
+	void			DoQuit();
+	void			DoNew();
+	void			DoOpen();
 
-	void		RunEventLoop();
+	void			RunEventLoop();
+	
+	virtual bool	UpdateCommandStatus(
+						uint32			inCommand,
+						bool&			outEnabled,
+						bool&			outChecked);
+
+	virtual bool	ProcessCommand(
+						uint32			inCommand);
 
   private:
 	typedef std::list<MWindow*>	MWindowList;
 
-	void		Pulse();
+	void			Pulse();
+	
+	static gboolean	Timeout(
+						gpointer		inData);
 
-	MWindowList	mTrashCan;
-	bool		mQuit;
-	bool		mQuitPending;
+	MWindowList		mTrashCan;
+	bool			mQuit;
+	bool			mQuitPending;
 };
 
 extern MJapieApp*	gApp;

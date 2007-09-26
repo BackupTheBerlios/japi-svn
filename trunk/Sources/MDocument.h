@@ -12,7 +12,9 @@ class MDocument
 
 	virtual				~MDocument();
 	
-	MURL				GetURL()					{ return mURL; }
+	bool				IsSpecified() const			{ return mSpecified; }
+	MURL				GetURL() const				{ return mURL; }
+	bool				IsDirty() const				{ return mDirty; }
 	
 	static MDocument*	GetDocumentForURL(
 							const MURL&		inURL,
@@ -26,6 +28,8 @@ class MDocument
 	virtual void		Initialize();
 
 	MURL				mURL;
+	bool				mSpecified;
+	bool				mDirty;
 	MDocument*			mNext;
 	static MDocument*	sFirst;
 };
