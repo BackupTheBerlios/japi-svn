@@ -36,6 +36,10 @@ Sources = \
 	./Sources/MDocWindow.cpp \
 	./Sources/MJapieG.cpp \
 	./Sources/MWindow.cpp \
+	./Sources/MHandler.cpp \
+	./Sources/MDocWindow.cpp \
+	./Sources/MMenu.cpp \
+	./Sources/MDocument.cpp \
 
 define SOURCES
 	$(Sources)
