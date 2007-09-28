@@ -1,3 +1,8 @@
+/*	$Id$
+	Copyright Drs M.L. Hekkelman
+	Created 28-09-07 11:20:53
+*/
+
 #ifndef MWINDOW_H
 #define MWINDOW_H
 
@@ -42,4 +47,5 @@ class MWindow : public MHandler
 	GtkWidget*		mWindow;
 };
 
-#endif
+
+#endif // MWINDOW_H

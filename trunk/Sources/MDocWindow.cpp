@@ -7,6 +7,7 @@
 #include "MDocWindow.h"
 #include "MCommands.h"
 #include "MMenu.h"
+#include "MView.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ MDocWindow::MDocWindow(
 	, mVBox(gtk_vbox_new(false, 0))
 	, mMenubar(this, mVBox)
 {
-    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 200, 100);
+    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 400, 200);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 	
@@ -50,16 +51,34 @@ MDocWindow::MDocWindow(
 	
 	// content
 	
-	GtkWidget* scroller = gtk_scrolled_window_new(nil, nil);
-	gtk_box_pack_start(GTK_BOX(mVBox), scroller, true, true, 0);
+	GtkWidget* hbox = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(mVBox), hbox, true, true, 0);
+
+	GtkObject* adj = gtk_adjustment_new(0, 0, 0, 0, 0, 0);
 	
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	GtkWidget* viewPort = gtk_viewport_new(nil, GTK_ADJUSTMENT(adj));
+	gtk_viewport_set_shadow_type(GTK_VIEWPORT(viewPort), GTK_SHADOW_NONE);
+	
+	GtkWidget* scrollBar = gtk_vscrollbar_new(GTK_ADJUSTMENT(adj));
+	
+	gtk_box_pack_end(GTK_BOX(hbox), scrollBar, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), viewPort, true, true, 0);
+	
+//	GtkWidget* scroller = gtk_scrolled_window_new(nil, nil);
+//	gtk_box_pack_start(GTK_BOX(mVBox), scroller, true, true, 0);
+//	
+//	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+//		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	
 	// image
-	GtkWidget* image = gtk_image_new_from_file("wallpaper-de-ring-3.jpg");
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
-	
+//	GtkWidget* image = gtk_image_new_from_file("wallpaper-de-ring-3.jpg");
+	GtkWidget* image = gtk_drawing_area_new();
+    gtk_widget_set_size_request(image, 500, 500);
+    
+    MView* textView = new MView(image);
+
+//	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
+	gtk_container_add(GTK_CONTAINER(viewPort), image);
 	
 	gtk_widget_show_all(GetGtkWidget());
 	

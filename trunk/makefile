@@ -31,15 +31,12 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS))
 
 Sources = \
 	./Sources/MDocument.cpp  \
-	./Sources/MHandler.cpp \
-	./Sources/MMenu.cpp \
 	./Sources/MDocWindow.cpp \
+	./Sources/MHandler.cpp \
 	./Sources/MJapieG.cpp \
-	./Sources/MWindow.cpp \
-	./Sources/MHandler.cpp \
-	./Sources/MDocWindow.cpp \
 	./Sources/MMenu.cpp \
-	./Sources/MDocument.cpp \
+	./Sources/MView.cpp \
+	./Sources/MWindow.cpp \
 
 define SOURCES
 	$(Sources)
@@ -86,11 +83,11 @@ all: $(TARGET)
 
 # build rules
 
-echo_flags:
-	 @ echo Compiler flags used: $(CFLAGS)
-	 @ echo Include paths: $(INCLUDES)
+$(TARGET)::
+	@ echo Compiler flags used: $(CFLAGS)
+	@ echo Include paths: $(INCLUDES)
 
-$(TARGET): echo_flags $(OBJDIR) $(OBJS)
+$(TARGET):: $(OBJDIR) $(OBJS)
 	@ echo "Linking "$(@F)
 	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
 	@ chmod a+rx $(TARGET)
@@ -104,11 +101,11 @@ $(OBJDIR):
 
 $(OBJDIR)/%.o: %.cpp
 	@ echo "=> "$(@F)
-	@ $(CC) -c $< -o $@ $(INCLUDES) -MD $(CFLAGS)
+	@ $(CC) -MD -c $< -o $@ $(INCLUDES) $(CFLAGS)
 
 $(OBJDIR)/%.o: %.c
 	@ echo "=> "$(@F)
-	@ $(CC) -c $< -o $@ $(INCLUDES) -MD $(CFLAGS)
+	@ $(CC) -MD -c $< -o $@ $(INCLUDES) $(CFLAGS)
 
 include $(OBJS:%.o=%.d)
 
