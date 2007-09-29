@@ -6,6 +6,8 @@
 
 class MDocument;
 class MMenubar;
+class MView;
+class MTextView;
 
 class MDocWindow : public MWindow
 {
@@ -41,6 +43,8 @@ class MDocWindow : public MWindow
 	GtkWidget*		mVBox;
 	GtkWidget*		mStatusbar;
 	MMenubar		mMenubar;
+	
+	MView*			mTextView;
 	
 	static MDocWindow*	sFirst;
 	MDocWindow*			mNext;

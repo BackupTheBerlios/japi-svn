@@ -32,10 +32,13 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS))
 Sources = \
 	./Sources/MDocument.cpp  \
 	./Sources/MDocWindow.cpp \
+	./Sources/MDrawingArea.cpp \
 	./Sources/MHandler.cpp \
 	./Sources/MJapieG.cpp \
 	./Sources/MMenu.cpp \
 	./Sources/MView.cpp \
+	./Sources/MViewPort.cpp \
+	./Sources/MVScrollbar.cpp \
 	./Sources/MWindow.cpp \
 
 define SOURCES

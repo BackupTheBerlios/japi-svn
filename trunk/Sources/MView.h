@@ -11,20 +11,15 @@
 class MView
 {
   public:
-					MView(
-						GtkWidget*	inWidget);
+					MView();
 	virtual			~MView();
-
-	
 
 	GtkWidget*		GetGtkWidget() const		{ return mGtkWidget; }
 
   protected:
 
-	virtual bool	OnExposeEvent(
-						GdkEventExpose*	inEvent);
-
-	MSlot<bool(GdkEventExpose*)>	mExposeEvent;
+					MView(
+						GtkWidget*	inWidget);
 
   private:
 	GtkWidget*		mGtkWidget;

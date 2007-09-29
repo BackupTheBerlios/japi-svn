@@ -8,6 +8,9 @@
 #include "MCommands.h"
 #include "MMenu.h"
 #include "MView.h"
+#include "MViewPort.h"
+#include "MVScrollbar.h"
+#include "MDrawingArea.h"
 
 using namespace std;
 
@@ -56,13 +59,13 @@ MDocWindow::MDocWindow(
 
 	GtkObject* adj = gtk_adjustment_new(0, 0, 0, 0, 0, 0);
 	
-	GtkWidget* viewPort = gtk_viewport_new(nil, GTK_ADJUSTMENT(adj));
-	gtk_viewport_set_shadow_type(GTK_VIEWPORT(viewPort), GTK_SHADOW_NONE);
+	MViewPort* viewPort = new MViewPort(nil, adj);
+	viewPort->SetShadowType(GTK_SHADOW_NONE);
 	
-	GtkWidget* scrollBar = gtk_vscrollbar_new(GTK_ADJUSTMENT(adj));
+	MVScrollbar* scrollBar = new MVScrollbar(adj);
 	
-	gtk_box_pack_end(GTK_BOX(hbox), scrollBar, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), viewPort, true, true, 0);
+	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), viewPort->GetGtkWidget(), true, true, 0);
 	
 //	GtkWidget* scroller = gtk_scrolled_window_new(nil, nil);
 //	gtk_box_pack_start(GTK_BOX(mVBox), scroller, true, true, 0);
@@ -70,15 +73,10 @@ MDocWindow::MDocWindow(
 //	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 //		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	
-	// image
-//	GtkWidget* image = gtk_image_new_from_file("wallpaper-de-ring-3.jpg");
-	GtkWidget* image = gtk_drawing_area_new();
-    gtk_widget_set_size_request(image, 500, 500);
-    
-    MView* textView = new MView(image);
+    mTextView = new MDrawingArea(500, 500);
 
 //	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
-	gtk_container_add(GTK_CONTAINER(viewPort), image);
+	viewPort->Add(mTextView);
 	
 	gtk_widget_show_all(GetGtkWidget());
 	
