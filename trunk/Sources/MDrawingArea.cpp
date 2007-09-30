@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "MDrawingArea.h"
+#include "MDevice.h"
 
 using namespace std;
 
@@ -28,45 +29,24 @@ MDrawingArea::~MDrawingArea()
 bool MDrawingArea::OnExposeEvent(
 	GdkEventExpose*	inEvent)
 {
-	cout << "Drawinging in: "
-		 << inEvent->area.x << ", " << inEvent->area.y
-		 << " - "
-		 << inEvent->area.width << ", " << inEvent->area.height
-		 << endl;
+	MDevice dev(this, MRect(inEvent->area));
+	
+	dev.EraseRect(inEvent->area);
 
-	// This is where we draw on the window
-	if (GetGtkWidget()->window)
-	{
-		GtkAllocation allocation = GetGtkWidget()->allocation;
-		const int width = allocation.width;
-		const int height = allocation.height;
-		
-		// coordinates for the center of the window
-		int xc, yc;
-		xc = width / 2;
-		yc = height / 2;
-		
-		cairo_t* cr = gdk_cairo_create(GetGtkWidget()->window);
-		
-		cairo_set_line_width(cr, 10.0);
-		
-		// clip to the area indicated by the expose event so that we only redraw
-		// the portion of the window that needs to be redrawn
-		cairo_rectangle(cr, inEvent->area.x, inEvent->area.y,
-		        inEvent->area.width, inEvent->area.height);
-		cairo_clip(cr);
-		
-		// draw red lines out from the center of the window
-		cairo_set_source_rgb(cr, 0.8, 0.0, 0.0);
-		cairo_move_to(cr, 0, 0);
-		cairo_line_to(cr, xc, yc);
-		cairo_line_to(cr, 0, height);
-		cairo_move_to(cr, xc, yc);
-		cairo_line_to(cr, width, yc);
-		cairo_stroke(cr);
-		
-		cairo_destroy(cr);
-	}
+	dev.SetForeColor(kMarkedLineColor);
+	dev.CreateAndUsePattern(kMarkedLineColor, kCurrentLineColor);
+
+	MRect r1(0, 0, inEvent->area.width, 12);
+	
+	r1.x += 12;
+	
+	dev.FillRect(r1);
+	
+	MRect r2(r1);
+	r2.x -= r2.height / 2;
+	r2.width = r2.height;
+	
+	dev.FillEllipse(r2);
 	
 	return true;
 }

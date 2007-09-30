@@ -33,6 +33,12 @@
 			<file>MDocWindow.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
+			<file>MViewPort.cpp</file>
+			<file>MView.cpp</file>
+			<file>MVScrollbar.cpp</file>
+			<file>MDrawingArea.cpp</file>
+			<file>MColor.cpp</file>
+			<file>MDevice.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>

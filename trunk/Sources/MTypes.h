@@ -48,6 +48,23 @@ typedef unsigned int		uint32;
 typedef long long			int64;
 typedef unsigned long long	uint64;
 
+struct MRect
+{
+	int32		x, y;
+	int32		width, height;
+	
+				MRect();
+				MRect(
+					const MRect&		inRHS);
+				MRect(
+					const GdkRectangle&	inRHS);
+				MRect(
+					int32		inX,
+					int32		inY,
+					int32		inWidth,
+					int32		inHeight);
+};
+
 enum MDirection
 {
 	kDirectionForward = 1,
@@ -173,6 +190,46 @@ inline
 value_changer<T>::~value_changer()
 {
 	mVariable = mValue;
+}
+
+// --------------------------------------------------------------------
+// inlines
+
+inline
+MRect::MRect()
+	: x(0), y(0), width(0), height(0) {}
+
+inline
+MRect::MRect(
+	const MRect&		inRHS)
+	: x(inRHS.x)
+	, y(inRHS.y)
+	, width(inRHS.width)
+	, height(inRHS.height)
+{
+}
+
+inline
+MRect::MRect(
+	const GdkRectangle&	inRHS)
+	: x(inRHS.x)
+	, y(inRHS.y)
+	, width(inRHS.width)
+	, height(inRHS.height)
+{
+}
+
+inline
+MRect::MRect(
+	int32		inX,
+	int32		inY,
+	int32		inWidth,
+	int32		inHeight)
+	: x(inX)
+	, y(inY)
+	, width(inWidth)
+	, height(inHeight)
+{
 }
 
 #endif
