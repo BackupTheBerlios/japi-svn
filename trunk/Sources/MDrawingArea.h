@@ -11,10 +11,12 @@
 class MDrawingArea : public MView
 {
   public:
-				MDrawingArea(
-					uint32		inWidth,
-					uint32		inHeight);
-				~MDrawingArea();
+					MDrawingArea(
+						uint32		inWidth,
+						uint32		inHeight);
+					~MDrawingArea();
+	
+	PangoContext*	GetPangoContext()	{ return mPangoContext; }
 
   protected:
 
@@ -22,6 +24,7 @@ class MDrawingArea : public MView
 						GdkEventExpose*	inEvent);
 
 	MSlot<bool(GdkEventExpose*)>	mExposeEvent;
+	PangoContext*					mPangoContext;
 };
 
 #endif // MDRAWINGAREA_H

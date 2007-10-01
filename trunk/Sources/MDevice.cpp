@@ -3,25 +3,28 @@
 #include <cmath>
 
 #include "MDevice.h"
-#include "MView.h"
+#include "MDrawingArea.h"
+#include "MFont.h"
 
 using namespace std;
 
 struct MDeviceImp
 {
-				MDeviceImp(
-					MView*		inView,
-					MRect		inRect);
+					MDeviceImp(
+						MView*		inView,
+						MRect		inRect);
+		
+					~MDeviceImp();
 	
-				~MDeviceImp();
-	
-	MView*		mView;
-	MRect		mRect;
-	MColor		mForeColor;
-	MColor		mBackColor;
-//	MWindow*	mWindow;
-	cairo_t*	mContext;
-	uint32		mPatternData[8][8];
+	MView*			mView;
+	MRect			mRect;
+	MColor			mForeColor;
+	MColor			mBackColor;
+//	MWindow*		mWindow;
+	cairo_t*		mContext;
+	PangoLayout*	mLayout;
+	MFont			mFont;
+	uint32			mPatternData[8][8];
 };
 
 MDeviceImp::MDeviceImp(
@@ -31,6 +34,9 @@ MDeviceImp::MDeviceImp(
 	, mRect(inRect)
 	, mForeColor(kBlack)
 	, mBackColor(kWhite)
+	, mContext(nil)
+	, mLayout(nil)
+	, mFont(kFixedFont)
 {
 	GtkWidget* widget = mView->GetGtkWidget();
 	
@@ -38,10 +44,22 @@ MDeviceImp::MDeviceImp(
 	
 	cairo_rectangle(mContext, inRect.x, inRect.y, inRect.width, inRect.height);
 	cairo_clip(mContext);
+
+	if (dynamic_cast<MDrawingArea*>(mView) != nil)
+	{
+		MDrawingArea* a = static_cast<MDrawingArea*>(mView);
+
+		PangoContext* pc = a->GetPangoContext();
+
+		mLayout = pango_layout_new(pc);
+		pango_layout_set_font_description(mLayout, mFont);
+	}
 }
 
 MDeviceImp::~MDeviceImp()
 {
+	if (mLayout != nil)
+		g_object_unref(mLayout);
 	cairo_destroy(mContext);
 }
 
@@ -107,10 +125,12 @@ void MDevice::FillRect(
 void MDevice::FillEllipse(
 	MRect		inRect)
 {
+	cairo_save(mImpl->mContext);
 	cairo_translate(mImpl->mContext, inRect.x + inRect.width / 2., inRect.y + inRect.height / 2.);
 	cairo_scale(mImpl->mContext, inRect.width / 2., inRect.height / 2.);
 	cairo_arc(mImpl->mContext, 0., 0., 1., 0., 2 * M_PI);
 	cairo_fill(mImpl->mContext);
+	cairo_restore(mImpl->mContext);
 }
 
 void MDevice::CreateAndUsePattern(
@@ -151,8 +171,6 @@ void MDevice::CreateAndUsePattern(
 			
 			cairo_set_source(mImpl->mContext, p);
 			
-			FillRect(MRect(40, 40, 20, 20));
-			
 			cairo_pattern_destroy(p);
 		}
 		
@@ -162,14 +180,39 @@ void MDevice::CreateAndUsePattern(
 
 uint32 MDevice::GetAscent() const
 {
+	uint32 result = 10;
+
+	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
+	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, nil);
+
+	if (metrics != nil)
+	{
+		result = pango_font_metrics_get_ascent(metrics) / PANGO_SCALE;
+		pango_font_metrics_unref(metrics);
+	}
+
+	return result;
 }
 
 uint32 MDevice::GetDescent() const
 {
+	uint32 result = 10;
+
+	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
+	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, nil);
+
+	if (metrics != nil)
+	{
+		result = pango_font_metrics_get_descent(metrics) / PANGO_SCALE;
+		pango_font_metrics_unref(metrics);
+	}
+
+	return result;
 }
 
 uint32 MDevice::GetLeading() const
 {
+	return 0;
 }
 
 void MDevice::DrawString(
@@ -177,6 +220,11 @@ void MDevice::DrawString(
 	float inX,
 	float inY)
 {
+	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
+	
+	cairo_move_to(mImpl->mContext, inX, inY);	
+
+	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
 
 

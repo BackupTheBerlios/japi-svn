@@ -30,9 +30,12 @@ endif
 LDFLAGS += $(addprefix -L, $(LIBPATHS)) 
 
 Sources = \
+	./Sources/MColor.cpp \
+	./Sources/MDevice.cpp \
 	./Sources/MDocument.cpp  \
 	./Sources/MDocWindow.cpp \
 	./Sources/MDrawingArea.cpp \
+	./Sources/MFont.cpp \
 	./Sources/MHandler.cpp \
 	./Sources/MJapieG.cpp \
 	./Sources/MMenu.cpp \

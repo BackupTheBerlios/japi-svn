@@ -51,7 +51,7 @@ MDocWindow::MDocWindow(
 	
 	mStatusbar = gtk_statusbar_new();
 	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
-	
+
 	// content
 	
 	GtkWidget* hbox = gtk_hbox_new(false, 0);
