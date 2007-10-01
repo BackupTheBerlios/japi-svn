@@ -46,10 +46,11 @@ const MColor
 	kMarkedLineColor(0.94, 1.0f, 0.50f, 1.0),
 	kNoteColor(0.129, 0.424, 1.0, 1.0),
 	kWarningColor(1.0, 0.925, 0.094, 1.0),
-	kErrorColor(1.0, 0.286, 0.070, 1.0);
+	kErrorColor(1.0, 0.286, 0.070, 1.0),
+	kSelectionColor(0.953, 0.737, 0.420, 1.0);
 
 MColor
-	gSelectionColor;
+	gSelectionColor = kSelectionColor;
 
 MColor::MColor()
 {

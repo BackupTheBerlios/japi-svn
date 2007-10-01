@@ -1,6 +1,5 @@
 #include "MJapieG.h"
 
-
 #include "MDocument.h"
 
 using namespace std;

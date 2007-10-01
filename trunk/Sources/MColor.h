@@ -70,7 +70,8 @@ extern const MColor
 	kMarkedLineColor,
 	kNoteColor,
 	kWarningColor,
-	kErrorColor;
+	kErrorColor,
+	kSelectionColor;
 
 template<class charT, class traits>
 std::basic_ostream<charT,traits>&

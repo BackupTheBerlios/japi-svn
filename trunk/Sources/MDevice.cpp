@@ -8,6 +8,8 @@
 
 using namespace std;
 
+const char* kLanguage = getenv("LANG");
+
 struct MDeviceImp
 {
 					MDeviceImp(
@@ -23,6 +25,7 @@ struct MDeviceImp
 //	MWindow*		mWindow;
 	cairo_t*		mContext;
 	PangoLayout*	mLayout;
+	PangoLanguage*	mLanguage;
 	MFont			mFont;
 	uint32			mPatternData[8][8];
 };
@@ -36,6 +39,7 @@ MDeviceImp::MDeviceImp(
 	, mBackColor(kWhite)
 	, mContext(nil)
 	, mLayout(nil)
+	, mLanguage(pango_language_from_string(kLanguage))
 	, mFont(kFixedFont)
 {
 	GtkWidget* widget = mView->GetGtkWidget();
@@ -183,7 +187,7 @@ uint32 MDevice::GetAscent() const
 	uint32 result = 10;
 
 	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
-	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, nil);
+	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
 
 	if (metrics != nil)
 	{
@@ -199,7 +203,7 @@ uint32 MDevice::GetDescent() const
 	uint32 result = 10;
 
 	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
-	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, nil);
+	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
 
 	if (metrics != nil)
 	{
@@ -223,6 +227,22 @@ void MDevice::DrawString(
 	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
 	
 	cairo_move_to(mImpl->mContext, inX, inY);	
+
+	if (1)
+	{
+		PangoAttribute* attr = pango_attr_background_new(
+			kSelectionColor.red * 65535,
+			kSelectionColor.green * 65535,
+			kSelectionColor.blue * 65535);
+
+		attr->start_index = 4;
+		attr->end_index = 8;
+		
+		PangoAttrList* attrs = pango_attr_list_new();
+		pango_attr_list_insert(attrs, attr);
+		pango_layout_set_attributes(mImpl->mLayout, attrs);
+		pango_attr_list_unref(attrs);
+	}
 
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
