@@ -55,7 +55,7 @@ PangoFontDescription* MFontMap::GetFont(
 	switch (inFontNr)
 	{
 		case eFixedFont:
-			d = pango_font_description_from_string("Monospace");
+			d = pango_font_description_from_string("Monospace 9");
 			break;
 		
 		case eSansFont:
@@ -63,7 +63,7 @@ PangoFontDescription* MFontMap::GetFont(
 			break;
 	}
 
-	pango_font_description_set_size(d, 10 * PANGO_SCALE);
+//	pango_font_description_set_size(d, 10 * PANGO_SCALE);
 
 	return d;
 }

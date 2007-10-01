@@ -39,7 +39,7 @@ MDeviceImp::MDeviceImp(
 	, mBackColor(kWhite)
 	, mContext(nil)
 	, mLayout(nil)
-	, mLanguage(pango_language_from_string(kLanguage))
+	, mLanguage(nil)
 	, mFont(kFixedFont)
 {
 	GtkWidget* widget = mView->GetGtkWidget();
@@ -48,6 +48,13 @@ MDeviceImp::MDeviceImp(
 	
 	cairo_rectangle(mContext, inRect.x, inRect.y, inRect.width, inRect.height);
 	cairo_clip(mContext);
+
+	const char* LANG = getenv("LANG");
+	
+	if (LANG != nil)
+		mLanguage = pango_language_from_string(kLanguage);
+	else
+		mLanguage = gtk_get_default_language();
 
 	if (dynamic_cast<MDrawingArea*>(mView) != nil)
 	{
@@ -64,6 +71,7 @@ MDeviceImp::~MDeviceImp()
 {
 	if (mLayout != nil)
 		g_object_unref(mLayout);
+	
 	cairo_destroy(mContext);
 }
 
