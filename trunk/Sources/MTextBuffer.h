@@ -454,14 +454,4 @@ inline void MTextBuffer::push_back(
 	}
 }
 
-//inline UniChar MTextBuffer::front() const
-//{
-//	return GetChar(0);
-//}
-//
-//inline UniChar MTextBuffer::back() const
-//{
-//	return GetChar(mLogicalLength - 1);
-//}
-
 #endif // TEXTBUFFER_H

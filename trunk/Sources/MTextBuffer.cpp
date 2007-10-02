@@ -945,7 +945,7 @@ void MTextBuffer::GetText(
 void MTextBuffer::GetText(
 	uint32			inPosition,
 	uint32			inLength,
-	ustring&		outText) const
+	string&			outText) const
 {
 	assert(inPosition + inLength <= mLogicalLength);
 	if (inPosition + inLength > mLogicalLength)
@@ -997,7 +997,9 @@ const bool kCharBreakTable[10][10] = {
 	{	1,	1,	1,	0,	1,	1,	1,	1,	1,	1	 },		// Other
 };
 
-uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovement) const
+uint32 MTextBuffer::NextCursorPosition(
+	uint32			inOffset,
+	CursorMovement	inMovement) const
 {
 	const SInt8 kWordBreakStateTableForKeyboard[5][10] = {
 		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
@@ -1026,27 +1028,28 @@ uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovemen
 		result = mLogicalLength;
 	else
 	{
-		const_iterator c(this, inOffset);
+		wc_iterator c(this, inOffset);
 
 		if (inMovement == eMoveOneCharacter)
 		{
-			CharBreakClass c1 = GetCharBreakClass(GetChar(result));
+			CharBreakClass c1 = GetCharBreakClass(*c);
 
 		    do
 		    {
-				++result;
-				CharBreakClass c2 = GetCharBreakClass(GetChar(result));
+				++c;
+				CharBreakClass c2 = GetCharBreakClass(*c);
 				
 				if (kCharBreakTable[c1][c2])
 					break;
 				
 				c1 = c2;
+				result = c.GetOffset();
 			}
 			while (result < mLogicalLength);
 		}
 		else if (inMovement == eMoveOneWordForKeyboard)
 		{
-		    SInt8 state = 0;
+		    int8 state = 0;
 			while (state >= 0)
 			{
 				result = c.GetOffset();
@@ -1054,7 +1057,7 @@ uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovemen
 				if (result >= mLogicalLength)
 					break;
 				
-				UniChar unicode = *c;
+				wchar_t unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -1063,7 +1066,7 @@ uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovemen
 		}
 		else
 		{
-		    SInt8 state = 0;
+		    int8 state = 0;
 			while (state >= 0)
 			{
 				result = c.GetOffset();
@@ -1071,7 +1074,7 @@ uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovemen
 				if (result >= mLogicalLength)
 					break;
 				
-				UniChar unicode = *c;
+				wchar_t unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -1083,7 +1086,9 @@ uint32 MTextBuffer::NextCursorPosition(uint32 inOffset, CursorMovement inMovemen
 	return result;
 }
 
-uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMovement) const
+uint32 MTextBuffer::PreviousCursorPosition(
+	uint32			inOffset,
+	CursorMovement	inMovement) const
 {
 	const SInt8 kWordBreakStateTableForKeyboard[6][10] = {
 		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
@@ -1111,16 +1116,18 @@ uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMov
 		result = 0;
 	else
 	{
-		const_iterator c(this, inOffset);
+		wc_iterator c(this, inOffset);
 
 		if (inMovement == eMoveOneCharacter)
 		{
-			CharBreakClass c1 = GetCharBreakClass(GetChar(result));
+			CharBreakClass c1 = GetCharBreakClass(*c);
 
 		    do
 		    {
-				--result;
-				CharBreakClass c2 = GetCharBreakClass(GetChar(result));
+		    	result = c.GetOffset();
+		    	--c;
+		    	
+				CharBreakClass c2 = GetCharBreakClass(*c);
 				
 				if (kCharBreakTable[c1][c2])
 					break;
@@ -1131,7 +1138,7 @@ uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMov
 		}
 		else// if (inMovement == eMoveOneWordForKeyboard)
 		{
-		    SInt8 state = 0;
+		    int8 state = 0;
 			while (state >= 0)
 			{
 				result = c.GetOffset();
@@ -1140,7 +1147,7 @@ uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMov
 					break;
 				
 				--c;
-				UniChar unicode = *c;
+				wchar_t unicode = *c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
 				state = kWordBreakStateTableForKeyboard[state][cl];
@@ -1152,7 +1159,7 @@ uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMov
 			while (result < mLogicalLength and state >= 0)
 			{
 				result = c.GetOffset();
-				UniChar unicode = *c;
+				wchar_t unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -1167,7 +1174,9 @@ uint32 MTextBuffer::PreviousCursorPosition(uint32 inOffset, CursorMovement inMov
 // -----------------------------------------------------------------------------
 
 void
-MTextBuffer::StartAction(const string& inAction, const MSelection& inSelection)
+MTextBuffer::StartAction(
+	const string&		inAction,
+	const MSelection&	inSelection)
 {
 	mDoneActions.push(new Action(*this, inAction));
 	mDoneActions.top()->SetSelectionBefore(inSelection);
@@ -1214,7 +1223,8 @@ MTextBuffer::GetSelectionAfter() const
 }
 
 bool
-MTextBuffer::CanUndo(string& outAction)
+MTextBuffer::CanUndo(
+	string&		outAction)
 {
 	bool result = false;
 	if (mDoneActions.size())
@@ -1226,7 +1236,8 @@ MTextBuffer::CanUndo(string& outAction)
 }
 
 bool
-MTextBuffer::CanRedo(string& outAction)
+MTextBuffer::CanRedo(
+	string&		outAction)
 {
 	bool result = false;
 	if (mUndoneActions.size())
@@ -1272,13 +1283,9 @@ MTextBuffer::Redo(
 // -----------------------------------------------------------------------------
 // Find
 
-// in order to reduce the skip table size we skip only on the even and uneven bytes
-// of a UniChar...
-
-
 void
 MTextBuffer::InitSkip(
-	const UniChar*	inPattern,
+	const char*		inPattern,
 	uint32			inPatternLength,
 	bool			inIgnoreCase,
 	MDirection		inDirection,
@@ -1293,39 +1300,31 @@ MTextBuffer::InitSkip(
 	{
 		for (i = 0; i < M; ++i)
 		{
-			UniChar c = inPattern[i];
+			uint8 c = static_cast<uint8>(inPattern[i]);
 			
 			if (inIgnoreCase)
-				c = ToUpper(c);
+				c = toupper(c);
 			
-			unsigned char hiByte = static_cast<unsigned char>((c >> 8) & 0x00ff);
-			unsigned char loByte = static_cast<unsigned char>(c & 0x00ff);
-			
-			ioSkip[hiByte] = M - i - 1;
-			ioSkip[loByte] = M - i - 1;
+			ioSkip[c] = M - i - 1;
 		}
 	}
 	else
 	{
 		for (i = M - 1; i >= 0; --i)
 		{
-			UniChar c = inPattern[i];
+			uint8 c = static_cast<uint8>(inPattern[i]);
 			
 			if (inIgnoreCase)
-				c = ToUpper(c);
+				c = toupper(c);
 			
-			unsigned char hiByte = static_cast<unsigned char>((c >> 8) & 0x00ff);
-			unsigned char loByte = static_cast<unsigned char>(c & 0x00ff);
-			
-			ioSkip[hiByte] = i;
-			ioSkip[loByte] = i;
+			ioSkip[c] = i;
 		}
 	}
 }
 
 bool
 MTextBuffer::MismatchSearch(
-	const UniChar*	inPattern,
+	const char*		inPattern,
 	uint32			inPatternLength,
 	uint32&			ioOffset,
 	bool			inIgnoreCase,
@@ -1348,24 +1347,19 @@ MTextBuffer::MismatchSearch(
 			
 			for (;;)
 			{
-				UniChar p = inPattern[j];
-				UniChar a = GetChar(i);
+				uint8 p = static_cast<uint8>(inPattern[j]);
+				uint8 a = static_cast<uint8>(GetChar(i));
 				
 				if (inIgnoreCase)
 				{
-					p = ToUpper(p);
-					a = ToUpper(a);
+					p = toupper(p);
+					a = toupper(a);
 				}
 				
 				if (a == p)
 					break;
 			
-				unsigned char hiByte = static_cast<unsigned char>((a >> 8) & 0x00ff);
-				unsigned char loByte = static_cast<unsigned char>(a & 0x00ff);
-				
-				t = inSkip[hiByte];
-				if (inSkip[loByte] > static_cast<uint32>(t))
-					t = inSkip[loByte];
+				t = inSkip[a];
 				
 				i += (M - j > t) ? M - j : t;
 				if (i >= static_cast<int32>(mLogicalLength))
@@ -1393,24 +1387,19 @@ MTextBuffer::MismatchSearch(
 			
 			for (;;)
 			{
-				UniChar p = inPattern[j];
-				UniChar a = GetChar(i);
+				uint8 p = static_cast<uint8>(inPattern[j]);
+				uint8 a = static_cast<uint8>(GetChar(i));
 				
 				if (inIgnoreCase)
 				{
-					p = ToUpper(p);
-					a = ToUpper(a);
+					p = toupper(p);
+					a = toupper(a);
 				}
 				
 				if (a == p)
 					break;
 			
-				unsigned char hiByte = static_cast<unsigned char>((a >> 8) & 0x00ff);
-				unsigned char loByte = static_cast<unsigned char>(a & 0x00ff);
-				
-				t = inSkip[hiByte];
-				if (inSkip[loByte] > static_cast<uint32>(t))
-					t = inSkip[loByte];
+				t = inSkip[a];
 				
 				i -= (j + 1 > t) ? j + 1 : t;
 				if (i < 0)
@@ -1432,7 +1421,7 @@ MTextBuffer::MismatchSearch(
 
 bool MTextBuffer::Find(
 	uint32			inOffset,
-	ustring			inWhat,
+	string			inWhat,
 	MDirection		inDirection,
 	bool			inIgnoreCase,
 	bool			inRegex,
@@ -1442,23 +1431,20 @@ bool MTextBuffer::Find(
 	
 	if (inRegex)
 	{
-		wstring expr;
-		Convert(inWhat, expr);
-
 		boost::regex::flag_type flags = boost::regex_constants::normal;
 		
 		if (inIgnoreCase)
 			flags |= boost::regex_constants::icase;
 		
-		boost::wregex re(expr, flags);
-		boost::match_results<wc_iterator> m;
+		boost::u32regex re(expr, flags);
+		boost::u32match_results<iterator> m;
 
 		boost::regex_constants::match_flag_type match_flags =
 			boost::regex_constants::match_not_dot_newline |
 			boost::regex_constants::match_not_dot_null;
 		
-		wc_iterator start = wc_iterator(this, inOffset);
-		wc_iterator wc_end = wc_iterator(this, mLogicalLength);
+		iterator start = iterator(this, inOffset);
+		iterator end = iterator(this, mLogicalLength);
 
 		if (inDirection == kDirectionForward)
 		{
@@ -1470,12 +1456,12 @@ bool MTextBuffer::Find(
 					match_flags |= boost::regex_constants::match_not_bol;
 			}
 			
-			if (boost::regex_search(start, wc_end, m, re, match_flags) and m[0].matched)
+			if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
 			{
 				result = true;
 				
-				wc_iterator begin = m[0].first;
-				wc_iterator end = m[0].second;
+				iterator begin = m[0].first;
+				iterator end = m[0].second;
 				
 				// special case, never match an empty string
 				// if the result is the same offset as the start
@@ -1487,7 +1473,7 @@ bool MTextBuffer::Find(
 					else
 					{
 						++start;
-						if (boost::regex_search(start, wc_end, m, re, match_flags) and
+						if (boost::u32regex_search(start, end, m, re, match_flags) and
 							m[0].matched)
 						{
 							begin = m[0].first;
@@ -1524,12 +1510,12 @@ bool MTextBuffer::Find(
 					match_flags &= ~boost::regex_constants::match_not_bol;
 				}
 				
-				if (boost::regex_search(start, wc_end, m, re, match_flags) and m[0].matched)
+				if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
 				{
 					result = true;
 
-					wc_iterator begin = m[0].first;
-					wc_iterator end = m[0].second;
+					iterator begin = m[0].first;
+					iterator end = m[0].second;
 					
 					outFound.Set(begin.GetOffset(), end.GetOffset());
 				}
@@ -1552,8 +1538,11 @@ bool MTextBuffer::Find(
 	return result;
 }
 
-bool MTextBuffer::CanReplace(ustring inWhat, bool inRegex,
-	bool inIgnoreCase, MSelection inSelection) const
+bool MTextBuffer::CanReplace(
+	string			inWhat,
+	bool			inRegex,
+	bool			inIgnoreCase,
+	MSelection		inSelection) const
 {
 	bool result;
 	
@@ -1561,18 +1550,15 @@ bool MTextBuffer::CanReplace(ustring inWhat, bool inRegex,
 	{
 		uint32 offset = inSelection.GetMinOffset();
 		
-		wc_iterator b = wc_iterator(this, offset);
-		wc_iterator e = wc_iterator(this, inSelection.GetMaxOffset());
+		iterator b = iterator(this, offset);
+		iterator e = iterator(this, inSelection.GetMaxOffset());
 	
 		boost::regex::flag_type flags = boost::regex_constants::normal;
 		
 		if (inIgnoreCase)
 			flags |= boost::regex_constants::icase;
 	
-		wstring expr;
-		Convert(inWhat, expr);
-		
-		boost::wregex re(expr, flags);
+		boost::u32regex re(inWhat, flags);
 	
 		boost::regex_constants::match_flag_type match_flags =
 			boost::regex_constants::match_not_dot_newline |
@@ -1586,38 +1572,41 @@ bool MTextBuffer::CanReplace(ustring inWhat, bool inRegex,
 				match_flags |= boost::regex_constants::match_not_bol;
 		}
 		
-		result = boost::regex_match(b, e, re, match_flags);
+		result = boost::u32regex_match(b, e, re, match_flags);
 	}
 	else
 	{
-		ustring s;
+		string s;
 		GetText(inSelection.GetMinOffset(),
 			inSelection.GetMaxOffset() - inSelection.GetMinOffset(), s);
-		result = inWhat == s;
+			
+		if (inIgnoreCase)
+			result = tolower(inWhat) == tolower(s);
+		else
+			result = inWhat == s;
 	}
 	
 	return result;
 }
 
-void MTextBuffer::ReplaceExpression(MSelection inSelection,
-	ustring inExpression, bool inIgnoreCase, ustring inFormat,
-	ustring& outReplacement)
+void MTextBuffer::ReplaceExpression(
+	MSelection		inSelection,
+	string			inExpression,
+	bool			inIgnoreCase,
+	string			inFormat,
+	string&			outReplacement)
 {
 	uint32 offset = inSelection.GetMinOffset();
 	
-	wc_iterator b = wc_iterator(this, offset);
-	wc_iterator e = wc_iterator(this, inSelection.GetMaxOffset());
+	iterator b = iterator(this, offset);
+	iterator e = iterator(this, inSelection.GetMaxOffset());
 
 	boost::regex::flag_type flags = boost::regex_constants::normal;
 	
 	if (inIgnoreCase)
 		flags |= boost::regex_constants::icase;
 
-	wstring expr, fmt;
-	Convert(inExpression, expr);
-	Convert(inFormat, fmt);
-	
-	boost::wregex re(expr, flags);
+	boost::u32regex re(inExpression, flags);
 
 	boost::regex_constants::match_flag_type match_flags =
 		boost::regex_constants::match_not_dot_newline |
@@ -1631,30 +1620,19 @@ void MTextBuffer::ReplaceExpression(MSelection inSelection,
 			match_flags |= boost::regex_constants::match_not_bol;
 	}
 	
-	vector<wchar_t> result;
-	(void)boost::regex_replace(back_inserter(result), b, e, re, fmt, match_flags);
-	
-	if (result.size())
-	{
-		auto_ptr<MDecoder> decoder(
-			MDecoder::GetDecoder(kEncodingUCS2, &result[0], result.size() * sizeof(wchar_t)));
-
-		decoder->GetText(outReplacement);
-	}
-	else
-		outReplacement.clear();
+	(void)boost::u32regex_replace(back_inserter(outReplacement), b, e, re, fmt, match_flags);
 }
 
 void
 MTextBuffer::CollectWordsBeginningWith(
 	uint32					inFromOffset,
 	MDirection				inDirection,
-	ustring					inPattern,
-	vector<ustring>&		ioStrings)
+	string					inPattern,
+	vector<string>&			ioStrings)
 {
-	set<ustring> keys;
+	set<string> keys;
 	
-	for (vector<ustring>::iterator k = ioStrings.begin(); k != ioStrings.end(); ++k)
+	for (vector<string>::iterator k = ioStrings.begin(); k != ioStrings.end(); ++k)
 		keys.insert(*k);
 	
 	uint32 offset = inFromOffset;
@@ -1710,7 +1688,7 @@ MTextBuffer::CollectWordsBeginningWith(
 		if (start == offset and end - start > inPattern.length() and
 			(end < inFromOffset or start > inFromOffset))
 		{
-			ustring k;
+			string k;
 			GetText(start + inPattern.length(), end - start - inPattern.length(), k);
 
 			if (keys.find(k) == keys.end())	// we found a word!
@@ -1725,71 +1703,109 @@ MTextBuffer::CollectWordsBeginningWith(
 	}
 }
 
-uint32 MTextBuffer::GetNextCharLength(uint32 inOffset) const
+uint32 MTextBuffer::GetNextCharLength(
+	uint32		inOffset) const
 {
 	uint32 result = 1;
 	
-	if (inOffset < mLogicalLength - 1)
-	{
-		UniChar ch = GetChar(inOffset);
-
-		if (ch >= 0xD800 and ch <= 0xDBFF)
-		{
-			UniChar ch = GetChar(inOffset + 1);
-			
-			if (ch >= 0xDC00 and ch <= 0xDFFF)
-				result = 2;
-		}
-	}
+	iterator text(*this, inOffset);
 	
-	return result;
-}
-
-uint32 MTextBuffer::GetPrevCharLength(uint32 inOffset) const
-{
-	uint32 result = 1;
-
-	if (inOffset > 1)
+	if (inOffset < mLogicalLength - 1 and
+		(*text & 0x0080) != 0)
 	{
-		UniChar ch = GetChar(inOffset - 1);
-
-		if (ch >= 0xD800 and ch <= 0xDBFF)
-		{
-			UniChar ch = GetChar(inOffset - 2);
-			
-			if (ch >= 0xDC00 and ch <= 0xDFFF)
-				result = 2;
-		}
-	}
-
-	return result;
-}
-
-wchar_t MTextBuffer::GetWChar(uint32 inOffset) const
-{
-	wchar_t result = GetChar(inOffset);
-
-	if (result >= 0xD800 and result <= 0xDBFF)
-	{
-		UniChar ch = GetChar(inOffset + 1);
+		uint32 r = 1;
 		
-		if (ch >= 0xDC00 and ch <= 0xDFFF)
-			result = (result - 0xD800) * 0x400 + (ch - 0xDC00) + 0x10000;
+		if ((*text & 0x0E0) == 0x0C0)
+			r = 2;
+		else if ((*text & 0x0F0) == 0x0E0)
+			r = 3;
+		else if ((*text & 0x0F8) == 0x0F0)
+			r = 4;
+		
+		if (r + inOffset >= mLogicalLength)
+			r = mLogicalLength - inOffset - 1;
+		
+		++text;
+		
+		for (uint32 i = 1; (*text & 0x0c0) == 0x080 and i < r; ++i, ++text)
+			++result;
 	}
 	
 	return result;
 }
 
-void MTextBuffer::reserve(uint32 inSize)
+uint32 MTextBuffer::GetPrevCharLength(
+	uint32		inOffset) const
+{
+	uint32 result = 1;
+	
+	iterator text(*this, inOffset);
+	
+	if ((*text & 0x0080) != 0)
+	{
+		result = 2;
+
+		while ((*--text & 0x00C0) == 0x0080 and result < 6)
+			result++;
+	
+		switch (result)
+		{
+			case 2:	if ((*text & 0x00E0) != 0x00C0) result = 1; break;
+			case 3:	if ((*text & 0x00F0) != 0x00E0) result = 1; break;
+			case 4:	if ((*text & 0x00F8) != 0x00F0) result = 1; break;
+			case 5:	if ((*text & 0x00FC) != 0x00F8) result = 1; break;
+			case 6:	if ((*text & 0x00FE) != 0x00FC) result = 1; break;
+			default:								result = 1; break;
+		}
+	}
+	
+	return result;
+}
+
+wchar_t MTextBuffer::GetWChar(
+	uint32		inOffset) const
+{
+	iterator text(*this, inOffset);
+	
+	wchar_t result = 0x0FFFD;
+	uint32 length = GetNextCharLength(inOffset);
+	
+	switch (length)
+	{
+		case 1:	if ((*text & 0x0080) == 0)		result = *text;						break;
+		case 2:	if ((*text & 0x00E0) == 0x00C0)	result = (*text++ & 0x001F) <<  6;	break;
+		case 3: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x000F) << 12;	break;
+		case 4: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0007) << 18;	break;
+		case 5: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0003) << 24;	break;
+		case 6: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0001) << 30;	break;
+	}
+	
+	if (result != 0xFFFD)
+	{
+		switch (length)
+		{
+			case 6:	result |= (*text++ & 0x003F) << 24;
+			case 5:	result |= (*text++ & 0x003F) << 18;
+			case 4:	result |= (*text++ & 0x003F) << 12;
+			case 3:	result |= (*text++ & 0x003F) <<  6;
+			case 2:	result |= (*text++ & 0x003F);
+		}
+	}
+	
+	return result;
+}
+
+void MTextBuffer::reserve(
+	uint32		inSize)
 {
 	if (inSize > mPhysicalLength)
 	{
-		auto_array<UniChar> tmp(new UniChar[inSize]);
+		auto_array<char> tmp(new char[inSize]);
 		
 		if (mData != nil)
 		{
 			MoveGapTo(mLogicalLength);
-			memcpy(tmp.get(), mData, mLogicalLength * sizeof(UniChar));
+			memcpy(tmp.get(), mData, mLogicalLength);
 			delete[] mData;
 		}
 		
@@ -1798,7 +1814,8 @@ void MTextBuffer::reserve(uint32 inSize)
 	}
 }
 
-bool MTextBuffer::const_iterator::operator==(const char* inText) const
+bool MTextBuffer::const_iterator::operator==(
+	const char*		inText) const
 {
 	bool result = true;
 	uint32 offset = mOffset;
