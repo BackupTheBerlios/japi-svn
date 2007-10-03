@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguageTeX.h"
 #include "MTextBuffer.h"
@@ -53,8 +53,8 @@ enum
 		LCOMMENT, MATH, WOORD, VERBATIM
 };
 
-const UniChar
-	kCommentPrefix[] = { '%', 0 };
+const char
+	kCommentPrefix[] = "%";
 
 bool operator==(MTextBuffer::const_iterator& inIterator, const char* inText)
 {
@@ -100,7 +100,7 @@ MLanguageTeX::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
 	uint32				inLength,
-	UInt16&				ioState)
+	uint16&				ioState)
 {
 	uint32 i = 0, s = 0, kws = 0, esc = 0;
 	bool leave = false;
@@ -108,7 +108,7 @@ MLanguageTeX::StyleLine(
 	MTextBuffer::const_iterator text = inText.begin() + inOffset;
 	MTextBuffer::const_iterator end = inText.end();
 
-	UniChar verbChar = ioState >> 8;
+	char verbChar = ioState >> 8;
 	ioState &= 0x00ff;
 
 	if (ioState == LCOMMENT)
@@ -121,7 +121,7 @@ MLanguageTeX::StyleLine(
 	
 	while (not leave)
 	{
-		UniChar c = 0;
+		char c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;
@@ -441,7 +441,7 @@ MLanguageTeX::Balance(
 
 bool
 MLanguageTeX::IsBalanceChar(
-	UniChar	inChar)
+	wchar_t				inChar)
 {
 	return inChar == ']' or inChar == '}';
 }
@@ -457,7 +457,7 @@ MLanguageTeX::IsSmartIndentLocation(
 
 bool
 MLanguageTeX::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 //	return inChar == '}';
 	return false;
@@ -465,14 +465,14 @@ MLanguageTeX::IsSmartIndentCloseChar(
 
 void
 MLanguageTeX::CommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	ioLine.insert(0, kCommentPrefix);
 }
 
 void
 MLanguageTeX::UncommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	if (ioLine.length() >= 1 and ioLine[0] == kCommentPrefix[0])
 		ioLine.erase(0, 1);

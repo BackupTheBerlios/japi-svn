@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguageHTML.h"
 #include "MTextBuffer.h"
@@ -99,9 +99,9 @@ const uint32
 	kCSSAttributeMask =			1 << 3,
 	kJavaScriptKeyWordMask =	1 << 4;
 
-const UniChar
-	kCommentPrefix[] = { '<', '!', '-', '-', 0 },
-	kCommentPostfix[] = { '-', '-', '>', 0 };
+const char
+	kCommentPrefix[] = "<!--",
+	kCommentPostfix[] = "-->";
 
 MLanguageHTML::MLanguageHTML()
 {
@@ -226,7 +226,7 @@ MLanguageHTML::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
 	uint32				inLength,
-	UInt16&				ioState)
+	uint16&				ioState)
 {
 	MTextBuffer::const_iterator text = inText.begin() + inOffset;
 	MTextBuffer::const_iterator end = inText.end();
@@ -260,7 +260,7 @@ MLanguageHTML::StyleLine(
 	
 	while (not leave and i < maxOffset)
 	{
-		UniChar c = 0;
+		char c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;
@@ -899,7 +899,7 @@ MLanguageHTML::Balance(
 
 bool
 MLanguageHTML::IsBalanceChar(
-	UniChar	inChar)
+	wchar_t				inChar)
 {
 	return false;
 }
@@ -914,14 +914,14 @@ MLanguageHTML::IsSmartIndentLocation(
 
 bool
 MLanguageHTML::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 	return false;
 }
 
 void
 MLanguageHTML::CommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	ioLine.insert(0, kCommentPrefix);
 	ioLine.append(kCommentPostfix);
@@ -929,21 +929,21 @@ MLanguageHTML::CommentLine(
 
 void
 MLanguageHTML::UncommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
-	uint32 n = (sizeof(kCommentPrefix) / sizeof(UniChar)) - 1;
+	uint32 n = sizeof(kCommentPrefix) - 1;
 	
 	if (ioLine.substr(0, n) == kCommentPrefix)
 		ioLine.erase(0, n);
 	
-	n = (sizeof(kCommentPostfix) / sizeof(UniChar)) - 1;
+	n = sizeof(kCommentPostfix) - 1;
 	if (ioLine.substr(ioLine.length() - n, n) == kCommentPostfix)
 		ioLine.erase(ioLine.length() - n, n);
 }
 
 uint32
 MLanguageHTML::MatchLanguage(
-	const std::string&	inFile,
+	const string&		inFile,
 	MTextBuffer&		inText)
 {
 	uint32 result = 0;
@@ -962,9 +962,9 @@ MLanguageHTML::MatchLanguage(
 	else
 	{
 		MSelection s;
-		static ustring p(USTR("<!DOCTYPE\\s+HTML\\s+"));
 		
-		if (inText.Find(0, p, kDirectionForward, false, true, s))
+		if (inText.Find(0, "<!DOCTYPE\\s+HTML\\s+",
+			kDirectionForward, false, true, s))
 		{
 			result += 75;
 		}			
@@ -977,9 +977,9 @@ bool MLanguageHTML::Softwrap() const
 	return true;
 }
 
-UInt16
+uint16
 MLanguageHTML::GetInitialState(
-	const std::string&	inFile,
+	const string&		inFile,
 	MTextBuffer&		inText)
 {
 	uint16 result = START;

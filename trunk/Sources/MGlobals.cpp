@@ -35,31 +35,36 @@
 	Created Sunday July 25 2004 21:07:42
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MGlobals.h"
 #include "MPreferences.h"
 #include "MLanguage.h"
-#include "MApplication.h"
+//#include "MApplication.h"
 
 using namespace std;
 
-const RGBColor kLanguageColors[] =
+struct RGBColor
 {
-	{ 0 },						// kLTextColor
-    { 0x3d3d, 0x4c4c, 0x9e9e },	// kLKeyWordColor
-    { 0x0000, 0x5454, 0x5454 }, // kLPreProcessorColor
-    { 0xadad, 0x6767, 0x3939 }, // kLCharConstColor
-    { 0x9b9b, 0x2e2e, 0x3535 }, // kLCommentColor
-    { 0x6666, 0x6666, 0x6666 }, // kLStringColor
-    { 0x0000, 0x8484, 0x8484 }, // kLTagColor
-    { 0x1e1e, 0x8484, 0x3b3b }, // kLAttribColor
-    { 0xaaaa, 0xaaaa, 0xaaaa }, // kLInvisiblesColor
+	uint16	red, green, blue;
+};
+
+const MColor kLanguageColors[] =
+{
+	kBlack,			  // kLTextColor
+    MColor("3d4c9e"), // kLKeyWordColor
+    MColor("005454"), // kLPreProcessorColor
+    MColor("ad6739"), // kLCharConstColor
+    MColor("9b2e35"), // kLCommentColor
+    MColor("666666"), // kLStringColor
+    MColor("008484"), // kLTagColor
+    MColor("1e843b"), // kLAttribColor
+    MColor("aaaaaa"), // kLInvisiblesColor
 };
 
 const MColor
-	kInactiveHighlightColor = MColor(0.9f, 0.9f, 0.9f, 1.0),
-	kOddRowBackColor = MColor( 0.94f, 0.97f, 1.0f);
+	kInactiveHighlightColor("#e5e5e5"),
+	kOddRowBackColor("#eff7ff");
 
 bool			gAutoIndent = true;
 bool			gSmartIndent = true;
@@ -67,14 +72,14 @@ bool			gKiss = true;
 bool			gSmoothFonts = false;
 bool			gShowInvisibles = true;
 bool			gTabEntersSpaces = false;
-UInt32			gCharsPerTab = 4;
-UInt32			gSpacesPerTab = 4;
-UInt32			gFontSize = 10;
+uint32			gCharsPerTab = 4;
+uint32			gSpacesPerTab = 4;
+uint32			gFontSize = 10;
 std::string		gFontName = "Monaco";
 MColor			gLanguageColors[kLStyleCount];
 MColor			gHiliteColor, gInactiveHiliteColor, gOddRowColor;
 
-MPath			gTemplatesDir, gPrefsDir;
+MURL			gTemplatesDir, gPrefsDir;
 
 void InitGlobals()
 {
@@ -108,64 +113,64 @@ void InitGlobals()
 	gLanguageColors[kLInvisiblesColor] =
 		Preferences::GetColor("invisibles color", kLanguageColors[kLInvisiblesColor]);
 
-	RGBColor c;
-	::LMGetHiliteRGB(&c);
-	gHiliteColor = c;
+//	RGBColor c;
+//	::LMGetHiliteRGB(&c);
+//	gHiliteColor = c;
 
 	gInactiveHiliteColor = kInactiveHighlightColor;
 	gOddRowColor = kOddRowBackColor;
 
-	try
-	{
-		FSRef folderRef;
-		THROW_IF_OSERROR(::FSFindFolder(kUserDomain, kDomainLibraryFolderType, true, &folderRef));
-
-		char lib[PATH_MAX];
-		THROW_IF_OSERROR(::FSRefMakePath(&folderRef, reinterpret_cast<UInt8*>(lib), PATH_MAX));
-
-		MPath libPath(lib);
-		
-		if (not exists(libPath) or not is_directory(libPath))
-			THROW(("%s is not a directory", lib));
-
-		gPrefsDir = libPath / "Japie";
-
-		if (not exists(gPrefsDir))
-			create_directory(gPrefsDir);
-	}
-	catch (const std::exception& e)
-	{
-		cerr << "Initialising preferences directory failed: " << e.what() << endl;
-	}
-	
-	try
-	{
-		gTemplatesDir = gPrefsDir / "Templates";
-
-		if (not exists(gTemplatesDir))
-		{
-			create_directory(gTemplatesDir);
-			
-			MPath resDir = MApplication::Instance().GetResourceDir();
-			
-			// copy over the default template files to the newly created templates directory
-			
-			MFileIterator iter(resDir, 0);
-			MPath file;
-			
-			while (iter.Next(file))
-			{
-				if (is_directory(file) or file.leaf() == ".DS_Store")
-					continue;
-				
-				copy_file(file, gTemplatesDir / file.leaf());
-			}
-		}
-	}
-	catch (const std::exception& e)
-	{
-		cerr << "Initialising Templates directory failed: " << e.what() << endl;
-	}
+//	try
+//	{
+//		FSRef folderRef;
+//		THROW_IF_OSERROR(::FSFindFolder(kUserDomain, kDomainLibraryFolderType, true, &folderRef));
+//
+//		char lib[PATH_MAX];
+//		THROW_IF_OSERROR(::FSRefMakePath(&folderRef, reinterpret_cast<UInt8*>(lib), PATH_MAX));
+//
+//		MPath libPath(lib);
+//		
+//		if (not exists(libPath) or not is_directory(libPath))
+//			THROW(("%s is not a directory", lib));
+//
+//		gPrefsDir = libPath / "Japie";
+//
+//		if (not exists(gPrefsDir))
+//			create_directory(gPrefsDir);
+//	}
+//	catch (const std::exception& e)
+//	{
+//		cerr << "Initialising preferences directory failed: " << e.what() << endl;
+//	}
+//	
+//	try
+//	{
+//		gTemplatesDir = gPrefsDir / "Templates";
+//
+//		if (not exists(gTemplatesDir))
+//		{
+//			create_directory(gTemplatesDir);
+//			
+//			MPath resDir = MApplication::Instance().GetResourceDir();
+//			
+//			// copy over the default template files to the newly created templates directory
+//			
+//			MFileIterator iter(resDir, 0);
+//			MPath file;
+//			
+//			while (iter.Next(file))
+//			{
+//				if (is_directory(file) or file.leaf() == ".DS_Store")
+//					continue;
+//				
+//				copy_file(file, gTemplatesDir / file.leaf());
+//			}
+//		}
+//	}
+//	catch (const std::exception& e)
+//	{
+//		cerr << "Initialising Templates directory failed: " << e.what() << endl;
+//	}
 }
 
 void SaveGlobals()
@@ -181,7 +186,7 @@ void SaveGlobals()
 	Preferences::SetString("fontname", gFontName);
 	Preferences::SetInteger("tab enters spaces", gTabEntersSpaces);
 
-	for (UInt32 ix = 0; ix < kLStyleCount; ++ix)
+	for (uint32 ix = 0; ix < kLStyleCount; ++ix)
 	{
 //		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
 	}

@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguagePerl.h"
 #include "MTextBuffer.h"
@@ -59,8 +59,8 @@ enum State
 	STATE_COUNT
 };
 
-const UniChar
-	kCommentPrefix[] = { '#', 0 };
+const char
+	kCommentPrefix[] = "#";
 
 MLanguagePerl::MLanguagePerl()
 {
@@ -128,7 +128,7 @@ MLanguagePerl::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
 	uint32				inLength,
-	UInt16&				ioState)
+	uint16&				ioState)
 {
 	assert(STATE_COUNT < 32);
 	
@@ -157,7 +157,7 @@ MLanguagePerl::StyleLine(
 	
 	while (not leave and i < maxOffset)
 	{
-		UniChar c = 0;
+		char c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;
@@ -922,7 +922,7 @@ MLanguagePerl::Balance(
 
 bool
 MLanguagePerl::IsBalanceChar(
-	UniChar	inChar)
+	wchar_t				inChar)
 {
 	return inChar == ')' or inChar == ']' or inChar == '}';
 }
@@ -937,21 +937,21 @@ MLanguagePerl::IsSmartIndentLocation(
 
 bool
 MLanguagePerl::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 	return inChar == '}';
 }
 
 void
 MLanguagePerl::CommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	ioLine.insert(0, kCommentPrefix);
 }
 
 void
 MLanguagePerl::UncommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	if (ioLine.length() >= 1 and ioLine[0] == '#')
 		ioLine.erase(0, 1);
@@ -970,9 +970,9 @@ MLanguagePerl::MatchLanguage(
 	else
 	{
 		MSelection s;
-		static ustring p(USTR("^#!\\s*.*?perl.*\\n"));
 		
-		if (inText.Find(0, p, kDirectionForward, false, true, s) and
+		if (inText.Find(0, "^#!\\s*.*?perl.*\\n",
+				kDirectionForward, false, true, s) and
 			s.GetAnchor() == 0)
 		{
 			result += 75;

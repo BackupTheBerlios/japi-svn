@@ -29,6 +29,13 @@ class MURL
 						return *this;
 					}
 	
+	MURL&			operator=(
+						const std::string&		inRHS)
+					{
+						mURL = inRHS;
+						return *this;
+					}
+	
 	MURL&			operator/=(
 						const std::string&		inSubPath)
 					{

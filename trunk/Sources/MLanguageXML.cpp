@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguageXML.h"
 #include "MTextBuffer.h"
@@ -75,7 +75,7 @@ MLanguageXML::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
 	uint32				inLength,
-	UInt16&				ioState)
+	uint16&				ioState)
 {
 	if (inLength <= 0)
 		return;
@@ -91,7 +91,7 @@ MLanguageXML::StyleLine(
 
 	while (not leave)
 	{
-		UniChar c = 0;
+		char c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;
@@ -305,7 +305,7 @@ MLanguageXML::Balance(
 
 bool
 MLanguageXML::IsBalanceChar(
-	UniChar	inChar)
+	wchar_t				inChar)
 {
 	return false;
 }
@@ -347,29 +347,36 @@ MLanguageXML::IsSmartIndentLocation(
 
 bool
 MLanguageXML::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 	return false;
 }
 
-static const UniChar kPrefix[] = { '<', '!', '-', '-', 0 };
-static const UniChar kPostfix[] = { '-', '-', '>', 0 };
+static const
+	char kPrefix[] = "<!--",
+	kPostfix[] = "-->";
 
-const uint32 kPrefixLength = 4;
-const uint32 kPostfixLength = 3;
+const uint32
+	kPrefixLength = 4,
+	kPostfixLength = 3;
 
 void
 MLanguageXML::CommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	ioLine.insert(0, kPrefix, kPrefixLength);
 
 	if (ioLine.length() >= kPrefixLength + 2)
 	{
-		for (ustring::iterator ch = ioLine.begin() + kPrefixLength + 1; ch != ioLine.end(); ++ch)
+		for (string::iterator ch = ioLine.begin() + kPrefixLength + 1; ch != ioLine.end(); ++ch)
 		{
 			if (*ch == '-' and *(ch - 1) == '-')
-				ch = ioLine.insert(ch, 0x2022) + 2;
+			{
+				const char kBullet[] = "•";
+				uint32 n = sizeof(kBullet);
+				ioLine.insert(ch, kBullet, kBullet + n);
+				ch += n + 1;
+			}
 		}
 	}
 	
@@ -378,9 +385,9 @@ MLanguageXML::CommentLine(
 
 void
 MLanguageXML::UncommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
-	const UniChar escapedDoubleDash[] = { '-', 0x2022, '-', 0 };
+	const char escapedDoubleDash[] = "-•-";
 	
 	if (ioLine.length() >= kPrefixLength + kPostfixLength and
 		ioLine.compare(0, kPrefixLength, kPrefix) == 0 and
@@ -389,8 +396,8 @@ MLanguageXML::UncommentLine(
 		ioLine.erase(0, kPrefixLength);
 		ioLine.erase(ioLine.length() - kPostfixLength, kPostfixLength);
 		
-		ustring::size_type p = ioLine.find(escapedDoubleDash);
-		while (p != ustring::npos)
+		string::size_type p = ioLine.find(escapedDoubleDash);
+		while (p != string::npos)
 		{
 			ioLine.erase(p + 1, 1);
 			p = ioLine.find(escapedDoubleDash, p);

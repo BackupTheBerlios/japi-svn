@@ -39,10 +39,9 @@
 struct MColor
 {
   public:
-	float		red;
-	float		green;
-	float		blue;
-	float		alpha;
+	uint8		red;
+	uint8		green;
+	uint8		blue;
 
 				MColor();
 
@@ -50,10 +49,12 @@ struct MColor
 					const MColor&		inOther);
 
 				MColor(
-					float				inRed,
-					float				inGreen,
-					float				inBlue,
-					float				inAlpha = 1.0f);
+					const char*			inHex);
+
+				MColor(
+					uint8				inRed,
+					uint8				inGreen,
+					uint8				inBlue);
 
 	MColor&		operator=(
 					const MColor&		inOther);
@@ -73,21 +74,21 @@ extern const MColor
 	kErrorColor,
 	kSelectionColor;
 
-template<class charT, class traits>
-std::basic_ostream<charT,traits>&
-operator << (
-	std::basic_ostream<charT,traits>&	os,
-	const MColor&						inColor)
-{
-	std::ios_base::fmtflags flags = os.setf(std::ios_base::hex, std::ios_base::basefield);
-	
-	os << '#'
-		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.red * 255UL)
-		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.green * 255UL)
-		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.blue * 255UL);
-	
-	os.setf(flags);
-	return os;
-}
+//template<class charT, class traits>
+//std::basic_ostream<charT,traits>&
+//operator << (
+//	std::basic_ostream<charT,traits>&	os,
+//	const MColor&						inColor)
+//{
+//	std::ios_base::fmtflags flags = os.setf(std::ios_base::hex, std::ios_base::basefield);
+//	
+//	os << '#'
+//		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.red)
+//		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.green)
+//		<< std::setw(2) << std::setfill('0') << static_cast<uint32>(inColor.blue);
+//	
+//	os.setf(flags);
+//	return os;
+//}
 
 #endif

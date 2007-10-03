@@ -234,24 +234,53 @@ void MDevice::DrawString(
 	
 	cairo_move_to(mImpl->mContext, inX, inY);	
 
-	if (1)
-	{
-		PangoAttribute* attr = pango_attr_background_new(
-			static_cast<uint16>(kSelectionColor.red * 65535),
-			static_cast<uint16>(kSelectionColor.green * 65535),
-			static_cast<uint16>(kSelectionColor.blue * 65535));
-
-		attr->start_index = 4;
-		attr->end_index = 8;
-		
-		PangoAttrList* attrs = pango_attr_list_new();
-		pango_attr_list_insert(attrs, attr);
-		pango_layout_set_attributes(mImpl->mLayout, attrs);
-		pango_attr_list_unref(attrs);
-	}
-
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
 
+uint32 MDevice::GetStringWidth(
+	const std::string&	inText)
+{
+	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
+	
+	PangoRectangle r;
+	pango_layout_get_pixel_extents(mImpl->mLayout, nil, &r);
+	
+	return r.width;
+}
 
+// --------------------------------------------------------------------
+
+	void			SetText(
+						const std::string&	inText);
+	
+	void			SetTabStops(
+						float				inTabWidth);
+	
+	void			SetTextColors(
+						uint32				inColorCount,
+						uint32				inColors[],
+						uint32				inOffsets[]);
+
+	void			SetTextSelection(
+						uint32				inStart,
+						uint32				inLength,
+						MColor				inSelectionColor);
+	
+	void			IndexToPosition(
+						uint32				inIndex,
+						bool				inTrailing,
+						int32&				outPosition);
+
+	bool			PositionToIndex(
+						int32				inPosition,
+						uint32&				outIndex,
+						bool&				outTrailing);
+	
+	void			DrawText(
+						float				inX,
+						float				inY);
+
+
+
+//pango_layout_index_to_line_x
 

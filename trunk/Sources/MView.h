@@ -16,6 +16,8 @@ class MView
 
 	GtkWidget*		GetGtkWidget() const		{ return mGtkWidget; }
 
+	MWindow*		GetWindow() const;
+
   protected:
 
 					MView(

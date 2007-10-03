@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguageCpp.h"
 #include "MTextBuffer.h"
@@ -56,10 +56,8 @@ enum {
 };
 
 const char
-	kInclude[] = "include";
-
-const UniChar
-	kCommentPrefix[] = { '/', '/', 0 };
+	kInclude[] = "include",
+	kCommentPrefix[] = "//";
 
 bool gAddPrototypes = false;
 
@@ -108,7 +106,7 @@ MLanguageCpp::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
 	uint32				inLength,
-	UInt16&				ioState)
+	uint16&				ioState)
 {
 	MTextPtr text = inText.begin() + inOffset;
 	uint32 i = 0, s = 0, kws = 0, esc = 0;
@@ -127,7 +125,7 @@ MLanguageCpp::StyleLine(
 	
 	while (not leave and text.GetOffset() < maxOffset)
 	{
-		UniChar c = 0;
+		wchar_t c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;
@@ -534,7 +532,7 @@ MLanguageCpp::Balance(
 
 bool
 MLanguageCpp::IsBalanceChar(
-	UniChar	inChar)
+	wchar_t				inChar)
 {
 	return inChar == ')' or inChar == ']' or inChar == '}';
 }
@@ -549,23 +547,23 @@ MLanguageCpp::IsSmartIndentLocation(
 
 bool
 MLanguageCpp::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 	return inChar == '}';
 }
 
 void
 MLanguageCpp::CommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
 	ioLine.insert(0, kCommentPrefix);
 }
 
 void
 MLanguageCpp::UncommentLine(
-	ustring&			ioLine)
+	string&				ioLine)
 {
-	if (ioLine.length() >= 2 and ioLine[0] == '/' and ioLine[1] == '/')
+	if (ioLine.substr(0, 2) == "//")
 		ioLine.erase(0, 2);
 }
 
@@ -594,13 +592,15 @@ bool MLanguageCpp::Softwrap() const
 //
 
 static inline bool
-isidentf(UniChar inChar)
+isidentf(
+	wchar_t		inChar)
 {
 	return isalpha(inChar) or inChar == '_';
 }
 
 static inline bool
-isident(UniChar inChar)
+isident(
+	wchar_t		inChar)
 {
 	return isalnum(inChar) or inChar == '_';
 }

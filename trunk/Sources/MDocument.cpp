@@ -44,20 +44,22 @@
 #include "MGlobals.h"
 #include "MLanguage.h"
 //#include "MApplication.h"
-//#include "MFindDialog.h"
+#include "MFindDialog.h"
 #include "MError.h"
 #include "MController.h"
 //#include "MGoToLineDialog.h"
 #include "MStyles.h"
+#include "MPreferences.h"
 //#include "MPrefsDialog.h"
 #include "MShell.h"
-//#include "MMessageWindow.h"
+#include "MMessageWindow.h"
 #include "MDevice.h"
 #include "MCommands.h"
 #include "MDocWindow.h"
 #include "MUtils.h"
 #include "MMenu.h"
 //#include "MProject.h"
+#include "MDevice.h"
 
 using namespace std;
 
@@ -371,13 +373,11 @@ void MDocument::ReInit()
 {
 #pragma message("zet mLayout opties hier")
 	
-	MDevice dev(mTextLayout);
+	MDevice device;
 
-	mLineHeight = dev.GetAscent() + dev.GetDescent() + dev.GetLeading();
-	mCharWidth = dev.GetStringWidth("          ") / 10.0f;
+	mLineHeight = device.GetLineHeight();
+	mCharWidth = device.GetStringWidth("          ") / 10.0f;
 	mTabWidth = mCharWidth * mCharsPerTab;
-	
-	mLayout.SetTabStops(mTabWidth, 32);
 }
 
 // ---------------------------------------------------------------------------
@@ -703,8 +703,7 @@ void MDocument::Type(
 			MSelection save(mSelection);
 			ChangeSelection(MSelection(offset - 1, offset));
 			eScroll(kScrollForKiss);
-			uint32 l;
-			::Delay(20UL, &l);
+			usleep(20000UL);
 			ChangeSelection(save);
 			eScroll(kScrollReturnAfterKiss);
 		}
@@ -823,21 +822,21 @@ void MDocument::CloseDocument()
 			
 			if (mTargetTextView != nil)
 			{
-				HIPoint pt;
-				mTargetTextView->GetScrollPosition(pt);
-				state.mScrollPosition[0] = static_cast<uint32>(pt.x);
-				state.mScrollPosition[1] = static_cast<uint32>(pt.y);
+				int32 x, y;
+				mTargetTextView->GetScrollPosition(x, y);
+				state.mScrollPosition[0] = static_cast<uint32>(x);
+				state.mScrollPosition[1] = static_cast<uint32>(y);
 			}
 
-			if (MWindow* w = MDocWindow::FindWindowForDocument(this))
-			{
-				Rect r;
-				::GetWindowBounds(w->GetSysWindow(), kWindowContentRgn, &r);
-				state.mWindowPosition[0] = r.left;
-				state.mWindowPosition[1] = r.top;
-				state.mWindowSize[0] = r.right - r.left;
-				state.mWindowSize[1] = r.bottom - r.top;
-			}
+//			if (MWindow* w = MDocWindow::FindWindowForDocument(this))
+//			{
+//				MRect r;
+//				::GetWindowBounds(w->GetSysWindow(), kWindowContentRgn, &r);
+//				state.mWindowPosition[0] = r.left;
+//				state.mWindowPosition[1] = r.top;
+//				state.mWindowSize[0] = r.right - r.left;
+//				state.mWindowSize[1] = r.bottom - r.top;
+//			}
 
 			state.mFlags.mSoftwrap = mSoftwrap;
 			state.mFlags.mTabWidth = mCharsPerTab;
@@ -898,7 +897,7 @@ bool MDocument::DoSave()
 		SetModified(false);
 		
 		gApp->AddToRecentMenu(mURL);
-		MProject::RecheckFiles();
+//		MProject::RecheckFiles();
 	
 		eFileSpecChanged(mURL);
 		
@@ -959,7 +958,7 @@ void MDocument::ReadFile()
 {
 	auto_ptr<MFile> file(new MFile(mURL));
 	
-	mText.ReadFromURL(*file);
+	mText.ReadFromFile(*file);
 	
 	mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
 	
@@ -1614,7 +1613,7 @@ void MDocument::UpdateDirtyLines()
 }
 
 void MDocument::GetSelectionBounds(
-	HIRect&		outBounds) const
+	MRect&		outBounds) const
 {
 	if (mSelection.IsBlock())
 	{
@@ -1633,25 +1632,25 @@ void MDocument::GetSelectionBounds(
 		
 		if (anchorLine != caretLine)
 		{
-			outBounds.origin.y = anchorLine * mLineHeight;
-			outBounds.size.height = (caretLine - anchorLine + 1) * mLineHeight;
-			outBounds.origin.x = 0;
-			outBounds.size.width = /*kMaxLineWidth*/100000;
+			outBounds.y = anchorLine * mLineHeight;
+			outBounds.height = (caretLine - anchorLine + 1) * mLineHeight;
+			outBounds.x = 0;
+			outBounds.width = /*kMaxLineWidth*/100000;
 		}
 		else
 		{
-			outBounds.origin.y = anchorLine * mLineHeight;
-			outBounds.size.height = mLineHeight;
+			outBounds.y = anchorLine * mLineHeight;
+			outBounds.height = mLineHeight;
 			
 			int32 anchorPos;
 			OffsetToPosition(anchor, anchorLine, anchorPos);
 
-			outBounds.origin.x = anchorPos;
+			outBounds.x = anchorPos;
 
 			int32 caretPos;
 			OffsetToPosition(caret, caretLine, caretPos);
 
-			outBounds.size.width = caretPos - anchorPos + 1;
+			outBounds.width = caretPos - anchorPos + 1;
 		}
 	}
 }
@@ -1811,22 +1810,19 @@ void MDocument::OffsetToPosition(
 	else
 	{
 		string text;
-		(void)GetStyledLayout(outLine, text);
-
-		ATSUCaret mainCaret = { 0 }, secondCaret = { 0 };
-		Boolean isSplit;
-
-		THROW_IF_OSERROR(::ATSUOffsetToPosition(mTextLayout, column, false, &mainCaret,
-			&secondCaret, &isSplit));
+		MDevice device;
 		
+		GetStyledText(outLine, device, text);
+
+		device.IndexToPosition(inOffset, false, outX);
+
 		if (GetSoftwrap())
-			mainCaret.fX += X2Fix(GetLineIndentWidth(outLine));
-		
-		outX = (Fix2Long(mainCaret.fX) + Fix2Long(mainCaret.fDeltaX)) / 2;
+			outX += GetLineIndentWidth(outLine);
 	}
 }
 
-uint32 MDocument::OffsetToColumn(uint32 inOffset) const
+uint32 MDocument::OffsetToColumn(
+	uint32		inOffset) const
 {
 	uint32 line = OffsetToLine(inOffset);
 	uint32 start = LineStart(line);
@@ -1855,29 +1851,28 @@ uint32 MDocument::OffsetToColumn(uint32 inOffset) const
 //	PositionToOffset
 
 void MDocument::PositionToOffset(
-	HIPoint			inLocation,
+	int32			inLocationX,
+	int32			inLocationY,
 	uint32&			outOffset) const
 {
-	uint32 line = static_cast<uint32>(inLocation.y / mLineHeight);
+	uint32 line = static_cast<uint32>(inLocationY / mLineHeight);
 	
 	if (line >= mLineInfo.size())
 		outOffset = mText.GetSize();
 	else
 	{
 		string text;
-		(void)GetStyledLayout(line, text);
+		MDevice device;
 		
-		uint32 primaryOffset = 0, secondaryOffset;
-		Boolean isLeading;
-
+		GetStyledText(line, device, text);
+		
 		if (GetSoftwrap())
-			inLocation.x -= GetLineIndentWidth(line);
+			inLocationX -= GetLineIndentWidth(line);
 		
-		THROW_IF_OSERROR(::ATSUPositionToOffset(mTextLayout,
-			X2Fix(inLocation.x), X2Fix(inLocation.y), &primaryOffset, &isLeading,
-			&secondaryOffset));
+		bool trailing;
+		bool hit = device.PositionToIndex(inLocationX, outOffset, trailing);
 		
-		outOffset = mLineInfo[line].start + primaryOffset;
+		outOffset += mLineInfo[line].start;
 	}
 }
 
@@ -2089,13 +2084,13 @@ void MDocument::DoBalance()
 			if (mLanguage->Balance(mText, newOffset, newLength))
 				Select(newOffset, newOffset + newLength);
 			else
-				::SysBeep(10);
+				Beep();
 		}
 		else
 			Select(newOffset, newOffset + newLength);
 	}
 	else
-		::SysBeep(10);
+		Beep();
 }
 								
 void MDocument::DoShiftLeft()
@@ -2410,7 +2405,7 @@ bool MDocument::FastFind(MDirection inDirection)
 		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
 	}
 	else
-		::SysBeep(10);
+		Beep();
 	
 	return result;
 }
@@ -2438,7 +2433,7 @@ void MDocument::HandleFindDialogCommand(uint32 inCommand)
 	{
 		case cmd_FindNext:
 			if (not DoFindNext(kDirectionForward))
-				::SysBeep(10);
+				Beep();
 			break;
 
 		case cmd_Replace:
@@ -2497,11 +2492,8 @@ void MDocument::FindAll(string inWhat, bool inIgnoreCase,
 	{
 		uint32 lineNr = sel.GetMinLine(*this);
 		
-		string t;
-		GetLine(lineNr, t);
-		
 		string s;
-		Convert(t, s);
+		GetLine(lineNr, s);
 		
 		outHits.AddMessage(kMsgKindNone, mURL, lineNr + 1,
 			sel.GetMinOffset(*this), sel.GetMaxOffset(*this), s);
@@ -2547,7 +2539,7 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 			else
 			{
 				ChangeSelection(offset, offset + replace.length());
-				::SysBeep(10);
+				Beep();
 			}
 	
 			eScroll(kScrollToSelection);
@@ -2555,7 +2547,7 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 		}
 	}
 	else
-		::SysBeep(10);
+		Beep();
 }
 
 void MDocument::DoReplaceAll()
@@ -2595,7 +2587,7 @@ void MDocument::DoReplaceAll()
 	if (replacedAny)
 		Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
 	else
-		::SysBeep(10);
+		Beep();
 }
 
 void MDocument::DoComplete(MDirection inDirection)
@@ -2616,7 +2608,7 @@ void MDocument::DoComplete(MDirection inDirection)
 		
 		if (length == 0 or OffsetToLine(mCompletionStartOffset) != OffsetToLine(startOffset))
 		{
-			::SysBeep(10);
+			Beep();
 			return;
 		}
 		
@@ -2635,7 +2627,7 @@ void MDocument::DoComplete(MDirection inDirection)
 			doc = doc->mNext;
 		}
 		
-		lock.unlock();
+//		lock.unlock();
 		
 		if (inDirection == kDirectionForward)
 			mCompletionIndex = -1;
@@ -2654,7 +2646,7 @@ void MDocument::DoComplete(MDirection inDirection)
 	if (mCompletionIndex < 0 or mCompletionIndex >= static_cast<int32>(mCompletionStrings.size()))
 	{
 		mCompletionIndex = -1;
-		::SysBeep(10);
+		Beep();
 	}
 	else
 	{
@@ -2673,132 +2665,73 @@ void MDocument::DoSoftwrap()
 	UpdateDirtyLines();
 }
 
-ATSUTextLayout MDocument::GetTextLayout() const
-{
-//	if (mTextLayout == nil)
-//		ReInit();
-//
-	return mTextLayout;
-}
-
-ATSUTextLayout MDocument::GetStyledLayout(
+void MDocument::GetStyledText(
 	uint32		inLine,
+	MDevice&	inDevice,
 	string&		outText) const
 {
 	uint32 offset = LineStart(inLine);
 	uint32 length = LineStart(inLine + 1) - offset;
-	return GetStyledLayout(offset, length, mLineInfo[inLine].state, outText);
+	return GetStyledText(offset, length, mLineInfo[inLine].state, inDevice, outText);
 }
 
-ATSUTextLayout MDocument::GetStyledLayout(
+void MDocument::GetStyledText(
 	uint32		inOffset,
 	uint32		inLength,
 	uint16		inState,
+	MDevice&	inDevice,
 	string&		outText) const
 {
-//	if (mTextLayout == nil)
-//		ReInit();
-//	
-	MStyleArray& styleArray = MStyleArray::Instance();
-	
 	mText.GetText(inOffset, inLength, outText);
 
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')
 		outText.erase(outText.length() - 1);
 
-	THROW_IF_OSERROR(::ATSUSetTextPointerLocation(mTextLayout, 
-		outText.c_str(), 0, outText.length(), outText.length()));
-
-	THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
-		styleArray[0], 0, outText.length()));
-
-	if (not gSmoothFonts)	// this sucks, tabs should 'just work'
-	{
-		const uint32 kTabCount = 100;
-	
-		ATSUTab  myTabArray[kTabCount];
-		
-		uint32 c = 0;
-		uint32 t = 0;
-		uint32 p = 0;
-
-		while (c < inLength and t < kTabCount)
-		{
-			if (outText[c] == '\t')
-			{
-				p = ((p / mCharsPerTab) + 1) * mCharsPerTab;
-				myTabArray[t].tabType = kATSULeftTab;
-				myTabArray[t].tabPosition = X2Fix((p / mCharsPerTab) * mTabWidth);
-				++t;
-			}
-			else
-				++p;
-			++c;
-		}
-	
-		THROW_IF_OSERROR(::ATSUSetTabArray(mTextLayout, myTabArray, t)); //6
-	}
+	inDevice.SetText(outText);
+	inDevice.SetTabStops(mTabWidth);
 	
 	if (mLanguage)
 	{
 		uint32 styles[kMaxStyles] = { 0 };
 		uint32 offsets[kMaxStyles] = { 0 };
 
-		mLanguage->StyleLine(mText, inOffset, inLength, inState, styles, offsets);
+		uint32 count = mLanguage->StyleLine(
+			mText, inOffset, inLength, inState, styles, offsets);
 
-		uint32 runOffset = 0;
-		uint32 ix = 0;
-		
-		do
-		{
-			uint32 next = offsets[ix + 1];
-			if (next == 0 or next > outText.length())
-				next = outText.length();
-			uint32 runLength = next - runOffset;
-			
-			if (runLength > 0)
-			{
-				THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
-					styleArray[styles[ix]],  runOffset, runLength));
-			}
-			
-			runOffset += runLength;
-			++ix;
-		}
-		while (ix < kMaxStyles and offsets[ix] != 0);
+		inDevice.SetTextColors(count, styles, offsets);
 	}
 	
-	if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
-	{
-		uint32 line = OffsetToLine(inOffset);
-
-		if (OffsetToLine(mTextInputAreaInfo.fOffset[kActiveInputArea]) == line)
-		{
-			for (uint32 i = kRawText; i <= kSelectedConvertedText; ++i)
-			{
-				if (mTextInputAreaInfo.fOffset[i] < 0 or mTextInputAreaInfo.fLength[i] <= 0)
-					continue;
-				
-				uint32 runOffset = mTextInputAreaInfo.fOffset[i] - inOffset;
-				uint32 runLength = mTextInputAreaInfo.fLength[i];
-				
-				THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
-					styleArray.GetInputStyle(i), runOffset, runLength));
-			}
-		}
-	}
+//	if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
+//	{
+//		uint32 line = OffsetToLine(inOffset);
+//
+//		if (OffsetToLine(mTextInputAreaInfo.fOffset[kActiveInputArea]) == line)
+//		{
+//			for (uint32 i = kRawText; i <= kSelectedConvertedText; ++i)
+//			{
+//				if (mTextInputAreaInfo.fOffset[i] < 0 or mTextInputAreaInfo.fLength[i] <= 0)
+//					continue;
+//				
+//				uint32 runOffset = mTextInputAreaInfo.fOffset[i] - inOffset;
+//				uint32 runLength = mTextInputAreaInfo.fLength[i];
+//				
+//				THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
+//					styleArray.GetInputStyle(i), runOffset, runLength));
+//			}
+//		}
+//	}
 	
-	for (uint32 ix = 0; ix < outText.length(); ++ix)
-	{
-		char ch = outText[ix];
-		if ((ch < 0x0020 and not isspace(ch)) or ch == 0x007f)
-		{
-			outText[ix] = 0x00BF; //	'¿'
-			
-			THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
-				styleArray.GetInvisiblesStyle(), ix, 1));
-		}
-	}
+//	for (uint32 ix = 0; ix < outText.length(); ++ix)
+//	{
+//		char ch = outText[ix];
+//		if ((ch < 0x0020 and not isspace(ch)) or ch == 0x007f)
+//		{
+//			outText[ix] = 0x00BF; //	'¿'
+//			
+//			THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
+//				styleArray.GetInvisiblesStyle(), ix, 1));
+//		}
+//	}
 
 //	if (gShowInvisibles)
 //	{
@@ -2820,8 +2753,6 @@ ATSUTextLayout MDocument::GetStyledLayout(
 //	{
 //		
 //	}
-	
-	return mTextLayout;
 }
 
 // ---------------------------------------------------------------------------
@@ -2945,9 +2876,9 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 	uint32 minLine = OffsetToLine(minOffset);
 	uint32 maxLine = OffsetToLine(maxOffset);
 
-	HIPoint pt;
-	pt.x = mWalkOffset;
-	pt.y = (caretLine + 0.5) * mLineHeight;
+	int32 x, y;
+	x = mWalkOffset;
+	y = (caretLine + 0.5) * mLineHeight;
 	
 	uint32 firstLine, lastLine;
 	mTargetTextView->GetVisibleLineSpan(firstLine, lastLine);
@@ -3009,8 +2940,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			{
 				if (minLine > 0)
 				{
-					pt.y -= mLineHeight;
-					PositionToOffset(pt, caret);
+					y -= mLineHeight;
+					PositionToOffset(x, y, caret);
 				}
 				else
 					caret = 0;
@@ -3025,8 +2956,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (mSelection.IsEmpty())
 			{
-				pt.y += mLineHeight;
-				PositionToOffset(pt, caret);
+				y += mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 				caret = mSelection.GetMaxOffset(*this);
@@ -3040,8 +2971,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				caret = 0;
 			else if (minLine > firstLine)
 			{
-				pt.y = (firstLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (firstLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 			{
@@ -3049,8 +2980,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 					caretLine -= linesPerPage;
 				else
 					caretLine = 0;
-				pt.y = (caretLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (caretLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			anchor = caret;
 			updateWalkOffset = false;
@@ -3060,8 +2991,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (maxLine < lastLine)
 			{
-				pt.y = (lastLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (lastLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 			{
@@ -3069,8 +3000,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (maxLine >= mLineInfo.size())
 					maxLine = mLineInfo.size() - 1;
 				
-				pt.y = (maxLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (maxLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			anchor = caret;
 			updateWalkOffset = false;
@@ -3096,7 +3027,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (mFastFindWhat.length())
 					FastFindType(nil, 0);		// lame
 				else
-					::SysBeep(10);
+					Beep();
 			}
 			else
 				HandleDeleteKey(kDirectionBackward);
@@ -3174,8 +3105,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (caretLine > 0)
 			{
-				pt.y -= mLineHeight;
-				PositionToOffset(pt, caret);
+				y -= mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 				caret = 0;
@@ -3184,8 +3115,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 
 		case kcmd_ExtendSelectionToNextLine:
 			mFastFindMode = false;
-			pt.y += mLineHeight;
-			PositionToOffset(pt, caret);
+			y += mLineHeight;
+			PositionToOffset(x, y, caret);
 			updateWalkOffset = false;
 			break;
 
@@ -3205,8 +3136,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				caret = 0;
 			else if (caretLine - 1 > firstLine)
 			{
-				pt.y = (firstLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (firstLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 			{
@@ -3214,8 +3145,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 					caretLine -= linesPerPage;
 				else
 					caretLine = 0;
-				pt.y = (caretLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (caretLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			updateWalkOffset = false;
 			break;
@@ -3224,8 +3155,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (caretLine < lastLine)
 			{
-				pt.y = (lastLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (lastLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			else
 			{
@@ -3233,8 +3164,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (maxLine >= mLineInfo.size())
 					maxLine = mLineInfo.size() - 1;
 				
-				pt.y = (maxLine + 0.5) * mLineHeight;
-				PositionToOffset(pt, caret);
+				y = (maxLine + 0.5) * mLineHeight;
+				PositionToOffset(x, y, caret);
 			}
 			updateWalkOffset = false;
 			break;
@@ -3385,241 +3316,241 @@ bool MDocument::HandleRawKeydown(
 	uint32		inKeyCode,
 	uint32		inCharCode,
 	uint32		inModifiers)
-{
-	MKeyCommand keyCommand = kcmd_None;
-	bool handled = false;
-	
-	switch (inCharCode)
-	{
-		case kLeftArrowCharCode:
-			if (inModifiers & shiftKey)
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfLine;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_ExtendSelectionWithPreviousWord;
-				else
-					keyCommand = kcmd_ExtendSelectionWithCharacterLeft;
-			}
-			else
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_MoveToBeginningOfLine;
-				else if ((inModifiers & optionKey) == optionKey)
-					keyCommand = kcmd_MoveWordLeft;
-				else
-					keyCommand = kcmd_MoveCharacterLeft;
-			}
-			break;
-
-		case kRightArrowCharCode:
-			if (inModifiers & shiftKey)
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_ExtendSelectionToEndOfLine;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_ExtendSelectionWithNextWord;
-				else
-					keyCommand = kcmd_ExtendSelectionWithCharacterRight;
-			}
-			else
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_MoveToEndOfLine;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_MoveWordRight;
-				else
-					keyCommand = kcmd_MoveCharacterRight;
-			}
-			break;
-		
-		case kUpArrowCharCode:
-			if (inModifiers & shiftKey)
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfFile;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfPage;
-				else if (inModifiers & controlKey)
-					keyCommand = kcmd_MoveLineUp;
-				else
-					keyCommand = kcmd_ExtendSelectionToPreviousLine;
-			}
-			else if (inModifiers & controlKey)
-				keyCommand = kcmd_ScrollOneLineDown;
-			else
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_MoveToBeginningOfFile;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_MoveToTopOfPage;
-				else
-					keyCommand = kcmd_MoveToPreviousLine;
-			}
-			break;
-
-		case kDownArrowCharCode:
-			if (inModifiers & shiftKey)
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_ExtendSelectionToEndOfFile;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_ExtendSelectionToEndOfPage;
-				else if (inModifiers & controlKey)
-					keyCommand = kcmd_MoveLineDown;
-				else
-					keyCommand = kcmd_ExtendSelectionToNextLine;
-			}
-			else if (inModifiers & controlKey)
-				keyCommand = kcmd_ScrollOneLineUp;
-			else
-			{
-				if (inModifiers & cmdKey)
-					keyCommand = kcmd_MoveToEndOfFile;
-				else if (inModifiers & optionKey)
-					keyCommand = kcmd_MoveToEndOfPage;
-				else
-					keyCommand = kcmd_MoveToNextLine;
-			}
-			break;
-		
-		case kPageUpCharCode:
-			keyCommand = kcmd_ScrollPageUp;
-			break;
-
-		case kPageDownCharCode:
-			keyCommand = kcmd_ScrollPageDown;
-			break;
-
-		case kHomeCharCode:
-			keyCommand = kcmd_ScrollToStartOfFile;
-			break;
-
-		case kEndCharCode:
-			keyCommand = kcmd_ScrollToEndOfFile;
-			break;
-		
-		case kBackspaceCharCode:
-			if (inModifiers & cmdKey)
-			{
-				if (inModifiers & shiftKey)
-					keyCommand = kcmd_DeleteToEndOfFile;
-				else
-					keyCommand = kcmd_DeleteToEndOfLine;
-			}
-			else if (inModifiers & shiftKey)
-			{
-				if (inModifiers & optionKey)
-					keyCommand = kcmd_DeleteWordRight;
-				else
-					keyCommand = kcmd_DeleteWordLeft;
-			}
-			else
-			{
-				if (inModifiers & optionKey)
-					keyCommand = kcmd_DeleteCharacterRight;
-				else
-					keyCommand = kcmd_DeleteCharacterLeft;
-			}
-			break;
-		
-		case kDeleteCharCode:
-			if (inModifiers & shiftKey)
-				keyCommand = kcmd_DeleteWordRight;
-			else
-				keyCommand = kcmd_DeleteCharacterRight;
-			break;
-
-		case kEnterCharCode:
-			Reset();
-			Execute();
-			handled = true;
-			break;		
-
-		case kReturnCharCode:
-			if (mFastFindMode)
-				mFastFindMode = false;
-			else if (inModifiers & cmdKey)
-			{
-				Execute();
-//				updateSelection = false;
-			}
-			else
-			{
-				// Enter a return, optionally auto indented
-				uint32 minOffset = mSelection.GetMinOffset(*this);
-
-				string s;
-				s += '\n';
-
-				if (gAutoIndent)
-				{
-					uint32 line = OffsetToLine(minOffset);
-					MTextBuffer::iterator c = mText.begin() + LineStart(line);
-					while (c.GetOffset() < minOffset and IsSpace(*c))
-					{
-						s += *c;
-						++c;
-					}
-				}
-				
-				if (gSmartIndent and
-					mLanguage and
-					mLanguage->IsSmartIndentLocation(mText, minOffset))
-				{
-					if (gTabEntersSpaces)
-					{
-						uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
-						while (o-- > 0)
-							s += ' ';
-					}
-					else
-						s += '\t';
-				}
-
-				Type(s.c_str(), s.length());
-			}
-			handled = true;
-			break;
-		
-		case kTabCharCode:
-			if (not mSelection.IsEmpty() and
-				not mFastFindMode and
-				mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
-			{
-				if (inModifiers & shiftKey)
-					DoShiftLeft();
-				else
-					DoShiftRight();
-				handled = true;
-			}
-			break;
-		
-		case kEscapeCharCode:
-			mFastFindMode = false;
-//			updateSelection = false;
-			if (mShell.get() != nil and mShell->IsRunning())
-				mShell->Kill();
-			handled = true;
-			break;
-		
-		case '.':
-			if (inModifiers & cmdKey and mShell.get() != nil and mShell->IsRunning())
-				mShell->Kill();
-			else
-				handled = false;
-			break;
-		
-		default:
-			handled = false;
-//			updateSelection = false;
-			break;
-	}
-	
-	if (not handled and keyCommand != kcmd_None)
-		handled = HandleKeyCommand(keyCommand);
-	
-	return handled;
+{//
+//	MKeyCommand keyCommand = kcmd_None;
+//	bool handled = false;
+//	
+//	switch (inCharCode)
+//	{
+//		case kLeftArrowCharCode:
+//			if (inModifiers & shiftKey)
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_ExtendSelectionToBeginningOfLine;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_ExtendSelectionWithPreviousWord;
+//				else
+//					keyCommand = kcmd_ExtendSelectionWithCharacterLeft;
+//			}
+//			else
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_MoveToBeginningOfLine;
+//				else if ((inModifiers & optionKey) == optionKey)
+//					keyCommand = kcmd_MoveWordLeft;
+//				else
+//					keyCommand = kcmd_MoveCharacterLeft;
+//			}
+//			break;
+//
+//		case kRightArrowCharCode:
+//			if (inModifiers & shiftKey)
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_ExtendSelectionToEndOfLine;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_ExtendSelectionWithNextWord;
+//				else
+//					keyCommand = kcmd_ExtendSelectionWithCharacterRight;
+//			}
+//			else
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_MoveToEndOfLine;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_MoveWordRight;
+//				else
+//					keyCommand = kcmd_MoveCharacterRight;
+//			}
+//			break;
+//		
+//		case kUpArrowCharCode:
+//			if (inModifiers & shiftKey)
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_ExtendSelectionToBeginningOfFile;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_ExtendSelectionToBeginningOfPage;
+//				else if (inModifiers & controlKey)
+//					keyCommand = kcmd_MoveLineUp;
+//				else
+//					keyCommand = kcmd_ExtendSelectionToPreviousLine;
+//			}
+//			else if (inModifiers & controlKey)
+//				keyCommand = kcmd_ScrollOneLineDown;
+//			else
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_MoveToBeginningOfFile;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_MoveToTopOfPage;
+//				else
+//					keyCommand = kcmd_MoveToPreviousLine;
+//			}
+//			break;
+//
+//		case kDownArrowCharCode:
+//			if (inModifiers & shiftKey)
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_ExtendSelectionToEndOfFile;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_ExtendSelectionToEndOfPage;
+//				else if (inModifiers & controlKey)
+//					keyCommand = kcmd_MoveLineDown;
+//				else
+//					keyCommand = kcmd_ExtendSelectionToNextLine;
+//			}
+//			else if (inModifiers & controlKey)
+//				keyCommand = kcmd_ScrollOneLineUp;
+//			else
+//			{
+//				if (inModifiers & cmdKey)
+//					keyCommand = kcmd_MoveToEndOfFile;
+//				else if (inModifiers & optionKey)
+//					keyCommand = kcmd_MoveToEndOfPage;
+//				else
+//					keyCommand = kcmd_MoveToNextLine;
+//			}
+//			break;
+//		
+//		case kPageUpCharCode:
+//			keyCommand = kcmd_ScrollPageUp;
+//			break;
+//
+//		case kPageDownCharCode:
+//			keyCommand = kcmd_ScrollPageDown;
+//			break;
+//
+//		case kHomeCharCode:
+//			keyCommand = kcmd_ScrollToStartOfFile;
+//			break;
+//
+//		case kEndCharCode:
+//			keyCommand = kcmd_ScrollToEndOfFile;
+//			break;
+//		
+//		case kBackspaceCharCode:
+//			if (inModifiers & cmdKey)
+//			{
+//				if (inModifiers & shiftKey)
+//					keyCommand = kcmd_DeleteToEndOfFile;
+//				else
+//					keyCommand = kcmd_DeleteToEndOfLine;
+//			}
+//			else if (inModifiers & shiftKey)
+//			{
+//				if (inModifiers & optionKey)
+//					keyCommand = kcmd_DeleteWordRight;
+//				else
+//					keyCommand = kcmd_DeleteWordLeft;
+//			}
+//			else
+//			{
+//				if (inModifiers & optionKey)
+//					keyCommand = kcmd_DeleteCharacterRight;
+//				else
+//					keyCommand = kcmd_DeleteCharacterLeft;
+//			}
+//			break;
+//		
+//		case kDeleteCharCode:
+//			if (inModifiers & shiftKey)
+//				keyCommand = kcmd_DeleteWordRight;
+//			else
+//				keyCommand = kcmd_DeleteCharacterRight;
+//			break;
+//
+//		case kEnterCharCode:
+//			Reset();
+//			Execute();
+//			handled = true;
+//			break;		
+//
+//		case kReturnCharCode:
+//			if (mFastFindMode)
+//				mFastFindMode = false;
+//			else if (inModifiers & cmdKey)
+//			{
+//				Execute();
+////				updateSelection = false;
+//			}
+//			else
+//			{
+//				// Enter a return, optionally auto indented
+//				uint32 minOffset = mSelection.GetMinOffset(*this);
+//
+//				string s;
+//				s += '\n';
+//
+//				if (gAutoIndent)
+//				{
+//					uint32 line = OffsetToLine(minOffset);
+//					MTextBuffer::iterator c = mText.begin() + LineStart(line);
+//					while (c.GetOffset() < minOffset and IsSpace(*c))
+//					{
+//						s += *c;
+//						++c;
+//					}
+//				}
+//				
+//				if (gSmartIndent and
+//					mLanguage and
+//					mLanguage->IsSmartIndentLocation(mText, minOffset))
+//				{
+//					if (gTabEntersSpaces)
+//					{
+//						uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
+//						while (o-- > 0)
+//							s += ' ';
+//					}
+//					else
+//						s += '\t';
+//				}
+//
+//				Type(s.c_str(), s.length());
+//			}
+//			handled = true;
+//			break;
+//		
+//		case kTabCharCode:
+//			if (not mSelection.IsEmpty() and
+//				not mFastFindMode and
+//				mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+//			{
+//				if (inModifiers & shiftKey)
+//					DoShiftLeft();
+//				else
+//					DoShiftRight();
+//				handled = true;
+//			}
+//			break;
+//		
+//		case kEscapeCharCode:
+//			mFastFindMode = false;
+////			updateSelection = false;
+//			if (mShell.get() != nil and mShell->IsRunning())
+//				mShell->Kill();
+//			handled = true;
+//			break;
+//		
+//		case '.':
+//			if (inModifiers & cmdKey and mShell.get() != nil and mShell->IsRunning())
+//				mShell->Kill();
+//			else
+//				handled = false;
+//			break;
+//		
+//		default:
+//			handled = false;
+////			updateSelection = false;
+//			break;
+//	}
+//	
+//	if (not handled and keyCommand != kcmd_None)
+//		handled = HandleKeyCommand(keyCommand);
+//	
+//	return handled;
 }
 
 //OSStatus MDocument::DoTextInputOffsetToPos(EventRef ioEvent)
@@ -3788,7 +3719,7 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 	if (mStdErrWindow == nil)
 	{
 		mStdErrWindow = new MMessageWindow;
-		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+//		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 
 	mStdErrWindow->SetBaseDirectory(MURL(mShell->GetCWD()));
@@ -3798,7 +3729,7 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 	mStdErrWindow->AddStdErr(inText, inSize);
 }
 
-void MDocument::MsgWindowClosed(MWindow* inWindow, WindowRef inWindowRef)
+void MDocument::MsgWindowClosed(MWindow* inWindow)
 {
 	assert(inWindow == mStdErrWindow);
 	mStdErrWindow = nil;
@@ -3842,9 +3773,7 @@ void MDocument::Execute()
 	if (mStdErrWindow != nil)
 		mStdErrWindow->ClearList();
 	
-	string s2;
-	Convert(s, s2);
-	mShell->Execute(s2);
+	mShell->Execute(s);
 }
 
 MController* MDocument::GetFirstController() const
@@ -3939,11 +3868,11 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem - 1);
 
-		MProject* project = MProject::Instance();
-		MURL p;
-		
-		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			gApp->OpenOneDocument(p);
+//		MProject* project = MProject::Instance();
+//		MURL p;
+//		
+//		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
+//			gApp->OpenOneDocument(p);
 	}
 }
 

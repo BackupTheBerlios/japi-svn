@@ -10,56 +10,85 @@ class MTextLayout;
 class MDevice
 {
   public:
-					MDevice(
-						MView*			inView,
-						MRect			inRect);
+					MDevice();
 
 					MDevice(
-						MTextLayout*	inTextLayout);
+						MView*				inView,
+						MRect				inRect);
 
 					~MDevice();
 
 	void			SetForeColor(
-						MColor			inColor);
+						MColor				inColor);
 
 	MColor			GetForeColor() const;
 
 	void			SetBackColor(
-						MColor			inColor);
+						MColor				inColor);
 
 	MColor			GetBackColor() const;
 	
 	void			EraseRect(
-						MRect			inRect);
+						MRect				inRect);
 
 	void			FillRect(
-						MRect			inRect);
+						MRect				inRect);
 
 	void			FillEllipse(
-						MRect			inRect);
+						MRect				inRect);
 	
 	void			CreateAndUsePattern(
-						MColor			inColor1,
-						MColor			inColor2);
+						MColor				inColor1,
+						MColor				inColor2);
 	
 	uint32			GetAscent() const;
 	
 	uint32			GetDescent() const;
 	
 	uint32			GetLeading() const;
+	
+	uint32			GetLineHeight() const;
 
 	void			DrawString(
-						const std::string&	
-										inText,
-						float			inX,
-						float			inY);
+						const std::string&	inText,
+						float				inX,
+						float				inY);
 	
-//	void			UseTextLayout(ATSUTextLayout inTextLayout);
-//	void			DrawText(float inX, float inY, uint32 inTextStart, uint32 inTextLength);
-//	void			DrawTextHighLight(float inX, float inY,
-//						uint32 inSelectionStart, uint32 inSelectionLength,
-//						bool inFillLeft, bool inFillRight, bool inActive);
+	uint32			GetStringWidth(
+						const std::string&	inText);
 
+	// Text Layout options
+	
+	void			SetText(
+						const std::string&	inText);
+	
+	void			SetTabStops(
+						float				inTabWidth);
+	
+	void			SetTextColors(
+						uint32				inColorCount,
+						uint32				inColors[],
+						uint32				inOffsets[]);
+
+	void			SetTextSelection(
+						uint32				inStart,
+						uint32				inLength,
+						MColor				inSelectionColor);
+	
+	void			IndexToPosition(
+						uint32				inIndex,
+						bool				inTrailing,
+						int32&				outPosition);
+
+	bool			PositionToIndex(
+						int32				inPosition,
+						uint32&				outIndex,
+						bool&				outTrailing);
+	
+	void			DrawText(
+						float				inX,
+						float				inY);
+	
   private:
 
 					MDevice(const MDevice&);

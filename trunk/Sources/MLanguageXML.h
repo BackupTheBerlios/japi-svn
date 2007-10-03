@@ -59,20 +59,20 @@ class MLanguageXML : public MLanguage
 						uint32&				ioLength);
 
 	virtual bool	IsBalanceChar(
-						UniChar				inChar);
+						wchar_t				inChar);
 
 	virtual bool	IsSmartIndentLocation(
 						const MTextBuffer&	inText,
 						uint32				inOffset);
 
 	virtual bool	IsSmartIndentCloseChar(
-						UniChar				inChar);
+						wchar_t				inChar);
 
 	virtual void	CommentLine(
-						ustring&			ioLine);
+						std::string&		ioLine);
 
 	virtual void	UncommentLine(
-						ustring&			ioLine);
+						std::string&		ioLine);
 
 	virtual bool	Softwrap() const;
 	

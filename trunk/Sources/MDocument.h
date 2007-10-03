@@ -49,7 +49,6 @@
 #include "MSelection.h"
 #include "MFile.h"
 #include "MCommands.h"
-#include "MTextLayout.h"
 
 class MLanguage;
 struct MNamedRange;
@@ -61,6 +60,7 @@ class MShell;
 class MMessageWindow;
 class MMessageList;
 class MMenu;
+class MDevice;
 
 struct MTextInputAreaInfo
 {
@@ -153,14 +153,18 @@ class MDocument
 	void				GetLine(uint32 inLineNr, std::string& outText) const;
 	
 	bool				GetFastFindMode() const				{ return mFastFindMode; }
-	
-	MTextLayout			GetTextLayout() const;
 
-	MTextLayout			GetStyledLayout(
-							uint32 inOffset, uint32 inLength,
-							uint16 inState, std::string& outText) const;
+	void				GetStyledText(
+							uint32			inOffset,
+							uint32			inLength,
+							uint16			inState,
+							MDevice&		inDevice,
+							std::string& 	outText) const;
 
-	MTextLayout			GetStyledLayout(uint32 inLine, std::string& outText) const;
+	void				GetStyledText(
+							uint32			inLine,
+							MDevice&		inDevice,
+							std::string&	outText) const;
 
 	void				HashLines(std::vector<uint32>& outHashes) const;
 	
@@ -381,7 +385,6 @@ class MDocument
 	float						mCharWidth;	// to be able to calculate tab widths
 	float						mTabWidth;
 	uint32						mCharsPerTab;
-	MTextLayout					mTextLayout;
 	MSelection					mSelection;
 	int32						mWalkOffset;
 	std::string					mLastAction;

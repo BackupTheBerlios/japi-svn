@@ -3,6 +3,7 @@
 
 #include <list>
 #include "MCommands.h"
+#include "MCallbacks.h"
 
 struct MMenuItem;
 typedef std::list<MMenuItem*>	MMenuItemList;
@@ -15,7 +16,7 @@ class MMenu
 
 	virtual			~MMenu();
 
-	void			AddItem(
+	void			AppendItem(
 						const std::string&	inLabel,
 						uint32				inCommand);
 	

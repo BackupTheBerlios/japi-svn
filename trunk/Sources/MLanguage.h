@@ -94,7 +94,7 @@ class MLanguage
 						uint32				inLength,
 						uint16&				ioState) = 0;
 
-	void			StyleLine(
+	uint32			StyleLine(
 						const MTextBuffer&	inText,
 						uint32				inOffset,
 						uint32				inLength,
@@ -108,14 +108,14 @@ class MLanguage
 						uint32&				ioLength) = 0;
 	
 	virtual bool	IsBalanceChar(
-						char				inChar);
+						wchar_t				inChar);
 
 	virtual bool	IsSmartIndentLocation(
 						const MTextBuffer&	inText,
 						uint32				inOffset);
 
 	virtual bool	IsSmartIndentCloseChar(
-						char				inChar);
+						wchar_t				inChar);
 
 	virtual uint16	GetInitialState(
 						const std::string&	inFile,

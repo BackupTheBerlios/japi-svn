@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 14:05:56
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MLanguage.h"
 #include "MLanguageCpp.h"
@@ -389,7 +389,7 @@ MLanguage::GetLanguageForDocument(
 	return result;
 }
 
-void
+uint32
 MLanguage::StyleLine(
 	const MTextBuffer&	inText,
 	uint32				inOffset,
@@ -412,6 +412,8 @@ MLanguage::StyleLine(
 
 	mStyles = nil;
 	mOffsets = nil;
+	
+	return mLastStyleIndex + 1;
 }
 
 void
@@ -435,7 +437,7 @@ MLanguage::SetStyle(
 	}
 }
 
-UInt16
+uint16
 MLanguage::GetInitialState(
 	const string&	inFile,
 	MTextBuffer&	inText)
@@ -467,7 +469,7 @@ MLanguage::GenerateDFA()
 
 int
 MLanguage::Move(
-	UniChar		inChar,
+	char		inChar,
 	int			inState)
 {
 	int result = 0;
@@ -490,7 +492,7 @@ MLanguage::IsKeyWord(
 
 bool
 MLanguage::IsBalanceChar(
-	UniChar		inChar)
+	wchar_t		inChar)
 {
 	return false;
 }
@@ -505,7 +507,7 @@ MLanguage::IsSmartIndentLocation(
 
 bool
 MLanguage::IsSmartIndentCloseChar(
-	UniChar				inChar)
+	wchar_t				inChar)
 {
 	return false;
 }

@@ -40,24 +40,21 @@
 using namespace std;
 
 const MColor
-	kBlack(0, 0, 0, 1),
-	kWhite(1, 1, 1, 1),
-	kCurrentLineColor(1.0f, 1.0f, 0.8f, 1.0),
-	kMarkedLineColor(0.94, 1.0f, 0.50f, 1.0),
-	kNoteColor(0.129, 0.424, 1.0, 1.0),
-	kWarningColor(1.0, 0.925, 0.094, 1.0),
-	kErrorColor(1.0, 0.286, 0.070, 1.0),
-	kSelectionColor(0.953, 0.737, 0.420, 1.0);
+	kBlack(0, 0, 0),
+	kWhite("#ffffff"),
+	kCurrentLineColor("#ffffcc"),
+	kMarkedLineColor("#efff7f"),
+	kNoteColor("#206cff"),
+	kWarningColor("#ffeb17"),
+	kErrorColor("#ff4811"),
+	kSelectionColor("#f3bb6b");
 
 MColor
 	gSelectionColor = kSelectionColor;
 
 MColor::MColor()
+	: red(0), green(0), blue(0)
 {
-	red = 0.0f;
-	green = 0.0f;
-	blue = 0.0f;
-	alpha = 1.0f;
 }
 
 MColor::MColor(
@@ -66,19 +63,22 @@ MColor::MColor(
 	red = inOther.red;
 	green = inOther.green;
 	blue = inOther.blue;
-	alpha = inOther.alpha;
 }
 
 MColor::MColor(
-	float			inRed,
-	float			inGreen,
-	float			inBlue,
-	float			inAlpha)
+	const char*		inHex)
+{
+	hex(inHex);
+}
+
+MColor::MColor(
+	uint8			inRed,
+	uint8			inGreen,
+	uint8			inBlue)
 {
 	red = inRed;
 	green = inGreen;
 	blue = inBlue;
-	alpha = inAlpha;
 }
 
 MColor& MColor::operator=(
@@ -87,7 +87,6 @@ MColor& MColor::operator=(
 	red = inOther.red;
 	green = inOther.green;
 	blue = inOther.blue;
-	alpha = inOther.alpha;
 	return *this;
 }
 
@@ -98,9 +97,9 @@ string MColor::hex() const
 	s.setf(ios_base::hex, ios_base::basefield);
 	
 	s << '#'
-		<< setw(2) << setfill('0') << static_cast<uint32>(red * 255UL)
-		<< setw(2) << setfill('0') << static_cast<uint32>(green * 255UL)
-		<< setw(2) << setfill('0') << static_cast<uint32>(blue * 255UL);
+		<< setw(2) << setfill('0') << static_cast<uint32>(red)
+		<< setw(2) << setfill('0') << static_cast<uint32>(green)
+		<< setw(2) << setfill('0') << static_cast<uint32>(blue);
 	
 	return s.str();
 }
@@ -117,17 +116,17 @@ void MColor::hex(
 		s.str(inHex.substr(1, 2));
 		s.clear();
 		s >> n;
-		red = n / 255.0f;
+		red = n;
 		
 		s.str(inHex.substr(3, 2));
 		s.clear();
 		s >> n;
-		green = n / 255.0f;
+		green = n;
 		
 		s.str(inHex.substr(5, 2));
 		s.clear();
 		s >> n;
-		blue = n / 255.0f;
+		blue = n;
 	}	
 }
 

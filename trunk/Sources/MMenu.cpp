@@ -147,7 +147,7 @@ MMenu::~MMenu()
 		gtk_widget_destroy(mGtkMenu);
 }
 
-void MMenu::AddItem(
+void MMenu::AppendItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {

@@ -53,4 +53,6 @@ void NormalizePath(std::string& ioPath);
 double GetLocalTime();
 double GetDoubleClickTime();
 
+void Beep();
+
 #endif

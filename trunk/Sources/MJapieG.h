@@ -11,17 +11,20 @@
 #define nil NULL
 
 class MWindow;
+class MDocument;
+class MURL;
 
 class MJapieApp : public MHandler
 {
   public:
 					MJapieApp(
-						int				argc,
-						char*			argv[]);
+						int					argc,
+						char*				argv[]);
+
 					~MJapieApp();
 	
 	void			RecycleWindow(
-						MWindow*		inWindow);
+						MWindow*			inWindow);
 
 	void			DoQuit();
 	void			DoNew();
@@ -30,14 +33,35 @@ class MJapieApp : public MHandler
 	void			RunEventLoop();
 	
 	virtual bool	UpdateCommandStatus(
-						uint32			inCommand,
-						bool&			outEnabled,
-						bool&			outChecked);
+						uint32				inCommand,
+						bool&				outEnabled,
+						bool&				outChecked);
 
 	virtual bool	ProcessCommand(
-						uint32			inCommand);
+						uint32				inCommand);
 
-	MEventOut<void()>	eIdle;
+	void			ResetMenuShortcuts();
+
+	void			RebuildRecentMenu();
+
+	bool			LocateSystemIncludeFile(
+						const std::string&	inFileName,
+						MURL&				outFile);
+
+	MDocument*		OpenOneDocument(
+						const MURL&			inFileRef);
+
+	MDocument*		AskOpenOneDocument();
+
+	void			OpenProject(
+						const MURL&			inPath);
+
+	void			AddToRecentMenu(
+						const MURL&			inFileRef);
+
+	void			StoreRecentMenu();
+	
+	MEventOut<void()>		eIdle;
 
   private:
 	typedef std::list<MWindow*>	MWindowList;
@@ -45,7 +69,7 @@ class MJapieApp : public MHandler
 	void			Pulse();
 	
 	static gboolean	Timeout(
-						gpointer		inData);
+						gpointer			inData);
 
 	MWindowList		mTrashCan;
 	bool			mQuit;
