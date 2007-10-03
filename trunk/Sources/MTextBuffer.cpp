@@ -46,7 +46,7 @@
 #define BOOST_DISABLE_ASSERTS 1
 #endif
 
-#include <boost/regex.hpp>
+#include <pcre.h>
 
 #include "MTextBuffer.h"
 //#include "MUnicode.h"
@@ -1001,7 +1001,7 @@ uint32 MTextBuffer::NextCursorPosition(
 	uint32			inOffset,
 	CursorMovement	inMovement) const
 {
-	const SInt8 kWordBreakStateTableForKeyboard[5][10] = {
+	const int8 kWordBreakStateTableForKeyboard[5][10] = {
 		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
 		{	-1,	-1,	 0,	 0,	 1,	 1,	 2,	 3,	 4,	 0	},	//	0
 		{	-1,	-1,	-1,	-1,	 1,	 1,	-1,	-1,	-1,	-1	},	//	1
@@ -1010,7 +1010,7 @@ uint32 MTextBuffer::NextCursorPosition(
 		{	-1,	-1,	-1,	-1,	-1,	 4,	 2,	-1,	 4,	-1	},	//	4
 	};
 
-	const SInt8 kWordBreakStateTableForMouse[8][10] = {
+	const int8 kWordBreakStateTableForMouse[8][10] = {
 		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
 		{	 7,	 7,	 6,	 5,	 4,	 4,	 2,	 3,	 1,	 6	},	//	0
 		{	-1,	-1,	-1,	-1,	-1,	 1,	 2,	-1,	 1,	-1	},	//	1
@@ -1061,7 +1061,7 @@ uint32 MTextBuffer::NextCursorPosition(
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
-				state = kWordBreakStateTableForKeyboard[state][cl];
+				state = kWordBreakStateTableForKeyboard[uint8(state)][cl];
 			}
 		}
 		else
@@ -1078,7 +1078,7 @@ uint32 MTextBuffer::NextCursorPosition(
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
-				state = kWordBreakStateTableForMouse[state][cl];
+				state = kWordBreakStateTableForMouse[uint8(state)][cl];
 			}
 		}
 	}
@@ -1090,7 +1090,7 @@ uint32 MTextBuffer::PreviousCursorPosition(
 	uint32			inOffset,
 	CursorMovement	inMovement) const
 {
-	const SInt8 kWordBreakStateTableForKeyboard[6][10] = {
+	const int8 kWordBreakStateTableForKeyboard[6][10] = {
 		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
 		{	-1,	-1,	 0,	 0,	 1,	 2,	 3,	 4,	 5,	 0	},	//	0
 		{	-1,	-1,	-1,	-1,	 2,	 1,	 3,	 4,	 5,	-1	},	//	1
@@ -1100,7 +1100,7 @@ uint32 MTextBuffer::PreviousCursorPosition(
 		{	-1,	-1,	-1,	-1,	-1,	 5,	-1,	-1,	 5,	-1	},	//	5
 	};
 
-//	const SInt8 kWordBreakStateTableForMouse[8][10] = {
+//	const int8 kWordBreakStateTableForMouse[8][10] = {
 //		//	CR	LF	Sep	Tab	Let	Com	Hir	Kat	Han	Other		State
 //		{	-1,	-1,	 0,	 0,	 1,	 2,	 3,	 4,	 5,	 0	},	//	0
 //		{	-1,	-1,	-1,	-1,	 2,	 1,	 3,	 4,	 5,	-1	},	//	1
@@ -1150,12 +1150,12 @@ uint32 MTextBuffer::PreviousCursorPosition(
 				wchar_t unicode = *c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
-				state = kWordBreakStateTableForKeyboard[state][cl];
+				state = kWordBreakStateTableForKeyboard[uint8(state)][cl];
 			}
 		}
 /*		else
 		{
-		    SInt8 state = 0;
+		    int8 state = 0;
 			while (result < mLogicalLength and state >= 0)
 			{
 				result = c.GetOffset();
@@ -1430,97 +1430,114 @@ bool MTextBuffer::Find(
 	bool result = false;
 	
 	if (inRegex)
-	{
-		boost::regex::flag_type flags = boost::regex_constants::normal;
-		
-		if (inIgnoreCase)
-			flags |= boost::regex_constants::icase;
-		
-		boost::u32regex re(expr, flags);
-		boost::u32match_results<iterator> m;
-
-		boost::regex_constants::match_flag_type match_flags =
-			boost::regex_constants::match_not_dot_newline |
-			boost::regex_constants::match_not_dot_null;
-		
-		iterator start = iterator(this, inOffset);
-		iterator end = iterator(this, mLogicalLength);
-
-		if (inDirection == kDirectionForward)
-		{
-			if (inOffset > 0)
-			{
-				match_flags |= boost::regex_constants::match_not_bob;
-			
-				if (GetChar(inOffset - 1) != '\n')
-					match_flags |= boost::regex_constants::match_not_bol;
-			}
-			
-			if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
-			{
-				result = true;
-				
-				iterator begin = m[0].first;
-				iterator end = m[0].second;
-				
-				// special case, never match an empty string
-				// if the result is the same offset as the start
-				
-				if (begin == end and begin == start)
-				{
-					if (inOffset == mLogicalLength)
-						result = false;
-					else
-					{
-						++start;
-						if (boost::u32regex_search(start, end, m, re, match_flags) and
-							m[0].matched)
-						{
-							begin = m[0].first;
-							end = m[0].second;
-						}
-						else
-							result = false;
-					}
-				}
-				
-				outFound.Set(begin.GetOffset(), end.GetOffset());
-			}
-		}
-		else
-		{
-			match_flags |= boost::regex_constants::match_continuous;
-
-			while (result == false and start.GetOffset() > 0)
-			{
-				--start;
-
-				if (start.GetOffset() > 0)
-				{
-					match_flags |= boost::regex_constants::match_not_bob;
-				
-					if (GetChar(start.GetOffset() - 1) != '\n')
-						match_flags |= boost::regex_constants::match_not_bol;
-					else
-						match_flags &= ~boost::regex_constants::match_not_bol;
-				}
-				else
-				{
-					match_flags &= ~boost::regex_constants::match_not_bob;
-					match_flags &= ~boost::regex_constants::match_not_bol;
-				}
-				
-				if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
-				{
-					result = true;
-
-					iterator begin = m[0].first;
-					iterator end = m[0].second;
-					
-					outFound.Set(begin.GetOffset(), end.GetOffset());
-				}
-			}
-		}
+	{//
+//		MoveGapTo(mLogicalLength);
+//	
+//		pcre* re = nil;
+//		
+//		try
+//		{
+//			
+//			
+//			re = pcre_compile2();
+//		}
+//		catch (...)
+//		{
+//			if (re != nil)
+//				pcre_free(re);
+//			throw;
+//		}
+//		
+//		boost::regex::flag_type flags = boost::regex_constants::normal;
+//		
+//		if (inIgnoreCase)
+//			flags |= boost::regex_constants::icase;
+//		
+//		boost::u32regex re = boost::make_u32regex(inWhat.c_str(), flags);
+//		boost::match_results<iterator> m;
+//
+//		boost::regex_constants::match_flag_type match_flags =
+//			boost::regex_constants::match_not_dot_newline |
+//			boost::regex_constants::match_not_dot_null;
+//		
+//		const_iterator start = const_iterator(this, inOffset);
+//		const_iterator end = const_iterator(this, mLogicalLength);
+//
+//		if (inDirection == kDirectionForward)
+//		{
+//			if (inOffset > 0)
+//			{
+//				match_flags |= boost::regex_constants::match_not_bob;
+//			
+//				if (GetChar(inOffset - 1) != '\n')
+//					match_flags |= boost::regex_constants::match_not_bol;
+//			}
+//			
+//			if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
+//			{
+//				result = true;
+//				
+//				iterator begin = m[0].first;
+//				iterator end = m[0].second;
+//				
+//				// special case, never match an empty string
+//				// if the result is the same offset as the start
+//				
+//				if (begin == end and begin == start)
+//				{
+//					if (inOffset == mLogicalLength)
+//						result = false;
+//					else
+//					{
+//						++start;
+//						if (boost::u32regex_search(start, end, m, re, match_flags) and
+//							m[0].matched)
+//						{
+//							begin = m[0].first;
+//							end = m[0].second;
+//						}
+//						else
+//							result = false;
+//					}
+//				}
+//				
+//				outFound.Set(begin.GetOffset(), end.GetOffset());
+//			}
+//		}
+//		else
+//		{
+//			match_flags |= boost::regex_constants::match_continuous;
+//
+//			while (result == false and start.GetOffset() > 0)
+//			{
+//				--start;
+//
+//				if (start.GetOffset() > 0)
+//				{
+//					match_flags |= boost::regex_constants::match_not_bob;
+//				
+//					if (GetChar(start.GetOffset() - 1) != '\n')
+//						match_flags |= boost::regex_constants::match_not_bol;
+//					else
+//						match_flags &= ~boost::regex_constants::match_not_bol;
+//				}
+//				else
+//				{
+//					match_flags &= ~boost::regex_constants::match_not_bob;
+//					match_flags &= ~boost::regex_constants::match_not_bol;
+//				}
+//				
+//				if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
+//				{
+//					result = true;
+//
+//					iterator begin = m[0].first;
+//					iterator end = m[0].second;
+//					
+//					outFound.Set(begin.GetOffset(), end.GetOffset());
+//				}
+//			}
+//		}
 	}
 	else
 	{
@@ -1544,35 +1561,35 @@ bool MTextBuffer::CanReplace(
 	bool			inIgnoreCase,
 	MSelection		inSelection) const
 {
-	bool result;
+	bool result = false;
 	
 	if (inRegex)
-	{
-		uint32 offset = inSelection.GetMinOffset();
-		
-		iterator b = iterator(this, offset);
-		iterator e = iterator(this, inSelection.GetMaxOffset());
-	
-		boost::regex::flag_type flags = boost::regex_constants::normal;
-		
-		if (inIgnoreCase)
-			flags |= boost::regex_constants::icase;
-	
-		boost::u32regex re(inWhat, flags);
-	
-		boost::regex_constants::match_flag_type match_flags =
-			boost::regex_constants::match_not_dot_newline |
-			boost::regex_constants::match_not_dot_null;
-		
-		if (offset > 0)
-		{
-			match_flags |= boost::regex_constants::match_prev_avail;
-		
-			if (GetChar(offset - 1) != '\n')
-				match_flags |= boost::regex_constants::match_not_bol;
-		}
-		
-		result = boost::u32regex_match(b, e, re, match_flags);
+	{//
+//		uint32 offset = inSelection.GetMinOffset();
+//		
+//		iterator b = iterator(this, offset);
+//		iterator e = iterator(this, inSelection.GetMaxOffset());
+//	
+//		boost::regex::flag_type flags = boost::regex_constants::normal;
+//		
+//		if (inIgnoreCase)
+//			flags |= boost::regex_constants::icase;
+//	
+//		boost::u32regex re(inWhat, flags);
+//	
+//		boost::regex_constants::match_flag_type match_flags =
+//			boost::regex_constants::match_not_dot_newline |
+//			boost::regex_constants::match_not_dot_null;
+//		
+//		if (offset > 0)
+//		{
+//			match_flags |= boost::regex_constants::match_prev_avail;
+//		
+//			if (GetChar(offset - 1) != '\n')
+//				match_flags |= boost::regex_constants::match_not_bol;
+//		}
+//		
+//		result = boost::u32regex_match(b, e, re, match_flags);
 	}
 	else
 	{
@@ -1580,9 +1597,9 @@ bool MTextBuffer::CanReplace(
 		GetText(inSelection.GetMinOffset(),
 			inSelection.GetMaxOffset() - inSelection.GetMinOffset(), s);
 			
-		if (inIgnoreCase)
-			result = tolower(inWhat) == tolower(s);
-		else
+//		if (inIgnoreCase)
+//			result = tolower(inWhat) == tolower(s);
+//		else
 			result = inWhat == s;
 	}
 	
@@ -1596,31 +1613,31 @@ void MTextBuffer::ReplaceExpression(
 	string			inFormat,
 	string&			outReplacement)
 {
-	uint32 offset = inSelection.GetMinOffset();
-	
-	iterator b = iterator(this, offset);
-	iterator e = iterator(this, inSelection.GetMaxOffset());
-
-	boost::regex::flag_type flags = boost::regex_constants::normal;
-	
-	if (inIgnoreCase)
-		flags |= boost::regex_constants::icase;
-
-	boost::u32regex re(inExpression, flags);
-
-	boost::regex_constants::match_flag_type match_flags =
-		boost::regex_constants::match_not_dot_newline |
-		boost::regex_constants::match_not_dot_null;
-	
-	if (offset > 0)
-	{
-		match_flags |= boost::regex_constants::match_not_bob;
-	
-		if (GetChar(offset - 1) != '\n')
-			match_flags |= boost::regex_constants::match_not_bol;
-	}
-	
-	(void)boost::u32regex_replace(back_inserter(outReplacement), b, e, re, fmt, match_flags);
+//	uint32 offset = inSelection.GetMinOffset();
+//	
+//	iterator b = iterator(this, offset);
+//	iterator e = iterator(this, inSelection.GetMaxOffset());
+//
+//	boost::regex::flag_type flags = boost::regex_constants::normal;
+//	
+//	if (inIgnoreCase)
+//		flags |= boost::regex_constants::icase;
+//
+//	boost::u32regex re(inExpression, flags);
+//
+//	boost::regex_constants::match_flag_type match_flags =
+//		boost::regex_constants::match_not_dot_newline |
+//		boost::regex_constants::match_not_dot_null;
+//	
+//	if (offset > 0)
+//	{
+//		match_flags |= boost::regex_constants::match_not_bob;
+//	
+//		if (GetChar(offset - 1) != '\n')
+//			match_flags |= boost::regex_constants::match_not_bol;
+//	}
+//	
+//	(void)boost::u32regex_replace(back_inserter(outReplacement), b, e, re, fmt, match_flags);
 }
 
 void
@@ -1708,7 +1725,7 @@ uint32 MTextBuffer::GetNextCharLength(
 {
 	uint32 result = 1;
 	
-	iterator text(*this, inOffset);
+	const_iterator text(this, inOffset);
 	
 	if (inOffset < mLogicalLength - 1 and
 		(*text & 0x0080) != 0)
@@ -1739,7 +1756,7 @@ uint32 MTextBuffer::GetPrevCharLength(
 {
 	uint32 result = 1;
 	
-	iterator text(*this, inOffset);
+	const_iterator text(this, inOffset);
 	
 	if ((*text & 0x0080) != 0)
 	{
@@ -1765,7 +1782,7 @@ uint32 MTextBuffer::GetPrevCharLength(
 wchar_t MTextBuffer::GetWChar(
 	uint32		inOffset) const
 {
-	iterator text(*this, inOffset);
+	const_iterator text(this, inOffset);
 	
 	wchar_t result = 0x0FFFD;
 	uint32 length = GetNextCharLength(inOffset);

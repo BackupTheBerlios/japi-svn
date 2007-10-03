@@ -35,20 +35,27 @@
 	Created Thursday July 01 2004 21:03:45
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
+
+#include <cassert>
 
 #include "MSelection.h"
 #include "MDocument.h"
 #include "MError.h"
 
+using namespace std;
+
 inline
-MSelection::Pos::Pos(uint64 inOffset)
+MSelection::Pos::Pos(
+	uint64		inOffset)
 	: mOffset(inOffset)
 {
 }
 
 inline
-MSelection::Pos::Pos(uint32 inLine, uint32 inColumn)
+MSelection::Pos::Pos(
+	uint32		inLine,
+	uint32		inColumn)
 {
 	mLocation.line = inLine;
 	mLocation.column = inColumn;
@@ -56,14 +63,16 @@ MSelection::Pos::Pos(uint32 inLine, uint32 inColumn)
 
 bool
 inline
-MSelection::Pos::operator==(const Pos& inOther) const
+MSelection::Pos::operator==(
+	const Pos&	inOther) const
 {
 	return mOffset == inOther.mOffset;
 }
 
 bool
 inline
-MSelection::Pos::operator!=(const Pos& inOther) const
+MSelection::Pos::operator!=(
+	const Pos&	inOther) const
 {
 	return mOffset != inOther.mOffset;
 }
@@ -73,29 +82,36 @@ MSelection::MSelection()
 {
 }
 
-MSelection::MSelection(uint32 inAnchor, uint32 inCaret)
+MSelection::MSelection(
+	uint32		inAnchor,
+	uint32		inCaret)
 	: mAnchor(inAnchor)
 	, mCaret(inCaret)
 	, mIsBlock(false)
 {
 }
 
-MSelection::MSelection(uint32 inAnchorLine, uint32 inAnchorColumn,
-		uint32 inCaretLine, uint32 inCaretColumn)
+MSelection::MSelection(
+	uint32		inAnchorLine,
+	uint32		inAnchorColumn,
+	uint32		inCaretLine,
+	uint32		inCaretColumn)
 	: mAnchor(inAnchorLine, inAnchorColumn)
 	, mCaret(inCaretLine, inCaretColumn)
 	, mIsBlock(true)
 {
 }
 
-MSelection::MSelection(const MSelection& inSelection)
+MSelection::MSelection(
+	const MSelection&	inSelection)
 {
 	mAnchor = inSelection.mAnchor;
 	mCaret = inSelection.mCaret;
 	mIsBlock = inSelection.mIsBlock;
 }
 
-bool MSelection::operator==(const MSelection& inOther) const
+bool MSelection::operator==(
+	const MSelection&	inOther) const
 {
 	return
 		mIsBlock == inOther.mIsBlock and
@@ -103,7 +119,8 @@ bool MSelection::operator==(const MSelection& inOther) const
 		mCaret == inOther.mCaret;
 }
 
-bool MSelection::operator!=(const MSelection& inOther) const
+bool MSelection::operator!=(
+	const MSelection&	inOther) const
 {
 	return
 		mIsBlock != inOther.mIsBlock or
@@ -121,15 +138,20 @@ bool MSelection::IsEmpty() const
 	return mAnchor == mCaret;
 }
 
-void MSelection::Set(uint32 inAnchor, uint32 inCaret)
+void MSelection::Set(
+	uint32		inAnchor,
+	uint32		inCaret)
 {
 	mAnchor.mOffset = inAnchor;
 	mCaret.mOffset = inCaret;
 	mIsBlock = false;
 }
 
-void MSelection::Set(uint32 inAnchorLine, uint32 inAnchorColumn,
-	uint32 inCaretLine, uint32 inCaretColumn)
+void MSelection::Set(
+	uint32		inAnchorLine,
+	uint32		inAnchorColumn,
+	uint32		inCaretLine,
+	uint32		inCaretColumn)
 {
 	mAnchor.mLocation.line = inAnchorLine;
 	mAnchor.mLocation.column = inAnchorColumn;
@@ -144,7 +166,8 @@ uint32 MSelection::GetAnchor() const
 	return mAnchor.mOffset;
 }
 
-void MSelection::SetAnchor(uint32 inAnchor)
+void MSelection::SetAnchor(
+	uint32		inAnchor)
 {
 	assert(not mIsBlock);
 	mAnchor.mOffset = inAnchor;
@@ -156,30 +179,35 @@ uint32 MSelection::GetCaret() const
 	return mCaret.mOffset;
 }
 
-void MSelection::SetCaret(uint32 inCaret)
+void MSelection::SetCaret(
+	uint32		inCaret)
 {
 	assert(not mIsBlock);
 	mCaret.mOffset = inCaret;
 }
 
-void MSelection::GetAnchorLineAndColumn(MDocument& inDoc,
-		uint32& outLine, uint32& outColumn) const
+void MSelection::GetAnchorLineAndColumn(
+	MDocument&		inDoc,
+	uint32&			outLine,
+	uint32&			outColumn) const
 {
 	assert(not mIsBlock);
 	outLine = inDoc.OffsetToLine(mAnchor.mOffset);
 	outColumn = inDoc.OffsetToColumn(mAnchor.mOffset);
 }
 
-void MSelection::GetCaretLineAndColumn(MDocument& inDoc,
-		uint32& outLine, uint32& outColumn) const
+void MSelection::GetCaretLineAndColumn(
+	MDocument&		inDoc,
+	uint32&			outLine,
+	uint32&			outColumn) const
 {
 	assert(not mIsBlock);
 	outLine = inDoc.OffsetToLine(mCaret.mOffset);
 	outColumn = inDoc.OffsetToColumn(mCaret.mOffset);
 }
 
-uint32
-MSelection::GetMinLine(MDocument& inDoc) const
+uint32 MSelection::GetMinLine(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -201,8 +229,8 @@ MSelection::GetMinLine(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::GetMaxLine(MDocument& inDoc) const
+uint32 MSelection::GetMaxLine(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -226,8 +254,8 @@ MSelection::GetMaxLine(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::GetMinColumn(MDocument& inDoc) const
+uint32 MSelection::GetMinColumn(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -251,8 +279,8 @@ MSelection::GetMinColumn(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::GetMaxColumn(MDocument& inDoc) const
+uint32 MSelection::GetMaxColumn(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -276,8 +304,8 @@ MSelection::GetMaxColumn(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::GetMinOffset(MDocument& inDoc) const
+uint32 MSelection::GetMinOffset(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -299,8 +327,8 @@ MSelection::GetMinOffset(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::GetMaxOffset(MDocument& inDoc) const
+uint32 MSelection::GetMaxOffset(
+	MDocument&		inDoc) const
 {
 	uint32 result;
 
@@ -322,8 +350,8 @@ MSelection::GetMaxOffset(MDocument& inDoc) const
 	return result;
 }
 
-MSelection
-MSelection::SelectLines(MDocument& inDoc) const
+MSelection MSelection::SelectLines(
+	MDocument&		inDoc) const
 {
 	MSelection result;
 	
@@ -336,8 +364,8 @@ MSelection::SelectLines(MDocument& inDoc) const
 	return result;
 }
 
-uint32
-MSelection::CountLines(MDocument& inDoc) const
+uint32 MSelection::CountLines(
+	MDocument&		inDoc) const
 {
 	return GetMaxLine(inDoc) - GetMinLine(inDoc) + 1;
 }

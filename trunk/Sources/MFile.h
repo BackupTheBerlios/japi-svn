@@ -35,33 +35,28 @@
 
 #include <fcntl.h>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
+//#include <boost/filesystem/path.hpp>
+//#include <boost/filesystem/operations.hpp>
+//#include <boost/filesystem/convenience.hpp>
 
 #include "MTypes.h"
+#include "MURL.h"
 
-namespace fs = boost::filesystem;
-
-typedef fs::path MPath;
-
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize);
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize);
+ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize);
+void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize);
 
 class MFile
 {
   public:
-					MFile(const MPath& inFileSpec, int inFD = -1);
+					MFile(const MURL& inFileSpec, int inFD = -1);
 	virtual			~MFile();
-
-	void			CreateOnDisk(bool inReplaceExisting);
 
 	void			Open(int inPermissions);
 	void			Close();
 	bool			IsOpen()						{ return mIsOpen; }
 	
-	void			GetFileSpec(MPath& outFileSpec) const;
-	const MPath&	GetFileSpec() const				{ return mFileSpec; }
+	void			GetFileSpec(MURL& outFileSpec) const;
+	const MURL&		GetFileSpec() const				{ return mFileSpec; }
 
 	int32			Read(void* inBuffer, int32 inByteCount);
 	int32			Write(const void* inBuffer, int32 inByteCount);
@@ -72,7 +67,7 @@ class MFile
 	int				GetFD() const					{ assert(mIsOpen); return mFD; }
 	
   private:
-	MPath			mFileSpec;
+	MURL			mFileSpec;
 	int				mFD;
 	bool			mIsOpen;
 };
@@ -80,17 +75,16 @@ class MFile
 class MSafeSaver
 {
   public:
-					MSafeSaver(const MPath& inFile,
-						OSType inFileType, OSType inCreator);
+					MSafeSaver(const MURL& inFile);
 	virtual			~MSafeSaver();
 	
-	void			Commit(MPath& outFileSpec);
+	void			Commit(MURL& outFileSpec);
 	
 	MFile*			GetTempFile();
 	
   private:
-	MPath			mTempFileSpec;
-	MPath			mDestFileSpec;
+	MURL			mTempFileSpec;
+	MURL			mDestFileSpec;
 	std::auto_ptr<MFile>
 					mTempFile;
 };
@@ -104,12 +98,12 @@ enum {
 class MFileIterator
 {
   public:
-					MFileIterator(const MPath& inDirectory, uint32 inFlags);
+					MFileIterator(const MURL& inDirectory, uint32 inFlags);
 					~MFileIterator();
 
 	void			SetFilter(const std::string& inFilter);
 	
-	bool			Next(MPath& outFile);
+	bool			Next(MURL& outFile);
 
   private:
 
@@ -117,15 +111,9 @@ class MFileIterator
 					mImpl;
 };
 
-bool FileNameMatches(const char* inPattern, const MPath& inFile);
+bool FileNameMatches(const char* inPattern, const MURL& inFile);
 bool FileNameMatches(const char* inPattern, const std::string& inFile);
 
-int FSRefMakePath(const FSRef& inRef, std::string& outPath);
-int FSRefMakePath(const FSRef& inRef, MPath& outPath);
-int FSSpecMakePath(const FSSpec& inSpec, MPath& outPath);
-int FSPathMakeRef(const std::string& outPath, FSRef& inRef);
-int FSPathMakeRef(const MPath& outPath, FSRef& inRef);
-
-MPath relative_path(const MPath& inFromDir, const MPath& inFile);
+MURL relative_path(const MURL& inFromDir, const MURL& inFile);
 
 #endif

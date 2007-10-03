@@ -31,32 +31,34 @@
 */
 
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <unistd.h>
-//#include <sys/xattr.h>
-#include <sys/syslimits.h>
+#include <sys/xattr.h>
+//#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stack>
 #include <fstream>
+#include <cassert>
+#include <cerrno>
 
 #include "MFile.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MUtils.h"
-#include "MGlobals.h"
+//#include "MGlobals.h"
 
 using namespace std;
 
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
+ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize)
 {
-	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize, 0, 0);
+	return ::getxattr(inPath.c_str(), inName, outData, inDataSize);
 }
 
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
+void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
-	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0, 0);
+	(void)::setxattr(inPath.c_str(), inName, inData, inDataSize, 0);
 }
 
 // ------------------------------------------------------------------
@@ -64,7 +66,7 @@ void write_attribute(const MPath& inPath, const char* inName, const void* inData
 //  MFile
 //
 
-MFile::MFile(const MPath& inFileSpec, int inFD)
+MFile::MFile(const MURL& inFileSpec, int inFD)
 	: mFileSpec(inFileSpec)
 	, mFD(inFD)
 	, mIsOpen(inFD != -1)
@@ -77,44 +79,14 @@ MFile::~MFile()
 		Close();
 }
 
-void MFile::GetFileSpec(MPath& outFileSpec) const
+void MFile::GetFileSpec(MURL& outFileSpec) const
 {
 	outFileSpec = mFileSpec;
 }
 
-void MFile::CreateOnDisk(UInt32 inFileType, UInt32 inCreator, bool inReplaceExisting)
-{
-	ustring name;
-	Convert(mFileSpec.leaf(), name);
-	
-	if (exists(mFileSpec))
-	{
-		if (inReplaceExisting)
-			remove(mFileSpec);
-		else
-			THROW(("File exists!"));
-	}
-	
-	FSCatalogInfoBitmap catInfoFlags = kFSCatInfoFinderInfo;
-	FSCatalogInfo catInfo = { 0 };
-	
-	FInfo* finderInfo = reinterpret_cast<FInfo*>(&catInfo.finderInfo);
-	finderInfo->fdType = inFileType;
-	finderInfo->fdCreator = inCreator;
-
-	FSRef parent;
-	THROW_IF_OSERROR(::FSPathMakeRef(mFileSpec.branch_path(), parent));	
-
-	FSRef fileRef;
-	THROW_IF_OSERROR(::FSCreateFileUnicode(&parent, name.length(),
-		name.c_str(), catInfoFlags, &catInfo, &fileRef, NULL));
-
-	THROW_IF_OSERROR(::FSRefMakePath(fileRef, mFileSpec));
-}
-
 void MFile::Open(int inPermissions)
 {
-	mFD = open(mFileSpec.string().c_str(), inPermissions, 022);
+	mFD = open(mFileSpec.c_str(), inPermissions, 022);
 	THROW_IF_POSIX_ERROR(mFD);
 	mIsOpen = true;
 }
@@ -151,7 +123,13 @@ int64 MFile::Seek(int64 inOffset, int inMode)
 
 int64 MFile::GetSize() const
 {
-	return fs::file_size(mFileSpec);
+	int64 result = -1;
+	
+	struct stat st;
+	if (stat(mFileSpec.c_str(), &st) >= 0)
+		result = st.st_size;
+	
+	return result;
 }
 
 void MFile::SetSize(int64 inSize)
@@ -209,12 +187,17 @@ bool Match(
 
 }
 
-bool FileNameMatches(const char* inPattern, const MPath& inFile)
-{
-	return FileNameMatches(inPattern, inFile.leaf());
-}
-
-bool FileNameMatches(const char* inPattern, const string& inFile)
+//bool FileNameMatches(
+//	const char*		inPattern,
+//	const MURL&		inFile)
+//{
+//	assert(false);
+////	return FileNameMatches(inPattern, inFile.leaf());
+//}
+//
+bool FileNameMatches(
+	const char*		inPattern,
+	const string&	inFile)
 {
 	bool result = false;
 	
@@ -245,28 +228,29 @@ bool FileNameMatches(const char* inPattern, const string& inFile)
 	return result;	
 }
 
-MSafeSaver::MSafeSaver(const MPath& inFile, OSType inFileType, OSType inCreator)
+MSafeSaver::MSafeSaver(const MURL& inFile)
 	: mDestFileSpec(inFile)
 {
-	if (exists(mDestFileSpec))
+	struct stat st;
+	
+	if (stat(mDestFileSpec.c_str(), &st) == 0)
 	{
-		string path = mDestFileSpec.string() + "-XXXXXX";
+		string path = mDestFileSpec + "-XXXXXX";
 		
 		int fd = mkstemp(const_cast<char*>(path.c_str()));
 		THROW_IF_POSIX_ERROR(fd);
 		
-		mTempFileSpec = MPath(path);
+		mTempFileSpec = path;
 		mTempFile.reset(new MFile(mTempFileSpec, fd));
 	}
 	else
 	{
 		mTempFile.reset(new MFile(mDestFileSpec));
-		mTempFile->CreateOnDisk(inFileType, inCreator, false);
 		
 		mTempFile->GetFileSpec(mTempFileSpec);
 		mDestFileSpec = mTempFileSpec;
 
-		mTempFile->Open(O_RDWR);
+		mTempFile->Open(O_RDWR | O_TRUNC | O_CREAT);
 	}
 }
 
@@ -278,30 +262,31 @@ MSafeSaver::~MSafeSaver()
 		try
 		{
 			mTempFile->Close();
-			remove(mTempFileSpec);
+			remove(mTempFileSpec.c_str());
 		}
 		catch (...) {}
 	}
 }
 
-void MSafeSaver::Commit(MPath& outFileSpec)
+void MSafeSaver::Commit(MURL& outFileSpec)
 {
 	mTempFile->Close();
 	mTempFile.reset(nil);
 
-	if (not (mDestFileSpec == mTempFileSpec))
-	{
-		int err = ::exchangedata(mTempFileSpec.string().c_str(),
-						mDestFileSpec.string().c_str(), 0);
-		
-		if (err == 0)
-			remove(mTempFileSpec);
-		else
-		{
-			THROW_IF_POSIX_ERROR(::rename(mTempFileSpec.string().c_str(),
-				mDestFileSpec.string().c_str()));
-		}
-	}
+	assert(false);
+//	if (not (mDestFileSpec == mTempFileSpec))
+//	{
+//		int err = ::exchangedata(mTempFileSpec.c_str(),
+//						mDestFileSpec.string().c_str(), 0);
+//		
+//		if (err == 0)
+//			remove(mTempFileSpec);
+//		else
+//		{
+//			THROW_IF_POSIX_ERROR(::rename(mTempFileSpec.c_str(),
+//				mDestFileSpec.string().c_str()));
+//		}
+//	}
 
 	outFileSpec = mDestFileSpec;
 }
@@ -311,363 +296,273 @@ MFile* MSafeSaver::GetTempFile()
 	return mTempFile.get();
 }
 
-OSStatus FSRefMakePath(const FSRef& inRef, std::string& outPath)
-{
-	unsigned char b[PATH_MAX];
-	OSStatus result = ::FSRefMakePath(&inRef, b, sizeof(b));
-	if (result == noErr)
-		outPath.assign(reinterpret_cast<char*>(b));
-	return result;
-}
-
-OSStatus FSSpecMakePath(const FSSpec& inSpec, MPath& outPath)
-{
-	FSRef ref;
-	OSStatus err = ::FSpMakeFSRef(&inSpec, &ref);
-	if (err == noErr)
-		err = FSRefMakePath(ref, outPath);
-	return err;
-}
-
-OSStatus FSPathMakeRef(const std::string& inPath, FSRef& outRef)
-{
-	Boolean isDir;
-	return ::FSPathMakeRef(
-		reinterpret_cast<const UInt8*>(inPath.c_str()), &outRef, &isDir);
-}
-
-OSStatus FSRefMakePath(const FSRef& inRef, MPath& outPath)
-{
-	string p;
-	OSStatus err = FSRefMakePath(inRef, p);
-	if (err == noErr)
-		outPath = MPath(p);
-	return err;
-}
-
-OSStatus FSPathMakeRef(const MPath& inPath, FSRef& outRef)
-{
-	return FSPathMakeRef(inPath.string(), outRef);
-}
-
-// ------------------------------------------------------------
-
-struct MFileIteratorImp
-{
-	struct MInfo
-	{
-		MPath			mParent;
-		DIR*			mDIR;
-		struct dirent	mEntry;
-	};
-	
-						MFileIteratorImp()
-							: mOnlyTEXT(false)
-							, mReturnDirs(false) {}
-	virtual				~MFileIteratorImp() {}
-	
-	virtual	bool		Next(MPath& outFile) = 0;
-	bool				IsTEXT(const MPath& inFile);
-	
-	string				mFilter;
-	bool				mOnlyTEXT;
-	bool				mReturnDirs;
-};
-
-bool MFileIteratorImp::IsTEXT(const MPath& inFile)
-{
-	bool result = false;
-	
-	FSRef ref;
-	LSItemInfoRecord outInfo = { };
-	
-	if (FSPathMakeRef(inFile, ref) == noErr and
-		::LSCopyItemInfoForRef(&ref, kLSRequestExtension | kLSRequestTypeCreator, &outInfo) == noErr)
-	{
-		CFStringRef itemUTI = nil;
-		if (outInfo.extension != nil)
-		{
-			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-				kUTTagClassFilenameExtension, outInfo.extension, nil);
-			::CFRelease(outInfo.extension);
-		}
-		else
-		{
-			CFStringRef typeString = ::UTCreateStringForOSType(outInfo.filetype);
-			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-				kUTTagClassFilenameExtension, typeString, NULL);
-			::CFRelease(typeString);
-		}
-
-		if (itemUTI != nil)
-		{
-			result = ::UTTypeConformsTo(itemUTI, CFSTR("public.text"));
-			::CFRelease(itemUTI);
-		}
-	}
-
-	return result;
-}
-
-struct MSingleFileIteratorImp : public MFileIteratorImp
-{
-						MSingleFileIteratorImp(const MPath& inDirectory);
-	virtual				~MSingleFileIteratorImp();
-	
-	virtual	bool		Next(MPath& outFile);
-	
-	MInfo				mInfo;
-};
-
-
-MSingleFileIteratorImp::MSingleFileIteratorImp(const MPath& inDirectory)
-{
-	mInfo.mParent = inDirectory;
-	mInfo.mDIR = opendir(inDirectory.string().c_str());
-	memset(&mInfo.mEntry, 0, sizeof(mInfo.mEntry));
-}
-
-MSingleFileIteratorImp::~MSingleFileIteratorImp()
-{
-	if (mInfo.mDIR != nil)
-		closedir(mInfo.mDIR);
-}
-
-bool MSingleFileIteratorImp::Next(MPath& outFile)
-{
-	bool result = false;
-	
-	while (not result)
-	{
-		struct dirent* e = nil;
-		
-		if (mInfo.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(mInfo.mDIR, &mInfo.mEntry, &e));
-		
-		if (e == nil)
-			break;
-
-		if (strcmp(e->d_name, ".") == 0 or strcmp(e->d_name, "..") == 0)
-			continue;
-
-		outFile = mInfo.mParent / e->d_name;
-
-//		struct stat statb;
-//		
-//		if (stat(outFile.string().c_str(), &statb) != 0)
-//			continue;
-//		
-//		if (S_ISDIR(statb.st_mode) != mReturnDirs)
-//			continue;
-
-		if (is_directory(outFile) and not mReturnDirs)
-			continue;
-		
-		if (mOnlyTEXT and not IsTEXT(outFile))
-			continue;
-		
-		if (mFilter.length() == 0 or
-			FileNameMatches(mFilter.c_str(), outFile))
-		{
-			result = true;
-		}
-	}
-	
-	return result;
-}
-
-struct MDeepFileIteratorImp : public MFileIteratorImp
-{
-						MDeepFileIteratorImp(const MPath& inDirectory);
-	virtual				~MDeepFileIteratorImp();
-
-	virtual	bool		Next(MPath& outFile);
-
-	stack<MInfo>		mStack;
-};
-
-MDeepFileIteratorImp::MDeepFileIteratorImp(const MPath& inDirectory)
-{
-	MInfo info;
-
-	info.mParent = inDirectory;
-	info.mDIR = opendir(inDirectory.string().c_str());
-	memset(&info.mEntry, 0, sizeof(info.mEntry));
-	
-	mStack.push(info);
-}
-
-MDeepFileIteratorImp::~MDeepFileIteratorImp()
-{
-	while (not mStack.empty())
-	{
-		closedir(mStack.top().mDIR);
-		mStack.pop();
-	}
-}
-
-bool MDeepFileIteratorImp::Next(MPath& outFile)
-{
-	bool result = false;
-	
-	while (not result and not mStack.empty())
-	{
-		struct dirent* e = nil;
-		
-		MInfo& top = mStack.top();
-		
-		if (top.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(top.mDIR, &top.mEntry, &e));
-		
-		if (e == nil)
-		{
-			if (top.mDIR != nil)
-				closedir(top.mDIR);
-			mStack.pop();
-		}
-		else
-		{
-			outFile = top.mParent / e->d_name;
-			
-			if (exists(outFile) and is_directory(outFile))
-			{
-				if (strcmp(e->d_name, ".") and strcmp(e->d_name, ".."))
-				{
-					MInfo info;
-	
-					info.mParent = outFile;
-					info.mDIR = opendir(outFile.string().c_str());
-					memset(&info.mEntry, 0, sizeof(info.mEntry));
-					
-					mStack.push(info);
-				}
-				continue;
-			}
-
-			if (mOnlyTEXT and not IsTEXT(outFile))
-				continue;
-
-			if (mFilter.length() and not FileNameMatches(mFilter.c_str(), outFile))
-				continue;
-
-			result = true;
-		}
-	}
-	
-	return result;
-}
-
-MFileIterator::MFileIterator(const MPath& inDirectory, uint32 inFlags)
-{
-	if (inFlags & kFileIter_Deep)
-		mImpl = new MDeepFileIteratorImp(inDirectory);
-	else
-		mImpl = new MSingleFileIteratorImp(inDirectory);
-	
-	mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
-	mImpl->mOnlyTEXT = (inFlags & kFileIter_TEXTFilesOnly) != 0;
-}
-
-MFileIterator::~MFileIterator()
-{
-	delete mImpl;
-}
-
-bool MFileIterator::Next(MPath& outFile)
-{
-	return mImpl->Next(outFile);
-}
-
-void MFileIterator::SetFilter(const std::string& inFilter)
-{
-	mImpl->mFilter = inFilter;
-}
-
-// ---------------------------------------------------------------------------
-//	Filter
-
-pascal Boolean TextFileFilterForNav(
-	AEDesc*			inItem,
-	void*			inInfo,
-	void*			/* inCallBackUD */,
-	NavFilterModes	/* inFilterMode */)
-{
-	return true;
-	
-//	Boolean 			display = true;
-//	NavFileOrFolderInfo *theInfo = (NavFileOrFolderInfo*)inInfo;
-//	FSRef				ref;
-//	LSItemInfoRecord	outInfo;
-
-//	if (theInfo->isFolder == true /*or sDisplayAll*/)
-//		return true;
-//	
-//	::AECoerceDesc(inItem, typeFSRef, inItem);
+//// ------------------------------------------------------------
 //
-//	if (::AEGetDescData(inItem, &ref, sizeof(FSRef)) == noErr)
+//struct MFileIteratorImp
+//{
+//	struct MInfo
 //	{
-//		outInfo.extension = NULL;
-//		if (::LSCopyItemInfoForRef(&ref, kLSRequestExtension|kLSRequestTypeCreator, 
-//			&outInfo) == noErr)
-//		{
-//			CFStringRef itemUTI = NULL;
-//			if (outInfo.extension != NULL)
-//			{
-//				itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-//					kUTTagClassFilenameExtension, outInfo.extension, NULL);
-//				::CFRelease(outInfo.extension);
-//			}
-//			else 
-//			{
-//				CFStringRef typeString = ::UTCreateStringForOSType(outInfo.filetype);
-//				itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-//					kUTTagClassFilenameExtension, typeString, NULL);
-//				::CFRelease(typeString);
-//			}
+//		MURL			mParent;
+//		DIR*			mDIR;
+//		struct dirent	mEntry;
+//	};
+//	
+//						MFileIteratorImp()
+//							: mOnlyTEXT(false)
+//							, mReturnDirs(false) {}
+//	virtual				~MFileIteratorImp() {}
+//	
+//	virtual	bool		Next(MURL& outFile) = 0;
+//	bool				IsTEXT(const MURL& inFile);
+//	
+//	string				mFilter;
+//	bool				mOnlyTEXT;
+//	bool				mReturnDirs;
+//};
 //
-//			if (itemUTI != NULL)
-//			{
-//				display = ::UTTypeConformsTo(itemUTI, CFSTR("public.text"));
-//				::CFRelease(itemUTI);
-//			}
+//bool MFileIteratorImp::IsTEXT(const MURL& inFile)
+//{
+//	bool result = false;
+//	
+//	FSRef ref;
+//	LSItemInfoRecord outInfo = { };
+//	
+//	if (FSPathMakeRef(inFile, ref) == noErr and
+//		::LSCopyItemInfoForRef(&ref, kLSRequestExtension | kLSRequestTypeCreator, &outInfo) == noErr)
+//	{
+//		CFStringRef itemUTI = nil;
+//		if (outInfo.extension != nil)
+//		{
+//			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
+//				kUTTagClassFilenameExtension, outInfo.extension, nil);
+//			::CFRelease(outInfo.extension);
+//		}
+//		else
+//		{
+//			CFStringRef typeString = ::UTCreateStringForOSType(outInfo.filetype);
+//			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
+//				kUTTagClassFilenameExtension, typeString, NULL);
+//			::CFRelease(typeString);
+//		}
+//
+//		if (itemUTI != nil)
+//		{
+//			result = ::UTTypeConformsTo(itemUTI, CFSTR("public.text"));
+//			::CFRelease(itemUTI);
 //		}
 //	}
 //
-//	return display;
-}
+//	return result;
+//}
+//
+//struct MSingleFileIteratorImp : public MFileIteratorImp
+//{
+//						MSingleFileIteratorImp(const MURL& inDirectory);
+//	virtual				~MSingleFileIteratorImp();
+//	
+//	virtual	bool		Next(MURL& outFile);
+//	
+//	MInfo				mInfo;
+//};
+//
+//
+//MSingleFileIteratorImp::MSingleFileIteratorImp(const MURL& inDirectory)
+//{
+//	mInfo.mParent = inDirectory;
+//	mInfo.mDIR = opendir(inDirectory.string().c_str());
+//	memset(&mInfo.mEntry, 0, sizeof(mInfo.mEntry));
+//}
+//
+//MSingleFileIteratorImp::~MSingleFileIteratorImp()
+//{
+//	if (mInfo.mDIR != nil)
+//		closedir(mInfo.mDIR);
+//}
+//
+//bool MSingleFileIteratorImp::Next(MURL& outFile)
+//{
+//	bool result = false;
+//	
+//	while (not result)
+//	{
+//		struct dirent* e = nil;
+//		
+//		if (mInfo.mDIR != nil)
+//			THROW_IF_POSIX_ERROR(::readdir_r(mInfo.mDIR, &mInfo.mEntry, &e));
+//		
+//		if (e == nil)
+//			break;
+//
+//		if (strcmp(e->d_name, ".") == 0 or strcmp(e->d_name, "..") == 0)
+//			continue;
+//
+//		outFile = mInfo.mParent / e->d_name;
+//
+////		struct stat statb;
+////		
+////		if (stat(outFile.string().c_str(), &statb) != 0)
+////			continue;
+////		
+////		if (S_ISDIR(statb.st_mode) != mReturnDirs)
+////			continue;
+//
+//		if (is_directory(outFile) and not mReturnDirs)
+//			continue;
+//		
+//		if (mOnlyTEXT and not IsTEXT(outFile))
+//			continue;
+//		
+//		if (mFilter.length() == 0 or
+//			FileNameMatches(mFilter.c_str(), outFile))
+//		{
+//			result = true;
+//		}
+//	}
+//	
+//	return result;
+//}
+//
+//struct MDeepFileIteratorImp : public MFileIteratorImp
+//{
+//						MDeepFileIteratorImp(const MURL& inDirectory);
+//	virtual				~MDeepFileIteratorImp();
+//
+//	virtual	bool		Next(MURL& outFile);
+//
+//	stack<MInfo>		mStack;
+//};
+//
+//MDeepFileIteratorImp::MDeepFileIteratorImp(const MURL& inDirectory)
+//{
+//	MInfo info;
+//
+//	info.mParent = inDirectory;
+//	info.mDIR = opendir(inDirectory.string().c_str());
+//	memset(&info.mEntry, 0, sizeof(info.mEntry));
+//	
+//	mStack.push(info);
+//}
+//
+//MDeepFileIteratorImp::~MDeepFileIteratorImp()
+//{
+//	while (not mStack.empty())
+//	{
+//		closedir(mStack.top().mDIR);
+//		mStack.pop();
+//	}
+//}
+//
+//bool MDeepFileIteratorImp::Next(MURL& outFile)
+//{
+//	bool result = false;
+//	
+//	while (not result and not mStack.empty())
+//	{
+//		struct dirent* e = nil;
+//		
+//		MInfo& top = mStack.top();
+//		
+//		if (top.mDIR != nil)
+//			THROW_IF_POSIX_ERROR(::readdir_r(top.mDIR, &top.mEntry, &e));
+//		
+//		if (e == nil)
+//		{
+//			if (top.mDIR != nil)
+//				closedir(top.mDIR);
+//			mStack.pop();
+//		}
+//		else
+//		{
+//			outFile = top.mParent / e->d_name;
+//			
+//			if (exists(outFile) and is_directory(outFile))
+//			{
+//				if (strcmp(e->d_name, ".") and strcmp(e->d_name, ".."))
+//				{
+//					MInfo info;
+//	
+//					info.mParent = outFile;
+//					info.mDIR = opendir(outFile.string().c_str());
+//					memset(&info.mEntry, 0, sizeof(info.mEntry));
+//					
+//					mStack.push(info);
+//				}
+//				continue;
+//			}
+//
+//			if (mOnlyTEXT and not IsTEXT(outFile))
+//				continue;
+//
+//			if (mFilter.length() and not FileNameMatches(mFilter.c_str(), outFile))
+//				continue;
+//
+//			result = true;
+//		}
+//	}
+//	
+//	return result;
+//}
+//
+//MFileIterator::MFileIterator(const MURL& inDirectory, uint32 inFlags)
+//{
+//	if (inFlags & kFileIter_Deep)
+//		mImpl = new MDeepFileIteratorImp(inDirectory);
+//	else
+//		mImpl = new MSingleFileIteratorImp(inDirectory);
+//	
+//	mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
+//	mImpl->mOnlyTEXT = (inFlags & kFileIter_TEXTFilesOnly) != 0;
+//}
+//
+//MFileIterator::~MFileIterator()
+//{
+//	delete mImpl;
+//}
+//
+//bool MFileIterator::Next(MURL& outFile)
+//{
+//	return mImpl->Next(outFile);
+//}
+//
+//void MFileIterator::SetFilter(const std::string& inFilter)
+//{
+//	mImpl->mFilter = inFilter;
+//}
 
 // ----------------------------------------------------------------------------
 //	relative_path
 
-MPath relative_path(const MPath& inFromDir, const MPath& inFile)
+MURL relative_path(const MURL& inFromDir, const MURL& inFile)
 {
-	fs::path::iterator d = inFromDir.begin();
-	fs::path::iterator f = inFile.begin();
-	
-	while (d != inFromDir.end() and f != inFile.end() and *d == *f)
-	{
-		++d;
-		++f;
-	}
-	
-	MPath result;
-	
-	if (d == inFromDir.end() and f == inFile.end())
-		result = ".";
-	else
-	{
-		while (d != inFromDir.end())
-		{
-			result /= "..";
-			++d;
-		}
-		
-		while (f != inFile.end())
-		{
-			result /= *f;
-			++f;
-		}
-	}
+	assert(false);
 
-	return result;
+//	fs::path::iterator d = inFromDir.begin();
+//	fs::path::iterator f = inFile.begin();
+//	
+//	while (d != inFromDir.end() and f != inFile.end() and *d == *f)
+//	{
+//		++d;
+//		++f;
+//	}
+//	
+//	MURL result;
+//	
+//	if (d == inFromDir.end() and f == inFile.end())
+//		result = ".";
+//	else
+//	{
+//		while (d != inFromDir.end())
+//		{
+//			result /= "..";
+//			++d;
+//		}
+//		
+//		while (f != inFile.end())
+//		{
+//			result /= *f;
+//			++f;
+//		}
+//	}
+//
+//	return result;
 }

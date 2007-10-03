@@ -5,13 +5,13 @@ TARGET		= jg
 DEBUG		= 0
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= 
+LIBS		= icudata icuuc
 LIBPATHS	=  
 INCPATHS	= 
 SYSINCPATHS	= 
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
 CFLAGS		= -fsigned-char -g
-CFLAGS		+= -fmessage-length=120 -fdiagnostics-show-location=every-line
+#CFLAGS		+= -fmessage-length=200 -fdiagnostics-show-location=every-line
 CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0)
 LDFLAGS		= -fdata-sections -g
 LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
@@ -35,10 +35,16 @@ Sources = \
 	./Sources/MDocument.cpp  \
 	./Sources/MDocWindow.cpp \
 	./Sources/MDrawingArea.cpp \
+	./Sources/MError.cpp \
+	./Sources/MFile.cpp \
 	./Sources/MFont.cpp \
 	./Sources/MHandler.cpp \
 	./Sources/MJapieG.cpp \
 	./Sources/MMenu.cpp \
+	./Sources/MPreferences.cpp \
+	./Sources/MSelection.cpp \
+	./Sources/MTextBuffer.cpp \
+	./Sources/MUnicode.cpp \
 	./Sources/MView.cpp \
 	./Sources/MViewPort.cpp \
 	./Sources/MVScrollbar.cpp \

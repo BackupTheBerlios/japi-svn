@@ -1,0 +1,189 @@
+/*
+	Copyright (c) 2006, Maarten L. Hekkelman
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in
+      the documentation and/or other materials provided with the
+      distribution.
+    * Neither the name of the Maarten L. Hekkelman nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+	OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*	$Id: MGlobals.cpp 151 2007-05-21 15:59:05Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Sunday July 25 2004 21:07:42
+*/
+
+#include "Japie.h"
+
+#include "MGlobals.h"
+#include "MPreferences.h"
+#include "MLanguage.h"
+#include "MApplication.h"
+
+using namespace std;
+
+const RGBColor kLanguageColors[] =
+{
+	{ 0 },						// kLTextColor
+    { 0x3d3d, 0x4c4c, 0x9e9e },	// kLKeyWordColor
+    { 0x0000, 0x5454, 0x5454 }, // kLPreProcessorColor
+    { 0xadad, 0x6767, 0x3939 }, // kLCharConstColor
+    { 0x9b9b, 0x2e2e, 0x3535 }, // kLCommentColor
+    { 0x6666, 0x6666, 0x6666 }, // kLStringColor
+    { 0x0000, 0x8484, 0x8484 }, // kLTagColor
+    { 0x1e1e, 0x8484, 0x3b3b }, // kLAttribColor
+    { 0xaaaa, 0xaaaa, 0xaaaa }, // kLInvisiblesColor
+};
+
+const MColor
+	kInactiveHighlightColor = MColor(0.9f, 0.9f, 0.9f, 1.0),
+	kOddRowBackColor = MColor( 0.94f, 0.97f, 1.0f);
+
+bool			gAutoIndent = true;
+bool			gSmartIndent = true;
+bool			gKiss = true;
+bool			gSmoothFonts = false;
+bool			gShowInvisibles = true;
+bool			gTabEntersSpaces = false;
+UInt32			gCharsPerTab = 4;
+UInt32			gSpacesPerTab = 4;
+UInt32			gFontSize = 10;
+std::string		gFontName = "Monaco";
+MColor			gLanguageColors[kLStyleCount];
+MColor			gHiliteColor, gInactiveHiliteColor, gOddRowColor;
+
+MPath			gTemplatesDir, gPrefsDir;
+
+void InitGlobals()
+{
+	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
+	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
+	gKiss = Preferences::GetInteger("kiss", gKiss);
+	gCharsPerTab = Preferences::GetInteger("chars per tab", gCharsPerTab);
+	gSpacesPerTab = Preferences::GetInteger("spaces per tab", gSpacesPerTab);
+//	gSmoothFonts = Preferences::GetInteger("smooth fonts", gSmoothFonts);
+	gShowInvisibles = Preferences::GetInteger("show invisibles", gShowInvisibles);
+	gTabEntersSpaces = Preferences::GetInteger("tab enters spaces", gTabEntersSpaces);
+	gFontSize = Preferences::GetInteger("fontsize", gFontSize);
+	gFontName = Preferences::GetString("fontname", gFontName);
+	
+	gLanguageColors[kLTextColor] =
+		Preferences::GetColor("text color", kLanguageColors[kLTextColor]);
+	gLanguageColors[kLKeyWordColor] =
+		Preferences::GetColor("keyword color", kLanguageColors[kLKeyWordColor]);
+	gLanguageColors[kLPreProcessorColor] =
+		Preferences::GetColor("preprocessor color", kLanguageColors[kLPreProcessorColor]);
+	gLanguageColors[kLCharConstColor] =
+		Preferences::GetColor("char const color", kLanguageColors[kLCharConstColor]);
+	gLanguageColors[kLCommentColor] =
+		Preferences::GetColor("comment color", kLanguageColors[kLCommentColor]);
+	gLanguageColors[kLStringColor] =
+		Preferences::GetColor("string color", kLanguageColors[kLStringColor]);
+	gLanguageColors[kLTagColor] =
+		Preferences::GetColor("tag color", kLanguageColors[kLTagColor]);
+	gLanguageColors[kLAttribColor] =
+		Preferences::GetColor("attribute color", kLanguageColors[kLAttribColor]);
+	gLanguageColors[kLInvisiblesColor] =
+		Preferences::GetColor("invisibles color", kLanguageColors[kLInvisiblesColor]);
+
+	RGBColor c;
+	::LMGetHiliteRGB(&c);
+	gHiliteColor = c;
+
+	gInactiveHiliteColor = kInactiveHighlightColor;
+	gOddRowColor = kOddRowBackColor;
+
+	try
+	{
+		FSRef folderRef;
+		THROW_IF_OSERROR(::FSFindFolder(kUserDomain, kDomainLibraryFolderType, true, &folderRef));
+
+		char lib[PATH_MAX];
+		THROW_IF_OSERROR(::FSRefMakePath(&folderRef, reinterpret_cast<UInt8*>(lib), PATH_MAX));
+
+		MPath libPath(lib);
+		
+		if (not exists(libPath) or not is_directory(libPath))
+			THROW(("%s is not a directory", lib));
+
+		gPrefsDir = libPath / "Japie";
+
+		if (not exists(gPrefsDir))
+			create_directory(gPrefsDir);
+	}
+	catch (const std::exception& e)
+	{
+		cerr << "Initialising preferences directory failed: " << e.what() << endl;
+	}
+	
+	try
+	{
+		gTemplatesDir = gPrefsDir / "Templates";
+
+		if (not exists(gTemplatesDir))
+		{
+			create_directory(gTemplatesDir);
+			
+			MPath resDir = MApplication::Instance().GetResourceDir();
+			
+			// copy over the default template files to the newly created templates directory
+			
+			MFileIterator iter(resDir, 0);
+			MPath file;
+			
+			while (iter.Next(file))
+			{
+				if (is_directory(file) or file.leaf() == ".DS_Store")
+					continue;
+				
+				copy_file(file, gTemplatesDir / file.leaf());
+			}
+		}
+	}
+	catch (const std::exception& e)
+	{
+		cerr << "Initialising Templates directory failed: " << e.what() << endl;
+	}
+}
+
+void SaveGlobals()
+{
+	Preferences::SetInteger("auto indent", gAutoIndent);
+	Preferences::SetInteger("smart indent", gSmartIndent);
+	Preferences::SetInteger("kiss", gKiss);
+	Preferences::SetInteger("chars per tab", gCharsPerTab);
+	Preferences::SetInteger("spaces per tab", gSpacesPerTab);
+//	Preferences::SetInteger("smooth fonts", gSmoothFonts);
+	Preferences::SetInteger("show invisibles", gShowInvisibles);
+	Preferences::SetInteger("fontsize", gFontSize);
+	Preferences::SetString("fontname", gFontName);
+	Preferences::SetInteger("tab enters spaces", gTabEntersSpaces);
+
+	for (UInt32 ix = 0; ix < kLStyleCount; ++ix)
+	{
+//		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
+	}
+}
+

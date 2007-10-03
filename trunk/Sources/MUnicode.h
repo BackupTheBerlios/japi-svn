@@ -57,6 +57,7 @@ enum MEncoding
 	kEncodingUTF16BE,
 	kEncodingUTF16LE,
 	kEncodingUCS2,
+	kEncodingISO88591,
 	kEncodingMacOSRoman,
 	
 	kEncodingCount,			// number of supported encodings
@@ -68,35 +69,27 @@ struct MEncodingTraits
 {
 	template<class ByteIterator>
 	static
-	uint32		GetNextCharLength(const ByteIterator inText);
+	uint32		GetNextCharLength(
+					const ByteIterator	inText);
 
 	template<class ByteIterator>
 	static
-	uint32		GetPrevCharLength(const ByteIterator inText);
+	uint32		GetPrevCharLength(
+					const ByteIterator	inText);
 
 	template<class ByteIterator>
 	static
-	void		ReadUnicode(const ByteIterator inText, uint32& outLength,
-					wchar_t& outUnicode);
+	void		ReadUnicode(
+					const ByteIterator	inText,
+					uint32&				outLength,
+					wchar_t&			outUnicode);
 
 	template<class ByteIterator>
 	static
-	uint32		WriteUnicode(ByteIterator& inText, wchar_t inUnicode);
+	uint32		WriteUnicode(
+					ByteIterator&		inText,
+					wchar_t				inUnicode);
 };
-	
-	// masks for the properties table
-enum {
-	kLETTER			= 1,
-	kNUMBER			= (kLETTER << 1),
-	kCOMBININGMARK	= (kNUMBER << 1),
-	kPUNCTUATION	= (kCOMBININGMARK << 1),
-	kSYMBOL			= (kPUNCTUATION << 1),
-	kSEPARATOR		= (kSYMBOL << 1),
-	kCONTROL		= (kSEPARATOR << 1),
-	kOTHER			= (kCONTROL << 1)
-};
-
-uint8 GetProperty(wchar_t inUnicode);
 
 enum WordBreakClass
 {
@@ -138,6 +131,8 @@ bool IsAlpha(wchar_t inChar);
 bool IsNum(wchar_t inChar);
 bool IsAlnum(wchar_t inChar);
 bool IsCombining(wchar_t inChar);
+
+std::string tolower(std::string inString);
 
 // one byte character set utilities
 namespace MUnicodeMapping
@@ -191,8 +186,8 @@ class MDecoder
 	uint32				mLength;
 };
 
-template<typename String1, typename String2>
-void Convert(const String1& inSrc, String2& outDst);
+//template<typename String1, typename String2>
+//void Convert(const String1& inSrc, String2& outDst);
 
 #include "MUnicode.inl"
 

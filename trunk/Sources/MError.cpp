@@ -32,13 +32,10 @@
 
 #include "MJapieG.h"
 
-#include <Carbon/Carbon.h>
-
 #include <iostream>
 #include <cstdarg>
 
 #include "MError.h"
-#include "MMach.h"
 #include "MTypes.h"
 
 using namespace std;
@@ -47,9 +44,9 @@ using namespace std;
 int StOKToThrow::sOkToThrow = 0;
 #endif
 
-MException::MException(OSStatus inErr)
+MException::MException(int inErr)
 {
-	snprintf(mMessage, sizeof(mMessage), "OS error %d", (int)inErr);
+	snprintf(mMessage, sizeof(mMessage), "OS error %d", inErr);
 }
 
 MException::MException(const char* inMsg, ...)
@@ -72,18 +69,20 @@ namespace MError
 
 void DisplayError(std::exception& inErr)
 {
-	AlertStdCFStringAlertParamRec pb;
-	OSStatus err;
+	cerr << "error!" << endl << inErr.what() << endl;
 	
-	MCFString errStr(inErr.what());
-	MCFString explStr("an exception was raised");
-	DialogRef d;
-	
-	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-	err = ::CreateStandardAlert(kAlertCautionAlert, errStr, explStr, &pb, &d);
-	
-	DialogItemIndex item;
-	err = ::RunStandardAlert(d, NULL, &item);
+//	AlertStdCFStringAlertParamRec pb;
+//	OSStatus err;
+//	
+//	MCFString errStr(inErr.what());
+//	MCFString explStr("an exception was raised");
+//	DialogRef d;
+//	
+//	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
+//	err = ::CreateStandardAlert(kAlertCautionAlert, errStr, explStr, &pb, &d);
+//	
+//	DialogItemIndex item;
+//	err = ::RunStandardAlert(d, NULL, &item);
 }
 
 }
@@ -109,52 +108,55 @@ void __signal_throw(const char* inCode, const char* inFunction, const char* inFi
 	
 	if (StOKToThrow::IsOK())
 		return;
-	
-	AlertStdCFStringAlertParamRec pb;
-	OSStatus err;
-	
-	MCFString errStr("Throwing an exception");
-	
-	char msg[1024];
-	snprintf(msg, sizeof(msg), "File: %s\rLine: %d\rFunction: %s\rCode: %s",
-		inFile, inLine, inFunction, inCode);
-	
-	MCFString explStr(msg);
-	DialogRef d;
-	
-	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-	err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
-	
-	DialogItemIndex item;
-	err = ::RunStandardAlert(d, NULL, &item);
+
+//	AlertStdCFStringAlertParamRec pb;
+//	OSStatus err;
+//	
+//	MCFString errStr("Throwing an exception");
+//	
+//	char msg[1024];
+//	snprintf(msg, sizeof(msg), "File: %s\rLine: %d\rFunction: %s\rCode: %s",
+//		inFile, inLine, inFunction, inCode);
+//	
+//	MCFString explStr(msg);
+//	DialogRef d;
+//	
+//	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
+//	err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
+//	
+//	DialogItemIndex item;
+//	err = ::RunStandardAlert(d, NULL, &item);
 }
 
-void __report_mach_error(const char* func, mach_error_t e)
-{
-	cerr << "Mach error in " << func << ": '" << mach_error_string(e) << '\'' << endl;
-}
+//void __report_mach_error(const char* func, mach_error_t e)
+//{
+//	cerr << "Mach error in " << func << ": '" << mach_error_string(e) << '\'' << endl;
+//}
 
 void __msl_assertion_failed(char const *inCode, char const *inFile, char const *inFunction, int inLine)
 {
 	try
 	{
-		AlertStdCFStringAlertParamRec pb;
-		OSStatus err;
-		
-		MCFString errStr("Assertion failure");
+//		AlertStdCFStringAlertParamRec pb;
+//		OSStatus err;
+//		
+//		MCFString errStr("Assertion failure");
 		
 		char msg[1024];
 		snprintf(msg, sizeof(msg), "File: %s\rLine: %d\rFunction: %s\rassert: %s",
 			inFile, inLine, inFunction, inCode);
 		
-		MCFString explStr(msg);
-		DialogRef d;
+		cerr << "Assertion failure: " << endl << msg << endl;
+		abort();
 		
-		err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-		err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
-		
-		DialogItemIndex item;
-		err = ::RunStandardAlert(d, NULL, &item);
+//		MCFString explStr(msg);
+//		DialogRef d;
+//		
+//		err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
+//		err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
+//		
+//		DialogItemIndex item;
+//		err = ::RunStandardAlert(d, NULL, &item);
 	}
 	catch (...) 
 	{

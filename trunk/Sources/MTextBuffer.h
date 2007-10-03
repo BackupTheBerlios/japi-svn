@@ -40,6 +40,7 @@
 
 #include "MTypes.h"
 #include "MUnicode.h"
+#include "MError.h"
 
 #include <stack>
 #include <boost/iterator/iterator_facade.hpp>
@@ -144,7 +145,7 @@ class MTextBuffer
 	};
 
 	class const_iterator : public boost::iterator_facade<const_iterator, const char,
-		boost::random_access_traversal_tag, const UniChar>
+		boost::random_access_traversal_tag, const char>
 	{
 	  public:
 						const_iterator() : mBuffer(nil), mOffset(0) {}
@@ -179,7 +180,7 @@ class MTextBuffer
 	const_iterator	end() const										{ return const_iterator(this, mLogicalLength); }
 	
 	char		operator[](
-					uint32			inPosition) const;
+					uint32			inPosition) const				{ return GetChar(inPosition); }
 	
 	ref			operator[](
 					uint32			inPosition);
@@ -218,6 +219,9 @@ class MTextBuffer
 					uint32			inOffset) const;
 
 	wchar_t		GetWChar(
+					uint32			inOffset) const;
+
+	char		GetChar(
 					uint32			inOffset) const;
 
 	uint32		NextCursorPosition(
@@ -357,7 +361,7 @@ class MTextBuffer
 
 inline
 char
-MTextBuffer::operator[](
+MTextBuffer::GetChar(
 	uint32			inOffset) const
 {
 	assert(inOffset < mLogicalLength);
@@ -397,7 +401,7 @@ MTextBuffer::ref&
 MTextBuffer::ref::operator=(
 	char		inChar)
 {
-	mBuffer.ReplaceSelf(mOffset, &inChar, 1);
+	mBuffer.Replace(mOffset, &inChar, 1);
 	return *this;
 }
 
@@ -407,7 +411,7 @@ MTextBuffer::ref::operator=(
 	const ref&	inOther)
 {
 	char ch = inOther;
-	mBuffer.ReplaceSelf(mOffset, &ch, 1);
+	mBuffer.Replace(mOffset, &ch, 1);
 	return *this;
 }
 
