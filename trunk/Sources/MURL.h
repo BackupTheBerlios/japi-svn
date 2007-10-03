@@ -20,6 +20,8 @@ class MURL
 					{
 					}
 
+	std::string		leaf() const;
+
 	MURL&			operator=(
 						const MURL&				inRHS)
 					{
@@ -36,7 +38,7 @@ class MURL
 					}
 					
 	bool			operator==(
-						const MURL&				inRHS)
+						const MURL&				inRHS) const
 					{
 						return mURL == inRHS.mURL;
 					}

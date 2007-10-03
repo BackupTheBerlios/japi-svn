@@ -8,8 +8,6 @@
 
 using namespace std;
 
-const char* kLanguage = getenv("LANG");
-
 struct MDeviceImp
 {
 					MDeviceImp(
@@ -52,7 +50,7 @@ MDeviceImp::MDeviceImp(
 	const char* LANG = getenv("LANG");
 	
 	if (LANG != nil)
-		mLanguage = pango_language_from_string(kLanguage);
+		mLanguage = pango_language_from_string(LANG);
 	else
 		mLanguage = gtk_get_default_language();
 
@@ -239,9 +237,9 @@ void MDevice::DrawString(
 	if (1)
 	{
 		PangoAttribute* attr = pango_attr_background_new(
-			kSelectionColor.red * 65535,
-			kSelectionColor.green * 65535,
-			kSelectionColor.blue * 65535);
+			static_cast<uint16>(kSelectionColor.red * 65535),
+			static_cast<uint16>(kSelectionColor.green * 65535),
+			static_cast<uint16>(kSelectionColor.blue * 65535));
 
 		attr->start_index = 4;
 		attr->end_index = 8;

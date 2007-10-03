@@ -45,6 +45,12 @@
 ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize);
 void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize);
 
+namespace MFileSystem
+{
+	double	GetModificationDate(
+				const MURL&		inURL);
+}
+
 class MFile
 {
   public:
@@ -63,6 +69,8 @@ class MFile
 	int64			Seek(int64 inOffset, int inMode);
 	int64			GetSize() const;
 	void			SetSize(int64 inSize);
+	
+	double			GetModificationDate() const;
 	
 	int				GetFD() const					{ assert(mIsOpen); return mFD; }
 	

@@ -109,7 +109,7 @@ void MDocState::Swap()
 //	MDocument
 
 MDocument::MDocument(
-	const MURL&			inFile)
+	const MURL*			inURL)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -120,20 +120,16 @@ MDocument::MDocument(
 {
 	Init();
 	
-	if (inFile)
+	if (inURL != nil)
 	{
-		mFile = *inFile;
-	
-		FSRef fsRef;
-		FSPathMakeRef(mFile, fsRef);
-		
-		THROW_IF_OSERROR(::FSNewAlias(nil, &fsRef, &mAlias));
+		mURL = *inURL;
+		mFileModDate = MFileSystem::GetModificationDate(mURL);
 		mSpecified = true;
 	}
 
-	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
-	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
-	AddRoute(eIdle, MApplication::Instance().eIdle);
+//	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
+//	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
 	
@@ -143,13 +139,13 @@ MDocument::MDocument(
 		Rewrap();
 	}
 
-	boost::mutex::scoped_lock lock(sDocListMutex);
+//	boost::mutex::scoped_lock lock(sDocListMutex);
 
 	mNext = sFirst;
 	sFirst = this;
 }
 
-MDocument::MDocument(const ustring& inText, const string& inFileNameHint)
+MDocument::MDocument(const string& inText, const string& inFileNameHint)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -158,21 +154,21 @@ MDocument::MDocument(const ustring& inText, const string& inFileNameHint)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 
-	, mFile(MURL("/tmp") / inFileNameHint)
+	, mURL(MURL("/tmp") / inFileNameHint)
 {
 	Init();
 	
-	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
-	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
-	AddRoute(eIdle, MApplication::Instance().eIdle);
+//	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
+//	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
 
-	mLanguage = MLanguage::GetLanguageForDocument(mFile.leaf(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
 	
 	Rewrap();
 
-	boost::mutex::scoped_lock lock(sDocListMutex);
+//	boost::mutex::scoped_lock lock(sDocListMutex);
 
 	mNext = sFirst;
 	sFirst = this;
@@ -187,7 +183,7 @@ MDocument::MDocument(const MURL& inFile)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 
-	, mFile(inFile)
+	, mURL(inFile)
 {
 	Init();
 
@@ -203,9 +199,7 @@ void MDocument::Init()
 {
 	mNext = nil;
 	mSpecified = false;
-	mAlias = nil;
 	mTargetTextView = nil;
-	mTextLayout = nil;
 	mWalkOffset = 0;
 	mLastAction = kNoAction;
 	mCurrentAction = kNoAction;
@@ -231,13 +225,8 @@ void MDocument::Init()
 
 MDocument::~MDocument()
 {
-	boost::mutex::scoped_lock lock(sDocListMutex);
+//	boost::mutex::scoped_lock lock(sDocListMutex);
 
-	if (mTextLayout)
-		ATSUDisposeTextLayout(mTextLayout);
-
-	::DisposeHandle(reinterpret_cast<Handle>(mAlias));
-	
 	if (sFirst == this)
 		sFirst = mNext;
 	else
@@ -303,7 +292,7 @@ const char* MDocument::GetCWD() const
 	{
 		static auto_array<char> cwd(new char[PATH_MAX]);
 
-		int32 r = read_attribute(mFile, kJapieCWD, cwd.get(), PATH_MAX);
+		int32 r = read_attribute(mURL, kJapieCWD, cwd.get(), PATH_MAX);
 		if (r > 0 and r < PATH_MAX)
 		{
 			cwd.get()[r] = 0;
@@ -325,36 +314,41 @@ void MDocument::Reset()
 		mTextInputAreaInfo.fOffset[i] = -1;
 }
 
-MDocument* MDocument::GetDocForFile(const MURL& inFile)
+MDocument* MDocument::GetDocumentForURL(
+	const MURL&		inFile,
+	bool			inCreateIfNeeded)
 {
-	boost::mutex::scoped_lock lock(sDocListMutex);
+//	boost::mutex::scoped_lock lock(sDocListMutex);
 	
 	MDocument* doc = sFirst;
 
 	while (doc != nil and not doc->UsesFile(inFile))
 		doc = doc->mNext;
 
+	if (doc == nil and inCreateIfNeeded)
+		doc = new MDocument(&inFile);
+
 	return doc;
 }
 
 void MDocument::CheckFile()
 {
-	Boolean changed;
-	FSRef newRef;
-	
-	if (mAlias != nil and
-		::FSResolveAliasWithMountFlags(nil, mAlias, &newRef,
-			&changed, kARMSearch | kARMNoUI) == noErr and
-		changed)
-	{
-		(void)::FSRefMakePath(newRef, mFile);
-		eFileSpecChanged(mFile);
-	}
+//	Boolean changed;
+//	FSRef newRef;
+//	
+//	if (mAlias != nil and
+//		::FSResolveAliasWithMountFlags(nil, mAlias, &newRef,
+//			&changed, kARMSearch | kARMNoUI) == noErr and
+//		changed)
+//	{
+//		(void)::FSRefMakePath(newRef, mURL);
+//		eFileSpecChanged(mURL);
+//	}
 }
 
 void MDocument::MakeFirstDocument()
 {
-	boost::mutex::scoped_lock lock(sDocListMutex);
+//	boost::mutex::scoped_lock lock(sDocListMutex);
 
 	MDocument* d = sFirst;
 	
@@ -375,64 +369,15 @@ void MDocument::MakeFirstDocument()
 
 void MDocument::ReInit()
 {
-	ATSLineLayoutOptions lineOptions = kATSLineNoLayoutOptions;
-
-	if (not gSmoothFonts)
-		lineOptions = kATSLineFractDisable | kATSLineNoAntiAliasing |
-			kATSLineUseDeviceMetrics;
-
-	ATSUAttributeTag		theTags[] = { kATSULineLayoutOptionsTag };
-	ByteCount				theSizes[] = { sizeof(lineOptions) };
-	ATSUAttributeValuePtr   theValues[] = { &lineOptions };
-
-	if (mTextLayout == nil)
-	{
-		THROW_IF_OSERROR(::ATSUCreateTextLayout(&mTextLayout));
-		THROW_IF_OSERROR(::ATSUSetTextLayoutRefCon(mTextLayout, reinterpret_cast<uint32>(this)));
-
-		ATSUUnhighlightData highlightData = { kATSUBackgroundColor, gHiliteColor };
-		THROW_IF_OSERROR(::ATSUSetHighlightingMethod(mTextLayout,
-			kRedrawHighlighting, &highlightData));
-	}
-
-	THROW_IF_OSERROR(::ATSUSetLayoutControls(mTextLayout, 1,
-		theTags, theSizes, theValues));
-
-	ustring spaces(10, ' ');
-	THROW_IF_OSERROR(::ATSUSetTextPointerLocation(mTextLayout, spaces.c_str(), 0, 10, 10));
-	THROW_IF_OSERROR(::ATSUSetRunStyle(mTextLayout,
-		MStyleArray::Instance()[0], 0, 10));
+#pragma message("zet mLayout opties hier")
 	
-	ATSUCaret mainCaret = { 0 }, secondCaret = { 0 };
-	Boolean isSplit;
-	THROW_IF_OSERROR(::ATSUOffsetToPosition(mTextLayout, 10, false, &mainCaret,
-		&secondCaret, &isSplit));
-	
-	mCharWidth = (Fix2X(mainCaret.fX) + Fix2X(mainCaret.fDeltaX)) / 20.f;
-	if (gSmoothFonts == false and mCharWidth > /*std::*/trunc(mCharWidth))
-		mCharWidth = /*std::*/trunc(mCharWidth) + 1;
+	MDevice dev(mTextLayout);
 
-	mTabWidth = mCharsPerTab * mCharWidth;
-
-	const uint32 kTabCount = 100;
-
-	float cumulative = 0;
-	float step = mCharWidth * mCharsPerTab;
-
-	ATSUTab  myTabArray[kTabCount];
-
-	for (uint32 i = 0; i < kTabCount; i++)  //2
-	{
-		cumulative += step; //3
-		myTabArray[i].tabType = kATSULeftTab; //4
-		myTabArray[i].tabPosition = X2Fix(cumulative); //5
-	}
-	THROW_IF_OSERROR(::ATSUSetTabArray(mTextLayout, myTabArray, kTabCount)); //6
-	
-	THROW_IF_OSERROR(::ATSUSetTransientFontMatching(mTextLayout, true));
-	
-	MDevice dev;
 	mLineHeight = dev.GetAscent() + dev.GetDescent() + dev.GetLeading();
+	mCharWidth = dev.GetStringWidth("          ") / 10.0f;
+	mTabWidth = mCharWidth * mCharsPerTab;
+	
+	mLayout.SetTabStops(mTabWidth, 32);
 }
 
 // ---------------------------------------------------------------------------
@@ -492,7 +437,7 @@ bool MDocument::UsesFile(
 	const MURL&	inFileRef) const
 {
 //	CheckFile();
-	return mSpecified and mFile == inFileRef;
+	return mSpecified and mURL == inFileRef;
 }
 
 bool MDocument::ReadDocState(MDocState& ioDocState)
@@ -501,7 +446,7 @@ bool MDocument::ReadDocState(MDocState& ioDocState)
 	
 	if (IsSpecified())
 	{
-		ssize_t r = read_attribute(mFile, kJapieDocState, &ioDocState, kMDocStateSize);
+		ssize_t r = read_attribute(mURL, kJapieDocState, &ioDocState, kMDocStateSize);
 		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
 		{
 			ioDocState.Swap();
@@ -686,7 +631,8 @@ void MDocument::DeleteSelectedText()
 // ---------------------------------------------------------------------------
 // ReplaceSelectedText
 
-void MDocument::ReplaceSelectedText(const ustring& inText)
+void MDocument::ReplaceSelectedText(
+	const string&		inText)
 {
 	if (mSelection.IsBlock())
 	{
@@ -712,10 +658,10 @@ void MDocument::ReplaceSelectedText(const ustring& inText)
 // Type
 
 void MDocument::Type(
-	const UniChar*	inText,
+	const char*		inText,
 	uint32			inLength)
 {
-	::ObscureCursor();
+	eObscureCursor();
 	
 	StartAction(kTypeAction);
 	
@@ -728,7 +674,7 @@ void MDocument::Type(
 	{
 		uint32 column = OffsetToColumn(offset);
 		inLength = gSpacesPerTab - (column % gSpacesPerTab);
-		ustring t(inLength, ' ');
+		string t(inLength, ' ');
 		Insert(offset, t.c_str(), inLength);
 	}
 	else
@@ -757,7 +703,7 @@ void MDocument::Type(
 			MSelection save(mSelection);
 			ChangeSelection(MSelection(offset - 1, offset));
 			eScroll(kScrollForKiss);
-			UInt32 l;
+			uint32 l;
 			::Delay(20UL, &l);
 			ChangeSelection(save);
 			eScroll(kScrollReturnAfterKiss);
@@ -778,7 +724,7 @@ void MDocument::Type(
 		if (mLanguage->Balance(mText, offset, length) and
 			(openLine = OffsetToLine(offset)) < closeLine)
 		{
-			ustring s;
+			string s;
 			MTextBuffer::iterator txt = mText.begin() + LineStart(openLine);
 			
 			while (txt.GetOffset() < offset and
@@ -803,7 +749,7 @@ void MDocument::Type(
 			}
 			else
 			{
-				const UniChar kLF = '\n';
+				const char kLF = '\n';
 				Insert(offset, &kLF, 1);
 				Insert(offset + 1, s.c_str(), s.length());
 			}
@@ -820,7 +766,11 @@ void MDocument::Type(
 // ---------------------------------------------------------------------------
 // Drop
 
-void MDocument::Drop(uint32 inOffset, const UniChar* inText, uint32 inSize, bool inDragMove)
+void MDocument::Drop(
+	uint32			inOffset,
+	const char*		inText,
+	uint32			inSize,
+	bool			inDragMove)
 {
 	StartAction(kDropAction);
 	
@@ -853,7 +803,7 @@ void MDocument::CloseDocument()
 		{
 			MDocState state = { };
 
-			(void)read_attribute(mFile, kJapieDocState, &state, kMDocStateSize);
+			(void)read_attribute(mURL, kJapieDocState, &state, kMDocStateSize);
 			
 			state.Swap();
 			
@@ -894,11 +844,11 @@ void MDocument::CloseDocument()
 			
 			state.Swap();
 			
-			write_attribute(mFile, kJapieDocState, &state, kMDocStateSize);
+			write_attribute(mURL, kJapieDocState, &state, kMDocStateSize);
 			
 			if (mShell.get() != nil)
 			{
-				write_attribute(mFile, kJapieCWD,
+				write_attribute(mURL, kJapieCWD,
 					mShell->GetCWD().c_str(), mShell->GetCWD().length());
 			}
 		}
@@ -924,7 +874,7 @@ bool MDocument::DoSave()
 	
 	CheckFile();	// make sure our filespec is valid
 	
-	MURL file = mFile;
+	MURL file = mURL;
 	bool specified = mSpecified;
 	
 	try
@@ -935,22 +885,22 @@ bool MDocument::DoSave()
 				mText.GetChar(mText.GetSize() - 1) != '\n')
 			{
 				StartAction(kTypeAction);
-				Insert(mText.GetSize(), USTR("\n"), 1);
+				Insert(mText.GetSize(), "\n", 1);
 				FinishAction();
 			}
 		}
 		catch (...) {}
 		
-		MSafeSaver safe(mFile, 'TEXT', kJapieSignature);
+		MSafeSaver safe(mURL);
 		mText.WriteToFile(*safe.GetTempFile());
-		safe.Commit(mFile);
+		safe.Commit(mURL);
 		
 		SetModified(false);
 		
-		MApplication::Instance().AddToRecentMenu(mFile);
+		gApp->AddToRecentMenu(mURL);
 		MProject::RecheckFiles();
 	
-		eFileSpecChanged(mFile);
+		eFileSpecChanged(mURL);
 		
 		result = true;
 	}
@@ -958,7 +908,7 @@ bool MDocument::DoSave()
 	{
 		MError::DisplayError(inErr);
 		
-		mFile = file;
+		mURL = file;
 		mSpecified = specified;
 		result = false;
 	}
@@ -970,25 +920,18 @@ bool MDocument::DoSaveAs(const MURL& inFile)
 {
 	bool result = false;
 	
-	mFile = inFile;
+	mURL = inFile;
 
 	if (DoSave())
 	{
 		mSpecified = true;
 		mIsWorksheet = false;
 	
-		if (mAlias != nil)
-			::DisposeHandle(reinterpret_cast<Handle>(mAlias));
-		
-		FSRef fsRef;
-		FSPathMakeRef(mFile, fsRef);
-		THROW_IF_OSERROR(::FSNewAlias(nil, &fsRef, &mAlias));
-		
-		eFileSpecChanged(mFile);
+		eFileSpecChanged(mURL);
 		
 		if (mLanguage == nil)
 		{
-			mLanguage = MLanguage::GetLanguageForDocument(mFile.leaf(), mText);
+			mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
 	
 			if (mLanguage != nil)
 			{
@@ -1014,11 +957,11 @@ bool MDocument::DoSaveAs(const MURL& inFile)
 
 void MDocument::ReadFile()
 {
-	auto_ptr<MFile> file(new MFile(mFile));
+	auto_ptr<MFile> file(new MFile(mURL));
 	
-	mText.ReadFromFile(*file);
+	mText.ReadFromURL(*file);
 	
-	mLanguage = MLanguage::GetLanguageForDocument(mFile.leaf(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
 	
 	if (mLanguage != nil)
 	{
@@ -1037,7 +980,7 @@ void MDocument::ReadFile()
 
 //void MDocument::ReadState()
 //{
-//	auto_ptr<MFile> file(new MFile(mFile));
+//	auto_ptr<MFile> file(new MFile(mURL));
 //	
 //	MDocState state;
 //
@@ -1075,7 +1018,7 @@ void MDocument::MarkLine(
 //	MarkMatching
 
 void MDocument::MarkMatching(
-	const ustring&	inMatch,
+	const string&	inMatch,
 	bool			inIgnoreCase,
 	bool			inRegEx)
 {
@@ -1198,7 +1141,7 @@ void MDocument::CCCMarkedLines(bool inCopy, bool inClear)
 {
 	if (inCopy)
 	{
-		ustring text;
+		string text;
 		bool first = true;
 
 		for (uint32 lineNr = 0; lineNr < mLineInfo.size(); ++lineNr)
@@ -1431,37 +1374,37 @@ uint32 MDocument::FindLineBreak(
 	
 	uint32 result = (t - mText.begin()) + 1;
 	
-	if (GetSoftwrap() /*and mTargetTextView != nil*/ and result > inFromOffset + 1)
-	{
-		uint32 width = mTargetTextView->GetWrapWidth();
-		
-		width -= static_cast<uint32>(inIndent * mCharsPerTab * mCharWidth);
-		
-		ustring txt;
-		uint32 l = result - inFromOffset;
-		if (inFromOffset + l > mText.GetSize())
-			l = mText.GetSize() - inFromOffset;
-		(void)GetStyledLayout(inFromOffset, l, inState, txt);
-		
-		uint32 s = 0;
-		while (s < txt.length() and txt[s] == '\t' and width > mTabWidth)
-		{
-			width -= static_cast<uint32>(mTabWidth);
-			++s;
-		}
-		
-		if (width <= mTabWidth)
-			result = inFromOffset + s;
-		else
-		{
-			UInt32 br;
-			if (::ATSUBreakLine(mTextLayout, s, Long2Fix(width), false, &br) == noErr
-				and br < txt.length() - 1)
-			{
-				result = inFromOffset + br;
-			}
-		}
-	}
+//	if (GetSoftwrap() /*and mTargetTextView != nil*/ and result > inFromOffset + 1)
+//	{
+//		uint32 width = mTargetTextView->GetWrapWidth();
+//		
+//		width -= static_cast<uint32>(inIndent * mCharsPerTab * mCharWidth);
+//		
+//		string txt;
+//		uint32 l = result - inFromOffset;
+//		if (inFromOffset + l > mText.GetSize())
+//			l = mText.GetSize() - inFromOffset;
+//		(void)GetStyledLayout(inFromOffset, l, inState, txt);
+//		
+//		uint32 s = 0;
+//		while (s < txt.length() and txt[s] == '\t' and width > mTabWidth)
+//		{
+//			width -= static_cast<uint32>(mTabWidth);
+//			++s;
+//		}
+//		
+//		if (width <= mTabWidth)
+//			result = inFromOffset + s;
+//		else
+//		{
+//			uint32 br;
+//			if (::ATSUBreakLine(mTextLayout, s, Long2Fix(width), false, &br) == noErr
+//				and br < txt.length() - 1)
+//			{
+//				result = inFromOffset + br;
+//			}
+//		}
+//	}
 	
 	return result;
 }
@@ -1524,7 +1467,7 @@ int32 MDocument::RewrapLines(
 	lineInfoEnd = lineInfoStart + 1;
 	
 	if (mLanguage and lineInfoStart == mLineInfo.begin())
-		(*lineInfoStart).state = mLanguage->GetInitialState(mFile.leaf(), mText);
+		(*lineInfoStart).state = mLanguage->GetInitialState(mURL.leaf(), mText);
 	
 	uint16 state = (*lineInfoStart).state;
 	uint32 start = (*lineInfoStart).start;
@@ -1616,7 +1559,7 @@ void MDocument::RestyleDirtyLines(
 		{
 			uint16 state;
 			if (line == 0)
-				state = mLanguage->GetInitialState(mFile.leaf(), mText);
+				state = mLanguage->GetInitialState(mURL.leaf(), mText);
 			else
 				state = mLineInfo[line].state;
 			
@@ -1641,7 +1584,7 @@ void MDocument::RestyleDirtyLines(
 
 void MDocument::GetLine(
 	uint32		inLineNr,
-	ustring&	outText) const
+	string&		outText) const
 {
 	if (inLineNr < mLineInfo.size())
 	{
@@ -1652,7 +1595,7 @@ void MDocument::GetLine(
 		
 		assert(start + length <= mText.GetSize());
 		
-		auto_array<UniChar> b(new UniChar[length]);
+		auto_array<char> b(new char[length]);
 		mText.GetText(start, b.get(), length);
 		
 		outText.assign(b.get(), b.get() + length);
@@ -1673,7 +1616,6 @@ void MDocument::UpdateDirtyLines()
 void MDocument::GetSelectionBounds(
 	HIRect&		outBounds) const
 {
-
 	if (mSelection.IsBlock())
 	{
 		assert(false);
@@ -1718,9 +1660,8 @@ void MDocument::GetSelectionBounds(
 // GetSelectedText
 
 void MDocument::GetSelectedText(
-	ustring&		outText) const
+	string&			outText) const
 {
-
 	if (not mSelection.IsEmpty())
 	{
 		if (mSelection.IsBlock())
@@ -1734,15 +1675,6 @@ void MDocument::GetSelectedText(
 			mText.GetText(anchor, caret - anchor, outText);
 		}
 	}
-}
-
-void MDocument::GetSelectedText(
-	string&			outText) const
-{
-
-	ustring txt;
-	GetSelectedText(txt);
-	Convert(txt, outText);
 }
 
 // ---------------------------------------------------------------------------
@@ -1846,7 +1778,6 @@ void MDocument::SendSelectionChangedEvent()
 uint32 MDocument::OffsetToLine(
 	uint32		inOffset) const
 {
-
 	int32 L = 0, R = mLineInfo.size() - 1;
 	
 	while (L <= R)
@@ -1868,11 +1799,10 @@ uint32 MDocument::OffsetToLine(
 //	OffsetToPosition
 
 void MDocument::OffsetToPosition(
-	uint32 inOffset,
-	uint32& outLine,
-	int32& outX) const
+	uint32		inOffset,
+	uint32&		outLine,
+	int32&		outX) const
 {
-
 	outLine = OffsetToLine(inOffset);
 	
 	uint32 column = inOffset - LineStart(outLine);
@@ -1880,7 +1810,7 @@ void MDocument::OffsetToPosition(
 		outX = 0;
 	else
 	{
-		ustring text;
+		string text;
 		(void)GetStyledLayout(outLine, text);
 
 		ATSUCaret mainCaret = { 0 }, secondCaret = { 0 };
@@ -1898,7 +1828,6 @@ void MDocument::OffsetToPosition(
 
 uint32 MDocument::OffsetToColumn(uint32 inOffset) const
 {
-
 	uint32 line = OffsetToLine(inOffset);
 	uint32 start = LineStart(line);
 	
@@ -1929,17 +1858,16 @@ void MDocument::PositionToOffset(
 	HIPoint			inLocation,
 	uint32&			outOffset) const
 {
-
 	uint32 line = static_cast<uint32>(inLocation.y / mLineHeight);
 	
 	if (line >= mLineInfo.size())
 		outOffset = mText.GetSize();
 	else
 	{
-		ustring text;
+		string text;
 		(void)GetStyledLayout(line, text);
 		
-		UInt32 primaryOffset = 0, secondaryOffset;
+		uint32 primaryOffset = 0, secondaryOffset;
 		Boolean isLeading;
 
 		if (GetSoftwrap())
@@ -1983,7 +1911,7 @@ void MDocument::FinishAction()
 
 void MDocument::Insert(
 	uint32			inOffset,
-	const UniChar*	inText,
+	const char*		inText,
 	uint32			inLength)
 {
 	if (inLength > 0)
@@ -2216,8 +2144,7 @@ void MDocument::DoShiftRight()
 	
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
-		const UniChar kTab = '\t';
-		Insert(LineStart(line), &kTab, 1);
+		Insert(LineStart(line), "\t", 1);
 		caret += 1;
 	}
 	
@@ -2255,7 +2182,7 @@ void MDocument::DoComment()
 			else
 				length = LineEnd(line) - offset;
 			
-			ustring text;
+			string text;
 			mText.GetText(offset, length, text);
 			
 			if (text[length - 1] == '\n')
@@ -2309,7 +2236,7 @@ void MDocument::DoUncomment()
 			else
 				length = LineEnd(line) - offset;
 			
-			ustring text;
+			string text;
 			mText.GetText(offset, length, text);
 
 			if (text[length - 1] == '\n')
@@ -2345,7 +2272,7 @@ void MDocument::DoCut(bool inAppend)
 {
 	StartAction("Cut");
 	
-	ustring text;
+	string text;
 	GetSelectedText(text);
 	if (inAppend)
 		MClipboard::Instance().AddData(text);
@@ -2359,7 +2286,7 @@ void MDocument::DoCut(bool inAppend)
 
 void MDocument::DoCopy(bool inAppend)
 {
-	ustring text;
+	string text;
 	GetSelectedText(text);
 	if (inAppend)
 		MClipboard::Instance().AddData(text);
@@ -2371,7 +2298,7 @@ void MDocument::DoPaste()
 {
 	if (MClipboard::Instance().HasData())
 	{
-		ustring text;
+		string text;
 		bool isBlock;
 		
 		MClipboard::Instance().GetData(text, isBlock);
@@ -2437,11 +2364,11 @@ void MDocument::DoFastFind(MDirection inDirection)
 // -----------------------------------------------------------------------
 // FastFind
 
-void MDocument::FastFindType(const UniChar* inText, uint32 inTextLength)
+void MDocument::FastFindType(const char* inText, uint32 inTextLength)
 {
-	::ObscureCursor();
+	eObscureCursor();
 	
-	ustring what = mFastFindWhat;
+	string what = mFastFindWhat;
 	
 	if (inText != nil)
 		mFastFindWhat.append(inText, inTextLength);
@@ -2490,7 +2417,6 @@ bool MDocument::FastFind(MDirection inDirection)
 
 bool MDocument::CanReplace() const
 {
-
 	return mText.CanReplace(MFindDialog::Instance().GetFindString(),
 		MFindDialog::Instance().GetRegex(),
 		MFindDialog::Instance().GetIgnoreCase(), mSelection);
@@ -2531,7 +2457,7 @@ void MDocument::HandleFindDialogCommand(uint32 inCommand)
 
 bool MDocument::DoFindNext(MDirection inDirection)
 {
-	ustring what = MFindDialog::Instance().GetFindString();
+	string what = MFindDialog::Instance().GetFindString();
 	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
 	bool regex = MFindDialog::Instance().GetRegex();
 	uint32 offset;
@@ -2550,7 +2476,7 @@ bool MDocument::DoFindNext(MDirection inDirection)
 	return result;
 }
 
-void MDocument::FindAll(ustring inWhat, bool inIgnoreCase, 
+void MDocument::FindAll(string inWhat, bool inIgnoreCase, 
 	bool inRegex, bool inSelection, MMessageList&outHits)
 {
 	if (mSelection.IsBlock())
@@ -2571,13 +2497,13 @@ void MDocument::FindAll(ustring inWhat, bool inIgnoreCase,
 	{
 		uint32 lineNr = sel.GetMinLine(*this);
 		
-		ustring t;
+		string t;
 		GetLine(lineNr, t);
 		
 		string s;
 		Convert(t, s);
 		
-		outHits.AddMessage(kMsgKindNone, mFile, lineNr + 1,
+		outHits.AddMessage(kMsgKindNone, mURL, lineNr + 1,
 			sel.GetMinOffset(*this), sel.GetMaxOffset(*this), s);
 		
 		minOffset = sel.GetMaxOffset();
@@ -2590,8 +2516,8 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 	{
 		StartAction(kReplaceAction);
 		
-		ustring what = MFindDialog::Instance().GetFindString();
-		ustring replace = MFindDialog::Instance().GetReplaceString();
+		string what = MFindDialog::Instance().GetFindString();
+		string replace = MFindDialog::Instance().GetReplaceString();
 		
 		uint32 offset = mSelection.GetMinOffset(*this);
 		
@@ -2635,8 +2561,8 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 void MDocument::DoReplaceAll()
 {
 	uint32 offset = 0, lastMatch = 0;
-	ustring what = MFindDialog::Instance().GetFindString();
-	ustring replace;
+	string what = MFindDialog::Instance().GetFindString();
+	string replace;
 	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
 	bool replacedAny = false;
 	bool regex = MFindDialog::Instance().GetRegex();
@@ -2694,11 +2620,11 @@ void MDocument::DoComplete(MDirection inDirection)
 			return;
 		}
 		
-		ustring key;
+		string key;
 		mText.GetText(startOffset, length, key);
 		mText.CollectWordsBeginningWith(startOffset, inDirection, key, mCompletionStrings);
 	
-		boost::mutex::scoped_lock lock(sDocListMutex);
+//		boost::mutex::scoped_lock lock(sDocListMutex);
 
 		MDocument* doc = sFirst;
 		while (doc != nil)
@@ -2749,7 +2675,6 @@ void MDocument::DoSoftwrap()
 
 ATSUTextLayout MDocument::GetTextLayout() const
 {
-
 //	if (mTextLayout == nil)
 //		ReInit();
 //
@@ -2758,9 +2683,8 @@ ATSUTextLayout MDocument::GetTextLayout() const
 
 ATSUTextLayout MDocument::GetStyledLayout(
 	uint32		inLine,
-	ustring&	outText) const
+	string&		outText) const
 {
-
 	uint32 offset = LineStart(inLine);
 	uint32 length = LineStart(inLine + 1) - offset;
 	return GetStyledLayout(offset, length, mLineInfo[inLine].state, outText);
@@ -2770,9 +2694,8 @@ ATSUTextLayout MDocument::GetStyledLayout(
 	uint32		inOffset,
 	uint32		inLength,
 	uint16		inState,
-	ustring&	outText) const
+	string&		outText) const
 {
-
 //	if (mTextLayout == nil)
 //		ReInit();
 //	
@@ -2867,7 +2790,7 @@ ATSUTextLayout MDocument::GetStyledLayout(
 	
 	for (uint32 ix = 0; ix < outText.length(); ++ix)
 	{
-		UniChar ch = outText[ix];
+		char ch = outText[ix];
 		if ((ch < 0x0020 and not isspace(ch)) or ch == 0x007f)
 		{
 			outText[ix] = 0x00BF; //	'¿'
@@ -2906,7 +2829,6 @@ ATSUTextLayout MDocument::GetStyledLayout(
 
 void MDocument::HashLines(vector<uint32>& outHashes) const
 {
-
 	outHashes.clear();
 	outHashes.reserve(mLineInfo.size());
 	
@@ -2923,85 +2845,85 @@ void MDocument::HashLines(vector<uint32>& outHashes) const
 
 // -- text input methods
 
-// ---------------------------------------------------------------------------
-//	DoTextInputUnicodeForKeyEvent
-
-OSStatus MDocument::DoTextInputUnicodeForKeyEvent(EventRef ioEvent)
-{
-	UInt32 dataSize; 
-	auto_array<UniChar> buffer;
-	
-	OSStatus status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-		typeUnicodeText, nil, 0, &dataSize, nil);
-	
-	if (status == noErr and dataSize > 0) 
-	{ 
-		buffer.reset(new UniChar[dataSize / sizeof(UniChar)]);
-		
-		status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-			typeUnicodeText, nil, dataSize, nil, buffer.get());
-	}
-	
-	UniChar* chars = buffer.get();
-	uint32 charCount = dataSize / sizeof(UniChar);
-	
-	THROW_IF_OSERROR(status); 
-	
-	bool handled = false;
-	mCompletionStrings.clear();
-
-	EventRef origEvent;
-	if (::GetEventParameter(ioEvent, kEventParamTextInputSendKeyboardEvent,
-	    typeEventRef, nil, sizeof(EventRef), nil, &origEvent) == noErr)
-	{
-	    uint32 modifiers, keyCode;
-
-	    ::GetEventParameter(origEvent, kEventParamKeyModifiers,
-	        typeUInt32, nil, sizeof(uint32), nil, &modifiers);
-	    ::GetEventParameter(origEvent, kEventParamKeyCode,
-			typeUInt32, nil, sizeof(uint32), nil, &keyCode);
-
-		UInt32 state = 0;    // we don't want to save the state
-		void* transData = (void*)::GetScriptManagerVariable(smKCHRCache);
-		uint32 charCode = static_cast<uint32>(
-			toupper(static_cast<int>(::KeyTranslate(transData,
-			static_cast<uint32>(keyCode & 0x000000FF), &state))));
-		
-		handled = HandleRawKeydown(keyCode, charCode, modifiers);
-		
-		if (modifiers & cmdKey)
-		{
-			handled = true;		// don't type command key's
-			mCompletionIndex = -1;
-		}
-	}
-	
-	if (not handled and dataSize > 0)
-	{
-		for (UniChar* text = chars; text != chars + charCount; ++text)
-		{
-			if (*text == '\r')
-				*text = '\n';
-		}
-		
-		if (mFastFindMode)
-			FastFindType(chars, charCount);
-		else
-		{
-			Type(chars, charCount);
-			mCompletionIndex = -1;
-		}
-		
-		handled = true;
-	}
-	
-	UpdateDirtyLines();
-	
-	OSStatus err = noErr;
-	if (not handled)
-		err = eventNotHandledErr;
-	return err;
-}
+//// ---------------------------------------------------------------------------
+////	DoTextInputUnicodeForKeyEvent
+//
+//OSStatus MDocument::DoTextInputUnicodeForKeyEvent(EventRef ioEvent)
+//{
+//	uint32 dataSize; 
+//	auto_array<UniChar> buffer;
+//	
+//	OSStatus status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
+//		typeUnicodeText, nil, 0, &dataSize, nil);
+//	
+//	if (status == noErr and dataSize > 0) 
+//	{ 
+//		buffer.reset(new UniChar[dataSize / sizeof(UniChar)]);
+//		
+//		status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
+//			typeUnicodeText, nil, dataSize, nil, buffer.get());
+//	}
+//	
+//	UniChar* chars = buffer.get();
+//	uint32 charCount = dataSize / sizeof(UniChar);
+//	
+//	THROW_IF_OSERROR(status); 
+//	
+//	bool handled = false;
+//	mCompletionStrings.clear();
+//
+//	EventRef origEvent;
+//	if (::GetEventParameter(ioEvent, kEventParamTextInputSendKeyboardEvent,
+//	    typeEventRef, nil, sizeof(EventRef), nil, &origEvent) == noErr)
+//	{
+//	    uint32 modifiers, keyCode;
+//
+//	    ::GetEventParameter(origEvent, kEventParamKeyModifiers,
+//	        typeuint32, nil, sizeof(uint32), nil, &modifiers);
+//	    ::GetEventParameter(origEvent, kEventParamKeyCode,
+//			typeuint32, nil, sizeof(uint32), nil, &keyCode);
+//
+//		uint32 state = 0;    // we don't want to save the state
+//		void* transData = (void*)::GetScriptManagerVariable(smKCHRCache);
+//		uint32 charCode = static_cast<uint32>(
+//			toupper(static_cast<int>(::KeyTranslate(transData,
+//			static_cast<uint32>(keyCode & 0x000000FF), &state))));
+//		
+//		handled = HandleRawKeydown(keyCode, charCode, modifiers);
+//		
+//		if (modifiers & cmdKey)
+//		{
+//			handled = true;		// don't type command key's
+//			mCompletionIndex = -1;
+//		}
+//	}
+//	
+//	if (not handled and dataSize > 0)
+//	{
+//		for (UniChar* text = chars; text != chars + charCount; ++text)
+//		{
+//			if (*text == '\r')
+//				*text = '\n';
+//		}
+//		
+//		if (mFastFindMode)
+//			FastFindType(chars, charCount);
+//		else
+//		{
+//			Type(chars, charCount);
+//			mCompletionIndex = -1;
+//		}
+//		
+//		handled = true;
+//	}
+//	
+//	UpdateDirtyLines();
+//	
+//	OSStatus err = noErr;
+//	if (not handled)
+//		err = eventNotHandledErr;
+//	return err;
+//}
 
 bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 {
@@ -3356,7 +3278,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 
 				StartAction("Shift lines up");
 			
-				ustring txt;
+				string txt;
 				mText.GetText(LineStart(minLine - 1), LineStart(minLine) - LineStart(minLine - 1), txt);
 				Delete(LineStart(minLine - 1), LineStart(minLine) - LineStart(minLine - 1));
 				
@@ -3387,7 +3309,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 
 				StartAction("Shift lines down");
 			
-				ustring txt;
+				string txt;
 				mText.GetText(LineStart(maxLine + 1), LineStart(maxLine + 2) - LineStart(maxLine + 1), txt);
 				Delete(LineStart(maxLine + 1), LineStart(maxLine + 2) - LineStart(maxLine + 1));
 				
@@ -3454,7 +3376,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 //		--firstLine;
 	
 	if (handled)
-		::ObscureCursor();
+		eObscureCursor();
 	
 	return handled;
 }
@@ -3627,7 +3549,7 @@ bool MDocument::HandleRawKeydown(
 				// Enter a return, optionally auto indented
 				uint32 minOffset = mSelection.GetMinOffset(*this);
 
-				ustring s;
+				string s;
 				s += '\n';
 
 				if (gAutoIndent)
@@ -3700,135 +3622,135 @@ bool MDocument::HandleRawKeydown(
 	return handled;
 }
 
-OSStatus MDocument::DoTextInputOffsetToPos(EventRef ioEvent)
-{
-	OSStatus err = eventNotHandledErr;
-
-	SInt32 textOffset;
-	::GetEventParameter(ioEvent, kEventParamTextInputSendTextOffset,
-		typeSInt32, nil, sizeof(textOffset), nil, &textOffset);
-	
-	if (textOffset == 0)
-	{
-		uint32 line;
-		int32 x;
-		OffsetToPosition(mSelection.GetCaret(), line, x);
-		
-		HIPoint pt;
-		pt.x = x;
-		pt.y = mLineHeight * line;
-		
-		mTargetTextView->ConvertToGlobal(pt);
-		
-		err = ::SetEventParameter(ioEvent, kEventParamTextInputReplyPoint,
-			typeHIPoint, sizeof(pt), &pt);
-	}
-	
-	return err;
-}
-
-OSStatus MDocument::DoTextInputUpdateActiveInputArea(EventRef ioEvent)
-{
-	OSStatus err = eventNotHandledErr;
-	
-	try
-	{
-		UInt32 size;
-		int32 fix = 0;
-		UniChar buf[256];
-
-		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendFixLen,
-				typeLongInteger, nil, sizeof(long), nil, &fix);
-		fix /= 2;
-
-		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-			typeUnicodeText, nil, sizeof(buf), &size, buf));
-		size /= 2;
-		
-		struct MyTextRangeArray
-		{
-		    short		fNumOfRanges;	/* specify the size of the fRange array */
-		    TextRange	fRange[9];		/* when fNumOfRanges > 1, the size of this array has to be calculated */
-		};
-
-		MyTextRangeArray tra;
-		tra.fNumOfRanges = 0;
-
-		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendHiliteRng, typeTextRangeArray,
-			nil, sizeof(MyTextRangeArray), nil, &tra);
-
-//		StHideCaret hide(fTargetTextView);
+//OSStatus MDocument::DoTextInputOffsetToPos(EventRef ioEvent)
+//{
+//	OSStatus err = eventNotHandledErr;
+//
+//	SInt32 textOffset;
+//	::GetEventParameter(ioEvent, kEventParamTextInputSendTextOffset,
+//		typeSInt32, nil, sizeof(textOffset), nil, &textOffset);
 //	
-		for (int i = kCaretPosition; i <= kSelectedText; ++i)
-			mTextInputAreaInfo.fOffset[i] = -1;
-
-		StartAction(kTypeAction);
-	
-		if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
-		{
-			Delete(mTextInputAreaInfo.fOffset[kActiveInputArea],
-				mTextInputAreaInfo.fLength[kActiveInputArea]);
-		}
-	
-		int insertAt = mSelection.GetCaret();
-	
-		if (size > 0)
-		{
-			Insert(insertAt, buf, size);
-
-			MSelection s = mText.GetSelectionAfter();
-			s.SetCaret(mSelection.GetCaret());
-			mText.SetSelectionAfter(s);
-	
-			if (fix == -1 or fix == static_cast<int32>(size))
-				mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
-			else
-			{
-				mTextInputAreaInfo.fOffset[kActiveInputArea] = insertAt;
-				mTextInputAreaInfo.fLength[kActiveInputArea] = size;
-		
-				for (int i = 0; i < tra.fNumOfRanges; ++i)
-				{
-					TextRangePtr trp = &tra.fRange[i];
-					if (trp->fStart >= 0)
-					{
-						mTextInputAreaInfo.fOffset[trp->fHiliteStyle] = insertAt + trp->fStart / 2;
-						mTextInputAreaInfo.fLength[trp->fHiliteStyle] = (trp->fEnd - trp->fStart) / 2;
-					}
-				}
-		
-				if (mTextInputAreaInfo.fOffset[kSelectedText] >= 0)
-				{
-					ChangeSelection(mTextInputAreaInfo.fOffset[kSelectedText],
-						mTextInputAreaInfo.fOffset[kSelectedText] +
-						mTextInputAreaInfo.fLength[kSelectedText]);
-				}
-				else if (mTextInputAreaInfo.fOffset[kCaretPosition] >= 0)
-				{
-					ChangeSelection(mTextInputAreaInfo.fOffset[kCaretPosition],
-						mTextInputAreaInfo.fOffset[kCaretPosition]);
-				}
-			}
-		}
-		else
-			mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
-
-		TouchLine(OffsetToLine(insertAt));
-		UpdateDirtyLines();
-		eScroll(kScrollToCaret);
-		
-		uint32 line;
-		OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
-		
-		err = noErr;
-	}
-	catch (exception& e)
-	{
-		MError::DisplayError(e);
-	}
-
-	return err;
-}
+//	if (textOffset == 0)
+//	{
+//		uint32 line;
+//		int32 x;
+//		OffsetToPosition(mSelection.GetCaret(), line, x);
+//		
+//		HIPoint pt;
+//		pt.x = x;
+//		pt.y = mLineHeight * line;
+//		
+//		mTargetTextView->ConvertToGlobal(pt);
+//		
+//		err = ::SetEventParameter(ioEvent, kEventParamTextInputReplyPoint,
+//			typeHIPoint, sizeof(pt), &pt);
+//	}
+//	
+//	return err;
+//}
+//
+//OSStatus MDocument::DoTextInputUpdateActiveInputArea(EventRef ioEvent)
+//{
+//	OSStatus err = eventNotHandledErr;
+//	
+//	try
+//	{
+//		uint32 size;
+//		int32 fix = 0;
+//		UniChar buf[256];
+//
+//		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendFixLen,
+//				typeLongInteger, nil, sizeof(long), nil, &fix);
+//		fix /= 2;
+//
+//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamTextInputSendText,
+//			typeUnicodeText, nil, sizeof(buf), &size, buf));
+//		size /= 2;
+//		
+//		struct MyTextRangeArray
+//		{
+//		    short		fNumOfRanges;	/* specify the size of the fRange array */
+//		    TextRange	fRange[9];		/* when fNumOfRanges > 1, the size of this array has to be calculated */
+//		};
+//
+//		MyTextRangeArray tra;
+//		tra.fNumOfRanges = 0;
+//
+//		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendHiliteRng, typeTextRangeArray,
+//			nil, sizeof(MyTextRangeArray), nil, &tra);
+//
+////		StHideCaret hide(fTargetTextView);
+////	
+//		for (int i = kCaretPosition; i <= kSelectedText; ++i)
+//			mTextInputAreaInfo.fOffset[i] = -1;
+//
+//		StartAction(kTypeAction);
+//	
+//		if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
+//		{
+//			Delete(mTextInputAreaInfo.fOffset[kActiveInputArea],
+//				mTextInputAreaInfo.fLength[kActiveInputArea]);
+//		}
+//	
+//		int insertAt = mSelection.GetCaret();
+//	
+//		if (size > 0)
+//		{
+//			Insert(insertAt, buf, size);
+//
+//			MSelection s = mText.GetSelectionAfter();
+//			s.SetCaret(mSelection.GetCaret());
+//			mText.SetSelectionAfter(s);
+//	
+//			if (fix == -1 or fix == static_cast<int32>(size))
+//				mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
+//			else
+//			{
+//				mTextInputAreaInfo.fOffset[kActiveInputArea] = insertAt;
+//				mTextInputAreaInfo.fLength[kActiveInputArea] = size;
+//		
+//				for (int i = 0; i < tra.fNumOfRanges; ++i)
+//				{
+//					TextRangePtr trp = &tra.fRange[i];
+//					if (trp->fStart >= 0)
+//					{
+//						mTextInputAreaInfo.fOffset[trp->fHiliteStyle] = insertAt + trp->fStart / 2;
+//						mTextInputAreaInfo.fLength[trp->fHiliteStyle] = (trp->fEnd - trp->fStart) / 2;
+//					}
+//				}
+//		
+//				if (mTextInputAreaInfo.fOffset[kSelectedText] >= 0)
+//				{
+//					ChangeSelection(mTextInputAreaInfo.fOffset[kSelectedText],
+//						mTextInputAreaInfo.fOffset[kSelectedText] +
+//						mTextInputAreaInfo.fLength[kSelectedText]);
+//				}
+//				else if (mTextInputAreaInfo.fOffset[kCaretPosition] >= 0)
+//				{
+//					ChangeSelection(mTextInputAreaInfo.fOffset[kCaretPosition],
+//						mTextInputAreaInfo.fOffset[kCaretPosition]);
+//				}
+//			}
+//		}
+//		else
+//			mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
+//
+//		TouchLine(OffsetToLine(insertAt));
+//		UpdateDirtyLines();
+//		eScroll(kScrollToCaret);
+//		
+//		uint32 line;
+//		OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
+//		
+//		err = noErr;
+//	}
+//	catch (exception& e)
+//	{
+//		MError::DisplayError(e);
+//	}
+//
+//	return err;
+//}
 
 void MDocument::PrefsChanged()
 {
@@ -3851,14 +3773,11 @@ void MDocument::StdOut(const char* inText, uint32 inSize)
 		uint32 line = mSelection.GetMaxLine(*this);
 		ChangeSelection(LineEnd(line), LineEnd(line));
 		
-		UniChar kNL = '\n';
-		Type(&kNL, 1);
+		Type("\n", 1);
 		mPreparedForStdOut = true;
 	}
 	
-	ustring txt;
-	Convert(string(inText, inSize), txt);
-	Type(txt.c_str(), txt.length());
+	Type(inText, inSize);
 	
 	eLineCountChanged();
 	eScroll(kScrollToCaret);
@@ -3895,7 +3814,7 @@ void MDocument::Execute()
 		ChangeSelection(LineStart(line), LineEnd(line));
 	}
 	
-	ustring s;
+	string s;
 	GetSelectedText(s);
 	
 	if (mShell.get() == nil)
@@ -3905,7 +3824,7 @@ void MDocument::Execute()
 		if (IsSpecified())
 		{
 			char cwd[1024] = { 0 };
-			ssize_t size = read_attribute(mFile, kJapieCWD, cwd, sizeof(cwd));
+			ssize_t size = read_attribute(mURL, kJapieCWD, cwd, sizeof(cwd));
 			if (size > 0)
 			{
 				string d(cwd, size);
@@ -3930,7 +3849,6 @@ void MDocument::Execute()
 
 MController* MDocument::GetFirstController() const
 {
-
 	MController* controller = nil;
 	
 	if (mTargetTextView != nil)
@@ -4025,7 +3943,7 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 		MURL p;
 		
 		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			MApplication::Instance().OpenOneDocument(p);
+			gApp->OpenOneDocument(p);
 	}
 }
 

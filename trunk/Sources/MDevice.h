@@ -5,38 +5,42 @@
 #include "MColor.h"
 
 class MView;
+class MTextLayout;
 
 class MDevice
 {
   public:
 					MDevice(
-						MView*		inView,
-						MRect		inRect);
+						MView*			inView,
+						MRect			inRect);
+
+					MDevice(
+						MTextLayout*	inTextLayout);
 
 					~MDevice();
 
 	void			SetForeColor(
-						MColor		inColor);
+						MColor			inColor);
 
 	MColor			GetForeColor() const;
 
 	void			SetBackColor(
-						MColor		inColor);
+						MColor			inColor);
 
 	MColor			GetBackColor() const;
 	
 	void			EraseRect(
-						MRect		inRect);
+						MRect			inRect);
 
 	void			FillRect(
-						MRect		inRect);
+						MRect			inRect);
 
 	void			FillEllipse(
-						MRect		inRect);
+						MRect			inRect);
 	
 	void			CreateAndUsePattern(
-						MColor		inColor1,
-						MColor		inColor2);
+						MColor			inColor1,
+						MColor			inColor2);
 	
 	uint32			GetAscent() const;
 	
@@ -45,9 +49,10 @@ class MDevice
 	uint32			GetLeading() const;
 
 	void			DrawString(
-						const std::string&	inText,
-						float inX,
-						float inY);
+						const std::string&	
+										inText,
+						float			inX,
+						float			inY);
 	
 //	void			UseTextLayout(ATSUTextLayout inTextLayout);
 //	void			DrawText(float inX, float inY, uint32 inTextStart, uint32 inTextLength);

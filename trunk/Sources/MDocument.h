@@ -97,6 +97,8 @@ class MDocument
   public:
 						MDocument();
 	explicit			MDocument(
+							const MURL*			inURL);
+	explicit			MDocument(
 							const MURL&			inURL);
 						MDocument(
 							const std::string&	inText,
@@ -256,6 +258,8 @@ class MDocument
 
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
+	
+	MEventOut<void()>					eObscureCursor();
 
 	MEventIn<void(bool)>								eShellStatusIn;
 	MEventIn<void(const char* inText, uint32 inSize)>	eStdOut;
@@ -368,6 +372,7 @@ class MDocument
 	MControllerList				mControllers;
 	bool						mSpecified;
 	MURL						mURL;
+	double						mFileModDate;
 	MTextBuffer					mText;
 	boost::mutex				mMutex;
 	MTextView*					mTargetTextView;

@@ -6,6 +6,7 @@
 
 #include "MTypes.h"
 #include "MHandler.h"
+#include "MP2PEvents.h"
 
 #define nil NULL
 
@@ -35,6 +36,8 @@ class MJapieApp : public MHandler
 
 	virtual bool	ProcessCommand(
 						uint32			inCommand);
+
+	MEventOut<void()>	eIdle;
 
   private:
 	typedef std::list<MWindow*>	MWindowList;
