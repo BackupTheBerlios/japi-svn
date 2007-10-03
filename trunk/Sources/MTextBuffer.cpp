@@ -49,12 +49,12 @@
 #include <boost/regex.hpp>
 
 #include "MTextBuffer.h"
-#include "MUnicode.h"
+//#include "MUnicode.h"
 #include "MSelection.h"
 #include "MError.h"
 #include "MFile.h"
 #include "MPreferences.h"
-#include "MMessageWindow.h"
+//#include "MMessageWindow.h"
 
 using namespace std;
 

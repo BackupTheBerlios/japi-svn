@@ -339,9 +339,6 @@ class MTextBuffer
 	void			push_back(
 						wchar_t			inUnicode);
 	
-	UniChar			front() const;
-	UniChar			back() const;
-	
 	void			reserve(
 						uint32			inSize);
 

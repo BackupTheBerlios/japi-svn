@@ -39,6 +39,9 @@
 			<file>MDrawingArea.cpp</file>
 			<file>MColor.cpp</file>
 			<file>MDevice.cpp</file>
+			<file>MFont.cpp</file>
+			<file>MTextBuffer.cpp</file>
+			<file>MPreferences.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>
