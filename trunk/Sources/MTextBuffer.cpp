@@ -1430,9 +1430,101 @@ bool MTextBuffer::Find(
 	bool result = false;
 	
 	if (inRegex)
-	{//
-//		MoveGapTo(mLogicalLength);
-//	
+	{
+		MoveGapTo(mLogicalLength);
+		
+		const char* errmsg;
+		int errcode, erroffset;
+		
+		if (inWhat.length() == 0)
+			THROW(("Regular expression is too short"));
+		
+		int options = PCRE_MULTILINE | PCRE_UTF8;
+		
+		if (inIgnoreCase)
+			options |= PCRE_CASELESS;
+		
+		pcre* pattern = nil;
+		pcre_extra* info = nil;
+		
+		try
+		{
+			pattern = pcre_compile2(inWhat.c_str(),
+				options, &errcode, &errmsg, &erroffset, nil);
+			
+			if (pattern == nil or errcode != 0)
+				THROW(("Error compiling regular expression: %s", kPCRE_ERR_STR[errcode]));
+			
+			info = pcre_study(pattern, 0, &errmsg);
+			if (errmsg != nil)
+				THROW(("Error studying compiled regular expression: %s", errmsg));
+			
+			int matches[33] = {};
+			
+			if (inDirection == kDirectionForward)
+			{
+				options = 0;
+				
+				int r = pcre_exec(pattern, info, mData + inOffset,
+					mLogicalLength, inOffset, options, matches, 33);
+				
+				result = r >= 0;
+			}
+			else
+			{
+				int firstchar;
+				const unsigned char* firstTable;
+
+				int r = pcre_fullinfo(pattern, info, PCRE_INFO_FIRSTCHAR, &firstchar);
+				if (r != 0 or firstChar < -1)
+					r = pcre_fullinfo(pattern, info, PCRE_INFO_FIRSTTABLE, &firstTable);
+				
+				if (inIgnoreCase and firstChar != 0)
+					firstChar = toupper(firstChar);
+
+				while (result == false and inOffset > 0)
+				{
+					inOffset -= GetPrevCharLength(inOffset);
+					
+					if (inOffset > mLogicalLength)
+						break;
+
+					bool trymatch = true;
+					unsigned char* ch = static_cast<unsigned char>(mData[inOffset]);
+					
+					if (firstChar >= 0)
+					{
+						if (inIgnoreCase)
+							ch = toupper(ch);
+						trymatch = ch == firstChar;
+					}
+					else if (firstChar == -1)
+						trymatch = inOffset == 0 or mData[inOffset - 1] == '\n';
+					else if (firstTable)
+						trymatch = (firstTable[inChar / 8] & (1 << (ch % 8))) != 0;
+					
+					if (trymatch)
+					{
+						r = pcre_exec(pattern, info, mData, mLogicalLength, inOffset,
+							PCRE_ANCHORED, matches, 33);
+						
+						result = r >= 0;
+					}
+				}
+			}
+		}
+		catch (...)
+		{
+			if (pattern != nil)
+				free(pattern);
+			
+			if (info != nil)
+				free(info);
+			
+			throw;
+		}
+		
+	
 //		pcre* re = nil;
 //		
 //		try

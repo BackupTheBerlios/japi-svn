@@ -42,6 +42,24 @@
 			<file>MFont.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
+			<file>MUnicode.cpp</file>
+			<file>MUtils.cpp</file>
+			<group name="Language">
+				<file>MLanguage.cpp</file>
+				<file>MLanguageCpp.cpp</file>
+				<file>MLanguageHTML.cpp</file>
+				<file>MLanguagePerl.cpp</file>
+				<file>MLanguageTeX.cpp</file>
+				<file>MLanguageXML.cpp</file>
+			</group>
+			<file>MGlobals.cpp</file>
+			<file>MFile.cpp</file>
+			<file>MError.cpp</file>
+			<file>MController.cpp</file>
+			<file>MClipboard.cpp</file>
+			<file>MTextView.cpp</file>
+			<file>MShell.cpp</file>
+			<file>MSelection.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>
