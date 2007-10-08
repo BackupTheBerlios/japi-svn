@@ -238,7 +238,7 @@ class MTextBuffer
 					MDirection		inDirection,
 					bool			inIgnoreCase,
 					bool			inRegex,
-					MSelection&		outFound) const;
+					MSelection&		outFound);
 
 	void		ReplaceExpression(
 					MSelection		inSelection,
@@ -251,7 +251,7 @@ class MTextBuffer
 					std::string		inWhat,
 					bool			inRegex,
 					bool			inIgnoreCase,
-					MSelection		inSelection) const;
+					MSelection		inSelection);
 
 //	void		FindAll(
 //					std::string		inWhat,

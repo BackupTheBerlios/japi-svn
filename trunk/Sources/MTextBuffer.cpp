@@ -1425,7 +1425,7 @@ bool MTextBuffer::Find(
 	MDirection		inDirection,
 	bool			inIgnoreCase,
 	bool			inRegex,
-	MSelection&		outFound) const
+	MSelection&		outFound)
 {
 	bool result = false;
 	
@@ -1476,11 +1476,11 @@ bool MTextBuffer::Find(
 				const unsigned char* firstTable;
 
 				int r = pcre_fullinfo(pattern, info, PCRE_INFO_FIRSTCHAR, &firstchar);
-				if (r != 0 or firstChar < -1)
+				if (r != 0 or firstchar < -1)
 					r = pcre_fullinfo(pattern, info, PCRE_INFO_FIRSTTABLE, &firstTable);
 				
-				if (inIgnoreCase and firstChar != 0)
-					firstChar = toupper(firstChar);
+				if (inIgnoreCase and firstchar != 0)
+					firstchar = toupper(firstchar);
 
 				while (result == false and inOffset > 0)
 				{
@@ -1490,18 +1490,18 @@ bool MTextBuffer::Find(
 						break;
 
 					bool trymatch = true;
-					unsigned char* ch = static_cast<unsigned char>(mData[inOffset]);
+					unsigned char ch = static_cast<unsigned char>(mData[inOffset]);
 					
-					if (firstChar >= 0)
+					if (firstchar >= 0)
 					{
 						if (inIgnoreCase)
 							ch = toupper(ch);
-						trymatch = ch == firstChar;
+						trymatch = ch == firstchar;
 					}
-					else if (firstChar == -1)
+					else if (firstchar == -1)
 						trymatch = inOffset == 0 or mData[inOffset - 1] == '\n';
 					else if (firstTable)
-						trymatch = (firstTable[inChar / 8] & (1 << (ch % 8))) != 0;
+						trymatch = (firstTable[ch / 8] & (1 << (ch % 8))) != 0;
 					
 					if (trymatch)
 					{
@@ -1651,7 +1651,7 @@ bool MTextBuffer::CanReplace(
 	string			inWhat,
 	bool			inRegex,
 	bool			inIgnoreCase,
-	MSelection		inSelection) const
+	MSelection		inSelection)
 {
 	bool result = false;
 	
