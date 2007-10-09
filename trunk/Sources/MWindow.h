@@ -24,7 +24,7 @@ class MWindow : public MHandler
 						const std::string&	inTitle);
 	std::string		GetTitle() const;
 
-	GtkWidget*		GetGtkWidget()			{ return mWindow; }
+	GtkWidget*		GetGtkWidget() const			{ return mWindow; }
 
 	virtual bool	UpdateCommandStatus(
 						uint32			inCommand,

@@ -30,57 +30,35 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCWINDOW_H
-#define MDOCWINDOW_H
+#ifndef MEDITWINDOW_H
+#define MEDITWINDOW_H
 
-#include "MWindow.h"
-#include "MSelection.h"
-#include "MDocument.h"
-#include "MController.h"
-#include "MMenu.h"
+#include "MDocWindow.h"
 
 class MParsePopup;
 
-class MDocWindow : public MWindow
+class MEditWindow : public MDocWindow
 {
   public:
-						MDocWindow();
+						MEditWindow();
 
-	static MDocWindow*	DisplayDocument(
+	virtual				~MEditWindow();
+	
+	static MEditWindow*	DisplayDocument(
 							MDocument*		inDocument);
 
-	static MDocWindow*	FindWindowForDocument(
+	static MEditWindow*	FindWindowForDocument(
+							MDocument*		inDocument);
+
+	void				Initialize(
 							MDocument*		inDocument);
 	
-	static MDocWindow*	GetFirstDocWindow()	{ return sFirst; }
-
-	MEventIn<void(bool)>					eModifiedChanged;
-	MEventIn<void(const MURL&)>				eFileSpecChanged;
-	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
-	MEventIn<void(bool)>					eShellStatus;
-	MEventIn<void(MDocument*)>				eDocumentChanged;
-
-	MDocument*		GetDocument();
+	virtual void		DocumentChanged(
+							MDocument* 		inDocument);
 
   protected:
 
-	static std::string	GetUntitledTitle();
-
-	virtual void		Initialize(
-							MDocument*		inDocument);
-
-	virtual bool		UpdateCommandStatus(
-							uint32			inCommand,
-							bool&			outEnabled,
-							bool&			outChecked);
-
-	virtual void		DocumentChanged(
-							MDocument*		inDocument);
-
 	virtual void		DoClose();
-
-	virtual bool		ProcessCommand(
-							uint32			inCommand);
 
 	virtual void		ModifiedChanged(
 							bool			inModified);
@@ -88,32 +66,13 @@ class MDocWindow : public MWindow
 	virtual void		FileSpecChanged(
 							const MURL&		inFile);
 	
-	void				SelectionChanged(
-							MSelection		inNewSelection,
-							std::string		inRangeName);
-
-	void				ShellStatus(
-							bool			inActive);
-	
-//	OSStatus			DoParsePaneClick(
-//							EventRef		ioEvent);
-
-  protected:
-
-	MController			mController;
-	MTextView*			mTextView;
-	GtkWidget*			mVBox;
-	GtkWidget*			mStatusbar;
-	MMenubar			mMenubar;
-	MParsePopup*		mParsePopup;
-	MParsePopup*		mIncludePopup;
-
-	virtual				~MDocWindow();
+	virtual bool		OnDelete(
+							GdkEvent*		inEvent);
 
   private:
 
-	static MDocWindow*	sFirst;
-	MDocWindow*			mNext;
+	static MEditWindow*	sHead;
+	MEditWindow*		mNext;
 };
 
 #endif

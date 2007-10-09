@@ -50,8 +50,10 @@ void MWindow::SetTitle(
 
 string MWindow::GetTitle() const
 {
-	string result;
-	return result;
+	const char* title = gtk_window_get_title(GTK_WINDOW(GetGtkWidget()));
+	if (title == nil)
+		title = "";
+	return title;
 }
 
 void MWindow::OnDestroy()

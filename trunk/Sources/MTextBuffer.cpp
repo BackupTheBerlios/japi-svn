@@ -1483,6 +1483,8 @@ MTextBuffer::MismatchSearch(
 	return result;
 }
 
+
+
 bool MTextBuffer::Find(
 	uint32			inOffset,
 	string			inWhat,

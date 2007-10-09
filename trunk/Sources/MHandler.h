@@ -16,7 +16,10 @@ class MHandler
 
 	virtual bool	ProcessCommand(
 						uint32			inCommand);
-  
+
+	void			SetSuper(
+						MHandler*		inSuper);
+
   protected:
 	MHandler*		mSuper;
 };

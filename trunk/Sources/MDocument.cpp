@@ -147,7 +147,9 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(const string& inText, const string& inFileNameHint)
+MDocument::MDocument(
+	const string&	inText,
+	const string&	inFileNameHint)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)

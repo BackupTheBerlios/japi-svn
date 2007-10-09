@@ -1,7 +1,7 @@
 #include "MJapieG.h"
 
 #include "MDocument.h"
-#include "MDocWindow.h"
+#include "MEditWindow.h"
 
 #include <iostream>
 
@@ -37,9 +37,7 @@ void MJapieApp::RunEventLoop()
 
 void MJapieApp::DoNew()
 {
-	MDocument* doc = new MDocument;
-	MWindow* w = new MDocWindow(doc);
-	w->Select();
+	MEditWindow::DisplayDocument(nil);
 }
 
 void MJapieApp::DoQuit()

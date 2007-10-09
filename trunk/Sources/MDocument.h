@@ -95,7 +95,6 @@ struct MDocState
 class MDocument
 {
   public:
-						MDocument();
 	explicit			MDocument(
 							const MURL*			inURL);
 	explicit			MDocument(

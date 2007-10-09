@@ -50,34 +50,53 @@ class MTextViewContainer;
 class MDocument;
 class MDocWindow;
 
+enum MCloseReason {
+	kSaveChangesClosingDocument,
+	kSaveChangesQuittingApplication
+};
+
 class MController : public MHandler
 {
   public:
 						MController();
-	virtual				~MController();
 
-	virtual MTextViewContainer*
-						GetContainer();
-	virtual MTextView*	GetTextView();
+						~MController();
 
-	void				SetWindow(MWindow* inWindow);
+	MTextViewContainer*	GetContainer();
 
-	virtual void		SetDocument(MDocument* inDocument);
-	virtual MDocument*	GetDocument() const;
+	MTextView*			GetTextView();
+
+	void				SetWindow(
+							MWindow*		inWindow);
+
+	void				SetDocument(
+							MDocument*		inDocument);
+
+	MDocument*			GetDocument() const;
 	
-	void				AddTextView(MTextView* inTextView);
-	void				RemoveTextView(MTextView* inTextView);
+	void				AddTextView(
+							MTextView*		inTextView);
 
-	virtual bool		SaveDocument();
-	virtual void		RevertDocument();
-	virtual bool		DoSaveAs(
-							const MURL&			inPath);
-	virtual void		CloseAfterNav();
+	void				RemoveTextView(
+							MTextView*		inTextView);
+
+	bool				SaveDocument();
+
+	void				RevertDocument();
+
+	bool				DoSaveAs(
+							const MURL&		inPath);
+
+	void				CloseAfterNavigationDialog();
 
 	void				SaveDocumentAs();
 
-//	bool				TryCloseDocument(NavAskSaveChangesAction inAction);
-//	bool				TryCloseController(NavAskSaveChangesAction inAction);
+	bool				TryCloseDocument(
+							MCloseReason	inAction);
+
+	bool				TryCloseController(
+							MCloseReason	inAction);
+
 	void				TryDiscardChanges();
 
 	virtual bool		UpdateCommandStatus(
@@ -88,7 +107,9 @@ class MController : public MHandler
 	virtual bool		ProcessCommand(
 							uint32			inCommand);
 
-	bool				OpenInclude(std::string inFileName);
+	bool				OpenInclude(
+							std::string		inFileName);
+
 	void				OpenCounterpart();
 
 	MEventOut<void(MDocument*)>		eDocumentChanged;
@@ -113,6 +134,7 @@ class MController : public MHandler
 	MDocument*			mDocument;
 	MDocWindow*			mWindow;
 	TextViewArray		mTextViews;
+	bool				mCloseOnNavTerminate;
 };
 
 #endif

@@ -35,12 +35,22 @@
 
 // stock commands
 
-const uint32 cmd_New =					'new ';
-const uint32 cmd_Open =					'open';
-const uint32 cmd_Quit =					'quit';
-const uint32 cmd_Close =				'clos';
-const uint32 cmd_Save =					'save';
-const uint32 cmd_SaveAs =				'sava';
+enum MStdCommand {
+	cmd_New =					'new ',
+	cmd_Open =					'open',
+	cmd_Quit =					'quit',
+	cmd_Close =					'clos',
+	cmd_Save =					'save',
+	cmd_SaveAs =				'sava',
+	cmd_Revert =				'reve',
+	cmd_Undo =					'undo',
+	cmd_Redo =					'redo',
+	cmd_Cut =					'cut ',
+	cmd_Copy =					'copy',
+	cmd_Paste =					'past',
+	cmd_Clear =					'clea',
+	
+};
 
 // private commands
 
