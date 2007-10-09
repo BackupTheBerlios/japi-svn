@@ -41,6 +41,7 @@
 			<file>MWindow.cpp</file>
 			<file>MDocument.cpp</file>
 			<file>MDocWindow.cpp</file>
+			<file>MEditWindow.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
 			<file>MViewPort.cpp</file>
@@ -70,7 +71,6 @@
 			<file>MTextView.cpp</file>
 			<file>MShell.cpp</file>
 			<file>MSelection.cpp</file>
-			<file>MEditWindow.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>
