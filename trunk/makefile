@@ -44,6 +44,7 @@ Sources = \
 	./Sources/MPreferences.cpp \
 	./Sources/MSelection.cpp \
 	./Sources/MTextBuffer.cpp \
+	./Sources/MTextView.cpp \
 	./Sources/MUnicode.cpp \
 	./Sources/MView.cpp \
 	./Sources/MViewPort.cpp \

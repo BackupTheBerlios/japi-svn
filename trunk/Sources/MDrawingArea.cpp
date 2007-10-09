@@ -23,7 +23,6 @@ MDrawingArea::MDrawingArea(
 	mExposeEvent.Connect(GetGtkWidget(), "expose-event");
 
 	pango_context_set_font_description(mPangoContext, kFixedFont);
-	PangoFont* font = pango_context_load_font(mPangoContext, kFixedFont);
 	
 	gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
 }

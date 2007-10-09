@@ -53,12 +53,12 @@ using namespace std;
 
 ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize)
 {
-	return ::getxattr(inPath.c_str(), inName, outData, inDataSize);
+	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize);
 }
 
 void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
-	(void)::setxattr(inPath.c_str(), inName, inData, inDataSize, 0);
+	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0);
 }
 
 // ------------------------------------------------------------------
@@ -86,7 +86,7 @@ void MFile::GetFileSpec(MURL& outFileSpec) const
 
 void MFile::Open(int inPermissions)
 {
-	mFD = open(mFileSpec.c_str(), inPermissions, 022);
+	mFD = open(mFileSpec.string().c_str(), inPermissions, 022);
 	THROW_IF_POSIX_ERROR(mFD);
 	mIsOpen = true;
 }
@@ -126,7 +126,7 @@ int64 MFile::GetSize() const
 	int64 result = -1;
 	
 	struct stat st;
-	if (stat(mFileSpec.c_str(), &st) >= 0)
+	if (stat(mFileSpec.string().c_str(), &st) >= 0)
 		result = st.st_size;
 	
 	return result;
@@ -233,9 +233,9 @@ MSafeSaver::MSafeSaver(const MURL& inFile)
 {
 	struct stat st;
 	
-	if (stat(mDestFileSpec.c_str(), &st) == 0)
+	if (stat(mDestFileSpec.string().c_str(), &st) == 0)
 	{
-		string path = mDestFileSpec + "-XXXXXX";
+		string path = mDestFileSpec.string() + "-XXXXXX";
 		
 		int fd = mkstemp(const_cast<char*>(path.c_str()));
 		THROW_IF_POSIX_ERROR(fd);
@@ -262,7 +262,7 @@ MSafeSaver::~MSafeSaver()
 		try
 		{
 			mTempFile->Close();
-			remove(mTempFileSpec.c_str());
+			remove(mTempFileSpec.string().c_str());
 		}
 		catch (...) {}
 	}

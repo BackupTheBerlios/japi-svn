@@ -18,6 +18,10 @@ class MDevice
 
 					~MDevice();
 
+	void			Save();
+	
+	void			Restore();
+
 	void			SetForeColor(
 						MColor				inColor);
 
@@ -88,6 +92,9 @@ class MDevice
 	void			DrawText(
 						float				inX,
 						float				inY);
+
+	void			DrawCaret(
+						uint32				inOffset);
 	
   private:
 
@@ -95,6 +102,25 @@ class MDevice
 	MDevice&		operator=(const MDevice&);
 
 	struct MDeviceImp*	mImpl;
+};
+
+class MDeviceContextSaver
+{
+  public:
+				MDeviceContextSaver(
+					MDevice&		inDevice)
+					: mDevice(inDevice)
+				{
+					mDevice.Save();
+				}
+				
+				~MDeviceContextSaver()
+				{
+					mDevice.Restore();
+				}
+
+  private:
+	MDevice&	mDevice;
 };
 
 #endif

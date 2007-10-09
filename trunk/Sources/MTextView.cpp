@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <cmath>
 
@@ -59,8 +59,8 @@ const int32
 	kLeftMargin = 10;
 
 const MColor
-	kPCLineColor = MColor(0.8f, 0.9f, 1.0f),
-	kBreakpointColor = MColor(0.37f, 0.65f, 0.05f);
+	kPCLineColor = MColor("#cce5ff"),
+	kBreakpointColor = MColor("#5ea50c");
 
 }
 
@@ -69,10 +69,7 @@ MColor		MTextView::sCurrentLineColor,
 			MTextView::sPCLineColor,
 			MTextView::sBreakpointColor;
 
-DragSendDataUPP MTextView::sDragSendDataUPP =
-	::NewDragSendDataUPP(&MTextView::DoDragSendDataCallback);
-MTextView* MTextView::sDraggingView = nil;
-
+//MTextView* MTextView::sDraggingView = nil;
 
 // ---------------------------------------------------------------------------
 //	Default constructor
@@ -98,27 +95,27 @@ MTextView::MTextView(HIObjectRef inObject)
 	
 	mImageOrigin.x = mImageOrigin.y = 0;
 
-	Install(kEventClassControl, kEventControlDraw,			this, &MTextView::DoControlDraw);
-	Install(kEventClassControl, kEventControlClick,			this, &MTextView::DoControlClick);
-	Install(kEventClassControl, kEventControlHitTest,		this, &MTextView::DoControlHitTest);
-	Install(kEventClassControl, kEventControlTrack,			this, &MTextView::DoControlTrack);
-	Install(kEventClassControl, kEventControlActivate,		this, &MTextView::DoControlActivate);
-	Install(kEventClassControl, kEventControlDeactivate,	this, &MTextView::DoControlDeactivate);
-	Install(kEventClassControl, kEventControlTrackingAreaEntered,
-															this, &MTextView::DoControlTrackingAreaEntered);
-	Install(kEventClassControl, kEventControlTrackingAreaExited,
-															this, &MTextView::DoControlTrackingAreaExited);
-	Install(kEventClassScrollable, kEventScrollableGetInfo,	this, &MTextView::DoScrollableGetInfo);
-	Install(kEventClassScrollable, kEventScrollableScrollTo,
-															this, &MTextView::DoScrollableScrollTo);
-	Install(kEventClassControl, kEventControlBoundsChanged,	this, &MTextView::DoBoundsChanged);
-	Install(kEventClassControl, kEventControlDragEnter,		this, &MTextView::DoDragEnter);
-	Install(kEventClassControl, kEventControlDragWithin,	this, &MTextView::DoDragWithin);
-	Install(kEventClassControl, kEventControlDragLeave,		this, &MTextView::DoDragLeave);
-	Install(kEventClassControl, kEventControlDragReceive,	this, &MTextView::DoDragReceive);
-	Install(kEventClassControl, kEventControlGetClickActivation,
-															this, &MTextView::DoGetClickActivation);
-	Install(kEventClassControl, kEventControlSetFocusPart,	this, &MTextView::DoSetFocusPart);
+//	Install(kEventClassControl, kEventControlDraw,			this, &MTextView::DoControlDraw);
+//	Install(kEventClassControl, kEventControlClick,			this, &MTextView::DoControlClick);
+//	Install(kEventClassControl, kEventControlHitTest,		this, &MTextView::DoControlHitTest);
+//	Install(kEventClassControl, kEventControlTrack,			this, &MTextView::DoControlTrack);
+//	Install(kEventClassControl, kEventControlActivate,		this, &MTextView::DoControlActivate);
+//	Install(kEventClassControl, kEventControlDeactivate,	this, &MTextView::DoControlDeactivate);
+//	Install(kEventClassControl, kEventControlTrackingAreaEntered,
+//															this, &MTextView::DoControlTrackingAreaEntered);
+//	Install(kEventClassControl, kEventControlTrackingAreaExited,
+//															this, &MTextView::DoControlTrackingAreaExited);
+//	Install(kEventClassScrollable, kEventScrollableGetInfo,	this, &MTextView::DoScrollableGetInfo);
+//	Install(kEventClassScrollable, kEventScrollableScrollTo,
+//															this, &MTextView::DoScrollableScrollTo);
+//	Install(kEventClassControl, kEventControlBoundsChanged,	this, &MTextView::DoBoundsChanged);
+//	Install(kEventClassControl, kEventControlDragEnter,		this, &MTextView::DoDragEnter);
+//	Install(kEventClassControl, kEventControlDragWithin,	this, &MTextView::DoDragWithin);
+//	Install(kEventClassControl, kEventControlDragLeave,		this, &MTextView::DoDragLeave);
+//	Install(kEventClassControl, kEventControlDragReceive,	this, &MTextView::DoDragReceive);
+//	Install(kEventClassControl, kEventControlGetClickActivation,
+//															this, &MTextView::DoGetClickActivation);
+//	Install(kEventClassControl, kEventControlSetFocusPart,	this, &MTextView::DoSetFocusPart);
 }
 
 // Destructor
@@ -146,7 +143,7 @@ OSStatus MTextView::Initialize(EventRef ioEvent)
 	::NewTSMDocument(1, intf, &mTSMDocument, reinterpret_cast<uint32>(this));
 	::ActivateTSMDocument(mTSMDocument);	// why?
 
-	HIRect r;
+	MRect r;
 	GetBounds(r);
 	r.size.width = kLeftMargin;
 	
@@ -181,285 +178,248 @@ void MTextView::SetController(MController* inController)
 	SetDocument(mController->GetDocument());
 }
 
-OSStatus MTextView::DoControlClick(EventRef ioEvent)
-{
-	OSStatus err = eventNotHandledErr;
-	
-	if (mLastClickTime + ::TicksToEventTime(::GetDblTime()) > ::GetEventTime(ioEvent))
-		mClickCount = mClickCount % 3 + 1;
-	else
-		mClickCount = 1;
-	mLastClickTime = ::GetEventTime(ioEvent);
-	
-	err = ::CallNextEventHandler(GetHandlerCallRef(), ioEvent);
-	
-	return err;
-}
+//OSStatus MTextView::DoControlClick(EventRef ioEvent)
+//{
+//	OSStatus err = eventNotHandledErr;
+//	
+//	if (mLastClickTime + ::TicksToEventTime(::GetDblTime()) > ::GetEventTime(ioEvent))
+//		mClickCount = mClickCount % 3 + 1;
+//	else
+//		mClickCount = 1;
+//	mLastClickTime = ::GetEventTime(ioEvent);
+//	
+//	err = ::CallNextEventHandler(GetHandlerCallRef(), ioEvent);
+//	
+//	return err;
+//}
+//
+//OSStatus MTextView::DoControlHitTest(EventRef ioEvent)
+//{
+//	ControlPartCode partCode = 1;
+//	::SetEventParameter(ioEvent, kEventParamControlPart,
+//		typeControlPartCode, sizeof(partCode), &partCode);
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoControlTrack(EventRef ioEvent)
+//{
+//	if (mDocument == nil)
+//		return eventNotHandledErr;
+//	
+//	enum
+//	{
+//		eSelectRegular,
+//		eSelectWords,
+//		eSelectLines
+//	} mode = eSelectRegular;
+//	
+//	switch (mClickCount)
+//	{
+//		case 1: mode = eSelectRegular; break;
+//		case 2: mode = eSelectWords; break;
+//		case 3: mode = eSelectLines; break;
+//	}
+//	
+//	mDocument->Reset();
+//
+//	HIViewRef contentView;
+//	THROW_IF_OSERROR(::GetRootControl(GetSysWindow(), &contentView));
+//	MSelection selection = mDocument->GetSelection();
+//
+//	HIPoint where;
+//	::GetEventParameter(ioEvent, kEventParamMouseLocation,
+//		typeHIPoint, nil, sizeof(HIPoint), nil, &where);
+//
+//	if (InitiateDrag(where, ioEvent))
+//		return noErr;
+//
+//	uint32 keyModifiers;
+//	::GetEventParameter(ioEvent, kEventParamKeyModifiers,
+//		typeUInt32, nil, sizeof(UInt32), nil, &keyModifiers);
+//
+//	uint32 line, anchor, caret;
+//
+//	where.x += mImageOrigin.x - kLeftMargin;
+//	where.y += mImageOrigin.y;
+//	
+//	if (where.x < 0)
+//		mode = eSelectLines;
+//
+//	mDocument->PositionToOffset(where, caret);
+//	line = mDocument->OffsetToLine(caret);
+//
+//	if (keyModifiers & shiftKey)
+//		anchor = selection.GetAnchor();
+//	else
+//		anchor = caret;
+//	
+//	mCaretVisible = true;
+//	bool stillDown = true;
+//	
+//	if (mode == eSelectRegular)
+//	{
+//		do
+//		{
+//			mDocument->Select(anchor, caret);
+//			
+//			double timeOut = 10.0;
+//			
+//			if (ScrollToCaret())
+//				timeOut = 0.01;
+//		
+//			Point pt;
+//			MouseTrackingResult flags;
+//			OSStatus err = ::TrackMouseLocationWithOptions(
+//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
+//			
+//			if (err != noErr and err != kMouseTrackingTimedOut)
+//				THROW_IF_OSERROR(err);
+//			
+//			where.x = mImageOrigin.x - kLeftMargin + pt.h;
+//			where.y = mImageOrigin.y + pt.v;
+//			
+//			::HIViewConvertPoint(&where, contentView, GetSysView());
+//
+//			mDocument->PositionToOffset(where, caret);
+//	
+//			stillDown = not (flags == kMouseTrackingMouseUp);
+//		}
+//		while (stillDown);
+//	}
+//	else if (mode == eSelectWords)
+//	{
+//		uint32 minAnchor, maxAnchor;
+//		mDocument->FindWord(caret, minAnchor, maxAnchor);
+//
+//		do
+//		{
+//			if (caret < minAnchor)
+//				mDocument->Select(maxAnchor, caret);
+//			else if (caret > maxAnchor)
+//				mDocument->Select(minAnchor, caret);
+//			else
+//				mDocument->Select(minAnchor, maxAnchor);
+//			
+//			double timeOut = 10.0;
+//			
+//			if (ScrollToCaret())
+//				timeOut = 0.01;
+//		
+//			Point pt;
+//			MouseTrackingResult flags;
+//			OSStatus err = ::TrackMouseLocationWithOptions(
+//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
+//			
+//			if (err != noErr and err != kMouseTrackingTimedOut)
+//				THROW_IF_OSERROR(err);
+//			
+//			where.x = pt.h;
+//			where.y = pt.v;
+//			
+//			::HIViewConvertPoint(&where, contentView, GetSysView());
+//			
+//			where.x += mImageOrigin.x - kLeftMargin;
+//			where.y += mImageOrigin.y;
+//
+//			mDocument->PositionToOffset(where, caret);
+//			
+//			uint32 c1, c2;
+//			mDocument->FindWord(caret, c1, c2);
+//			if (c1 != c2)
+//			{
+//				if (c1 < caret and caret < minAnchor)
+//					caret = c1;
+//				else if (c2 > caret and caret > maxAnchor)
+//					caret = c2;
+//			}
+//	
+//			stillDown = not (flags == kMouseTrackingMouseUp);
+//		}
+//		while (stillDown);
+//	}
+//	else if (mode == eSelectLines)
+//	{
+//		uint32 anchorLine = line;
+//		uint32 caretLine = line;
+//		
+//		do
+//		{
+//			if (caretLine < anchorLine)
+//				mDocument->Select(
+//					mDocument->LineStart(anchorLine + 1), mDocument->LineStart(caretLine));
+//			else
+//				mDocument->Select(
+//					mDocument->LineStart(anchorLine), mDocument->LineStart(caretLine + 1));
+//			
+//			double timeOut = 10.0;
+//			
+//			if (ScrollToCaret())
+//				timeOut = 0.01;
+//		
+//			Point pt;
+//			MouseTrackingResult flags;
+//			OSStatus err = ::TrackMouseLocationWithOptions(
+//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
+//			
+//			if (err != noErr and err != kMouseTrackingTimedOut)
+//				THROW_IF_OSERROR(err);
+//			
+//			where.x = pt.h;
+//			where.y = pt.v;
+//			
+//			::HIViewConvertPoint(&where, contentView, GetSysView());
+//			
+//			where.x += mImageOrigin.x - kLeftMargin;
+//			where.y += mImageOrigin.y;
+//
+//			mDocument->PositionToOffset(where, caret);
+//			caretLine = mDocument->OffsetToLine(caret);
+//	
+//			stillDown = not (flags == kMouseTrackingMouseUp);
+//		}
+//		while (stillDown);
+//	}
+//
+//	ControlPartCode partCode = 0;
+//	::SetEventParameter(ioEvent, kEventParamControlPart,
+//		typeControlPartCode, sizeof(partCode), &partCode);
+//		
+//	return noErr;
+//}
 
-OSStatus MTextView::DoControlHitTest(EventRef ioEvent)
-{
-	ControlPartCode partCode = 1;
-	::SetEventParameter(ioEvent, kEventParamControlPart,
-		typeControlPartCode, sizeof(partCode), &partCode);
-	return noErr;
-}
-
-OSStatus MTextView::DoControlTrack(EventRef ioEvent)
+bool MTextView::OnExposeEvent(
+	GdkEventExpose*		inEvent)
 {
 	if (mDocument == nil)
-		return eventNotHandledErr;
+		return false;
 	
-	enum
-	{
-		eSelectRegular,
-		eSelectWords,
-		eSelectLines
-	} mode = eSelectRegular;
-	
-	switch (mClickCount)
-	{
-		case 1: mode = eSelectRegular; break;
-		case 2: mode = eSelectWords; break;
-		case 3: mode = eSelectLines; break;
-	}
-	
-	mDocument->Reset();
+	MRect update(inEvent->area);
 
-	HIViewRef contentView;
-	THROW_IF_OSERROR(::GetRootControl(GetSysWindow(), &contentView));
-	MSelection selection = mDocument->GetSelection();
-
-	HIPoint where;
-	::GetEventParameter(ioEvent, kEventParamMouseLocation,
-		typeHIPoint, nil, sizeof(HIPoint), nil, &where);
-
-	if (InitiateDrag(where, ioEvent))
-		return noErr;
-
-	uint32 keyModifiers;
-	::GetEventParameter(ioEvent, kEventParamKeyModifiers,
-		typeUInt32, nil, sizeof(UInt32), nil, &keyModifiers);
-
-	uint32 line, anchor, caret;
-
-	where.x += mImageOrigin.x - kLeftMargin;
-	where.y += mImageOrigin.y;
-	
-	if (where.x < 0)
-		mode = eSelectLines;
-
-	mDocument->PositionToOffset(where, caret);
-	line = mDocument->OffsetToLine(caret);
-
-	if (keyModifiers & shiftKey)
-		anchor = selection.GetAnchor();
-	else
-		anchor = caret;
-	
-	mCaretVisible = true;
-	bool stillDown = true;
-	
-	if (mode == eSelectRegular)
-	{
-		do
-		{
-			mDocument->Select(anchor, caret);
-			
-			double timeOut = 10.0;
-			
-			if (ScrollToCaret())
-				timeOut = 0.01;
-		
-			Point pt;
-			MouseTrackingResult flags;
-			OSStatus err = ::TrackMouseLocationWithOptions(
-				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-			
-			if (err != noErr and err != kMouseTrackingTimedOut)
-				THROW_IF_OSERROR(err);
-			
-			where.x = mImageOrigin.x - kLeftMargin + pt.h;
-			where.y = mImageOrigin.y + pt.v;
-			
-			::HIViewConvertPoint(&where, contentView, GetSysView());
-
-			mDocument->PositionToOffset(where, caret);
-	
-			stillDown = not (flags == kMouseTrackingMouseUp);
-		}
-		while (stillDown);
-	}
-	else if (mode == eSelectWords)
-	{
-		uint32 minAnchor, maxAnchor;
-		mDocument->FindWord(caret, minAnchor, maxAnchor);
-
-		do
-		{
-			if (caret < minAnchor)
-				mDocument->Select(maxAnchor, caret);
-			else if (caret > maxAnchor)
-				mDocument->Select(minAnchor, caret);
-			else
-				mDocument->Select(minAnchor, maxAnchor);
-			
-			double timeOut = 10.0;
-			
-			if (ScrollToCaret())
-				timeOut = 0.01;
-		
-			Point pt;
-			MouseTrackingResult flags;
-			OSStatus err = ::TrackMouseLocationWithOptions(
-				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-			
-			if (err != noErr and err != kMouseTrackingTimedOut)
-				THROW_IF_OSERROR(err);
-			
-			where.x = pt.h;
-			where.y = pt.v;
-			
-			::HIViewConvertPoint(&where, contentView, GetSysView());
-			
-			where.x += mImageOrigin.x - kLeftMargin;
-			where.y += mImageOrigin.y;
-
-			mDocument->PositionToOffset(where, caret);
-			
-			uint32 c1, c2;
-			mDocument->FindWord(caret, c1, c2);
-			if (c1 != c2)
-			{
-				if (c1 < caret and caret < minAnchor)
-					caret = c1;
-				else if (c2 > caret and caret > maxAnchor)
-					caret = c2;
-			}
-	
-			stillDown = not (flags == kMouseTrackingMouseUp);
-		}
-		while (stillDown);
-	}
-	else if (mode == eSelectLines)
-	{
-		uint32 anchorLine = line;
-		uint32 caretLine = line;
-		
-		do
-		{
-			if (caretLine < anchorLine)
-				mDocument->Select(
-					mDocument->LineStart(anchorLine + 1), mDocument->LineStart(caretLine));
-			else
-				mDocument->Select(
-					mDocument->LineStart(anchorLine), mDocument->LineStart(caretLine + 1));
-			
-			double timeOut = 10.0;
-			
-			if (ScrollToCaret())
-				timeOut = 0.01;
-		
-			Point pt;
-			MouseTrackingResult flags;
-			OSStatus err = ::TrackMouseLocationWithOptions(
-				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-			
-			if (err != noErr and err != kMouseTrackingTimedOut)
-				THROW_IF_OSERROR(err);
-			
-			where.x = pt.h;
-			where.y = pt.v;
-			
-			::HIViewConvertPoint(&where, contentView, GetSysView());
-			
-			where.x += mImageOrigin.x - kLeftMargin;
-			where.y += mImageOrigin.y;
-
-			mDocument->PositionToOffset(where, caret);
-			caretLine = mDocument->OffsetToLine(caret);
-	
-			stillDown = not (flags == kMouseTrackingMouseUp);
-		}
-		while (stillDown);
-	}
-
-	ControlPartCode partCode = 0;
-	::SetEventParameter(ioEvent, kEventParamControlPart,
-		typeControlPartCode, sizeof(partCode), &partCode);
-		
-	return noErr;
-}
-
-OSStatus MTextView::DoControlDraw(EventRef ioEvent)
-{
-	if (mDocument == nil)
-		return eventNotHandledErr;
-
-	CGContextRef context = nil;
-	::GetEventParameter(ioEvent, kEventParamCGContextRef,
-		typeCGContextRef, nil, sizeof(CGContextRef), nil, &context);
+	MDevice dev(*this, update);
 
 	try
 	{
 		mNeedsDisplay = false;
 		
-		ATSUTextLayout textLayout = mDocument->GetTextLayout();
-		
-		ATSUAttributeTag		theTags[] = { kATSUCGContextTag };
-		ByteCount				theSizes[] = { sizeof(CGContextRef) };
-		ATSUAttributeValuePtr   theValues[] = { &context };
-		
-		THROW_IF_OSERROR(::ATSUSetLayoutControls(textLayout, sizeof(theSizes) / sizeof(ByteCount),
-			theTags, theSizes, theValues));
-		
-		MCGContextSaver save(context);
-	
-		// Find out the clipping region to minimize redraw
-		
-		HIShapeRef clip = nil;
-		HIRect update;
-		
-		if (::GetEventParameter(ioEvent, kEventParamShape, typeHIShapeRef,
-			nil, sizeof(clip), nil, &clip) == noErr and clip != nil)
-		{
-			::HIShapeGetBounds(clip, &update);
-			::HIShapeReplacePathInCGContext(clip, context);
-			::CGContextClip(context);
-		}
-		else
-			GetBounds(update);
-
 		if (not mDrawForDragImage)
-		{
-			::CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0);
-			::CGContextFillRect(context, update);
-			::CGContextSetRGBFillColor(context, 0.0, 0.0, 0.0, 1.0);
-//			
-//			cout << "update (ltrb): "
-//				<< update.origin.x << ','
-//				<< update.origin.y << ','
-//				<< update.origin.x + update.size.width << ','
-//				<< update.origin.y + update.size.height << endl;
-		}
+			dev.EraseRect(update);
 		
-		int32 minLine = static_cast<int32>(trunc((update.origin.y + mImageOrigin.y) / mLineHeight));
+		int32 minLine = update.y / mLineHeight;
 		if (minLine < 0)
 			minLine = 0;
 		
-		uint32 maxLine = static_cast<int32>(ceil(minLine + update.size.height / mLineHeight));
+		uint32 maxLine = minLine + update.height / mLineHeight;
 		if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
 			maxLine = mDocument->CountLines() - 1;
 	
-		::CGContextScaleCTM(context, 1.0, -1.0);
-		
 		for (uint32 line = minLine; line <= maxLine; ++line)
 		{
-			HIRect lr = GetLineRect(line);
+			MRect lr = GetLineRect(line);
 
-			if (clip == nil or ::HIShapeIntersectsRect(clip, &lr))
+			if (update.Intersects(lr))
 			{
 //				cout << "drawing line: " << line << endl;
-				DrawLine(line, context);
+				DrawLine(line, device);
 			}
 		}
 	}
@@ -467,42 +427,38 @@ OSStatus MTextView::DoControlDraw(EventRef ioEvent)
 	{
 	}
 
-	if (mDragRef != nil)
-		DrawDragHilite(context);
+//	if (mDragRef != nil)
+//		DrawDragHilite(context);
 	
-	return noErr;
+	return true;
 }
 
 void MTextView::DrawLine(
 	uint32				inLineNr,
-	CGContextRef		inContext)
+	MDevice&			inDevice)
 {
 	assert(mDocument);
 	
-	ATSUTextLayout			textLayout;
-	ustring					text;
+	string text;
 	
-	textLayout = mDocument->GetStyledLayout(inLineNr, text);
+	mDocument->GetStyledText(inLineNr, inDevice, text);
+	
 	bool trailingNL = false;
 	if (inLineNr < mDocument->CountLines())
 		trailingNL = mDocument->GetTextBuffer().GetChar(mDocument->LineEnd(inLineNr)) == '\n';
 	
-	HIRect lineRect = GetLineRect(inLineNr);
-
-	MCGContextSaver save(inContext);
-	float y = (inLineNr + 1) * mLineHeight - mDescent - mImageOrigin.y;
-	::CGContextTranslateCTM(inContext, kLeftMargin - mImageOrigin.x, -y);
-	
-	lineRect.origin.y = -mDescent;
+	MRect lineRect = GetLineRect(inLineNr);
 	float indent = mDocument->GetLineIndentWidth(inLineNr);
+
+	MDeviceContextSaver save(inDevice);
+	float y = inLineNr * mLineHeight;
+	float x = indent;
 
 	MSelection selection = mDocument->GetSelection();
 
-	MDevice dev(inContext, lineRect);
-
 	if (not mDrawForDragImage)
 	{
-		MCGContextSaver save(inContext);
+		MDeviceContextSaver save(inDevice);
 		
 		bool marked = mDocument->IsLineMarked(inLineNr);
 		bool current = mDocument->OffsetToLine(selection.GetCaret()) == inLineNr and IsActive();
@@ -525,56 +481,49 @@ void MTextView::DrawLine(
 		
 		if (fill)
 		{
-			::CGContextScaleCTM(inContext, 1.0, 1.0);
-
 			dev.FillRect(lineRect);
-			dev.FillEllipse(
-				::CGRectMake(-(mLineHeight / 2.0f), lineRect.origin.y, mLineHeight, mLineHeight));
-		}
-		
-	}
 
-	ATSUCaret mainCaret = { 0 }, secondCaret = { 0 };
-	Boolean isSplit;
-
-	float x = indent;
-	/*float*/ y = 0;
-
-	// text input area, perhaps?
-	
-	const MTextInputAreaInfo& ii = mDocument->GetTextInputAreaInfo();
-	
-	if (ii.fOffset[kActiveInputArea] >= 0 and
-		mDocument->OffsetToLine(ii.fOffset[kActiveInputArea]) == inLineNr)
-	{
-		for (uint32 i = kSelectedRawText; i <= kSelectedConvertedText; i += 2)
-		{
-			if (ii.fOffset[i] < 0 or ii.fLength[i] <= 0)
-				continue;
+			MRect r2(lineRect);
+			r2.x -= r2.height / 2;
+			r2.width = r2.height;
 			
-			uint32 offset = ii.fOffset[i] - mDocument->LineStart(inLineNr);
-			uint32 length = ii.fLength[i];
-
-			dev.DrawTextHighLight(x, y, offset, length, false, false, IsActive());
-//			
-//			(void)::ATSUHighlightText(textLayout, myXLocation, myYLocation,
-//				offset, length);
+			dev.FillEllipse(r2);
 		}
 	}
+
+//	// text input area, perhaps?
+//	
+//	const MTextInputAreaInfo& ii = mDocument->GetTextInputAreaInfo();
+//	
+//	if (ii.fOffset[kActiveInputArea] >= 0 and
+//		mDocument->OffsetToLine(ii.fOffset[kActiveInputArea]) == inLineNr)
+//	{
+//		for (uint32 i = kSelectedRawText; i <= kSelectedConvertedText; i += 2)
+//		{
+//			if (ii.fOffset[i] < 0 or ii.fLength[i] <= 0)
+//				continue;
+//			
+//			uint32 offset = ii.fOffset[i] - mDocument->LineStart(inLineNr);
+//			uint32 length = ii.fLength[i];
+//
+//			dev.DrawTextHighLight(x, y, offset, length, false, false, IsActive());
+////			
+////			(void)::ATSUHighlightText(textLayout, myXLocation, myYLocation,
+////				offset, length);
+//		}
+//	}
 
 	// Highlight selection
 	
 	bool drawCaret = false;
 	uint32 caretLine, caretColumn = 0;
 	
-	dev.UseTextLayout(textLayout);
-	
 	if (selection.IsEmpty() or
 		selection.GetMaxLine(*mDocument) < inLineNr or
 		selection.GetMinLine(*mDocument) > inLineNr)
 	{
 		if (not mDrawForDragImage)
-			dev.DrawText(x, y, 0, text.length());
+			dev.DrawText(x, y);
 		
 		if (selection.IsEmpty())
 		{
@@ -646,51 +595,32 @@ void MTextView::DrawLine(
 		}
 		
 		if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
-			dev.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
-				fillBefore, fillAfter, IsActive());
-
-		dev.DrawText(x, y, 0, text.length());
+		{
+			if (IsActive()
+				dev.SetTextSelection(selectionStart, selectionEnd, gHiliteColor);
+			else
+				dev.SetTextSelection(selectionStart, selectionEnd, gInactiveHiliteColor);
+//			dev.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
+//				fillBefore, fillAfter, IsActive());
+		}
+		dev.DrawText(x, y);
 	}
 	
-	if (mDragRef != nil)
-	{
-		caretLine = mDocument->OffsetToLine(mDragCaret);
-		caretColumn = mDragCaret - mDocument->LineStart(caretLine);
-		
-		if (caretLine == inLineNr and mCaretVisible)
-			drawCaret = true;
-	}
+//	if (mDragRef != nil)
+//	{
+//		caretLine = mDocument->OffsetToLine(mDragCaret);
+//		caretColumn = mDragCaret - mDocument->LineStart(caretLine);
+//		
+//		if (caretLine == inLineNr and mCaretVisible)
+//			drawCaret = true;
+//	}
 
 	if (drawCaret)
 	{
 		if (caretColumn > text.length())	// duh
 			caretColumn = text.length();
 
-		(void)::ATSUOffsetToPosition(textLayout,
-			caretColumn, false, &mainCaret, &secondCaret, &isSplit);
-
-		float x = indent + Fix2X(mainCaret.fX) + 0.5f;
-		float y = Fix2X(mainCaret.fY);
-		float dx = indent + Fix2X(mainCaret.fDeltaX) + 0.5f;
-		float dy = Fix2X(mainCaret.fDeltaY);
-		
-		::CGContextBeginPath(inContext);
-		::CGContextMoveToPoint(inContext, x, -y);
-		::CGContextAddLineToPoint(inContext, dx, -dy);
-		
-		if (isSplit)
-		{
-			x = Fix2X(secondCaret.fX) + 0.5f;
-			y = Fix2X(secondCaret.fY) + 1;
-			dx = Fix2X(secondCaret.fDeltaX) + 0.5f;
-			dy = Fix2X(secondCaret.fDeltaY);
-			
-			::CGContextMoveToPoint(inContext, x, -y);
-			::CGContextAddLineToPoint(inContext, dx, -dy);
-		}
-		
-		::CGContextClosePath(inContext);
-		::CGContextDrawPath(inContext, kCGPathStroke);
+		dev.DrawCaret(caretColumn);
 	}
 }
 
@@ -699,7 +629,7 @@ OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
 	if (mDocument == nil)
 		return eventNotHandledErr;
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 
 	HISize		imageSize = { 0 };
@@ -758,7 +688,7 @@ void MTextView::DoScrollTo(HIPoint inWhere)
 		mImageOrigin.y = inWhere.y;
 	}
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	if (mNeedsDisplay)	// invalidate everything if a piece is invalid
@@ -838,7 +768,7 @@ void MTextView::SelectionChanged(MSelection inNewSelection, string inRangeName)
 	mCaretVisible = true;
 	::SetEventLoopTimerNextFireTime(mTimerRef, ::TicksToEventTime(::GetCaretTime()));
 	
-	HIRect bounds;
+	MRect bounds;
 	GetBounds(bounds);
 	bounds.origin.x += kLeftMargin;
 	bounds.size.width -= kLeftMargin;
@@ -862,10 +792,10 @@ void MTextView::SelectionChanged(MSelection inNewSelection, string inRangeName)
 // ---------------------------------------------------------------------------
 //	GetLineRect
 
-HIRect MTextView::GetLineRect(
+MRect MTextView::GetLineRect(
 	uint32		inLineNr) const
 {
-	HIRect result;
+	MRect result;
 	
 	GetBounds(result);
 	result.origin.y = inLineNr * mLineHeight - mImageOrigin.y;
@@ -881,7 +811,7 @@ void MTextView::InvalidateDirtyLines()
 {
 	assert(mDocument);
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 
 	uint32 minLine = static_cast<uint32>(mImageOrigin.y / mLineHeight);
@@ -917,7 +847,7 @@ void MTextView::InvalidateAll()
 //	InvalidateRect
 
 void MTextView::InvalidateRect(
-	HIRect		inRect)
+	MRect		inRect)
 {
 	mNeedsDisplay = true;
 	::HIViewSetNeedsDisplayInRect(GetSysView(), &inRect, true);
@@ -942,7 +872,7 @@ void MTextView::Scroll(MScrollMessage inCommand)
 	MCarbonEvent event;
 	HIPoint loc = mImageOrigin;
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	uint32 lineCount = mDocument->CountLines();
@@ -1042,7 +972,7 @@ bool MTextView::ScrollToCaret()
 {
 	assert(mDocument);
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	int32 top, bottom;
@@ -1125,7 +1055,7 @@ void MTextView::ScrollToLine(
 	
 	MCarbonEvent event;
 
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	float y;
@@ -1178,7 +1108,7 @@ void MTextView::ScrollToSelection(
 	MCarbonEvent event;
 	uint32 line;
 
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	MSelection selection(mDocument->GetSelection());
@@ -1253,7 +1183,7 @@ void MTextView::ScrollForDiff()
 {
 	assert(mDocument);
 	
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	int32 center = static_cast<int32>(frame.size.height / (4 * mLineHeight));
@@ -1288,11 +1218,11 @@ void MTextView::ScrollForDiff()
 void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 {
 	// get our frame
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	// calculate the rectangle that needs to be scrolled
-	HIRect r = frame;
+	MRect r = frame;
 
 	// the top of the scrolling rect
 	r.origin.y = inFromLine * mLineHeight - mImageOrigin.y;
@@ -1324,7 +1254,7 @@ void MTextView::GetVisibleLineSpan(
 	uint32&				outFirstLine,
 	uint32&				outLastLine) const
 {
-	HIRect frame;
+	MRect frame;
 	GetBounds(frame);
 	
 	outFirstLine = static_cast<uint32>(mImageOrigin.y / mLineHeight);
@@ -1429,7 +1359,7 @@ OSStatus MTextView::DoControlTrackingAreaExited(EventRef ioEvent)
 	::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
 		sizeof(where), nil, &where);
 	
-	HIRect bounds;
+	MRect bounds;
 	GetBounds(bounds);
 	
 	if (where.x < bounds.origin.x or where.x > bounds.origin.x + bounds.size.width or
@@ -1444,7 +1374,7 @@ OSStatus MTextView::DoControlTrackingAreaExited(EventRef ioEvent)
 
 OSStatus MTextView::DoBoundsChanged(EventRef ioEvent)
 {
-	HIRect r;
+	MRect r;
 	GetBounds(r);
 	r.size.width = kLeftMargin;
 	
@@ -1574,7 +1504,7 @@ OSStatus MTextView::DoDragWithin(EventRef ioEvent)
 		uint32 caret;
 		mDocument->PositionToOffset(pt, caret);
 		
-		HIRect bounds;
+		MRect bounds;
 		GetBounds(bounds);
 		
 		if (mDragCaret != caret)
@@ -1808,11 +1738,11 @@ bool MTextView::IsPointInSelection(HIPoint inWhere)
 //	{
 //		MSelection selection = mDocument->GetSelection();
 //		
-//		HIRect bounds;
+//		MRect bounds;
 //		GetBounds(bounds);
 //		bounds.origin.x += kLeftMargin;
 //		
-//		HIRect r = bounds;
+//		MRect r = bounds;
 //		r.origin.y += selection.GetMinLine(*mDocument) * mLineHeight - mImageOrigin.y;
 //		r.size.height = mLineHeight * selection.CountLines(*mDocument);
 //		
@@ -1893,8 +1823,8 @@ bool MTextView::InitiateDrag(HIPoint inWhere, EventRef inEvent)
 			
 			MSelection selection = mDocument->GetSelection();
 			
-			HIRect minLine = GetLineRect(selection.GetMinLine(*mDocument));
-			HIRect maxLine = GetLineRect(selection.GetMaxLine(*mDocument));
+			MRect minLine = GetLineRect(selection.GetMinLine(*mDocument));
+			MRect maxLine = GetLineRect(selection.GetMaxLine(*mDocument));
 			
 			CGRect r = ::CGRectUnion(minLine, maxLine);
 			MCFRef<CGImageRef> subImage(::CGImageCreateWithImageInRect(image, r), false);
@@ -1951,7 +1881,7 @@ void MTextView::DrawDragHilite(CGContextRef inContext)
 			c.green / 65536.f, c.blue / 65536.f, 1.0f);
 		::CGContextSetLineWidth(inContext, 2.f);
 		
-		HIRect bounds;
+		MRect bounds;
 		GetBounds(bounds);
 
 		::CGContextClipToRect(inContext, bounds);
@@ -1985,7 +1915,7 @@ OSStatus MTextView::DoSetFocusPart(EventRef ioEvent)
 
 uint32 MTextView::GetWrapWidth() const
 {
-	HIRect r;
+	MRect r;
 	GetBounds(r);
 	return static_cast<uint32>(r.size.width) - kLeftMargin;
 }

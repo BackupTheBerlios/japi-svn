@@ -44,7 +44,7 @@ class MDocWindow;
 class MController;
 class MDevice;
 
-class MTextView : public MView
+class MTextView : public MDrawingArea
 {
   public:
 						MTextView();
@@ -115,6 +115,9 @@ class MTextView : public MView
 //	OSStatus			DoGetClickActivation(EventRef inEvent);
 //	OSStatus			DoContextualMenuClick(EventRef inEvent);
 //	OSStatus			DoSetFocusPart(EventRef inEvent);
+
+	virtual bool		OnExposeEvent(
+							GdkEventExpose*	inEvent);
 
   private:
 

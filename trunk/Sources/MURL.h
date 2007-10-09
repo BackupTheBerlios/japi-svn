@@ -21,6 +21,8 @@ class MURL
 					}
 
 	std::string		leaf() const;
+	
+	std::string		string() const						{ return mURL; }
 
 	MURL&			operator=(
 						const MURL&				inRHS)
