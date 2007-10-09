@@ -29,21 +29,21 @@ MDocWindow::MDocWindow(
 	// the menubar
 	
 	MMenu* fileMenu = new MMenu("File");
-	fileMenu->AddItem("New", cmd_New);
-	fileMenu->AddItem("Open…", cmd_Open);
-	fileMenu->AddSeparator();
-	fileMenu->AddItem("Close", cmd_Close);
-	fileMenu->AddItem("Save", cmd_Save);
-	fileMenu->AddItem("Save As…", cmd_SaveAs);
-	fileMenu->AddSeparator();
-	fileMenu->AddItem("Quit", cmd_Quit);
+	fileMenu->AppendItem("New", cmd_New);
+	fileMenu->AppendItem("Open…", cmd_Open);
+	fileMenu->AppendSeparator();
+	fileMenu->AppendItem("Close", cmd_Close);
+	fileMenu->AppendItem("Save", cmd_Save);
+	fileMenu->AppendItem("Save As…", cmd_SaveAs);
+	fileMenu->AppendSeparator();
+	fileMenu->AppendItem("Quit", cmd_Quit);
 	
 	mMenubar.AddMenu(fileMenu);
 	
 	// set title
 	
 	if (inDocument->IsSpecified())
-		SetTitle(inDocument->GetURL());
+		SetTitle(inDocument->GetURL().string());
 	else
 		SetTitle(GetUntitledTitle());
 	
@@ -122,7 +122,7 @@ bool MDocWindow::UpdateCommandStatus(
 	switch (inCommand)
 	{
 		case cmd_Save:
-			outEnabled = mDocument->IsDirty();
+			outEnabled = mDocument->IsModified();
 			break;
 	
 		default:

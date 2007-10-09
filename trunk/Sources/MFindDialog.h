@@ -89,7 +89,7 @@ class MFindDialog // : public MDialog
 
   private:
 
-	typedef std::vector<std::string>		StringArray;
+	typedef std::deque<std::string>			StringArray;
 	typedef std::deque<MURL>				FileArray;
 
 					MFindDialog();

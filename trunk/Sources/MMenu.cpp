@@ -155,7 +155,7 @@ void MMenu::AppendItem(
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
 }
 
-void MMenu::AddSeparator()
+void MMenu::AppendSeparator()
 {
 	mItems.push_back(new MMenuItem());
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);

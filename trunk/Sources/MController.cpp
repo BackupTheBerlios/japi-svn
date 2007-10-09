@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MDocWindow.h"
 #include "MController.h"

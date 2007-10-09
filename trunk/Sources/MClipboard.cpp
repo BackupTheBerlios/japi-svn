@@ -35,7 +35,7 @@
 	Created Wednesday July 21 2004 18:21:56
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <list>
 
@@ -46,19 +46,19 @@
 
 using namespace std;
 
-MClipboard::Data::Data(const ustring& inText, bool inBlock)
+MClipboard::Data::Data(const string& inText, bool inBlock)
 	: mText(inText)
 	, mBlock(inBlock)
 {
 }
 
-void MClipboard::Data::SetData(const ustring& inText, bool inBlock)
+void MClipboard::Data::SetData(const string& inText, bool inBlock)
 {
 	mText = inText;
 	mBlock = inBlock;
 }
 
-void MClipboard::Data::AddData(const ustring& inText)
+void MClipboard::Data::AddData(const string& inText)
 {
 	mText += inText;
 	mBlock = false;
@@ -66,7 +66,7 @@ void MClipboard::Data::AddData(const ustring& inText)
 
 MClipboard::MClipboard()
 	: mCount(0)
-	, mScrap(kScrapClipboardScrap)
+//	, mScrap(kScrapClipboardScrap)
 {
 }
 
@@ -115,7 +115,7 @@ void MClipboard::PreviousInRing()
 	mRing[0] = back;
 }
 
-void MClipboard::GetData(ustring& outText, bool& outIsBlock)
+void MClipboard::GetData(string& outText, bool& outIsBlock)
 {
 	if (mCount == 0)
 		THROW(("clipboard error"));
@@ -124,7 +124,7 @@ void MClipboard::GetData(ustring& outText, bool& outIsBlock)
 	outIsBlock = mRing[0]->mBlock;
 }
 
-void MClipboard::SetData(const ustring& inText, bool inBlock)
+void MClipboard::SetData(const string& inText, bool inBlock)
 {
 	if (mCount >= kClipboardRingSize)
 	{
@@ -141,11 +141,11 @@ void MClipboard::SetData(const ustring& inText, bool inBlock)
 		mRing[0] = newData;
 		++mCount;
 	}
-	
-	mScrap.PutScrap(inText);
+//	
+//	mScrap.PutScrap(inText);
 }
 
-void MClipboard::AddData(const ustring& inText)
+void MClipboard::AddData(const string& inText)
 {
 	if (mCount == 0)
 		SetData(inText, false);
@@ -155,8 +155,8 @@ void MClipboard::AddData(const ustring& inText)
 
 void MClipboard::LoadOSScrapIfNewer()
 {
-	ustring text;
-	if (mScrap.LoadOSScrapIfNewer(text))
-		SetData(text, false);
+	string text;
+//	if (mScrap.LoadOSScrapIfNewer(text))
+//		SetData(text, false);
 }
 

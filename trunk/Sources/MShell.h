@@ -68,6 +68,8 @@ class MShell
 	MEventOut<void(const char*, uint32)>	eStdErr;
 	MEventOut<void(bool)>					eShellStatus;
 
+	MEventIn<void()>						ePoll;
+
   private:
 
 	typedef	std::map<std::string,std::string>	Env;
@@ -86,8 +88,6 @@ class MShell
 	void					Poll();
 	
 	std::string				NextPath(std::string& ioPathVar, std::string inName);
-	
-//	static pascal void		EventLoopTimerProc(EventLoopTimerRef inTimer, void *inUserData);
 
 	// built-in
 	int						Cd(int argc, char* const argv[], char* const env[]);
@@ -100,7 +100,6 @@ class MShell
 	int						mStdOutFD;
 	int						mStdErrFD;
 	bool					mRedirectStdErr, mOutDone, mErrDone;
-//	EventLoopTimerRef		mTimerRef;
 	Env						mEnvironment;
 	std::string				mCurDir, mPrevDir;
 	std::string				mToken;

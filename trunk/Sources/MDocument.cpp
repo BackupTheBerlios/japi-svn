@@ -92,19 +92,19 @@ MDocument* MDocument::sFirst;
 
 void MDocState::Swap()
 {
-#if __LITTLE_ENDIAN__
-	mSelection[0] = Endian32_Swap(mSelection[0]);
-	mSelection[1] = Endian32_Swap(mSelection[1]);
-	mSelection[2] = Endian32_Swap(mSelection[2]);
-	mSelection[3] = Endian32_Swap(mSelection[3]);
-	mScrollPosition[0] = Endian32_Swap(mScrollPosition[0]);
-	mScrollPosition[1] = Endian32_Swap(mScrollPosition[1]);
-	mWindowPosition[0] = Endian16_Swap(mWindowPosition[0]);
-	mWindowPosition[1] = Endian16_Swap(mWindowPosition[1]);
-	mWindowSize[0] = Endian16_Swap(mWindowSize[0]);
-	mWindowSize[1] = Endian16_Swap(mWindowSize[1]);
-	mSwapHelper = Endian32_Swap(mSwapHelper);
-#endif
+//#if __LITTLE_ENDIAN__
+//	mSelection[0] = Endian32_Swap(mSelection[0]);
+//	mSelection[1] = Endian32_Swap(mSelection[1]);
+//	mSelection[2] = Endian32_Swap(mSelection[2]);
+//	mSelection[3] = Endian32_Swap(mSelection[3]);
+//	mScrollPosition[0] = Endian32_Swap(mScrollPosition[0]);
+//	mScrollPosition[1] = Endian32_Swap(mScrollPosition[1]);
+//	mWindowPosition[0] = Endian16_Swap(mWindowPosition[0]);
+//	mWindowPosition[1] = Endian16_Swap(mWindowPosition[1]);
+//	mWindowSize[0] = Endian16_Swap(mWindowSize[0]);
+//	mWindowSize[1] = Endian16_Swap(mWindowSize[1]);
+//	mSwapHelper = Endian32_Swap(mSwapHelper);
+//#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -2410,7 +2410,7 @@ bool MDocument::FastFind(MDirection inDirection)
 	return result;
 }
 
-bool MDocument::CanReplace() const
+bool MDocument::CanReplace()
 {
 	return mText.CanReplace(MFindDialog::Instance().GetFindString(),
 		MFindDialog::Instance().GetRegex(),

@@ -20,7 +20,7 @@ class MMenu
 						const std::string&	inLabel,
 						uint32				inCommand);
 	
-	void			AddSeparator();
+	void			AppendSeparator();
 
 	virtual void	AddMenu(
 						MMenu*				inMenu);

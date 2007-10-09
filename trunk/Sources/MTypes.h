@@ -54,15 +54,21 @@ struct MRect
 	int32		width, height;
 	
 				MRect();
+
 				MRect(
 					const MRect&		inRHS);
+
 				MRect(
 					const GdkRectangle&	inRHS);
+
 				MRect(
-					int32		inX,
-					int32		inY,
-					int32		inWidth,
-					int32		inHeight);
+					int32				inX,
+					int32				inY,
+					int32				inWidth,
+					int32				inHeight);
+
+	bool		Intersects(
+					const MRect&		inRHS) const;
 };
 
 enum MDirection

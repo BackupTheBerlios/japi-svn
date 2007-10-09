@@ -18,6 +18,19 @@ class MView
 
 	MWindow*		GetWindow() const;
 
+	void			GetBounds(
+						MRect&			outBounds) const;
+
+	void			SetBounds(
+						const MRect&	inBounds);
+
+	bool			IsActive() const;
+
+	void			Invalidate();
+
+	void			Invalidate(
+						const MRect&	inRect);
+
   protected:
 
 					MView(

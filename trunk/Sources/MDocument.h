@@ -308,7 +308,7 @@ class MDocument
 	bool				DoSave();
 	bool				DoSaveAs(const MURL& inFile);
 
-	bool				CanReplace() const;
+	bool				CanReplace();
 
 	bool				GetParsePopupItems(MMenu& inMenu);
 	void				SelectParsePopupItem(uint32 inItem);

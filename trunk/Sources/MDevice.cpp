@@ -289,29 +289,29 @@ uint32 MDevice::GetStringWidth(
 void MDevice::DrawCaret(
 	uint32				inOffset)
 {
-	(void)::ATSUOffsetToPosition(textLayout,
-		caretColumn, false, &mainCaret, &secondCaret, &isSplit);
-
-	float x = indent + Fix2X(mainCaret.fX) + 0.5f;
-	float y = Fix2X(mainCaret.fY);
-	float dx = indent + Fix2X(mainCaret.fDeltaX) + 0.5f;
-	float dy = Fix2X(mainCaret.fDeltaY);
-	
-	::CGContextBeginPath(inContext);
-	::CGContextMoveToPoint(inContext, x, -y);
-	::CGContextAddLineToPoint(inContext, dx, -dy);
-	
-	if (isSplit)
-	{
-		x = Fix2X(secondCaret.fX) + 0.5f;
-		y = Fix2X(secondCaret.fY) + 1;
-		dx = Fix2X(secondCaret.fDeltaX) + 0.5f;
-		dy = Fix2X(secondCaret.fDeltaY);
-		
-		::CGContextMoveToPoint(inContext, x, -y);
-		::CGContextAddLineToPoint(inContext, dx, -dy);
-	}
-	
-	::CGContextClosePath(inContext);
-	::CGContextDrawPath(inContext, kCGPathStroke);
+//	(void)::ATSUOffsetToPosition(textLayout,
+//		caretColumn, false, &mainCaret, &secondCaret, &isSplit);
+//
+//	float x = indent + Fix2X(mainCaret.fX) + 0.5f;
+//	float y = Fix2X(mainCaret.fY);
+//	float dx = indent + Fix2X(mainCaret.fDeltaX) + 0.5f;
+//	float dy = Fix2X(mainCaret.fDeltaY);
+//	
+//	::CGContextBeginPath(inContext);
+//	::CGContextMoveToPoint(inContext, x, -y);
+//	::CGContextAddLineToPoint(inContext, dx, -dy);
+//	
+//	if (isSplit)
+//	{
+//		x = Fix2X(secondCaret.fX) + 0.5f;
+//		y = Fix2X(secondCaret.fY) + 1;
+//		dx = Fix2X(secondCaret.fDeltaX) + 0.5f;
+//		dy = Fix2X(secondCaret.fDeltaY);
+//		
+//		::CGContextMoveToPoint(inContext, x, -y);
+//		::CGContextAddLineToPoint(inContext, dx, -dy);
+//	}
+//	
+//	::CGContextClosePath(inContext);
+//	::CGContextDrawPath(inContext, kCGPathStroke);
 }

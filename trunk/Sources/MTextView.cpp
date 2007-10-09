@@ -37,6 +37,7 @@
 #include "MTypes.h"
 #include "MTextView.h"
 #include "MDocument.h"
+#include "MController.h"
 #include "MGlobals.h"
 #include "MPreferences.h"
 #include "MDocWindow.h"
@@ -74,8 +75,8 @@ MColor		MTextView::sCurrentLineColor,
 // ---------------------------------------------------------------------------
 //	Default constructor
 
-MTextView::MTextView(HIObjectRef inObject)
-	: MView(inObject, kControlSupportsDragAndDrop|kHIViewFeatureGetsFocusOnClick)
+MTextView::MTextView()
+	: MDrawingArea(10, 10)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
 	, eScroll(this, &MTextView::Scroll)
@@ -85,88 +86,48 @@ MTextView::MTextView(HIObjectRef inObject)
 	, eStylesChanged(this, &MTextView::StylesChanged)
 	, eDocumentClosed(this, &MTextView::DocumentClosed)
 	, eDocumentChanged(this, &MTextView::SetDocument)
+	, eIdle(this, &MTextView::Tick)
 	, mController(nil)
 	, mDocument(nil)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
-	, mDragRef(nil)
+//	, mDragRef(nil)
 {
-	// Default constructor should set all data members to default values
-	
-	mImageOrigin.x = mImageOrigin.y = 0;
+	AddRoute(eIdle, gApp->eIdle);
 
-//	Install(kEventClassControl, kEventControlDraw,			this, &MTextView::DoControlDraw);
-//	Install(kEventClassControl, kEventControlClick,			this, &MTextView::DoControlClick);
-//	Install(kEventClassControl, kEventControlHitTest,		this, &MTextView::DoControlHitTest);
-//	Install(kEventClassControl, kEventControlTrack,			this, &MTextView::DoControlTrack);
-//	Install(kEventClassControl, kEventControlActivate,		this, &MTextView::DoControlActivate);
-//	Install(kEventClassControl, kEventControlDeactivate,	this, &MTextView::DoControlDeactivate);
-//	Install(kEventClassControl, kEventControlTrackingAreaEntered,
-//															this, &MTextView::DoControlTrackingAreaEntered);
-//	Install(kEventClassControl, kEventControlTrackingAreaExited,
-//															this, &MTextView::DoControlTrackingAreaExited);
-//	Install(kEventClassScrollable, kEventScrollableGetInfo,	this, &MTextView::DoScrollableGetInfo);
-//	Install(kEventClassScrollable, kEventScrollableScrollTo,
-//															this, &MTextView::DoScrollableScrollTo);
-//	Install(kEventClassControl, kEventControlBoundsChanged,	this, &MTextView::DoBoundsChanged);
-//	Install(kEventClassControl, kEventControlDragEnter,		this, &MTextView::DoDragEnter);
-//	Install(kEventClassControl, kEventControlDragWithin,	this, &MTextView::DoDragWithin);
-//	Install(kEventClassControl, kEventControlDragLeave,		this, &MTextView::DoDragLeave);
-//	Install(kEventClassControl, kEventControlDragReceive,	this, &MTextView::DoDragReceive);
-//	Install(kEventClassControl, kEventControlGetClickActivation,
-//															this, &MTextView::DoGetClickActivation);
-//	Install(kEventClassControl, kEventControlSetFocusPart,	this, &MTextView::DoSetFocusPart);
-}
-
-// Destructor
-
-MTextView::~MTextView()
-{
-	::RemoveEventLoopTimer(mTimerRef);
-}
-
-// ---------------------------------------------------------------------------
-//	Initialize								Direct Initializer		  [public]
-
-OSStatus MTextView::Initialize(EventRef ioEvent)
-{
-	OSStatus result = MView::Initialize(ioEvent);
-
-	THROW_IF_OSERROR(::SetControlDragTrackingEnabled(GetSysView(), true));
+//	THROW_IF_OSERROR(::SetControlDragTrackingEnabled(GetSysView(), true));
 		
-	static EventLoopTimerUPP sTimerUPP = ::NewEventLoopTimerUPP(&MTextView::EventLoopTimerProc);
-	THROW_IF_OSERROR(::InstallEventLoopTimer(::GetCurrentEventLoop(),
-		::TicksToEventTime(::GetCaretTime()), ::TicksToEventTime(::GetCaretTime()),
-		sTimerUPP, this, &mTimerRef));
-
-	InterfaceTypeList intf = { kUnicodeDocumentInterfaceType };
-	::NewTSMDocument(1, intf, &mTSMDocument, reinterpret_cast<uint32>(this));
-	::ActivateTSMDocument(mTSMDocument);	// why?
+//	InterfaceTypeList intf = { kUnicodeDocumentInterfaceType };
+//	::NewTSMDocument(1, intf, &mTSMDocument, reinterpret_cast<uint32>(this));
+//	::ActivateTSMDocument(mTSMDocument);	// why?
 
 	MRect r;
 	GetBounds(r);
-	r.size.width = kLeftMargin;
+	r.width = kLeftMargin;
 	
-	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&r), false);
-	::HIViewNewTrackingArea(GetSysView(), shape, 1, &mTrackingLeftRef);
+//	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&r), false);
+//	::HIViewNewTrackingArea(GetSysView(), shape, 1, &mTrackingLeftRef);
 	
 	GetBounds(r);
-	r.origin.x += kLeftMargin;
-	r.size.width -= kLeftMargin;
+	r.x += kLeftMargin;
+	r.width -= kLeftMargin;
 
-	shape = MCFRef<HIShapeRef>(::HIShapeCreateWithRect(&r), false);
-	::HIViewNewTrackingArea(GetSysView(), shape, 2, &mTrackingMainRef);
-
+//	shape = MCFRef<HIShapeRef>(::HIShapeCreateWithRect(&r), false);
+//	::HIViewNewTrackingArea(GetSysView(), shape, 2, &mTrackingMainRef);
+//
 	sCurrentLineColor = Preferences::GetColor("current line color", kCurrentLineColor);
 	sMarkedLineColor = Preferences::GetColor("marked line color", kMarkedLineColor);
 
 	sPCLineColor = kPCLineColor;
 	sBreakpointColor = kBreakpointColor;
 	
-	
 	StylesChanged();
-	
-	return result;
+}
+
+// Destructor
+
+MTextView::~MTextView()
+{
 }
 
 void MTextView::SetController(MController* inController)
@@ -395,7 +356,7 @@ bool MTextView::OnExposeEvent(
 	
 	MRect update(inEvent->area);
 
-	MDevice dev(*this, update);
+	MDevice dev(this, update);
 
 	try
 	{
@@ -419,11 +380,11 @@ bool MTextView::OnExposeEvent(
 			if (update.Intersects(lr))
 			{
 //				cout << "drawing line: " << line << endl;
-				DrawLine(line, device);
+				DrawLine(line, dev);
 			}
 		}
 	}
-	catch (std::exception& e)
+	catch (exception& e)
 	{
 	}
 
@@ -465,29 +426,25 @@ void MTextView::DrawLine(
 		bool fill = true;
 		
 		if (mDocument->GetPCLine() == inLineNr)
-			dev.SetForeColor(sPCLineColor);
+			inDevice.SetForeColor(sPCLineColor);
 		else if (marked and current)
-		{
-			dev.SetForeColor(sMarkedLineColor);
-			dev.SetBackColor(sCurrentLineColor);
-			dev.SetUsePattern(true);
-		}
+			inDevice.CreateAndUsePattern(sMarkedLineColor, sCurrentLineColor);
 		else if (marked)
-			dev.SetForeColor(sMarkedLineColor);
+			inDevice.SetForeColor(sMarkedLineColor);
 		else if (current)
-			dev.SetForeColor(sCurrentLineColor);
+			inDevice.SetForeColor(sCurrentLineColor);
 		else
 			fill = false;
 		
 		if (fill)
 		{
-			dev.FillRect(lineRect);
+			inDevice.FillRect(lineRect);
 
 			MRect r2(lineRect);
 			r2.x -= r2.height / 2;
 			r2.width = r2.height;
 			
-			dev.FillEllipse(r2);
+			inDevice.FillEllipse(r2);
 		}
 	}
 
@@ -506,7 +463,7 @@ void MTextView::DrawLine(
 //			uint32 offset = ii.fOffset[i] - mDocument->LineStart(inLineNr);
 //			uint32 length = ii.fLength[i];
 //
-//			dev.DrawTextHighLight(x, y, offset, length, false, false, IsActive());
+//			inDevice.DrawTextHighLight(x, y, offset, length, false, false, IsActive());
 ////			
 ////			(void)::ATSUHighlightText(textLayout, myXLocation, myYLocation,
 ////				offset, length);
@@ -523,7 +480,7 @@ void MTextView::DrawLine(
 		selection.GetMinLine(*mDocument) > inLineNr)
 	{
 		if (not mDrawForDragImage)
-			dev.DrawText(x, y);
+			inDevice.DrawText(x, y);
 		
 		if (selection.IsEmpty())
 		{
@@ -539,7 +496,7 @@ void MTextView::DrawLine(
 		uint32 selectionStart = selection.GetAnchor();
 		uint32 selectionEnd = selection.GetCaret();
 		if (selectionStart > selectionEnd)
-			std::swap(selectionEnd, selectionStart);
+			swap(selectionEnd, selectionStart);
 
 		uint32 startOffset = mDocument->LineStart(inLineNr);
 //		uint32 endOffset = mDocument->LineStart(inLineNr + 1);
@@ -558,7 +515,7 @@ void MTextView::DrawLine(
 //					text.length(), false, &mainCaret, &secondCaret, &isSplit);
 //	
 //				CGRect s = lineRect;
-//				s.origin.x = std::min(Fix2X(mainCaret.fX), Fix2X(mainCaret.fDeltaX));
+//				s.x = min(Fix2X(mainCaret.fX), Fix2X(mainCaret.fDeltaX));
 //	
 //				if (IsActive() and not mDrawForDragImage)
 //					::CGContextSetRGBFillColor(inContext, gHiliteColor.red,
@@ -596,14 +553,14 @@ void MTextView::DrawLine(
 		
 		if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
 		{
-			if (IsActive()
-				dev.SetTextSelection(selectionStart, selectionEnd, gHiliteColor);
+			if (IsActive())
+				inDevice.SetTextSelection(selectionStart, selectionEnd, gHiliteColor);
 			else
-				dev.SetTextSelection(selectionStart, selectionEnd, gInactiveHiliteColor);
-//			dev.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
+				inDevice.SetTextSelection(selectionStart, selectionEnd, gInactiveHiliteColor);
+//			inDevice.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
 //				fillBefore, fillAfter, IsActive());
 		}
-		dev.DrawText(x, y);
+		inDevice.DrawText(x, y);
 	}
 	
 //	if (mDragRef != nil)
@@ -620,108 +577,114 @@ void MTextView::DrawLine(
 		if (caretColumn > text.length())	// duh
 			caretColumn = text.length();
 
-		dev.DrawCaret(caretColumn);
+		inDevice.DrawCaret(caretColumn);
 	}
 }
 
-OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
+//OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
+//{
+//	if (mDocument == nil)
+//		return eventNotHandledErr;
+//	
+//	MRect frame;
+//	GetBounds(frame);
+//
+//	HISize		imageSize = { 0 };
+//	HISize		viewSize = { 0 };
+//	HISize		lineSize = { 0 };
+//	HIPoint		origin = { 0 };
+//
+//	lineSize.height = mLineHeight;
+//	imageSize.height = mDocument->CountLines() * mLineHeight;
+//	viewSize.height = frame.height;
+//
+//	origin = mImageOrigin;
+//	
+//	::SetEventParameter(ioEvent, kEventParamImageSize, typeHISize, sizeof(HISize), &imageSize);
+//	::SetEventParameter(ioEvent, kEventParamViewSize, typeHISize, sizeof(HISize), &viewSize);
+//	::SetEventParameter(ioEvent, kEventParamLineSize, typeHISize, sizeof(HISize), &lineSize);
+//	::SetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, sizeof(HIPoint), &origin);
+//	
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoScrollableScrollTo(EventRef ioEvent)
+//{
+//	HIPoint location;
+//	::GetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, nil,
+//		sizeof(location), nil, &location);
+//	
+//	DoScrollTo(location);
+//	
+//	return noErr;
+//}
+//
+void MTextView::DoScrollTo(
+	int32			inX,
+	int32			inY)
 {
-	if (mDocument == nil)
-		return eventNotHandledErr;
-	
-	MRect frame;
-	GetBounds(frame);
-
-	HISize		imageSize = { 0 };
-	HISize		viewSize = { 0 };
-	HISize		lineSize = { 0 };
-	HIPoint		origin = { 0 };
-
-	lineSize.height = mLineHeight;
-	imageSize.height = mDocument->CountLines() * mLineHeight;
-	viewSize.height = frame.size.height;
-
-	origin = mImageOrigin;
-	
-	::SetEventParameter(ioEvent, kEventParamImageSize, typeHISize, sizeof(HISize), &imageSize);
-	::SetEventParameter(ioEvent, kEventParamViewSize, typeHISize, sizeof(HISize), &viewSize);
-	::SetEventParameter(ioEvent, kEventParamLineSize, typeHISize, sizeof(HISize), &lineSize);
-	::SetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, sizeof(HIPoint), &origin);
-	
-	return noErr;
+//	HIPoint delta;
+//	
+//	if (inWhere.x < 0.0)
+//	{
+//		delta.x = -mImageOrigin.x;
+//		mImageOrigin.x = 0.0;
+//	}
+//	else
+//	{
+//		delta.x = mImageOrigin.x - inWhere.x;
+//		mImageOrigin.x = inWhere.x;
+//	}
+//	
+//	if (inWhere.y < 0.0)
+//	{
+//		delta.y = -mImageOrigin.y;
+//		mImageOrigin.y = 0.0;
+//	}
+//	else
+//	{
+//		delta.y = mImageOrigin.y - inWhere.y;
+//		mImageOrigin.y = inWhere.y;
+//	}
+//	
+//	MRect frame;
+//	GetBounds(frame);
+//	
+//	if (mNeedsDisplay)	// invalidate everything if a piece is invalid
+//		SetNeedsDisplay(true);
+//	else if (fabs(delta.x) < frame.width and fabs(delta.y) < frame.height)
+//		::HIViewScrollRect(GetSysView(), NULL, delta.x, delta.y);
+//	else
+//		SetNeedsDisplay(true);
 }
 
-OSStatus MTextView::DoScrollableScrollTo(EventRef ioEvent)
+void MTextView::ScrollToPosition(
+	int32			inX,
+	int32			inY)
 {
-	HIPoint location;
-	::GetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, nil,
-		sizeof(location), nil, &location);
+	DoScrollTo(inX, inY);
 	
-	DoScrollTo(location);
-	
-	return noErr;
+//	MCarbonEvent event;
+//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//	
+//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
-void MTextView::DoScrollTo(HIPoint inWhere)
+void MTextView::GetScrollPosition(
+	int32&				outX,
+	int32&				outY)
 {
-	HIPoint delta;
-	
-	if (inWhere.x < 0.0)
-	{
-		delta.x = -mImageOrigin.x;
-		mImageOrigin.x = 0.0;
-	}
-	else
-	{
-		delta.x = mImageOrigin.x - inWhere.x;
-		mImageOrigin.x = inWhere.x;
-	}
-	
-	if (inWhere.y < 0.0)
-	{
-		delta.y = -mImageOrigin.y;
-		mImageOrigin.y = 0.0;
-	}
-	else
-	{
-		delta.y = mImageOrigin.y - inWhere.y;
-		mImageOrigin.y = inWhere.y;
-	}
-	
-	MRect frame;
-	GetBounds(frame);
-	
-	if (mNeedsDisplay)	// invalidate everything if a piece is invalid
-		SetNeedsDisplay(true);
-	else if (std::fabs(delta.x) < frame.size.width and std::fabs(delta.y) < frame.size.height)
-		::HIViewScrollRect(GetSysView(), NULL, delta.x, delta.y);
-	else
-		SetNeedsDisplay(true);
-}
-
-void MTextView::ScrollToPosition(const HIPoint& inPosition)
-{
-	DoScrollTo(inPosition);
-	
-	MCarbonEvent event;
-	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-	
-	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
-}
-
-void MTextView::GetScrollPosition(HIPoint& outPosition)
-{
-	outPosition = mImageOrigin;
+//	outPosition = mImageOrigin;
 }
 
 void MTextView::LineCountChanged()
 {
-	MCarbonEvent event;
-	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-
-	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+//	MCarbonEvent event;
+//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//
+//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
 void MTextView::Tick()
@@ -731,13 +694,13 @@ void MTextView::Tick()
 		
 	MSelection sel = mDocument->GetSelection();
 
-	if (mDragRef != nil)
-	{
-		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-		mCaretVisible = not mCaretVisible;
-	}
-	else
-	{
+//	if (mDragRef != nil)
+//	{
+//		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+//		mCaretVisible = not mCaretVisible;
+//	}
+//	else
+//	{
 		uint32 caret = sel.GetCaret();
 		
 		if (mCaret != caret)
@@ -756,37 +719,39 @@ void MTextView::Tick()
 	
 			InvalidateLine(mDocument->OffsetToLine(mCaret));
 		}
-	}
+//	}
 }
 
-void MTextView::SelectionChanged(MSelection inNewSelection, string inRangeName)
+void MTextView::SelectionChanged(
+	MSelection		inNewSelection,
+	string			inRangeName)
 {
 	InvalidateDirtyLines();
 
 	mCaretVisible = true;
 	Tick();
 	mCaretVisible = true;
-	::SetEventLoopTimerNextFireTime(mTimerRef, ::TicksToEventTime(::GetCaretTime()));
+//	::SetEventLoopTimerNextFireTime(mTimerRef, ::TicksToEventTime(::GetCaretTime()));
 	
 	MRect bounds;
 	GetBounds(bounds);
-	bounds.origin.x += kLeftMargin;
-	bounds.size.width -= kLeftMargin;
+	bounds.x += kLeftMargin;
+	bounds.width -= kLeftMargin;
 	
-	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&bounds), false);
-
-//	if (not mDocument->GetSelection().IsEmpty())
-//	{
-//		MRegion rgn(SelectionToRegion());
-//		MCFRef<HIShapeRef> selectionShape(::HIShapeCreateWithQDRgn(rgn), false);
-//		MCFRef<HIShapeRef> newShape(::HIShapeCreateDifference(shape, selectionShape), false);
-//		shape = newShape;
-//	}
-
-	::HIViewChangeTrackingArea(mTrackingMainRef, shape);
-	
-//	if (inInvalidate)
-//		::HIWindowFlush(GetSysWindow());
+//	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&bounds), false);
+//
+////	if (not mDocument->GetSelection().IsEmpty())
+////	{
+////		MRegion rgn(SelectionToRegion());
+////		MCFRef<HIShapeRef> selectionShape(::HIShapeCreateWithQDRgn(rgn), false);
+////		MCFRef<HIShapeRef> newShape(::HIShapeCreateDifference(shape, selectionShape), false);
+////		shape = newShape;
+////	}
+//
+//	::HIViewChangeTrackingArea(mTrackingMainRef, shape);
+//	
+////	if (inInvalidate)
+////		::HIWindowFlush(GetSysWindow());
 }
 
 // ---------------------------------------------------------------------------
@@ -798,8 +763,8 @@ MRect MTextView::GetLineRect(
 	MRect result;
 	
 	GetBounds(result);
-	result.origin.y = inLineNr * mLineHeight - mImageOrigin.y;
-	result.size.height = mLineHeight;
+	result.y = inLineNr * mLineHeight;
+	result.height = mLineHeight;
 	
 	return result;
 }
@@ -814,11 +779,11 @@ void MTextView::InvalidateDirtyLines()
 	MRect frame;
 	GetBounds(frame);
 
-	uint32 minLine = static_cast<uint32>(mImageOrigin.y / mLineHeight);
+	uint32 minLine = static_cast<uint32>(frame.y / mLineHeight);
 	if (minLine > 0)
 		--minLine;
 	
-	uint32 maxLine = static_cast<uint32>(minLine + frame.size.height / mLineHeight + 1);
+	uint32 maxLine = static_cast<uint32>(minLine + frame.height / mLineHeight + 1);
 	if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
 		maxLine = mDocument->CountLines() - 1;
 	
@@ -840,7 +805,8 @@ void MTextView::InvalidateDirtyLines()
 void MTextView::InvalidateAll()
 {
 	mNeedsDisplay = true;
-	SetNeedsDisplay(true);
+	Invalidate();
+//	SetNeedsDisplay(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -850,7 +816,8 @@ void MTextView::InvalidateRect(
 	MRect		inRect)
 {
 	mNeedsDisplay = true;
-	::HIViewSetNeedsDisplayInRect(GetSysView(), &inRect, true);
+	Invalidate(inRect);
+//	::HIViewSetNeedsDisplayInRect(GetSysView(), &inRect, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -869,31 +836,32 @@ void MTextView::Scroll(MScrollMessage inCommand)
 {
 	assert(mDocument);
 	
-	MCarbonEvent event;
-	HIPoint loc = mImageOrigin;
+//	MCarbonEvent event;
+//	HIPoint loc = mImageOrigin;
+	int32 x, y;
 	
 	MRect frame;
 	GetBounds(frame);
 	
 	uint32 lineCount = mDocument->CountLines();
-	uint32 linesPerPage = static_cast<uint32>(frame.size.height / mLineHeight);
+	uint32 linesPerPage = static_cast<uint32>(frame.height / mLineHeight);
 	if (linesPerPage > 1)
 		--linesPerPage;
 	
-	float maxLoc = (lineCount * mLineHeight) - frame.size.height;
+	float maxLoc = (lineCount * mLineHeight) - frame.height;
 	if (maxLoc < 0)
 		maxLoc = 0;
 	
 	switch (inCommand)
 	{
 		case kScrollToStart:
-			loc.y = 0;
-			DoScrollTo(loc);
+			y = 0;
+			DoScrollTo(x, y);
 			break;
 		
 		case kScrollToEnd:
-			loc.y = maxLoc;
-			DoScrollTo(loc);
+			y = maxLoc;
+			DoScrollTo(x, y);
 			break;
 		
 		case kScrollToCaret:
@@ -909,41 +877,42 @@ void MTextView::Scroll(MScrollMessage inCommand)
 			break;
 		
 		case kScrollLineUp:
-			loc.y += mLineHeight;
-			if (loc.y > maxLoc)
-				loc.y = maxLoc;
-			DoScrollTo(loc);
+			y += mLineHeight;
+			if (y > maxLoc)
+				y = maxLoc;
+			DoScrollTo(x, y);
 			break;
 
 		case kScrollLineDown:
-			loc.y -= mLineHeight;
-			if (loc.y < 0)
-				loc.y = 0;
-			DoScrollTo(loc);
+			y -= mLineHeight;
+			if (y < 0)
+				y = 0;
+			DoScrollTo(x, y);
 			break;
 
 		case kScrollPageUp:
-			loc.y -= (linesPerPage * mLineHeight);
-			if (loc.y < 0)
-				loc.y = 0;
-			DoScrollTo(loc);
+			y -= (linesPerPage * mLineHeight);
+			if (y < 0)
+				y = 0;
+			DoScrollTo(x, y);
 			break;
 
 		case kScrollPageDown:
-			loc.y += (linesPerPage * mLineHeight);
-			if (loc.y > maxLoc)
-				loc.y = maxLoc;
-			DoScrollTo(loc);
+			y += (linesPerPage * mLineHeight);
+			if (y > maxLoc)
+				y = maxLoc;
+			DoScrollTo(x, y);
 			break;
 		
 		case kScrollForKiss:
-			mSavedOrigin = mImageOrigin;
+			mSavedOriginX = x;
+			mSavedOriginY = y;
 			ScrollToSelection(false);
-			::HIWindowFlush(GetSysWindow());
+//			::HIWindowFlush(GetSysWindow());
 			break;
 		
 		case kScrollReturnAfterKiss:
-			DoScrollTo(mSavedOrigin);
+			DoScrollTo(mSavedOriginX, mSavedOriginY);
 //			::HIWindowFlush(GetSysWindow());
 			break;
 		
@@ -960,9 +929,9 @@ void MTextView::Scroll(MScrollMessage inCommand)
 			break;
 	}
 
-	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
 // ---------------------------------------------------------------------------
@@ -972,24 +941,24 @@ bool MTextView::ScrollToCaret()
 {
 	assert(mDocument);
 	
-	MRect frame;
-	GetBounds(frame);
+	MRect bounds;
+	GetBounds(bounds);
 	
 	int32 top, bottom;
-	top = static_cast<int32>(mImageOrigin.y);
-	bottom = static_cast<int32>(top + frame.size.height);
+	top = static_cast<int32>(bounds.y);
+	bottom = static_cast<int32>(top + bounds.height);
 	
 	MSelection selection = mDocument->GetSelection();
 	
 	uint32 caret;
 	
-	if (mDragRef)
-	{
-		caret = mDragCaret;
-		top += mLineHeight;
-		bottom -= mLineHeight;
-	}
-	else
+//	if (mDragRef)
+//	{
+//		caret = mDragCaret;
+//		top += mLineHeight;
+//		bottom -= mLineHeight;
+//	}
+//	else
 		caret = selection.GetCaret();
 	
 	uint32 line;
@@ -1006,39 +975,41 @@ bool MTextView::ScrollToCaret()
 		y -= mLineHeight;
 	}
 	
-	HIPoint newOrigin = mImageOrigin;
+	int32 newX, newY;
+	newX = bounds.x;
+	newY = bounds.y;
 	
 	if (y < top)
 	{
-		newOrigin.y = line * mLineHeight;
-		if (mDragRef)
-			newOrigin.y -= mLineHeight;
+		newY = line * mLineHeight;
+//		if (mDragRef)
+//			newY -= mLineHeight;
 	}
 	else if (y + mLineHeight > bottom)
 	{
-		newOrigin.y = (line + 1) * mLineHeight - (bottom - top) + 2;
-		if (mDragRef)
-			newOrigin.y += mLineHeight;
+		newY = (line + 1) * mLineHeight - (bottom - top) + 2;
+//		if (mDragRef)
+//			newY += mLineHeight;
 	}
 	
-	if (x < mImageOrigin.x + 3)
-		newOrigin.x = std::max(0, static_cast<int32>(x - 3));
-	else if (x > mImageOrigin.x + frame.size.width - 3 - kLeftMargin)
-		newOrigin.x = x - frame.size.width + 3 + kLeftMargin;
+	if (x < bounds.x + 3)
+		newX = max(0, static_cast<int32>(x - 3));
+	else if (x > bounds.x + bounds.width - 3 - kLeftMargin)
+		newX = x - bounds.width + 3 + kLeftMargin;
 	
 	bool result = false;
 	
-	if (newOrigin.x != mImageOrigin.x or newOrigin.y != mImageOrigin.y)
+	if (newX != bounds.x or newY != bounds.y)
 	{
-		MCarbonEvent er;
-		DoScrollTo(newOrigin);
-
-		MCarbonEvent event;
-		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
-
-		result = true;
+//		MCarbonEvent er;
+//		DoScrollTo(newOrigin);
+//
+//		MCarbonEvent event;
+//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+//
+//		result = true;
 	}
 	
 	return result;
@@ -1053,10 +1024,10 @@ void MTextView::ScrollToLine(
 {
 	assert(mDocument);
 	
-	MCarbonEvent event;
+//	MCarbonEvent event;
 
-	MRect frame;
-	GetBounds(frame);
+	MRect bounds;
+	GetBounds(bounds);
 	
 	float y;
 		
@@ -1064,7 +1035,7 @@ void MTextView::ScrollToLine(
 	{
 		y = inLineNr * mLineHeight;
 		
-		if (y < mImageOrigin.y)
+		if (y < bounds.y)
 			inForceCenter = true;
 	}
 			
@@ -1072,28 +1043,28 @@ void MTextView::ScrollToLine(
 	{
 		y = (inLineNr + 1) * mLineHeight;
 	 
-		if (y > mImageOrigin.y + frame.size.height)
+		if (y > bounds.y + bounds.height)
 			inForceCenter = true;
 	}
 
 	if (inForceCenter)
 	{
-		uint32 midLine = static_cast<uint32>(frame.size.height / (3 * mLineHeight));
+		uint32 midLine = static_cast<uint32>(bounds.height / (3 * mLineHeight));
 
 		if (inLineNr < midLine)
 			inLineNr = 0;
 		else
 			inLineNr -= midLine;
 
-		HIPoint loc;
-		loc.x = 0;
-		loc.y = inLineNr * mLineHeight;
+		int32 x, y;
+		x = 0;
+		y = inLineNr * mLineHeight;
 		
-		DoScrollTo(loc);
+		DoScrollTo(x, y);
 
-		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 	}
 }
 
@@ -1102,616 +1073,604 @@ void MTextView::ScrollToLine(
 
 void MTextView::ScrollToSelection(
 	bool	inForceCenter)
-{
-	assert(mDocument);
-	
-	MCarbonEvent event;
-	uint32 line;
-
-	MRect frame;
-	GetBounds(frame);
-	
-	MSelection selection(mDocument->GetSelection());
-	float y;
-		
-	if (not inForceCenter)
-	{
-		line = selection.GetMinLine(*mDocument);
-		y = line * mLineHeight;
-		
-		if (y < mImageOrigin.y)
-			inForceCenter = true;
-	}
-			
-	if (not inForceCenter)
-	{
-		line = selection.GetMaxLine(*mDocument);
-		y = (line + 1) * mLineHeight;
-	 
-		if (y > mImageOrigin.y + frame.size.height)
-			inForceCenter = true;
-	}
-
-	if (inForceCenter)
-	{
-		uint32 midLine = static_cast<uint32>(frame.size.height / (3 * mLineHeight));
-
-		line = selection.GetMinLine(*mDocument);
-		if (line < midLine)
-			line = 0;
-		else
-			line -= midLine;
-
-		HIPoint loc;
-		loc.x = 0;
-		loc.y = line * mLineHeight;
-		
-		DoScrollTo(loc);
-	}
-   
-	ScrollToCaret();
-
-	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
-	{
-		int32 ax, cx;
-		uint32 line;
-		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
-		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
-
-		float center = (ax + cx) / 2;
-
-		if (center < mImageOrigin.x + 10 or
-			center > mImageOrigin.x + frame.size.width - 10)
-		{
-			HIPoint loc;
-			loc.y = mImageOrigin.y;
-			loc.x = mImageOrigin.x + center -
-				(mImageOrigin.x + frame.size.width / 2);
-			DoScrollTo(loc);
-		}
-	}
-
-	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+{//
+//	assert(mDocument);
+//	
+//	MCarbonEvent event;
+//	uint32 line;
+//
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	MSelection selection(mDocument->GetSelection());
+//	float y;
+//		
+//	if (not inForceCenter)
+//	{
+//		line = selection.GetMinLine(*mDocument);
+//		y = line * mLineHeight;
+//		
+//		if (y < bounds.y)
+//			inForceCenter = true;
+//	}
+//			
+//	if (not inForceCenter)
+//	{
+//		line = selection.GetMaxLine(*mDocument);
+//		y = (line + 1) * mLineHeight;
+//	 
+//		if (y > bounds.y + bounds.height)
+//			inForceCenter = true;
+//	}
+//
+//	if (inForceCenter)
+//	{
+//		uint32 midLine = static_cast<uint32>(bounds.height / (3 * mLineHeight));
+//
+//		line = selection.GetMinLine(*mDocument);
+//		if (line < midLine)
+//			line = 0;
+//		else
+//			line -= midLine;
+//
+//		HIPoint loc;
+//		loc.x = 0;
+//		loc.y = line * mLineHeight;
+//		
+//		DoScrollTo(loc);
+//	}
+//   
+//	ScrollToCaret();
+//
+//	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
+//	{
+//		int32 ax, cx;
+//		uint32 line;
+//		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
+//		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
+//
+//		float center = (ax + cx) / 2;
+//
+//		if (center < bounds.x + 10 or
+//			center > bounds.x + bounds.width - 10)
+//		{
+//			HIPoint loc;
+//			loc.y = bounds.y;
+//			loc.x = bounds.x + center -
+//				(bounds.x + bounds.width / 2);
+//			DoScrollTo(loc);
+//		}
+//	}
+//
+//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
 // ---------------------------------------------------------------------------
 //	ScrollForDiff
 
 void MTextView::ScrollForDiff()
-{
-	assert(mDocument);
-	
-	MRect frame;
-	GetBounds(frame);
-	
-	int32 center = static_cast<int32>(frame.size.height / (4 * mLineHeight));
-
-	uint32 offset = mDocument->GetSelection().GetMinOffset();
-	
-	uint32 line;
-	int32 x;
-	
-	mDocument->OffsetToPosition(offset, line, x);
-
-	HIPoint newOrigin = mImageOrigin;
-	newOrigin.y = (static_cast<int32>(line) - center) * mLineHeight;
-	if (newOrigin.y < 0)
-		newOrigin.y = 0;
-	
-	if (newOrigin.y != mImageOrigin.y)
-	{
-		MCarbonEvent er;
-		DoScrollTo(newOrigin);
-
-		MCarbonEvent event;
-		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
-	}
+{//
+//	assert(mDocument);
+//	
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	int32 center = static_cast<int32>(bounds.height / (4 * mLineHeight));
+//
+//	uint32 offset = mDocument->GetSelection().GetMinOffset();
+//	
+//	uint32 line;
+//	int32 x;
+//	
+//	mDocument->OffsetToPosition(offset, line, x);
+//
+//	HIPoint newOrigin = bounds;
+//	newOrigin.y = (static_cast<int32>(line) - center) * mLineHeight;
+//	if (newOrigin.y < 0)
+//		newOrigin.y = 0;
+//	
+//	if (newOrigin.y != bounds.y)
+//	{
+//		MCarbonEvent er;
+//		DoScrollTo(newOrigin);
+//
+//		MCarbonEvent event;
+//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
+//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
+//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+//	}
 }
 
 // -----------------------------------------------------------------------------
 // ShiftLines
 
 void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
-{
-	// get our frame
-	MRect frame;
-	GetBounds(frame);
-	
-	// calculate the rectangle that needs to be scrolled
-	MRect r = frame;
-
-	// the top of the scrolling rect
-	r.origin.y = inFromLine * mLineHeight - mImageOrigin.y;
-	if (r.origin.y < frame.origin.y)
-		r.origin.y = frame.origin.y;
-	
-	// and the height
-	r.size.height = frame.size.height - r.origin.y;
-
-	float dy = inDelta * static_cast<int32>(mLineHeight);
-	
-	// if the rect is not empty and lies within our frame
-	if (r.size.height > 0 and
-		r.origin.y <= frame.size.height and
-		r.origin.y + r.size.height >= 0 and
-		std::fabs(dy) < frame.size.height and
-		not mNeedsDisplay)
-	{
-		::HIViewScrollRect(GetSysView(), &r, 0.f, dy);
-	}
-	
-	// otherwise just invalidate the entire view
-	
-	else
-		SetNeedsDisplay(true);
+{//
+//	// get our bounds
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	// calculate the rectangle that needs to be scrolled
+//	MRect r = bounds;
+//
+//	// the top of the scrolling rect
+//	r.y = inFromLine * mLineHeight - bounds.y;
+//	if (r.y < bounds.y)
+//		r.y = bounds.y;
+//	
+//	// and the height
+//	r.height = bounds.height - r.y;
+//
+//	float dy = inDelta * static_cast<int32>(mLineHeight);
+//	
+//	// if the rect is not empty and lies within our bounds
+//	if (r.height > 0 and
+//		r.y <= bounds.height and
+//		r.y + r.height >= 0 and
+//		fabs(dy) < bounds.height and
+//		not mNeedsDisplay)
+//	{
+//		::HIViewScrollRect(GetSysView(), &r, 0.f, dy);
+//	}
+//	
+//	// otherwise just invalidate the entire view
+//	
+//	else
+//		SetNeedsDisplay(true);
 }
 
 void MTextView::GetVisibleLineSpan(
 	uint32&				outFirstLine,
 	uint32&				outLastLine) const
 {
-	MRect frame;
-	GetBounds(frame);
+	MRect bounds;
+	GetBounds(bounds);
 	
-	outFirstLine = static_cast<uint32>(mImageOrigin.y / mLineHeight);
+	outFirstLine = static_cast<uint32>(bounds.y / mLineHeight);
 	
-	uint32 cnt = static_cast<uint32>(frame.size.height / mLineHeight);
+	uint32 cnt = static_cast<uint32>(bounds.height / mLineHeight);
 	if (cnt > 0)
 		--cnt;
 	
 	outLastLine = outFirstLine + cnt;
 }
 
-OSStatus MTextView::DoControlActivate(EventRef ioEvent)
-{
-	::ActivateTSMDocument(mTSMDocument);
-	SetNeedsDisplay(true);
-	
-	if (mDocument != nil)
-	{
-		mDocument->SetTargetTextView(this);
-		mDocument->MakeFirstDocument();
-		mDocument->CheckFile();
-	}
-	
-	return noErr;
-}
-
-OSStatus MTextView::DoControlDeactivate(EventRef ioEvent)
-{
-	::DeactivateTSMDocument(mTSMDocument);
-	
-	mNeedsDisplay = true;
-	SetNeedsDisplay(true);
-	
-	if (mDocument != nil)
-		mDocument->Reset();
-	
-	return noErr;
-}
-
-OSStatus MTextView::DoControlTrackingAreaEntered(EventRef ioEvent)
-{
-	HIPoint where;
-	::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
-		sizeof(where), nil, &where);
-	
-	HIViewTrackingAreaRef area;
-	::GetEventParameter(ioEvent, kEventParamHIViewTrackingArea, typeHIViewTrackingAreaRef,
-		nil, sizeof(area), nil, &area);
-	
-	if (IsActive())
-	{
-		if (area == mTrackingLeftRef)
-		{
-			const Cursor kSelectLineCursor =
-			{
-#if __BIG_ENDIAN__
-				{
-					0x0000, 0x0002, 0x0006, 0x000E, 0x001E, 0x003E, 0x007E, 0x00FE,
-					0x01FE, 0x003E, 0x0036, 0x0062, 0x0060, 0x00C0, 0x00C0, 0x0000
-				},
-				{
-					0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF,
-					0x03FF, 0x07FF, 0x007F, 0x00F7, 0x00F3, 0x01E1, 0x01E0, 0x01C0
-				},
-#else
-				{
-					0x0000, 0x0200, 0x0600, 0x0E00, 0x1E00, 0x3E00, 0x7E00, 0xFE00,
-					0xFE01, 0x3E00, 0x3600, 0x6200, 0x6000, 0xC000, 0xC000, 0x0000
-				},
-				{
-					0x0300, 0x0700, 0x0F00, 0x1F00, 0x3F00, 0x7F00, 0xFF00, 0xFF01,
-					0xFF03, 0xFF07, 0x7F00, 0xF700, 0xF300, 0xE101, 0xE001, 0xC001
-				},
-#endif
-				0x0000, 0x000F
-			};
-
-			::SetCursor(&kSelectLineCursor);
-			mTrackCursorInTick = false;
-		}
-		else
-		{
-			mTrackCursorInTick = true;
-			::QDSetNamedPixMapCursor(
-				::QDGetCursorNameForSystemCursor(kQDXIBeamXORCursor));
-		}
-	}
-	else
-	{
-		mTrackCursorInTick = false;
-		::QDSetNamedPixMapCursor(
-			::QDGetCursorNameForSystemCursor(kQDXArrowCursor));
-	}
-	return noErr;
-}
-
-OSStatus MTextView::DoControlTrackingAreaExited(EventRef ioEvent)
-{
-	mTrackCursorInTick = false;
-
-	HIPoint where;
-	::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
-		sizeof(where), nil, &where);
-	
-	MRect bounds;
-	GetBounds(bounds);
-	
-	if (where.x < bounds.origin.x or where.x > bounds.origin.x + bounds.size.width or
-		where.y < bounds.origin.y or where.y > bounds.origin.y + bounds.size.height)
-	{
-		::QDSetNamedPixMapCursor(
-			::QDGetCursorNameForSystemCursor(kQDXArrowCursor));
-	}
-
-	return noErr;
-}
-
-OSStatus MTextView::DoBoundsChanged(EventRef ioEvent)
-{
-	MRect r;
-	GetBounds(r);
-	r.size.width = kLeftMargin;
-	
-	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&r), false);
-	::HIViewChangeTrackingArea(mTrackingLeftRef, shape);
-	
-	GetBounds(r);
-	r.origin.x += kLeftMargin;
-	r.size.width -= kLeftMargin;
-
-	shape = MCFRef<HIShapeRef>(::HIShapeCreateWithRect(&r), false);
-
-//	if (mDocument and not mDocument->GetSelection().IsEmpty())
+//OSStatus MTextView::DoControlActivate(EventRef ioEvent)
+//{
+//	::ActivateTSMDocument(mTSMDocument);
+//	SetNeedsDisplay(true);
+//	
+//	if (mDocument != nil)
 //	{
-//		MRegion rgn(SelectionToRegion());
-//		MCFRef<HIShapeRef> selectionShape(::HIShapeCreateWithQDRgn(rgn), false);
-//		shape = ::HIShapeCreateDifference(shape, selectionShape);
+//		mDocument->SetTargetTextView(this);
+//		mDocument->MakeFirstDocument();
+//		mDocument->CheckFile();
 //	}
-
-	::HIViewChangeTrackingArea(mTrackingMainRef, shape);
-	
-	eBoundsChanged();
-	
-	return noErr;
-}
-
-pascal void	MTextView::EventLoopTimerProc(EventLoopTimerRef inTimer, void *inUserData)
-{
-	try
-	{
-		MTextView* self = static_cast<MTextView*>(inUserData);
-		self->Tick();
-	}
-	catch (std::exception& e)
-	{
-		MError::DisplayError(e);
-	}
-	catch (...) {}
-}
-
-OSStatus MTextView::DoDragEnter(EventRef ioEvent)
-{
-	OSStatus err = eventNotHandledErr;
-	
-	try
-	{
-		DragRef dragRef;
-		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
-			sizeof(dragRef), nil, &dragRef));
-		
-		UInt16 itemCount;
-		THROW_IF_OSERROR(::CountDragItems(dragRef, &itemCount));
-		
-		Boolean accept = false;
-		
-		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
-		{
-			ItemReference itemRef;
-			THROW_IF_OSERROR(::GetDragItemReferenceNumber(dragRef, ix, &itemRef));
-			
-			UInt16 flavorCount;
-			if (::CountDragItemFlavors(dragRef, itemRef, &flavorCount) != noErr)
-				return false;
-		
-			for (UInt16 index = 1; index <= flavorCount and accept == false; ++index)
-			{
-				FlavorType type;
-				if (::GetFlavorType(dragRef, itemRef, index, &type) != noErr)
-					continue;
-		
-				accept =
-					type == kScrapFlavorTypeText or
-					type == kScrapFlavorTypeUnicode or
-					type == kScrapFlavorTypeUTF16External;
-		
-//				if (type == flavorTypeHFS)
+//	
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoControlDeactivate(EventRef ioEvent)
+//{
+//	::DeactivateTSMDocument(mTSMDocument);
+//	
+//	mNeedsDisplay = true;
+//	SetNeedsDisplay(true);
+//	
+//	if (mDocument != nil)
+//		mDocument->Reset();
+//	
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoControlTrackingAreaEntered(EventRef ioEvent)
+//{
+//	HIPoint where;
+//	::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
+//		sizeof(where), nil, &where);
+//	
+//	HIViewTrackingAreaRef area;
+//	::GetEventParameter(ioEvent, kEventParamHIViewTrackingArea, typeHIViewTrackingAreaRef,
+//		nil, sizeof(area), nil, &area);
+//	
+//	if (IsActive())
+//	{
+//		if (area == mTrackingLeftRef)
+//		{
+//			const Cursor kSelectLineCursor =
+//			{
+//#if __BIG_ENDIAN__
 //				{
-//					HFSFlavor hfs;
-//					long size = sizeof(hfs);
-//					
-//					if (::GetFlavorData(fDragRef, itemRef, flavorTypeHFS, &hfs, &size, 0) != noErr)
-//						return false;
-//					
-//					FInfo info;
-//					if (::FSpGetFInfo(&hfs.fileSpec, &info) != noErr)
-//						return false;
-//					
-//					return info.fdType == 'TEXT';
+//					0x0000, 0x0002, 0x0006, 0x000E, 0x001E, 0x003E, 0x007E, 0x00FE,
+//					0x01FE, 0x003E, 0x0036, 0x0062, 0x0060, 0x00C0, 0x00C0, 0x0000
+//				},
+//				{
+//					0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF,
+//					0x03FF, 0x07FF, 0x007F, 0x00F7, 0x00F3, 0x01E1, 0x01E0, 0x01C0
+//				},
+//#else
+//				{
+//					0x0000, 0x0200, 0x0600, 0x0E00, 0x1E00, 0x3E00, 0x7E00, 0xFE00,
+//					0xFE01, 0x3E00, 0x3600, 0x6200, 0x6000, 0xC000, 0xC000, 0x0000
+//				},
+//				{
+//					0x0300, 0x0700, 0x0F00, 0x1F00, 0x3F00, 0x7F00, 0xFF00, 0xFF01,
+//					0xFF03, 0xFF07, 0x7F00, 0xF700, 0xF300, 0xE101, 0xE001, 0xC001
+//				},
+//#endif
+//				0x0000, 0x000F
+//			};
+//
+//			::SetCursor(&kSelectLineCursor);
+//			mTrackCursorInTick = false;
+//		}
+//		else
+//		{
+//			mTrackCursorInTick = true;
+//			::QDSetNamedPixMapCursor(
+//				::QDGetCursorNameForSystemCursor(kQDXIBeamXORCursor));
+//		}
+//	}
+//	else
+//	{
+//		mTrackCursorInTick = false;
+//		::QDSetNamedPixMapCursor(
+//			::QDGetCursorNameForSystemCursor(kQDXArrowCursor));
+//	}
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoControlTrackingAreaExited(EventRef ioEvent)
+//{
+//	mTrackCursorInTick = false;
+//
+//	HIPoint where;
+//	::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
+//		sizeof(where), nil, &where);
+//	
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	if (where.x < bounds.x or where.x > bounds.x + bounds.width or
+//		where.y < bounds.y or where.y > bounds.y + bounds.height)
+//	{
+//		::QDSetNamedPixMapCursor(
+//			::QDGetCursorNameForSystemCursor(kQDXArrowCursor));
+//	}
+//
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoBoundsChanged(EventRef ioEvent)
+//{
+//	MRect r;
+//	GetBounds(r);
+//	r.width = kLeftMargin;
+//	
+//	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&r), false);
+//	::HIViewChangeTrackingArea(mTrackingLeftRef, shape);
+//	
+//	GetBounds(r);
+//	r.x += kLeftMargin;
+//	r.width -= kLeftMargin;
+//
+//	shape = MCFRef<HIShapeRef>(::HIShapeCreateWithRect(&r), false);
+//
+////	if (mDocument and not mDocument->GetSelection().IsEmpty())
+////	{
+////		MRegion rgn(SelectionToRegion());
+////		MCFRef<HIShapeRef> selectionShape(::HIShapeCreateWithQDRgn(rgn), false);
+////		shape = ::HIShapeCreateDifference(shape, selectionShape);
+////	}
+//
+//	::HIViewChangeTrackingArea(mTrackingMainRef, shape);
+//	
+//	eBoundsChanged();
+//	
+//	return noErr;
+//}
+
+//OSStatus MTextView::DoDragEnter(EventRef ioEvent)
+//{
+//	OSStatus err = eventNotHandledErr;
+//	
+//	try
+//	{
+//		DragRef dragRef;
+//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
+//			sizeof(dragRef), nil, &dragRef));
+//		
+//		UInt16 itemCount;
+//		THROW_IF_OSERROR(::CountDragItems(dragRef, &itemCount));
+//		
+//		Boolean accept = false;
+//		
+//		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
+//		{
+//			ItemReference itemRef;
+//			THROW_IF_OSERROR(::GetDragItemReferenceNumber(dragRef, ix, &itemRef));
+//			
+//			UInt16 flavorCount;
+//			if (::CountDragItemFlavors(dragRef, itemRef, &flavorCount) != noErr)
+//				return false;
+//		
+//			for (UInt16 index = 1; index <= flavorCount and accept == false; ++index)
+//			{
+//				FlavorType type;
+//				if (::GetFlavorType(dragRef, itemRef, index, &type) != noErr)
+//					continue;
+//		
+//				accept =
+//					type == kScrapFlavorTypeText or
+//					type == kScrapFlavorTypeUnicode or
+//					type == kScrapFlavorTypeUTF16External;
+//		
+////				if (type == flavorTypeHFS)
+////				{
+////					HFSFlavor hfs;
+////					long size = sizeof(hfs);
+////					
+////					if (::GetFlavorData(fDragRef, itemRef, flavorTypeHFS, &hfs, &size, 0) != noErr)
+////						return false;
+////					
+////					FInfo info;
+////					if (::FSpGetFInfo(&hfs.fileSpec, &info) != noErr)
+////						return false;
+////					
+////					return info.fdType == 'TEXT';
+////				}
+////				else if (type == inDataType)
+////					return true;
+//			}
+//		}
+//		
+//		if (accept and mDocument != nil)
+//		{
+//			err = noErr;
+//			THROW_IF_OSERROR(::SetEventParameter(ioEvent, kEventParamControlWouldAcceptDrop,
+//				typeBoolean, sizeof(accept), &accept));
+//		}
+//	}
+//	catch (...)
+//	{
+//		err = eventNotHandledErr;
+//	}
+//	
+//	return err;
+//}
+//
+//OSStatus MTextView::DoDragWithin(EventRef ioEvent)
+//{
+//	try
+//	{
+//		DragRef dragRef;
+//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
+//			sizeof(dragRef), nil, &dragRef));
+//		
+//		Point where, dummy;
+//		THROW_IF_OSERROR(::GetDragMouse(dragRef, &where, &dummy));
+//		
+//		HIPoint pt = { where.h, where.v };
+//		ConvertFromGlobal(pt);
+//
+//		pt.x += bounds.x - kLeftMargin;
+//		pt.y += bounds.y;
+//		
+//		uint32 caret;
+//		mDocument->PositionToOffset(pt, caret);
+//		
+//		MRect bounds;
+//		GetBounds(bounds);
+//		
+//		if (mDragCaret != caret)
+//		{
+//			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+//			mDragCaret = caret;
+//			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+//
+//			double timeOut = 0.01;
+//			
+//			while (ScrollToCaret())
+//			{
+//				MouseTrackingResult flags;
+//				OSStatus err = ::TrackMouseLocationWithOptions(
+//					::GetWindowPort(GetSysWindow()), 0, timeOut, &where, nil, &flags);
+//				
+//				if (err != noErr and err != kMouseTrackingTimedOut)
+//					THROW_IF_OSERROR(err);
+//				
+//				pt.x = where.h;
+//				pt.y = where.v;
+//				ConvertFromRoot(pt);
+//				
+//				if (not ::CGRectContainsPoint(bounds, pt))
+//					break;
+//				
+//				pt.x += bounds.x - kLeftMargin;
+//				pt.y += bounds.y;
+//	
+//				mDocument->PositionToOffset(pt, caret);
+//
+//				if (mDragCaret != caret)
+//				{
+//					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+//					mDragCaret = caret;
+//					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
 //				}
-//				else if (type == inDataType)
-//					return true;
-			}
-		}
-		
-		if (accept and mDocument != nil)
-		{
-			err = noErr;
-			THROW_IF_OSERROR(::SetEventParameter(ioEvent, kEventParamControlWouldAcceptDrop,
-				typeBoolean, sizeof(accept), &accept));
-		}
-	}
-	catch (...)
-	{
-		err = eventNotHandledErr;
-	}
-	
-	return err;
-}
-
-OSStatus MTextView::DoDragWithin(EventRef ioEvent)
-{
-	try
-	{
-		DragRef dragRef;
-		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
-			sizeof(dragRef), nil, &dragRef));
-		
-		Point where, dummy;
-		THROW_IF_OSERROR(::GetDragMouse(dragRef, &where, &dummy));
-		
-		HIPoint pt = { where.h, where.v };
-		ConvertFromGlobal(pt);
-
-		pt.x += mImageOrigin.x - kLeftMargin;
-		pt.y += mImageOrigin.y;
-		
-		uint32 caret;
-		mDocument->PositionToOffset(pt, caret);
-		
-		MRect bounds;
-		GetBounds(bounds);
-		
-		if (mDragCaret != caret)
-		{
-			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-			mDragCaret = caret;
-			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-
-			double timeOut = 0.01;
-			
-			while (ScrollToCaret())
-			{
-				MouseTrackingResult flags;
-				OSStatus err = ::TrackMouseLocationWithOptions(
-					::GetWindowPort(GetSysWindow()), 0, timeOut, &where, nil, &flags);
-				
-				if (err != noErr and err != kMouseTrackingTimedOut)
-					THROW_IF_OSERROR(err);
-				
-				pt.x = where.h;
-				pt.y = where.v;
-				ConvertFromRoot(pt);
-				
-				if (not ::CGRectContainsPoint(bounds, pt))
-					break;
-				
-				pt.x += mImageOrigin.x - kLeftMargin;
-				pt.y += mImageOrigin.y;
-	
-				mDocument->PositionToOffset(pt, caret);
-
-				if (mDragCaret != caret)
-				{
-					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-					mDragCaret = caret;
-					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-				}
-		
-				if (flags == kMouseTrackingMouseUp)
-					break;
-			}
-		}
-		
-		if (mDragRef == nil)
-		{
-			mDragRef = dragRef;
-			InvalidateAll();
-		}
-	}
-	catch (...) {}
-	return noErr;
-}
-
-OSStatus MTextView::DoDragLeave(EventRef ioEvent)
-{
-	mDocument->TouchLine(mDocument->OffsetToLine(mDragCaret));
-	InvalidateDirtyLines();
-	
-//	if (mDragRef != nil)
-//		::HideDragHilite(mDragRef);
-
-	InvalidateAll();
-	
-	mDragRef = nil;
-	return noErr;
-}
-
-OSStatus MTextView::DoDragReceive(EventRef ioEvent)
-{
-	// short cut, make sure we accept the drag
-	MSelection selection = mDocument->GetSelection();
-
-	// use brute force... sigh
-	InvalidateAll();
-
-	if (sDraggingView == this and
-		mDragCaret >= selection.GetMinOffset(*mDocument) and
-		mDragCaret <= selection.GetMaxOffset(*mDocument))
-	{
-		return dragNotAcceptedErr;
-	}
-	
-	OSStatus err = noErr;
-	
-	try
-	{
-		UInt16 itemCount;
-		THROW_IF_OSERROR(::CountDragItems(mDragRef, &itemCount));
-		
-		bool accept = false;
-		
-		SInt16 modifiers, downModifiers, upModifiers;
-		::GetDragModifiers(mDragRef, &modifiers, &downModifiers, &upModifiers);
-		
-		bool move = (sDraggingView == this) and (modifiers & optionKey) == 0;
-		
-		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
-		{
-			ItemReference itemRef;
-			THROW_IF_OSERROR(::GetDragItemReferenceNumber(mDragRef, ix, &itemRef));
-			
-			Size size;
-			if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUnicode, &size) == noErr)
-			{
-				auto_array<UniChar> txt(new UniChar[size / 2]);
-				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUnicode,
-					txt.get(), &size, 0));
-				
-				replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
-				mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
-
-				accept = true;
-			}
-			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUTF16External, &size) == noErr)
-			{
-				auto_array<UniChar> txt(new UniChar[size / 2]);
-				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUTF16External,
-					txt.get(), &size, 0));
-				
-				UniChar kBOM = 0xfeff;
-				
-				if (txt[0] != kBOM)
-				{
-					auto_ptr<MDecoder> decoder;
-					const char* b = reinterpret_cast<const char*>(txt.get());
-					
-					if (kEncodingNative == kEncodingUTF16BE)
-						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16LE, b, size));
-					else
-						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16BE, b, size));
-					
-					ustring s;
-					decoder->GetText(s);
-					replace(s.begin(), s.end(), '\r', '\n');
-					mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
-				}
-				else
-				{
-					replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
-					mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
-				}
-
-				accept = true;
-			}
-			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeText, &size) == noErr)
-			{
-				auto_array<char> txt(new char[size]);
-				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeText,
-					txt.get(), &size, 0));
-				
-				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, txt.get(), size));
-				
-				ustring s;
-				decoder->GetText(s);
-				
-				replace(s.begin(), s.end(), '\r', '\n');
-				mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
-
-				accept = true;
-			}
-		}
-		
-		if (not accept)
-			err = dragNotAcceptedErr;
-	}
-	catch (std::exception& e)
-	{
-		MError::DisplayError(e);
-		err = dragNotAcceptedErr;
-	}
-
-	mDragRef = nil;
-	return err;
-}
-
-OSStatus MTextView::DoGetClickActivation(EventRef ioEvent)
-{
-	HIPoint where;
-	(void)::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
-		sizeof(where), nil, &where);
-
-	ClickActivationResult result = kActivateAndIgnoreClick;
-	
-	if (InitiateDrag(where, ioEvent))
-		result = kDoNotActivateAndIgnoreClick;
-	
-	(void)::SetEventParameter(ioEvent, kEventParamClickActivation, typeClickActivationResult,
-		sizeof(result), &result);
-
-	return noErr;
-}
+//		
+//				if (flags == kMouseTrackingMouseUp)
+//					break;
+//			}
+//		}
+//		
+//		if (mDragRef == nil)
+//		{
+//			mDragRef = dragRef;
+//			InvalidateAll();
+//		}
+//	}
+//	catch (...) {}
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoDragLeave(EventRef ioEvent)
+//{
+//	mDocument->TouchLine(mDocument->OffsetToLine(mDragCaret));
+//	InvalidateDirtyLines();
+//	
+////	if (mDragRef != nil)
+////		::HideDragHilite(mDragRef);
+//
+//	InvalidateAll();
+//	
+//	mDragRef = nil;
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoDragReceive(EventRef ioEvent)
+//{
+//	// short cut, make sure we accept the drag
+//	MSelection selection = mDocument->GetSelection();
+//
+//	// use brute force... sigh
+//	InvalidateAll();
+//
+//	if (sDraggingView == this and
+//		mDragCaret >= selection.GetMinOffset(*mDocument) and
+//		mDragCaret <= selection.GetMaxOffset(*mDocument))
+//	{
+//		return dragNotAcceptedErr;
+//	}
+//	
+//	OSStatus err = noErr;
+//	
+//	try
+//	{
+//		UInt16 itemCount;
+//		THROW_IF_OSERROR(::CountDragItems(mDragRef, &itemCount));
+//		
+//		bool accept = false;
+//		
+//		SInt16 modifiers, downModifiers, upModifiers;
+//		::GetDragModifiers(mDragRef, &modifiers, &downModifiers, &upModifiers);
+//		
+//		bool move = (sDraggingView == this) and (modifiers & optionKey) == 0;
+//		
+//		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
+//		{
+//			ItemReference itemRef;
+//			THROW_IF_OSERROR(::GetDragItemReferenceNumber(mDragRef, ix, &itemRef));
+//			
+//			Size size;
+//			if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUnicode, &size) == noErr)
+//			{
+//				auto_array<UniChar> txt(new UniChar[size / 2]);
+//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUnicode,
+//					txt.get(), &size, 0));
+//				
+//				replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
+//				mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
+//
+//				accept = true;
+//			}
+//			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUTF16External, &size) == noErr)
+//			{
+//				auto_array<UniChar> txt(new UniChar[size / 2]);
+//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUTF16External,
+//					txt.get(), &size, 0));
+//				
+//				UniChar kBOM = 0xfeff;
+//				
+//				if (txt[0] != kBOM)
+//				{
+//					auto_ptr<MDecoder> decoder;
+//					const char* b = reinterpret_cast<const char*>(txt.get());
+//					
+//					if (kEncodingNative == kEncodingUTF16BE)
+//						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16LE, b, size));
+//					else
+//						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16BE, b, size));
+//					
+//					ustring s;
+//					decoder->GetText(s);
+//					replace(s.begin(), s.end(), '\r', '\n');
+//					mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
+//				}
+//				else
+//				{
+//					replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
+//					mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
+//				}
+//
+//				accept = true;
+//			}
+//			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeText, &size) == noErr)
+//			{
+//				auto_array<char> txt(new char[size]);
+//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeText,
+//					txt.get(), &size, 0));
+//				
+//				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, txt.get(), size));
+//				
+//				ustring s;
+//				decoder->GetText(s);
+//				
+//				replace(s.begin(), s.end(), '\r', '\n');
+//				mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
+//
+//				accept = true;
+//			}
+//		}
+//		
+//		if (not accept)
+//			err = dragNotAcceptedErr;
+//	}
+//	catch (exception& e)
+//	{
+//		MError::DisplayError(e);
+//		err = dragNotAcceptedErr;
+//	}
+//
+//	mDragRef = nil;
+//	return err;
+//}
+//
+//OSStatus MTextView::DoGetClickActivation(EventRef ioEvent)
+//{
+//	HIPoint where;
+//	(void)::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
+//		sizeof(where), nil, &where);
+//
+//	ClickActivationResult result = kActivateAndIgnoreClick;
+//	
+//	if (InitiateDrag(where, ioEvent))
+//		result = kDoNotActivateAndIgnoreClick;
+//	
+//	(void)::SetEventParameter(ioEvent, kEventParamClickActivation, typeClickActivationResult,
+//		sizeof(result), &result);
+//
+//	return noErr;
+//}
 
 // inWhere should be in view local coordinates
-bool MTextView::IsPointInSelection(HIPoint inWhere)
+bool MTextView::IsPointInSelection(
+	int32			inX,
+	int32			inY)
 {
 	bool result = false;
-	if (mDocument != nil and inWhere.x > kLeftMargin)
+	if (mDocument != nil and inX > kLeftMargin)
 	{
 		MSelection selection(mDocument->GetSelection());
 		
 		if (not selection.IsEmpty())
 		{
 			uint32 caret;
-			inWhere.x += mImageOrigin.x - kLeftMargin;
-			inWhere.y += mImageOrigin.y;
+			inX -= kLeftMargin;
+//			inWhere.y += bounds.y;
 			
-			mDocument->PositionToOffset(inWhere, caret);
+			mDocument->PositionToOffset(inX, inY, caret);
 		
 			if (caret >= selection.GetMinOffset(*mDocument) and
 				caret <= selection.GetMaxOffset(*mDocument))
@@ -1720,9 +1679,9 @@ bool MTextView::IsPointInSelection(HIPoint inWhere)
 				
 				uint32 line = mDocument->OffsetToLine(caret);
 				
-				uint32 y = line * mLineHeight;
+				int32 y = line * mLineHeight;
 				
-				result = inWhere.y >= y and inWhere.y <= y + mLineHeight;
+				result = inY >= y and inY <= y + mLineHeight;
 			}
 		}
 	}
@@ -1740,11 +1699,11 @@ bool MTextView::IsPointInSelection(HIPoint inWhere)
 //		
 //		MRect bounds;
 //		GetBounds(bounds);
-//		bounds.origin.x += kLeftMargin;
+//		bounds.x += kLeftMargin;
 //		
 //		MRect r = bounds;
-//		r.origin.y += selection.GetMinLine(*mDocument) * mLineHeight - mImageOrigin.y;
-//		r.size.height = mLineHeight * selection.CountLines(*mDocument);
+//		r.y += selection.GetMinLine(*mDocument) * mLineHeight - bounds.y;
+//		r.height = mLineHeight * selection.CountLines(*mDocument);
 //		
 //		r = ::CGRectIntersection(r, bounds);
 //		
@@ -1758,166 +1717,166 @@ bool MTextView::IsPointInSelection(HIPoint inWhere)
 //	return rgn.Release();
 //}
 
-void MTextView::DoDragSendData(FlavorType theType,
-	DragItemRef theItemRef, DragRef theDrag)
-{
-	ustring s;
-
-	mDocument->GetSelectedText(s);
-
-	if (theType == kScrapFlavorTypeUnicode)
-	{
-		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
-			s.c_str(), s.length() * sizeof(UniChar), 0));
-	}
-	else if (theType == kScrapFlavorTypeText)
-	{
-		MEncoder* encoder = MEncoder::GetEncoder(kEncodingMacOSRoman);
-		encoder->SetText(s);
-		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
-			encoder->Peek(), encoder->GetBufferSize(), 0));
-	}
-	else
-		THROW(("invalid flavor requested"));
-}
-	
-pascal OSErr MTextView::DoDragSendDataCallback(FlavorType theType,
-	void *dragSendRefCon, DragItemRef theItemRef, DragRef theDrag)
-{
-	OSErr err = noErr;
-	try
-	{
-		MTextView* textView = static_cast<MTextView*>(dragSendRefCon);
-		textView->DoDragSendData(theType, theItemRef, theDrag);
-	}
-	catch (std::exception& inErr)
-	{
-		err = cantGetFlavorErr;
-	}
-	
-	return err;
-}
-
-bool MTextView::InitiateDrag(HIPoint inWhere, EventRef inEvent)
-{
-	bool result = false;
-	
-	if (IsPointInSelection(inWhere))
-	{
-		ConvertToGlobal(inWhere);
-
-		Point pt;
-		pt.h = static_cast<int16>(inWhere.x);
-		pt.v = static_cast<int16>(inWhere.y);
-	
-		if (::WaitMouseMoved(pt))
-		{
-			CGImageRef imageRef;
-			CGRect bounds;
-			
-			mDrawForDragImage = true;
-			::HIViewCreateOffscreenImage(GetSysView(), 0, &bounds, &imageRef);
-			mDrawForDragImage = false;
-
-			MCFRef<CGImageRef> image(imageRef, false);
-			
-			MSelection selection = mDocument->GetSelection();
-			
-			MRect minLine = GetLineRect(selection.GetMinLine(*mDocument));
-			MRect maxLine = GetLineRect(selection.GetMaxLine(*mDocument));
-			
-			CGRect r = ::CGRectUnion(minLine, maxLine);
-			MCFRef<CGImageRef> subImage(::CGImageCreateWithImageInRect(image, r), false);
-			
-			HIPoint offset;
-			offset.x = -inWhere.x;
-			offset.y = -inWhere.y + minLine.origin.y;
-			ConvertToGlobal(offset);
-
-			try
-			{
-				DragRef dragRef;
-				::NewDrag(&dragRef);
-				
-				EventRecord er;
-				::ConvertEventRefToEventRecord(inEvent, &er);
-				
-				THROW_IF_OSERROR(::SetDragSendProc(dragRef, sDragSendDataUPP, this));
-				THROW_IF_OSERROR(::SetDragImageWithCGImage(dragRef,
-					subImage, &offset, 0));
-				
-				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 1, kScrapFlavorTypeUnicode,
-					nil, 0, 0));
-				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 2, kScrapFlavorTypeText,
-					nil, 0, 0));
-				
-				sDraggingView = this;
-				result = true;
-				
-				RgnHandle rgn = ::NewRgn();
-				(void)::TrackDrag(dragRef, &er, rgn);
-				::DisposeRgn(rgn);
-			}
-			catch (std::exception& e)
-			{
-				MError::DisplayError(e);
-			}
-			
-			sDraggingView = nil;
-		}
-	}
-	
-	return result;
-}
-
-void MTextView::DrawDragHilite(CGContextRef inContext)
-{
-	MCGContextSaver save(inContext);
-	
-	RGBColor c;
-	if (::GetDragHiliteColor(GetSysWindow(), &c) == noErr)
-	{
-		::CGContextSetRGBStrokeColor(inContext, c.red / 65536.f,
-			c.green / 65536.f, c.blue / 65536.f, 1.0f);
-		::CGContextSetLineWidth(inContext, 2.f);
-		
-		MRect bounds;
-		GetBounds(bounds);
-
-		::CGContextClipToRect(inContext, bounds);
-
-		bounds = ::CGRectInset(bounds, 1.f, 1.f);
-		::CGContextStrokeRect(inContext, bounds);
-	}
-}
-
-OSStatus MTextView::DoContextualMenuClick(EventRef inEvent)
-{
-	return noErr;
-}
-
-OSStatus MTextView::DoSetFocusPart(EventRef ioEvent)
-{
-	ControlPartCode part;
-	
-	::GetEventParameter(ioEvent, kEventParamMouseLocation,
-		typeControlPartCode, nil, sizeof(part), nil, &part);
-	
-//	if ((part != kControlFocusNoPart) != mHasFocus)
+//void MTextView::DoDragSendData(FlavorType theType,
+//	DragItemRef theItemRef, DragRef theDrag)
+//{
+//	ustring s;
+//
+//	mDocument->GetSelectedText(s);
+//
+//	if (theType == kScrapFlavorTypeUnicode)
 //	{
-//		mHasFocus = not mHasFocus;
-//		
-//		SetNeedsDisplay(true);
+//		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
+//			s.c_str(), s.length() * sizeof(UniChar), 0));
 //	}
-
-	return noErr;
-}
+//	else if (theType == kScrapFlavorTypeText)
+//	{
+//		MEncoder* encoder = MEncoder::GetEncoder(kEncodingMacOSRoman);
+//		encoder->SetText(s);
+//		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
+//			encoder->Peek(), encoder->GetBufferSize(), 0));
+//	}
+//	else
+//		THROW(("invalid flavor requested"));
+//}
+//	
+//pascal OSErr MTextView::DoDragSendDataCallback(FlavorType theType,
+//	void *dragSendRefCon, DragItemRef theItemRef, DragRef theDrag)
+//{
+//	OSErr err = noErr;
+//	try
+//	{
+//		MTextView* textView = static_cast<MTextView*>(dragSendRefCon);
+//		textView->DoDragSendData(theType, theItemRef, theDrag);
+//	}
+//	catch (exception& inErr)
+//	{
+//		err = cantGetFlavorErr;
+//	}
+//	
+//	return err;
+//}
+//
+//bool MTextView::InitiateDrag(HIPoint inWhere, EventRef inEvent)
+//{
+//	bool result = false;
+//	
+//	if (IsPointInSelection(inWhere))
+//	{
+//		ConvertToGlobal(inWhere);
+//
+//		Point pt;
+//		pt.h = static_cast<int16>(inWhere.x);
+//		pt.v = static_cast<int16>(inWhere.y);
+//	
+//		if (::WaitMouseMoved(pt))
+//		{
+//			CGImageRef imageRef;
+//			CGRect bounds;
+//			
+//			mDrawForDragImage = true;
+//			::HIViewCreateOffscreenImage(GetSysView(), 0, &bounds, &imageRef);
+//			mDrawForDragImage = false;
+//
+//			MCFRef<CGImageRef> image(imageRef, false);
+//			
+//			MSelection selection = mDocument->GetSelection();
+//			
+//			MRect minLine = GetLineRect(selection.GetMinLine(*mDocument));
+//			MRect maxLine = GetLineRect(selection.GetMaxLine(*mDocument));
+//			
+//			CGRect r = ::CGRectUnion(minLine, maxLine);
+//			MCFRef<CGImageRef> subImage(::CGImageCreateWithImageInRect(image, r), false);
+//			
+//			HIPoint offset;
+//			offset.x = -inWhere.x;
+//			offset.y = -inWhere.y + minLine.y;
+//			ConvertToGlobal(offset);
+//
+//			try
+//			{
+//				DragRef dragRef;
+//				::NewDrag(&dragRef);
+//				
+//				EventRecord er;
+//				::ConvertEventRefToEventRecord(inEvent, &er);
+//				
+//				THROW_IF_OSERROR(::SetDragSendProc(dragRef, sDragSendDataUPP, this));
+//				THROW_IF_OSERROR(::SetDragImageWithCGImage(dragRef,
+//					subImage, &offset, 0));
+//				
+//				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 1, kScrapFlavorTypeUnicode,
+//					nil, 0, 0));
+//				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 2, kScrapFlavorTypeText,
+//					nil, 0, 0));
+//				
+//				sDraggingView = this;
+//				result = true;
+//				
+//				RgnHandle rgn = ::NewRgn();
+//				(void)::TrackDrag(dragRef, &er, rgn);
+//				::DisposeRgn(rgn);
+//			}
+//			catch (exception& e)
+//			{
+//				MError::DisplayError(e);
+//			}
+//			
+//			sDraggingView = nil;
+//		}
+//	}
+//	
+//	return result;
+//}
+//
+//void MTextView::DrawDragHilite(CGContextRef inContext)
+//{
+//	MCGContextSaver save(inContext);
+//	
+//	RGBColor c;
+//	if (::GetDragHiliteColor(GetSysWindow(), &c) == noErr)
+//	{
+//		::CGContextSetRGBStrokeColor(inContext, c.red / 65536.f,
+//			c.green / 65536.f, c.blue / 65536.f, 1.0f);
+//		::CGContextSetLineWidth(inContext, 2.f);
+//		
+//		MRect bounds;
+//		GetBounds(bounds);
+//
+//		::CGContextClipToRect(inContext, bounds);
+//
+//		bounds = ::CGRectInset(bounds, 1.f, 1.f);
+//		::CGContextStrokeRect(inContext, bounds);
+//	}
+//}
+//
+//OSStatus MTextView::DoContextualMenuClick(EventRef inEvent)
+//{
+//	return noErr;
+//}
+//
+//OSStatus MTextView::DoSetFocusPart(EventRef ioEvent)
+//{
+//	ControlPartCode part;
+//	
+//	::GetEventParameter(ioEvent, kEventParamMouseLocation,
+//		typeControlPartCode, nil, sizeof(part), nil, &part);
+//	
+////	if ((part != kControlFocusNoPart) != mHasFocus)
+////	{
+////		mHasFocus = not mHasFocus;
+////		
+////		SetNeedsDisplay(true);
+////	}
+//
+//	return noErr;
+//}
 
 uint32 MTextView::GetWrapWidth() const
 {
 	MRect r;
 	GetBounds(r);
-	return static_cast<uint32>(r.size.width) - kLeftMargin;
+	return static_cast<uint32>(r.width) - kLeftMargin;
 }
 
 void MTextView::StylesChanged()

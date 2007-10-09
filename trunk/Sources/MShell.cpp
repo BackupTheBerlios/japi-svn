@@ -30,8 +30,9 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <kvm.h>
 #include <sys/param.h>
@@ -49,6 +50,7 @@
 #include <getopt.h>
 
 #include "MShell.h"
+#include "MError.h"
 #include "MPreferences.h"
 
 extern const char** environ;
@@ -89,7 +91,8 @@ MShellException::MShellException(const char* inErr, ...)
 }
 
 MShell::MShell(bool inRedirectStdErr)
-	: mPid(0)
+	: ePoll(this, &MShell::Poll)
+	, mPid(0)
 	, mStdOutFD(-1)
 	, mStdErrFD(-1)
 	, mRedirectStdErr(inRedirectStdErr)
@@ -113,8 +116,7 @@ MShell::~MShell()
 	if (mPid > 0)
 		Kill();
 
-	if (mTimerRef != NULL)
-		::RemoveEventLoopTimer(mTimerRef);
+	RemoveRoute(ePoll, gApp->eIdle);
 }
 
 void MShell::SetCWD(string inCWD)
@@ -788,11 +790,8 @@ int MShell::Exec(int argc, char* const argv[], char* const env[])
 		flags = fcntl(mStdErrFD, F_GETFL, 0);
 		fcntl(mStdErrFD, F_SETFL, flags | O_NONBLOCK);
 		mErrDone = false;
-
-		static EventLoopTimerUPP sTimerUPP = ::NewEventLoopTimerUPP(&MShell::EventLoopTimerProc);
-		THROW_IF_OSERROR(::InstallEventLoopTimer(::GetCurrentEventLoop(),
-			kEventDurationSecond / 10, kEventDurationSecond / 10,
-			sTimerUPP, this, &mTimerRef));
+		
+		AddRoute(ePoll, gApp->eIdle);
 	}
 	catch (std::exception& e)
 	{
@@ -876,21 +875,6 @@ void MShell::Poll()
 		mPid = 0;
 		eShellStatus(false);
 
-		::RemoveEventLoopTimer(mTimerRef);
-		mTimerRef = 0;
+		RemoveRoute(ePoll, gApp->eIdle);
 	}
-}
-
-pascal void	MShell::EventLoopTimerProc(EventLoopTimerRef inTimer, void *inUserData)
-{
-	try
-	{
-		MShell* self = static_cast<MShell*>(inUserData);
-		self->Poll();
-	}
-	catch (std::exception& e)
-	{
-		MError::DisplayError(e);
-	}
-	catch (...) {}
 }

@@ -35,7 +35,7 @@
 #pragma once
 
 #include "MColor.h"
-#include "MView.h"
+#include "MDrawingArea.h"
 #include "MP2PEvents.h"
 #include "MSelection.h"
 
@@ -89,6 +89,8 @@ class MTextView : public MDrawingArea
 
 	MEventIn<void()>					eDocumentClosed;
 	MEventIn<void(MDocument*)>			eDocumentChanged;
+	
+	MEventIn<void()>					eIdle;
 
 	void				SetDocument(
 							MDocument*			inDocument);

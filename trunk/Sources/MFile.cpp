@@ -53,12 +53,20 @@ using namespace std;
 
 ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize)
 {
+#if defined(XATTR_FINDERINFO_NAME)
+	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize, 0, 0);
+#else
 	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize);
+#endif
 }
 
 void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
+#if defined(XATTR_FINDERINFO_NAME)
+	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0, 0);
+#else
 	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0);
+#endif
 }
 
 // ------------------------------------------------------------------
