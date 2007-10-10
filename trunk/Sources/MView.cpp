@@ -21,3 +21,31 @@ MView::~MView()
 {
 }
 
+MWindow* MView::GetWindow() const
+{
+	return nil;
+}
+
+void MView::GetBounds(
+	MRect&			outBounds) const
+{
+	outBounds = mGtkWidget->allocation;
+}
+
+void MView::SetBounds(
+	const MRect&	inBounds)
+{
+}
+
+bool MView::IsActive() const
+{
+}
+
+void MView::Invalidate()
+{
+}
+
+void MView::Invalidate(
+	const MRect&	inRect)
+{
+}

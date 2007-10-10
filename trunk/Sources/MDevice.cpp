@@ -75,6 +75,11 @@ MDeviceImp::~MDeviceImp()
 
 // -------------------------------------------------------------------
 
+MDevice::MDevice()
+{
+	assert(false);
+}
+
 MDevice::MDevice(
 	MView*		inView,
 	MRect		inRect)
@@ -85,6 +90,16 @@ MDevice::MDevice(
 MDevice::~MDevice()
 {
 	delete mImpl;
+}
+
+void MDevice::Save()
+{
+	cairo_save(mImpl->mContext);
+}
+
+void MDevice::Restore()
+{
+	cairo_restore(mImpl->mContext);
 }
 
 void MDevice::SetForeColor(
@@ -225,6 +240,25 @@ uint32 MDevice::GetLeading() const
 	return 0;
 }
 
+uint32 MDevice::GetLineHeight() const
+{
+	uint32 result = 10;
+
+	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
+	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
+
+	if (metrics != nil)
+	{
+		uint32 ascent = pango_font_metrics_get_ascent(metrics);
+		uint32 descent = pango_font_metrics_get_descent(metrics);
+		
+		result = (ascent + descent) / PANGO_SCALE;
+		pango_font_metrics_unref(metrics);
+	}
+
+	return result;
+}
+
 void MDevice::DrawString(
 	const std::string&	inText,
 	float inX,
@@ -250,41 +284,49 @@ uint32 MDevice::GetStringWidth(
 
 // --------------------------------------------------------------------
 
-	void			SetText(
-						const std::string&	inText);
-	
-	void			SetTabStops(
-						float				inTabWidth);
-	
-	void			SetTextColors(
-						uint32				inColorCount,
-						uint32				inColors[],
-						uint32				inOffsets[]);
+void MDevice::SetText(
+	const string&	inText)
+{
+}
 
-	void			SetTextSelection(
-						uint32				inStart,
-						uint32				inLength,
-						MColor				inSelectionColor);
-	
-	void			IndexToPosition(
-						uint32				inIndex,
-						bool				inTrailing,
-						int32&				outPosition);
+void MDevice::SetTabStops(
+	float			inTabWidth)
+{
+}
 
-	bool			PositionToIndex(
-						int32				inPosition,
-						uint32&				outIndex,
-						bool&				outTrailing);
-	
-	void			DrawText(
-						float				inX,
-						float				inY);
+void MDevice::SetTextColors(
+	uint32			inColorCount,
+	uint32			inColors[],
+	uint32			inOffsets[])
+{
+}
 
+void MDevice::SetTextSelection(
+	uint32			inStart,
+	uint32			inLength,
+	MColor			inSelectionColor)
+{
+}
 
+void MDevice::IndexToPosition(
+	uint32			inIndex,
+	bool			inTrailing,
+	int32&			outPosition)
+{
+}
 
-//pango_layout_index_to_line_x
+bool MDevice::PositionToIndex(
+	int32			inPosition,
+	uint32&			outIndex,
+	bool&			outTrailing)
+{
+}
 
-
+void MDevice::DrawText(
+	float			inX,
+	float			inY)
+{
+}
 
 void MDevice::DrawCaret(
 	uint32				inOffset)

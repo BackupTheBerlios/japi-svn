@@ -71,6 +71,22 @@ void write_attribute(const MURL& inPath, const char* inName, const void* inData,
 
 // ------------------------------------------------------------------
 //
+//  MFileSystem
+//
+
+namespace MFileSystem
+{
+
+double GetModificationDate(
+	const MURL&		inURL)
+{
+	return 0;
+}
+
+}
+
+// ------------------------------------------------------------------
+//
 //  MFile
 //
 

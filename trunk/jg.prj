@@ -28,6 +28,7 @@
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
+		<path>../../../../usr/pkg/lib</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib</path>
@@ -38,12 +39,14 @@
 	<files>
 		<group name="Sources">
 			<file>MJapieG.cpp</file>
-			<file>MWindow.cpp</file>
 			<file>MDocument.cpp</file>
-			<file>MDocWindow.cpp</file>
-			<file>MEditWindow.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
+			<group name="Windows">
+				<file>MEditWindow.cpp</file>
+				<file>MDocWindow.cpp</file>
+				<file>MWindow.cpp</file>
+			</group>
 			<file>MViewPort.cpp</file>
 			<file>MView.cpp</file>
 			<file>MVScrollbar.cpp</file>
@@ -53,6 +56,9 @@
 			<file>MFont.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
+			<group name="Dialogs">
+				<file>MFindDialog.cpp</file>
+			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
 			<group name="Language">
@@ -74,6 +80,8 @@
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>
+			<file>libicuuc.dylib.36.0</file>
+			<file>libicui18n.dylib.36.0</file>
 			<file>libgtk-x11-2.0.dylib</file>
 			<file>libgdk-x11-2.0.dylib</file>
 			<file>libatk-1.0.dylib</file>
@@ -87,6 +95,8 @@
 			<file>libglib-2.0.dylib</file>
 			<file>libintl.dylib</file>
 			<file>libiconv.dylib</file>
+			<file>libboost_thread-mt.dylib</file>
+			<file>libpcre.0.0.1.dylib</file>
 		</group>
 	</files>
 	<package/>

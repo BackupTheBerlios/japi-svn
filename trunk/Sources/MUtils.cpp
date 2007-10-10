@@ -275,3 +275,8 @@ string GetDateTime()
 //	return s;
 	return "de tijd";
 }
+
+void Beep()
+{
+	
+}

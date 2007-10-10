@@ -410,4 +410,86 @@ class MDocument
 	uint32						mPCLine;
 };
 
+inline
+uint32 MDocument::LineStart(
+	uint32				inLine) const
+{
+	uint32 result = mText.GetSize();
+	if (inLine < mLineInfo.size())
+		result = mLineInfo[inLine].start;
+	return result;
+}
+
+inline
+uint32 MDocument::LineEnd(
+	uint32				inLine) const
+{
+	uint32 result = mText.GetSize();
+	if (inLine + 1 < mLineInfo.size())
+		result = mLineInfo[inLine + 1].start - 1;
+	return result;
+}
+
+inline
+bool MDocument::IsLineDirty(
+	uint32				inLine) const
+{
+	bool result = false;
+	if (inLine < mLineInfo.size())
+		result = mLineInfo[inLine].dirty;
+	return result;
+}
+
+inline
+bool MDocument::IsLineMarked(
+	uint32				inLine) const
+{
+	bool result = false;
+	if (inLine < mLineInfo.size())
+		result = mLineInfo[inLine].marked;
+	return result;
+}
+
+inline
+bool MDocument::IsStatement(
+	uint32				inLine) const
+{
+	bool result = false;
+	if (inLine < mLineInfo.size())
+		result = mLineInfo[inLine].stmt;
+	return result;
+}
+
+inline
+bool MDocument::IsBreakpoint(
+	uint32				inLine) const
+{
+	bool result = false;
+	if (inLine < mLineInfo.size())
+		result = mLineInfo[inLine].brkp;
+	return result;
+}
+
+inline
+void MDocument::Insert(
+	uint32				inOffset,
+	const std::string&	inText)
+{
+	Insert(inOffset, inText.c_str(), inText.length());
+}
+
+inline
+void MDocument::ChangeSelection(
+	uint32				inAnchor,
+	uint32				inCaret)
+{
+	ChangeSelection(MSelection(inAnchor, inCaret));
+}
+
+inline
+void MDocument::SelectAll()
+{
+	Select(0, mText.GetSize());
+}
+
 #endif
