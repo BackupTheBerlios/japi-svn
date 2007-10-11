@@ -58,7 +58,8 @@ const MColor
 	kStringColor("#666666"),
 	kTagColor("#008484"),
 	kAttribColor("#1e843b"),
-	kInvisiblesColor("#aaaaaa");
+	kInvisiblesColor("#aaaaaa"),
+	kHiliteColor("#ffd281");
 
 const MColor
 	kInactiveHighlightColor("#e5e5e5"),
@@ -106,6 +107,7 @@ void InitGlobals()
 //	::LMGetHiliteRGB(&c);
 //	gHiliteColor = c;
 
+	gHiliteColor = kHiliteColor;
 	gInactiveHiliteColor = kInactiveHighlightColor;
 	gOddRowColor = kOddRowBackColor;
 

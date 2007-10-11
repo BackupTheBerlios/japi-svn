@@ -91,6 +91,7 @@ MTextView::MTextView()
 	, mDocument(nil)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
+	, mClickMode(eSelectNone)
 //	, mDragRef(nil)
 {
 	AddRoute(eIdle, gApp->eIdle);
@@ -161,192 +162,145 @@ void MTextView::SetController(MController* inController)
 //		typeControlPartCode, sizeof(partCode), &partCode);
 //	return noErr;
 //}
-//
-//OSStatus MTextView::DoControlTrack(EventRef ioEvent)
-//{
-//	if (mDocument == nil)
-//		return eventNotHandledErr;
-//	
-//	enum
-//	{
-//		eSelectRegular,
-//		eSelectWords,
-//		eSelectLines
-//	} mode = eSelectRegular;
-//	
-//	switch (mClickCount)
-//	{
-//		case 1: mode = eSelectRegular; break;
-//		case 2: mode = eSelectWords; break;
-//		case 3: mode = eSelectLines; break;
-//	}
-//	
-//	mDocument->Reset();
-//
-//	HIViewRef contentView;
-//	THROW_IF_OSERROR(::GetRootControl(GetSysWindow(), &contentView));
-//	MSelection selection = mDocument->GetSelection();
-//
-//	HIPoint where;
-//	::GetEventParameter(ioEvent, kEventParamMouseLocation,
-//		typeHIPoint, nil, sizeof(HIPoint), nil, &where);
-//
-//	if (InitiateDrag(where, ioEvent))
-//		return noErr;
-//
-//	uint32 keyModifiers;
-//	::GetEventParameter(ioEvent, kEventParamKeyModifiers,
-//		typeUInt32, nil, sizeof(UInt32), nil, &keyModifiers);
-//
-//	uint32 line, anchor, caret;
-//
-//	where.x += mImageOrigin.x - kLeftMargin;
-//	where.y += mImageOrigin.y;
-//	
-//	if (where.x < 0)
-//		mode = eSelectLines;
-//
-//	mDocument->PositionToOffset(where, caret);
-//	line = mDocument->OffsetToLine(caret);
-//
-//	if (keyModifiers & shiftKey)
-//		anchor = selection.GetAnchor();
-//	else
-//		anchor = caret;
-//	
-//	mCaretVisible = true;
-//	bool stillDown = true;
-//	
-//	if (mode == eSelectRegular)
-//	{
-//		do
-//		{
-//			mDocument->Select(anchor, caret);
-//			
-//			double timeOut = 10.0;
-//			
-//			if (ScrollToCaret())
-//				timeOut = 0.01;
-//		
-//			Point pt;
-//			MouseTrackingResult flags;
-//			OSStatus err = ::TrackMouseLocationWithOptions(
-//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-//			
-//			if (err != noErr and err != kMouseTrackingTimedOut)
-//				THROW_IF_OSERROR(err);
-//			
-//			where.x = mImageOrigin.x - kLeftMargin + pt.h;
-//			where.y = mImageOrigin.y + pt.v;
-//			
-//			::HIViewConvertPoint(&where, contentView, GetSysView());
-//
-//			mDocument->PositionToOffset(where, caret);
-//	
-//			stillDown = not (flags == kMouseTrackingMouseUp);
-//		}
-//		while (stillDown);
-//	}
-//	else if (mode == eSelectWords)
-//	{
-//		uint32 minAnchor, maxAnchor;
-//		mDocument->FindWord(caret, minAnchor, maxAnchor);
-//
-//		do
-//		{
-//			if (caret < minAnchor)
-//				mDocument->Select(maxAnchor, caret);
-//			else if (caret > maxAnchor)
-//				mDocument->Select(minAnchor, caret);
-//			else
-//				mDocument->Select(minAnchor, maxAnchor);
-//			
-//			double timeOut = 10.0;
-//			
-//			if (ScrollToCaret())
-//				timeOut = 0.01;
-//		
-//			Point pt;
-//			MouseTrackingResult flags;
-//			OSStatus err = ::TrackMouseLocationWithOptions(
-//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-//			
-//			if (err != noErr and err != kMouseTrackingTimedOut)
-//				THROW_IF_OSERROR(err);
-//			
-//			where.x = pt.h;
-//			where.y = pt.v;
-//			
-//			::HIViewConvertPoint(&where, contentView, GetSysView());
-//			
-//			where.x += mImageOrigin.x - kLeftMargin;
-//			where.y += mImageOrigin.y;
-//
-//			mDocument->PositionToOffset(where, caret);
-//			
-//			uint32 c1, c2;
-//			mDocument->FindWord(caret, c1, c2);
-//			if (c1 != c2)
-//			{
-//				if (c1 < caret and caret < minAnchor)
-//					caret = c1;
-//				else if (c2 > caret and caret > maxAnchor)
-//					caret = c2;
-//			}
-//	
-//			stillDown = not (flags == kMouseTrackingMouseUp);
-//		}
-//		while (stillDown);
-//	}
-//	else if (mode == eSelectLines)
-//	{
-//		uint32 anchorLine = line;
-//		uint32 caretLine = line;
-//		
-//		do
-//		{
-//			if (caretLine < anchorLine)
-//				mDocument->Select(
-//					mDocument->LineStart(anchorLine + 1), mDocument->LineStart(caretLine));
-//			else
-//				mDocument->Select(
-//					mDocument->LineStart(anchorLine), mDocument->LineStart(caretLine + 1));
-//			
-//			double timeOut = 10.0;
-//			
-//			if (ScrollToCaret())
-//				timeOut = 0.01;
-//		
-//			Point pt;
-//			MouseTrackingResult flags;
-//			OSStatus err = ::TrackMouseLocationWithOptions(
-//				::GetWindowPort(GetSysWindow()), 0, timeOut, &pt, nil, &flags);
-//			
-//			if (err != noErr and err != kMouseTrackingTimedOut)
-//				THROW_IF_OSERROR(err);
-//			
-//			where.x = pt.h;
-//			where.y = pt.v;
-//			
-//			::HIViewConvertPoint(&where, contentView, GetSysView());
-//			
-//			where.x += mImageOrigin.x - kLeftMargin;
-//			where.y += mImageOrigin.y;
-//
-//			mDocument->PositionToOffset(where, caret);
-//			caretLine = mDocument->OffsetToLine(caret);
-//	
-//			stillDown = not (flags == kMouseTrackingMouseUp);
-//		}
-//		while (stillDown);
-//	}
-//
-//	ControlPartCode partCode = 0;
-//	::SetEventParameter(ioEvent, kEventParamControlPart,
-//		typeControlPartCode, sizeof(partCode), &partCode);
-//		
-//	return noErr;
-//}
+
+bool MTextView::OnButtonPressEvent(
+	GdkEventButton*		inEvent)
+{
+	if (mDocument == nil)
+		return true;
+
+	if (mLastClickTime + 250 > inEvent->time)
+		mClickCount = mClickCount % 3 + 1;
+	else
+		mClickCount = 1;
+	mLastClickTime = inEvent->time;
+		
+	switch (mClickCount)
+	{
+		case 1: mClickMode = eSelectRegular; break;
+		case 2: mClickMode = eSelectWords; break;
+		case 3: mClickMode = eSelectLines; break;
+	}
+	
+	mDocument->Reset();
+
+	MSelection selection = mDocument->GetSelection();
+
+	uint32 x, y;
+	x = inEvent->x - kLeftMargin;
+	y = inEvent->y;
+
+	if (InitiateDrag(inEvent))
+		return false;
+
+	uint32 keyModifiers = inEvent->state;
+	
+	if (x < 0)
+		mClickMode = eSelectLines;
+
+	mDocument->PositionToOffset(x, y, mClickCaret);
+
+	if (keyModifiers & GDK_SHIFT_MASK)
+		mClickAnchor = selection.GetAnchor();
+	else
+		mClickAnchor = mClickCaret;
+	
+	mCaretVisible = true;
+	
+	if (mClickMode == eSelectRegular)
+		mDocument->Select(mClickAnchor, mClickCaret);
+	else if (mClickMode == eSelectWords)
+	{
+		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
+
+		if (mClickCaret < mMinClickAnchor)
+			mDocument->Select(mMaxClickAnchor, mClickCaret);
+		else if (mClickCaret > mMaxClickAnchor)
+			mDocument->Select(mMinClickAnchor, mClickCaret);
+		else
+			mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+	}
+	else if (mClickMode == eSelectLines)
+	{
+		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
+		
+		if (mClickCaret < mClickAnchor)
+			mDocument->Select(
+				mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+		else
+			mDocument->Select(
+				mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+	}
+
+	return true;
+}
+
+bool MTextView::OnMotionNotifyEvent(
+	GdkEventMotion*	inEvent)
+{
+	if (mClickMode != eSelectNone and IsActive())
+	{
+		int32 x, y;
+		GdkModifierType state;
+		
+		if (inEvent->is_hint)
+			gdk_window_get_pointer(inEvent->window, &x, &y, &state);
+		else
+		{
+			x = inEvent->x;
+			y = inEvent->y;
+			state = GdkModifierType(inEvent->state);
+		}
+	
+		x -= kLeftMargin;
+	
+		mDocument->PositionToOffset(x, y, mClickCaret);
+	    
+	//  if (state & GDK_BUTTON1_MASK && pixmap != NULL)
+	//    draw_brush (widget, x, y);
+	
+		if (mClickMode == eSelectRegular)
+		{
+			mDocument->Select(mClickAnchor, mClickCaret);
+			ScrollToCaret();
+		}
+		else if (mClickMode == eSelectWords)
+		{
+			uint32 c1, c2;
+			mDocument->FindWord(mClickCaret, c1, c2);
+			if (c1 != c2)
+			{
+				if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
+					mClickCaret = c1;
+				else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
+					mClickCaret = c2;
+			}
+	
+			mDocument->Select(mClickAnchor, mClickCaret);
+			ScrollToCaret();
+		}
+		else if (mClickMode == eSelectLines)
+		{
+			mClickCaret = mDocument->OffsetToLine(mClickCaret);
+	
+			if (mClickCaret < mClickAnchor)
+				mDocument->Select(
+					mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+			else
+				mDocument->Select(
+					mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+		}
+	}
+	
+	return true;
+}
+	
+bool MTextView::OnButtonReleaseEvent(
+	GdkEventButton*	inEvent)
+{
+	mClickMode = eSelectNone;
+	return true;
+}
 
 bool MTextView::OnExposeEvent(
 	GdkEventExpose*		inEvent)
@@ -1789,11 +1743,12 @@ bool MTextView::IsPointInSelection(
 //	
 //	return err;
 //}
-//
-//bool MTextView::InitiateDrag(HIPoint inWhere, EventRef inEvent)
-//{
-//	bool result = false;
-//	
+
+bool MTextView::InitiateDrag(
+	GdkEventButton*		inEvent)
+{
+	bool result = false;
+	
 //	if (IsPointInSelection(inWhere))
 //	{
 //		ConvertToGlobal(inWhere);
@@ -1858,10 +1813,10 @@ bool MTextView::IsPointInSelection(
 //			sDraggingView = nil;
 //		}
 //	}
-//	
-//	return result;
-//}
-//
+	
+	return result;
+}
+
 //void MTextView::DrawDragHilite(CGContextRef inContext)
 //{
 //	MCGContextSaver save(inContext);

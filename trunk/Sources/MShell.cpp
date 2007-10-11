@@ -34,7 +34,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-//#include <kvm.h>
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
@@ -54,7 +54,7 @@
 #include "MError.h"
 #include "MPreferences.h"
 
-//extern const char** environ;
+extern char** environ;
 
 using namespace std;
 

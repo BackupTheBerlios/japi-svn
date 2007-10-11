@@ -403,6 +403,21 @@ void MDevice::SetTextSelection(
 	uint32			inLength,
 	MColor			inSelectionColor)
 {
+	PangoAttrList* attrs = pango_attr_list_new ();
+
+	uint16 red = inSelectionColor.red << 8 | inSelectionColor.red;
+	uint16 green = inSelectionColor.green << 8 | inSelectionColor.green;
+	uint16 blue = inSelectionColor.blue << 8 | inSelectionColor.blue;
+		
+	PangoAttribute* attr = pango_attr_background_new(red, green, blue);
+	attr->start_index = inStart;
+	attr->end_index = inStart + inLength;
+		
+	pango_attr_list_insert(attrs, attr);
+	
+	pango_layout_set_attributes (mImpl->mLayout, attrs);
+	
+	pango_attr_list_unref (attrs);
 }
 
 void MDevice::IndexToPosition(
@@ -410,6 +425,9 @@ void MDevice::IndexToPosition(
 	bool			inTrailing,
 	int32&			outPosition)
 {
+	PangoRectangle r;
+	pango_layout_index_to_pos(mImpl->mLayout, inIndex, &r);
+	outPosition = r.x / PANGO_SCALE;
 }
 
 bool MDevice::PositionToIndex(
@@ -417,7 +435,18 @@ bool MDevice::PositionToIndex(
 	uint32&			outIndex,
 	bool&			outTrailing)
 {
-	return false;
+	outIndex = 0;
+	outTrailing = false;
+	
+	int index, trailing;
+	
+	bool result = pango_layout_xy_to_index(mImpl->mLayout,
+		inPosition * PANGO_SCALE, 0, &index, &trailing); 
+
+	outIndex = index;
+	outTrailing = trailing;
+	
+	return result;
 }
 
 void MDevice::DrawText(

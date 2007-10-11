@@ -15,20 +15,24 @@ using namespace std;
 MView::MView(
 	GtkWidget*		inWidget,
 	bool			inCanActivate)
-	: mGtkWidget(inWidget)
-	, mFocusInEvent(this, &MView::OnFocusInEvent)
+	: mFocusInEvent(this, &MView::OnFocusInEvent)
 	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
+	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
+	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
+	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
+	, mRealize(this, &MView::OnRealize)
+	, mGtkWidget(inWidget)
 {
 	if (inCanActivate)
 	{
-//		int m = gdk_window_get_events(GetGtkWidget()->window);
-//		m |= GDK_FOCUS_CHANGE_MASK;
-//		gdk_window_set_events(GetGtkWidget()->window, (GdkEventMask)m);
-
 		GTK_WIDGET_SET_FLAGS(mGtkWidget, GTK_CAN_FOCUS);
 		
 		mFocusInEvent.Connect(mGtkWidget, "focus-in-event");
 		mFocusOutEvent.Connect(mGtkWidget, "focus-out-event");
+		mButtonPressEvent.Connect(mGtkWidget, "button-press-event");
+		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
+		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
+		mRealize.Connect(mGtkWidget, "realize");
 	}
 }
 
@@ -76,6 +80,19 @@ void MView::Add(
 {
 	assert(GTK_IS_CONTAINER(GetGtkWidget()));
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), inSubView->GetGtkWidget());
+	inSubView->Added();
+}
+
+void MView::Added()
+{
+}
+
+bool MView::OnRealize()
+{
+	int m = gdk_window_get_events(GetGtkWidget()->window);
+	m |= GDK_FOCUS_CHANGE_MASK |
+		GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK;
+	gdk_window_set_events(GetGtkWidget()->window, (GdkEventMask)m);
 }
 
 bool MView::OnFocusInEvent(
@@ -93,4 +110,22 @@ bool MView::OnFocusOutEvent(
 bool MView::IsActive() const
 {
 	return GTK_WIDGET_HAS_FOCUS(mGtkWidget);
+}
+
+bool MView::OnButtonPressEvent(
+	GdkEventButton*	inEvent)
+{
+	return true;
+}
+
+bool MView::OnMotionNotifyEvent(
+	GdkEventMotion*	inEvent)
+{
+	return true;
+}
+
+bool MView::OnButtonReleaseEvent(
+	GdkEventButton*	inEvent)
+{
+	return true;
 }

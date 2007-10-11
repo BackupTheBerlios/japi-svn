@@ -18,7 +18,7 @@ class MViewPort : public MView
 	void			SetShadowType(
 						GtkShadowType	inShadowType);
 
-	HVScrollBar*	GetVScrollBar() const;
+//	HVScrollBar*	GetVScrollBar() const;
 };
 
 #endif // MVIEWPORT_H

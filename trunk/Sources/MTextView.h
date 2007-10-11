@@ -127,6 +127,14 @@ class MTextView : public MDrawingArea
 	virtual bool		OnFocusOutEvent(
 							GdkEventFocus*	inEvent);
 
+	virtual bool		OnButtonPressEvent(
+							GdkEventButton*	inEvent);
+
+	virtual bool		OnMotionNotifyEvent(
+							GdkEventMotion*	inEvent);
+	
+	virtual bool		OnButtonReleaseEvent(
+							GdkEventButton*	inEvent);
   private:
 
 	void				DrawLine(
@@ -182,8 +190,10 @@ class MTextView : public MDrawingArea
 	
 //	void				DoDragSendData(FlavorType theType,
 //							DragItemRef theItemRef, DragRef theDrag);
-//	
-//	bool				InitiateDrag(HIPoint inWhere, EventRef inEvent);
+	
+	bool				InitiateDrag(
+							GdkEventButton*	inEvent);
+
 //	void				DrawDragHilite(CGContextRef inContext);
 //	
 //	static pascal OSErr	DoDragSendDataCallback(FlavorType theType, void *dragSendRefCon,
@@ -206,7 +216,18 @@ class MTextView : public MDrawingArea
 	bool				mTrackCursorInTick;
 	uint32				mCaret;		// our cache of the current caret position
 	uint32				mClickCount;
-	double				mLastClickTime;
+	uint32				mLastClickTime;
+	
+	enum
+	{
+		eSelectNone,
+		eSelectRegular,
+		eSelectWords,
+		eSelectLines
+	}					mClickMode;
+	uint32				mClickAnchor, mClickCaret;
+	uint32				mMinClickAnchor, mMaxClickAnchor;
+	
 //	TSMDocumentID		mTSMDocument;
 //	HIViewTrackingAreaRef
 //						mTrackingLeftRef, mTrackingMainRef;

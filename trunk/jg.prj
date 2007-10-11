@@ -98,8 +98,8 @@
 			<file>libiconv.dylib</file>
 			<file>libboost_thread-mt.dylib</file>
 			<file>libpcre.0.0.1.dylib</file>
-			<file>libicuuc.38.0.dylib</file>
-			<file>libboost_regex-1_34_1.dylib</file>
+			<file>libicuuc.dylib</file>
+			<file>libboost_regex-mt.dylib</file>
 		</group>
 	</files>
 	<package/>

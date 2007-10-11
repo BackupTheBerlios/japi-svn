@@ -44,15 +44,31 @@ class MView
 						GtkWidget*		inWidget,
 						bool			inCanActivate);
 
+	virtual void	Added();
+
 	virtual bool	OnFocusInEvent(
 						GdkEventFocus*	inEvent);
 
 	virtual bool	OnFocusOutEvent(
 						GdkEventFocus*	inEvent);
+	
+	virtual bool	OnButtonPressEvent(
+						GdkEventButton*	inEvent);
 
+	virtual bool	OnMotionNotifyEvent(
+						GdkEventMotion*	inEvent);
+	
+	virtual bool	OnButtonReleaseEvent(
+						GdkEventButton*	inEvent);
+
+	virtual bool	OnRealize();
 
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
 	MSlot<bool(GdkEventFocus*)>			mFocusOutEvent;
+	MSlot<bool(GdkEventButton*)>		mButtonPressEvent;
+	MSlot<bool(GdkEventMotion*)>		mMotionNotifyEvent;
+	MSlot<bool(GdkEventButton*)>		mButtonReleaseEvent;
+	MSlot<bool()>						mRealize;
 
   private:
 	GtkWidget*		mGtkWidget;
