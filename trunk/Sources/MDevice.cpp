@@ -1,6 +1,7 @@
 #include "MJapieG.h"
 
 #include <cmath>
+#include <cassert>
 
 #include "MDevice.h"
 #include "MDrawingArea.h"

@@ -34,7 +34,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <kvm.h>
+//#include <kvm.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
@@ -44,6 +44,7 @@
 #define _ANSI_SOURCE 1
 #endif
 #include <sys/wait.h>
+#include <cerrno>
 
 #include <iostream>
 #include <sstream>
@@ -53,7 +54,7 @@
 #include "MError.h"
 #include "MPreferences.h"
 
-extern const char** environ;
+//extern const char** environ;
 
 using namespace std;
 
@@ -97,7 +98,7 @@ MShell::MShell(bool inRedirectStdErr)
 	, mStdErrFD(-1)
 	, mRedirectStdErr(inRedirectStdErr)
 {
-	for (const char** e = environ; *e != NULL; ++e)
+	for (char** e = environ; *e != NULL; ++e)
 	{
 		string v = *e;
 		string::size_type n = v.find('=');

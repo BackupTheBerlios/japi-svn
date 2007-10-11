@@ -2,10 +2,10 @@
 
 TARGET		= jg
 # DEBUG should be either 1 or 0
-DEBUG		= 0
+DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= icudata icuuc
+LIBS		= icudata icuuc pcre boost_regex boost_thread
 LIBPATHS	=  
 INCPATHS	= 
 SYSINCPATHS	= 
@@ -29,27 +29,9 @@ endif
 
 LDFLAGS += $(addprefix -L, $(LIBPATHS)) 
 
-Sources = \
-	./Sources/MColor.cpp \
-	./Sources/MDevice.cpp \
-	./Sources/MDocument.cpp  \
-	./Sources/MDocWindow.cpp \
-	./Sources/MDrawingArea.cpp \
-	./Sources/MError.cpp \
-	./Sources/MFile.cpp \
-	./Sources/MFont.cpp \
-	./Sources/MHandler.cpp \
-	./Sources/MJapieG.cpp \
-	./Sources/MMenu.cpp \
-	./Sources/MPreferences.cpp \
-	./Sources/MSelection.cpp \
-	./Sources/MTextBuffer.cpp \
-	./Sources/MTextView.cpp \
-	./Sources/MUnicode.cpp \
-	./Sources/MView.cpp \
-	./Sources/MViewPort.cpp \
-	./Sources/MVScrollbar.cpp \
-	./Sources/MWindow.cpp \
+Sources = $(wildcard Sources/*.cpp)
+
+Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

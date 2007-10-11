@@ -6,6 +6,7 @@
 #include "MJapieG.h"
 
 #include <iostream>
+#include <cassert>
 
 #include "MView.h"
 

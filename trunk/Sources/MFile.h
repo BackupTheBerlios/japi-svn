@@ -34,6 +34,7 @@
 #define MFILE
 
 #include <fcntl.h>
+#include <cassert>
 
 //#include <boost/filesystem/path.hpp>
 //#include <boost/filesystem/operations.hpp>
