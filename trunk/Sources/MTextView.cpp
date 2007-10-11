@@ -365,11 +365,11 @@ bool MTextView::OnExposeEvent(
 		if (not mDrawForDragImage)
 			dev.EraseRect(update);
 		
-		int32 minLine = update.y / mLineHeight;
+		int32 minLine = update.y / mLineHeight - 1;
 		if (minLine < 0)
 			minLine = 0;
 		
-		uint32 maxLine = minLine + update.height / mLineHeight;
+		uint32 maxLine = minLine + update.height / mLineHeight + 2;
 		if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
 			maxLine = mDocument->CountLines() - 1;
 	

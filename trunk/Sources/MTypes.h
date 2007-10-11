@@ -75,10 +75,10 @@ inline bool MRect::Intersects(
 	const MRect&		inRHS) const
 {
 	return
-		x < inRHS.x + inRHS.width and
-		x + width > inRHS.x and
-		y < inRHS.y + inRHS.height and
-		y + height > inRHS.y;
+		x <= inRHS.x + inRHS.width and
+		x + width >= inRHS.x and
+		y <= inRHS.y + inRHS.height and
+		y + height >= inRHS.y;
 }
 
 enum MDirection
