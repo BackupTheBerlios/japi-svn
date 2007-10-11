@@ -8,7 +8,7 @@
 using namespace std;
 
 MWindow::MWindow()
-	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL))
+	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
 	, MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)

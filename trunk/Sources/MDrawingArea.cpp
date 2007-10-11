@@ -15,7 +15,7 @@ using namespace std;
 
 MDrawingArea::MDrawingArea(
 	uint32 inWidth, uint32 inHeight)
-	: MView(gtk_drawing_area_new())
+	: MView(gtk_drawing_area_new(), true)
 	, mExposeEvent(this, &MDrawingArea::OnExposeEvent)
 	, mPangoContext(pango_cairo_font_map_create_context(
 		PANGO_CAIRO_FONT_MAP(pango_cairo_font_map_get_default())))

@@ -41,7 +41,18 @@ class MView
   protected:
 
 					MView(
-						GtkWidget*	inWidget);
+						GtkWidget*		inWidget,
+						bool			inCanActivate);
+
+	virtual bool	OnFocusInEvent(
+						GdkEventFocus*	inEvent);
+
+	virtual bool	OnFocusOutEvent(
+						GdkEventFocus*	inEvent);
+
+
+	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
+	MSlot<bool(GdkEventFocus*)>			mFocusOutEvent;
 
   private:
 	GtkWidget*		mGtkWidget;

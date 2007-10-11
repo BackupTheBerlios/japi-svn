@@ -11,6 +11,6 @@ using namespace std;
 
 MVScrollbar::MVScrollbar(
 	GtkObject*		inAdjustment)
-	: MView(gtk_vscrollbar_new(GTK_ADJUSTMENT(inAdjustment)))
+	: MView(gtk_vscrollbar_new(GTK_ADJUSTMENT(inAdjustment)), false)
 {
 }

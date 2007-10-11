@@ -158,8 +158,10 @@ void MDevice::SetForeColor(
 {
 	mImpl->mForeColor = inColor;
 
-	cairo_set_source_rgb(mImpl->mContext, mImpl->mForeColor.red,
-		mImpl->mForeColor.green, mImpl->mForeColor.blue);
+	cairo_set_source_rgb(mImpl->mContext,
+		mImpl->mForeColor.red / 255.0,
+		mImpl->mForeColor.green / 255.0,
+		mImpl->mForeColor.blue / 255.0);
 }
 
 MColor MDevice::GetForeColor() const
@@ -184,8 +186,11 @@ void MDevice::EraseRect(
 	cairo_save(mImpl->mContext);
 	
 	cairo_rectangle(mImpl->mContext, inRect.x, inRect.y, inRect.width, inRect.height);
-	cairo_set_source_rgb(mImpl->mContext, mImpl->mBackColor.red,
-		mImpl->mBackColor.green, mImpl->mBackColor.blue);
+
+	cairo_set_source_rgb(mImpl->mContext,
+		mImpl->mBackColor.red / 255.0,
+		mImpl->mBackColor.green / 255.0,
+		mImpl->mBackColor.blue / 255.0);
 	cairo_fill(mImpl->mContext);
 	
 	cairo_restore(mImpl->mContext);
@@ -215,13 +220,13 @@ void MDevice::CreateAndUsePattern(
 {
 	uint32 c1 = 0, c2 = 0;
 	
-	c1 |= (uint32(inColor1.red * 255) & 0xFF) << 16;
-	c1 |= (uint32(inColor1.green * 255) & 0xFF) << 8;
-	c1 |= (uint32(inColor1.blue * 255) & 0xFF) << 0;
+	c1 |= inColor1.red << 16;
+	c1 |= inColor1.green << 8;
+	c1 |= inColor1.blue << 0;
 	
-	c2 |= (uint32(inColor2.red * 255) & 0xFF) << 16;
-	c2 |= (uint32(inColor2.green * 255) & 0xFF) << 8;
-	c2 |= (uint32(inColor2.blue * 255) & 0xFF) << 0;
+	c2 |= inColor2.red << 16;
+	c2 |= inColor2.green << 8;
+	c2 |= inColor2.blue << 0;
 	
 	for (uint32 y = 0; y < 8; ++y)
 	{
@@ -342,8 +347,23 @@ void MDevice::SetText(
 }
 
 void MDevice::SetTabStops(
-	float			inTabWidth)
+	uint32			inTabWidth)
 {
+	uint32 count = mImpl->mRect.width / inTabWidth;
+
+	PangoTabArray* tabs = pango_tab_array_new(count, true);
+	
+	uint32 next = inTabWidth;
+	
+	for (uint32 x = 0; x < count; ++x)
+	{
+		pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next);
+		next += inTabWidth;
+	}
+	
+	pango_layout_set_tabs(mImpl->mLayout, tabs);
+	
+	pango_tab_array_free(tabs);
 }
 
 void MDevice::SetTextColors(

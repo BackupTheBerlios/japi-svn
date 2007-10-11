@@ -12,7 +12,9 @@ using namespace std;
 MViewPort::MViewPort(
 	GtkObject*		inHAdjustment,
 	GtkObject*		inVAdjustment)
-	: MView(gtk_viewport_new(GTK_ADJUSTMENT(inHAdjustment), GTK_ADJUSTMENT(inVAdjustment)))
+	: MView(
+		gtk_viewport_new(GTK_ADJUSTMENT(inHAdjustment), GTK_ADJUSTMENT(inVAdjustment)),
+		false)
 {
 }
 

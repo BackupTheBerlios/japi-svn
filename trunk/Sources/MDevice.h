@@ -67,7 +67,7 @@ class MDevice
 						const std::string&	inText);
 	
 	void			SetTabStops(
-						float				inTabWidth);
+						uint32				inTabWidth);
 	
 	void			SetTextColors(
 						uint32				inColorCount,

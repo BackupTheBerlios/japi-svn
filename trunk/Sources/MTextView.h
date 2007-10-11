@@ -121,6 +121,12 @@ class MTextView : public MDrawingArea
 	virtual bool		OnExposeEvent(
 							GdkEventExpose*	inEvent);
 
+	virtual bool		OnFocusInEvent(
+							GdkEventFocus*	inEvent);
+
+	virtual bool		OnFocusOutEvent(
+							GdkEventFocus*	inEvent);
+
   private:
 
 	void				DrawLine(

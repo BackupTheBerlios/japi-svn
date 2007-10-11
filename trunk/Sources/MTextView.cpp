@@ -409,11 +409,13 @@ void MTextView::DrawLine(
 		trailingNL = mDocument->GetTextBuffer().GetChar(mDocument->LineEnd(inLineNr)) == '\n';
 	
 	MRect lineRect = GetLineRect(inLineNr);
-	float indent = kLeftMargin + mDocument->GetLineIndentWidth(inLineNr);
+	lineRect.x += kLeftMargin;
+	
+	float indent = mDocument->GetLineIndentWidth(inLineNr);
 
 	MDeviceContextSaver save(inDevice);
-	float y = inLineNr * mLineHeight;
-	float x = indent;
+	float y = lineRect.y;
+	float x = lineRect.x + indent;
 
 	MSelection selection = mDocument->GetSelection();
 
@@ -1239,6 +1241,33 @@ void MTextView::GetVisibleLineSpan(
 		--cnt;
 	
 	outLastLine = outFirstLine + cnt;
+}
+
+bool MTextView::OnFocusInEvent(
+	GdkEventFocus*	inEvent)
+{
+	Invalidate();
+
+	if (mDocument != nil)
+	{
+		mDocument->SetTargetTextView(this);
+		mDocument->MakeFirstDocument();
+		mDocument->CheckFile();
+	}
+	
+	return true;
+}
+
+bool MTextView::OnFocusOutEvent(
+	GdkEventFocus*	inEvent)
+{
+	mNeedsDisplay = true;
+	Invalidate();
+
+	if (mDocument != nil)
+		mDocument->Reset();
+
+	return true;
 }
 
 //OSStatus MTextView::DoControlActivate(EventRef ioEvent)
