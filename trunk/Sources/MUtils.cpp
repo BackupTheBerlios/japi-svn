@@ -278,9 +278,10 @@ string GetDateTime()
 
 void Beep()
 {
-	
+	gdk_beep();
 }
 
 void ObscureCursor()
 {
+	
 }

@@ -23,9 +23,3 @@ void MViewPort::SetShadowType(
 {
 	gtk_viewport_set_shadow_type(GTK_VIEWPORT(GetGtkWidget()), inShadowType);
 }
-
-void MViewPort::Add(
-	MView*			inView)
-{
-	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), inView->GetGtkWidget());
-}

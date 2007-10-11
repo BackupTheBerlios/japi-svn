@@ -1,7 +1,6 @@
 #include "MJapieG.h"
 
 #include <cmath>
-#include <cassert>
 
 #include "MDevice.h"
 #include "MDrawingArea.h"
@@ -13,6 +12,8 @@
 using namespace std;
 
 namespace {
+
+#pragma message("GdkPixmap gaan gebruiken")
 	
 class MDummyWindow : public MWindow
 {

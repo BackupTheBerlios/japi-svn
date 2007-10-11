@@ -11,15 +11,14 @@
 class MViewPort : public MView
 {
   public:
-				MViewPort(
-					GtkObject*		inHAdjustment,
-					GtkObject*		inVAdjustment);
+					MViewPort(
+						GtkObject*		inHAdjustment,
+						GtkObject*		inVAdjustment);
 
-	void		SetShadowType(
-					GtkShadowType	inShadowType);
-	
-	void		Add(
-					MView*			inView);
+	void			SetShadowType(
+						GtkShadowType	inShadowType);
+
+	HVScrollBar*	GetVScrollBar() const;
 };
 
 #endif // MVIEWPORT_H
