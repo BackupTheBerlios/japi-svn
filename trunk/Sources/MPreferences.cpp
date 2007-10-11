@@ -51,16 +51,9 @@ GetInteger(
 	const char*	inName,
 	int32		inDefaultValue)
 {
-//	MCFString key(inName);
-//	Boolean valid;
-//	
-//	SInt32 result = ::CFPreferencesGetAppIntegerValue(key,
-//		kCFPreferencesCurrentApplication, &valid);
-//
-//	if (not valid)
-//		result = inDefaultValue;
-//	
-//	return result;
+	int32 result = inDefaultValue;
+	
+	return result;
 }
 
 void
@@ -83,16 +76,16 @@ GetString(
 	const char*	inName,
 	string		inDefaultValue)
 {
-//	string result = inDefaultValue;
-//	
+	string result = inDefaultValue;
+	
 //	MCFString key(inName);
 //	MCFString value(static_cast<CFStringRef>(::CFPreferencesCopyAppValue(key,
 //		kCFPreferencesCurrentApplication)), false);
 //
 //	if (value.IsValid() != nil)
 //		value.GetString(result);
-//	
-//	return result;
+	
+	return result;
 }
 
 void SetString(

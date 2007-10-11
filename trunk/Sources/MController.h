@@ -48,7 +48,9 @@
 class MTextView;
 class MTextViewContainer;
 class MDocument;
+class MWindow;
 class MDocWindow;
+class MURL;
 
 enum MCloseReason {
 	kSaveChangesClosingDocument,

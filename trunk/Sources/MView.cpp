@@ -37,6 +37,13 @@ void MView::SetBounds(
 {
 }
 
+void MView::ResizeTo(
+	uint32			inWidth,
+	uint32			inHeight)
+{
+	gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
+}
+
 bool MView::IsActive() const
 {
 }
@@ -49,3 +56,11 @@ void MView::Invalidate(
 	const MRect&	inRect)
 {
 }
+
+void MView::Add(
+	MView*			inSubView)
+{
+	assert(GTK_IS_CONTAINER(GetGtkWidget()));
+	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), inSubView->GetGtkWidget());
+}
+

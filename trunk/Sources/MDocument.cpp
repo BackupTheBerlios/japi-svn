@@ -663,7 +663,7 @@ void MDocument::Type(
 	const char*		inText,
 	uint32			inLength)
 {
-	eObscureCursor();
+	ObscureCursor();
 	
 	StartAction(kTypeAction);
 	
@@ -2363,7 +2363,7 @@ void MDocument::DoFastFind(MDirection inDirection)
 
 void MDocument::FastFindType(const char* inText, uint32 inTextLength)
 {
-	eObscureCursor();
+	ObscureCursor();
 	
 	string what = mFastFindWhat;
 	
@@ -3309,7 +3309,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 //		--firstLine;
 	
 	if (handled)
-		eObscureCursor();
+		ObscureCursor();
 	
 	return handled;
 }

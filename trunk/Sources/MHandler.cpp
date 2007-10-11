@@ -35,3 +35,10 @@ bool MHandler::ProcessCommand(
 	
 	return result;
 }
+
+void MHandler::SetSuper(
+	MHandler*		inSuper)
+{
+	mSuper = inSuper;
+}
+

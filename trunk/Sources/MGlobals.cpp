@@ -49,18 +49,16 @@ struct RGBColor
 	uint16	red, green, blue;
 };
 
-const MColor kLanguageColors[] =
-{
-	kBlack,			  // kLTextColor
-    MColor("3d4c9e"), // kLKeyWordColor
-    MColor("005454"), // kLPreProcessorColor
-    MColor("ad6739"), // kLCharConstColor
-    MColor("9b2e35"), // kLCommentColor
-    MColor("666666"), // kLStringColor
-    MColor("008484"), // kLTagColor
-    MColor("1e843b"), // kLAttribColor
-    MColor("aaaaaa"), // kLInvisiblesColor
-};
+const MColor
+	kTextColor,
+	kKeyWordColor("#3d4c9e"),
+	kPreProcessorColor("#005454"),
+	kCharConstColor("#ad6739"),
+	kCommentColor("#9b2e35"),
+	kStringColor("#666666"),
+	kTagColor("#008484"),
+	kAttribColor("#1e843b"),
+	kInvisiblesColor("#aaaaaa");
 
 const MColor
 	kInactiveHighlightColor("#e5e5e5"),
@@ -94,24 +92,15 @@ void InitGlobals()
 	gFontSize = Preferences::GetInteger("fontsize", gFontSize);
 	gFontName = Preferences::GetString("fontname", gFontName);
 	
-	gLanguageColors[kLTextColor] =
-		Preferences::GetColor("text color", kLanguageColors[kLTextColor]);
-	gLanguageColors[kLKeyWordColor] =
-		Preferences::GetColor("keyword color", kLanguageColors[kLKeyWordColor]);
-	gLanguageColors[kLPreProcessorColor] =
-		Preferences::GetColor("preprocessor color", kLanguageColors[kLPreProcessorColor]);
-	gLanguageColors[kLCharConstColor] =
-		Preferences::GetColor("char const color", kLanguageColors[kLCharConstColor]);
-	gLanguageColors[kLCommentColor] =
-		Preferences::GetColor("comment color", kLanguageColors[kLCommentColor]);
-	gLanguageColors[kLStringColor] =
-		Preferences::GetColor("string color", kLanguageColors[kLStringColor]);
-	gLanguageColors[kLTagColor] =
-		Preferences::GetColor("tag color", kLanguageColors[kLTagColor]);
-	gLanguageColors[kLAttribColor] =
-		Preferences::GetColor("attribute color", kLanguageColors[kLAttribColor]);
-	gLanguageColors[kLInvisiblesColor] =
-		Preferences::GetColor("invisibles color", kLanguageColors[kLInvisiblesColor]);
+	gLanguageColors[kLTextColor] =			Preferences::GetColor("text color", kTextColor);
+	gLanguageColors[kLKeyWordColor] =		Preferences::GetColor("keyword color", kKeyWordColor);
+	gLanguageColors[kLPreProcessorColor] =	Preferences::GetColor("preprocessor color", kPreProcessorColor);
+	gLanguageColors[kLCharConstColor] =		Preferences::GetColor("char const color", kCharConstColor);
+	gLanguageColors[kLCommentColor] =		Preferences::GetColor("comment color", kCommentColor);
+	gLanguageColors[kLStringColor] =		Preferences::GetColor("string color", kStringColor);
+	gLanguageColors[kLTagColor] =			Preferences::GetColor("tag color", kTagColor);
+	gLanguageColors[kLAttribColor] =		Preferences::GetColor("attribute color", kAttribColor);
+	gLanguageColors[kLInvisiblesColor] =	Preferences::GetColor("invisibles color", kInvisiblesColor);
 
 //	RGBColor c;
 //	::LMGetHiliteRGB(&c);

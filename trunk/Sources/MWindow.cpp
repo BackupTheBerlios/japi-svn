@@ -8,14 +8,13 @@
 using namespace std;
 
 MWindow::MWindow()
-	: MHandler(gApp)
+	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL))
+	, MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
 {
-	mWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	
-	mOnDestroy.Connect(mWindow, "destroy");
-	mOnDelete.Connect(mWindow, "delete_event");
+	mOnDestroy.Connect(GetGtkWidget(), "destroy");
+	mOnDelete.Connect(GetGtkWidget(), "delete_event");
 }
 
 MWindow::~MWindow()
@@ -25,16 +24,17 @@ MWindow::~MWindow()
 	
 void MWindow::Show()
 {
-	gtk_widget_show_all(mWindow);
+	gtk_widget_show_all(GetGtkWidget());
 }
 
 void MWindow::Hide()
 {
+	gtk_widget_hide_all(GetGtkWidget());
 }
 
 void MWindow::Select()
 {
-	gtk_window_present(GTK_WINDOW(mWindow));
+	gtk_window_present(GTK_WINDOW(GetGtkWidget()));
 }
 
 void MWindow::Close()

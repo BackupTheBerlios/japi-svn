@@ -278,6 +278,7 @@ MDocWindow::~MDocWindow()
 void MDocWindow::Initialize(
 	MDocument*		inDocument)
 {
+	mController.SetWindow(this);
 	mController.SetDocument(inDocument);
 }
 

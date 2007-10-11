@@ -67,9 +67,9 @@ void MController::SetWindow(MWindow* inWindow)
 {
 	SetSuper(inWindow);
 	
-//	mWindow = dynamic_cast<MDocWindow*>(inWindow);
-//	THROW_IF_NIL(mWindow);
-//	
+	mWindow = dynamic_cast<MDocWindow*>(inWindow);
+	THROW_IF_NIL(mWindow);
+	
 //	mWindow->Install(kEventClassTextInput, kEventTextInputUpdateActiveInputArea,
 //		this, &MController::DoTextInputUpdateActiveInputArea);
 //	mWindow->Install(kEventClassTextInput, kEventTextInputUnicodeForKeyEvent,

@@ -24,12 +24,19 @@ class MView
 	void			SetBounds(
 						const MRect&	inBounds);
 
+	void			ResizeTo(
+						uint32			inWidth,
+						uint32			inHeight);
+
 	bool			IsActive() const;
 
 	void			Invalidate();
 
 	void			Invalidate(
 						const MRect&	inRect);
+
+	virtual void	Add(
+						MView*			inSubView);
 
   protected:
 

@@ -405,11 +405,11 @@ void MTextView::DrawLine(
 	mDocument->GetStyledText(inLineNr, inDevice, text);
 	
 	bool trailingNL = false;
-	if (inLineNr < mDocument->CountLines())
+	if (inLineNr < mDocument->CountLines() and mDocument->LineEnd(inLineNr) < mDocument->GetTextBuffer().GetSize())
 		trailingNL = mDocument->GetTextBuffer().GetChar(mDocument->LineEnd(inLineNr)) == '\n';
 	
 	MRect lineRect = GetLineRect(inLineNr);
-	float indent = mDocument->GetLineIndentWidth(inLineNr);
+	float indent = kLeftMargin + mDocument->GetLineIndentWidth(inLineNr);
 
 	MDeviceContextSaver save(inDevice);
 	float y = inLineNr * mLineHeight;
@@ -581,6 +581,14 @@ void MTextView::DrawLine(
 	}
 }
 
+void MTextView::AdjustScrollBars()
+{
+	uint32 width = 1000;
+	uint32 height = mDocument->CountLines() * mLineHeight;
+	
+	ResizeTo(width, height);
+}
+
 //OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
 //{
 //	if (mDocument == nil)
@@ -680,11 +688,7 @@ void MTextView::GetScrollPosition(
 
 void MTextView::LineCountChanged()
 {
-//	MCarbonEvent event;
-//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//
-//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+	AdjustScrollBars();
 }
 
 void MTextView::Tick()

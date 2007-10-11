@@ -262,8 +262,6 @@ class MDocument
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
 	
-	MEventOut<void()>					eObscureCursor();
-
 	MEventIn<void(bool)>								eShellStatusIn;
 	MEventIn<void(const char* inText, uint32 inSize)>	eStdOut;
 	MEventIn<void(const char* inText, uint32 inSize)>	eStdErr;
@@ -364,8 +362,6 @@ class MDocument
 	void				Execute();
 
 	void				Idle();
-
-	virtual void		Initialize();
 
 	typedef std::list<MController*>	MControllerList;
 	

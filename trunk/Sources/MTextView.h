@@ -186,6 +186,8 @@ class MTextView : public MDrawingArea
 //						sDragSendDataUPP;
 //	static MTextView*	sDraggingView;
 
+	void				AdjustScrollBars();
+
 	MController*		mController;
 	MDocument*			mDocument;
 	int32				mLineHeight;

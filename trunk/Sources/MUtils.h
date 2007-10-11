@@ -55,4 +55,6 @@ double GetDoubleClickTime();
 
 void Beep();
 
+void ObscureCursor();
+
 #endif

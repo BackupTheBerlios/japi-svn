@@ -280,3 +280,7 @@ void Beep()
 {
 	
 }
+
+void ObscureCursor()
+{
+}

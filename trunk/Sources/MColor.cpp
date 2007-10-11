@@ -105,7 +105,7 @@ string MColor::hex() const
 }
 
 void MColor::hex(
-	const std::string&	inHex)
+	const string&	inHex)
 {
 	if (inHex.length() == 7 and inHex[0] == '#')
 	{

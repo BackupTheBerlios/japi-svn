@@ -101,7 +101,7 @@ class MTextBuffer
 		friend class MTextBuffer;
 		
 	  public:
-						operator const char() const					{ return mBuffer[mOffset]; }
+						operator const char() const					{ return mBuffer.GetChar(mOffset); }
 		ref&			operator=(
 							char		inChar);
 		ref&			operator=(

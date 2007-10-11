@@ -29,29 +29,35 @@
 	<userpaths>
 		<path>Sources</path>
 		<path>../../../../usr/pkg/lib</path>
+		<path>../../../../opt/local/lib</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib</path>
 		<path>/usr/local/lib</path>
 		<path>/usr/pkg/lib</path>
+		<path>/opt/local/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
 		<group name="Sources">
 			<file>MJapieG.cpp</file>
+			<file>MController.cpp</file>
 			<file>MDocument.cpp</file>
+			<file>MTextView.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
 			<group name="Windows">
 				<file>MEditWindow.cpp</file>
 				<file>MDocWindow.cpp</file>
 				<file>MWindow.cpp</file>
+				<file>MMessageWindow.cpp</file>
 			</group>
 			<file>MViewPort.cpp</file>
 			<file>MView.cpp</file>
-			<file>MVScrollbar.cpp</file>
 			<file>MDrawingArea.cpp</file>
+			<file>MVScrollbar.cpp</file>
 			<file>MColor.cpp</file>
+			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
 			<file>MFont.cpp</file>
 			<file>MTextBuffer.cpp</file>
@@ -69,19 +75,14 @@
 				<file>MLanguageTeX.cpp</file>
 				<file>MLanguageXML.cpp</file>
 			</group>
-			<file>MGlobals.cpp</file>
 			<file>MFile.cpp</file>
 			<file>MError.cpp</file>
-			<file>MController.cpp</file>
 			<file>MClipboard.cpp</file>
-			<file>MTextView.cpp</file>
 			<file>MShell.cpp</file>
 			<file>MSelection.cpp</file>
 		</group>
 		<group name="Libraries">
 			<file>libxml2.dylib</file>
-			<file>libicuuc.dylib.36.0</file>
-			<file>libicui18n.dylib.36.0</file>
 			<file>libgtk-x11-2.0.dylib</file>
 			<file>libgdk-x11-2.0.dylib</file>
 			<file>libatk-1.0.dylib</file>
@@ -97,6 +98,8 @@
 			<file>libiconv.dylib</file>
 			<file>libboost_thread-mt.dylib</file>
 			<file>libpcre.0.0.1.dylib</file>
+			<file>libicuuc.38.0.dylib</file>
+			<file>libboost_regex-1_34_1.dylib</file>
 		</group>
 	</files>
 	<package/>

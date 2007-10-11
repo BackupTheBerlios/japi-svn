@@ -5,18 +5,63 @@
 #include "MDevice.h"
 #include "MDrawingArea.h"
 #include "MFont.h"
+#include "MDrawingArea.h"
+#include "MWindow.h"
+#include "MGlobals.h"
 
 using namespace std;
 
+namespace {
+	
+class MDummyWindow : public MWindow
+{
+  public:
+					MDummyWindow();
+//					~MDummyWindow();
+
+	static MDummyWindow*	Instance();
+	
+	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea ; }
+
+  private:
+	MDrawingArea*	mDrawingArea;
+};
+
+MDummyWindow::MDummyWindow()
+{
+	mDrawingArea = new MDrawingArea(10, 10);
+	Add(mDrawingArea);
+	
+//	gtk_widget_realize(GetGtkWidget());
+	Show();
+	Hide();
+}
+
+MDummyWindow* MDummyWindow::Instance()
+{
+	static MDummyWindow* sInstance = nil;
+	
+	if (sInstance == nil)
+		sInstance = new MDummyWindow();
+	
+	return sInstance;
+}
+
+}
+
 struct MDeviceImp
 {
+					MDeviceImp();
+		
 					MDeviceImp(
 						MView*		inView,
 						MRect		inRect);
 		
 					~MDeviceImp();
 	
-	MView*			mView;
+	void			Init();
+	
+	MDrawingArea*	mView;
 	MRect			mRect;
 	MColor			mForeColor;
 	MColor			mBackColor;
@@ -28,23 +73,34 @@ struct MDeviceImp
 	uint32			mPatternData[8][8];
 };
 
+MDeviceImp::MDeviceImp()
+	: mView(MDummyWindow::Instance()->GetDrawingArea())
+	, mRect(0, 0, 10, 10)
+	, mFont(kFixedFont)
+{
+	Init();
+}
+
 MDeviceImp::MDeviceImp(
 	MView*		inView,
 	MRect		inRect)
-	: mView(inView)
+	: mView(dynamic_cast<MDrawingArea*>(inView))
 	, mRect(inRect)
-	, mForeColor(kBlack)
-	, mBackColor(kWhite)
-	, mContext(nil)
-	, mLayout(nil)
-	, mLanguage(nil)
 	, mFont(kFixedFont)
 {
-	GtkWidget* widget = mView->GetGtkWidget();
-	
-	mContext = gdk_cairo_create(widget->window);
-	
-	cairo_rectangle(mContext, inRect.x, inRect.y, inRect.width, inRect.height);
+	Init();
+}
+
+void MDeviceImp::Init()
+{
+	mForeColor = kBlack;
+	mBackColor = kWhite;
+	mLayout = nil;
+	mLanguage = nil;
+
+	mContext = gdk_cairo_create(mView->GetGtkWidget()->window);
+
+	cairo_rectangle(mContext, mRect.x, mRect.y, mRect.width, mRect.height);
 	cairo_clip(mContext);
 
 	const char* LANG = getenv("LANG");
@@ -54,15 +110,9 @@ MDeviceImp::MDeviceImp(
 	else
 		mLanguage = gtk_get_default_language();
 
-	if (dynamic_cast<MDrawingArea*>(mView) != nil)
-	{
-		MDrawingArea* a = static_cast<MDrawingArea*>(mView);
-
-		PangoContext* pc = a->GetPangoContext();
-
-		mLayout = pango_layout_new(pc);
-		pango_layout_set_font_description(mLayout, mFont);
-	}
+	PangoContext* pc = mView->GetPangoContext();
+	mLayout = pango_layout_new(pc);
+	pango_layout_set_font_description(mLayout, mFont);
 }
 
 MDeviceImp::~MDeviceImp()
@@ -76,8 +126,8 @@ MDeviceImp::~MDeviceImp()
 // -------------------------------------------------------------------
 
 MDevice::MDevice()
+	: mImpl(new MDeviceImp())
 {
-	assert(false);
 }
 
 MDevice::MDevice(
@@ -287,6 +337,7 @@ uint32 MDevice::GetStringWidth(
 void MDevice::SetText(
 	const string&	inText)
 {
+	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
 }
 
 void MDevice::SetTabStops(
@@ -299,6 +350,30 @@ void MDevice::SetTextColors(
 	uint32			inColors[],
 	uint32			inOffsets[])
 {
+	PangoAttrList* attrs = pango_attr_list_new ();
+
+	for (uint32 ix = 0; ix < inColorCount; ++ix)
+	{
+		MColor c = gLanguageColors[inColors[ix]];
+		
+		uint16 red = c.red << 8 | c.red;
+		uint16 green = c.green << 8 | c.green;
+		uint16 blue = c.blue << 8 | c.blue;
+		
+		PangoAttribute* attr = pango_attr_foreground_new(red, green, blue);
+		attr->start_index = inOffsets[ix];
+		
+		if (ix == inColorCount - 1)
+			attr->end_index = -1;
+		else
+			attr->end_index = inOffsets[ix + 1];
+		
+		pango_attr_list_insert(attrs, attr);
+	}
+	
+	pango_layout_set_attributes (mImpl->mLayout, attrs);
+	
+	pango_attr_list_unref (attrs);
 }
 
 void MDevice::SetTextSelection(
@@ -320,12 +395,15 @@ bool MDevice::PositionToIndex(
 	uint32&			outIndex,
 	bool&			outTrailing)
 {
+	return false;
 }
 
 void MDevice::DrawText(
 	float			inX,
 	float			inY)
 {
+	cairo_move_to(mImpl->mContext, inX, inY);	
+	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
 
 void MDevice::DrawCaret(

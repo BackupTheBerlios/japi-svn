@@ -6,9 +6,10 @@
 #ifndef MWINDOW_H
 #define MWINDOW_H
 
+#include "MView.h"
 #include "MCallbacks.h"
 
-class MWindow : public MHandler
+class MWindow : public MView, public MHandler
 {
   public:
 					MWindow();
@@ -23,8 +24,6 @@ class MWindow : public MHandler
 	void			SetTitle(
 						const std::string&	inTitle);
 	std::string		GetTitle() const;
-
-	GtkWidget*		GetGtkWidget() const			{ return mWindow; }
 
 	virtual bool	UpdateCommandStatus(
 						uint32			inCommand,
@@ -43,8 +42,6 @@ class MWindow : public MHandler
   private:
 	MSlot<void()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
-
-	GtkWidget*		mWindow;
 };
 
 

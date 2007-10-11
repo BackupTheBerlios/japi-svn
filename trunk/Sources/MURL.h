@@ -20,7 +20,7 @@ class MURL
 					{
 					}
 
-	std::string		leaf() const;
+	std::string		leaf() const						{ return mURL; }
 	
 	std::string		string() const						{ return mURL; }
 
