@@ -52,6 +52,8 @@
 #include "MError.h"
 #include "MTypes.h"
 
+#include "MUnicodeTables.h"
+
 using namespace std;
 
 WordBreakClass GetWordBreakClass(wchar_t inUnicode)
@@ -74,9 +76,8 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 		
 		default:
 		{
-			uint32 t = u_charType(inUnicode);
-			
-			if (t & (U_GC_L_MASK | U_GC_N_MASK))
+			uint8 prop = kCharClass[inUnicode];
+			if (prop & (kLETTER | kNUMBER))
 			{
 				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
 					result = eWB_Hira;
@@ -91,36 +92,64 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 				else
 					result = eWB_Let;
 			}
-			else if (t & U_GC_MC_MASK)
+			else if (prop & kCOMBININGMARK)
 				result = eWB_Com;
-			else if (t & U_GC_Z_MASK)
+			else if (prop & kSEPARATOR)
 				result = eWB_Sep;
 		}
 	}
 	
 	return result;
+	
+//	WordBreakClass result = eWB_Other;
+//	
+//	switch (inUnicode)
+//	{
+//		case '\r':
+//			result = eWB_CR;
+//			break;
+//
+//		case '\n':
+//			result = eWB_LF;
+//			break;
+//
+//		case '\t':
+//			result = eWB_Tab;
+//			break;
+//		
+//		default:
+//		{
+//			uint32 t = u_charType(inUnicode);
+//			
+//			if (t & (U_GC_L_MASK | U_GC_N_MASK))
+//			{
+//				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
+//					result = eWB_Hira;
+//				else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
+//					result = eWB_Kata;
+//				else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
+//					result = eWB_Han;
+//				else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
+//					result = eWB_Han;
+//				else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
+//					result = eWB_Han;
+//				else
+//					result = eWB_Let;
+//			}
+//			else if (t & U_GC_MC_MASK)
+//				result = eWB_Com;
+//			else if (t & U_GC_Z_MASK)
+//				result = eWB_Sep;
+//		}
+//	}
+//	
+//	return result;
 }
 
 CharBreakClass GetCharBreakClass(
 	wchar_t		inUnicode)
 {
-	CharBreakClass result = kCBC_Other;
-
-	switch (u_getIntPropertyValue(inUnicode, UCHAR_GRAPHEME_CLUSTER_BREAK))
-	{
-		case U_GCB_OTHER:	result = kCBC_Other;		break;
-		case U_GCB_CONTROL:	result = kCBC_Control;		break;
-		case U_GCB_CR:		result = kCBC_CR;			break;
-		case U_GCB_EXTEND:	result = kCBC_Extend;		break;
-		case U_GCB_L:		result = kCBC_L;			break;
-		case U_GCB_LF:		result = kCBC_LF;			break;
-		case U_GCB_LV:		result = kCBC_LV;			break;
-		case U_GCB_LVT:		result = kCBC_LVT;			break;
-		case U_GCB_T:		result = kCBC_T;			break;
-		case U_GCB_V:		result = kCBC_V;			break;
-	}
-	
-	return result;
+	return static_cast<CharBreakClass>(kCharBreakClass[inUnicode]);
 }
 
 wchar_t ToLower(
