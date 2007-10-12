@@ -212,13 +212,7 @@ bool MTextView::OnButtonPressEvent(
 	else if (mClickMode == eSelectWords)
 	{
 		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
-
-		if (mClickCaret < mMinClickAnchor)
-			mDocument->Select(mMaxClickAnchor, mClickCaret);
-		else if (mClickCaret > mMaxClickAnchor)
-			mDocument->Select(mMinClickAnchor, mClickCaret);
-		else
-			mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+		mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
 	}
 	else if (mClickMode == eSelectLines)
 	{
