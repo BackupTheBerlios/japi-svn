@@ -166,7 +166,7 @@ void MTextView::SetController(MController* inController)
 bool MTextView::OnButtonPressEvent(
 	GdkEventButton*		inEvent)
 {
-	if (mDocument == nil)
+	if (mDocument == nil or inEvent->button != 1 or inEvent->type != GDK_BUTTON_PRESS)
 		return true;
 
 	if (mLastClickTime + 250 > inEvent->time)
@@ -510,9 +510,9 @@ void MTextView::DrawLine(
 		if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
 		{
 			if (IsActive())
-				inDevice.SetTextSelection(selectionStart, selectionEnd, gHiliteColor);
+				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gHiliteColor);
 			else
-				inDevice.SetTextSelection(selectionStart, selectionEnd, gInactiveHiliteColor);
+				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gInactiveHiliteColor);
 //			inDevice.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
 //				fillBefore, fillAfter, IsActive());
 		}

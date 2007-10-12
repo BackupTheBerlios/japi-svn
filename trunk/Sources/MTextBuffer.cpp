@@ -1101,13 +1101,13 @@ uint32 MTextBuffer::NextCursorPosition(
 		    do
 		    {
 				++c;
+				result = c.GetOffset();
 				CharBreakClass c2 = GetCharBreakClass(*c);
 				
 				if (kCharBreakTable[c1][c2])
 					break;
 				
 				c1 = c2;
-				result = c.GetOffset();
 			}
 			while (result < mLogicalLength);
 		}
@@ -1883,26 +1883,24 @@ uint32 MTextBuffer::GetNextCharLength(
 {
 	uint32 result = 1;
 	
-	const_iterator text(this, inOffset);
-	
 	if (inOffset < mLogicalLength - 1 and
-		(*text & 0x0080) != 0)
+		(GetChar(inOffset) & 0x0080) != 0)
 	{
 		uint32 r = 1;
 		
-		if ((*text & 0x0E0) == 0x0C0)
+		if ((GetChar(inOffset) & 0x0E0) == 0x0C0)
 			r = 2;
-		else if ((*text & 0x0F0) == 0x0E0)
+		else if ((GetChar(inOffset) & 0x0F0) == 0x0E0)
 			r = 3;
-		else if ((*text & 0x0F8) == 0x0F0)
+		else if ((GetChar(inOffset) & 0x0F8) == 0x0F0)
 			r = 4;
 		
 		if (r + inOffset >= mLogicalLength)
 			r = mLogicalLength - inOffset - 1;
 		
-		++text;
+		++inOffset;
 		
-		for (uint32 i = 1; (*text & 0x0c0) == 0x080 and i < r; ++i, ++text)
+		for (uint32 i = 1; (GetChar(inOffset) & 0x0c0) == 0x080 and i < r; ++i, ++inOffset)
 			++result;
 	}
 	
@@ -1912,25 +1910,29 @@ uint32 MTextBuffer::GetNextCharLength(
 uint32 MTextBuffer::GetPrevCharLength(
 	uint32		inOffset) const
 {
-	uint32 result = 1;
+	uint32 result = 0;
 	
-	const_iterator text(this, inOffset);
-	
-	if ((*text & 0x0080) != 0)
+	if (inOffset > 0)
 	{
-		result = 2;
-
-		while ((*--text & 0x00C0) == 0x0080 and result < 6)
-			result++;
-	
-		switch (result)
+		result = 1;
+		--inOffset;
+		
+		if ((GetChar(inOffset) & 0x0080) != 0)
 		{
-			case 2:	if ((*text & 0x00E0) != 0x00C0) result = 1; break;
-			case 3:	if ((*text & 0x00F0) != 0x00E0) result = 1; break;
-			case 4:	if ((*text & 0x00F8) != 0x00F0) result = 1; break;
-			case 5:	if ((*text & 0x00FC) != 0x00F8) result = 1; break;
-			case 6:	if ((*text & 0x00FE) != 0x00FC) result = 1; break;
-			default:								result = 1; break;
+			result = 2;
+	
+			while ((GetChar(inOffset - 1) & 0x00C0) == 0x0080 and result < 6)
+				result++;
+		
+			switch (result)
+			{
+				case 2:	if ((GetChar(inOffset) & 0x00E0) != 0x00C0) result = 1; break;
+				case 3:	if ((GetChar(inOffset) & 0x00F0) != 0x00E0) result = 1; break;
+				case 4:	if ((GetChar(inOffset) & 0x00F8) != 0x00F0) result = 1; break;
+				case 5:	if ((GetChar(inOffset) & 0x00FC) != 0x00F8) result = 1; break;
+				case 6:	if ((GetChar(inOffset) & 0x00FE) != 0x00FC) result = 1; break;
+				default:											result = 1; break;
+			}
 		}
 	}
 	
@@ -1940,30 +1942,29 @@ uint32 MTextBuffer::GetPrevCharLength(
 wchar_t MTextBuffer::GetWChar(
 	uint32		inOffset) const
 {
-	const_iterator text(this, inOffset);
-	
 	wchar_t result = 0x0FFFD;
 	uint32 length = GetNextCharLength(inOffset);
 	
 	switch (length)
 	{
-		case 1:	if ((*text & 0x0080) == 0)		result = *text;						break;
-		case 2:	if ((*text & 0x00E0) == 0x00C0)	result = (*text++ & 0x001F) <<  6;	break;
-		case 3: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x000F) << 12;	break;
-		case 4: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0007) << 18;	break;
-		case 5: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0003) << 24;	break;
-		case 6: if ((*text & 0x00E0) == 0x00C0) result = (*text++ & 0x0001) << 30;	break;
+		case 1:	if ((GetChar(inOffset) & 0x0080) == 0)		result = GetChar(inOffset++);					break;
+		case 2:	if ((GetChar(inOffset) & 0x00E0) == 0x00C0)	result = (GetChar(inOffset++) & 0x001F) <<  6;	break;
+		case 3: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x000F) << 12;	break;
+		case 4: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0007) << 18;	break;
+		case 5: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0003) << 24;	break;
+		case 6: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0001) << 30;	break;
 	}
 	
 	if (result != 0xFFFD)
 	{
+		++inOffset;
 		switch (length)
 		{
-			case 6:	result |= (*text++ & 0x003F) << 24;
-			case 5:	result |= (*text++ & 0x003F) << 18;
-			case 4:	result |= (*text++ & 0x003F) << 12;
-			case 3:	result |= (*text++ & 0x003F) <<  6;
-			case 2:	result |= (*text++ & 0x003F);
+			case 6:	result |= (GetChar(inOffset++) & 0x003F) << 24;
+			case 5:	result |= (GetChar(inOffset++) & 0x003F) << 18;
+			case 4:	result |= (GetChar(inOffset++) & 0x003F) << 12;
+			case 3:	result |= (GetChar(inOffset++) & 0x003F) <<  6;
+			case 2:	result |= (GetChar(inOffset++) & 0x003F);
 		}
 	}
 	

@@ -350,21 +350,21 @@ void MDevice::SetText(
 void MDevice::SetTabStops(
 	uint32			inTabWidth)
 {
-	uint32 count = mImpl->mRect.width / inTabWidth;
-
-	PangoTabArray* tabs = pango_tab_array_new(count, true);
-	
-	uint32 next = inTabWidth;
-	
-	for (uint32 x = 0; x < count; ++x)
-	{
-		pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next);
-		next += inTabWidth;
-	}
-	
-	pango_layout_set_tabs(mImpl->mLayout, tabs);
-	
-	pango_tab_array_free(tabs);
+//	uint32 count = mImpl->mRect.width / inTabWidth;
+//
+//	PangoTabArray* tabs = pango_tab_array_new(count, false);
+//	
+//	uint32 next = inTabWidth;
+//	
+//	for (uint32 x = 0; x < count; ++x)
+//	{
+//		pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next * PANGO_SCALE);
+//		next += inTabWidth;
+//	}
+//	
+//	pango_layout_set_tabs(mImpl->mLayout, tabs);
+//	
+//	pango_tab_array_free(tabs);
 }
 
 void MDevice::SetTextColors(
@@ -403,8 +403,6 @@ void MDevice::SetTextSelection(
 	uint32			inLength,
 	MColor			inSelectionColor)
 {
-	PangoAttrList* attrs = pango_attr_list_new ();
-
 	uint16 red = inSelectionColor.red << 8 | inSelectionColor.red;
 	uint16 green = inSelectionColor.green << 8 | inSelectionColor.green;
 	uint16 blue = inSelectionColor.blue << 8 | inSelectionColor.blue;
@@ -412,8 +410,19 @@ void MDevice::SetTextSelection(
 	PangoAttribute* attr = pango_attr_background_new(red, green, blue);
 	attr->start_index = inStart;
 	attr->end_index = inStart + inLength;
-		
-	pango_attr_list_insert(attrs, attr);
+	
+	PangoAttrList* attrs = pango_layout_get_attributes(mImpl->mLayout);
+	
+	if (attrs == nil)
+	{
+		attrs = pango_attr_list_new();
+		pango_attr_list_insert(attrs, attr);
+	}
+	else
+	{
+		attrs = pango_attr_list_copy(attrs);
+		pango_attr_list_change(attrs, attr);
+	}
 	
 	pango_layout_set_attributes (mImpl->mLayout, attrs);
 	
@@ -445,6 +454,9 @@ bool MDevice::PositionToIndex(
 
 	outIndex = index;
 	outTrailing = trailing;
+
+cout << "position: " << inPosition
+	 << " out index: " << outIndex << ", " << (trailing ? "trailing" : "not trailing") << endl;
 	
 	return result;
 }
