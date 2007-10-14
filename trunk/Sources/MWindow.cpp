@@ -37,9 +37,16 @@ void MWindow::Select()
 	gtk_window_present(GTK_WINDOW(GetGtkWidget()));
 }
 
+bool MWindow::DoClose()
+{
+	cout << "close" << endl;
+	return true;
+}
+
 void MWindow::Close()
 {
-	gtk_widget_destroy(GetGtkWidget());
+	if (DoClose())
+		gtk_widget_destroy(GetGtkWidget());
 }
 
 void MWindow::SetTitle(
@@ -56,17 +63,22 @@ string MWindow::GetTitle() const
 	return title;
 }
 
-void MWindow::OnDestroy()
+bool MWindow::OnDestroy()
 {
 	cout << "destroy" << endl;
 	gApp->RecycleWindow(this);
+	return false;
 }
 
 bool MWindow::OnDelete(
 	GdkEvent*		inEvent)
 {
-	Close();
-	return false;
+	bool result = true;
+
+	if (DoClose())
+		result = false;
+	
+	return result;
 }
 
 bool MWindow::UpdateCommandStatus(

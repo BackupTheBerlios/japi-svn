@@ -77,7 +77,7 @@ class MDocWindow : public MWindow
 	virtual void		DocumentChanged(
 							MDocument*		inDocument);
 
-//	virtual void		DoClose();
+	virtual bool		DoClose();
 
 	virtual bool		ProcessCommand(
 							uint32			inCommand);

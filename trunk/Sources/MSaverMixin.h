@@ -30,46 +30,70 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MEDITWINDOW_H
-#define MEDITWINDOW_H
+#ifndef MSAVERMIXIN_H
+#define MSAVERMIXIN_H
 
-#include "MDocWindow.h"
+#include "MFile.h"
+#include "MCallbacks.h"
 
-class MParsePopup;
+class MWindow;
 
-class MEditWindow : public MDocWindow
+enum MCloseReason {
+	kSaveChangesClosingDocument,
+	kSaveChangesQuittingApplication
+};
+
+class MSaverMixin
 {
   public:
-						MEditWindow();
-
-	virtual				~MEditWindow();
+						MSaverMixin();
+	virtual				~MSaverMixin();
 	
-	static MEditWindow*	DisplayDocument(
-							MDocument*		inDocument);
+	static bool			IsNavDialogVisible();
 
-	static MEditWindow*	FindWindowForDocument(
-							MDocument*		inDocument);
-
-	void				Initialize(
-							MDocument*		inDocument);
+	virtual void		TryCloseDocument(
+							MCloseReason		inAction,
+							MWindow*			inParentWindow);
 	
-	virtual void		DocumentChanged(
-							MDocument* 		inDocument);
+	virtual void		TryDiscardChanges(
+							const std::string&	inDocument,
+							MWindow*			inParentWindow);
+
+	virtual void		SaveDocumentAs(
+							MWindow*			inParentWindow);
 
   protected:
 
-	virtual bool		DoClose();
+	virtual bool		SaveDocument() = 0;
+	virtual void		RevertDocument() = 0;
+	virtual bool		DoSaveAs(
+							const MURL&			inPath) = 0;
+	virtual void		CloseAfterNavigationDialog() = 0;
 
-	virtual void		ModifiedChanged(
-							bool			inModified);
+//	static pascal void	NavEvent(
+//							NavEventCallbackMessage	inMessage,
+//							NavCBRecPtr				inParams,
+//							void*					inUserData);
+//
+//	virtual void		DoNavUserAction(
+//							NavCBRecPtr				inParams);
+//
+//	virtual void		DoNavTerminate(
+//							NavCBRecPtr				inParams);
+	
+	virtual bool		OnClose();
+	
+	virtual bool		OnResponse(
+							gint				inArg);
 
-	virtual void		FileSpecChanged(
-							const MURL&		inFile);
-
-  private:
-
-	static MEditWindow*	sHead;
-	MEditWindow*		mNext;
+	MSlot<bool()>								slClose;
+	MSlot<bool(gint)>							slResponse;
+	
+	static MSaverMixin*	sFirst;
+	MSaverMixin*		mNext;
+	bool				mCloseOnNavTerminate;
+	bool				mClosePending;
+	GtkWidget*			mDialog;
 };
 
 #endif

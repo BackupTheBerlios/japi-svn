@@ -158,7 +158,7 @@ bool MController::ProcessCommand(
 		switch (inCommand)
 		{
 			case cmd_Close:
-//				TryCloseController(kNavSaveChangesClosingDocument);
+				TryCloseController(kSaveChangesClosingDocument);
 				break;
 	
 			case cmd_Save:
@@ -497,8 +497,7 @@ bool MController::TryCloseDocument(
 		else
 		{
 			result = false;
-//			MNavSaverMixin::TryCloseDocument(inAction, mWindow);
-			Beep();
+			MSaverMixin::TryCloseDocument(inAction, mWindow);
 		}
 	}
 	
@@ -527,7 +526,7 @@ bool MController::TryCloseController(
 
 void MController::SaveDocumentAs()
 {
-//	MNavSaverMixin::SaveDocumentAs(mWindow, 'TEXT', kJapieSignature);
+	MSaverMixin::SaveDocumentAs(mWindow);
 }
 
 void MController::TryDiscardChanges()
@@ -535,7 +534,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-//	MNavSaverMixin::TryDiscardChanges(mDocument->GetFilePath().leaf(), mWindow);
+	MSaverMixin::TryDiscardChanges(mDocument->GetURL().leaf(), mWindow);
 }
 
 bool MController::SaveDocument()

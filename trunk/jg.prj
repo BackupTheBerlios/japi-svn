@@ -78,6 +78,7 @@
 			<file>MFile.cpp</file>
 			<file>MError.cpp</file>
 			<file>MClipboard.cpp</file>
+			<file>MSaverMixin.cpp</file>
 			<file>MShell.cpp</file>
 			<file>MSelection.cpp</file>
 		</group>

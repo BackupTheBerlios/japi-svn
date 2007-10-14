@@ -110,7 +110,7 @@ void MFile::GetFileSpec(MURL& outFileSpec) const
 
 void MFile::Open(int inPermissions)
 {
-	mFD = open(mFileSpec.string().c_str(), inPermissions, 022);
+	mFD = open(mFileSpec.string().c_str(), inPermissions, 0644);
 	THROW_IF_POSIX_ERROR(mFD);
 	mIsOpen = true;
 }
@@ -297,20 +297,12 @@ void MSafeSaver::Commit(MURL& outFileSpec)
 	mTempFile->Close();
 	mTempFile.reset(nil);
 
-	assert(false);
-//	if (not (mDestFileSpec == mTempFileSpec))
-//	{
-//		int err = ::exchangedata(mTempFileSpec.c_str(),
-//						mDestFileSpec.string().c_str(), 0);
-//		
-//		if (err == 0)
-//			remove(mTempFileSpec);
-//		else
-//		{
-//			THROW_IF_POSIX_ERROR(::rename(mTempFileSpec.c_str(),
-//				mDestFileSpec.string().c_str()));
-//		}
-//	}
+	if (not (mDestFileSpec == mTempFileSpec))
+	{
+		THROW_IF_POSIX_ERROR(remove(mDestFileSpec.string().c_str()));
+		THROW_IF_POSIX_ERROR(
+			rename(mTempFileSpec.string().c_str(), mDestFileSpec.string().c_str()));
+	}
 
 	outFileSpec = mDestFileSpec;
 }

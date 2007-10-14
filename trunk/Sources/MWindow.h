@@ -19,8 +19,8 @@ class MWindow : public MView, public MHandler
 	void			Hide();
 	void			Select();
 	
-	virtual void	Close();
-
+	void			Close();
+	
 	void			SetTitle(
 						const std::string&	inTitle);
 	std::string		GetTitle() const;
@@ -35,12 +35,14 @@ class MWindow : public MView, public MHandler
 
   protected:
 
-	virtual void	OnDestroy();
+	virtual bool	DoClose();
+
+	virtual bool	OnDestroy();
 	virtual bool	OnDelete(
 						GdkEvent*	inEvent);
 
   private:
-	MSlot<void()>			mOnDestroy;
+	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
 };
 

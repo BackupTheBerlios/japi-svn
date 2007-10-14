@@ -282,6 +282,11 @@ void MDocWindow::Initialize(
 	mController.SetDocument(inDocument);
 }
 
+bool MDocWindow::DoClose()
+{
+	return mController.TryCloseController(kSaveChangesClosingDocument);
+}
+
 MDocWindow* MDocWindow::FindWindowForDocument(MDocument* inDocument)
 {
 	MDocWindow* w = sFirst;
@@ -344,7 +349,12 @@ bool MDocWindow::UpdateCommandStatus(
 bool MDocWindow::ProcessCommand(
 	uint32			inCommand)
 {
-	return MWindow::ProcessCommand(inCommand);
+	bool result = mController.ProcessCommand(inCommand);
+	
+	if (result == false)
+		result = MWindow::ProcessCommand(inCommand);
+	
+	return result;
 }
 
 MDocument* MDocWindow::GetDocument()

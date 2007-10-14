@@ -407,9 +407,8 @@ void MMessageWindow::DocumentChanged(
 {
 }
 
-void MMessageWindow::DoClose()
+bool MMessageWindow::DoClose()
 {
-	if (mController.TryCloseController(kSaveChangesClosingDocument))
-		MWindow::Close();
+	return mController.TryCloseController(kSaveChangesClosingDocument);
 }
 

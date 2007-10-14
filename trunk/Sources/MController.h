@@ -42,6 +42,7 @@
 #define MCONTROLLER_H
 
 #include "MHandler.h"
+#include "MSaverMixin.h"
 
 #include <list>
 
@@ -52,12 +53,7 @@ class MWindow;
 class MDocWindow;
 class MURL;
 
-enum MCloseReason {
-	kSaveChangesClosingDocument,
-	kSaveChangesQuittingApplication
-};
-
-class MController : public MHandler
+class MController : public MHandler, public MSaverMixin
 {
   public:
 						MController();

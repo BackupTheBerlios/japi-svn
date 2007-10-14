@@ -140,9 +140,9 @@ void MEditWindow::Initialize(
 	}
 }
 
-void MEditWindow::DoClose()
+bool MEditWindow::DoClose()
 {
-	mController.TryCloseController(kSaveChangesClosingDocument);
+	return mController.TryCloseController(kSaveChangesClosingDocument);
 }
 
 void MEditWindow::ModifiedChanged(bool inModified)
@@ -178,13 +178,3 @@ void MEditWindow::DocumentChanged(MDocument* inDocument)
 	else
 		Close();
 }
-
-bool MEditWindow::OnDelete(
-	GdkEvent*		inEvent)
-{
-	if (mController.TryCloseController(kSaveChangesClosingDocument))
-		MWindow::OnDelete(inEvent);
-
-	return false;
-}
-

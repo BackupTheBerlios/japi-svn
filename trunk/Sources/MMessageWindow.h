@@ -118,7 +118,7 @@ class MMessageWindow : public MDocWindow
 	virtual void	DocumentChanged(
 						MDocument*			inDocument);
 	
-	virtual void	DoClose();
+	virtual bool	DoClose();
 
   private:
 
