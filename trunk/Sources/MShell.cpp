@@ -825,7 +825,8 @@ void MShell::Kill()
 	mStdErrFD = -1;
 }
 
-void MShell::Poll()
+void MShell::Poll(
+	double			inSystemTime)
 {
 	if (not mErrDone or not mOutDone)
 	{

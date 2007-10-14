@@ -247,7 +247,7 @@ struct MCallBackOutHandler<CallBackIn, R()>
 				}
 
 	static R	GCallback(
-					GtkWidget*		inWidget,
+					GObject*		inObject,
 					gpointer		inData)
 				{
 					R result;
@@ -267,7 +267,7 @@ struct MCallBackOutHandler<CallBackIn, void()>
 	std::auto_ptr<CallBackIn>		mHandler;
 	
 	static void	GCallback(
-					GtkWidget*		inWidget,
+					GObject*		inWidget,
 					gpointer		inData)
 				{
 					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
@@ -291,7 +291,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1)>
 				}
 
 	static R	GCallback(
-					GtkWidget*		inWidget,
+					GObject*		inWidget,
 					T1				inArg1,
 					gpointer		inData)
 				{
@@ -316,6 +316,22 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2)>
 					if (mHandler.get() != nil)
 						return mHandler->DoCallBack(a1, a2);
 					return R();
+				}
+
+	static R	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					T2				inArg2,
+					gpointer		inData)
+				{
+					R result = R();
+					
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						result = handler.mHandler->DoCallBack(inArg1, inArg2);
+					
+					return result;
 				}
 };
 
@@ -441,6 +457,14 @@ class MSlot : public MCallBackNS::MakeCallBackHandler<Function>::type
 								const char*		inSignalName)
 							{
 								g_signal_connect(G_OBJECT(inObject), inSignalName,
+									G_CALLBACK(&base_class::GCallback), this);
+							}
+	
+	void					Connect(
+								GObject*		inObject,
+								const char*		inSignalName)
+							{
+								g_signal_connect(inObject, inSignalName,
 									G_CALLBACK(&base_class::GCallback), this);
 							}
 	

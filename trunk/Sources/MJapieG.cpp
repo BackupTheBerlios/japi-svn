@@ -36,6 +36,7 @@
 #include "MEditWindow.h"
 #include "MPreferences.h"
 #include "MGlobals.h"
+#include "MUtils.h"
 
 #include <iostream>
 
@@ -552,6 +553,8 @@ void MJapieApp::Pulse()
 	
 	if (MDocWindow::GetFirstDocWindow() == nil)
 		DoQuit();
+	else
+		eIdle(GetLocalTime());
 }
 
 int main(int argc, char* argv[])

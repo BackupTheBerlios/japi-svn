@@ -3,7 +3,16 @@
 use strict;
 use warnings;
 
-my (%codes, %data);
+my (%codes, @data);
+
+for (my $uc = 0; $uc < 983039; ++$uc) {
+	my %ucd = (
+		'prop'	=> 'kOTHER',
+		'cbc'	=> 'kCBC_Other'
+	);
+	
+	push @data, \%ucd;
+}
 
 # Character Break Classes
 
@@ -33,39 +42,13 @@ while (my $line = <IN>)
 		die "unknown value: $4\n" unless defined $value;
 		
 		foreach my $uc ($first .. $last) {
-			my $key = sprintf("%4.4x", $uc);
-			$data{$key} = $value;
+			$data[$uc]->{'cbc'} = $value;
 		}
 	}
 }
 close IN;
 
-print "const uint8 kCharBreakClass[983039] = {\n";
-for (my $uc = 0; $uc < 983039; ++$uc) {
-	my $value = $data{sprintf("%4.4x", $uc)};
-	$value = "kCBC_Other" unless defined $value;
-	
-	print "\t$value, /* $uc */\n";
-}
-print "};\n\n";
-
 # Character Property Table
-
-undef(%data);
-
-sub add
-{
-	my ($key, $value) = @_;
-	
-	$key = sprintf("%5.5x", $key);
-	
-	if (defined $data{$key}) {
-		$data{$key} .= " | $value";
-	}
-	else {
-		$data{$key} = $value;
-	}
-}
 
 open IN, "<CharClass.csv" or die "Could not open CharClass\n";
 while (my $line = <IN>)
@@ -79,12 +62,12 @@ while (my $line = <IN>)
 		my $v;
 		
 		if ($c1 eq 'L') {
-			if ($c2 eq 'o') {
-				$v = 'kOTHER';
-			}
-			else {
+#			if ($c2 eq 'o') {
+#				$v = 'kOTHER';
+#			}
+#			else {
 				$v = 'kLETTER';
-			}
+#			}
 		}
 		elsif ($c1 eq 'N') {
 			$v = 'kNUMBER';
@@ -106,52 +89,39 @@ while (my $line = <IN>)
 		}
 		
 		if (defined $v) {
-			add($uc, $v);
+			$data[$uc]->{'prop'} = $v;
 		}
 	}
 }
 close IN;
 
 for (my $uc = hex('0x3400'); $uc <= hex('0x4DB5'); ++$uc) {
-	add($uc, 'kLETTER');
+	$data[$uc]->{'prop'} = 'kLETTER';
 }
 
 for (my $uc = hex('0x4E00'); $uc <= hex('0x09FA5'); ++$uc) {
-	add($uc, 'kLETTER');
+	$data[$uc]->{'prop'} = 'kLETTER';
 }
 
 for (my $uc = hex('0x0Ac00'); $uc <= hex('0x0D7A3'); ++$uc) {
-	add($uc, 'kLETTER');
+	$data[$uc]->{'prop'} = 'kLETTER';
 }
 
 for (my $uc = hex('0x20000'); $uc <= hex('0x2A6D6'); ++$uc) {
-	add($uc, 'kLETTER');
+	$data[$uc]->{'prop'} = 'kLETTER';
 }
 
-add(95, 'kLETTER');
+# we treat an underscore as a letter
+$data[95]->{'prop'} = 'kLETTER';
 
 my $defs=<<EOF;
-
-enum {
-	kLETTER			= 1,
-	kNUMBER			= (kLETTER << 1),
-	kCOMBININGMARK	= (kNUMBER << 1),
-	kPUNCTUATION	= (kCOMBININGMARK << 1),
-	kSYMBOL			= (kPUNCTUATION << 1),
-	kSEPARATOR		= (kSYMBOL << 1),
-	kCONTROL		= (kSEPARATOR << 1),
-	kOTHER			= (kCONTROL << 1)
-};
 
 EOF
 
 print $defs;
 
-print "const uint8 kCharClass[983039] = {\n";
+print "const MUnicodeInfo kUCInfo[983039] = {\n";
 for (my $uc = 0; $uc < 983039; ++$uc) {
-	my $value = $data{sprintf("%5.5x", $uc)};
-	$value = 'kOTHER' unless defined $value;
-	
-	printf "\t$value, /* $uc */\n";
+	print "\t{ ", $data[$uc]->{'cbc'}, ", ", $data[$uc]->{'prop'}, " },\n";
 }
 print "};\n\n";

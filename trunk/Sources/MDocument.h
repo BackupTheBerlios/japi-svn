@@ -248,6 +248,13 @@ class MDocument
 //	OSStatus			DoTextInputOffsetToPos(EventRef inEvent);
 ////	OSStatus			DoTextInputPosToOffset(EventRef inEvent);
 
+	void				OnKeyPressEvent(
+							GdkEventKey*		inEvent);
+	
+	void				OnCommit(
+							const char*			inText,
+							uint32				inLength);
+
 	MEventOut<void()>					eLineCountChanged;
 	MEventOut<void(MSelection,std::string)>	eSelectionChanged;
 	MEventOut<void(bool)>				eModifiedChanged;
@@ -266,7 +273,7 @@ class MDocument
 	MEventIn<void(const char* inText, uint32 inSize)>	eStdOut;
 	MEventIn<void(const char* inText, uint32 inSize)>	eStdErr;
 	MEventIn<void(MWindow*)>							eMsgWindowClosed;
-	MEventIn<void()>									eIdle;
+	MEventIn<void(double)>								eIdle;
 
 	// the actions MDocument can perform
 
@@ -337,8 +344,7 @@ class MDocument
 	void				SendSelectionChangedEvent();
 	
 	bool				HandleRawKeydown(
-							uint32		inKeyCode,
-							uint32		inCharCode,
+							uint32		inKeyValue,
 							uint32		inModifiers);
 
 	bool				HandleKeyCommand(MKeyCommand inKeyCommand);
@@ -361,7 +367,8 @@ class MDocument
 	
 	void				Execute();
 
-	void				Idle();
+	void				Idle(
+							double		inSystemTime);
 
 	typedef std::list<MController*>	MControllerList;
 	

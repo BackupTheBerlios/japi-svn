@@ -1188,8 +1188,8 @@ uint32 MTextBuffer::PreviousCursorPosition(
 
 		    do
 		    {
-		    	result = c.GetOffset();
 		    	--c;
+		    	result = c.GetOffset();
 		    	
 				CharBreakClass c2 = GetCharBreakClass(*c);
 				

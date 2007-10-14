@@ -104,7 +104,7 @@ class MJapieApp : public MHandler
 
 	void			StoreRecentMenu();
 	
-	MEventOut<void()>		eIdle;
+	MEventOut<void(double)>					eIdle;
 
 	void			RunEventLoop();
 

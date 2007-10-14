@@ -52,6 +52,23 @@
 #include "MError.h"
 #include "MTypes.h"
 
+enum {
+	kLETTER			= 0,
+	kNUMBER			= 1,
+	kCOMBININGMARK	= 2,
+	kPUNCTUATION	= 3,
+	kSYMBOL			= 4,
+	kSEPARATOR		= 5,
+	kCONTROL		= 6,
+	kOTHER			= 7
+};
+
+struct MUnicodeInfo
+{
+	CharBreakClass		cbc		: 4;
+	uint8				prop	: 3;
+};
+
 #include "MUnicodeTables.h"
 
 using namespace std;
@@ -76,8 +93,8 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 		
 		default:
 		{
-			uint8 prop = kCharClass[inUnicode];
-			if (prop & (kLETTER | kNUMBER))
+			uint8 prop = kUCInfo[inUnicode].prop;
+			if (prop == kLETTER or prop == kNUMBER)
 			{
 				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
 					result = eWB_Hira;
@@ -92,64 +109,20 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 				else
 					result = eWB_Let;
 			}
-			else if (prop & kCOMBININGMARK)
+			else if (prop == kCOMBININGMARK)
 				result = eWB_Com;
-			else if (prop & kSEPARATOR)
+			else if (prop == kSEPARATOR)
 				result = eWB_Sep;
 		}
 	}
 	
 	return result;
-	
-//	WordBreakClass result = eWB_Other;
-//	
-//	switch (inUnicode)
-//	{
-//		case '\r':
-//			result = eWB_CR;
-//			break;
-//
-//		case '\n':
-//			result = eWB_LF;
-//			break;
-//
-//		case '\t':
-//			result = eWB_Tab;
-//			break;
-//		
-//		default:
-//		{
-//			uint32 t = u_charType(inUnicode);
-//			
-//			if (t & (U_GC_L_MASK | U_GC_N_MASK))
-//			{
-//				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
-//					result = eWB_Hira;
-//				else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
-//					result = eWB_Kata;
-//				else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
-//					result = eWB_Han;
-//				else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
-//					result = eWB_Han;
-//				else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
-//					result = eWB_Han;
-//				else
-//					result = eWB_Let;
-//			}
-//			else if (t & U_GC_MC_MASK)
-//				result = eWB_Com;
-//			else if (t & U_GC_Z_MASK)
-//				result = eWB_Sep;
-//		}
-//	}
-//	
-//	return result;
 }
 
 CharBreakClass GetCharBreakClass(
 	wchar_t		inUnicode)
 {
-	return static_cast<CharBreakClass>(kCharBreakClass[inUnicode]);
+	return static_cast<CharBreakClass>(kUCInfo[inUnicode].cbc);
 }
 
 wchar_t ToLower(

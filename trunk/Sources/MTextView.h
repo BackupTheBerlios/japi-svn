@@ -90,7 +90,7 @@ class MTextView : public MDrawingArea
 	MEventIn<void()>					eDocumentClosed;
 	MEventIn<void(MDocument*)>			eDocumentChanged;
 	
-	MEventIn<void()>					eIdle;
+	MEventIn<void(double)>				eIdle;
 
 	void				SetDocument(
 							MDocument*			inDocument);
@@ -137,6 +137,8 @@ class MTextView : public MDrawingArea
 							GdkEventButton*	inEvent);
   private:
 
+	virtual bool		OnRealize();
+
 	void				DrawLine(
 							uint32			inLineNr,
 							MDevice&		inDevice);
@@ -173,7 +175,8 @@ class MTextView : public MDrawingArea
 
 	void				StylesChanged();
 	
-	void				Tick();
+	void				Tick(
+							double			inTime);
 	
 	void				ScrollToLine(
 							uint32			inLineNr,
@@ -204,12 +207,38 @@ class MTextView : public MDrawingArea
 
 	void				AdjustScrollBars();
 
+	virtual bool		OnKeyPressEvent(
+							GdkEventKey*	inEvent);
+	
+	bool				OnCommit(
+							gchar*			inText);
+	
+	bool				OnDeleteSurrounding(
+							gint			inStart,
+							gint			inLength);
+
+	bool				OnPreeditChanged();
+	
+	bool				OnPreeditEnd();
+
+	bool				OnPreeditStart();
+	
+	bool				OnRetrieveSurrounding();
+	
+	MSlot<bool(gchar*)>						slOnCommit;
+	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
+	MSlot<bool()>							slOnPreeditChanged;
+	MSlot<bool()>							slOnPreeditStart;
+	MSlot<bool()>							slOnPreeditEnd;
+	MSlot<bool()>							slOnRetrieveSurrounding;
+	
 	MController*		mController;
 	MDocument*			mDocument;
 	int32				mLineHeight;
 	int32				mDescent;
 	int32				mImageOriginX, mImageOriginY;
 	int32				mSavedOriginX, mSavedOriginY;	// for kissing
+	double				mLastCaretBlinkTime;
 	bool				mCaretVisible;
 	bool				mNeedsDisplay;	// cache this
 	bool				mDrawForDragImage;
@@ -227,6 +256,8 @@ class MTextView : public MDrawingArea
 	}					mClickMode;
 	uint32				mClickAnchor, mClickCaret;
 	uint32				mMinClickAnchor, mMaxClickAnchor;
+	
+	GtkIMContext*		mIMContext;
 	
 //	TSMDocumentID		mTSMDocument;
 //	HIViewTrackingAreaRef

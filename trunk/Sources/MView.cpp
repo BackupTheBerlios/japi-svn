@@ -20,6 +20,7 @@ MView::MView(
 	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
 	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
 	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
+	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mGtkWidget(inWidget)
 {
@@ -32,6 +33,7 @@ MView::MView(
 		mButtonPressEvent.Connect(mGtkWidget, "button-press-event");
 		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
 		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
+		mKeyPressEvent.Connect(mGtkWidget, "key-press-event");
 		mRealize.Connect(mGtkWidget, "realize");
 	}
 }
@@ -90,9 +92,13 @@ void MView::Added()
 bool MView::OnRealize()
 {
 	int m = gdk_window_get_events(GetGtkWidget()->window);
+
 	m |= GDK_FOCUS_CHANGE_MASK |
+		GDK_KEY_PRESS_MASK |
 		GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK;
 	gdk_window_set_events(GetGtkWidget()->window, (GdkEventMask)m);
+	
+	return true;
 }
 
 bool MView::OnFocusInEvent(
@@ -122,6 +128,11 @@ bool MView::OnMotionNotifyEvent(
 	GdkEventMotion*	inEvent)
 {
 	return true;
+}
+
+bool MView::OnKeyPressEvent(
+	GdkEventKey*	inEvent)
+{
 }
 
 bool MView::OnButtonReleaseEvent(

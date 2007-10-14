@@ -68,7 +68,7 @@ class MShell
 	MEventOut<void(const char*, uint32)>	eStdErr;
 	MEventOut<void(bool)>					eShellStatus;
 
-	MEventIn<void()>						ePoll;
+	MEventIn<void(double)>					ePoll;
 
   private:
 
@@ -85,7 +85,8 @@ class MShell
 	void					Parse();
 	void					ExecuteSubCommand(Args& inArgs, Env& inEnv);
 
-	void					Poll();
+	void					Poll(
+								double			inSystemTime);
 	
 	std::string				NextPath(std::string& ioPathVar, std::string inName);
 

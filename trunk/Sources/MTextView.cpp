@@ -63,6 +63,9 @@ const MColor
 	kPCLineColor = MColor("#cce5ff"),
 	kBreakpointColor = MColor("#5ea50c");
 
+const double
+	kCaretBlinkTime = 0.6;
+
 }
 
 MColor		MTextView::sCurrentLineColor,
@@ -87,6 +90,14 @@ MTextView::MTextView()
 	, eDocumentClosed(this, &MTextView::DocumentClosed)
 	, eDocumentChanged(this, &MTextView::SetDocument)
 	, eIdle(this, &MTextView::Tick)
+
+	, slOnCommit(this, &MTextView::OnCommit)
+	, slOnDeleteSurrounding(this, &MTextView::OnDeleteSurrounding)
+	, slOnPreeditChanged(this, &MTextView::OnPreeditChanged)
+	, slOnPreeditStart(this, &MTextView::OnPreeditStart)
+	, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
+	, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
+	
 	, mController(nil)
 	, mDocument(nil)
 	, mDrawForDragImage(false)
@@ -95,6 +106,15 @@ MTextView::MTextView()
 //	, mDragRef(nil)
 {
 	AddRoute(eIdle, gApp->eIdle);
+	
+	mIMContext = gtk_im_context_simple_new();
+	
+	slOnCommit.Connect(G_OBJECT(mIMContext), "commit");
+	slOnDeleteSurrounding.Connect(G_OBJECT(mIMContext), "delete-surrounding");
+	slOnPreeditChanged.Connect(G_OBJECT(mIMContext), "preedit-changed");
+	slOnPreeditStart.Connect(G_OBJECT(mIMContext), "preedit-start");
+	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
+	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
 
 //	THROW_IF_OSERROR(::SetControlDragTrackingEnabled(GetSysView(), true));
 		
@@ -129,6 +149,20 @@ MTextView::MTextView()
 
 MTextView::~MTextView()
 {
+}
+
+bool MTextView::OnRealize()
+{
+	bool result = false;
+	
+	if (MView::OnRealize())
+	{
+		gtk_im_context_set_client_window(mIMContext, GetGtkWidget()->window);
+		
+		result = true;
+	}
+	
+	return result;
 }
 
 void MTextView::SetController(MController* inController)
@@ -507,8 +541,6 @@ void MTextView::DrawLine(
 				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gHiliteColor);
 			else
 				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gInactiveHiliteColor);
-//			inDevice.DrawTextHighLight(x, y, selectionStart, selectionEnd - selectionStart,
-//				fillBefore, fillAfter, IsActive());
 		}
 		inDevice.DrawText(x, y);
 	}
@@ -527,7 +559,7 @@ void MTextView::DrawLine(
 		if (caretColumn > text.length())	// duh
 			caretColumn = text.length();
 
-		inDevice.DrawCaret(caretColumn);
+		inDevice.DrawCaret(x, y, caretColumn);
 	}
 }
 
@@ -641,11 +673,14 @@ void MTextView::LineCountChanged()
 	AdjustScrollBars();
 }
 
-void MTextView::Tick()
+void MTextView::Tick(
+	double		inTime)
 {
-	if (mDocument == nil)
+	if (mDocument == nil or inTime < mLastCaretBlinkTime + kCaretBlinkTime)
 		return;
-		
+	
+	mLastCaretBlinkTime = inTime;
+	
 	MSelection sel = mDocument->GetSelection();
 
 //	if (mDragRef != nil)
@@ -683,9 +718,9 @@ void MTextView::SelectionChanged(
 	InvalidateDirtyLines();
 
 	mCaretVisible = true;
-	Tick();
+	mLastCaretBlinkTime = 0;
+	Tick(GetLocalTime());
 	mCaretVisible = true;
-//	::SetEventLoopTimerNextFireTime(mTimerRef, ::TicksToEventTime(::GetCaretTime()));
 	
 	MRect bounds;
 	GetBounds(bounds);
@@ -1201,6 +1236,8 @@ bool MTextView::OnFocusInEvent(
 		mDocument->SetTargetTextView(this);
 		mDocument->MakeFirstDocument();
 		mDocument->CheckFile();
+		
+		gtk_im_context_focus_in(mIMContext);
 	}
 	
 	return true;
@@ -1213,7 +1250,11 @@ bool MTextView::OnFocusOutEvent(
 	Invalidate();
 
 	if (mDocument != nil)
+	{
+		gtk_im_context_focus_out(mIMContext);
+		
 		mDocument->Reset();
+	}
 
 	return true;
 }
@@ -1903,4 +1944,54 @@ void MTextView::SetDocument(MDocument* inDocument)
 		
 		LineCountChanged();
 	}
+}
+
+bool MTextView::OnKeyPressEvent(
+	GdkEventKey*	inEvent)
+{
+	if (gtk_im_context_filter_keypress(mIMContext, inEvent) == false)
+		mDocument->OnKeyPressEvent(inEvent);
+	
+	return true;
+}
+
+bool MTextView::OnCommit(
+	gchar*			inText)
+{
+	if (mDocument != nil)
+		mDocument->OnCommit(inText, strlen(inText));
+
+	return true;
+}
+
+bool MTextView::OnDeleteSurrounding(
+	gint			inStart,
+	gint			inLength)
+{
+	cout << "OnDeleteSurrounding" << endl;
+	return true;
+}
+
+bool MTextView::OnPreeditChanged()
+{
+	cout << "OnPreeditChanged" << endl;
+	return true;
+}
+
+bool MTextView::OnPreeditEnd()
+{
+	cout << "OnPreeditEnd" << endl;
+	return true;
+}
+
+bool MTextView::OnPreeditStart()
+{
+	cout << "OnPreeditStart" << endl;
+	return true;
+}
+
+bool MTextView::OnRetrieveSurrounding()
+{
+	cout << "OnRetrieveSurrounding" << endl;
+	return true;
 }

@@ -160,7 +160,7 @@ class MTextBuffer
 		friend class boost::iterator_core_access;
 		friend class MTextBuffer;
 
-		char			dereference() const							{ return mBuffer->operator[](mOffset); }
+		char			dereference() const							{ return mBuffer->GetChar(mOffset); }
 
 		void			increment()									{ ++mOffset; }
 		void			decrement()									{ --mOffset; }
@@ -364,7 +364,7 @@ char
 MTextBuffer::GetChar(
 	uint32			inOffset) const
 {
-	assert(inOffset < mLogicalLength);
+	assert(inOffset <= mLogicalLength);
 	
 	char result = 0;
 	

@@ -349,7 +349,7 @@ void MDevice::SetText(
 
 void MDevice::SetTabStops(
 	uint32			inTabWidth)
-{
+{//
 //	uint32 count = mImpl->mRect.width / inTabWidth;
 //
 //	PangoTabArray* tabs = pango_tab_array_new(count, false);
@@ -444,9 +444,6 @@ bool MDevice::PositionToIndex(
 	uint32&			outIndex,
 	bool&			outTrailing)
 {
-	outIndex = 0;
-	outTrailing = false;
-	
 	int index, trailing;
 	
 	bool result = pango_layout_xy_to_index(mImpl->mLayout,
@@ -455,8 +452,16 @@ bool MDevice::PositionToIndex(
 	outIndex = index;
 	outTrailing = trailing;
 
-cout << "position: " << inPosition
-	 << " out index: " << outIndex << ", " << (trailing ? "trailing" : "not trailing") << endl;
+//cout << "position: " << inPosition
+//	 << " out index: " << outIndex << ", " << (trailing ? "trailing" : "not trailing") << endl;
+//
+//	{
+//		int32 pos;
+//		
+//		IndexToPosition(outIndex, outTrailing, pos);
+//		
+//		cout << "pos: " << pos << endl;
+//	}
 	
 	return result;
 }
@@ -470,8 +475,24 @@ void MDevice::DrawText(
 }
 
 void MDevice::DrawCaret(
+	float				inX,
+	float				inY,
 	uint32				inOffset)
 {
+	PangoRectangle sp, wp;
+
+	pango_layout_get_cursor_pos(mImpl->mLayout, inOffset, &sp, &wp);
+	
+	Save();
+	
+	cairo_set_line_width(mImpl->mContext, 1.0);
+	cairo_set_source_rgb(mImpl->mContext, 0, 0, 0);
+	cairo_move_to(mImpl->mContext, inX + sp.x / PANGO_SCALE, inY + sp.y / PANGO_SCALE);
+	cairo_rel_line_to(mImpl->mContext, sp.width / PANGO_SCALE, sp.height / PANGO_SCALE);
+	cairo_stroke(mImpl->mContext);
+	
+	Restore();
+	
 //	(void)::ATSUOffsetToPosition(textLayout,
 //		caretColumn, false, &mainCaret, &secondCaret, &isSplit);
 //

@@ -94,6 +94,8 @@ class MDevice
 						float				inY);
 
 	void			DrawCaret(
+						float				inX,
+						float				inY,
 						uint32				inOffset);
 	
   private:

@@ -61,6 +61,9 @@ class MView
 	virtual bool	OnButtonReleaseEvent(
 						GdkEventButton*	inEvent);
 
+	virtual bool	OnKeyPressEvent(
+						GdkEventKey*	inEvent);
+
 	virtual bool	OnRealize();
 
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
@@ -68,6 +71,7 @@ class MView
 	MSlot<bool(GdkEventButton*)>		mButtonPressEvent;
 	MSlot<bool(GdkEventMotion*)>		mMotionNotifyEvent;
 	MSlot<bool(GdkEventButton*)>		mButtonReleaseEvent;
+	MSlot<bool(GdkEventKey*)>			mKeyPressEvent;
 	MSlot<bool()>						mRealize;
 
   private:

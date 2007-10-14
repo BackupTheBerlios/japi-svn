@@ -35,6 +35,8 @@
 #include <limits>
 #include <cmath>
 
+#include <gdk/gdkkeysyms.h>
+
 #include <boost/functional/hash.hpp>
 
 #include "MDocument.h"
@@ -1816,7 +1818,7 @@ void MDocument::OffsetToPosition(
 		
 		GetStyledText(outLine, device, text);
 
-		device.IndexToPosition(inOffset, false, outX);
+		device.IndexToPosition(inOffset - LineStart(outLine), false, outX);
 
 		if (GetSoftwrap())
 			outX += GetLineIndentWidth(outLine);
@@ -2684,13 +2686,14 @@ void MDocument::GetStyledText(
 	MDevice&	inDevice,
 	string&		outText) const
 {
+	inDevice.SetTabStops(mTabWidth);
+
 	mText.GetText(inOffset, inLength, outText);
 
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')
 		outText.erase(outText.length() - 1);
 
 	inDevice.SetText(outText);
-	inDevice.SetTabStops(mTabWidth);
 	
 	if (mLanguage)
 	{
@@ -2778,9 +2781,58 @@ void MDocument::HashLines(vector<uint32>& outHashes) const
 
 // -- text input methods
 
-//// ---------------------------------------------------------------------------
-////	DoTextInputUnicodeForKeyEvent
-//
+// ---------------------------------------------------------------------------
+//	OnKeyPressEvent
+
+void MDocument::OnKeyPressEvent(
+	GdkEventKey*		inEvent)
+{
+	bool handled = false;
+	mCompletionStrings.clear();
+
+    uint32 modifiers = inEvent->state;
+	uint32 keyValue = inEvent->keyval;
+	
+	handled = HandleRawKeydown(keyValue, modifiers);
+	
+	if (modifiers != 0)
+	{
+		handled = true;		// don't type command key's
+		mCompletionIndex = -1;
+	}
+	
+	if (not handled)
+	{
+		wchar_t ch = gdk_keyval_to_unicode(keyValue);
+		
+		if (ch != 0)
+		{
+			char s[8];
+			char* sp = s;
+			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
+			Type(s, length);
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+//	OnCommit
+
+void MDocument::OnCommit(
+	const char*			inText,
+	uint32				inLength)
+{
+	if (mFastFindMode)
+		FastFindType(inText, inLength);
+	else
+	{
+		Type(inText, inLength);
+		mCompletionIndex = -1;
+	}
+	
+	UpdateDirtyLines();
+}
+
 //OSStatus MDocument::DoTextInputUnicodeForKeyEvent(EventRef ioEvent)
 //{
 //	uint32 dataSize; 
@@ -3315,244 +3367,248 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 }
 
 bool MDocument::HandleRawKeydown(
-	uint32		inKeyCode,
-	uint32		inCharCode,
+	uint32		inKeyValue,
 	uint32		inModifiers)
-{//
-//	MKeyCommand keyCommand = kcmd_None;
-//	bool handled = false;
-//	
-//	switch (inCharCode)
-//	{
-//		case kLeftArrowCharCode:
-//			if (inModifiers & shiftKey)
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_ExtendSelectionToBeginningOfLine;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_ExtendSelectionWithPreviousWord;
-//				else
-//					keyCommand = kcmd_ExtendSelectionWithCharacterLeft;
-//			}
-//			else
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_MoveToBeginningOfLine;
-//				else if ((inModifiers & optionKey) == optionKey)
-//					keyCommand = kcmd_MoveWordLeft;
-//				else
-//					keyCommand = kcmd_MoveCharacterLeft;
-//			}
-//			break;
-//
-//		case kRightArrowCharCode:
-//			if (inModifiers & shiftKey)
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_ExtendSelectionToEndOfLine;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_ExtendSelectionWithNextWord;
-//				else
-//					keyCommand = kcmd_ExtendSelectionWithCharacterRight;
-//			}
-//			else
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_MoveToEndOfLine;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_MoveWordRight;
-//				else
-//					keyCommand = kcmd_MoveCharacterRight;
-//			}
-//			break;
-//		
-//		case kUpArrowCharCode:
-//			if (inModifiers & shiftKey)
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_ExtendSelectionToBeginningOfFile;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_ExtendSelectionToBeginningOfPage;
-//				else if (inModifiers & controlKey)
-//					keyCommand = kcmd_MoveLineUp;
-//				else
-//					keyCommand = kcmd_ExtendSelectionToPreviousLine;
-//			}
-//			else if (inModifiers & controlKey)
-//				keyCommand = kcmd_ScrollOneLineDown;
-//			else
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_MoveToBeginningOfFile;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_MoveToTopOfPage;
-//				else
-//					keyCommand = kcmd_MoveToPreviousLine;
-//			}
-//			break;
-//
-//		case kDownArrowCharCode:
-//			if (inModifiers & shiftKey)
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_ExtendSelectionToEndOfFile;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_ExtendSelectionToEndOfPage;
-//				else if (inModifiers & controlKey)
-//					keyCommand = kcmd_MoveLineDown;
-//				else
-//					keyCommand = kcmd_ExtendSelectionToNextLine;
-//			}
-//			else if (inModifiers & controlKey)
-//				keyCommand = kcmd_ScrollOneLineUp;
-//			else
-//			{
-//				if (inModifiers & cmdKey)
-//					keyCommand = kcmd_MoveToEndOfFile;
-//				else if (inModifiers & optionKey)
-//					keyCommand = kcmd_MoveToEndOfPage;
-//				else
-//					keyCommand = kcmd_MoveToNextLine;
-//			}
-//			break;
-//		
-//		case kPageUpCharCode:
-//			keyCommand = kcmd_ScrollPageUp;
-//			break;
-//
-//		case kPageDownCharCode:
-//			keyCommand = kcmd_ScrollPageDown;
-//			break;
-//
-//		case kHomeCharCode:
-//			keyCommand = kcmd_ScrollToStartOfFile;
-//			break;
-//
-//		case kEndCharCode:
-//			keyCommand = kcmd_ScrollToEndOfFile;
-//			break;
-//		
-//		case kBackspaceCharCode:
-//			if (inModifiers & cmdKey)
-//			{
-//				if (inModifiers & shiftKey)
-//					keyCommand = kcmd_DeleteToEndOfFile;
-//				else
-//					keyCommand = kcmd_DeleteToEndOfLine;
-//			}
-//			else if (inModifiers & shiftKey)
-//			{
-//				if (inModifiers & optionKey)
-//					keyCommand = kcmd_DeleteWordRight;
-//				else
-//					keyCommand = kcmd_DeleteWordLeft;
-//			}
-//			else
-//			{
-//				if (inModifiers & optionKey)
-//					keyCommand = kcmd_DeleteCharacterRight;
-//				else
-//					keyCommand = kcmd_DeleteCharacterLeft;
-//			}
-//			break;
-//		
-//		case kDeleteCharCode:
-//			if (inModifiers & shiftKey)
-//				keyCommand = kcmd_DeleteWordRight;
-//			else
-//				keyCommand = kcmd_DeleteCharacterRight;
-//			break;
-//
+{
+	MKeyCommand keyCommand = kcmd_None;
+	bool handled = false;
+	
+	switch (inKeyValue)
+	{
+		case GDK_Left:
+			if (inModifiers & GDK_SHIFT_MASK)
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_ExtendSelectionToBeginningOfLine;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_ExtendSelectionWithPreviousWord;
+				else
+					keyCommand = kcmd_ExtendSelectionWithCharacterLeft;
+			}
+			else
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_MoveToBeginningOfLine;
+				else if ((inModifiers & GDK_MOD1_MASK) == GDK_MOD1_MASK)
+					keyCommand = kcmd_MoveWordLeft;
+				else
+					keyCommand = kcmd_MoveCharacterLeft;
+			}
+			break;
+
+		case GDK_Right:
+			if (inModifiers & GDK_SHIFT_MASK)
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_ExtendSelectionToEndOfLine;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_ExtendSelectionWithNextWord;
+				else
+					keyCommand = kcmd_ExtendSelectionWithCharacterRight;
+			}
+			else
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_MoveToEndOfLine;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_MoveWordRight;
+				else
+					keyCommand = kcmd_MoveCharacterRight;
+			}
+			break;
+		
+		case GDK_Up:
+			if (inModifiers & GDK_SHIFT_MASK)
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_ExtendSelectionToBeginningOfFile;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_ExtendSelectionToBeginningOfPage;
+				else if (inModifiers & GDK_CONTROL_MASK)
+					keyCommand = kcmd_MoveLineUp;
+				else
+					keyCommand = kcmd_ExtendSelectionToPreviousLine;
+			}
+			else if (inModifiers & GDK_CONTROL_MASK)
+				keyCommand = kcmd_ScrollOneLineDown;
+			else
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_MoveToBeginningOfFile;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_MoveToTopOfPage;
+				else
+					keyCommand = kcmd_MoveToPreviousLine;
+			}
+			break;
+
+		case GDK_Down:
+			if (inModifiers & GDK_SHIFT_MASK)
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_ExtendSelectionToEndOfFile;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_ExtendSelectionToEndOfPage;
+				else if (inModifiers & GDK_CONTROL_MASK)
+					keyCommand = kcmd_MoveLineDown;
+				else
+					keyCommand = kcmd_ExtendSelectionToNextLine;
+			}
+			else if (inModifiers & GDK_CONTROL_MASK)
+				keyCommand = kcmd_ScrollOneLineUp;
+			else
+			{
+				if (inModifiers & GDK_MOD2_MASK)
+					keyCommand = kcmd_MoveToEndOfFile;
+				else if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_MoveToEndOfPage;
+				else
+					keyCommand = kcmd_MoveToNextLine;
+			}
+			break;
+		
+		case GDK_Page_Up:
+			keyCommand = kcmd_ScrollPageUp;
+			break;
+
+		case GDK_Page_Down:
+			keyCommand = kcmd_ScrollPageDown;
+			break;
+
+		case GDK_Home:
+			keyCommand = kcmd_ScrollToStartOfFile;
+			break;
+
+		case GDK_End:
+			keyCommand = kcmd_ScrollToEndOfFile;
+			break;
+		
+		case GDK_BackSpace:
+			if (inModifiers & GDK_MOD2_MASK)
+			{
+				if (inModifiers & GDK_SHIFT_MASK)
+					keyCommand = kcmd_DeleteToEndOfFile;
+				else
+					keyCommand = kcmd_DeleteToEndOfLine;
+			}
+			else if (inModifiers & GDK_SHIFT_MASK)
+			{
+				if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_DeleteWordRight;
+				else
+					keyCommand = kcmd_DeleteWordLeft;
+			}
+			else
+			{
+				if (inModifiers & GDK_MOD1_MASK)
+					keyCommand = kcmd_DeleteCharacterRight;
+				else
+					keyCommand = kcmd_DeleteCharacterLeft;
+			}
+			break;
+		
+		case GDK_Delete:
+			if (inModifiers & GDK_SHIFT_MASK)
+				keyCommand = kcmd_DeleteWordRight;
+			else
+				keyCommand = kcmd_DeleteCharacterRight;
+			break;
+
 //		case kEnterCharCode:
 //			Reset();
 //			Execute();
 //			handled = true;
 //			break;		
-//
-//		case kReturnCharCode:
-//			if (mFastFindMode)
-//				mFastFindMode = false;
-//			else if (inModifiers & cmdKey)
-//			{
-//				Execute();
-////				updateSelection = false;
-//			}
-//			else
-//			{
-//				// Enter a return, optionally auto indented
-//				uint32 minOffset = mSelection.GetMinOffset(*this);
-//
-//				string s;
-//				s += '\n';
-//
-//				if (gAutoIndent)
-//				{
-//					uint32 line = OffsetToLine(minOffset);
-//					MTextBuffer::iterator c = mText.begin() + LineStart(line);
-//					while (c.GetOffset() < minOffset and IsSpace(*c))
-//					{
-//						s += *c;
-//						++c;
-//					}
-//				}
-//				
-//				if (gSmartIndent and
-//					mLanguage and
-//					mLanguage->IsSmartIndentLocation(mText, minOffset))
-//				{
-//					if (gTabEntersSpaces)
-//					{
-//						uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
-//						while (o-- > 0)
-//							s += ' ';
-//					}
-//					else
-//						s += '\t';
-//				}
-//
-//				Type(s.c_str(), s.length());
-//			}
-//			handled = true;
-//			break;
-//		
-//		case kTabCharCode:
-//			if (not mSelection.IsEmpty() and
-//				not mFastFindMode and
-//				mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
-//			{
-//				if (inModifiers & shiftKey)
-//					DoShiftLeft();
-//				else
-//					DoShiftRight();
-//				handled = true;
-//			}
-//			break;
-//		
-//		case kEscapeCharCode:
-//			mFastFindMode = false;
-////			updateSelection = false;
-//			if (mShell.get() != nil and mShell->IsRunning())
-//				mShell->Kill();
-//			handled = true;
-//			break;
-//		
-//		case '.':
-//			if (inModifiers & cmdKey and mShell.get() != nil and mShell->IsRunning())
-//				mShell->Kill();
-//			else
-//				handled = false;
-//			break;
-//		
-//		default:
-//			handled = false;
-////			updateSelection = false;
-//			break;
-//	}
-//	
-//	if (not handled and keyCommand != kcmd_None)
-//		handled = HandleKeyCommand(keyCommand);
-//	
-//	return handled;
+
+		case GDK_Return:
+			if (mFastFindMode)
+				mFastFindMode = false;
+			else if (inModifiers & GDK_MOD2_MASK)
+			{
+				Execute();
+//				updateSelection = false;
+			}
+			else
+			{
+				// Enter a return, optionally auto indented
+				uint32 minOffset = mSelection.GetMinOffset(*this);
+
+				string s;
+				s += '\n';
+
+				if (gAutoIndent)
+				{
+					uint32 line = OffsetToLine(minOffset);
+					MTextBuffer::iterator c = mText.begin() + LineStart(line);
+					while (c.GetOffset() < minOffset and IsSpace(*c))
+					{
+						s += *c;
+						++c;
+					}
+				}
+				
+				if (gSmartIndent and
+					mLanguage and
+					mLanguage->IsSmartIndentLocation(mText, minOffset))
+				{
+					if (gTabEntersSpaces)
+					{
+						uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
+						while (o-- > 0)
+							s += ' ';
+					}
+					else
+						s += '\t';
+				}
+
+				Type(s.c_str(), s.length());
+			}
+			handled = true;
+			break;
+		
+		case GDK_Tab:
+			if (not mSelection.IsEmpty() and
+				not mFastFindMode and
+				mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+			{
+				if (inModifiers & GDK_SHIFT_MASK)
+					DoShiftLeft();
+				else
+					DoShiftRight();
+				handled = true;
+			}
+			else
+			{
+				Type("\t", 1);
+				handled = true;
+			}
+			break;
+		
+		case GDK_Escape:
+			mFastFindMode = false;
+//			updateSelection = false;
+			if (mShell.get() != nil and mShell->IsRunning())
+				mShell->Kill();
+			handled = true;
+			break;
+		
+		case GDK_period:
+			if (inModifiers & GDK_MOD2_MASK and mShell.get() != nil and mShell->IsRunning())
+				mShell->Kill();
+			else
+				handled = false;
+			break;
+		
+		default:
+			handled = false;
+//			updateSelection = false;
+			break;
+	}
+	
+	if (not handled and keyCommand != kcmd_None)
+		handled = HandleKeyCommand(keyCommand);
+	
+	return handled;
 }
 
 //OSStatus MDocument::DoTextInputOffsetToPos(EventRef ioEvent)
@@ -3791,7 +3847,8 @@ MController* MDocument::GetFirstController() const
 	return controller;
 }
 
-void MDocument::Idle()
+void MDocument::Idle(
+	double		inSystemTime)
 {
 	if (mNeedReparse)
 	{
@@ -3815,7 +3872,7 @@ bool MDocument::GetParsePopupItems(MMenu& inMenu)
 	if (mLanguage and mNamedRange)
 	{
 		if (mNeedReparse)
-			Idle();		// force reparse
+			Idle(0);		// force reparse
 
 		mLanguage->GetParsePopupItems(*mNamedRange, "", inMenu);
 		result = true;
@@ -3850,7 +3907,7 @@ bool MDocument::GetIncludePopupItems(MMenu& inMenu)
 	if (mLanguage and mIncludeFiles)
 	{
 		if (mNeedReparse)
-			Idle();		// force reparse
+			Idle(0);		// force reparse
 
 		for (MIncludeFileList::iterator i = mIncludeFiles->begin(); i != mIncludeFiles->end(); ++i)
 			inMenu.AppendItem(i->name, i - mIncludeFiles->begin() + 1);
