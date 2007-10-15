@@ -100,7 +100,7 @@ class MClipboard
 	
 	Data*				mRing[kClipboardRingSize];
 	uint32				mCount;
-//	MScrap				mScrap;
+	GtkClipboard*		mGtkClipboard;
 };
 
 #endif // MCLIPBOARD_H

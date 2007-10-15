@@ -39,6 +39,8 @@
 #include "MGlobals.h"
 //#include "MToolbar.h"
 //#include "MTextViewContainer.h"
+#include "MViewPort.h"
+#include "MScrollBar.h"
 #include "MTextView.h"
 #include "MUtils.h"
 #include "MMenu.h"
@@ -55,6 +57,87 @@ MEditWindow::MEditWindow()
 {
 	mNext = sHead;
 	sHead = this;
+
+	// the menubar
+	
+	MMenu* fileMenu = new MMenu("File");
+	fileMenu->AppendItem("New", cmd_New, GDK_N, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Open…", cmd_Open, GDK_O, GDK_CONTROL_MASK);
+	
+	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile, GDK_D, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	fileMenu->AppendItem("Open Source/Header", cmd_SwitchHeaderSource, GDK_1, GDK_CONTROL_MASK);
+	
+	fileMenu->AppendSeparator();
+	fileMenu->AppendItem("Close", cmd_Close, GDK_W, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Save", cmd_Save, GDK_S, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Save As…", cmd_SaveAs);
+	fileMenu->AppendItem("Revert", cmd_Revert);
+	fileMenu->AppendSeparator();
+	fileMenu->AppendItem("Quit", cmd_Quit, GDK_Q, GDK_CONTROL_MASK);
+	
+	mMenubar.AddMenu(fileMenu);
+	
+	MMenu* editMenu = new MMenu("Edit");
+	editMenu->AppendItem("Undo", cmd_Undo, GDK_Z, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Redo", cmd_Redo, GDK_Z, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	editMenu->AppendSeparator();
+	editMenu->AppendItem("Cut", cmd_Cut, GDK_X, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Cut and append", cmd_CutAppend, GDK_X, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	editMenu->AppendItem("Copy", cmd_Copy, GDK_C, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Copy and append", cmd_CopyAppend, GDK_C, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	editMenu->AppendItem("Paste", cmd_Paste, GDK_P, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Clear", cmd_Clear);
+	editMenu->AppendItem("Select all", cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
+//	editMenu->AppendSeparator();
+//	editMenu->AppendItem("Font…", cmd_
+	
+	mMenubar.AddMenu(editMenu);
+	
+	MMenu* textMenu = new MMenu("Text");
+	textMenu->AppendItem("Balance", cmd_Balance, GDK_B, GDK_CONTROL_MASK);
+	textMenu->AppendItem("Softwrap", cmd_Softwrap);
+	textMenu->AppendSeparator();
+	textMenu->AppendItem("Shift Left", cmd_ShiftLeft, GDK_bracketleft, GDK_CONTROL_MASK);
+	textMenu->AppendItem("Shift Right", cmd_ShiftRight, GDK_bracketright, GDK_CONTROL_MASK);
+	textMenu->AppendSeparator();
+	textMenu->AppendItem("Comment", cmd_Comment, GDK_apostrophe, GDK_CONTROL_MASK);
+	textMenu->AppendItem("Uncomment", cmd_Uncomment, GDK_apostrophe, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	textMenu->AppendSeparator();
+	textMenu->AppendItem("Entab", cmd_Entab);
+	textMenu->AppendItem("Detab", cmd_Detab);
+	textMenu->AppendSeparator();
+	textMenu->AppendItem("File Info…", cmd_ShowDocInfoDialog, GDK_I, GDK_CONTROL_MASK);
+
+	mMenubar.AddMenu(textMenu);
+
+	// add status 
+	
+	mStatusbar = gtk_statusbar_new();
+	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
+
+	// content
+	
+	GtkWidget* hbox = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(mVBox), hbox, true, true, 0);
+
+	MScrollBar* scrollBar = new MScrollBar(true);
+	
+	MViewPort* viewPort = new MViewPort(nil, scrollBar);
+	viewPort->SetShadowType(GTK_SHADOW_NONE);
+	
+	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), viewPort->GetGtkWidget(), true, true, 0);
+	
+    mTextView = new MTextView(scrollBar);
+	mController.AddTextView(mTextView);
+	
+	AddRoute(viewPort->eBoundsChanged, mTextView->eBoundsChanged);
+
+	viewPort->Add(mTextView);
+	
+	gtk_widget_show_all(GetGtkWidget());
+
+	ShellStatus(false);
 }
 
 MEditWindow::~MEditWindow()

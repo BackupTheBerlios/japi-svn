@@ -31,7 +31,9 @@ struct MMenuItem
 					MMenuItem(
 						MMenu*			inMenu,
 						const string&	inLabel,
-						uint32			inCommand);
+						uint32			inCommand,
+						uint32			inAcceleratorKey,
+						GdkModifierType	inAcceleratorModifiers);
 
 					MMenuItem(
 						MMenu*			inMenu,
@@ -50,6 +52,8 @@ struct MMenuItem
 	uint32			mCommand;
 	MMenu*			mMenu;
 	MMenu*			mSubMenu;
+	uint32			mAcceleratorKey;
+	GdkModifierType	mAcceleratorModifiers;
 	bool			mEnabled;
 	bool			mChecked;
 };
@@ -57,13 +61,17 @@ struct MMenuItem
 MMenuItem::MMenuItem(
 	MMenu*			inMenu,
 	const string&	inLabel,
-	uint32			inCommand)
+	uint32			inCommand,
+	uint32			inAcceleratorKey,
+	GdkModifierType	inAcceleratorModifiers)
 	: mCallback(this, &MMenuItem::ItemCallback)
 	, mGtkMenuItem(nil)
 	, mLabel(inLabel)
 	, mCommand(inCommand)
 	, mMenu(inMenu)
 	, mSubMenu(nil)
+	, mAcceleratorKey(inAcceleratorKey)
+	, mAcceleratorModifiers(inAcceleratorModifiers)
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -136,9 +144,6 @@ MMenu::MMenu(
 	gtk_widget_show(mGtkMenuItem);
 
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
-	
-	if (mParent != nil)
-		mGtkAccel = mParent->mGtkAccel;
 }
 
 MMenu::~MMenu()
@@ -149,10 +154,15 @@ MMenu::~MMenu()
 
 void MMenu::AppendItem(
 	const string&	inLabel,
-	uint32			inCommand)
+	uint32			inCommand,
+	uint32			inAcceleratorKey,
+	uint32			inAcceleratorModifiers)
 {
-	mItems.push_back(new MMenuItem(this, inLabel, inCommand));
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
+	MMenuItem* item = new MMenuItem(
+		this, inLabel, inCommand, inAcceleratorKey, GdkModifierType(inAcceleratorModifiers));
+	
+	mItems.push_back(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
 }
 
 void MMenu::AppendSeparator()
@@ -214,11 +224,34 @@ void MMenu::UpdateCommandStatus()
 	}
 }
 
+void MMenu::SetAcceleratorGroup(
+	GtkAccelGroup*		inAcceleratorGroup)
+{
+	mGtkAccel = inAcceleratorGroup;
+	
+	gtk_menu_set_accel_group(GTK_MENU(mGtkMenu), mGtkAccel);
+	
+	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
+	{
+		MMenuItem* item = *mi;
+		
+		if (item->mAcceleratorKey != 0)
+		{
+			gtk_widget_add_accelerator(item->mGtkMenuItem, "activate", mGtkAccel,
+				item->mAcceleratorKey, item->mAcceleratorModifiers, GTK_ACCEL_VISIBLE);
+		}
+		
+		if (item->mSubMenu != nil)
+			item->mSubMenu->SetAcceleratorGroup(inAcceleratorGroup);
+	}
+}
+
 // --------------------------------------------------------------------
 
 MMenubar::MMenubar(
 	MHandler*		inTarget,
-	GtkWidget*		inContainer)
+	GtkWidget*		inContainer,
+	GtkWidget*		inWindow)
 	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
 	, mTarget(inTarget)
 {
@@ -228,6 +261,8 @@ MMenubar::MMenubar(
 	gtk_box_pack_start(GTK_BOX(inContainer), mGtkMenubar, false, false, 0);
 	
 	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
+	
+	gtk_window_add_accel_group(GTK_WINDOW(inWindow), mGtkAccel);
 }
 
 void MMenubar::AddMenu(
@@ -235,7 +270,7 @@ void MMenubar::AddMenu(
 {
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), inMenu->GetGtkMenuItem());
 	inMenu->SetTarget(mTarget);
-	
+	inMenu->SetAcceleratorGroup(mGtkAccel);
 	mMenus.push_back(inMenu);
 }
 

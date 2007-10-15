@@ -66,6 +66,7 @@ void MClipboard::Data::AddData(const string& inText)
 
 MClipboard::MClipboard()
 	: mCount(0)
+	, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
 //	, mScrap(kScrapClipboardScrap)
 {
 }
@@ -141,7 +142,9 @@ void MClipboard::SetData(const string& inText, bool inBlock)
 		mRing[0] = newData;
 		++mCount;
 	}
-//	
+	
+	gtk_clipboard_set_text(mGtkClipboard, inText.c_str(), inText.length());
+	
 //	mScrap.PutScrap(inText);
 }
 
@@ -156,6 +159,17 @@ void MClipboard::AddData(const string& inText)
 void MClipboard::LoadOSScrapIfNewer()
 {
 	string text;
+	
+	if (gtk_clipboard_wait_is_text_available(mGtkClipboard))
+	{
+		gchar* text = gtk_clipboard_wait_for_text(mGtkClipboard);
+		if (text != nil)
+		{
+			SetData(text, false);
+			g_free(text);
+		}
+	}
+	
 //	if (mScrap.LoadOSScrapIfNewer(text))
 //		SetData(text, false);
 }

@@ -199,62 +199,16 @@ MDocWindow::MDocWindow()
 	, eSelectionChanged(this, &MDocWindow::SelectionChanged)
 	, eShellStatus(this, &MDocWindow::ShellStatus)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
+	, mTextView(nil)
 	, mVBox(gtk_vbox_new(false, 0))
-	, mMenubar(this, mVBox)
+	, mStatusbar(nil)
+	, mMenubar(this, mVBox, GetGtkWidget())
+	, mParsePopup(nil)
+	, mIncludePopup(nil)
 {
-    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 400, 200);
+    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 600);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
-	
-	// the menubar
-	
-	MMenu* fileMenu = new MMenu("File");
-	fileMenu->AppendItem("New", cmd_New);
-	fileMenu->AppendItem("Open…", cmd_Open);
-	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Close", cmd_Close);
-	fileMenu->AppendItem("Save", cmd_Save);
-	fileMenu->AppendItem("Save As…", cmd_SaveAs);
-	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Quit", cmd_Quit);
-	
-	mMenubar.AddMenu(fileMenu);
-	
-	// add status 
-	
-	mStatusbar = gtk_statusbar_new();
-	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
-
-	// content
-	
-	GtkWidget* hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(mVBox), hbox, true, true, 0);
-
-	MScrollBar* scrollBar = new MScrollBar(true);
-	
-	MViewPort* viewPort = new MViewPort(nil, scrollBar);
-	viewPort->SetShadowType(GTK_SHADOW_NONE);
-	
-	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), viewPort->GetGtkWidget(), true, true, 0);
-	
-//	GtkWidget* scroller = gtk_scrolled_window_new(nil, nil);
-//	gtk_box_pack_start(GTK_BOX(mVBox), scroller, true, true, 0);
-//	
-//	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-//		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	
-    mTextView = new MTextView(scrollBar);
-	mController.AddTextView(mTextView);
-	
-	AddRoute(viewPort->eBoundsChanged, mTextView->eBoundsChanged);
-
-//	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
-	viewPort->Add(mTextView);
-	
-	gtk_widget_show_all(GetGtkWidget());
-
-	ShellStatus(false);
 	
 	mNext = sFirst;
 	sFirst = this;
@@ -334,13 +288,18 @@ bool MDocWindow::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	bool result = true;
-	
-	switch (inCommand)
+	bool result = mController.UpdateCommandStatus(inCommand, outEnabled, outChecked);
+
+	if (result == false)
 	{
-		default:
-			result = MWindow::UpdateCommandStatus(inCommand, outEnabled, outChecked);
-			break;
+		result = true;
+		
+		switch (inCommand)
+		{
+			default:
+				result = MWindow::UpdateCommandStatus(inCommand, outEnabled, outChecked);
+				break;
+		}
 	}
 	
 	return result;

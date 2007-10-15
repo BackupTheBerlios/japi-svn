@@ -2,6 +2,8 @@
 #define MMENU_H
 
 #include <list>
+#include <gdk/gdkkeysyms.h>
+
 #include "MCommands.h"
 #include "MCallbacks.h"
 
@@ -18,7 +20,9 @@ class MMenu
 
 	void			AppendItem(
 						const std::string&	inLabel,
-						uint32				inCommand);
+						uint32				inCommand,
+						uint32				inAcceleratorKey = 0,
+						uint32				inAcceleratorModifiers = 0);
 	
 	void			AppendSeparator();
 
@@ -36,6 +40,9 @@ class MMenu
 	std::string		GetLabel()				{ return mLabel; }
 	MHandler*		GetTarget()				{ return mTarget; }
 	
+	void			SetAcceleratorGroup(
+						GtkAccelGroup*		inAcceleratorGroup);
+	
   protected:
 	GtkWidget*		mGtkMenu;
 	GtkWidget*		mGtkMenuItem;
@@ -51,7 +58,8 @@ class MMenubar
   public:
 					MMenubar(
 						MHandler*			inTarget,
-						GtkWidget*			inContainer);
+						GtkWidget*			inContainer,
+						GtkWidget*			inWindow);
 
 	void			AddMenu(
 						MMenu*				inMenu);
