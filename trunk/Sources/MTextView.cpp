@@ -306,7 +306,13 @@ bool MTextView::OnMotionNotifyEvent(
 					mClickCaret = c2;
 			}
 	
-			mDocument->Select(mClickAnchor, mClickCaret);
+			if (mClickCaret < mMinClickAnchor)
+				mDocument->Select(mMaxClickAnchor, mClickCaret);
+			else if (mClickCaret > mMaxClickAnchor)
+				mDocument->Select(mMinClickAnchor, mClickCaret);
+			else
+				mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+
 			ScrollToCaret();
 		}
 		else if (mClickMode == eSelectLines)
@@ -611,85 +617,11 @@ void MTextView::BoundsChanged()
 	AdjustScrollBars();
 }
 
-//OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
-//{
-//	if (mDocument == nil)
-//		return eventNotHandledErr;
-//	
-//	MRect frame;
-//	GetBounds(frame);
-//
-//	HISize		imageSize = { 0 };
-//	HISize		viewSize = { 0 };
-//	HISize		lineSize = { 0 };
-//	HIPoint		origin = { 0 };
-//
-//	lineSize.height = mLineHeight;
-//	imageSize.height = mDocument->CountLines() * mLineHeight;
-//	viewSize.height = frame.height;
-//
-//	origin = mImageOrigin;
-//	
-//	::SetEventParameter(ioEvent, kEventParamImageSize, typeHISize, sizeof(HISize), &imageSize);
-//	::SetEventParameter(ioEvent, kEventParamViewSize, typeHISize, sizeof(HISize), &viewSize);
-//	::SetEventParameter(ioEvent, kEventParamLineSize, typeHISize, sizeof(HISize), &lineSize);
-//	::SetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, sizeof(HIPoint), &origin);
-//	
-//	return noErr;
-//}
-//
-//OSStatus MTextView::DoScrollableScrollTo(EventRef ioEvent)
-//{
-//	HIPoint location;
-//	::GetEventParameter(ioEvent, kEventParamOrigin, typeHIPoint, nil,
-//		sizeof(location), nil, &location);
-//	
-//	DoScrollTo(location);
-//	
-//	return noErr;
-//}
-//
 void MTextView::DoScrollTo(
 	int32			inX,
 	int32			inY)
 {
 	mVScrollBar->SetValue(inY);
-	
-	
-	
-//	int32 dx, dy;
-//	
-//	if (inX < 0)
-//	{
-//		delta.x = -mImageOrigin.x;
-//		mImageOrigin.x = 0.0;
-//	}
-//	else
-//	{
-//		delta.x = mImageOrigin.x - inWhere.x;
-//		mImageOrigin.x = inWhere.x;
-//	}
-//	
-//	if (inWhere.y < 0.0)
-//	{
-//		delta.y = -mImageOrigin.y;
-//		mImageOrigin.y = 0.0;
-//	}
-//	else
-//	{
-//		delta.y = mImageOrigin.y - inWhere.y;
-//		mImageOrigin.y = inWhere.y;
-//	}
-//	
-//	MRect frame;
-//	GetBounds(frame);
-//	
-//	if (mNeedsDisplay)	// invalidate everything if a piece is invalid
-//		SetNeedsDisplay(true);
-//	else if (fabs(delta.x) < frame.width and fabs(delta.y) < frame.height)
-//		::HIViewScrollRect(GetSysView(), NULL, delta.x, delta.y);
-//	else
-//		SetNeedsDisplay(true);
 }
 
 void MTextView::ScrollToPosition(

@@ -364,7 +364,8 @@ char
 MTextBuffer::GetChar(
 	uint32			inOffset) const
 {
-	assert(inOffset <= mLogicalLength);
+	if (inOffset >= mLogicalLength)
+		std::cerr << "*** offset out of range for text buffer" << std::endl;
 	
 	char result = 0;
 	

@@ -310,6 +310,8 @@ const char* MDocument::GetCWD() const
 
 void MDocument::Reset()
 {
+cout << "Reset" << endl;	
+	
 	if (mCurrentAction != kNoAction)
 		FinishAction();
 	
