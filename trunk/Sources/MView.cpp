@@ -21,7 +21,8 @@ MView::MView(
 	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
 	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
 	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
-	, mConfigure(this, &MView::OnConfigure)
+	, mConfigureEvent(this, &MView::OnConfigureEvent)
+	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mGtkWidget(nil)
 {
@@ -35,7 +36,8 @@ MView::MView()
 	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
 	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
 	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
-	, mConfigure(this, &MView::OnConfigure)
+	, mConfigureEvent(this, &MView::OnConfigureEvent)
+	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mGtkWidget(nil)
 {
@@ -59,7 +61,8 @@ void MView::SetWidget(
 		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
 		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
 		mKeyPressEvent.Connect(mGtkWidget, "key-press-event");
-		mConfigure.Connect(mGtkWidget, "configure-event");
+		mConfigureEvent.Connect(mGtkWidget, "configure-event");
+		mScrollEvent.Connect(mGtkWidget, "scroll-event");
 		mRealize.Connect(mGtkWidget, "realize");
 	}
 }
@@ -180,8 +183,14 @@ bool MView::OnButtonReleaseEvent(
 	return false;
 }
 
-bool MView::OnConfigure(
+bool MView::OnConfigureEvent(
 	GdkEventConfigure*	inEvent)
+{
+	return false;
+}
+
+bool MView::OnScrollEvent(
+	GdkEventScroll*	inEvent)
 {
 	return false;
 }

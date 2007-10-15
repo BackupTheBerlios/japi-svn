@@ -26,7 +26,7 @@ MViewPort::MViewPort(
 	
 	SetWidget(gtk_viewport_new(hAdj, vAdj), false);
 		
-	mConfigure.Connect(GetGtkWidget(), "configure-event");
+	mConfigureEvent.Connect(GetGtkWidget(), "configure-event");
 }
 
 void MViewPort::SetShadowType(
@@ -35,7 +35,7 @@ void MViewPort::SetShadowType(
 	gtk_viewport_set_shadow_type(GTK_VIEWPORT(GetGtkWidget()), inShadowType);
 }
 
-bool MViewPort::OnConfigure(
+bool MViewPort::OnConfigureEvent(
 	GdkEventConfigure*	inEvent)
 {
 	eBoundsChanged();

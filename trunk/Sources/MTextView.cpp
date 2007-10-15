@@ -224,7 +224,7 @@ bool MTextView::OnButtonPressEvent(
 
 	MSelection selection = mDocument->GetSelection();
 
-	uint32 x, y;
+	int32 x, y;
 	x = inEvent->x - kLeftMargin;
 	y = inEvent->y;
 
@@ -256,13 +256,11 @@ bool MTextView::OnButtonPressEvent(
 	{
 		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
 		
-		if (mClickCaret < mClickAnchor)
-			mDocument->Select(
-				mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
-		else
-			mDocument->Select(
-				mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+		mDocument->Select(
+			mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
 	}
+
+	gtk_grab_add(GetGtkWidget());
 
 	return true;
 }
@@ -330,6 +328,8 @@ bool MTextView::OnMotionNotifyEvent(
 bool MTextView::OnButtonReleaseEvent(
 	GdkEventButton*	inEvent)
 {
+	gtk_grab_remove(GetGtkWidget());	
+	
 	mClickMode = eSelectNone;
 	return true;
 }
@@ -541,10 +541,30 @@ void MTextView::DrawLine(
 		
 		if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
 		{
+			MColor selectionColor;
+			
 			if (IsActive())
-				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gHiliteColor);
+				selectionColor = gHiliteColor;
 			else
-				inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, gInactiveHiliteColor);
+				selectionColor = gInactiveHiliteColor;
+		
+			inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, selectionColor);	
+			
+			if (fillBefore)
+				;
+			
+			if (fillAfter)
+			{
+				MRect r = lineRect;
+				
+				if (text.length() > 0)
+					r.x += inDevice.GetTextWidth();
+
+				inDevice.Save();
+				inDevice.SetForeColor(selectionColor);
+				inDevice.FillRect(r);
+				inDevice.Restore();
+			}
 		}
 		inDevice.DrawText(x, y);
 	}
@@ -584,13 +604,6 @@ void MTextView::AdjustScrollBars()
 
 	mVScrollBar->SetAdjustmentValues(0, height,
 		mLineHeight, bounds.height / mLineHeight, bounds.height / mLineHeight, mVScrollBar->GetValue());
-}
-
-bool MTextView::OnSizeAllocate(
-	GtkAllocation*		inAllocation)
-{
-	AdjustScrollBars();
-	return false;
 }
 
 void MTextView::BoundsChanged()
@@ -694,6 +707,34 @@ void MTextView::GetScrollPosition(
 	GetBounds(bounds);
 	outX = bounds.x;
 	outY = bounds.y;
+}
+
+bool MTextView::OnScrollEvent(
+	GdkEventScroll*		inEvent)
+{
+	switch (inEvent->direction)
+	{
+		case GDK_SCROLL_UP:
+			Scroll(kScrollLineDown);
+			Scroll(kScrollLineDown);
+			Scroll(kScrollLineDown);
+			break; 
+
+		case GDK_SCROLL_DOWN:
+			Scroll(kScrollLineUp);
+			Scroll(kScrollLineUp);
+			Scroll(kScrollLineUp);
+			break; 
+
+		case GDK_SCROLL_LEFT:
+			break; 
+
+		case GDK_SCROLL_RIGHT:
+			break; 
+
+	}	
+		
+	return true;
 }
 
 void MTextView::LineCountChanged()

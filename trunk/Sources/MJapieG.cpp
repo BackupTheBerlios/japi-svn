@@ -310,23 +310,20 @@ void MJapieApp::DoOpen()
 			GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 			NULL);
 	
-	int32 result = gtk_dialog_run(GTK_DIALOG(dialog));
+	MDocument* doc = nil;
 	
-	MURL url;
-	
-	if (result == GTK_RESPONSE_ACCEPT)
-		url = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+	{
+		char* fileName = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)); 
+		MURL url(fileName);		
+		doc = MDocument::GetDocumentForURL(url, true);
+	}
 	
 	gtk_widget_destroy(dialog);
 	
-	// open the file
-	
-	if (true /*fs::exists(url)*/)
-	{
-		MDocument* doc = MDocument::GetDocumentForURL(url, true);
-		if (doc != nil)
-			MDocWindow::DisplayDocument(doc);
-	}
+	// display the file
+	if (doc != nil)
+		MDocWindow::DisplayDocument(doc);
 }
 
 // ---------------------------------------------------------------------------

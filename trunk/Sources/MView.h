@@ -69,9 +69,12 @@ class MView
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);
 
-	virtual bool	OnConfigure(
+	virtual bool	OnConfigureEvent(
 						GdkEventConfigure*
 										inEvent);
+
+	virtual bool	OnScrollEvent(
+						GdkEventScroll*	inEvent);
 
 	virtual bool	OnRealize();
 
@@ -81,7 +84,8 @@ class MView
 	MSlot<bool(GdkEventMotion*)>		mMotionNotifyEvent;
 	MSlot<bool(GdkEventButton*)>		mButtonReleaseEvent;
 	MSlot<bool(GdkEventKey*)>			mKeyPressEvent;
-	MSlot<bool(GdkEventConfigure*)>		mConfigure;
+	MSlot<bool(GdkEventConfigure*)>		mConfigureEvent;
+	MSlot<bool(GdkEventScroll*)>		mScrollEvent;
 	MSlot<bool()>						mRealize;
 
   private:

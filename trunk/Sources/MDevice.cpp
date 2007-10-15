@@ -463,6 +463,15 @@ void MDevice::DrawText(
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
 
+uint32 MDevice::GetTextWidth()
+{
+	PangoRectangle r;
+	
+	pango_layout_get_pixel_extents(mImpl->mLayout, nil, &r);
+	
+	return r.width;
+}
+
 void MDevice::DrawCaret(
 	float				inX,
 	float				inY,

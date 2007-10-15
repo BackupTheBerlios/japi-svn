@@ -89,6 +89,8 @@ class MDevice
 						uint32&				outIndex,
 						bool&				outTrailing);
 	
+	uint32			GetTextWidth();
+	
 	void			DrawText(
 						float				inX,
 						float				inY);

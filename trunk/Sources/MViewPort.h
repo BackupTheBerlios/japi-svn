@@ -26,7 +26,7 @@ class MViewPort : public MView
 
   protected:
 
-	virtual bool	OnConfigure(
+	virtual bool	OnConfigureEvent(
 						GdkEventConfigure*
 										inEvent);
 	

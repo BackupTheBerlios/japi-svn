@@ -140,8 +140,8 @@ class MTextView : public MDrawingArea
 	virtual bool		OnButtonReleaseEvent(
 							GdkEventButton*	inEvent);
 
-	virtual bool		OnSizeAllocate(
-							GtkAllocation*	inAllocation);
+	virtual bool		OnScrollEvent(
+							GdkEventScroll*	inEvent);
 	
   private:
 
