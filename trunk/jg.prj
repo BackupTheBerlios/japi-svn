@@ -53,7 +53,7 @@
 				<file>MMessageWindow.cpp</file>
 			</group>
 			<file>MViewPort.cpp</file>
-			<file>MScrollbar.cpp</file>
+			<file>MScrollBar.cpp</file>
 			<file>MView.cpp</file>
 			<file>MDrawingArea.cpp</file>
 			<file>MColor.cpp</file>

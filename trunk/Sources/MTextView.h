@@ -43,11 +43,13 @@ class MDocument;
 class MDocWindow;
 class MController;
 class MDevice;
+class MScrollBar;
 
 class MTextView : public MDrawingArea
 {
   public:
-						MTextView();
+						MTextView(
+							MScrollBar*			inVScrollBar);
 						
 	virtual				~MTextView();
 	
@@ -77,7 +79,7 @@ class MTextView : public MDrawingArea
 	void				SetController(
 							MController*		inController);
 
-	MEventOut<void()>					eBoundsChanged;
+	MEventIn<void()>					eBoundsChanged;
 
 	MEventIn<void()>					eLineCountChanged;
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
@@ -118,6 +120,8 @@ class MTextView : public MDrawingArea
 //	OSStatus			DoContextualMenuClick(EventRef inEvent);
 //	OSStatus			DoSetFocusPart(EventRef inEvent);
 
+	void				BoundsChanged();
+
 	virtual bool		OnExposeEvent(
 							GdkEventExpose*	inEvent);
 
@@ -135,6 +139,10 @@ class MTextView : public MDrawingArea
 	
 	virtual bool		OnButtonReleaseEvent(
 							GdkEventButton*	inEvent);
+
+	virtual bool		OnSizeAllocate(
+							GtkAllocation*	inAllocation);
+	
   private:
 
 	virtual bool		OnRealize();
@@ -234,6 +242,7 @@ class MTextView : public MDrawingArea
 	
 	MController*		mController;
 	MDocument*			mDocument;
+	MScrollBar*			mVScrollBar;
 	int32				mLineHeight;
 	int32				mDescent;
 	int32				mImageOriginX, mImageOriginY;

@@ -714,7 +714,10 @@ void MTextBuffer::ReadFromFile(
 	if (mEncoding == kEncodingUTF8)
 	{
 		mData = data.release();
-		mLogicalLength = mPhysicalLength = mGapOffset = len;
+
+		mLogicalLength = len;
+		mGapOffset = 0;
+		mPhysicalLength = inFile.GetSize();
 	}
 	else
 	{

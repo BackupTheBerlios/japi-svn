@@ -45,7 +45,7 @@ const int32
 	kAskSaveChanges_Save = 'save',
 	kAskSaveChanges_Cancel = 'canc',
 	kAskSaveChanges_DontSave = 'dont';
-	
+
 }
 
 MSaverMixin* MSaverMixin::sFirst = nil;
@@ -188,18 +188,9 @@ void MSaverMixin::SaveDocumentAs(
 	}
 	
 	gtk_widget_destroy (dialog);
-//	NavDialogCreationOptions creationOptions;
-//	THROW_IF_OSERROR(::NavGetDefaultDialogCreationOptions(&creationOptions));
-//	
-//	creationOptions.clientName	 = MApplication::Instance().GetAppName();
-//	creationOptions.saveFileName = nil;
-//	creationOptions.modality	 = kWindowModalityWindowModal;
-//	creationOptions.parentWindow = inParentWindow->GetSysWindow();
-//
-//	THROW_IF_OSERROR(::NavCreatePutFileDialog(&creationOptions,
-//		inOSType, inCreator, sNavEventUPP, this, &mDialog));
-//	
-//	THROW_IF_OSERROR(::NavDialogRun(mDialog));
+	
+	if (mClosePending)
+		CloseAfterNavigationDialog();
 }
 
 //pascal void	MSaverMixin::NavEvent(
@@ -276,54 +267,34 @@ void MSaverMixin::SaveDocumentAs(
 //			break;
 //	}
 //}
-//
-//void MSaverMixin::DoNavTerminate(
-//	NavCBRecPtr				inParams)
-//{
-//	mDialog = nil;
-//
-//	if (mCloseOnNavTerminate)
-//		CloseAfterNav();
-//}
 
 bool MSaverMixin::OnClose()
 {
-	cout << "Close Save Dialog" << endl;
-
 	mDialog = nil;
-
-	if (mCloseOnNavTerminate)
-		CloseAfterNavigationDialog();
-	
-	return true;
+	return false;
 }
 	
 bool MSaverMixin::OnResponse(
 	gint		inArg)
 {
+	gtk_widget_destroy(mDialog);
+	mDialog = nil;
+
 	switch (inArg)
 	{
 		case kAskSaveChanges_Save:
-			mCloseOnNavTerminate = SaveDocument();	// Save was successful
-			mClosePending = true;			// Save operation is waiting
-											//   for user to specify the
-											//   file. We will close the
-											//   document if the save
-											//   completes.
+			mClosePending = true;
+			if (SaveDocument())
+				CloseAfterNavigationDialog();
 			break;
 		
 		case kAskSaveChanges_Cancel:
-			mClosePending = false;			//   which always aborts any
-			mCloseOnNavTerminate = false;
 			break;
 		
 		case kAskSaveChanges_DontSave:
-			mCloseOnNavTerminate = true;
+			CloseAfterNavigationDialog();
 			break;
 	}
-
-	gtk_widget_destroy(mDialog);
-	mDialog = nil;
 	
 	return true;	
 }

@@ -6,20 +6,38 @@
 #include "MJapieG.h"
 
 #include "MViewPort.h"
+#include "MScrollBar.h"
 
 using namespace std;
 
 MViewPort::MViewPort(
-	GtkObject*		inHAdjustment,
-	GtkObject*		inVAdjustment)
-	: MView(
-		gtk_viewport_new(GTK_ADJUSTMENT(inHAdjustment), GTK_ADJUSTMENT(inVAdjustment)),
-		false)
+	MScrollBar*		inHScrollBar,
+	MScrollBar*		inVScrollBar)
+	: mHScrollBar(inHScrollBar)
+	, mVScrollBar(inVScrollBar)
 {
+	GtkAdjustment* hAdj = nil;
+	if (inHScrollBar)
+		hAdj = inHScrollBar->GetAdjustment();
+	
+	GtkAdjustment* vAdj = nil;
+	if (inVScrollBar)
+		vAdj = inVScrollBar->GetAdjustment();
+	
+	SetWidget(gtk_viewport_new(hAdj, vAdj), false);
+		
+	mConfigure.Connect(GetGtkWidget(), "configure-event");
 }
 
 void MViewPort::SetShadowType(
 	GtkShadowType	inShadowType)
 {
 	gtk_viewport_set_shadow_type(GTK_VIEWPORT(GetGtkWidget()), inShadowType);
+}
+
+bool MViewPort::OnConfigure(
+	GdkEventConfigure*	inEvent)
+{
+	eBoundsChanged();
+	return false;
 }

@@ -21,9 +21,34 @@ MView::MView(
 	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
 	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
 	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
+	, mConfigure(this, &MView::OnConfigure)
 	, mRealize(this, &MView::OnRealize)
-	, mGtkWidget(inWidget)
+	, mGtkWidget(nil)
 {
+	SetWidget(inWidget, inCanActivate);
+}
+
+MView::MView()
+	: mFocusInEvent(this, &MView::OnFocusInEvent)
+	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
+	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
+	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
+	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
+	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
+	, mConfigure(this, &MView::OnConfigure)
+	, mRealize(this, &MView::OnRealize)
+	, mGtkWidget(nil)
+{
+}
+
+void MView::SetWidget(
+	GtkWidget*		inWidget,
+	bool			inCanActivate)
+{
+	assert(mGtkWidget == nil);
+	
+	mGtkWidget = inWidget;
+	
 	if (inCanActivate)
 	{
 		GTK_WIDGET_SET_FLAGS(mGtkWidget, GTK_CAN_FOCUS);
@@ -34,6 +59,7 @@ MView::MView(
 		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
 		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
 		mKeyPressEvent.Connect(mGtkWidget, "key-press-event");
+		mConfigure.Connect(mGtkWidget, "configure-event");
 		mRealize.Connect(mGtkWidget, "realize");
 	}
 }
@@ -50,7 +76,19 @@ MWindow* MView::GetWindow() const
 void MView::GetBounds(
 	MRect&			outBounds) const
 {
-	outBounds = mGtkWidget->allocation;
+	GtkWidget* parent = gtk_widget_get_parent(mGtkWidget);
+	if (GTK_IS_VIEWPORT(parent))
+	{
+		outBounds = parent->allocation;
+		
+		outBounds.x = outBounds.y = 0;
+		
+		gtk_widget_translate_coordinates(parent, mGtkWidget,
+			outBounds.x, outBounds.y,
+			&outBounds.x, &outBounds.y);
+	}
+	else
+		outBounds = mGtkWidget->allocation;
 }
 
 void MView::SetBounds(
@@ -93,24 +131,24 @@ bool MView::OnRealize()
 {
 	int m = gdk_window_get_events(GetGtkWidget()->window);
 
-	m |= GDK_FOCUS_CHANGE_MASK |
+	m |= GDK_FOCUS_CHANGE_MASK | GDK_STRUCTURE_MASK |
 		GDK_KEY_PRESS_MASK |
 		GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK;
 	gdk_window_set_events(GetGtkWidget()->window, (GdkEventMask)m);
 	
-	return true;
+	return false;
 }
 
 bool MView::OnFocusInEvent(
 	GdkEventFocus*	inEvent)
 {
-	return true;
+	return false;
 }
 
 bool MView::OnFocusOutEvent(
 	GdkEventFocus*	inEvent)
 {
-	return true;
+	return false;
 }
 
 bool MView::IsActive() const
@@ -121,22 +159,29 @@ bool MView::IsActive() const
 bool MView::OnButtonPressEvent(
 	GdkEventButton*	inEvent)
 {
-	return true;
+	return false;
 }
 
 bool MView::OnMotionNotifyEvent(
 	GdkEventMotion*	inEvent)
 {
-	return true;
+	return false;
 }
 
 bool MView::OnKeyPressEvent(
 	GdkEventKey*	inEvent)
 {
+	return false;
 }
 
 bool MView::OnButtonReleaseEvent(
 	GdkEventButton*	inEvent)
 {
-	return true;
+	return false;
+}
+
+bool MView::OnConfigure(
+	GdkEventConfigure*	inEvent)
+{
+	return false;
 }

@@ -11,7 +11,6 @@
 class MView
 {
   public:
-					MView();
 	virtual			~MView();
 
 	GtkWidget*		GetGtkWidget() const		{ return mGtkWidget; }
@@ -44,6 +43,12 @@ class MView
 						GtkWidget*		inWidget,
 						bool			inCanActivate);
 
+					MView();
+
+	void			SetWidget(
+						GtkWidget*		inWidget,
+						bool			inCanActivate);
+
 	virtual void	Added();
 
 	virtual bool	OnFocusInEvent(
@@ -64,6 +69,10 @@ class MView
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);
 
+	virtual bool	OnConfigure(
+						GdkEventConfigure*
+										inEvent);
+
 	virtual bool	OnRealize();
 
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
@@ -72,6 +81,7 @@ class MView
 	MSlot<bool(GdkEventMotion*)>		mMotionNotifyEvent;
 	MSlot<bool(GdkEventButton*)>		mButtonReleaseEvent;
 	MSlot<bool(GdkEventKey*)>			mKeyPressEvent;
+	MSlot<bool(GdkEventConfigure*)>		mConfigure;
 	MSlot<bool()>						mRealize;
 
   private:

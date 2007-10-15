@@ -39,6 +39,7 @@
 #include "MGlobals.h"
 //#include "MToolbar.h"
 //#include "MTextViewContainer.h"
+#include "MTextView.h"
 #include "MUtils.h"
 #include "MMenu.h"
 #include "MFile.h"
@@ -112,17 +113,14 @@ void MEditWindow::Initialize(
 
 	if (inDocument != nil)
 	{
-//		try
-//		{
-//			MDocState state = {};
-//		
-//			if (inDocument->IsSpecified() and inDocument->ReadDocState(state))
-//			{
-//				MTextView* textView = FindViewByID<MTextView>(128);
-//				
-//				textView->ScrollToPosition(
-//					CGPointMake(state.mScrollPosition[0], state.mScrollPosition[1]));
-//				
+		try
+		{
+			MDocState state = {};
+		
+			if (inDocument->IsSpecified() and inDocument->ReadDocState(state))
+			{
+				mTextView->ScrollToPosition(state.mScrollPosition[0], state.mScrollPosition[1]);
+				
 //				::MoveWindow(GetSysWindow(),
 //					state.mWindowPosition[0], state.mWindowPosition[1], true);
 //				::SizeWindow(GetSysWindow(),
@@ -130,13 +128,13 @@ void MEditWindow::Initialize(
 //				::ConstrainWindowToScreen(GetSysWindow(),
 //					kWindowStructureRgn, kWindowConstrainStandardOptions,
 //					NULL, NULL);
-//			}
+			}
 //			else
 //				::RepositionWindow(GetSysWindow(), nil, kWindowCascadeOnMainScreen);
-//		}
-//		catch (...) {
+		}
+		catch (...) {
 //			::RepositionWindow(GetSysWindow(), nil, kWindowCascadeOnMainScreen);
-//		}
+		}
 	}
 }
 

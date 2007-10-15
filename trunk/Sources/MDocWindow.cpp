@@ -47,7 +47,7 @@
 #include "MEditWindow.h"
 #include "MView.h"
 #include "MViewPort.h"
-#include "MVScrollbar.h"
+#include "MScrollBar.h"
 #include "MDrawingArea.h"
 
 using namespace std;
@@ -230,12 +230,10 @@ MDocWindow::MDocWindow()
 	GtkWidget* hbox = gtk_hbox_new(false, 0);
 	gtk_box_pack_start(GTK_BOX(mVBox), hbox, true, true, 0);
 
-	GtkObject* adj = gtk_adjustment_new(0, 0, 0, 0, 0, 0);
+	MScrollBar* scrollBar = new MScrollBar(true);
 	
-	MViewPort* viewPort = new MViewPort(nil, adj);
+	MViewPort* viewPort = new MViewPort(nil, scrollBar);
 	viewPort->SetShadowType(GTK_SHADOW_NONE);
-	
-	MVScrollbar* scrollBar = new MVScrollbar(adj);
 	
 	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), viewPort->GetGtkWidget(), true, true, 0);
@@ -246,8 +244,10 @@ MDocWindow::MDocWindow()
 //	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 //		GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	
-    mTextView = new MTextView();
+    mTextView = new MTextView(scrollBar);
 	mController.AddTextView(mTextView);
+	
+	AddRoute(viewPort->eBoundsChanged, mTextView->eBoundsChanged);
 
 //	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), image);
 	viewPort->Add(mTextView);

@@ -44,6 +44,7 @@
 #include "MStyles.h"
 #include "MUtils.h"
 #include "MDevice.h"
+#include "MScrollBar.h"
 
 #ifndef NDEBUG
 #include <iostream>
@@ -78,8 +79,10 @@ MColor		MTextView::sCurrentLineColor,
 // ---------------------------------------------------------------------------
 //	Default constructor
 
-MTextView::MTextView()
+MTextView::MTextView(
+	MScrollBar*		inVScrollBar)
 	: MDrawingArea(10, 10)
+	, eBoundsChanged(this, &MTextView::BoundsChanged)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
 	, eScroll(this, &MTextView::Scroll)
@@ -100,6 +103,7 @@ MTextView::MTextView()
 	
 	, mController(nil)
 	, mDocument(nil)
+	, mVScrollBar(inVScrollBar)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
 	, mClickMode(eSelectNone)
@@ -565,10 +569,37 @@ void MTextView::DrawLine(
 
 void MTextView::AdjustScrollBars()
 {
-	uint32 width = 1000;
-	uint32 height = mDocument->CountLines() * mLineHeight;
+	uint32 width = 10, height = 10;
+	
+	if (mDocument != nil)
+	{
+		width = 1000;
+		height = mDocument->CountLines() * mLineHeight;
+	}
 	
 	ResizeTo(width, height);
+	
+	MRect bounds;
+	GetBounds(bounds);
+
+	uint32 lower, upper, step_increment, page_increment, page_size, value;
+	
+//	mVScrollBar->GetAdjustmentValues(lower, upper, step_increment, page_increment, page_size, value);
+	mVScrollBar->SetAdjustmentValues(0, height,
+		mLineHeight, bounds.height / mLineHeight, bounds.height / mLineHeight, mVScrollBar->GetValue());
+
+}
+
+bool MTextView::OnSizeAllocate(
+	GtkAllocation*		inAllocation)
+{
+	AdjustScrollBars();
+	return false;
+}
+
+void MTextView::BoundsChanged()
+{
+	AdjustScrollBars();
 }
 
 //OSStatus MTextView::DoScrollableGetInfo(EventRef ioEvent)
@@ -613,9 +644,13 @@ void MTextView::DoScrollTo(
 	int32			inX,
 	int32			inY)
 {
-//	HIPoint delta;
+	mVScrollBar->SetValue(inY);
+	
+	
+	
+//	int32 dx, dy;
 //	
-//	if (inWhere.x < 0.0)
+//	if (inX < 0)
 //	{
 //		delta.x = -mImageOrigin.x;
 //		mImageOrigin.x = 0.0;
@@ -653,19 +688,16 @@ void MTextView::ScrollToPosition(
 	int32			inY)
 {
 	DoScrollTo(inX, inY);
-	
-//	MCarbonEvent event;
-//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//	
-//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
 void MTextView::GetScrollPosition(
 	int32&				outX,
 	int32&				outY)
 {
-//	outPosition = mImageOrigin;
+	MRect bounds;
+	GetBounds(bounds);
+	outX = bounds.x;
+	outY = bounds.y;
 }
 
 void MTextView::LineCountChanged()
@@ -917,10 +949,6 @@ void MTextView::Scroll(MScrollMessage inCommand)
 		default:
 			break;
 	}
-
-//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 }
 
 // ---------------------------------------------------------------------------
@@ -990,15 +1018,8 @@ bool MTextView::ScrollToCaret()
 	
 	if (newX != bounds.x or newY != bounds.y)
 	{
-//		MCarbonEvent er;
-//		DoScrollTo(newOrigin);
-//
-//		MCarbonEvent event;
-//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
-//
-//		result = true;
+		DoScrollTo(newX, newY);
+		result = true;
 	}
 	
 	return result;
@@ -1013,8 +1034,6 @@ void MTextView::ScrollToLine(
 {
 	assert(mDocument);
 	
-//	MCarbonEvent event;
-
 	MRect bounds;
 	GetBounds(bounds);
 	
@@ -1050,10 +1069,6 @@ void MTextView::ScrollToLine(
 		y = inLineNr * mLineHeight;
 		
 		DoScrollTo(x, y);
-
-//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
 	}
 }
 
@@ -1062,78 +1077,73 @@ void MTextView::ScrollToLine(
 
 void MTextView::ScrollToSelection(
 	bool	inForceCenter)
-{//
-//	assert(mDocument);
-//	
-//	MCarbonEvent event;
-//	uint32 line;
-//
-//	MRect bounds;
-//	GetBounds(bounds);
-//	
-//	MSelection selection(mDocument->GetSelection());
-//	float y;
-//		
-//	if (not inForceCenter)
-//	{
-//		line = selection.GetMinLine(*mDocument);
-//		y = line * mLineHeight;
-//		
-//		if (y < bounds.y)
-//			inForceCenter = true;
-//	}
-//			
-//	if (not inForceCenter)
-//	{
-//		line = selection.GetMaxLine(*mDocument);
-//		y = (line + 1) * mLineHeight;
-//	 
-//		if (y > bounds.y + bounds.height)
-//			inForceCenter = true;
-//	}
-//
-//	if (inForceCenter)
-//	{
-//		uint32 midLine = static_cast<uint32>(bounds.height / (3 * mLineHeight));
-//
-//		line = selection.GetMinLine(*mDocument);
-//		if (line < midLine)
-//			line = 0;
-//		else
-//			line -= midLine;
-//
-//		HIPoint loc;
-//		loc.x = 0;
-//		loc.y = line * mLineHeight;
-//		
-//		DoScrollTo(loc);
-//	}
-//   
-//	ScrollToCaret();
-//
-//	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
-//	{
-//		int32 ax, cx;
-//		uint32 line;
-//		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
-//		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
-//
-//		float center = (ax + cx) / 2;
-//
-//		if (center < bounds.x + 10 or
-//			center > bounds.x + bounds.width - 10)
-//		{
-//			HIPoint loc;
-//			loc.y = bounds.y;
-//			loc.x = bounds.x + center -
-//				(bounds.x + bounds.width / 2);
-//			DoScrollTo(loc);
-//		}
-//	}
-//
-//	event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//	HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//	event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
+{
+	assert(mDocument);
+	
+	uint32 line;
+
+	MRect bounds;
+	GetBounds(bounds);
+	
+	MSelection selection(mDocument->GetSelection());
+	float y;
+		
+	if (not inForceCenter)
+	{
+		line = selection.GetMinLine(*mDocument);
+		y = line * mLineHeight;
+		
+		if (y < bounds.y)
+			inForceCenter = true;
+	}
+			
+	if (not inForceCenter)
+	{
+		line = selection.GetMaxLine(*mDocument);
+		y = (line + 1) * mLineHeight;
+	 
+		if (y > bounds.y + bounds.height)
+			inForceCenter = true;
+	}
+
+	if (inForceCenter)
+	{
+		uint32 midLine = static_cast<uint32>(bounds.height / (3 * mLineHeight));
+
+		line = selection.GetMinLine(*mDocument);
+		if (line < midLine)
+			line = 0;
+		else
+			line -= midLine;
+
+		int32 x, y;
+		x = 0;
+		y = line * mLineHeight;
+		
+		DoScrollTo(x, y);
+	}
+   
+	ScrollToCaret();
+
+	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
+	{
+		int32 ax, cx;
+		uint32 line;
+		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
+		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
+
+		float center = (ax + cx) / 2;
+
+		if (center < bounds.x + 10 or
+			center > bounds.x + bounds.width - 10)
+		{
+			int32 x, y;
+			y = bounds.y;
+			x = bounds.x + center -
+				(bounds.x + bounds.width / 2);
+			DoScrollTo(x, y);
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1923,7 +1933,7 @@ void MTextView::SetDocument(MDocument* inDocument)
 		RemoveRoute(eScroll, mDocument->eScroll);
 		RemoveRoute(eShiftLines, mDocument->eShiftLines);
 		RemoveRoute(eInvalidateDirtyLines, mDocument->eInvalidateDirtyLines);
-		RemoveRoute(eBoundsChanged, mDocument->eBoundsChanged);
+//		RemoveRoute(eBoundsChanged, mDocument->eBoundsChanged);
 		RemoveRoute(eDocumentClosed, mDocument->eDocumentClosed);
 	}
 
@@ -1936,7 +1946,7 @@ void MTextView::SetDocument(MDocument* inDocument)
 		AddRoute(eScroll, mDocument->eScroll);
 		AddRoute(eShiftLines, mDocument->eShiftLines);
 		AddRoute(eInvalidateDirtyLines, mDocument->eInvalidateDirtyLines);
-		AddRoute(eBoundsChanged, mDocument->eBoundsChanged);
+//		AddRoute(eBoundsChanged, mDocument->eBoundsChanged);
 		AddRoute(eDocumentClosed, mDocument->eDocumentClosed);
 		
 		if (IsActive())

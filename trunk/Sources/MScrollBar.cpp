@@ -10,15 +10,24 @@
 using namespace std;
 
 MScrollBar::MScrollBar(
-	GtkObject*		inAdjustment,
 	bool			inVertical)
-	: MView(
-		inVertical ? 
-			gtk_vscrollbar_new(GTK_ADJUSTMENT(inAdjustment) :
-			gtk_hscrollbar_new(GTK_ADJUSTMENT(inAdjustment)
-		), false)
-	, mAdjustment(GTK_ADJUSTMENT(inAdjustment))
+	: mAdjustment(GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, 0, 0, 0, 0)))
 {
+	if (inVertical)
+		SetWidget(gtk_vscrollbar_new(mAdjustment), false);
+	else
+		SetWidget(gtk_hscrollbar_new(mAdjustment), false);
+}
+
+uint32 MScrollBar::GetValue() const
+{
+	return static_cast<uint32>(gtk_adjustment_get_value(mAdjustment));
+}
+
+void MScrollBar::SetValue(
+	uint32			inValue)
+{
+	gtk_adjustment_set_value(mAdjustment, inValue);
 }
 
 void MScrollBar::GetAdjustmentValues(

@@ -8,19 +8,31 @@
 
 #include "MView.h"
 
-class HScrollBar;
+class MScrollBar;
 
 class MViewPort : public MView
 {
   public:
 					MViewPort(
-						GtkObject*		inHAdjustment,
-						GtkObject*		inVAdjustment);
+						MScrollBar*		inHScrollBar,
+						MScrollBar*		inVScrollBar);
 
 	void			SetShadowType(
 						GtkShadowType	inShadowType);
 
-	HScrollBar*	GetVScrollBar() const;
+	MScrollBar*	GetVScrollBar() const		{ return mVScrollBar; }
+
+	MEventOut<void()>						eBoundsChanged;
+
+  protected:
+
+	virtual bool	OnConfigure(
+						GdkEventConfigure*
+										inEvent);
+	
+  private:
+	MScrollBar*		mHScrollBar;
+	MScrollBar*		mVScrollBar;
 };
 
 #endif // MVIEWPORT_H

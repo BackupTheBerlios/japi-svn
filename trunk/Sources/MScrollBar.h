@@ -12,8 +12,14 @@ class MScrollBar : public MView
 {
   public:
 						MScrollBar(
-							GtkObject*		inAdjustment,
 							bool			inVertical);
+
+	GtkAdjustment*		GetAdjustment() const		{ return mAdjustment; }
+
+	uint32				GetValue() const;
+
+	void				SetValue(
+							uint32			inValue);
 
 	void				GetAdjustmentValues(
 							uint32&			outLower,
