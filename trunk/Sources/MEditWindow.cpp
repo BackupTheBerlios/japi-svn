@@ -85,7 +85,7 @@ MEditWindow::MEditWindow()
 	editMenu->AppendItem("Cut and append", cmd_CutAppend, GDK_X, GDK_CONTROL_MASK | GDK_MOD1_MASK);
 	editMenu->AppendItem("Copy", cmd_Copy, GDK_C, GDK_CONTROL_MASK);
 	editMenu->AppendItem("Copy and append", cmd_CopyAppend, GDK_C, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	editMenu->AppendItem("Paste", cmd_Paste, GDK_P, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Paste", cmd_Paste, GDK_V, GDK_CONTROL_MASK);
 	editMenu->AppendItem("Clear", cmd_Clear);
 	editMenu->AppendItem("Select all", cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
 //	editMenu->AppendSeparator();
@@ -113,8 +113,41 @@ MEditWindow::MEditWindow()
 	MMenu* searchMenu = new MMenu("Search");
 
 	searchMenu->AppendItem("Fast Find", cmd_FastFind, GDK_I, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Fast Find Backward", cmd_FastFind, GDK_I, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendSeparator();
+	searchMenu->AppendItem("Find", cmd_Find, GDK_F, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Find Next", cmd_FindNext, GDK_G, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Find Previous", cmd_FindPrev, GDK_G, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Find in Next File", cmd_FindInNextFile, GDK_J, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Enter Search String", cmd_EnterSearchString, GDK_E, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Enter Replace String", cmd_EnterReplaceString, GDK_E, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendSeparator();
+	searchMenu->AppendItem("Replace", cmd_Replace, GDK_equal, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Replace All", cmd_ReplaceAll, GDK_equal, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Replace and Find Next", cmd_ReplaceFindNext, GDK_T, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Replace and Find Previous", cmd_ReplaceFindPrev, GDK_T, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendSeparator();
+	searchMenu->AppendItem("Complete", cmd_CompleteLookingBack, GDK_P, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Complete Looking Forward", cmd_CompleteLookingFwd, GDK_P, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendSeparator();
+	searchMenu->AppendItem("Jump to Line", cmd_GoToLine, GDK_comma, GDK_CONTROL_MASK);
 	
 	mMenubar.AddMenu(searchMenu);
+
+	MMenu* markMenu = new MMenu("Mark");
+	
+	markMenu->AppendItem("Jump to Next Marked Line", cmd_JumpToNextMark, GDK_F2);
+	markMenu->AppendItem("Jump to Previous Marked Line", cmd_JumpToPrevMark, GDK_F2, GDK_MOD1_MASK);
+	markMenu->AppendSeparator();
+	markMenu->AppendItem("Clear all Marks", cmd_ClearMarks);
+	markMenu->AppendItem("Mark Line", cmd_MarkLine, GDK_F1);
+	markMenu->AppendItem("Find and Mark…", cmd_MarkMatching);
+	markMenu->AppendSeparator();
+	markMenu->AppendItem("Copy Marked Lines", cmd_CopyMarkedLines);
+	markMenu->AppendItem("Cut Marked Lines", cmd_CutMarkedLines);
+	markMenu->AppendItem("Clear Marked Lines", cmd_ClearMarkedLines);
+	
+	mMenubar.AddMenu(markMenu);
 
 	// add status 
 	

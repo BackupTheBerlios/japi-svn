@@ -310,66 +310,67 @@ void
 MFindDialog::SetFindString(
 	const string&	inString,
 	bool			inReplaceFirst)
-{//
-//	inString = Escape(inString);
-//	
-//	ustring s;
-//	GetText(kFindComboboxID, s);
-//	
-//	if (s != inString)
-//	{
-//		if (inReplaceFirst and mFindStrings.size() > 0)
-//			mFindStrings.erase(mFindStrings.begin());
-//		
+{
+	string s = Escape(inString);
+	
+	if (s != GetFindString())
+	{
+		if (inReplaceFirst and mFindStrings.size() > 0)
+			mFindStrings.erase(mFindStrings.begin());
+		
 //		SetText(kFindComboboxID, inString);
 //		StoreComboText(kFindComboboxID, mFindStrings);
+		mFindStrings.push_front(s);
 //
 //		SetChecked(kRegexCheckboxID, false);
 //		SetChecked(kBatchCheckboxID, false);
-//
-//		mMultiMode = false;
+
+		mMultiMode = false;
 //		SetValue(kShowHideMultiTriangleID, mMultiMode);
 //		ShowHideMultiPanel(mMultiMode);
-//		
+		
 //		mScrap.PutScrap(inString);
-//	}
+	}
 }
 
 string MFindDialog::GetFindString()
-{//
-//	ustring result;
-//	GetText(kFindComboboxID, result);
-//	
-//	if (not IsChecked(kRegexCheckboxID))
-//		result = Unescape(result);
-//	
-//	return result;
+{
+	string result;
+	
+	if (not mFindStrings.empty())
+		result = mFindStrings.front();
+	
+	if (not GetRegex())
+		result = Unescape(result);
+	
+	return result;
 }
 
 void MFindDialog::SetReplaceString(
 	const string&	inString)
-{//
-//	inString = Escape(inString);
-//
-//	ustring s;
-//	GetText(kReplaceComboboxID, s);
-//	
-//	if (s != inString)
-//	{
+{
+	string s = Escape(inString);
+
+	if (s != GetReplaceString())
+	{
 //		SetText(kReplaceComboboxID, inString);
-//		StoreComboText(kReplaceComboboxID, mReplaceStrings);
-//	}
+		mReplaceStrings.push_front(s);
+		if (mReplaceStrings.size() > 10)
+			mReplaceStrings.pop_back();
+	}
 }
 
 string MFindDialog::GetReplaceString()
-{//
-//	ustring result;
-//	GetText(kReplaceComboboxID, result);
-//	
-//	if (not IsChecked(kRegexCheckboxID))
-//		result = Unescape(result);
-//
-//	return result;
+{
+	string result;
+	
+	if (not mReplaceStrings.empty())
+		result = mReplaceStrings.front();
+	
+	if (not GetRegex())
+		result = Unescape(result);
+
+	return result;
 }
 
 //OSStatus MFindDialog::DoControlHit(EventRef inEvent)
@@ -431,21 +432,25 @@ string MFindDialog::GetReplaceString()
 bool MFindDialog::GetInSelection() const
 {
 //	return IsChecked(kInSelectionCheckboxID);
+	return false;
 }
 
 bool MFindDialog::GetWrap() const
 {
 //	return IsChecked(kWrapCheckboxID);
+	return false;
 }
 
 bool MFindDialog::GetIgnoreCase() const
 {
 //	return IsChecked(kIgnoreCaseCheckboxID);
+	return false;
 }
 
 bool MFindDialog::GetRegex() const
 {
 //	return IsChecked(kRegexCheckboxID);
+	return false;
 }
 
 void MFindDialog::ShowHideMultiPanel(

@@ -3567,20 +3567,23 @@ bool MDocument::HandleRawKeydown(
 			break;
 		
 		case GDK_Tab:
-			if (not mSelection.IsEmpty() and
-				not mFastFindMode and
-				mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+			if (inModifiers == 0)
 			{
-				if (inModifiers & GDK_SHIFT_MASK)
-					DoShiftLeft();
+				if (not mSelection.IsEmpty() and
+					not mFastFindMode and
+					mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+				{
+					if (inModifiers & GDK_SHIFT_MASK)
+						DoShiftLeft();
+					else
+						DoShiftRight();
+					handled = true;
+				}
 				else
-					DoShiftRight();
-				handled = true;
-			}
-			else
-			{
-				Type("\t", 1);
-				handled = true;
+				{
+					Type("\t", 1);
+					handled = true;
+				}
 			}
 			break;
 		

@@ -582,12 +582,8 @@ void MTextView::AdjustScrollBars()
 	MRect bounds;
 	GetBounds(bounds);
 
-	uint32 lower, upper, step_increment, page_increment, page_size, value;
-	
-//	mVScrollBar->GetAdjustmentValues(lower, upper, step_increment, page_increment, page_size, value);
 	mVScrollBar->SetAdjustmentValues(0, height,
 		mLineHeight, bounds.height / mLineHeight, bounds.height / mLineHeight, mVScrollBar->GetValue());
-
 }
 
 bool MTextView::OnSizeAllocate(
