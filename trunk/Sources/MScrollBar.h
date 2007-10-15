@@ -3,16 +3,17 @@
 	Created 28-09-07 21:35:07
 */
 
-#ifndef MVSCROLLBAR_H
-#define MVSCROLLBAR_H
+#ifndef MSCROLLBAR_H
+#define MSCROLLBAR_H
 
 #include "MView.h"
 
-class MVScrollbar : public MView
+class MScrollBar : public MView
 {
   public:
-						MVScrollbar(
-							GtkObject*		inAdjustment);
+						MScrollBar(
+							GtkObject*		inAdjustment,
+							bool			inVertical);
 
 	void				GetAdjustmentValues(
 							uint32&			outLower,
@@ -29,7 +30,9 @@ class MVScrollbar : public MView
 							uint32			inPageIncrement,
 							uint32			inPageSize,
 							uint32			inValue);
-		
+
+  private:
+	GtkAdjustment*		mAdjustment;
 };
 
-#endif // MVSCROLLBAR_H
+#endif // MSCROLLBAR_H

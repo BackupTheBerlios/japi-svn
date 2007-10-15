@@ -8,6 +8,8 @@
 
 #include "MView.h"
 
+class HScrollBar;
+
 class MViewPort : public MView
 {
   public:
@@ -18,7 +20,7 @@ class MViewPort : public MView
 	void			SetShadowType(
 						GtkShadowType	inShadowType);
 
-//	HVScrollBar*	GetVScrollBar() const;
+	HScrollBar*	GetVScrollBar() const;
 };
 
 #endif // MVIEWPORT_H
