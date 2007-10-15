@@ -1,5 +1,4 @@
 #include "MJapieG.h"
-
 #include <iostream>
 
 #include "MCallbacks.h"
@@ -119,7 +118,6 @@ MMenuItem::~MMenuItem()
 
 void MMenuItem::ItemCallback()
 {
-	cout << "Callback for item " << MCommandToString(mCommand) << endl;
 	if (mMenu != nil and mMenu->GetTarget() != nil)
 	{
 		if (not mMenu->GetTarget()->ProcessCommand(mCommand))

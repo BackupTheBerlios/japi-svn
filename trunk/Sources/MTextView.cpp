@@ -859,10 +859,11 @@ void MTextView::Scroll(MScrollMessage inCommand)
 	
 //	MCarbonEvent event;
 //	HIPoint loc = mImageOrigin;
-	int32 x, y;
 	
 	MRect frame;
 	GetBounds(frame);
+
+	int32 x = frame.y, y = frame.y;
 	
 	uint32 lineCount = mDocument->CountLines();
 	uint32 linesPerPage = static_cast<uint32>(frame.height / mLineHeight);
@@ -929,12 +930,10 @@ void MTextView::Scroll(MScrollMessage inCommand)
 			mSavedOriginX = x;
 			mSavedOriginY = y;
 			ScrollToSelection(false);
-//			::HIWindowFlush(GetSysWindow());
 			break;
 		
 		case kScrollReturnAfterKiss:
 			DoScrollTo(mSavedOriginX, mSavedOriginY);
-//			::HIWindowFlush(GetSysWindow());
 			break;
 		
 		case kScrollForDiff:

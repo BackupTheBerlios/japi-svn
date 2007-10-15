@@ -3467,12 +3467,12 @@ bool MDocument::HandleRawKeydown(
 			}
 			break;
 		
-		case GDK_Page_Up:
-			keyCommand = kcmd_ScrollPageUp;
-			break;
-
 		case GDK_Page_Down:
 			keyCommand = kcmd_ScrollPageDown;
+			break;
+
+		case GDK_Page_Up:
+			keyCommand = kcmd_ScrollPageUp;
 			break;
 
 		case GDK_Home:

@@ -106,9 +106,15 @@ MEditWindow::MEditWindow()
 	textMenu->AppendItem("Entab", cmd_Entab);
 	textMenu->AppendItem("Detab", cmd_Detab);
 	textMenu->AppendSeparator();
-	textMenu->AppendItem("File Info…", cmd_ShowDocInfoDialog, GDK_I, GDK_CONTROL_MASK);
+	textMenu->AppendItem("File Info…", cmd_ShowDocInfoDialog);
 
 	mMenubar.AddMenu(textMenu);
+
+	MMenu* searchMenu = new MMenu("Search");
+
+	searchMenu->AppendItem("Fast Find", cmd_FastFind, GDK_I, GDK_CONTROL_MASK);
+	
+	mMenubar.AddMenu(searchMenu);
 
 	// add status 
 	
