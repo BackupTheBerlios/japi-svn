@@ -2686,8 +2686,6 @@ void MDocument::GetStyledText(
 	MDevice&	inDevice,
 	string&		outText) const
 {
-	inDevice.SetTabStops(mTabWidth);
-
 	mText.GetText(inOffset, inLength, outText);
 
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')
@@ -2705,6 +2703,8 @@ void MDocument::GetStyledText(
 
 		inDevice.SetTextColors(count, styles, offsets);
 	}
+
+	inDevice.SetTabStops(mTabWidth);
 	
 //	if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
 //	{

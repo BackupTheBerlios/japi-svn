@@ -77,7 +77,7 @@ struct MDeviceImp
 
 MDeviceImp::MDeviceImp()
 	: mView(MDummyWindow::Instance()->GetDrawingArea())
-	, mRect(0, 0, 10, 10)
+	, mRect(0, 0, 10000, 10)
 	, mFont(kFixedFont)
 {
 	Init();
@@ -349,22 +349,22 @@ void MDevice::SetText(
 
 void MDevice::SetTabStops(
 	uint32			inTabWidth)
-{//
-//	uint32 count = mImpl->mRect.width / inTabWidth;
-//
-//	PangoTabArray* tabs = pango_tab_array_new(count, false);
-//	
-//	uint32 next = inTabWidth;
-//	
-//	for (uint32 x = 0; x < count; ++x)
-//	{
-//		pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next * PANGO_SCALE);
-//		next += inTabWidth;
-//	}
-//	
-//	pango_layout_set_tabs(mImpl->mLayout, tabs);
-//	
-//	pango_tab_array_free(tabs);
+{
+	uint32 count = mImpl->mRect.width / inTabWidth;
+
+	PangoTabArray* tabs = pango_tab_array_new(count, false);
+	
+	uint32 next = inTabWidth;
+	
+	for (uint32 x = 0; x < count; ++x)
+	{
+		pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next * PANGO_SCALE);
+		next += inTabWidth;
+	}
+	
+	pango_layout_set_tabs(mImpl->mLayout, tabs);
+	
+	pango_tab_array_free(tabs);
 }
 
 void MDevice::SetTextColors(
@@ -451,17 +451,6 @@ bool MDevice::PositionToIndex(
 
 	outIndex = index;
 	outTrailing = trailing;
-
-//cout << "position: " << inPosition
-//	 << " out index: " << outIndex << ", " << (trailing ? "trailing" : "not trailing") << endl;
-//
-//	{
-//		int32 pos;
-//		
-//		IndexToPosition(outIndex, outTrailing, pos);
-//		
-//		cout << "pos: " << pos << endl;
-//	}
 	
 	return result;
 }
@@ -492,30 +481,4 @@ void MDevice::DrawCaret(
 	cairo_stroke(mImpl->mContext);
 	
 	Restore();
-	
-//	(void)::ATSUOffsetToPosition(textLayout,
-//		caretColumn, false, &mainCaret, &secondCaret, &isSplit);
-//
-//	float x = indent + Fix2X(mainCaret.fX) + 0.5f;
-//	float y = Fix2X(mainCaret.fY);
-//	float dx = indent + Fix2X(mainCaret.fDeltaX) + 0.5f;
-//	float dy = Fix2X(mainCaret.fDeltaY);
-//	
-//	::CGContextBeginPath(inContext);
-//	::CGContextMoveToPoint(inContext, x, -y);
-//	::CGContextAddLineToPoint(inContext, dx, -dy);
-//	
-//	if (isSplit)
-//	{
-//		x = Fix2X(secondCaret.fX) + 0.5f;
-//		y = Fix2X(secondCaret.fY) + 1;
-//		dx = Fix2X(secondCaret.fDeltaX) + 0.5f;
-//		dy = Fix2X(secondCaret.fDeltaY);
-//		
-//		::CGContextMoveToPoint(inContext, x, -y);
-//		::CGContextAddLineToPoint(inContext, dx, -dy);
-//	}
-//	
-//	::CGContextClosePath(inContext);
-//	::CGContextDrawPath(inContext, kCGPathStroke);
 }
