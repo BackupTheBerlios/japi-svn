@@ -37,6 +37,7 @@
 #include "MPreferences.h"
 #include "MGlobals.h"
 #include "MUtils.h"
+#include "MAcceleratorTable.h"
 
 #include <iostream>
 
@@ -174,6 +175,22 @@ bool MJapieApp::UpdateCommandStatus(
 
 	switch (inCommand)
 	{
+		case cmd_New:
+		case cmd_Open:
+		case cmd_OpenRecent:
+		case cmd_OpenTemplate:
+		case cmd_ClearRecent:
+		case cmd_CloseAll:
+		case cmd_SaveAll:
+		case cmd_Quit:
+		case cmd_Preferences:
+		case cmd_Find:
+		case cmd_FindInNextFile:
+		case cmd_OpenIncludeFile:
+		case cmd_Worksheet:
+			outEnabled = true;
+			break;
+		
 		default:
 			result = false;
 			break;
@@ -190,9 +207,45 @@ void MJapieApp::RecycleWindow(
 
 void MJapieApp::RunEventLoop()
 {
+	uint32 snooper = gtk_key_snooper_install(
+		&MJapieApp::Snooper, nil);
+	
 	uint32 timer = g_timeout_add(250, &MJapieApp::Timeout, nil);
 	
 	gtk_main();
+	
+	gtk_key_snooper_remove(snooper);
+}
+
+gint MJapieApp::Snooper(
+	GtkWidget*		inGrabWidget,
+	GdkEventKey*	inEvent,
+	gpointer		inFuncData)
+{
+cout << "Snooper: "
+	 << " modifiers: " << hex << inEvent->state
+	 << " value: " << hex << inEvent->keyval
+	 << endl;
+
+	bool result = false;
+	uint32 cmd;
+
+	if (inEvent->type == GDK_KEY_PRESS and 
+		MAcceleratorTable::Instance().IsAcceleratorKey(inEvent, cmd))
+	{
+cout << "Mapped to command: " << hex << cmd << endl;
+		result = true;
+		
+		MHandler* handler = MHandler::GetFocus();
+		if (handler == nil)
+			handler = gApp;
+		
+		bool enabled, checked;
+		if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
+			handler->ProcessCommand(cmd);
+	}
+
+	return false;
 }
 
 void MJapieApp::DoSaveAll()
@@ -315,7 +368,7 @@ void MJapieApp::DoOpen()
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		char* fileName = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)); 
-		MURL url(fileName);		
+		MPath url(fileName);		
 		doc = MDocument::GetDocumentForURL(url, true);
 	}
 	
@@ -330,7 +383,7 @@ void MJapieApp::DoOpen()
 //	OpenOneDocument
 
 MDocument* MJapieApp::OpenOneDocument(
-	const MURL&			inFileRef)
+	const MPath&			inFileRef)
 {
 	AddToRecentMenu(inFileRef);
 	
@@ -348,7 +401,7 @@ MDocument* MJapieApp::OpenOneDocument(
 //	OpenProject
 
 void MJapieApp::OpenProject(
-	const MURL&		inPath)
+	const MPath&		inPath)
 {
 	AddToRecentMenu(inPath);
 	
@@ -438,7 +491,7 @@ void MJapieApp::RebuildRecentMenu()
 //	}
 }
 
-void MJapieApp::AddToRecentMenu(const MURL& inFileRef)
+void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
 {//
 //	string path = fs::system_complete(inFileRef).string();
 //
@@ -463,7 +516,7 @@ void MJapieApp::DoOpenRecent(
 {//
 //	if (inCommand.menu.menuItemIndex <= mRecentDocs.size())
 //	{
-//		MURL path(mRecentDocs[inCommand.menu.menuItemIndex - 1]);
+//		MPath path(mRecentDocs[inCommand.menu.menuItemIndex - 1]);
 //		
 //		if (FileNameMatches("*.prj", path))
 //			OpenProject(path);
@@ -521,7 +574,7 @@ void MJapieApp::StoreRecentMenu()
 
 void MJapieApp::ShowWorksheet()
 {//
-//	MURL worksheet = gPrefsDir / "Worksheet";
+//	MPath worksheet = gPrefsDir / "Worksheet";
 //	
 //	if (not fs::exists(worksheet))
 //	{
@@ -560,7 +613,7 @@ int main(int argc, char* argv[])
 	{
 		gtk_init(&argc, &argv);
 
-		vector<string> docs;
+		vector<MPath> docs;
 		
 		int c;
 		while ((c = getopt(argc, const_cast<char**>(argv), "h?p:")) != -1)
@@ -583,8 +636,12 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		char b[PATH_MAX];
+		getcwd(b, PATH_MAX);
+		MPath cwd(b);
+
 		for (int32 i = optind; i < argc; ++i)
-			docs.push_back(argv[i]);
+			docs.push_back(cwd / argv[i]);
 
 		InitGlobals();
 
@@ -595,12 +652,11 @@ int main(int argc, char* argv[])
 
 		if (docs.size() > 0)
 		{
-			for (vector<string>::iterator d = docs.begin(); d != docs.end(); ++d)
+			for (vector<MPath>::iterator d = docs.begin(); d != docs.end(); ++d)
 			{
 				try
 				{
-					MURL f(*d);
-					gApp->OpenOneDocument(f);
+					gApp->OpenOneDocument(*d);
 				}
 				catch (std::exception& inErr)
 				{

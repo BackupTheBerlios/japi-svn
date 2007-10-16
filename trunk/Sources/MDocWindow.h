@@ -55,7 +55,7 @@ class MDocWindow : public MWindow
 	static MDocWindow*	GetFirstDocWindow()	{ return sFirst; }
 
 	MEventIn<void(bool)>					eModifiedChanged;
-	MEventIn<void(const MURL&)>				eFileSpecChanged;
+	MEventIn<void(const MPath&)>				eFileSpecChanged;
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
 	MEventIn<void(bool)>					eShellStatus;
 	MEventIn<void(MDocument*)>				eDocumentChanged;
@@ -86,7 +86,7 @@ class MDocWindow : public MWindow
 							bool			inModified);
 
 	virtual void		FileSpecChanged(
-							const MURL&		inFile);
+							const MPath&		inFile);
 	
 	void				SelectionChanged(
 							MSelection		inNewSelection,

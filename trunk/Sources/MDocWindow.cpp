@@ -327,7 +327,7 @@ void MDocWindow::ModifiedChanged(
 }
 
 void MDocWindow::FileSpecChanged(
-	const MURL&		inFile)
+	const MPath&		inFile)
 {
 }
 

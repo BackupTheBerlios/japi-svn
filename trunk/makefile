@@ -5,12 +5,12 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= icudata icuuc pcre boost_regex boost_thread
+LIBS		= icudata icuuc pcre boost_regex boost_thread boost_filesystem
 LIBPATHS	=  
 INCPATHS	= 
 SYSINCPATHS	= 
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
-CFLAGS		= -fsigned-char -g
+CFLAGS		= -fsigned-char -g -finput-charset=UTF-8
 #CFLAGS		+= -fmessage-length=200 -fdiagnostics-show-location=every-line
 CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0)
 LDFLAGS		= -fdata-sections -g

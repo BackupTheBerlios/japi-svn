@@ -182,7 +182,7 @@ void MSaverMixin::SaveDocumentAs(
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		MURL url(filename);
+		MPath url(filename);
 		DoSaveAs(url);
 		g_free(filename);
 	}

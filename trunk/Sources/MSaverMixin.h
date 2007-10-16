@@ -67,7 +67,7 @@ class MSaverMixin
 	virtual bool		SaveDocument() = 0;
 	virtual void		RevertDocument() = 0;
 	virtual bool		DoSaveAs(
-							const MURL&			inPath) = 0;
+							const MPath&			inPath) = 0;
 	virtual void		CloseAfterNavigationDialog() = 0;
 
 //	static pascal void	NavEvent(

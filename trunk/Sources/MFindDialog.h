@@ -90,7 +90,7 @@ class MFindDialog // : public MDialog
   private:
 
 	typedef std::deque<std::string>			StringArray;
-	typedef std::deque<MURL>				FileArray;
+	typedef std::deque<MPath>				FileArray;
 
 					MFindDialog();
 
@@ -119,14 +119,14 @@ class MFindDialog // : public MDialog
 						bool				inIgnoreCase,
 						bool				inRegex,
 						MMultiMethod		inMethod,
-						MURL				inDirectory,
+						MPath				inDirectory,
 						bool				inRecursive,
 						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter);
 	
 	void			GetFilesForFindAll(
 						MMultiMethod		inMethod,
-						const MURL&			inDirectory,
+						const MPath&			inDirectory,
 						bool				inRecursive,
 						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter,

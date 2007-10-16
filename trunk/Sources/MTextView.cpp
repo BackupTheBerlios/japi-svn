@@ -82,6 +82,7 @@ MColor		MTextView::sCurrentLineColor,
 MTextView::MTextView(
 	MScrollBar*		inVScrollBar)
 	: MDrawingArea(10, 10)
+	, MHandler(nil)
 	, eBoundsChanged(this, &MTextView::BoundsChanged)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
@@ -1216,6 +1217,8 @@ bool MTextView::OnFocusInEvent(
 		mDocument->CheckFile();
 		
 		gtk_im_context_focus_in(mIMContext);
+	
+		TakeFocus();	
 	}
 	
 	return true;
@@ -1224,6 +1227,8 @@ bool MTextView::OnFocusInEvent(
 bool MTextView::OnFocusOutEvent(
 	GdkEventFocus*	inEvent)
 {
+	ReleaseFocus();
+
 	mNeedsDisplay = true;
 	Invalidate();
 

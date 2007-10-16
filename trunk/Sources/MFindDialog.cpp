@@ -228,7 +228,7 @@ void MFindDialog::DoFindCommand(
 //
 //	if (mMultiMode)
 //	{
-//		MURL dir;
+//		MPath dir;
 //		bool recursive, textFilesOnly;
 //		string filter;
 //		MMultiMethod method;
@@ -538,7 +538,7 @@ void MFindDialog::FindNext()
 //	{
 //		try
 //		{
-//			MURL file = mMultiFiles.front();
+//			MPath file = mMultiFiles.front();
 //			mMultiFiles.pop_front();
 //		
 //			MDocument* doc = MDocument::GetDocForFile(file);
@@ -569,7 +569,7 @@ void MFindDialog::FindAll(
 	bool			inIgnoreCase,
 	bool			inRegex,
 	MMultiMethod	inMethod,
-	MURL			inDirectory,
+	MPath			inDirectory,
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter)
@@ -604,13 +604,13 @@ void MFindDialog::FindAll(
 //	catch (...)
 //	{
 //		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-//		mFindAllResult->AddMessage(kMsgKindError, MURL(), 0, 0, 0, "Error in find all, sorry");
+//		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
 //	}	
 }
 
 void MFindDialog::GetFilesForFindAll(
 	MMultiMethod	inMethod,
-	const MURL&		inDirectory,
+	const MPath&		inDirectory,
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter,
@@ -635,7 +635,7 @@ void MFindDialog::GetFilesForFindAll(
 //			if (inFileNameFilter.c_str())
 //				iter.SetFilter(inFileNameFilter);
 //		
-//			MURL file;
+//			MPath file;
 //			while (iter.Next(file))
 //				outFiles.push_back(file);
 //			break;
@@ -646,7 +646,7 @@ void MFindDialog::GetFilesForFindAll(
 //			MDocument* doc = MDocument::GetFirstDocument();
 //			while (doc != nil)
 //			{
-//				MURL file = doc->GetFilePath();
+//				MPath file = doc->GetFilePath();
 //				if (exists(file))
 //					outFiles.push_back(file);
 //				doc = doc->GetNextDocument();
@@ -659,9 +659,9 @@ void MFindDialog::GetFilesForFindAll(
 //			MProject* project = MProject::Instance();
 //			if (project != nil)
 //			{
-//				vector<MURL> includePaths;
+//				vector<MPath> includePaths;
 //				project->GetIncludePaths(includePaths);
-//				for (vector<MURL>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
+//				for (vector<MPath>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
 //					GetFilesForFindAll(eMMDirectory, *p, false, false, "", outFiles);
 //			}
 //			break;

@@ -113,7 +113,7 @@ void MDocState::Swap()
 //	MDocument
 
 MDocument::MDocument(
-	const MURL*			inURL)
+	const MPath*			inURL)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -127,7 +127,7 @@ MDocument::MDocument(
 	if (inURL != nil)
 	{
 		mURL = *inURL;
-		mFileModDate = MFileSystem::GetModificationDate(mURL);
+		mFileModDate = fs::last_write_time(mURL);
 		mSpecified = true;
 	}
 
@@ -160,7 +160,7 @@ MDocument::MDocument(
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 
-	, mURL(MURL("/tmp") / inFileNameHint)
+	, mURL(MPath("/tmp") / inFileNameHint)
 {
 	Init();
 	
@@ -180,7 +180,7 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(const MURL& inFile)
+MDocument::MDocument(const MPath& inFile)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -310,11 +310,10 @@ const char* MDocument::GetCWD() const
 
 void MDocument::Reset()
 {
-cout << "Reset" << endl;	
-	
 	if (mCurrentAction != kNoAction)
 		FinishAction();
-	
+
+cout << "Reset" << endl;	
 	mCompletionIndex = -1;
 	mFastFindMode = false;
 	
@@ -323,7 +322,7 @@ cout << "Reset" << endl;
 }
 
 MDocument* MDocument::GetDocumentForURL(
-	const MURL&		inFile,
+	const MPath&		inFile,
 	bool			inCreateIfNeeded)
 {
 //	boost::mutex::scoped_lock lock(sDocListMutex);
@@ -440,9 +439,12 @@ bool MDocument::IsSpecified() const
 //	UsesFile
 
 bool MDocument::UsesFile(
-	const MURL&	inFileRef) const
+	const MPath&	inFileRef) const
 {
 //	CheckFile();
+
+cout << "Compare " << inFileRef << " - " << mURL << endl;
+
 	return mSpecified and mURL == inFileRef;
 }
 
@@ -879,7 +881,7 @@ bool MDocument::DoSave()
 	
 	CheckFile();	// make sure our filespec is valid
 	
-	MURL file = mURL;
+	MPath file = mURL;
 	bool specified = mSpecified;
 	
 	try
@@ -921,7 +923,7 @@ bool MDocument::DoSave()
 	return result;
 }
 
-bool MDocument::DoSaveAs(const MURL& inFile)
+bool MDocument::DoSaveAs(const MPath& inFile)
 {
 	bool result = false;
 	
@@ -1888,6 +1890,7 @@ void MDocument::PositionToOffset(
 void MDocument::StartAction(
 	const char*		inTitle)
 {
+cout << "StartAction " << inTitle << endl;
 	mFastFindMode = false;
 	if (mCurrentAction != inTitle)
 	{
@@ -1907,6 +1910,8 @@ void MDocument::FinishAction()
 
 	UpdateDirtyLines();
 	mCompletionStrings.clear();
+
+cout << "FinishAction" << endl;	
 	mCompletionIndex = -1;
 }
 
@@ -2598,6 +2603,10 @@ void MDocument::DoReplaceAll()
 
 void MDocument::DoComplete(MDirection inDirection)
 {
+cout << dec
+	 << "DoComplete, mCompletionIndex = " << mCompletionIndex
+	 << " mCurrentAction = " << mCurrentAction << endl;
+	
 	if (mCompletionIndex != -1 and mCurrentAction == kTypeAction)
 	{
 		int32 remove = mSelection.GetCaret() - mCompletionStartOffset;
@@ -2662,6 +2671,10 @@ void MDocument::DoComplete(MDirection inDirection)
 	
 	TouchLine(OffsetToLine(mCompletionStartOffset));
 	UpdateDirtyLines();
+
+cout << "Completion finished, index is now: " << mCompletionIndex
+	 << " mCompletionStrings.size() = " << mCompletionStrings.size()
+	 << endl; 
 }
 
 void MDocument::DoSoftwrap()
@@ -2790,33 +2803,36 @@ void MDocument::OnKeyPressEvent(
 	GdkEventKey*		inEvent)
 {
 	bool handled = false;
-	mCompletionStrings.clear();
+//	mCompletionStrings.clear();
 
     uint32 modifiers = inEvent->state;
 	uint32 keyValue = inEvent->keyval;
 	
 	handled = HandleRawKeydown(keyValue, modifiers);
-
-cout << "KeyPressEvent: "
-	 << " modifiers: " << hex << inEvent->state
-	 << " value: " << hex << inEvent->keyval
-	 << endl;
+//
+//cout << "KeyPressEvent: "
+//	 << " modifiers: " << hex << inEvent->state
+//	 << " value: " << hex << inEvent->keyval
+//	 << endl;
+//	
+//	if (modifiers != 0)
+//	{
+//		handled = true;		// don't type command key's
+//		mCompletionIndex = -1;
+//	}
 	
-	if (modifiers != 0)
-	{
-		handled = true;		// don't type command key's
-		mCompletionIndex = -1;
-	}
-	
-	if (not handled)
+	if (not handled and modifiers == 0)
 	{
 		wchar_t ch = gdk_keyval_to_unicode(keyValue);
 		
 		if (ch != 0)
 		{
-			char s[8];
+			char s[8] = {};
 			char* sp = s;
 			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
+
+cout << "Writing a result from gdk_keyval_to_unicode: " << s << endl;
+
 			Type(s, length);
 		}
 	}
@@ -2834,6 +2850,7 @@ void MDocument::OnCommit(
 	else
 	{
 		Type(inText, inLength);
+cout << "Commit" << endl;	
 		mCompletionIndex = -1;
 	}
 	
@@ -3790,7 +3807,7 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 //		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 
-	mStdErrWindow->SetBaseDirectory(MURL(mShell->GetCWD()));
+	mStdErrWindow->SetBaseDirectory(MPath(mShell->GetCWD()));
 	
 //	StdOut(inText, inSize);
 
@@ -3938,7 +3955,7 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 		MIncludeFile file = mIncludeFiles->at(inItem - 1);
 
 //		MProject* project = MProject::Instance();
-//		MURL p;
+//		MPath p;
 //		
 //		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
 //			gApp->OpenOneDocument(p);

@@ -51,7 +51,6 @@ class MTextViewContainer;
 class MDocument;
 class MWindow;
 class MDocWindow;
-class MURL;
 
 class MController : public MHandler, public MSaverMixin
 {
@@ -83,7 +82,7 @@ class MController : public MHandler, public MSaverMixin
 	void				RevertDocument();
 
 	bool				DoSaveAs(
-							const MURL&		inPath);
+							const MPath&		inPath);
 
 	void				CloseAfterNavigationDialog();
 

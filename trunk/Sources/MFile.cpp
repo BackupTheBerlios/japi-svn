@@ -51,7 +51,7 @@
 
 using namespace std;
 
-ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, size_t inDataSize)
+ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 #if defined(XATTR_FINDERINFO_NAME)
 	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize, 0, 0);
@@ -60,7 +60,7 @@ ssize_t read_attribute(const MURL& inPath, const char* inName, void* outData, si
 #endif
 }
 
-void write_attribute(const MURL& inPath, const char* inName, const void* inData, size_t inDataSize)
+void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 #if defined(XATTR_FINDERINFO_NAME)
 	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0, 0);
@@ -78,13 +78,13 @@ namespace MFileSystem
 {
 
 double GetModificationDate(
-	const MURL&		inURL)
+	const MPath&		inURL)
 {
 	return 0;
 }
 
 bool Exists(
-	const MURL&		inURL)
+	const MPath&		inURL)
 {
 	struct stat st;
 	return stat(inURL.string().c_str(), &st) >= 0;
@@ -97,7 +97,7 @@ bool Exists(
 //  MFile
 //
 
-MFile::MFile(const MURL& inFileSpec, int inFD)
+MFile::MFile(const MPath& inFileSpec, int inFD)
 	: mFileSpec(inFileSpec)
 	, mFD(inFD)
 	, mIsOpen(inFD != -1)
@@ -110,7 +110,7 @@ MFile::~MFile()
 		Close();
 }
 
-void MFile::GetFileSpec(MURL& outFileSpec) const
+void MFile::GetFileSpec(MPath& outFileSpec) const
 {
 	outFileSpec = mFileSpec;
 }
@@ -220,7 +220,7 @@ bool Match(
 
 //bool FileNameMatches(
 //	const char*		inPattern,
-//	const MURL&		inFile)
+//	const MPath&		inFile)
 //{
 //	assert(false);
 ////	return FileNameMatches(inPattern, inFile.leaf());
@@ -259,7 +259,7 @@ bool FileNameMatches(
 	return result;	
 }
 
-MSafeSaver::MSafeSaver(const MURL& inFile)
+MSafeSaver::MSafeSaver(const MPath& inFile)
 	: mDestFileSpec(inFile)
 {
 	struct stat st;
@@ -299,7 +299,7 @@ MSafeSaver::~MSafeSaver()
 	}
 }
 
-void MSafeSaver::Commit(MURL& outFileSpec)
+void MSafeSaver::Commit(MPath& outFileSpec)
 {
 	mTempFile->Close();
 	mTempFile.reset(nil);
@@ -325,7 +325,7 @@ MFile* MSafeSaver::GetTempFile()
 //{
 //	struct MInfo
 //	{
-//		MURL			mParent;
+//		MPath			mParent;
 //		DIR*			mDIR;
 //		struct dirent	mEntry;
 //	};
@@ -335,15 +335,15 @@ MFile* MSafeSaver::GetTempFile()
 //							, mReturnDirs(false) {}
 //	virtual				~MFileIteratorImp() {}
 //	
-//	virtual	bool		Next(MURL& outFile) = 0;
-//	bool				IsTEXT(const MURL& inFile);
+//	virtual	bool		Next(MPath& outFile) = 0;
+//	bool				IsTEXT(const MPath& inFile);
 //	
 //	string				mFilter;
 //	bool				mOnlyTEXT;
 //	bool				mReturnDirs;
 //};
 //
-//bool MFileIteratorImp::IsTEXT(const MURL& inFile)
+//bool MFileIteratorImp::IsTEXT(const MPath& inFile)
 //{
 //	bool result = false;
 //	
@@ -380,16 +380,16 @@ MFile* MSafeSaver::GetTempFile()
 //
 //struct MSingleFileIteratorImp : public MFileIteratorImp
 //{
-//						MSingleFileIteratorImp(const MURL& inDirectory);
+//						MSingleFileIteratorImp(const MPath& inDirectory);
 //	virtual				~MSingleFileIteratorImp();
 //	
-//	virtual	bool		Next(MURL& outFile);
+//	virtual	bool		Next(MPath& outFile);
 //	
 //	MInfo				mInfo;
 //};
 //
 //
-//MSingleFileIteratorImp::MSingleFileIteratorImp(const MURL& inDirectory)
+//MSingleFileIteratorImp::MSingleFileIteratorImp(const MPath& inDirectory)
 //{
 //	mInfo.mParent = inDirectory;
 //	mInfo.mDIR = opendir(inDirectory.string().c_str());
@@ -402,7 +402,7 @@ MFile* MSafeSaver::GetTempFile()
 //		closedir(mInfo.mDIR);
 //}
 //
-//bool MSingleFileIteratorImp::Next(MURL& outFile)
+//bool MSingleFileIteratorImp::Next(MPath& outFile)
 //{
 //	bool result = false;
 //	
@@ -447,15 +447,15 @@ MFile* MSafeSaver::GetTempFile()
 //
 //struct MDeepFileIteratorImp : public MFileIteratorImp
 //{
-//						MDeepFileIteratorImp(const MURL& inDirectory);
+//						MDeepFileIteratorImp(const MPath& inDirectory);
 //	virtual				~MDeepFileIteratorImp();
 //
-//	virtual	bool		Next(MURL& outFile);
+//	virtual	bool		Next(MPath& outFile);
 //
 //	stack<MInfo>		mStack;
 //};
 //
-//MDeepFileIteratorImp::MDeepFileIteratorImp(const MURL& inDirectory)
+//MDeepFileIteratorImp::MDeepFileIteratorImp(const MPath& inDirectory)
 //{
 //	MInfo info;
 //
@@ -475,7 +475,7 @@ MFile* MSafeSaver::GetTempFile()
 //	}
 //}
 //
-//bool MDeepFileIteratorImp::Next(MURL& outFile)
+//bool MDeepFileIteratorImp::Next(MPath& outFile)
 //{
 //	bool result = false;
 //	
@@ -526,7 +526,7 @@ MFile* MSafeSaver::GetTempFile()
 //	return result;
 //}
 //
-//MFileIterator::MFileIterator(const MURL& inDirectory, uint32 inFlags)
+//MFileIterator::MFileIterator(const MPath& inDirectory, uint32 inFlags)
 //{
 //	if (inFlags & kFileIter_Deep)
 //		mImpl = new MDeepFileIteratorImp(inDirectory);
@@ -542,7 +542,7 @@ MFile* MSafeSaver::GetTempFile()
 //	delete mImpl;
 //}
 //
-//bool MFileIterator::Next(MURL& outFile)
+//bool MFileIterator::Next(MPath& outFile)
 //{
 //	return mImpl->Next(outFile);
 //}
@@ -555,7 +555,7 @@ MFile* MSafeSaver::GetTempFile()
 // ----------------------------------------------------------------------------
 //	relative_path
 
-MURL relative_path(const MURL& inFromDir, const MURL& inFile)
+MPath relative_path(const MPath& inFromDir, const MPath& inFile)
 {
 	assert(false);
 
@@ -568,7 +568,7 @@ MURL relative_path(const MURL& inFromDir, const MURL& inFile)
 //		++f;
 //	}
 //	
-//	MURL result;
+//	MPath result;
 //	
 //	if (d == inFromDir.end() and f == inFile.end())
 //		result = ".";

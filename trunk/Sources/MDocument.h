@@ -96,9 +96,9 @@ class MDocument
 {
   public:
 	explicit			MDocument(
-							const MURL*			inURL);
+							const MPath*			inURL);
 	explicit			MDocument(
-							const MURL&			inURL);
+							const MPath&			inURL);
 						MDocument(
 							const std::string&	inText,
 							const std::string&	inFileNameHint);
@@ -117,7 +117,7 @@ class MDocument
 	
 	MTextBuffer&		GetTextBuffer()						{ return mText; }
 
-	MURL				GetURL() const						{ return mURL; }
+	MPath				GetURL() const						{ return mURL; }
 
 	void				SetWorksheet(bool inIsWorksheet);
 	bool				IsWorksheet() const					{ return mIsWorksheet; }
@@ -135,7 +135,7 @@ class MDocument
 	MDocument*			GetNextDocument()					{ return mNext; }
 
 	static MDocument*	GetDocumentForURL(
-							const MURL&		inURL,
+							const MPath&		inURL,
 							bool			inCreateIfNeeded);
 
 	void				MakeFirstDocument();
@@ -145,7 +145,7 @@ class MDocument
 	
 	bool				IsSpecified() const;
 
-	bool				UsesFile(const MURL& inFileRef) const;
+	bool				UsesFile(const MPath& inFileRef) const;
 	
 	void				GoToLine(uint32 inLineNr);
 	
@@ -261,10 +261,10 @@ class MDocument
 	MEventOut<void()>					eInvalidateDirtyLines;
 	MEventOut<void(uint32,int32)>		eShiftLines;
 	MEventOut<void()>					eDocumentClosed;
-	MEventOut<void(const MURL&)>		eFileSpecChanged;
+	MEventOut<void(const MPath&)>		eFileSpecChanged;
 	MEventOut<void(MScrollMessage)>		eScroll;
 	MEventOut<void(bool)>				eShellStatus;
-	MEventOut<void(const MURL&)>		eBaseDirChanged;
+	MEventOut<void(const MPath&)>		eBaseDirChanged;
 
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
@@ -310,7 +310,7 @@ class MDocument
 	
 	void				RevertDocument();
 	bool				DoSave();
-	bool				DoSaveAs(const MURL& inFile);
+	bool				DoSaveAs(const MPath& inFile);
 
 	bool				CanReplace();
 
@@ -377,7 +377,7 @@ class MDocument
 	static boost::mutex			sDocListMutex;
 	MControllerList				mControllers;
 	bool						mSpecified;
-	MURL						mURL;
+	MPath						mURL;
 	double						mFileModDate;
 	MTextBuffer					mText;
 	boost::mutex				mMutex;

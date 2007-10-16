@@ -78,7 +78,7 @@ std::string		gFontName = "Monaco";
 MColor			gLanguageColors[kLStyleCount];
 MColor			gHiliteColor, gInactiveHiliteColor, gOddRowColor;
 
-MURL			gTemplatesDir, gPrefsDir;
+MPath			gTemplatesDir, gPrefsDir;
 
 void InitGlobals()
 {

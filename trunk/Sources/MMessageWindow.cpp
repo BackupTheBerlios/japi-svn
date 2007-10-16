@@ -128,7 +128,7 @@ MMessageList::~MMessageList()
 
 void MMessageList::AddMessage(
 	MMessageKind	inKind,
-	const MURL&		inFile,
+	const MPath&		inFile,
 	uint32			inLine,
 	uint32			inMinOffset,
 	uint32			inMaxOffset,
@@ -181,7 +181,7 @@ MMessageWindow::MMessageWindow()
 	
 void MMessageWindow::AddMessage(
 	MMessageKind		inKind,
-	const MURL&			inFile,
+	const MPath&			inFile,
 	uint32				inLine,
 	uint32				inMinOffset,
 	uint32				inMaxOffset,
@@ -207,7 +207,7 @@ void MMessageWindow::AddMessages(
 }
 
 void MMessageWindow::SetBaseDirectory(
-	const MURL&			inBaseDir)
+	const MPath&			inBaseDir)
 {
 	mBaseDirectory = inBaseDir;
 }
@@ -288,7 +288,7 @@ void MMessageWindow::AddStdErr(
 
 			boost::match_results<string::iterator> m;
 
-			MURL spec;
+			MPath spec;
 
 			if (boost::regex_search(line.begin(), line.end(), m, re, match_flags) and m[0].matched)
 			{
@@ -386,7 +386,7 @@ void MMessageWindow::DrawItem(
 }
 
 uint32 MMessageWindow::AddFileToTable(
-	const MURL&			inFile)
+	const MPath&			inFile)
 {
 //try {
 //	cout << "add: " << inFile.str() << endl;

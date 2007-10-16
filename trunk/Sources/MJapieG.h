@@ -59,7 +59,6 @@ const uint32
 
 class MWindow;
 class MDocument;
-class MURL;
 
 // ===========================================================================
 
@@ -89,18 +88,18 @@ class MJapieApp : public MHandler
 
 	bool			LocateSystemIncludeFile(
 						const std::string&	inFileName,
-						MURL&				outFile);
+						MPath&				outFile);
 
 	MDocument*		OpenOneDocument(
-						const MURL&			inFileRef);
+						const MPath&			inFileRef);
 
 	MDocument*		AskOpenOneDocument();
 
 	void			OpenProject(
-						const MURL&			inPath);
+						const MPath&			inPath);
 
 	void			AddToRecentMenu(
-						const MURL&			inFileRef);
+						const MPath&			inFileRef);
 
 	void			StoreRecentMenu();
 	
@@ -142,6 +141,11 @@ class MJapieApp : public MHandler
 	
 	static gboolean	Timeout(
 						gpointer			inData);
+
+	static gint		Snooper(
+						GtkWidget*			inGrabWidget,
+						GdkEventKey*		inEvent,
+						gpointer			inFuncData); 
 
 	MWindowList		mTrashCan;
 	std::deque<std::string>

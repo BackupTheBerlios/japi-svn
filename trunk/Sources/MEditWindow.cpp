@@ -173,6 +173,8 @@ MEditWindow::MEditWindow()
 	AddRoute(viewPort->eBoundsChanged, mTextView->eBoundsChanged);
 
 	viewPort->Add(mTextView);
+
+	mTextView->SetSuper(this);
 	
 	gtk_widget_show_all(GetGtkWidget());
 
@@ -271,9 +273,9 @@ void MEditWindow::ModifiedChanged(bool inModified)
 }
 
 void MEditWindow::FileSpecChanged(
-	const MURL&		inFile)
+	const MPath&		inFile)
 {
-	if (MFileSystem::Exists(inFile))
+	if (fs::exists(inFile))
 		SetTitle(inFile.string());
 	else
 		SetTitle(GetUntitledTitle());

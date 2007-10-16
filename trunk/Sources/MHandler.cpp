@@ -2,6 +2,8 @@
 
 #include "MHandler.h"
 
+MHandler* MHandler::sFocus = nil;
+
 MHandler::MHandler(
 	MHandler*		inSuper)
 	: mSuper(inSuper)
@@ -10,6 +12,7 @@ MHandler::MHandler(
 
 MHandler::~MHandler()
 {
+	ReleaseFocus();
 }
 
 bool MHandler::UpdateCommandStatus(
@@ -40,5 +43,16 @@ void MHandler::SetSuper(
 	MHandler*		inSuper)
 {
 	mSuper = inSuper;
+}
+
+void MHandler::TakeFocus()
+{
+	sFocus = this;
+}
+
+void MHandler::ReleaseFocus()
+{
+	if (sFocus == this)
+		sFocus = mSuper;
 }
 

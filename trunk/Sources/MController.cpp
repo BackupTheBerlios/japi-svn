@@ -416,6 +416,7 @@ bool MController::UpdateCommandStatus(
 		case cmd_ShiftRight:
 		case cmd_OpenIncludeFile:
 		case cmd_ShowDocInfoDialog:
+			outEnabled = true;
 			break;
 
 		// dirty
@@ -569,7 +570,7 @@ void MController::RevertDocument()
 }
 
 bool MController::DoSaveAs(
-	const MURL&			inPath)
+	const MPath&			inPath)
 {
 	return mDocument->DoSaveAs(inPath);
 }
@@ -637,7 +638,7 @@ void MController::DoGoToLine()
 bool MController::OpenInclude(std::string inFileName)
 {
 //	MProject* project = MProject::Instance();
-	MURL p;
+	MPath p;
 	
 	bool result = false;
 		
@@ -729,7 +730,7 @@ void MController::DoOpenCounterpart()
 //	{
 //		string name = mDocument->GetURL().leaf();
 //		
-//		MURL p;
+//		MPath p;
 //		const char** ext = nil;
 //		
 //		if (FileNameMatches("*.h;*.hp;*.hpp", name))

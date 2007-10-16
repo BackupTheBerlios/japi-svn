@@ -48,7 +48,7 @@ enum MMessageKind
 };
 
 struct MMessageItem;
-typedef std::vector<MURL> MFileTable;
+typedef std::vector<MPath> MFileTable;
 
 class MMessageList
 {
@@ -58,7 +58,7 @@ class MMessageList
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const MURL&			inFile,
+						const MPath&			inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -85,18 +85,18 @@ class MMessageWindow : public MDocWindow
 						const char*			inText,
 						uint32				inSize);
 	
-//	MEventIn<void(MMessageKind, const MURL&, uint32, const std::string&)>
+//	MEventIn<void(MMessageKind, const MPath&, uint32, const std::string&)>
 //					eAddMessage;
 
-	MEventIn<void(const MURL&)>
+	MEventIn<void(const MPath&)>
 					eBaseDirChanged;
 	
 	void			SetBaseDirectory(
-						const MURL&			inDir);
+						const MPath&			inDir);
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const MURL&			inFile,
+						const MPath&			inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -123,7 +123,7 @@ class MMessageWindow : public MDocWindow
   private:
 
 	uint32			AddFileToTable(
-						const MURL&			inFile);
+						const MPath&			inFile);
 
 	void			DrawItem(
 						MDevice&			inDevice,
@@ -133,7 +133,7 @@ class MMessageWindow : public MDocWindow
 						const void*			inData,
 						uint32				inDataLength);
 
-	MURL			mBaseDirectory;
+	MPath			mBaseDirectory;
 	MFileTable		mFileTable;
 	MListView*		mList;
 	std::string		mText;

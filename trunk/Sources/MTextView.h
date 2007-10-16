@@ -36,6 +36,7 @@
 
 #include "MColor.h"
 #include "MDrawingArea.h"
+#include "MHandler.h"
 #include "MP2PEvents.h"
 #include "MSelection.h"
 
@@ -45,7 +46,7 @@ class MController;
 class MDevice;
 class MScrollBar;
 
-class MTextView : public MDrawingArea
+class MTextView : public MDrawingArea, public MHandler
 {
   public:
 						MTextView(

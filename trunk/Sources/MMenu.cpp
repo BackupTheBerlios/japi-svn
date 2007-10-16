@@ -264,7 +264,7 @@ MMenubar::MMenubar(
 	
 	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
 	
-	gtk_window_add_accel_group(GTK_WINDOW(inWindow), mGtkAccel);
+//	gtk_window_add_accel_group(GTK_WINDOW(inWindow), mGtkAccel);
 }
 
 void MMenubar::AddMenu(
