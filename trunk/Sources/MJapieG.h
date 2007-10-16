@@ -82,8 +82,6 @@ class MJapieApp : public MHandler
 	virtual bool	ProcessCommand(
 						uint32				inCommand);
 
-	void			ResetMenuShortcuts();
-
 	void			RebuildRecentMenu();
 
 	bool			LocateSystemIncludeFile(
@@ -102,6 +100,9 @@ class MJapieApp : public MHandler
 						const MPath&			inFileRef);
 
 	void			StoreRecentMenu();
+	
+	GtkRecentManager*
+					GetRecentMgr() const					{ return mRecentMgr; }
 	
 	MEventOut<void(double)>					eIdle;
 
@@ -147,11 +148,10 @@ class MJapieApp : public MHandler
 						GdkEventKey*		inEvent,
 						gpointer			inFuncData); 
 
-	MWindowList		mTrashCan;
-	std::deque<std::string>
-					mRecentDocs;
-	bool			mQuit;
-	bool			mQuitPending;
+	MWindowList			mTrashCan;
+	GtkRecentManager*	mRecentMgr;
+	bool				mQuit;
+	bool				mQuitPending;
 };
 
 extern MJapieApp*	gApp;

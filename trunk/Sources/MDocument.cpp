@@ -3500,11 +3500,17 @@ bool MDocument::HandleRawKeydown(
 			break;
 
 		case GDK_Home:
-			keyCommand = kcmd_ScrollToStartOfFile;
+			if (inModifiers & GDK_CONTROL_MASK)
+				keyCommand = kcmd_MoveToBeginningOfFile;
+			else
+				keyCommand = kcmd_ScrollToStartOfFile;
 			break;
 
 		case GDK_End:
-			keyCommand = kcmd_ScrollToEndOfFile;
+			if (inModifiers & GDK_CONTROL_MASK)
+				keyCommand = kcmd_MoveToEndOfFile;	
+			else	
+				keyCommand = kcmd_ScrollToEndOfFile;	
 			break;
 		
 		case GDK_BackSpace:

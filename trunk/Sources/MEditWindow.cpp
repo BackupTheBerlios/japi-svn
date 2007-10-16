@@ -64,6 +64,8 @@ MEditWindow::MEditWindow()
 	fileMenu->AppendItem("New", cmd_New, GDK_N, GDK_CONTROL_MASK);
 	fileMenu->AppendItem("Open…", cmd_Open, GDK_O, GDK_CONTROL_MASK);
 	
+	fileMenu->AppendRecentMenu("Open Recent…");
+	
 	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile, GDK_D, GDK_CONTROL_MASK | GDK_MOD1_MASK);
 	fileMenu->AppendItem("Open Source/Header", cmd_SwitchHeaderSource, GDK_1, GDK_CONTROL_MASK);
 	

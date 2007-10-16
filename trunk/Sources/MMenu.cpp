@@ -43,8 +43,11 @@ struct MMenuItem
 	virtual			~MMenuItem();
 
 	void			ItemCallback();
+	
+	void			RecentItemActivated();
 
 	MSlot<void()>	mCallback;
+	MSlot<void()>	mRecentItemActivated;
 
 	GtkWidget*		mGtkMenuItem;
 	std::string		mLabel;
@@ -64,6 +67,7 @@ MMenuItem::MMenuItem(
 	uint32			inAcceleratorKey,
 	GdkModifierType	inAcceleratorModifiers)
 	: mCallback(this, &MMenuItem::ItemCallback)
+	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
 	, mLabel(inLabel)
 	, mCommand(inCommand)
@@ -83,11 +87,14 @@ MMenuItem::MMenuItem(
 	MMenu*			inMenu,
 	MMenu*			inSubMenu)
 	: mCallback(this, &MMenuItem::ItemCallback)
+	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
 	, mLabel(inSubMenu->GetLabel())
 	, mCommand(0)
 	, mMenu(inMenu)
 	, mSubMenu(inSubMenu)
+	, mAcceleratorKey(0)
+	, mAcceleratorModifiers(GdkModifierType(0))
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -98,6 +105,7 @@ MMenuItem::MMenuItem(
 
 MMenuItem::MMenuItem()
 	: mCallback(this, &MMenuItem::ItemCallback)
+	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
 	, mLabel("-")
 	, mCommand(0)
@@ -125,6 +133,22 @@ void MMenuItem::ItemCallback()
 	}
 }
 
+void MMenuItem::RecentItemActivated()
+{
+	assert(mSubMenu);
+	assert(GTK_IS_RECENT_CHOOSER(mSubMenu->GetGtkMenu()));	
+	
+	char* uri = gtk_recent_chooser_get_current_uri(GTK_RECENT_CHOOSER(mSubMenu->GetGtkMenu()));
+	
+	if (uri != nil and strncmp(uri, "file://", 7) == 0)
+	{
+		MPath p(uri + 7);
+		gApp->OpenOneDocument(p);
+	}
+	
+	g_free(uri);
+}
+
 // --------------------------------------------------------------------
 
 MMenu::MMenu(
@@ -144,6 +168,21 @@ MMenu::MMenu(
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
 }
 
+MMenu::MMenu(
+	const string&	inLabel,
+	GtkWidget*		inMenuWidget)
+	: mGtkMenu(inMenuWidget)
+	, mGtkMenuItem(nil)
+	, mGtkAccel(nil)
+	, mParent(nil)
+	, mLabel(inLabel)
+	, mTarget(nil)
+{
+	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
+	gtk_widget_show(mGtkMenuItem);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
+}
+
 MMenu::~MMenu()
 {
 	if (mGtkMenu != nil)
@@ -158,8 +197,7 @@ void MMenu::AppendItem(
 {
 	if (inAcceleratorKey != 0 and not gtk_accelerator_valid(inAcceleratorKey, GdkModifierType(inAcceleratorModifiers)))
 		cerr << "*** WARNING: Not a valid accelerator combination for " << inLabel << endl;
-	
-	
+		
 	MMenuItem* item = new MMenuItem(
 		this, inLabel, inCommand, inAcceleratorKey, GdkModifierType(inAcceleratorModifiers));
 	
@@ -173,11 +211,26 @@ void MMenu::AppendSeparator()
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
 }
 
-void MMenu::AddMenu(
+void MMenu::AppendMenu(
 	MMenu*			inMenu)
 {
 	mItems.push_back(new MMenuItem(this, inMenu));
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
+}
+
+void MMenu::AppendRecentMenu(
+	const string&	inLabel)
+{
+	MMenu* recentMenu = new MMenu(inLabel,
+		gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
+
+	MMenuItem* item = new MMenuItem(this, recentMenu);
+	
+	item->mRecentItemActivated.Connect(recentMenu->mGtkMenu, "item-activated");
+	
+	mItems.push_back(item);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
 }
 
 void MMenu::SetTarget(

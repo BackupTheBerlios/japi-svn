@@ -26,8 +26,11 @@ class MMenu
 	
 	void			AppendSeparator();
 
-	virtual void	AddMenu(
+	virtual void	AppendMenu(
 						MMenu*				inMenu);
+
+	void			AppendRecentMenu(
+						const std::string&	inLabel);
 
 	void			SetTarget(
 						MHandler*			inHandler);
@@ -44,6 +47,11 @@ class MMenu
 						GtkAccelGroup*		inAcceleratorGroup);
 	
   protected:
+
+					MMenu(
+						const std::string&	inLabel,
+						GtkWidget*			inMenuWidget);
+
 	GtkWidget*		mGtkMenu;
 	GtkWidget*		mGtkMenuItem;
 	GtkAccelGroup*	mGtkAccel;

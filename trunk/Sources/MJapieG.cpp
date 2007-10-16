@@ -49,6 +49,7 @@ MJapieApp::MJapieApp(
 	int				argc,
 	char*			argv[])
 	: MHandler(nil)
+	, mRecentMgr(gtk_recent_manager_get_default())
 	, mQuit(false)
 	, mQuitPending(false)
 {
@@ -222,18 +223,12 @@ gint MJapieApp::Snooper(
 	GdkEventKey*	inEvent,
 	gpointer		inFuncData)
 {
-cout << "Snooper: "
-	 << " modifiers: " << hex << inEvent->state
-	 << " value: " << hex << inEvent->keyval
-	 << endl;
-
 	bool result = false;
 	uint32 cmd;
 
 	if (inEvent->type == GDK_KEY_PRESS and 
 		MAcceleratorTable::Instance().IsAcceleratorKey(inEvent, cmd))
 	{
-cout << "Mapped to command: " << hex << cmd << endl;
 		result = true;
 		
 		MHandler* handler = MHandler::GetFocus();
@@ -346,12 +341,12 @@ void MJapieApp::DoNew()
 
 void MJapieApp::DoClearRecent()
 {
-	mRecentDocs.clear();
-
-	RebuildRecentMenu();
-
-	vector<string> recent;
-	Preferences::SetArray("recent", recent);
+//	mRecentDocs.clear();
+//
+//	RebuildRecentMenu();
+//
+//	vector<string> recent;
+//	Preferences::SetArray("recent", recent);
 }
 
 void MJapieApp::DoOpen()
@@ -368,15 +363,11 @@ void MJapieApp::DoOpen()
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		char* fileName = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)); 
-		MPath url(fileName);		
-		doc = MDocument::GetDocumentForURL(url, true);
+		MPath url(fileName);	
+		doc = OpenOneDocument(url);
 	}
 	
 	gtk_widget_destroy(dialog);
-	
-	// display the file
-	if (doc != nil)
-		MDocWindow::DisplayDocument(doc);
 }
 
 // ---------------------------------------------------------------------------
@@ -411,61 +402,7 @@ void MJapieApp::OpenProject(
 //	project.release();
 }
 
-//
-// ---------------------------------------------------------------------------
-//	ResetMenuShortcuts
-
-void MJapieApp::ResetMenuShortcuts()
-{//
-//	MenuRef menu;
-//	MenuItemIndex item;
-//
-//	if (::GetIndMenuItemWithCommandID(nil,
-//		cmd_CompleteLookingBack, 1, &menu, &item) == noErr)
-//	{
-//		::SetItemCmd(menu, item, 0);
-//		::SetMenuItemKeyGlyph(menu, item, kMenuTabRightGlyph);
-//		::SetMenuItemModifiers(menu, item,
-//			kMenuNoCommandModifier|kMenuControlModifier);
-//	}
-//
-//	if (::GetIndMenuItemWithCommandID(nil,
-//		cmd_CompleteLookingFwd, 1, &menu, &item) == noErr)
-//	{
-//		::SetItemCmd(menu, item, 0);
-//		::SetMenuItemKeyGlyph(menu, item, kMenuTabRightGlyph);
-//		::SetMenuItemModifiers(menu, item,
-//			kMenuNoCommandModifier|kMenuControlModifier|kMenuShiftModifier);
-//	}
-//
-//	if (::GetIndMenuItemWithCommandID(nil,
-//		cmd_MarkLine, 1, &menu, &item) == noErr)
-//	{
-//		::SetItemCmd(menu, item, 0);
-//		::SetMenuItemKeyGlyph(menu, item, kMenuF1Glyph);
-//		::SetMenuItemModifiers(menu, item, kMenuNoCommandModifier);
-//	}
-//
-//	if (::GetIndMenuItemWithCommandID(nil,
-//		cmd_JumpToNextMark, 1, &menu, &item) == noErr)
-//	{
-//		::SetItemCmd(menu, item, 0);
-//		::SetMenuItemKeyGlyph(menu, item, kMenuF2Glyph);
-//		::SetMenuItemModifiers(menu, item, kMenuNoCommandModifier);
-//	}
-//
-//	if (::GetIndMenuItemWithCommandID(nil,
-//		cmd_JumpToPrevMark, 1, &menu, &item) == noErr)
-//	{
-//		::SetItemCmd(menu, item, 0);
-//		::SetMenuItemKeyGlyph(menu, item, kMenuF2Glyph);
-//		::SetMenuItemModifiers(menu, item,
-//			kMenuNoCommandModifier|kMenuShiftModifier);
-//	}
-}
-
-
-	// rebuild the recent menu
+// rebuild the recent menu
 	
 void MJapieApp::RebuildRecentMenu()
 {//
@@ -492,9 +429,12 @@ void MJapieApp::RebuildRecentMenu()
 }
 
 void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
-{//
-//	string path = fs::system_complete(inFileRef).string();
-//
+{
+	string path = "file://";
+	path += fs::system_complete(inFileRef).string();
+	
+	gtk_recent_manager_add_item(mRecentMgr, path.c_str());
+
 //	deque<string>::iterator d = mRecentDocs.begin();
 //	while (d != mRecentDocs.end())
 //	{
@@ -513,7 +453,7 @@ void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
 
 void MJapieApp::DoOpenRecent(
 	uint32			inCommand)
-{//
+{
 //	if (inCommand.menu.menuItemIndex <= mRecentDocs.size())
 //	{
 //		MPath path(mRecentDocs[inCommand.menu.menuItemIndex - 1]);
@@ -567,19 +507,19 @@ void MJapieApp::DoOpenTemplate(
 
 void MJapieApp::StoreRecentMenu()
 {
-	vector<string> docs;
-	copy(mRecentDocs.begin(), mRecentDocs.end(), back_inserter(docs));
-	Preferences::SetArray("recent", docs);
+//	vector<string> docs;
+//	copy(mRecentDocs.begin(), mRecentDocs.end(), back_inserter(docs));
+//	Preferences::SetArray("recent", docs);
 }
 
 void MJapieApp::ShowWorksheet()
-{//
+{
 //	MPath worksheet = gPrefsDir / "Worksheet";
 //	
 //	if (not fs::exists(worksheet))
 //	{
 //		MFile file(worksheet);
-//		file.CreateOnDisk('TEXT', kJapieSignature, false);
+//		file.CreateOnDisk(false);
 //	}
 //		
 //	MDocument* doc = OpenOneDocument(worksheet);
@@ -647,7 +587,7 @@ int main(int argc, char* argv[])
 
 		gApp = new MJapieApp(argc, argv);
 
-		gApp->ResetMenuShortcuts();
+//		gApp->ResetMenuShortcuts();
 		gApp->RebuildRecentMenu();
 
 		if (docs.size() > 0)

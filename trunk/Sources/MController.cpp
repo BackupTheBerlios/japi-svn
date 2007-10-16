@@ -644,11 +644,12 @@ bool MController::OpenInclude(std::string inFileName)
 		
 //	if (project != nil and project->LocateFile(inFileName, true, p))
 //		result = true;
-//	else if (mDocument != nil)
-//	{
-//		p = mDocument->GetURL().branch_path() / inFileName;
-//		result = exists(p);
-//	}
+//	else
+	if (mDocument != nil)
+	{
+		p = mDocument->GetURL().branch_path() / inFileName;
+		result = exists(p);
+	}
 	
 	if (result)
 		gApp->OpenOneDocument(p);
@@ -723,37 +724,43 @@ void MController::DoOpenCounterpart()
 	const char* kHeaderExtensions[] = {
 		"h", "hp", "hpp", nil
 	};
+
+	if (mDocument->IsSpecified())
+	{
+		string name = mDocument->GetURL().leaf();
+		MPath p;
 	
-//	MProject* project = MProject::Instance();
-//	
-//	if (mDocument->IsSpecified() and project != nil)
-//	{
-//		string name = mDocument->GetURL().leaf();
+		const char** ext = nil;
+		
+		if (FileNameMatches("*.h;*.hp;*.hpp", name))
+			ext = kSourceExtensions;
+		else if (FileNameMatches("*.c;*.cc;*.cp;*.cpp;*.c++;*.inl", name))
+			ext = kHeaderExtensions;
+	
+		if (ext != nil)
+		{
+			name.erase(name.rfind('.') + 1);
+//			MProject* project = MProject::Instance();
 //		
-//		MPath p;
-//		const char** ext = nil;
-//		
-//		if (FileNameMatches("*.h;*.hp;*.hpp", name))
-//			ext = kSourceExtensions;
-//		else if (FileNameMatches("*.c;*.cc;*.cp;*.cpp;*.c++;*.inl", name))
-//			ext = kHeaderExtensions;
-//		
-//		if (ext != nil)
-//		{
-//			name.erase(name.rfind('.') + 1);
-//			
-//			for (const char** e = ext; result == false and *e != nil; ++e)
-//				result = project->LocateFile(name + *e, true, p);
-//		}
-//		
-//		if (result)
-//			MApplication::Instance().OpenOneDocument(p);
-//	}
+//			if (project != nil)
+//			{
+//				for (const char** e = ext; result == false and *e != nil; ++e)
+//					result = project->LocateFile(name + *e, true, p);
+//			if (result)
+//				MApplication::Instance().OpenOneDocument(p);
+//			}
+
+			if (not result)
+			{
+				for (const char** e = ext; result == false and *e != nil; ++e)
+					result = OpenInclude(name + *e);
+			}
+		}
+	}
 	
 	if (not result)
 		Beep();
 }
-
 
 //// ---------------------------------------------------------------------------
 ////	DoSaveAll
