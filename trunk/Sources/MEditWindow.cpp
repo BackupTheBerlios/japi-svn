@@ -267,28 +267,20 @@ bool MEditWindow::DoClose()
 
 void MEditWindow::ModifiedChanged(bool inModified)
 {
-//	::SetWindowModified(GetSysWindow(), inModified);
+	SetModifiedMarkInTitle(inModified);
 }
 
-void MEditWindow::FileSpecChanged(const MURL& inFile)
+void MEditWindow::FileSpecChanged(
+	const MURL&		inFile)
 {
-//	if (exists(inFile))
-//	{
-////		FSRef fsRef;
-////		::FSPathMakeRef(inFile, fsRef);
-////		
-////		::HIWindowSetProxyFSRef(GetSysWindow(), &fsRef);
-////		::SetWindowTitleWithCFString(GetSysWindow(), MCFString(inFile.leaf()));
-//		SetTitle(inFile.string());
-//	}
-//	else
-//	{
-////		::HIWindowSetProxyFSRef(GetSysWindow(), nil);
-//		SetTitle(GetUntitledName());
-//	}
+	if (MFileSystem::Exists(inFile))
+		SetTitle(inFile.string());
+	else
+		SetTitle(GetUntitledTitle());
 }
 
-void MEditWindow::DocumentChanged(MDocument* inDocument)
+void MEditWindow::DocumentChanged(
+	MDocument*		inDocument)
 {
 	if (inDocument != nil)
 	{

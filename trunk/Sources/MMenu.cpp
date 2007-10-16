@@ -156,6 +156,10 @@ void MMenu::AppendItem(
 	uint32			inAcceleratorKey,
 	uint32			inAcceleratorModifiers)
 {
+	if (inAcceleratorKey != 0 and not gtk_accelerator_valid(inAcceleratorKey, GdkModifierType(inAcceleratorModifiers)))
+		cerr << "*** WARNING: Not a valid accelerator combination for " << inLabel << endl;
+	
+	
 	MMenuItem* item = new MMenuItem(
 		this, inLabel, inCommand, inAcceleratorKey, GdkModifierType(inAcceleratorModifiers));
 	

@@ -12,6 +12,7 @@ MWindow::MWindow()
 	, MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
+	, mModified(false)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
@@ -52,17 +53,27 @@ void MWindow::Close()
 void MWindow::SetTitle(
 	const string&	inTitle)
 {
-cout << "SetTitle " << inTitle << endl;	
-
-	gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), inTitle.c_str());
+	mTitle = inTitle;
+	
+	if (mModified)
+		gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), (mTitle + " *").c_str());
+	else
+		gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), mTitle.c_str());
 }
 
 string MWindow::GetTitle() const
 {
-	const char* title = gtk_window_get_title(GTK_WINDOW(GetGtkWidget()));
-	if (title == nil)
-		title = "";
-	return title;
+	return mTitle;
+}
+
+void MWindow::SetModifiedMarkInTitle(
+	bool		inModified)
+{
+	if (mModified != inModified)
+	{
+		mModified = inModified;
+		SetTitle(mTitle);
+	}
 }
 
 bool MWindow::OnDestroy()

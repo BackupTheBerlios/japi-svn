@@ -83,6 +83,13 @@ double GetModificationDate(
 	return 0;
 }
 
+bool Exists(
+	const MURL&		inURL)
+{
+	struct stat st;
+	return stat(inURL.string().c_str(), &st) >= 0;
+}
+
 }
 
 // ------------------------------------------------------------------

@@ -24,6 +24,9 @@ class MWindow : public MView, public MHandler
 	void			SetTitle(
 						const std::string&	inTitle);
 	std::string		GetTitle() const;
+	
+	void			SetModifiedMarkInTitle(
+						bool			inModified);
 
 	virtual bool	UpdateCommandStatus(
 						uint32			inCommand,
@@ -44,6 +47,9 @@ class MWindow : public MView, public MHandler
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
+
+	std::string				mTitle;
+	bool					mModified;
 };
 
 

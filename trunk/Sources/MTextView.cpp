@@ -624,7 +624,7 @@ void MTextView::DoScrollTo(
 	int32			inX,
 	int32			inY)
 {
-	Invalidate();
+//	Invalidate();
 	mVScrollBar->SetValue(inY);
 }
 
@@ -652,13 +652,9 @@ bool MTextView::OnScrollEvent(
 	{
 		case GDK_SCROLL_UP:
 			Scroll(kScrollLineDown);
-			Scroll(kScrollLineDown);
-			Scroll(kScrollLineDown);
 			break; 
 
 		case GDK_SCROLL_DOWN:
-			Scroll(kScrollLineUp);
-			Scroll(kScrollLineUp);
 			Scroll(kScrollLineUp);
 			break; 
 

@@ -48,6 +48,9 @@ void write_attribute(const MURL& inPath, const char* inName, const void* inData,
 
 namespace MFileSystem
 {
+	bool	Exists(
+				const MURL&		inURL);
+	
 	double	GetModificationDate(
 				const MURL&		inURL);
 }
