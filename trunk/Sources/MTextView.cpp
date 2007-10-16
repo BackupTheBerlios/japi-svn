@@ -607,9 +607,12 @@ void MTextView::AdjustScrollBars()
 	
 	MRect bounds;
 	GetBounds(bounds);
+	
+	uint32 linesPerPage = bounds.height / mLineHeight;
 
 	mVScrollBar->SetAdjustmentValues(0, height,
-		mLineHeight, bounds.height / mLineHeight, bounds.height / mLineHeight, mVScrollBar->GetValue());
+		mLineHeight, linesPerPage * mLineHeight,
+		bounds.height, mVScrollBar->GetValue());
 }
 
 void MTextView::BoundsChanged()
@@ -621,6 +624,7 @@ void MTextView::DoScrollTo(
 	int32			inX,
 	int32			inY)
 {
+	Invalidate();
 	mVScrollBar->SetValue(inY);
 }
 

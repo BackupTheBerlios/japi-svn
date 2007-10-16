@@ -110,7 +110,7 @@ void __m_debug_str(const char* inStr, ...);
 namespace MError
 {
 
-void DisplayError(std::exception& inErr);
+void DisplayError(const std::exception& inErr);
 
 }
 

@@ -44,6 +44,8 @@
 
 #include <memory>
 
+#include "MError.h"
+
 // shield implementation details in our namespace
 
 namespace MCallBackNS
@@ -120,7 +122,41 @@ struct Handler<Derived, Owner, R()> : public HandlerBase<R()>
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)();
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)();
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
+										}
+};
+
+template<class Derived, class Owner>
+struct Handler<Derived, Owner, void()> : public HandlerBase<void()>
+{
+	typedef void (Owner::*Callback)();
+	
+	virtual void						DoCallBack()
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+
+											try
+											{
+												(owner->*func)();
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
 										}
 };
 
@@ -129,12 +165,24 @@ struct Handler<Derived, Owner, R(T1)> : public HandlerBase<R(T1)>
 {
 	typedef R (Owner::*Callback)(T1);
 	
-	virtual R						DoCallBack(T1 a1)
+	virtual R							DoCallBack(T1 a1)
 										{
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -148,7 +196,19 @@ struct Handler<Derived, Owner, R(T1, T2)> : public HandlerBase<R(T1, T2)>
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1, a2);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1, a2);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -162,7 +222,19 @@ struct Handler<Derived, Owner, R(T1, T2, T3)> : public HandlerBase<R(T1, T2, T3)
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1, a2, a3);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1, a2, a3);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -176,7 +248,19 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4)> : public HandlerBase<R(T1, T2,
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1, a2, a3, a4);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1, a2, a3, a4);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -190,7 +274,19 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5)> : public HandlerBase<R(T1,
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1, a2, a3, a4, a5);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1, a2, a3, a4, a5);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -204,7 +300,19 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5, T6)> : public HandlerBase<R
 											Derived* self = static_cast<Derived*>(this);
 											Owner* owner = self->fOwner;
 											Callback func = self->fHandler;
-											return (owner->*func)(a1, a2, a3, a4, a5, a6);
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(a1, a2, a3, a4, a5, a6);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+											
+											return result;
 										}
 };
 
@@ -276,7 +384,6 @@ struct MCallBackOutHandler<CallBackIn, void()>
 						handler.mHandler->DoCallBack();
 				}
 };
-
 
 template<class CallBackIn, typename R, typename T1>
 struct MCallBackOutHandler<CallBackIn, R(T1)>

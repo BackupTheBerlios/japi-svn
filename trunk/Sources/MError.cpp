@@ -44,12 +44,15 @@ using namespace std;
 int StOKToThrow::sOkToThrow = 0;
 #endif
 
-MException::MException(int inErr)
+MException::MException(
+	int					inErr)
 {
 	snprintf(mMessage, sizeof(mMessage), "OS error %d", inErr);
 }
 
-MException::MException(const char* inMsg, ...)
+MException::MException(
+	const char*			inMsg,
+	...)
 {
 	va_list vl;
 	va_start(vl, inMsg);
@@ -67,7 +70,8 @@ const char*	MException::what() const throw()
 namespace MError
 {
 
-void DisplayError(std::exception& inErr)
+void DisplayError(
+	const exception&	inErr)
 {
 	cerr << "error!" << endl << inErr.what() << endl;
 	
@@ -101,7 +105,11 @@ void __m_debug_str(const char* inStr, ...)
 	cerr << msg << endl;
 }
 
-void __signal_throw(const char* inCode, const char* inFunction, const char* inFile, int inLine)
+void __signal_throw(
+	const char*		inCode,
+	const char*		inFunction,
+	const char*		inFile,
+	int				inLine)
 {
 	cerr << "Throwing in file " << inFile << " line " << inLine
 		<< " \"" << inFunction << "\": " << endl << inCode << endl;
@@ -133,7 +141,11 @@ void __signal_throw(const char* inCode, const char* inFunction, const char* inFi
 //	cerr << "Mach error in " << func << ": '" << mach_error_string(e) << '\'' << endl;
 //}
 
-void __msl_assertion_failed(char const *inCode, char const *inFile, char const *inFunction, int inLine)
+void __msl_assertion_failed(
+	char const*		inCode,
+	char const*		inFile,
+	char const*		inFunction,
+	int				inLine)
 {
 	try
 	{

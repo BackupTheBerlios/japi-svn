@@ -52,6 +52,8 @@ void MWindow::Close()
 void MWindow::SetTitle(
 	const string&	inTitle)
 {
+cout << "SetTitle " << inTitle << endl;	
+
 	gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), inTitle.c_str());
 }
 

@@ -2796,6 +2796,11 @@ void MDocument::OnKeyPressEvent(
 	uint32 keyValue = inEvent->keyval;
 	
 	handled = HandleRawKeydown(keyValue, modifiers);
+
+cout << "KeyPressEvent: "
+	 << " modifiers: " << hex << inEvent->state
+	 << " value: " << hex << inEvent->keyval
+	 << endl;
 	
 	if (modifiers != 0)
 	{
