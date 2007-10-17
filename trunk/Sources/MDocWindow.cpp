@@ -49,6 +49,7 @@
 #include "MViewPort.h"
 #include "MScrollBar.h"
 #include "MDrawingArea.h"
+#include "MDevice.h"
 
 using namespace std;
 
@@ -62,77 +63,73 @@ using namespace std;
 //	kIncludePopupViewID = 132
 //};
 //}
+
+// ------------------------------------------------------------------
 //
-//// ------------------------------------------------------------------
-////
-//
-//class MParsePopup : public MView
-//{
-//  public:
-//	static CFStringRef	GetClassID()					{ return CFSTR("com.hekkelman.japie.ParsePopup"); }
-////	static CFStringRef	GetBaseClassID()				{ return kHIScrollViewClassID; }
-//
-//						MParsePopup(HIObjectRef inObjectRef);
-//
-////	virtual OSStatus	Initialize(EventRef ioEvent);
-//	void				SetText(const string& inText);
-//	void				SetController(MController* inController, bool inIsFunctionParser);
-//
-//  private:
-//
-//	OSStatus			DoControlDraw(EventRef ioEvent);
-//	OSStatus			DoControlClick(EventRef inEvent);
-//
-//	MController*		mController;
-//	string				mName;
-//	bool				mIsFunctionParser;
-//};
-//
-//MParsePopup::MParsePopup(HIObjectRef inObjectRef)
-//	: MView(inObjectRef, kControlSupportsEmbedding)
-//	, mIsFunctionParser(false)
-//{
-//	Install(kEventClassControl, kEventControlDraw,	this, &MParsePopup::DoControlDraw);
-//	Install(kEventClassControl, kEventControlClick,	this, &MParsePopup::DoControlClick);
-//}
-//
-////OSStatus MParsePopup::Initialize(EventRef ioEvent)
-////{
-////	OSStatus err = MView::Initialize(ioEvent);
-////	
-////	return err;
-////}
-//
-//void MParsePopup::SetController(MController* inController, bool inIsFunctionParser)
-//{
-//	mController = inController;
-//	mIsFunctionParser = inIsFunctionParser;
-//	
-//	if (not mIsFunctionParser)
-//		SetText("<>");
-//}
-//
-//void MParsePopup::SetText(const string& inName)
-//{
-//	mName = inName;
-//	SetNeedsDisplay(true);
-//}
-//
-//OSStatus MParsePopup::DoControlDraw(EventRef ioEvent)
-//{
-//	if (mName.length())
-//	{
-//		CGContextRef context = nil;
-//		::GetEventParameter(ioEvent, kEventParamCGContextRef,
-//			typeCGContextRef, nil, sizeof(CGContextRef), nil, &context);
-//	
-//		HIRect bounds;
-//		GetBounds(bounds);
-//		
-//		ThemeDrawState state = kThemeStateActive;
-//		if (not IsActive())
-//			state = kThemeStateInactive;
-//		
+
+class MParsePopup : public MDrawingArea
+{
+  public:
+						MParsePopup(
+							int32			inWidth);
+
+	void				SetText(
+							const string&	inText);
+
+	void				SetController(
+							MController*	inController,
+							bool			inIsFunctionParser);
+
+  private:
+
+	bool				OnExposeEvent(
+							GdkEventExpose*	inEvent);
+	
+	bool				OnButtonPressEvent(
+							GdkEventButton*	inEvent);
+
+	MController*		mController;
+	string				mName;
+	bool				mIsFunctionParser;
+};
+
+MParsePopup::MParsePopup(
+	int32			inWidth)
+	: MDrawingArea(inWidth, -1)
+	, mIsFunctionParser(false)
+{
+}
+
+void MParsePopup::SetController(
+	MController*	inController,
+	bool			inIsFunctionParser)
+{
+	mController = inController;
+	mIsFunctionParser = inIsFunctionParser;
+	
+	if (not mIsFunctionParser)
+		SetText("#inc<>");
+}
+
+void MParsePopup::SetText(
+	const string&	inName)
+{
+	mName = inName;
+	Invalidate();
+}
+
+bool MParsePopup::OnExposeEvent(
+	GdkEventExpose*		inEvent)
+{
+	if (mName.length())
+	{
+		MRect bounds;
+		GetBounds(bounds);
+		
+		MDevice dev(this, bounds);
+
+//		dev.EraseRect(bounds);
+		
 //		Rect r;
 //		r.left =	static_cast<short>(bounds.origin.x);
 //		r.top = 	static_cast<short>(bounds.origin.y + bounds.size.height / 2 - 1);
@@ -148,28 +145,31 @@ using namespace std;
 //		
 //		MCFString s(mName);
 //		::DrawThemeTextBox(s, kThemeSmallSystemFont, state, false, &r, teJustLeft, context);
-//	}
-//	
-//	return noErr;
-//}
-//
-//OSStatus MParsePopup::DoControlClick(EventRef ioEvent)
-//{
-//	assert(mController != nil);
-//	
-//	MDocument* doc = mController->GetDocument();
-//	if (doc != nil)
-//	{
+		
+		dev.DrawString(mName, bounds.x, bounds.y, true);
+	}
+	
+	return true;
+}
+
+bool MParsePopup::OnButtonPressEvent(
+	GdkEventButton*		inEvent)
+{
+	assert(mController != nil);
+	
+	MDocument* doc = mController->GetDocument();
+	if (doc != nil)
+	{
 //		MMenu popup;
 //
-//		HIPoint pt = {};
-//		ConvertToGlobal(pt);
+//		int32 x, y;
+//		ConvertToGlobal(x, y);
 //		
 //		if (mIsFunctionParser)
 //		{
 //			if (doc->GetParsePopupItems(popup))
 //			{
-//				uint32 select = popup.Popup(pt, true);
+//				uint32 select = popup.Popup(x, y, true);
 //				if (select)
 //					doc->SelectParsePopupItem(select);
 //			}
@@ -178,15 +178,15 @@ using namespace std;
 //		{
 //			if (doc->GetIncludePopupItems(popup))
 //			{
-//				uint32 select = popup.Popup(pt, true);
+//				uint32 select = popup.Popup(x, y, true);
 //				if (select)
 //					doc->SelectIncludePopupItem(select);
 //			}
 //		}
-//	}
-//	
-//	return noErr;
-//}
+	}
+	
+	return true;
+}
 
 // ------------------------------------------------------------------
 //
@@ -209,6 +209,30 @@ MDocWindow::MDocWindow()
     gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 600);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
+
+	// add status 
+	
+	mStatusbar = gtk_statusbar_new();
+	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
+	
+	// selection status
+	
+	mSelectionPanel = gtk_label_new("aap noot mies");
+	gtk_box_pack_start(GTK_BOX(mStatusbar), mSelectionPanel, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), mSelectionPanel, 0);
+	gtk_widget_set_size_request(mSelectionPanel, 100, -1);
+	
+	// parse popups
+	
+	mIncludePopup = new MParsePopup(50);
+	gtk_box_pack_start(GTK_BOX(mStatusbar), mIncludePopup->GetGtkWidget(), false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), mIncludePopup->GetGtkWidget(), 1);
+	mIncludePopup->SetController(&mController, false);
+	
+	mParsePopup = new MParsePopup(200);
+	gtk_box_pack_start(GTK_BOX(mStatusbar), mParsePopup->GetGtkWidget(), true, true, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), mParsePopup->GetGtkWidget(), 2);	
+	mParsePopup->SetController(&mController, true);
 	
 	mNext = sFirst;
 	sFirst = this;
@@ -346,10 +370,9 @@ void MDocWindow::SelectionChanged(
 	}
 	catch (...) {}
 
-//	MCFString s(str.str());
-//	::HIViewSetText(mSelectionPanel, s);
+	gtk_label_set_text(GTK_LABEL(mSelectionPanel), str.str().c_str());
 	
-//	mParsePopup->SetText(inRangeName);
+	mParsePopup->SetText(inRangeName);
 }
 
 void MDocWindow::DocumentChanged(

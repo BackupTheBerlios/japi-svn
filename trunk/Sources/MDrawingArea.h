@@ -12,8 +12,8 @@ class MDrawingArea : public MView
 {
   public:
 					MDrawingArea(
-						uint32		inWidth,
-						uint32		inHeight);
+						int32		inWidth,
+						int32		inHeight);
 					~MDrawingArea();
 	
 	PangoContext*	GetPangoContext()	{ return mPangoContext; }

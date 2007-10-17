@@ -14,7 +14,7 @@
 using namespace std;
 
 MDrawingArea::MDrawingArea(
-	uint32 inWidth, uint32 inHeight)
+	int32 inWidth, int32 inHeight)
 	: MView(gtk_drawing_area_new(), true)
 	, mExposeEvent(this, &MDrawingArea::OnExposeEvent)
 	, mPangoContext(pango_cairo_font_map_create_context(
@@ -24,7 +24,8 @@ MDrawingArea::MDrawingArea(
 
 	pango_context_set_font_description(mPangoContext, kFixedFont);
 	
-	gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
+	if (inWidth > 0 or inHeight > 0)
+		gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
 }
 
 MDrawingArea::~MDrawingArea()

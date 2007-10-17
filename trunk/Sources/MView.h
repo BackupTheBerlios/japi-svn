@@ -34,6 +34,8 @@ class MView
 	void			Invalidate(
 						const MRect&	inRect);
 
+	void			UpdateNow();
+
 	virtual void	Add(
 						MView*			inSubView);
 

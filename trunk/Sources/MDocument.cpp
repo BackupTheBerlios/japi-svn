@@ -34,6 +34,7 @@
 
 #include <limits>
 #include <cmath>
+#include <iostream>
 
 #include <gdk/gdkkeysyms.h>
 
@@ -313,7 +314,6 @@ void MDocument::Reset()
 	if (mCurrentAction != kNoAction)
 		FinishAction();
 
-cout << "Reset" << endl;	
 	mCompletionIndex = -1;
 	mFastFindMode = false;
 	
@@ -442,9 +442,6 @@ bool MDocument::UsesFile(
 	const MPath&	inFileRef) const
 {
 //	CheckFile();
-
-cout << "Compare " << inFileRef << " - " << mURL << endl;
-
 	return mSpecified and mURL == inFileRef;
 }
 
@@ -711,7 +708,7 @@ void MDocument::Type(
 			MSelection save(mSelection);
 			ChangeSelection(MSelection(offset - 1, offset));
 			eScroll(kScrollForKiss);
-			usleep(20000UL);
+			usleep(200000UL);
 			ChangeSelection(save);
 			eScroll(kScrollReturnAfterKiss);
 		}
@@ -1890,7 +1887,6 @@ void MDocument::PositionToOffset(
 void MDocument::StartAction(
 	const char*		inTitle)
 {
-cout << "StartAction " << inTitle << endl;
 	mFastFindMode = false;
 	if (mCurrentAction != inTitle)
 	{
@@ -1911,7 +1907,6 @@ void MDocument::FinishAction()
 	UpdateDirtyLines();
 	mCompletionStrings.clear();
 
-cout << "FinishAction" << endl;	
 	mCompletionIndex = -1;
 }
 
@@ -2603,10 +2598,6 @@ void MDocument::DoReplaceAll()
 
 void MDocument::DoComplete(MDirection inDirection)
 {
-cout << dec
-	 << "DoComplete, mCompletionIndex = " << mCompletionIndex
-	 << " mCurrentAction = " << mCurrentAction << endl;
-	
 	if (mCompletionIndex != -1 and mCurrentAction == kTypeAction)
 	{
 		int32 remove = mSelection.GetCaret() - mCompletionStartOffset;
@@ -2671,10 +2662,6 @@ cout << dec
 	
 	TouchLine(OffsetToLine(mCompletionStartOffset));
 	UpdateDirtyLines();
-
-cout << "Completion finished, index is now: " << mCompletionIndex
-	 << " mCompletionStrings.size() = " << mCompletionStrings.size()
-	 << endl; 
 }
 
 void MDocument::DoSoftwrap()
@@ -2803,23 +2790,11 @@ void MDocument::OnKeyPressEvent(
 	GdkEventKey*		inEvent)
 {
 	bool handled = false;
-//	mCompletionStrings.clear();
 
     uint32 modifiers = inEvent->state;
 	uint32 keyValue = inEvent->keyval;
 	
 	handled = HandleRawKeydown(keyValue, modifiers);
-//
-//cout << "KeyPressEvent: "
-//	 << " modifiers: " << hex << inEvent->state
-//	 << " value: " << hex << inEvent->keyval
-//	 << endl;
-//	
-//	if (modifiers != 0)
-//	{
-//		handled = true;		// don't type command key's
-//		mCompletionIndex = -1;
-//	}
 	
 	if (not handled and modifiers == 0)
 	{
@@ -2850,7 +2825,6 @@ void MDocument::OnCommit(
 	else
 	{
 		Type(inText, inLength);
-cout << "Commit" << endl;	
 		mCompletionIndex = -1;
 	}
 	

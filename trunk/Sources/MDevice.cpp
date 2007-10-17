@@ -317,10 +317,17 @@ uint32 MDevice::GetLineHeight() const
 }
 
 void MDevice::DrawString(
-	const std::string&	inText,
-	float inX,
-	float inY)
+	const string&	inText,
+	float 			inX,
+	float 			inY,
+	bool			inTruncate)
 {
+	if (inTruncate)
+	{
+		pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_END);
+		pango_layout_set_width(mImpl->mLayout, mImpl->mRect.width * PANGO_SCALE);
+	}
+
 	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
 	
 	cairo_move_to(mImpl->mContext, inX, inY);	

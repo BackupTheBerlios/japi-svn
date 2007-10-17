@@ -56,7 +56,8 @@ class MDevice
 	void			DrawString(
 						const std::string&	inText,
 						float				inX,
-						float				inY);
+						float				inY,
+						bool				inTruncate = false);
 	
 	uint32			GetStringWidth(
 						const std::string&	inText);

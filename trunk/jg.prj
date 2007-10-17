@@ -30,6 +30,7 @@
 		<path>Sources</path>
 		<path>../../../../usr/pkg/lib</path>
 		<path>../../../../opt/local/lib</path>
+		<path>../../../../usr/pkg/lib</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib</path>
@@ -41,6 +42,7 @@
 	<files>
 		<group name="Sources">
 			<file>MJapieG.cpp</file>
+			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
 			<file>MDocument.cpp</file>
 			<file>MTextView.cpp</file>
@@ -100,6 +102,7 @@
 			<file>libboost_thread-mt.dylib</file>
 			<file>libpcre.0.0.1.dylib</file>
 			<file>libicuuc.dylib</file>
+			<file>libboost_filesystem-mt.dylib</file>
 			<file>libboost_regex-mt.dylib</file>
 		</group>
 	</files>

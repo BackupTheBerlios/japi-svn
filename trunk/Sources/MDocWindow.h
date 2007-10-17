@@ -104,6 +104,7 @@ class MDocWindow : public MWindow
 	MTextView*			mTextView;
 	GtkWidget*			mVBox;
 	GtkWidget*			mStatusbar;
+	GtkWidget*			mSelectionPanel;
 	MMenubar			mMenubar;
 	MParsePopup*		mParsePopup;
 	MParsePopup*		mIncludePopup;

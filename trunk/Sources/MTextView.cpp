@@ -900,6 +900,7 @@ void MTextView::Scroll(MScrollMessage inCommand)
 			mSavedOriginX = x;
 			mSavedOriginY = y;
 			ScrollToSelection(false);
+			UpdateNow();
 			break;
 		
 		case kScrollReturnAfterKiss:

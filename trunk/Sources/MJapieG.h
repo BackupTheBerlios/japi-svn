@@ -82,8 +82,6 @@ class MJapieApp : public MHandler
 	virtual bool	ProcessCommand(
 						uint32				inCommand);
 
-	void			RebuildRecentMenu();
-
 	bool			LocateSystemIncludeFile(
 						const std::string&	inFileName,
 						MPath&				outFile);
@@ -99,8 +97,6 @@ class MJapieApp : public MHandler
 	void			AddToRecentMenu(
 						const MPath&			inFileRef);
 
-	void			StoreRecentMenu();
-	
 	GtkRecentManager*
 					GetRecentMgr() const					{ return mRecentMgr; }
 	
@@ -121,11 +117,6 @@ class MJapieApp : public MHandler
 
 	void			DoCloseAll(
 						MCloseReason		inReason);
-
-	void			DoClearRecent();
-
-	void			DoOpenRecent(
-						uint32				inCommand);
 
 	void			DoOpenTemplate(
 						uint32				inCommand);

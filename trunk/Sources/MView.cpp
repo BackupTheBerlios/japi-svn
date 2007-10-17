@@ -91,7 +91,10 @@ void MView::GetBounds(
 			&outBounds.x, &outBounds.y);
 	}
 	else
+	{
 		outBounds = mGtkWidget->allocation;
+		outBounds.x = outBounds.y = 0;
+	}
 }
 
 void MView::SetBounds(
@@ -116,6 +119,11 @@ void MView::Invalidate(
 {
 	gtk_widget_queue_draw_area(mGtkWidget,
 		inRect.x, inRect.y, inRect.width, inRect.height);
+}
+
+void MView::UpdateNow()
+{
+	gdk_window_process_updates(mGtkWidget->window, true);
 }
 
 void MView::Add(

@@ -224,8 +224,9 @@ void MMenu::AppendRecentMenu(
 	MMenu* recentMenu = new MMenu(inLabel,
 		gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
 
-	MMenuItem* item = new MMenuItem(this, recentMenu);
-	
+	MMenuItem* item = new MMenuItem();
+	item->mSubMenu = recentMenu;
+	item->mGtkMenuItem = recentMenu->GetGtkMenuItem();
 	item->mRecentItemActivated.Connect(recentMenu->mGtkMenu, "item-activated");
 	
 	mItems.push_back(item);

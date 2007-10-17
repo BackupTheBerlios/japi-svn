@@ -100,13 +100,13 @@ bool MJapieApp::ProcessCommand(
 			DoSaveAll();
 			break;
 		
-		case cmd_ClearRecent:
-			DoClearRecent();
-			break;
-		
-		case cmd_OpenRecent:
-			DoOpenRecent(inCommand);
-			break;
+//		case cmd_ClearRecent:
+//			DoClearRecent();
+//			break;
+//		
+//		case cmd_OpenRecent:
+//			DoOpenRecent(inCommand);
+//			break;
 		
 		case cmd_OpenTemplate:
 			DoOpenTemplate(inCommand);
@@ -339,16 +339,6 @@ void MJapieApp::DoNew()
 	MDocWindow::DisplayDocument(doc);
 }
 
-void MJapieApp::DoClearRecent()
-{
-//	mRecentDocs.clear();
-//
-//	RebuildRecentMenu();
-//
-//	vector<string> recent;
-//	Preferences::SetArray("recent", recent);
-}
-
 void MJapieApp::DoOpen()
 {
 	GtkWidget* dialog = 
@@ -402,67 +392,12 @@ void MJapieApp::OpenProject(
 //	project.release();
 }
 
-// rebuild the recent menu
-	
-void MJapieApp::RebuildRecentMenu()
-{//
-//	THROW_IF_OSERROR(::DeleteMenuItems(
-//		mRecentMenu, 1, ::CountMenuItems(mRecentMenu) - 2));
-//
-//	UInt32 ix = 0;
-//	
-//	for (deque<string>::iterator r = mRecentDocs.begin(); r != mRecentDocs.end(); ++r)
-//	{
-//		string name = *r;
-//		string::size_type n = name.rfind('/');
-//		if (n != string::npos)
-//			name.erase(0, n + 1);
-//		
-//		MCFString s(name);
-//		
-//		THROW_IF_OSERROR(::InsertMenuItemTextWithCFString(
-//			mRecentMenu, s, ix, 0, cmd_OpenRecent));
-//
-//		++ix;
-//		::EnableMenuItem(mRecentMenu, ix);
-//	}
-}
-
 void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
 {
 	string path = "file://";
 	path += fs::system_complete(inFileRef).string();
 	
 	gtk_recent_manager_add_item(mRecentMgr, path.c_str());
-
-//	deque<string>::iterator d = mRecentDocs.begin();
-//	while (d != mRecentDocs.end())
-//	{
-//		if (*d == path)
-//			d = mRecentDocs.erase(d);
-//		else
-//			++d;
-//	}
-//	
-//	mRecentDocs.push_front(path);
-//	while (mRecentDocs.size() > 20)
-//		mRecentDocs.pop_back();
-//
-//	RebuildRecentMenu();
-}
-
-void MJapieApp::DoOpenRecent(
-	uint32			inCommand)
-{
-//	if (inCommand.menu.menuItemIndex <= mRecentDocs.size())
-//	{
-//		MPath path(mRecentDocs[inCommand.menu.menuItemIndex - 1]);
-//		
-//		if (FileNameMatches("*.prj", path))
-//			OpenProject(path);
-//		else
-//			OpenOneDocument(path);
-//	}
 }
 
 void MJapieApp::DoOpenTemplate(
@@ -505,13 +440,6 @@ void MJapieApp::DoOpenTemplate(
 //	}
 }
 
-void MJapieApp::StoreRecentMenu()
-{
-//	vector<string> docs;
-//	copy(mRecentDocs.begin(), mRecentDocs.end(), back_inserter(docs));
-//	Preferences::SetArray("recent", docs);
-}
-
 void MJapieApp::ShowWorksheet()
 {
 //	MPath worksheet = gPrefsDir / "Worksheet";
@@ -551,6 +479,8 @@ int main(int argc, char* argv[])
 {
 	try
 	{
+		fs::path::default_name_check(fs::no_check);
+		
 		gtk_init(&argc, &argv);
 
 		vector<MPath> docs;
@@ -587,9 +517,6 @@ int main(int argc, char* argv[])
 
 		gApp = new MJapieApp(argc, argv);
 
-//		gApp->ResetMenuShortcuts();
-		gApp->RebuildRecentMenu();
-
 		if (docs.size() > 0)
 		{
 			for (vector<MPath>::iterator d = docs.begin(); d != docs.end(); ++d)
@@ -610,8 +537,6 @@ int main(int argc, char* argv[])
 		gApp->RunEventLoop();
 
 		// we're done, clean up
-		gApp->StoreRecentMenu();
-	
 		SaveGlobals();
 		
 		delete gApp;
