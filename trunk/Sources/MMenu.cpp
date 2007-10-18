@@ -33,12 +33,6 @@ struct MMenuItem
 						const string&	inLabel,
 						uint32			inCommand);
 
-					MMenuItem(
-						MMenu*			inMenu,
-						MMenu*			inSubMenu);
-
-					MMenuItem();
-
 	virtual			~MMenuItem();
 
 	void			ItemCallback();
@@ -73,43 +67,14 @@ MMenuItem::MMenuItem(
 	, mEnabled(true)
 	, mChecked(false)
 {
-	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-	mCallback.Connect(mGtkMenuItem, "activate");
-	gtk_widget_show(mGtkMenuItem);
-}
+	if (inLabel == "-")
+		mGtkMenuItem = gtk_separator_menu_item_new();
+	else
+	{
+		mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
+		mCallback.Connect(mGtkMenuItem, "activate");
+	}
 
-MMenuItem::MMenuItem(
-	MMenu*			inMenu,
-	MMenu*			inSubMenu)
-	: mCallback(this, &MMenuItem::ItemCallback)
-	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
-	, mGtkMenuItem(nil)
-	, mLabel(inSubMenu->GetLabel())
-	, mCommand(0)
-	, mIndex(0)
-	, mMenu(inMenu)
-	, mSubMenu(inSubMenu)
-	, mEnabled(true)
-	, mChecked(false)
-{
-	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), inSubMenu->GetGtkMenu());
-	gtk_widget_show(mGtkMenuItem);
-}
-
-MMenuItem::MMenuItem()
-	: mCallback(this, &MMenuItem::ItemCallback)
-	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
-	, mGtkMenuItem(nil)
-	, mLabel("-")
-	, mCommand(0)
-	, mIndex(0)
-	, mMenu(nil)
-	, mSubMenu(nil)
-	, mEnabled(true)
-	, mChecked(false)
-{
-	mGtkMenuItem = gtk_separator_menu_item_new();
 	gtk_widget_show(mGtkMenuItem);
 }
 
@@ -147,112 +112,71 @@ void MMenuItem::RecentItemActivated()
 
 // --------------------------------------------------------------------
 
-MMenu::MMenu()
-	: mOnDestroy(this, &MMenu::OnDestroy)
-	, mGtkMenu(nil)
-	, mGtkMenuItem(nil)
-	, mGtkAccel(nil)
-	, mTarget(nil)
-{
-	mGtkMenu = gtk_menu_new();
-
-	mOnDestroy.Connect(mGtkMenu, "destroy");
-}
-
-MMenu::MMenu(
-	const string&	inLabel)
-	: mOnDestroy(this, &MMenu::OnDestroy)
-	, mGtkMenu(nil)
-	, mGtkMenuItem(nil)
-	, mGtkAccel(nil)
-	, mLabel(inLabel)
-	, mTarget(nil)
-{
-	mGtkMenu = gtk_menu_new();
-
-	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-	gtk_widget_show(mGtkMenuItem);
-
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
-
-	mOnDestroy.Connect(mGtkMenu, "destroy");
-}
-
 MMenu::MMenu(
 	const string&	inLabel,
 	GtkWidget*		inMenuWidget)
 	: mOnDestroy(this, &MMenu::OnDestroy)
 	, mGtkMenu(inMenuWidget)
-	, mGtkMenuItem(nil)
-	, mGtkAccel(nil)
 	, mLabel(inLabel)
 	, mTarget(nil)
 {
-	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-	gtk_widget_show(mGtkMenuItem);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
-	
+	if (mGtkMenu == nil)
+		mGtkMenu = gtk_menu_new();
+
 	mOnDestroy.Connect(mGtkMenu, "destroy");
 }
 
 MMenu::~MMenu()
 {
-cout << "Deleting menu" << endl;
+cout << "Deleting menu " << mLabel << endl;
 
 	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
 		delete *mi;
+}
+
+MMenuItem* MMenu::CreateNewItem(
+	const string&	inLabel,
+	uint32			inCommand)
+{
+	MMenuItem* item = new MMenuItem(this, inLabel, inCommand);
+
+	item->mIndex = mItems.size();
+	mItems.push_back(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	
+	return item;
 }
 
 void MMenu::AppendItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
-	MMenuItem* item = new MMenuItem(
-		this, inLabel, inCommand);
-
-	item->mIndex = mItems.size();
-	
-	mItems.push_back(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	CreateNewItem(inLabel, inCommand);
 }
 
 void MMenu::AppendSeparator()
 {
-	MMenuItem* item = new MMenuItem();	
-	
-	mItems.push_back(item);
-
-	item->mIndex = mItems.size();
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	CreateNewItem("-", 0);
 }
 
 void MMenu::AppendMenu(
 	MMenu*			inMenu)
 {
-	MMenuItem* item = new MMenuItem(this, inMenu);	
-
-	item->mIndex = mItems.size();
-	
-	mItems.push_back(item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	MMenuItem* item = CreateNewItem(inMenu->GetLabel(), 0);
+	item->mSubMenu = inMenu;
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), inMenu->mGtkMenu);
 }
 
 void MMenu::AppendRecentMenu(
 	const string&	inLabel)
 {
-	MMenu* recentMenu = new MMenu(inLabel,
-		gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
-
-	MMenuItem* item = new MMenuItem();
-	item->mIndex = mItems.size();
-	item->mSubMenu = recentMenu;
-	item->mGtkMenuItem = recentMenu->GetGtkMenuItem();
-	item->mRecentItemActivated.Connect(recentMenu->mGtkMenu, "item-activated");
+	MMenuItem* item = CreateNewItem(inLabel, 0);
 	
-	mItems.push_back(item);
+	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr());
+	item->mSubMenu = new MMenu(inLabel, recMenu);;
 
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
+	item->mRecentItemActivated.Connect(recMenu, "item-activated");
 }
 
 void MMenu::SetTarget(
@@ -304,11 +228,9 @@ void MMenu::UpdateCommandStatus()
 void MMenu::SetAcceleratorGroup(
 	GtkAccelGroup*		inAcceleratorGroup)
 {
-	mGtkAccel = inAcceleratorGroup;
-	
 	MAcceleratorTable& at = MAcceleratorTable::Instance();
 	
-	gtk_menu_set_accel_group(GTK_MENU(mGtkMenu), mGtkAccel);
+	gtk_menu_set_accel_group(GTK_MENU(mGtkMenu), inAcceleratorGroup);
 	
 	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
 	{
@@ -318,7 +240,7 @@ void MMenu::SetAcceleratorGroup(
 		
 		if (at.GetAcceleratorKeyForCommand(item->mCommand, key, mod))
 		{
-			gtk_widget_add_accelerator(item->mGtkMenuItem, "activate", mGtkAccel,
+			gtk_widget_add_accelerator(item->mGtkMenuItem, "activate", inAcceleratorGroup,
 				key, GdkModifierType(mod), GTK_ACCEL_VISIBLE);
 		}
 		
@@ -392,7 +314,9 @@ MMenubar::MMenubar(
 void MMenubar::AddMenu(
 	MMenu*				inMenu)
 {
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), inMenu->GetGtkMenuItem());
+	GtkWidget* menuItem = gtk_menu_item_new_with_label(inMenu->GetLabel().c_str());
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), inMenu->GetGtkMenu());
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), menuItem);
 	inMenu->SetTarget(mTarget);
 	inMenu->SetAcceleratorGroup(mGtkAccel);
 	mMenus.push_back(inMenu);

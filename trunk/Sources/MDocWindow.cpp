@@ -131,7 +131,7 @@ bool MParsePopup::OnButtonPressEvent(
 	MDocument* doc = mController->GetDocument();
 	if (doc != nil)
 	{
-		MMenu* popup = new MMenu;
+		MMenu* popup = new MMenu("popup");
 		
 		int32 x = 0, y = 0;
 		ConvertToGlobal(x, y);

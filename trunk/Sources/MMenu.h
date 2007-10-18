@@ -13,10 +13,9 @@ typedef std::list<MMenuItem*>	MMenuItemList;
 class MMenu
 {
   public:
-					MMenu();
-
 					MMenu(
-						const std::string&	inLabel);
+						const std::string&	inLabel,
+						GtkWidget*			inMenuWidget = nil);
 
 	virtual			~MMenu();
 
@@ -38,8 +37,6 @@ class MMenu
 	void			UpdateCommandStatus();
 
 	GtkWidget*		GetGtkMenu()			{ return mGtkMenu; }
-	GtkWidget*		GetGtkMenuItem()		{ return mGtkMenuItem; }
-	GtkAccelGroup*	GetGtkAccelerator()		{ return mGtkAccel; }
 	std::string		GetLabel()				{ return mLabel; }
 	MHandler*		GetTarget()				{ return mTarget; }
 	
@@ -55,10 +52,6 @@ class MMenu
 	
   protected:
 
-					MMenu(
-						const std::string&	inLabel,
-						GtkWidget*			inMenuWidget);
-
 	static void		MenuPosition(
 						GtkMenu*			inMenu,
 						gint*				inX,
@@ -66,14 +59,15 @@ class MMenu
 						gboolean*			inPushIn,
 						gpointer			inUserData);
 
+	MMenuItem*		CreateNewItem(
+						const std::string&	inLabel,
+						uint32				inCommand);
 
 	virtual bool	OnDestroy();
 
 	MSlot<bool()>	mOnDestroy;
 
 	GtkWidget*		mGtkMenu;
-	GtkWidget*		mGtkMenuItem;
-	GtkAccelGroup*	mGtkAccel;
 	std::string		mLabel;
 	MMenuItemList	mItems;
 	MHandler*		mTarget;
