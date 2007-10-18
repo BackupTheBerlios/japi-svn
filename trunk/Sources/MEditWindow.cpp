@@ -88,6 +88,7 @@ MEditWindow::MEditWindow()
 	editMenu->AppendItem("Copy", cmd_Copy, GDK_C, GDK_CONTROL_MASK);
 	editMenu->AppendItem("Copy and append", cmd_CopyAppend, GDK_C, GDK_CONTROL_MASK | GDK_MOD1_MASK);
 	editMenu->AppendItem("Paste", cmd_Paste, GDK_V, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Paste Next", cmd_PasteNext, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	editMenu->AppendItem("Clear", cmd_Clear);
 	editMenu->AppendItem("Select all", cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
 //	editMenu->AppendSeparator();

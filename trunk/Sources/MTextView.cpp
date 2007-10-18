@@ -148,6 +148,9 @@ MTextView::MTextView(
 	sBreakpointColor = kBreakpointColor;
 	
 	StylesChanged();
+	
+	
+//	gdk_window_set_debug_updates(true);
 }
 
 // Destructor
@@ -826,9 +829,6 @@ void MTextView::InvalidateLine(
 void MTextView::Scroll(MScrollMessage inCommand)
 {
 	assert(mDocument);
-	
-//	MCarbonEvent event;
-//	HIPoint loc = mImageOrigin;
 	
 	MRect frame;
 	GetBounds(frame);

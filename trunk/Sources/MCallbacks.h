@@ -186,6 +186,28 @@ struct Handler<Derived, Owner, R(T1)> : public HandlerBase<R(T1)>
 										}
 };
 
+template<class Derived, class Owner, typename T1>
+struct Handler<Derived, Owner, void(T1)> : public HandlerBase<void(T1)>
+{
+	typedef void (Owner::*Callback)(T1);
+	
+	virtual void						DoCallBack(T1 a1)
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+
+											try
+											{
+												(owner->*func)(a1);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+										}
+};
+
 template<class Derived, class Owner, typename R, typename T1, typename T2>
 struct Handler<Derived, Owner, R(T1, T2)> : public HandlerBase<R(T1, T2)>
 {
@@ -410,6 +432,29 @@ struct MCallBackOutHandler<CallBackIn, R(T1)>
 						result = handler.mHandler->DoCallBack(inArg1);
 					
 					return result;
+				}
+};
+
+template<class CallBackIn, typename T1>
+struct MCallBackOutHandler<CallBackIn, void(T1)>
+{
+	std::auto_ptr<CallBackIn>		mHandler;
+
+	void		operator() (T1 a1)
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallBack(a1);
+				}
+
+	static void	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					gpointer		inData)
+				{
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						handler.mHandler->DoCallBack(inArg1);
 				}
 };
 

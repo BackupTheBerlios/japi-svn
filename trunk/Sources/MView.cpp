@@ -142,7 +142,13 @@ void MView::Invalidate(
 
 void MView::UpdateNow()
 {
-	gdk_window_process_updates(mGtkWidget->window, true);
+	GtkWidget* w = mGtkWidget; 
+	GtkWidget* toplevel = gtk_widget_get_toplevel(mGtkWidget);
+
+	if (GTK_WIDGET_TOPLEVEL(toplevel))
+		w = toplevel;
+
+	gdk_window_process_all_updates();
 }
 
 void MView::Add(

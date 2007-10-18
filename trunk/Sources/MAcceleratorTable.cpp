@@ -75,6 +75,7 @@ MAcceleratorTable::MAcceleratorTable()
 	RegisterAcceleratorKey(cmd_Copy, GDK_C, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_CopyAppend, GDK_c, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Paste, GDK_V, GDK_CONTROL_MASK);
+	RegisterAcceleratorKey(cmd_PasteNext, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Balance, GDK_B, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_ShiftLeft, GDK_bracketleft, GDK_CONTROL_MASK);

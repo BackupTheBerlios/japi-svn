@@ -708,7 +708,7 @@ void MDocument::Type(
 			MSelection save(mSelection);
 			ChangeSelection(MSelection(offset - 1, offset));
 			eScroll(kScrollForKiss);
-			usleep(200000UL);
+			usleep(250000UL);
 			ChangeSelection(save);
 			eScroll(kScrollReturnAfterKiss);
 		}
@@ -2334,6 +2334,10 @@ void MDocument::DoPasteNext()
 {
 	if (mLastAction == kPasteAction and mCurrentAction == kNoAction)
 	{
+cout << "Last action before paste next: " << mLastAction << endl;	
+cout << "Current action before paste next: " << mCurrentAction << endl;	
+	
+
 		DoUndo();
 		MClipboard::Instance().NextInRing();
 	}
