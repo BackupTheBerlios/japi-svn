@@ -187,18 +187,7 @@ void MClipboard::GtkClipboardClear(
 	GtkClipboard*		inClipboard,
 	gpointer			inUserDataOrOwner)
 {
-	cout << "Clear clipboard..." << endl;
 	Instance().mOwnerChanged = true;
-}
-
-void MClipboard::OnOwnerChangedEvent(
-	GdkEventOwnerChange*		inEvent)
-{
-	if (inEvent->reason == GDK_OWNER_CHANGE_NEW_OWNER)
-	{
-		mOwnerChanged = true;
-cout << "owner change" << endl;
-	}
 }
 
 void MClipboard::LoadClipboardIfNeeded()

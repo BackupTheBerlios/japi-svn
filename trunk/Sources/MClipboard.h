@@ -98,12 +98,6 @@ class MClipboard
 
 	void				LoadClipboardIfNeeded();
 
-	void				OnOwnerChangedEvent(
-							GdkEventOwnerChange*
-												inEvent);
-	
-	MSlot<void(GdkEventOwnerChange*)>			mOwnerChangedEvent;
-	
 	static void			GtkClipboardGet(
 							GtkClipboard*		inClipboard,
 							GtkSelectionData*	inSelectionData,
