@@ -33,8 +33,6 @@ struct MMenuItem
 						const string&	inLabel,
 						uint32			inCommand);
 
-	virtual			~MMenuItem();
-
 	void			ItemCallback();
 	
 	void			RecentItemActivated();
@@ -78,13 +76,6 @@ MMenuItem::MMenuItem(
 	gtk_widget_show(mGtkMenuItem);
 }
 
-MMenuItem::~MMenuItem()
-{
-cout << "Deleting menu item " << mLabel << endl;
-//	if (mGtkMenuItem != nil)
-//		gtk_widget_destroy(mGtkMenuItem);
-}
-
 void MMenuItem::ItemCallback()
 {
 	if (mMenu != nil and mMenu->GetTarget() != nil)
@@ -119,6 +110,8 @@ MMenu::MMenu(
 	, mGtkMenu(inMenuWidget)
 	, mLabel(inLabel)
 	, mTarget(nil)
+	, mPopupX(-1)
+	, mPopupY(-1)
 {
 	if (mGtkMenu == nil)
 		mGtkMenu = gtk_menu_new();
