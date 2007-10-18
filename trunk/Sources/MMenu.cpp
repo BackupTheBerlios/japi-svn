@@ -52,6 +52,7 @@ struct MMenuItem
 	GtkWidget*		mGtkMenuItem;
 	std::string		mLabel;
 	uint32			mCommand;
+	uint32			mIndex;
 	MMenu*			mMenu;
 	MMenu*			mSubMenu;
 	uint32			mAcceleratorKey;
@@ -71,6 +72,7 @@ MMenuItem::MMenuItem(
 	, mGtkMenuItem(nil)
 	, mLabel(inLabel)
 	, mCommand(inCommand)
+	, mIndex(0)
 	, mMenu(inMenu)
 	, mSubMenu(nil)
 	, mAcceleratorKey(inAcceleratorKey)
@@ -91,6 +93,7 @@ MMenuItem::MMenuItem(
 	, mGtkMenuItem(nil)
 	, mLabel(inSubMenu->GetLabel())
 	, mCommand(0)
+	, mIndex(0)
 	, mMenu(inMenu)
 	, mSubMenu(inSubMenu)
 	, mAcceleratorKey(0)
@@ -109,8 +112,11 @@ MMenuItem::MMenuItem()
 	, mGtkMenuItem(nil)
 	, mLabel("-")
 	, mCommand(0)
+	, mIndex(0)
 	, mMenu(nil)
 	, mSubMenu(nil)
+	, mAcceleratorKey(0)
+	, mAcceleratorModifiers(GdkModifierType(0))
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -128,7 +134,7 @@ void MMenuItem::ItemCallback()
 {
 	if (mMenu != nil and mMenu->GetTarget() != nil)
 	{
-		if (not mMenu->GetTarget()->ProcessCommand(mCommand))
+		if (not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
 			cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
 	}
 }
@@ -150,6 +156,16 @@ void MMenuItem::RecentItemActivated()
 }
 
 // --------------------------------------------------------------------
+
+MMenu::MMenu()
+	: mGtkMenu(nil)
+	, mGtkMenuItem(nil)
+	, mGtkAccel(nil)
+	, mParent(nil)
+	, mTarget(nil)
+{
+	mGtkMenu = gtk_menu_new();
+}
 
 MMenu::MMenu(
 	const string&	inLabel)
@@ -200,6 +216,8 @@ void MMenu::AppendItem(
 		
 	MMenuItem* item = new MMenuItem(
 		this, inLabel, inCommand, inAcceleratorKey, GdkModifierType(inAcceleratorModifiers));
+
+	item->mIndex = mItems.size();
 	
 	mItems.push_back(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
@@ -207,15 +225,24 @@ void MMenu::AppendItem(
 
 void MMenu::AppendSeparator()
 {
-	mItems.push_back(new MMenuItem());
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
+	MMenuItem* item = new MMenuItem();	
+	
+	mItems.push_back(item);
+
+	item->mIndex = mItems.size();
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
 }
 
 void MMenu::AppendMenu(
 	MMenu*			inMenu)
 {
-	mItems.push_back(new MMenuItem(this, inMenu));
-	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), mItems.back()->mGtkMenuItem);
+	MMenuItem* item = new MMenuItem(this, inMenu);	
+
+	item->mIndex = mItems.size();
+	
+	mItems.push_back(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
 }
 
 void MMenu::AppendRecentMenu(
@@ -225,6 +252,7 @@ void MMenu::AppendRecentMenu(
 		gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
 
 	MMenuItem* item = new MMenuItem();
+	item->mIndex = mItems.size();
 	item->mSubMenu = recentMenu;
 	item->mGtkMenuItem = recentMenu->GetGtkMenuItem();
 	item->mRecentItemActivated.Connect(recentMenu->mGtkMenu, "item-activated");
@@ -300,6 +328,42 @@ void MMenu::SetAcceleratorGroup(
 		if (item->mSubMenu != nil)
 			item->mSubMenu->SetAcceleratorGroup(inAcceleratorGroup);
 	}
+}
+
+void MMenu::MenuPosition(
+	GtkMenu*			inMenu,
+	gint*				inX,
+	gint*				inY,
+	gboolean*			inPushIn,
+	gpointer			inUserData)
+{
+	MMenu* self = reinterpret_cast<MMenu*>(g_object_get_data(G_OBJECT(inMenu), "MMenu"));	
+	
+	*inX = self->mPopupX;
+	*inY = self->mPopupY;
+	*inPushIn = true;
+
+	cout << "Set location: " << *inX << ", " << *inY << endl;
+}
+
+int32 MMenu::Popup(
+	MHandler*			inHandler,
+	GdkEventButton*		inEvent,
+	int32				inX,
+	int32				inY,
+	bool				inBottomMenu)
+{
+	SetTarget(inHandler);
+	
+	mPopupX = inX;
+	mPopupY = inY;
+	
+	g_object_set_data(G_OBJECT(mGtkMenu), "MMenu", this);
+
+	gtk_widget_show_all(mGtkMenu);
+
+	gtk_menu_popup(GTK_MENU(mGtkMenu), nil, nil,
+		&MMenu::MenuPosition, nil, inEvent->button, inEvent->time);
 }
 
 // --------------------------------------------------------------------

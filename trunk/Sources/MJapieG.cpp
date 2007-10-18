@@ -60,7 +60,9 @@ MJapieApp::~MJapieApp()
 }
 
 bool MJapieApp::ProcessCommand(
-	uint32			inCommand)
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
 {
 	bool result = true;
 
@@ -237,7 +239,7 @@ gint MJapieApp::Snooper(
 		
 		bool enabled, checked;
 		if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
-			handler->ProcessCommand(cmd);
+			handler->ProcessCommand(cmd, nil, 0);
 	}
 
 	return false;
@@ -396,6 +398,9 @@ void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
 {
 	string path = "file://";
 	path += fs::system_complete(inFileRef).string();
+
+	if (gtk_recent_manager_has_item(mRecentMgr, path.c_str()))
+		gtk_recent_manager_remove_item(mRecentMgr, path.c_str(), nil);
 	
 	gtk_recent_manager_add_item(mRecentMgr, path.c_str());
 }
@@ -532,7 +537,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		else
-			gApp->ProcessCommand(cmd_New);
+			gApp->ProcessCommand(cmd_New, nil, 0);
 
 		gApp->RunEventLoop();
 

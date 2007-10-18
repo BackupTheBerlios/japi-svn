@@ -27,6 +27,10 @@ class MView
 						uint32			inWidth,
 						uint32			inHeight);
 
+	void			ConvertToGlobal(
+						int32&			ioX,
+						int32&			ioY);
+
 	bool			IsActive() const;
 
 	void			Invalidate();

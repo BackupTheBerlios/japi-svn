@@ -588,9 +588,10 @@ MLanguage::Parse(
 
 void
 MLanguage::GetParsePopupItems(
-	const MNamedRange&	inRanges,
+	MNamedRange&		inRanges,
 	const std::string&	inNSName,
-	MMenu&				inMenu)
+	MMenu&				inMenu,
+	uint32&				ioIndex)
 {
 	string ns = inNSName;
 	if (ns.length() > 0)
@@ -598,10 +599,14 @@ MLanguage::GetParsePopupItems(
 	ns += inRanges.name;
 
 	if (inRanges.name.length())
-		inMenu.AppendItem(ns, inRanges.begin);
+	{
+		inRanges.index = ioIndex;
+		++ioIndex;
+		inMenu.AppendItem(ns, cmd_SelectFunctionFromMenu);
+	}
 	
 	for (uint32 i = 0; i < inRanges.subrange.size(); ++i)
-		GetParsePopupItems(inRanges.subrange[i], ns, inMenu);
+		GetParsePopupItems(inRanges.subrange[i], ns, inMenu, ioIndex);
 }
 
 bool MLanguage::GetSelectionForParseItem(
@@ -612,7 +617,7 @@ bool MLanguage::GetSelectionForParseItem(
 {
 	bool result = false;
 	
-	if (inItem == inRanges.begin)
+	if (inItem == inRanges.index)
 	{
 		result = true;
 		outSelectionStart = inRanges.selectFrom;

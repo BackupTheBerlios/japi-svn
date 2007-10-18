@@ -102,7 +102,9 @@ class MController : public MHandler, public MSaverMixin
 							bool&			outChecked);
 
 	virtual bool		ProcessCommand(
-							uint32			inCommand);
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
 
 	bool				OpenInclude(
 							std::string		inFileName);

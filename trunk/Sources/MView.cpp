@@ -109,6 +109,25 @@ void MView::ResizeTo(
 	gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
 }
 
+void MView::ConvertToGlobal(
+	int32&			ioX,
+	int32&			ioY)
+{
+	GtkWidget* w = mGtkWidget; 
+	GtkWidget* toplevel = gtk_widget_get_toplevel(mGtkWidget);
+	if (GTK_WIDGET_TOPLEVEL(toplevel))
+	{
+		gtk_widget_translate_coordinates(mGtkWidget, toplevel, ioX, ioY, &ioX, &ioY);
+		w = toplevel;
+	}
+
+	int32 ox, oy;
+	
+	gdk_window_get_position(w->window, &ox, &oy);
+	ioX += ox;
+	ioY += oy;
+}
+
 void MView::Invalidate()
 {
 	gtk_widget_queue_draw(mGtkWidget);

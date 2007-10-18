@@ -110,6 +110,10 @@ const uint32 cmd_MakeClean =			'Pcln';
 const uint32 cmd_Run =					'Prun';
 const uint32 cmd_NewGroup =				'Pnwg';
 
+const uint32
+	cmd_OpenIncludeFromMenu =			'OMic',
+	cmd_SelectFunctionFromMenu =		'OMfu';
+
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';
 #endif

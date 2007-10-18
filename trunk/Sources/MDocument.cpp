@@ -3875,13 +3875,14 @@ void MDocument::Idle(
 bool MDocument::GetParsePopupItems(MMenu& inMenu)
 {
 	bool result = false;
+	uint32 ix = 0;
 	
 	if (mLanguage and mNamedRange)
 	{
 		if (mNeedReparse)
 			Idle(0);		// force reparse
 
-		mLanguage->GetParsePopupItems(*mNamedRange, "", inMenu);
+		mLanguage->GetParsePopupItems(*mNamedRange, "", inMenu, ix);
 		result = true;
 	}
 	
@@ -3917,7 +3918,7 @@ bool MDocument::GetIncludePopupItems(MMenu& inMenu)
 			Idle(0);		// force reparse
 
 		for (MIncludeFileList::iterator i = mIncludeFiles->begin(); i != mIncludeFiles->end(); ++i)
-			inMenu.AppendItem(i->name, i - mIncludeFiles->begin() + 1);
+			inMenu.AppendItem(i->name, cmd_OpenIncludeFromMenu);
 		
 		result = mIncludeFiles->size() > 0;
 	}
@@ -3926,13 +3927,15 @@ bool MDocument::GetIncludePopupItems(MMenu& inMenu)
 }
 
 // ---------------------------------------------------------------------------
-//	MDocument::SelectParsePopupItem
+//	MDocument::SelectIncludePopupItem
 
 void MDocument::SelectIncludePopupItem(uint32 inItem)
 {
 	if (mLanguage)
 	{
-		MIncludeFile file = mIncludeFiles->at(inItem - 1);
+		MIncludeFile file = mIncludeFiles->at(inItem);
+
+cout << "Open file " << file.name << endl;
 
 //		MProject* project = MProject::Instance();
 //		MPath p;

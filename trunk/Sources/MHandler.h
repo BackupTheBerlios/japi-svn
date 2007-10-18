@@ -1,6 +1,8 @@
 #ifndef MHANDLER_H
 #define MHANDLER_H
 
+class MMenu;
+
 class MHandler
 {
   public:
@@ -15,7 +17,9 @@ class MHandler
 							bool&			outChecked);
 
 	virtual bool		ProcessCommand(
-							uint32			inCommand);
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
 
 	void				SetSuper(
 							MHandler*		inSuper);

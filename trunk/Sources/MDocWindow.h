@@ -80,7 +80,9 @@ class MDocWindow : public MWindow
 	virtual bool		DoClose();
 
 	virtual bool		ProcessCommand(
-							uint32			inCommand);
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
 
 	virtual void		ModifiedChanged(
 							bool			inModified);

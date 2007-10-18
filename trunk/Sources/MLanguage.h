@@ -69,6 +69,7 @@ struct MNamedRange
 	uint32						end;
 	uint32						selectFrom;
 	uint32						selectTo;
+	uint32						index;
 	std::vector<MNamedRange>	subrange;
 };
 
@@ -134,9 +135,10 @@ class MLanguage
 						uint32				inPosition);
 	
 	void			GetParsePopupItems(
-						const MNamedRange&	inRanges,
+						MNamedRange&		inRanges,
 						const std::string&	inNSName,
-						MMenu&				inMenu);
+						MMenu&				inMenu,
+						uint32&				ioIndex);
 	
 	bool			GetSelectionForParseItem(
 						const MNamedRange&	inRanges,

@@ -103,7 +103,9 @@ bool MWindow::UpdateCommandStatus(
 }
 
 bool MWindow::ProcessCommand(
-	uint32			inCommand)
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
 {
 	bool result = true;	
 	
@@ -114,7 +116,7 @@ bool MWindow::ProcessCommand(
 			break;
 		
 		default:
-			result = MHandler::ProcessCommand(inCommand);
+			result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex);
 			break;
 	}
 	

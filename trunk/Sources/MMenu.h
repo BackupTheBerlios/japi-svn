@@ -13,6 +13,8 @@ typedef std::list<MMenuItem*>	MMenuItemList;
 class MMenu
 {
   public:
+					MMenu();
+
 					MMenu(
 						const std::string&	inLabel);
 
@@ -45,12 +47,26 @@ class MMenu
 	
 	void			SetAcceleratorGroup(
 						GtkAccelGroup*		inAcceleratorGroup);
+
+	int32			Popup(
+						MHandler*			inTarget,
+						GdkEventButton*		inEvent,
+						int32				inX,
+						int32				inY,
+						bool				inBottomMenu);
 	
   protected:
 
 					MMenu(
 						const std::string&	inLabel,
 						GtkWidget*			inMenuWidget);
+
+	static void		MenuPosition(
+						GtkMenu*			inMenu,
+						gint*				inX,
+						gint*				inY,
+						gboolean*			inPushIn,
+						gpointer			inUserData);
 
 	GtkWidget*		mGtkMenu;
 	GtkWidget*		mGtkMenuItem;
@@ -59,6 +75,7 @@ class MMenu
 	std::string		mLabel;
 	MMenuItemList	mItems;
 	MHandler*		mTarget;
+	int32			mPopupX, mPopupY;
 };
 
 class MMenubar

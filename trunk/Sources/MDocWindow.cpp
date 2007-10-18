@@ -53,17 +53,6 @@
 
 using namespace std;
 
-//namespace
-//{
-//enum {
-//	kTextViewPlaceHolderID = 128,
-//	kSelectionPanelViewID = 129,
-//	kChasingArrowsViewID = 130,
-//	kFunctionPopupViewID = 131,
-//	kIncludePopupViewID = 132
-//};
-//}
-
 // ------------------------------------------------------------------
 //
 
@@ -128,24 +117,6 @@ bool MParsePopup::OnExposeEvent(
 		
 		MDevice dev(this, bounds);
 
-//		dev.EraseRect(bounds);
-		
-//		Rect r;
-//		r.left =	static_cast<short>(bounds.origin.x);
-//		r.top = 	static_cast<short>(bounds.origin.y + bounds.size.height / 2 - 1);
-//		r.right =	static_cast<short>(r.left + 8);
-//		r.bottom =	static_cast<short>(r.top + 3);
-//	
-//		::DrawThemePopupArrow(&r, kThemeArrowDown, kThemeArrow5pt, state, nil, 0);
-//	
-//		r.left =	static_cast<short>(bounds.origin.x + 9);
-//		r.top =		static_cast<short>(bounds.origin.y);
-//		r.right =	static_cast<short>(r.left + bounds.size.width - 7);
-//		r.bottom =	static_cast<short>(bounds.origin.y + bounds.size.height);
-//		
-//		MCFString s(mName);
-//		::DrawThemeTextBox(s, kThemeSmallSystemFont, state, false, &r, teJustLeft, context);
-		
 		dev.DrawString(mName, bounds.x, bounds.y, true);
 	}
 	
@@ -160,29 +131,21 @@ bool MParsePopup::OnButtonPressEvent(
 	MDocument* doc = mController->GetDocument();
 	if (doc != nil)
 	{
-//		MMenu popup;
-//
-//		int32 x, y;
-//		ConvertToGlobal(x, y);
-//		
-//		if (mIsFunctionParser)
-//		{
-//			if (doc->GetParsePopupItems(popup))
-//			{
-//				uint32 select = popup.Popup(x, y, true);
-//				if (select)
-//					doc->SelectParsePopupItem(select);
-//			}
-//		}
-//		else
-//		{
-//			if (doc->GetIncludePopupItems(popup))
-//			{
-//				uint32 select = popup.Popup(x, y, true);
-//				if (select)
-//					doc->SelectIncludePopupItem(select);
-//			}
-//		}
+		MMenu* popup = new MMenu;
+		
+		int32 x = 0, y = 0;
+		ConvertToGlobal(x, y);
+		
+		if (mIsFunctionParser)
+		{
+			if (doc->GetParsePopupItems(*popup))
+				popup->Popup(mController, inEvent, x, y, true);
+		}
+		else
+		{
+			if (doc->GetIncludePopupItems(*popup))
+				popup->Popup(mController, inEvent, x, y, true);
+		}
 	}
 	
 	return true;
@@ -330,12 +293,14 @@ bool MDocWindow::UpdateCommandStatus(
 }
 
 bool MDocWindow::ProcessCommand(
-	uint32			inCommand)
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
 {
-	bool result = mController.ProcessCommand(inCommand);
+	bool result = mController.ProcessCommand(inCommand, inMenu, inItemIndex);
 	
 	if (result == false)
-		result = MWindow::ProcessCommand(inCommand);
+		result = MWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
 	
 	return result;
 }

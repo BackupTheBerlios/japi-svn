@@ -140,7 +140,9 @@ void MController::RemoveTextView(MTextView* inTextView)
 }
 
 bool MController::ProcessCommand(
-	uint32			inCommand)
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
 {
 	bool result = false;
 	
@@ -352,6 +354,14 @@ bool MController::ProcessCommand(
 //					dlog->Initialize(mDocument, mWindow);
 //					dlog.release();
 //				}
+				break;
+				
+			case cmd_SelectFunctionFromMenu:
+				mDocument->SelectParsePopupItem(inItemIndex);
+				break;
+			
+			case cmd_OpenIncludeFromMenu:
+				mDocument->SelectIncludePopupItem(inItemIndex);
 				break;
 		
 	//#ifndef NDEBUG
