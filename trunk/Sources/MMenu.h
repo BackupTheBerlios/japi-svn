@@ -22,9 +22,7 @@ class MMenu
 
 	void			AppendItem(
 						const std::string&	inLabel,
-						uint32				inCommand,
-						uint32				inAcceleratorKey = 0,
-						uint32				inAcceleratorModifiers = 0);
+						uint32				inCommand);
 	
 	void			AppendSeparator();
 
@@ -48,7 +46,7 @@ class MMenu
 	void			SetAcceleratorGroup(
 						GtkAccelGroup*		inAcceleratorGroup);
 
-	int32			Popup(
+	void			Popup(
 						MHandler*			inTarget,
 						GdkEventButton*		inEvent,
 						int32				inX,
@@ -68,10 +66,14 @@ class MMenu
 						gboolean*			inPushIn,
 						gpointer			inUserData);
 
+
+	virtual bool	OnDestroy();
+
+	MSlot<bool()>	mOnDestroy;
+
 	GtkWidget*		mGtkMenu;
 	GtkWidget*		mGtkMenuItem;
 	GtkAccelGroup*	mGtkAccel;
-	MMenu*			mParent;
 	std::string		mLabel;
 	MMenuItemList	mItems;
 	MHandler*		mTarget;

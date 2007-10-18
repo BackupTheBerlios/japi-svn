@@ -4,6 +4,7 @@
 #include "MCallbacks.h"
 #include "MMenu.h"
 #include "MWindow.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 
@@ -30,9 +31,7 @@ struct MMenuItem
 					MMenuItem(
 						MMenu*			inMenu,
 						const string&	inLabel,
-						uint32			inCommand,
-						uint32			inAcceleratorKey,
-						GdkModifierType	inAcceleratorModifiers);
+						uint32			inCommand);
 
 					MMenuItem(
 						MMenu*			inMenu,
@@ -55,8 +54,6 @@ struct MMenuItem
 	uint32			mIndex;
 	MMenu*			mMenu;
 	MMenu*			mSubMenu;
-	uint32			mAcceleratorKey;
-	GdkModifierType	mAcceleratorModifiers;
 	bool			mEnabled;
 	bool			mChecked;
 };
@@ -64,9 +61,7 @@ struct MMenuItem
 MMenuItem::MMenuItem(
 	MMenu*			inMenu,
 	const string&	inLabel,
-	uint32			inCommand,
-	uint32			inAcceleratorKey,
-	GdkModifierType	inAcceleratorModifiers)
+	uint32			inCommand)
 	: mCallback(this, &MMenuItem::ItemCallback)
 	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
@@ -75,8 +70,6 @@ MMenuItem::MMenuItem(
 	, mIndex(0)
 	, mMenu(inMenu)
 	, mSubMenu(nil)
-	, mAcceleratorKey(inAcceleratorKey)
-	, mAcceleratorModifiers(inAcceleratorModifiers)
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -96,8 +89,6 @@ MMenuItem::MMenuItem(
 	, mIndex(0)
 	, mMenu(inMenu)
 	, mSubMenu(inSubMenu)
-	, mAcceleratorKey(0)
-	, mAcceleratorModifiers(GdkModifierType(0))
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -115,8 +106,6 @@ MMenuItem::MMenuItem()
 	, mIndex(0)
 	, mMenu(nil)
 	, mSubMenu(nil)
-	, mAcceleratorKey(0)
-	, mAcceleratorModifiers(GdkModifierType(0))
 	, mEnabled(true)
 	, mChecked(false)
 {
@@ -126,6 +115,7 @@ MMenuItem::MMenuItem()
 
 MMenuItem::~MMenuItem()
 {
+cout << "Deleting menu item " << mLabel << endl;
 //	if (mGtkMenuItem != nil)
 //		gtk_widget_destroy(mGtkMenuItem);
 }
@@ -158,21 +148,23 @@ void MMenuItem::RecentItemActivated()
 // --------------------------------------------------------------------
 
 MMenu::MMenu()
-	: mGtkMenu(nil)
+	: mOnDestroy(this, &MMenu::OnDestroy)
+	, mGtkMenu(nil)
 	, mGtkMenuItem(nil)
 	, mGtkAccel(nil)
-	, mParent(nil)
 	, mTarget(nil)
 {
 	mGtkMenu = gtk_menu_new();
+
+	mOnDestroy.Connect(mGtkMenu, "destroy");
 }
 
 MMenu::MMenu(
 	const string&	inLabel)
-	: mGtkMenu(nil)
+	: mOnDestroy(this, &MMenu::OnDestroy)
+	, mGtkMenu(nil)
 	, mGtkMenuItem(nil)
 	, mGtkAccel(nil)
-	, mParent(nil)
 	, mLabel(inLabel)
 	, mTarget(nil)
 {
@@ -182,40 +174,41 @@ MMenu::MMenu(
 	gtk_widget_show(mGtkMenuItem);
 
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
+
+	mOnDestroy.Connect(mGtkMenu, "destroy");
 }
 
 MMenu::MMenu(
 	const string&	inLabel,
 	GtkWidget*		inMenuWidget)
-	: mGtkMenu(inMenuWidget)
+	: mOnDestroy(this, &MMenu::OnDestroy)
+	, mGtkMenu(inMenuWidget)
 	, mGtkMenuItem(nil)
 	, mGtkAccel(nil)
-	, mParent(nil)
 	, mLabel(inLabel)
 	, mTarget(nil)
 {
 	mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
 	gtk_widget_show(mGtkMenuItem);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mGtkMenuItem), mGtkMenu);
+	
+	mOnDestroy.Connect(mGtkMenu, "destroy");
 }
 
 MMenu::~MMenu()
 {
-	if (mGtkMenu != nil)
-		gtk_widget_destroy(mGtkMenu);
+cout << "Deleting menu" << endl;
+
+	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
+		delete *mi;
 }
 
 void MMenu::AppendItem(
 	const string&	inLabel,
-	uint32			inCommand,
-	uint32			inAcceleratorKey,
-	uint32			inAcceleratorModifiers)
+	uint32			inCommand)
 {
-	if (inAcceleratorKey != 0 and not gtk_accelerator_valid(inAcceleratorKey, GdkModifierType(inAcceleratorModifiers)))
-		cerr << "*** WARNING: Not a valid accelerator combination for " << inLabel << endl;
-		
 	MMenuItem* item = new MMenuItem(
-		this, inLabel, inCommand, inAcceleratorKey, GdkModifierType(inAcceleratorModifiers));
+		this, inLabel, inCommand);
 
 	item->mIndex = mItems.size();
 	
@@ -313,16 +306,20 @@ void MMenu::SetAcceleratorGroup(
 {
 	mGtkAccel = inAcceleratorGroup;
 	
+	MAcceleratorTable& at = MAcceleratorTable::Instance();
+	
 	gtk_menu_set_accel_group(GTK_MENU(mGtkMenu), mGtkAccel);
 	
 	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
 	{
 		MMenuItem* item = *mi;
 		
-		if (item->mAcceleratorKey != 0)
+		uint32 key, mod;
+		
+		if (at.GetAcceleratorKeyForCommand(item->mCommand, key, mod))
 		{
 			gtk_widget_add_accelerator(item->mGtkMenuItem, "activate", mGtkAccel,
-				item->mAcceleratorKey, item->mAcceleratorModifiers, GTK_ACCEL_VISIBLE);
+				key, GdkModifierType(mod), GTK_ACCEL_VISIBLE);
 		}
 		
 		if (item->mSubMenu != nil)
@@ -342,11 +339,9 @@ void MMenu::MenuPosition(
 	*inX = self->mPopupX;
 	*inY = self->mPopupY;
 	*inPushIn = true;
-
-	cout << "Set location: " << *inX << ", " << *inY << endl;
 }
 
-int32 MMenu::Popup(
+void MMenu::Popup(
 	MHandler*			inHandler,
 	GdkEventButton*		inEvent,
 	int32				inX,
@@ -364,6 +359,15 @@ int32 MMenu::Popup(
 
 	gtk_menu_popup(GTK_MENU(mGtkMenu), nil, nil,
 		&MMenu::MenuPosition, nil, inEvent->button, inEvent->time);
+}
+
+bool MMenu::OnDestroy()
+{
+	mGtkMenu = nil;
+	
+	delete this;
+	
+	return false;
 }
 
 // --------------------------------------------------------------------

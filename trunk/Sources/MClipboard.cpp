@@ -65,12 +65,10 @@ void MClipboard::Data::AddData(const string& inText)
 }
 
 MClipboard::MClipboard()
-	: mOwnerChangedEvent(this, &MClipboard::OnOwnerChangedEvent)
-	, mCount(0)
+	: mCount(0)
 	, mOwnerChanged(true)
 	, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
 {
-	mOwnerChangedEvent.Connect(GTK_WIDGET(mGtkClipboard), "owner-change");
 }
 
 MClipboard::~MClipboard()

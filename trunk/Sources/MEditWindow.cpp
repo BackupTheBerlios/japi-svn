@@ -61,50 +61,50 @@ MEditWindow::MEditWindow()
 	// the menubar
 	
 	MMenu* fileMenu = new MMenu("File");
-	fileMenu->AppendItem("New", cmd_New, GDK_N, GDK_CONTROL_MASK);
-	fileMenu->AppendItem("Open…", cmd_Open, GDK_O, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("New", cmd_New);
+	fileMenu->AppendItem("Open…", cmd_Open);
 	
 	fileMenu->AppendRecentMenu("Open Recent…");
 	
-	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile, GDK_D, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	fileMenu->AppendItem("Open Source/Header", cmd_SwitchHeaderSource, GDK_1, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile);
+	fileMenu->AppendItem("Open Source/Header", cmd_SwitchHeaderSource);
 	
 	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Close", cmd_Close, GDK_W, GDK_CONTROL_MASK);
-	fileMenu->AppendItem("Save", cmd_Save, GDK_S, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Close", cmd_Close);
+	fileMenu->AppendItem("Save", cmd_Save);
 	fileMenu->AppendItem("Save As…", cmd_SaveAs);
 	fileMenu->AppendItem("Revert", cmd_Revert);
 	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Quit", cmd_Quit, GDK_Q, GDK_CONTROL_MASK);
+	fileMenu->AppendItem("Quit", cmd_Quit);
 	
 	mMenubar.AddMenu(fileMenu);
 	
 	MMenu* editMenu = new MMenu("Edit");
-	editMenu->AppendItem("Undo", cmd_Undo, GDK_Z, GDK_CONTROL_MASK);
-	editMenu->AppendItem("Redo", cmd_Redo, GDK_Z, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	editMenu->AppendItem("Undo", cmd_Undo);
+	editMenu->AppendItem("Redo", cmd_Redo);
 	editMenu->AppendSeparator();
-	editMenu->AppendItem("Cut", cmd_Cut, GDK_X, GDK_CONTROL_MASK);
-	editMenu->AppendItem("Cut and append", cmd_CutAppend, GDK_X, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	editMenu->AppendItem("Copy", cmd_Copy, GDK_C, GDK_CONTROL_MASK);
-	editMenu->AppendItem("Copy and append", cmd_CopyAppend, GDK_C, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	editMenu->AppendItem("Paste", cmd_Paste, GDK_V, GDK_CONTROL_MASK);
-	editMenu->AppendItem("Paste Next", cmd_PasteNext, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	editMenu->AppendItem("Cut", cmd_Cut);
+	editMenu->AppendItem("Cut and append", cmd_CutAppend);
+	editMenu->AppendItem("Copy", cmd_Copy);
+	editMenu->AppendItem("Copy and append", cmd_CopyAppend);
+	editMenu->AppendItem("Paste", cmd_Paste);
+	editMenu->AppendItem("Paste Next", cmd_PasteNext);
 	editMenu->AppendItem("Clear", cmd_Clear);
-	editMenu->AppendItem("Select all", cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
+	editMenu->AppendItem("Select all", cmd_SelectAll);
 //	editMenu->AppendSeparator();
 //	editMenu->AppendItem("Font…", cmd_
 	
 	mMenubar.AddMenu(editMenu);
 	
 	MMenu* textMenu = new MMenu("Text");
-	textMenu->AppendItem("Balance", cmd_Balance, GDK_B, GDK_CONTROL_MASK);
+	textMenu->AppendItem("Balance", cmd_Balance);
 	textMenu->AppendItem("Softwrap", cmd_Softwrap);
 	textMenu->AppendSeparator();
-	textMenu->AppendItem("Shift Left", cmd_ShiftLeft, GDK_bracketleft, GDK_CONTROL_MASK);
-	textMenu->AppendItem("Shift Right", cmd_ShiftRight, GDK_bracketright, GDK_CONTROL_MASK);
+	textMenu->AppendItem("Shift Left", cmd_ShiftLeft);
+	textMenu->AppendItem("Shift Right", cmd_ShiftRight);
 	textMenu->AppendSeparator();
-	textMenu->AppendItem("Comment", cmd_Comment, GDK_apostrophe, GDK_CONTROL_MASK);
-	textMenu->AppendItem("Uncomment", cmd_Uncomment, GDK_apostrophe, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	textMenu->AppendItem("Comment", cmd_Comment);
+	textMenu->AppendItem("Uncomment", cmd_Uncomment);
 	textMenu->AppendSeparator();
 	textMenu->AppendItem("Entab", cmd_Entab);
 	textMenu->AppendItem("Detab", cmd_Detab);
@@ -115,35 +115,35 @@ MEditWindow::MEditWindow()
 
 	MMenu* searchMenu = new MMenu("Search");
 
-	searchMenu->AppendItem("Fast Find", cmd_FastFind, GDK_I, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Fast Find Backward", cmd_FastFind, GDK_I, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Fast Find", cmd_FastFind);
+	searchMenu->AppendItem("Fast Find Backward", cmd_FastFind);
 	searchMenu->AppendSeparator();
-	searchMenu->AppendItem("Find", cmd_Find, GDK_F, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Find Next", cmd_FindNext, GDK_G, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Find Previous", cmd_FindPrev, GDK_G, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	searchMenu->AppendItem("Find in Next File", cmd_FindInNextFile, GDK_J, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Enter Search String", cmd_EnterSearchString, GDK_E, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Enter Replace String", cmd_EnterReplaceString, GDK_E, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Find", cmd_Find);
+	searchMenu->AppendItem("Find Next", cmd_FindNext);
+	searchMenu->AppendItem("Find Previous", cmd_FindPrev);
+	searchMenu->AppendItem("Find in Next File", cmd_FindInNextFile);
+	searchMenu->AppendItem("Enter Search String", cmd_EnterSearchString);
+	searchMenu->AppendItem("Enter Replace String", cmd_EnterReplaceString);
 	searchMenu->AppendSeparator();
-	searchMenu->AppendItem("Replace", cmd_Replace, GDK_equal, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Replace All", cmd_ReplaceAll, GDK_equal, GDK_CONTROL_MASK | GDK_MOD1_MASK);
-	searchMenu->AppendItem("Replace and Find Next", cmd_ReplaceFindNext, GDK_T, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Replace and Find Previous", cmd_ReplaceFindPrev, GDK_T, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Replace", cmd_Replace);
+	searchMenu->AppendItem("Replace All", cmd_ReplaceAll);
+	searchMenu->AppendItem("Replace and Find Next", cmd_ReplaceFindNext);
+	searchMenu->AppendItem("Replace and Find Previous", cmd_ReplaceFindPrev);
 	searchMenu->AppendSeparator();
-	searchMenu->AppendItem("Complete", cmd_CompleteLookingBack, GDK_P, GDK_CONTROL_MASK);
-	searchMenu->AppendItem("Complete Looking Forward", cmd_CompleteLookingFwd, GDK_P, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+	searchMenu->AppendItem("Complete", cmd_CompleteLookingBack);
+	searchMenu->AppendItem("Complete Looking Forward", cmd_CompleteLookingFwd);
 	searchMenu->AppendSeparator();
-	searchMenu->AppendItem("Jump to Line", cmd_GoToLine, GDK_comma, GDK_CONTROL_MASK);
+	searchMenu->AppendItem("Jump to Line", cmd_GoToLine);
 	
 	mMenubar.AddMenu(searchMenu);
 
 	MMenu* markMenu = new MMenu("Mark");
 	
-	markMenu->AppendItem("Jump to Next Marked Line", cmd_JumpToNextMark, GDK_F2);
-	markMenu->AppendItem("Jump to Previous Marked Line", cmd_JumpToPrevMark, GDK_F2, GDK_MOD1_MASK);
+	markMenu->AppendItem("Jump to Next Marked Line", cmd_JumpToNextMark);
+	markMenu->AppendItem("Jump to Previous Marked Line", cmd_JumpToPrevMark);
 	markMenu->AppendSeparator();
 	markMenu->AppendItem("Clear all Marks", cmd_ClearMarks);
-	markMenu->AppendItem("Mark Line", cmd_MarkLine, GDK_F1);
+	markMenu->AppendItem("Mark Line", cmd_MarkLine);
 	markMenu->AppendItem("Find and Mark…", cmd_MarkMatching);
 	markMenu->AppendSeparator();
 	markMenu->AppendItem("Copy Marked Lines", cmd_CopyMarkedLines);

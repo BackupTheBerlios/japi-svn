@@ -64,13 +64,13 @@ void MScrollBar::SetAdjustmentValues(
 	mAdjustment->value = inValue;
 	
 	gtk_adjustment_changed(mAdjustment);
-
-	cout << "lower: " << inLower
-		 << " upper: " << inUpper
-		 << " step: " << inStepIncrement
-		 << " page: " << inPageIncrement
-		 << " size: " << inPageSize
-		 << " value: " << inValue
-		 << endl;
- 
+//
+//	cout << "lower: " << inLower
+//		 << " upper: " << inUpper
+//		 << " step: " << inStepIncrement
+//		 << " page: " << inPageIncrement
+//		 << " size: " << inPageSize
+//		 << " value: " << inValue
+//		 << endl;
+// 
 }
