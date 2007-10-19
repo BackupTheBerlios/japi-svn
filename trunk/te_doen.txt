@@ -1,7 +1,13 @@
 ﻿Te doen
 
+- dialogs
 - Rare highlight bug bij laatste regels of zo?
 - project
 - drag&drop
 - eigen unicode tabellen afmaken
-- 
+- openen doc vanaf commandline, met wait en zo
+- verminderen aantal gelinkte bibliotheken
+- entab/detab
+- preferences
+- import clipboard bij startup
+

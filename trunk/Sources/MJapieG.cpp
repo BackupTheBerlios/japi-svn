@@ -214,20 +214,24 @@ void MJapieApp::UpdateWindowMenu(
 	MDocument* doc = MDocument::GetFirstDocument();
 	while (doc != nil)
 	{
-		string label;
-		
-		if (doc->IsSpecified())
-			label = doc->GetURL().leaf();
-		else
+		if (not doc->IsWorksheet())
 		{
-			MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
-			if (w != nil)
-				label = w->GetTitle();
+			string label;
+			
+			if (doc->IsSpecified())
+				label = doc->GetURL().leaf();
 			else
-				label = "weird";
+			{
+				MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
+				if (w != nil)
+					label = w->GetTitle();
+				else
+					label = "weird";
+			}
+			
+			inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
 		}
 		
-		inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
 		doc = doc->GetNextDocument();
 	}	
 }

@@ -70,6 +70,7 @@ MClipboard::MClipboard()
 	, mOwnerChanged(true)
 	, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
 {
+	mOwnerChange.Connect(G_OBJECT(mGtkClipboard), "owner-change");
 }
 
 MClipboard::~MClipboard()
