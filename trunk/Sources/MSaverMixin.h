@@ -60,7 +60,8 @@ class MSaverMixin
 							MWindow*			inParentWindow);
 
 	virtual void		SaveDocumentAs(
-							MWindow*			inParentWindow);
+							MWindow*			inParentWindow,
+							const std::string&	inSuggestedName);
 
   protected:
 

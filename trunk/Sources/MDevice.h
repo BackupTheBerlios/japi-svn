@@ -45,6 +45,12 @@ class MDevice
 						MColor				inColor1,
 						MColor				inColor2);
 	
+	void			DrawListItemBackground(
+						MRect				inRect,
+						bool				inSelected,
+						bool				inActive,
+						bool				inOdd);
+
 	uint32			GetAscent() const;
 	
 	uint32			GetDescent() const;

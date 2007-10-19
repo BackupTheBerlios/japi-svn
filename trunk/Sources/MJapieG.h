@@ -44,19 +44,6 @@
 
 #define nil NULL
 
-// ---------------------------------------------------------------------------
-//	Command ID numbers for our custom menu items
-
-const uint32
-	cmd_Preferences		= 'pref',
-
-	cmd_CloseAll		= 'Clos',
-	cmd_SaveAll			= 'Save',
-	cmd_OpenRecent		= 'Recd',
-	cmd_OpenTemplate	= 'Tmpd',
-	cmd_ClearRecent		= 'ClrR',
-	cmd_Worksheet		= 'Wrks';
-
 class MWindow;
 class MDocument;
 

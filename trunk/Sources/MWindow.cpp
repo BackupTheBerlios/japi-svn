@@ -79,6 +79,9 @@ void MWindow::SetModifiedMarkInTitle(
 bool MWindow::OnDestroy()
 {
 	cout << "destroy" << endl;
+	
+	eWindowClosed(this);	
+	
 	gApp->RecycleWindow(this);
 	return false;
 }

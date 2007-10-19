@@ -260,6 +260,27 @@ void MDevice::CreateAndUsePattern(
 	}
 }
 
+void MDevice::DrawListItemBackground(
+	MRect				inRect,
+	bool				inSelected,
+	bool				inActive,
+	bool				inOdd)
+{
+	if (inSelected)
+	{
+		if (inActive)
+			SetBackColor(gHiliteColor);
+		else
+			SetBackColor(gInactiveHiliteColor);
+	}
+	else if (inOdd)
+		SetBackColor(gOddRowColor);
+	else
+		SetBackColor(kWhite);
+	
+	EraseRect(inRect);
+}
+
 uint32 MDevice::GetAscent() const
 {
 	uint32 result = 10;

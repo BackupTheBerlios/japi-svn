@@ -1095,6 +1095,8 @@ void MTextView::ScrollToSelection(
    
 	ScrollToCaret();
 
+	GetBounds(bounds);
+
 	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
 	{
 		int32 ax, cx;

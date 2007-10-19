@@ -152,6 +152,13 @@ MEditWindow::MEditWindow()
 	
 	mMenubar.AddMenu(markMenu);
 
+	MMenu* windowMenu = new MMenu("Window");
+	
+	windowMenu->AppendItem("Worksheet", cmd_Worksheet);	
+	windowMenu->AppendSeparator();
+	
+	mMenubar.AddMenu(windowMenu);
+
 	// content
 	
 	GtkWidget* hbox = gtk_hbox_new(false, 0);

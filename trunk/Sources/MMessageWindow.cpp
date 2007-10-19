@@ -39,7 +39,7 @@
 #include <boost/regex.hpp>
 
 #include "MMessageWindow.h"
-//#include "MListView.h"
+#include "MListView.h"
 #include "MDevice.h"
 #include "MGlobals.h"
 #include "MUtils.h"
@@ -158,25 +158,19 @@ MMessageWindow::MMessageWindow()
 	: eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
 	, mBaseDirectory("/")
 	, mLastAddition(0)
-{//
-//	MView::RegisterSubclass<MTextViewContainer>();
-//	MView::RegisterSubclass<MListView>();
-//	
-//	MDocWindow::Initialize(nil, "Lijst");
-//
-//	HIViewRef listViewRef;
-//	HIViewID id = { kJapieSignature, kListViewID };
-//	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &listViewRef));
-//	
-//	mList = MView::GetView<MListView>(listViewRef);
-//	if (mList == nil)
-//		THROW(("Listview not found"));
-//
-//	SetCallBack(mList->cbDrawItem, this, &MMessageWindow::DrawItem);
-//	SetCallBack(mList->cbRowSelected, this, &MMessageWindow::SelectItem);
-//	SetCallBack(mList->cbRowInvoked, this, &MMessageWindow::InvokeItem);
-//
-//	Show();
+{
+    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 200);
+	
+	mList = new MListView();
+	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mList->GetGtkWidget());
+
+	SetCallBack(mList->cbDrawItem, this, &MMessageWindow::DrawItem);
+	SetCallBack(mList->cbRowSelected, this, &MMessageWindow::SelectItem);
+	SetCallBack(mList->cbRowInvoked, this, &MMessageWindow::InvokeItem);
+	
+	gtk_widget_show_all(GetGtkWidget());
+
+	Show();
 }
 	
 void MMessageWindow::AddMessage(
@@ -191,7 +185,7 @@ void MMessageWindow::AddMessage(
 		MMessageItem::Create(inKind, AddFileToTable(inFile),
 			inLine, inMinOffset, inMaxOffset, inMessage));
 	
-//	mList->InsertItem(mList->GetCount(), item.get(), item->Size());
+	mList->InsertItem(mList->GetCount(), item.get(), item->Size());
 }
 
 void MMessageWindow::AddMessages(
@@ -201,9 +195,9 @@ void MMessageWindow::AddMessages(
 	
 	mFileTable = imp->mFileTable;
 	
-//	mList->RemoveAll();
-//	for (MMessageItemArray::iterator i = imp->mArray.begin(); i != imp->mArray.end(); ++i)
-//		mList->InsertItem(mList->GetCount(), (*i), (*i)->Size());
+	mList->RemoveAll();
+	for (MMessageItemArray::iterator i = imp->mArray.begin(); i != imp->mArray.end(); ++i)
+		mList->InsertItem(mList->GetCount(), (*i), (*i)->Size());
 }
 
 void MMessageWindow::SetBaseDirectory(
@@ -216,7 +210,7 @@ void MMessageWindow::SelectItem(
 	uint32				inItemNr)
 {
 	MMessageItem item;
-//	mList->GetItem(inItemNr, &item, sizeof(item));
+	mList->GetItem(inItemNr, &item, sizeof(item));
 	
 	if (item.mFileNr > 0)
 	{
@@ -224,26 +218,26 @@ void MMessageWindow::SelectItem(
 		if (doc == nil)
 			doc = new MDocument(&mFileTable[item.mFileNr - 1]);
 		
-		if (doc == mController.GetDocument() or
-			mController.TryCloseController(kSaveChangesClosingDocument))
-		{
-			mController.SetDocument(doc);
-	
-			if (item.mMaxOffset > item.mMinOffset)
-				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
-			else if (item.mLineNr > 0)
-				doc->GoToLine(item.mLineNr - 1);
-		}
+//		if (doc == mController.GetDocument() or
+//			mController.TryCloseController(kSaveChangesClosingDocument))
+//		{
+//			mController.SetDocument(doc);
+//	
+//			if (item.mMaxOffset > item.mMinOffset)
+//				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
+//			else if (item.mLineNr > 0)
+//				doc->GoToLine(item.mLineNr - 1);
+//		}
 	}
-	else
-		mController.TryCloseController(kSaveChangesClosingDocument);
+//	else
+//		mController.TryCloseController(kSaveChangesClosingDocument);
 }
 
 void MMessageWindow::InvokeItem(
 	uint32				inItemNr)
 {
 	MMessageItem item;
-//	mList->GetItem(inItemNr, &item, sizeof(item));
+	mList->GetItem(inItemNr, &item, sizeof(item));
 	
 	if (item.mFileNr > 0)
 	{
@@ -301,27 +295,27 @@ void MMessageWindow::AddStdErr(
 //	cout << "spec: " << spec.str() << endl;
 //} catch (...) {}
 				
-//				if (exists(spec))
-//				{
-//					MMessageKind kind = kMsgKindNone;
-//					if (m[5].matched)
-//					{
-//						string k(m[5].first, m[5].second);
-//						if (k == "error")
-//							kind = kMsgKindError;
-//						else if (k == "warning")
-//							kind = kMsgKindWarning;
-//						else if (k == "note")
-//							kind = kMsgKindNote;
-//					}
-//					
-//					uint32 lineNr = 0;
-//					if (m[3].matched)
-//						lineNr = atoi(string(m[3].first, m[3].second).c_str());
-//					AddMessage(kind, spec, lineNr, 0, 0, string(m[6].first, m[6].second));
-//					
-//					continue;
-//				}
+				if (fs::exists(spec))
+				{
+					MMessageKind kind = kMsgKindNone;
+					if (m[5].matched)
+					{
+						string k(m[5].first, m[5].second);
+						if (k == "error")
+							kind = kMsgKindError;
+						else if (k == "warning")
+							kind = kMsgKindWarning;
+						else if (k == "note")
+							kind = kMsgKindNote;
+					}
+					
+					uint32 lineNr = 0;
+					if (m[3].matched)
+						lineNr = atoi(string(m[3].first, m[3].second).c_str());
+					AddMessage(kind, spec, lineNr, 0, 0, string(m[6].first, m[6].second));
+					
+					continue;
+				}
 			}
 
 			AddMessage(kMsgKindNone, spec, 0, 0, 0, line);
@@ -333,7 +327,7 @@ void MMessageWindow::AddStdErr(
 
 void MMessageWindow::ClearList()
 {
-//	mList->RemoveAll();
+	mList->RemoveAll();
 	mFileTable.clear();
 }
 
@@ -348,20 +342,9 @@ void MMessageWindow::DrawItem(
 	const MMessageItem* item = static_cast<const MMessageItem*>(inData);
 	assert(item->Size() == inDataLength);
 	
-//	MDevice dev(inContext, inFrame);
-
-	if (inSelected)
-		inDevice.SetBackColor(gHiliteColor);
-	else if ((inRow % 2) == 1)
-		inDevice.SetBackColor(gOddRowColor);
-	else
-		inDevice.SetBackColor(kWhite);
-	
-	inDevice.EraseRect(inFrame);
-	
 	float x, y;
 	x = inFrame.x;
-	y = inFrame.y + inDevice.GetAscent() + 1;
+	y = inFrame.y + 1;
 
 	switch (item->mKind)
 	{
@@ -377,22 +360,19 @@ void MMessageWindow::DrawItem(
 	inDevice.SetForeColor(kBlack);
 	
 	if (item->mFileNr > 0)
-		inDevice.DrawString(mFileTable[item->mFileNr - 1].leaf(), x + kFileColumnOffset, y);
+		inDevice.DrawString(mFileTable[item->mFileNr - 1].leaf(), x + kFileColumnOffset, y, true);
 
 	if (item->mLineNr > 0)
-		inDevice.DrawString(NumToString(item->mLineNr), x + kLineColumnOffset, y);
+		inDevice.DrawString(NumToString(item->mLineNr), x + kLineColumnOffset, y, true);
 
-	inDevice.DrawString(string(item->mMessage, item->mMessage + item->mMessageLength), x + kMessageColumnOffset, y);
+	inDevice.DrawString(string(item->mMessage, item->mMessage + item->mMessageLength), 
+		x + kMessageColumnOffset, y, true);
 }
 
 uint32 MMessageWindow::AddFileToTable(
 	const MPath&			inFile)
 {
-//try {
-//	cout << "add: " << inFile.str() << endl;
-//} catch (...) {}
-//
-//	if (not exists(inFile))
+	if (not exists(inFile))
 		return 0;
 	
 	MFileTable::iterator f = find(mFileTable.begin(), mFileTable.end(), inFile);
@@ -409,6 +389,7 @@ void MMessageWindow::DocumentChanged(
 
 bool MMessageWindow::DoClose()
 {
-	return mController.TryCloseController(kSaveChangesClosingDocument);
+//	return mController.TryCloseController(kSaveChangesClosingDocument);
+	return MWindow::DoClose();
 }
 

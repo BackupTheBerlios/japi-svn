@@ -537,7 +537,14 @@ bool MController::TryCloseController(
 
 void MController::SaveDocumentAs()
 {
-	MSaverMixin::SaveDocumentAs(mWindow);
+	string name;	
+	
+	if (mDocument->IsSpecified())
+		name = mDocument->GetURL().leaf();
+	else
+		name = mWindow->GetTitle();
+	
+	MSaverMixin::SaveDocumentAs(mWindow, name);
 }
 
 void MController::TryDiscardChanges()

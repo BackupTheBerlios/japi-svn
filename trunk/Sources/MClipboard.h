@@ -73,12 +73,6 @@ class MClipboard
 						MClipboard();
 	virtual				~MClipboard();
 
-//	static pascal OSStatus		
-//						ScrapPromiseKeeperCallback(ScrapRef inScrap,
-//							ScrapFlavorType inFlavor, void* inUserData);
-//	static ScrapPromiseKeeperUPP
-//						sScrapPromiseKeeperUPP;
-
 	struct Data
 	{
 						Data(
@@ -107,6 +101,11 @@ class MClipboard
 	static void			GtkClipboardClear(
 							GtkClipboard*		inClipboard,
 							gpointer			inUserDataOrOwner);
+
+	void				OnOwnerChange(
+							GdkEventOwnerChange*inEvent);
+	
+	MSlot<void(GdkEventOwnerChange*)>			mOwnerChange;
 	
 	Data*				mRing[kClipboardRingSize];
 	uint32				mCount;

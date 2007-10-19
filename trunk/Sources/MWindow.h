@@ -38,6 +38,8 @@ class MWindow : public MView, public MHandler
 						const MMenu*	inMenu,
 						uint32			inItemIndex);
 
+	MEventOut<void(MWindow*)>			eWindowClosed;
+
   protected:
 
 	virtual bool	DoClose();

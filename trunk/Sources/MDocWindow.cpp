@@ -169,7 +169,11 @@ MDocWindow::MDocWindow()
 	, mParsePopup(nil)
 	, mIncludePopup(nil)
 {
-    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 600);
+	GdkGeometry geom = {};
+	geom.min_width = 300;
+	geom.min_height = 100;
+	gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);	
+	gtk_window_set_default_size(GTK_WINDOW(GetGtkWidget()), 600, 700);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 

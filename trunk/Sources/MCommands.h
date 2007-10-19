@@ -54,65 +54,67 @@ enum MStdCommand {
 
 // private commands
 
-const uint32 cmd_Balance =				'Bala';
-const uint32 cmd_ShiftLeft =			'ShiL';
-const uint32 cmd_ShiftRight =			'ShiR';
-const uint32 cmd_Comment =				'Comm';
-const uint32 cmd_Uncomment =			'Unco';
-const uint32 cmd_Entab =				'Enta';
-const uint32 cmd_Detab =				'Deta';
-const uint32 cmd_PasteNext =			'PstN';
-const uint32 cmd_CopyAppend =			'CopA';
-const uint32 cmd_CutAppend =			'CutA';
-const uint32 cmd_SelectAll =			'sall';
-const uint32 cmd_FastFind =				'FFnd';
-const uint32 cmd_FastFindBW =			'FFnb';
-const uint32 cmd_MarkLine =				'Mark';
-const uint32 cmd_ClearMarks =			'ClAM';
-const uint32 cmd_CutMarkedLines =		'CuML';
-const uint32 cmd_CopyMarkedLines =		'CoML';
-const uint32 cmd_ClearMarkedLines =		'ClML';
-const uint32 cmd_JumpToNextMark =		'NxtM';
-const uint32 cmd_JumpToPrevMark =		'PrvM';
-const uint32 cmd_Find = 				'Find';
-const uint32 cmd_FindNext =				'FndN';
-const uint32 cmd_FindPrev =				'FndP';
-const uint32 cmd_FindInNextFile =		'FnND';
-const uint32 cmd_MarkMatching =			'F&Mk';
-const uint32 cmd_EnterSearchString =	'EntF';
-const uint32 cmd_EnterReplaceString =	'EntR';
-const uint32 cmd_Replace =				'Repl';
-const uint32 cmd_ReplaceAll =			'RplA';
-const uint32 cmd_ReplaceFindNext =		'RpFN';
-const uint32 cmd_ReplaceFindPrev =		'RpFP';
-const uint32 cmd_CompleteLookingBack =	'ComB';
-const uint32 cmd_CompleteLookingFwd =	'ComF';
-const uint32 cmd_OpenIncludeFile =		'OInc';
-const uint32 cmd_GoToLine =				'GoTo';
-const uint32 cmd_SwitchHeaderSource =	'SHdS';
-const uint32 cmd_Softwrap = 			'SftW';
-
-const uint32 cmd_ChangeCaseUpper =		'CsUP';
-const uint32 cmd_ChangeCaseLower =		'Cslw';
-const uint32 cmd_ChangeCaseMixed =		'CsMx';
-
-const uint32 cmd_ShowDiffWindow =		'diff';
-
-const uint32 cmd_ShowDocInfoDialog = 	'DocI';
-
-const uint32 cmd_AddFileToProject =		'Padd';
-const uint32 cmd_CheckSyntax =			'Psyn';
-const uint32 cmd_Precompile =			'Ppre';
-const uint32 cmd_Compile =				'Pcmp';
-const uint32 cmd_BringUpToDate =		'Pupd';
-const uint32 cmd_Make =					'Pmak';
-const uint32 cmd_MakeClean =			'Pcln';
-const uint32 cmd_Run =					'Prun';
-const uint32 cmd_NewGroup =				'Pnwg';
-
 const uint32
-	cmd_OpenIncludeFromMenu =			'OMic',
-	cmd_SelectFunctionFromMenu =		'OMfu';
+	cmd_Balance =				'Bala',
+	cmd_ShiftLeft =				'ShiL',
+	cmd_ShiftRight =			'ShiR',
+	cmd_Comment =				'Comm',
+	cmd_Uncomment =				'Unco',
+	cmd_Entab =					'Enta',
+	cmd_Detab =					'Deta',
+	cmd_PasteNext =				'PstN',
+	cmd_CopyAppend =			'CopA',
+	cmd_CutAppend =				'CutA',
+	cmd_SelectAll =				'sall',
+	cmd_FastFind =				'FFnd',
+	cmd_FastFindBW =			'FFnb',
+	cmd_MarkLine =				'Mark',
+	cmd_ClearMarks =			'ClAM',
+	cmd_CutMarkedLines =		'CuML',
+	cmd_CopyMarkedLines =		'CoML',
+	cmd_ClearMarkedLines =		'ClML',
+	cmd_JumpToNextMark =		'NxtM',
+	cmd_JumpToPrevMark =		'PrvM',
+	cmd_Find = 					'Find',
+	cmd_FindNext =				'FndN',
+	cmd_FindPrev =				'FndP',
+	cmd_FindInNextFile =		'FnND',
+	cmd_MarkMatching =			'F&Mk',
+	cmd_EnterSearchString =		'EntF',
+	cmd_EnterReplaceString =	'EntR',
+	cmd_Replace =				'Repl',
+	cmd_ReplaceAll =			'RplA',
+	cmd_ReplaceFindNext =		'RpFN',
+	cmd_ReplaceFindPrev =		'RpFP',
+	cmd_CompleteLookingBack =	'ComB',
+	cmd_CompleteLookingFwd =	'ComF',
+	cmd_OpenIncludeFile =		'OInc',
+	cmd_GoToLine =				'GoTo',
+	cmd_SwitchHeaderSource =	'SHdS',
+	cmd_Softwrap = 				'SftW',
+	cmd_ChangeCaseUpper =		'CsUP',
+	cmd_ChangeCaseLower =		'Cslw',
+	cmd_ChangeCaseMixed =		'CsMx',
+	cmd_ShowDiffWindow =		'diff',
+	cmd_ShowDocInfoDialog = 	'DocI',
+	cmd_AddFileToProject =		'Padd',
+	cmd_CheckSyntax =			'Psyn',
+	cmd_Precompile =			'Ppre',
+	cmd_Compile =				'Pcmp',
+	cmd_BringUpToDate =			'Pupd',
+	cmd_Make =					'Pmak',
+	cmd_MakeClean =				'Pcln',
+	cmd_Run =					'Prun',
+	cmd_NewGroup =				'Pnwg',
+	cmd_OpenIncludeFromMenu =	'OMic',
+	cmd_SelectFunctionFromMenu ='OMfu',
+	cmd_Preferences	=			'pref',
+	cmd_CloseAll =				'Clos',
+	cmd_SaveAll =				'Save',
+	cmd_OpenRecent =			'Recd',
+	cmd_OpenTemplate =			'Tmpd',
+	cmd_ClearRecent =			'ClrR',
+	cmd_Worksheet =				'Wrks';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

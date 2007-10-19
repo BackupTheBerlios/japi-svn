@@ -70,7 +70,8 @@ MMenuItem::MMenuItem(
 	else
 	{
 		mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-		mCallback.Connect(mGtkMenuItem, "activate");
+		if (inCommand != 0)	
+			mCallback.Connect(mGtkMenuItem, "activate");
 	}
 
 	gtk_widget_show(mGtkMenuItem);
@@ -107,6 +108,7 @@ MMenu::MMenu(
 	const string&	inLabel,
 	GtkWidget*		inMenuWidget)
 	: mOnDestroy(this, &MMenu::OnDestroy)
+	, mOnSelectionDone(this, &MMenu::OnSelectionDone)
 	, mGtkMenu(inMenuWidget)
 	, mLabel(inLabel)
 	, mTarget(nil)
@@ -265,6 +267,8 @@ void MMenu::Popup(
 {
 	SetTarget(inHandler);
 	
+	mOnSelectionDone.Connect(mGtkMenu, "selection-done");
+	
 	mPopupX = inX;
 	mPopupY = inY;
 	
@@ -283,6 +287,12 @@ bool MMenu::OnDestroy()
 	delete this;
 	
 	return false;
+}
+
+void MMenu::OnSelectionDone()
+{
+cout << "selection-done" << endl;
+	gtk_widget_destroy(mGtkMenu);
 }
 
 // --------------------------------------------------------------------

@@ -64,8 +64,10 @@ class MMenu
 						uint32				inCommand);
 
 	virtual bool	OnDestroy();
+	virtual void	OnSelectionDone();
 
 	MSlot<bool()>	mOnDestroy;
+	MSlot<void()>	mOnSelectionDone;
 
 	GtkWidget*		mGtkMenu;
 	std::string		mLabel;

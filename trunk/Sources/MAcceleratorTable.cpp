@@ -40,8 +40,29 @@
 
 using namespace std;
 
+namespace {
+
 const uint32
 	kValidModifiersMask = GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK;
+
+struct MCommandToString
+{
+	char mCommandString[10];
+	
+	MCommandToString(uint32 inCommand)
+	{
+		strcpy(mCommandString, "MCmd_xxxx");
+		
+		mCommandString[5] = ((inCommand & 0xff000000) >> 24) & 0x000000ff;
+		mCommandString[6] = ((inCommand & 0x00ff0000) >> 16) & 0x000000ff;
+		mCommandString[7] = ((inCommand & 0x0000ff00) >>  8) & 0x000000ff;
+		mCommandString[8] = ((inCommand & 0x000000ff) >>  0) & 0x000000ff;
+	}
+	
+	operator const char*() const	{ return mCommandString; }
+};
+
+}
 
 struct MAcceleratorTableImp
 {
@@ -83,7 +104,7 @@ MAcceleratorTable::MAcceleratorTable()
 	RegisterAcceleratorKey(cmd_Comment, GDK_apostrophe, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Uncomment, GDK_quotedbl, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_FastFind, GDK_I, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_FastFind, GDK_i, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_FastFindBW, GDK_i, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Find, GDK_F, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_FindNext, GDK_G, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_FindPrev, GDK_g, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
@@ -100,6 +121,31 @@ MAcceleratorTable::MAcceleratorTable()
 	RegisterAcceleratorKey(cmd_JumpToNextMark, GDK_F2, 0);
 	RegisterAcceleratorKey(cmd_JumpToPrevMark, GDK_F2, GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_MarkLine, GDK_F1, 0);
+	
+	RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
+
+//	// debug code, dump the current table
+//	for (map<int64,uint32>::iterator a = mImpl->mTable.begin(); a != mImpl->mTable.end(); ++a)
+//	{
+//		uint32 key = static_cast<uint32>(a->first >> 32);
+//		uint32 mod = static_cast<uint32>(a->first) & kValidModifiersMask;
+//		
+//		cout << gdk_keyval_name(key);
+//
+//		if (mod & GDK_CONTROL_MASK)
+//			cout << " CTRL";
+//		
+//		if (mod & GDK_SHIFT_MASK)
+//			cout << " SHIFT";
+//		
+//		if (mod & GDK_MOD1_MASK)
+//			cout << " ALT";
+//		
+//		if (mod & GDK_MOD2_MASK)
+//			cout << " MOD2";
+//
+//		cout << " mapped to " << MCommandToString(a->second) << endl;
+//	}
 }
 
 void MAcceleratorTable::RegisterAcceleratorKey(
@@ -107,7 +153,8 @@ void MAcceleratorTable::RegisterAcceleratorKey(
 	uint32			inKeyValue,
 	uint32			inModifiers)
 {
-	int64 key = int64(gdk_keyval_to_upper(inKeyValue)) << 32 | (inModifiers & kValidModifiersMask);
+	int64 key = (int64(gdk_keyval_to_upper(inKeyValue)) << 32) | (inModifiers & kValidModifiersMask);
+//	int64 key = int64(inKeyValue) << 32 | (inModifiers & kValidModifiersMask);
 	
 	mImpl->mTable[key] = inCommand;
 }
@@ -139,28 +186,34 @@ bool MAcceleratorTable::IsAcceleratorKey(
 {
 	bool result = false;
 
-cout << "IsAcceleratorKey for " << gdk_keyval_name(inEvent->keyval);
-
-if (inEvent->state & GDK_CONTROL_MASK)
-	cout << " CTRL";
-
-if (inEvent->state & GDK_SHIFT_MASK)
-	cout << " SHIFT";
-
-if (inEvent->state & GDK_MOD1_MASK)
-	cout << " ALT";
-
-cout << endl;
+//cout << "IsAcceleratorKey for " << gdk_keyval_name(inEvent->keyval);
+//
+//if (inEvent->state & GDK_CONTROL_MASK)
+//	cout << " CTRL";
+//
+//if (inEvent->state & GDK_SHIFT_MASK)
+//	cout << " SHIFT";
+//
+//if (inEvent->state & GDK_MOD1_MASK)
+//	cout << " ALT";
+//
+//if (inEvent->state & GDK_MOD2_MASK)
+//	cout << " MOD2";
 
 	int keyval = gdk_keyval_to_upper(inEvent->keyval);
-	int64 key = int64(keyval) << 32 | (inEvent->state & kValidModifiersMask);
+//	int keyval = inEvent->keyval;
+	int64 key = (int64(keyval) << 32) | (inEvent->state & kValidModifiersMask);
 
 	map<int64,uint32>::iterator a = mImpl->mTable.find(key);	
 	if (a != mImpl->mTable.end())
 	{
 		outCommand = a->second;
 		result = true;
+		
+//cout << " mapped to " << MCommandToString(outCommand);
 	}
+//
+//cout << endl;
 	
 	return result;
 }

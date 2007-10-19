@@ -76,7 +76,7 @@ class MMessageList
 					mImpl;
 };
 
-class MMessageWindow : public MDocWindow
+class MMessageWindow : public MWindow
 {
   public:
 					MMessageWindow();
@@ -96,7 +96,7 @@ class MMessageWindow : public MDocWindow
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const MPath&			inFile,
+						const MPath&		inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,

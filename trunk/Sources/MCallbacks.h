@@ -338,6 +338,28 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5, T6)> : public HandlerBase<R
 										}
 };
 
+template<class Derived, class Owner, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+struct Handler<Derived, Owner, void(T1, T2, T3, T4, T5, T6)> : public HandlerBase<void(T1, T2, T3, T4, T5, T6)>
+{
+	typedef void (Owner::*Callback)(T1, T2, T3, T4, T5, T6);
+	
+	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+											
+											try
+											{
+												(owner->*func)(a1, a2, a3, a4, a5, a6);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+										}
+};
+
 // MCallBackInHandler is the complete handler object that has all the type info
 // needed to deliver the callback.
 
@@ -536,6 +558,18 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5, T6)>
 					if (mHandler.get() != nil)
 						return mHandler->DoCallBack(a1, a2, a3, a4, a5, a6);
 					return R();
+				}
+};
+
+template<class CallBackIn, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
+{
+	std::auto_ptr<CallBackIn>		mHandler;
+
+	void		operator() (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallBack(a1, a2, a3, a4, a5, a6);
 				}
 };
 

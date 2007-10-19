@@ -65,7 +65,8 @@ void MClipboard::Data::AddData(const string& inText)
 }
 
 MClipboard::MClipboard()
-	: mCount(0)
+	: mOwnerChange(this, &MClipboard::OnOwnerChange)
+	, mCount(0)
 	, mOwnerChanged(true)
 	, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
 {
@@ -150,8 +151,6 @@ void MClipboard::SetData(const string& inText, bool inBlock)
 		{"STRING", 0, 0},
 	};
 
-cout << "about to call set data" << endl;
-
 	gtk_clipboard_set_with_data(mGtkClipboard, 
 		targets, sizeof(targets) / sizeof(GtkTargetEntry),
 		&MClipboard::GtkClipboardGet, &MClipboard::GtkClipboardClear, nil);
@@ -186,6 +185,12 @@ void MClipboard::GtkClipboardClear(
 	gpointer			inUserDataOrOwner)
 {
 	Instance().mOwnerChanged = true;
+}
+
+void MClipboard::OnOwnerChange(
+	GdkEventOwnerChange*	inEvent)
+{
+	mOwnerChanged = true;
 }
 
 void MClipboard::LoadClipboardIfNeeded()

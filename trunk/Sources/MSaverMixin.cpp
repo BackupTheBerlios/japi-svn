@@ -164,7 +164,8 @@ void MSaverMixin::TryDiscardChanges(
 }
 
 void MSaverMixin::SaveDocumentAs(
-	MWindow*		inParentWindow)
+	MWindow*		inParentWindow,
+	const string&	inSuggestedName)
 {
 	GtkWidget *dialog;
 	
@@ -177,7 +178,7 @@ void MSaverMixin::SaveDocumentAs(
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), true);
 	
 //	    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), default_folder_for_saving);
-	gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), inParentWindow->GetTitle().c_str());
+	gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), inSuggestedName.c_str());
 	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{

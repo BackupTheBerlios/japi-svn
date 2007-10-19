@@ -69,17 +69,11 @@ struct MRect
 
 	bool		Intersects(
 					const MRect&		inRHS) const;
+	
+	bool		ContainsPoint(
+					int32				inX,
+					int32				inY) const;
 };
-
-inline bool MRect::Intersects(
-	const MRect&		inRHS) const
-{
-	return
-		x <= inRHS.x + inRHS.width and
-		x + width >= inRHS.x and
-		y <= inRHS.y + inRHS.height and
-		y + height >= inRHS.y;
-}
 
 enum MDirection
 {
@@ -246,6 +240,25 @@ MRect::MRect(
 	, width(inWidth)
 	, height(inHeight)
 {
+}
+
+inline bool MRect::Intersects(
+	const MRect&		inRHS) const
+{
+	return
+		x <= inRHS.x + inRHS.width and
+		x + width >= inRHS.x and
+		y <= inRHS.y + inRHS.height and
+		y + height >= inRHS.y;
+}
+
+inline bool MRect::ContainsPoint(
+	int32				inX,
+	int32				inY) const
+{
+	return
+		x <= inX and x + width > inX and
+		y <= inY and y + height > inY;
 }
 
 #endif

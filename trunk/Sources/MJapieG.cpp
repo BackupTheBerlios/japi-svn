@@ -213,7 +213,7 @@ void MJapieApp::RunEventLoop()
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
-	uint32 timer = g_timeout_add(250, &MJapieApp::Timeout, nil);
+	/*uint32 timer = */g_timeout_add(250, &MJapieApp::Timeout, nil);
 	
 	gtk_main();
 	
@@ -349,14 +349,26 @@ void MJapieApp::DoOpen()
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 			NULL);
-	
-	MDocument* doc = nil;
+
+	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
 	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
-		char* fileName = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog)); 
-		MPath url(fileName);	
-		doc = OpenOneDocument(url);
+		GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));	
+		
+		GSList* file = files;	
+		
+		while (file != nil)
+		{
+			MPath url(reinterpret_cast<char*>(file->data));
+			OpenOneDocument(url);
+			
+			g_free(file->data);
+			file->data = nil;
+			file = file->next;
+		}
+		
+		g_slist_free(files);
 	}
 	
 	gtk_widget_destroy(dialog);
@@ -447,17 +459,17 @@ void MJapieApp::DoOpenTemplate(
 
 void MJapieApp::ShowWorksheet()
 {
-//	MPath worksheet = gPrefsDir / "Worksheet";
-//	
-//	if (not fs::exists(worksheet))
-//	{
-//		MFile file(worksheet);
-//		file.CreateOnDisk(false);
-//	}
-//		
-//	MDocument* doc = OpenOneDocument(worksheet);
-//	if (doc != nil)
-//		doc->SetWorksheet(true);
+	MPath worksheet = gPrefsDir / "Worksheet";
+	
+	if (not fs::exists(worksheet))
+	{
+		MFile file(worksheet);
+		file.Open(O_CREAT | O_RDWR);
+	}
+		
+	MDocument* doc = OpenOneDocument(worksheet);
+	if (doc != nil)
+		doc->SetWorksheet(true);
 }
 
 gboolean MJapieApp::Timeout(

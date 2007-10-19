@@ -2334,10 +2334,6 @@ void MDocument::DoPasteNext()
 {
 	if (mLastAction == kPasteAction and mCurrentAction == kNoAction)
 	{
-cout << "Last action before paste next: " << mLastAction << endl;	
-cout << "Current action before paste next: " << mCurrentAction << endl;	
-	
-
 		DoUndo();
 		MClipboard::Instance().NextInRing();
 	}
@@ -3522,18 +3518,20 @@ bool MDocument::HandleRawKeydown(
 				keyCommand = kcmd_DeleteCharacterRight;
 			break;
 
-//		case kEnterCharCode:
-//			Reset();
-//			Execute();
-//			handled = true;
-//			break;		
+		case GDK_KP_Enter:
+			Reset();
+			Execute();
+			handled = true;
+			break;		
 
 		case GDK_Return:
 			if (mFastFindMode)
 				mFastFindMode = false;
-			else if (inModifiers & GDK_MOD2_MASK)
+			else if (inModifiers & GDK_MOD2_MASK or inModifiers & GDK_CONTROL_MASK)
 			{
+				Reset();
 				Execute();
+				handled = true;
 //				updateSelection = false;
 			}
 			else
@@ -3788,7 +3786,7 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 	if (mStdErrWindow == nil)
 	{
 		mStdErrWindow = new MMessageWindow;
-//		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 
 	mStdErrWindow->SetBaseDirectory(MPath(mShell->GetCWD()));
@@ -3939,7 +3937,12 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem);
 
-cout << "Open file " << file.name << endl;
+		if (mSpecified)
+		{
+			MPath url = mURL.branch_path() / file.name;
+			if (fs::exists(url))
+				gApp->OpenOneDocument(url);
+		}
 
 //		MProject* project = MProject::Instance();
 //		MPath p;
