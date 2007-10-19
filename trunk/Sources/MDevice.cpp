@@ -23,7 +23,7 @@ class MDummyWindow : public MWindow
 
 	static MDummyWindow*	Instance();
 	
-	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea ; }
+	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea; }
 
   private:
 	MDrawingArea*	mDrawingArea;
@@ -486,6 +486,14 @@ bool MDevice::PositionToIndex(
 
 	outIndex = index;
 	outTrailing = trailing;
+	
+	if (not result)
+	{
+		int w;
+		pango_layout_get_pixel_size(mImpl->mLayout, &w, nil);
+		if (inPosition >= w)
+			outIndex = strlen(pango_layout_get_text(mImpl->mLayout));		
+	}
 	
 	return result;
 }

@@ -1,0 +1,7 @@
+﻿Te doen
+
+- Rare highlight bug bij laatste regels of zo?
+- project
+- drag&drop
+- eigen unicode tabellen afmaken
+- 
