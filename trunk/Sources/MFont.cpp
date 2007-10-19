@@ -59,7 +59,7 @@ PangoFontDescription* MFontMap::GetFont(
 			break;
 		
 		case eSansFont:
-			d = pango_font_description_from_string("Sans");
+			d = pango_font_description_from_string("Sans 10");
 			break;
 	}
 
@@ -90,3 +90,14 @@ MFont::~MFont()
 	pango_font_description_free(mDesc);
 }
 
+MFont& MFont::operator=(
+	const MFont&			inRHS)
+{
+	if (this != &inRHS)
+	{
+		pango_font_description_free(mDesc);
+		mDesc = pango_font_description_copy(inRHS.mDesc);
+	}
+	
+	return *this;
+}

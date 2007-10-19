@@ -114,7 +114,8 @@ const uint32
 	cmd_OpenRecent =			'Recd',
 	cmd_OpenTemplate =			'Tmpd',
 	cmd_ClearRecent =			'ClrR',
-	cmd_Worksheet =				'Wrks';
+	cmd_Worksheet =				'Wrks',
+	cmd_SelectWindowFromMenu =	'WSel';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

@@ -82,7 +82,7 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case cmd_Quit:
-//			if (not MNavSaverMixin::IsNavDialogVisible())
+			if (not MSaverMixin::IsNavDialogVisible())
 				DoQuit();
 			break;
 		
@@ -152,6 +152,10 @@ bool MJapieApp::ProcessCommand(
 //			break;
 //		}
 
+		case cmd_SelectWindowFromMenu:
+			DoSelectWindowFromWindowMenu(inItemIndex - 2);
+			break;
+
 		default:
 			result = false;
 			break;
@@ -201,6 +205,44 @@ bool MJapieApp::UpdateCommandStatus(
 	
 	return result;
 }
+
+void MJapieApp::UpdateWindowMenu(
+	MMenu*				inMenu)
+{
+	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
+	
+	MDocument* doc = MDocument::GetFirstDocument();
+	while (doc != nil)
+	{
+		string label;
+		
+		if (doc->IsSpecified())
+			label = doc->GetURL().leaf();
+		else
+		{
+			MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
+			if (w != nil)
+				label = w->GetTitle();
+			else
+				label = "weird";
+		}
+		
+		inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
+		doc = doc->GetNextDocument();
+	}	
+}
+
+void MJapieApp::DoSelectWindowFromWindowMenu(
+	uint32				inIndex)
+{
+	MDocument* doc = MDocument::GetFirstDocument();
+
+	while (doc != nil and inIndex-- > 0)
+		doc = doc->GetNextDocument();
+	
+	if (doc != nil)
+		MDocWindow::DisplayDocument(doc);	
+}	
 
 void MJapieApp::RecycleWindow(
 	MWindow*		inWindow)
@@ -352,6 +394,8 @@ void MJapieApp::DoOpen()
 
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
 	
+	MDocument* doc = nil;
+	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));	
@@ -361,7 +405,7 @@ void MJapieApp::DoOpen()
 		while (file != nil)
 		{
 			MPath url(reinterpret_cast<char*>(file->data));
-			OpenOneDocument(url);
+			doc = OpenOneDocument(url);
 			
 			g_free(file->data);
 			file->data = nil;
@@ -372,6 +416,9 @@ void MJapieApp::DoOpen()
 	}
 	
 	gtk_widget_destroy(dialog);
+	
+	if (doc != nil)
+		MDocWindow::DisplayDocument(doc); 
 }
 
 // ---------------------------------------------------------------------------

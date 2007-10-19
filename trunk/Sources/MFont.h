@@ -17,6 +17,9 @@ class MFont
 
 			~MFont();
 	
+	MFont&	operator=(
+				const MFont&			inRHS);
+
 			operator PangoFontDescription*() const	{ return mDesc; }
 
 	uint32	GetAscent() const;

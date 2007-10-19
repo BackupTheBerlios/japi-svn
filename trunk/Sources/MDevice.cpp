@@ -154,6 +154,13 @@ void MDevice::Restore()
 	cairo_restore(mImpl->mContext);
 }
 
+void MDevice::SetFont(
+	const MFont&	inFont)
+{
+	mImpl->mFont = inFont;
+	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
+}
+
 void MDevice::SetForeColor(
 	MColor		inColor)
 {

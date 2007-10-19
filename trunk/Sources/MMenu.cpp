@@ -123,8 +123,6 @@ MMenu::MMenu(
 
 MMenu::~MMenu()
 {
-cout << "Deleting menu " << mLabel << endl;
-
 	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
 		delete *mi;
 }
@@ -172,6 +170,31 @@ void MMenu::AppendRecentMenu(
 
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
 	item->mRecentItemActivated.Connect(recMenu, "item-activated");
+}
+
+uint32 MMenu::CountItems()
+{
+	return mItems.size();
+}
+
+void MMenu::RemoveItems(
+	uint32			inFromIndex,
+	uint32			inCount)
+{
+	if (inFromIndex < mItems.size())
+	{
+		MMenuItemList::iterator b = mItems.begin() + inFromIndex;
+
+		if (inFromIndex + inCount > mItems.size())
+			inCount = mItems.size() - inFromIndex;
+
+		MMenuItemList::iterator e = b + inCount;	
+		
+		for (MMenuItemList::iterator mi = b; mi != e; ++mi)
+			gtk_widget_destroy((*mi)->mGtkMenuItem);
+		
+		mItems.erase(b, e);
+	}
 }
 
 void MMenu::SetTarget(
@@ -291,7 +314,6 @@ bool MMenu::OnDestroy()
 
 void MMenu::OnSelectionDone()
 {
-cout << "selection-done" << endl;
 	gtk_widget_destroy(mGtkMenu);
 }
 
@@ -303,6 +325,7 @@ MMenubar::MMenubar(
 	GtkWidget*		inWindow)
 	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
 	, mTarget(inTarget)
+	, mWindowMenu(nil)
 {
 	mGtkMenubar = gtk_menu_bar_new();
 	mGtkAccel = gtk_accel_group_new();
@@ -315,7 +338,8 @@ MMenubar::MMenubar(
 }
 
 void MMenubar::AddMenu(
-	MMenu*				inMenu)
+	MMenu*				inMenu,
+	bool				isWindowMenu)
 {
 	GtkWidget* menuItem = gtk_menu_item_new_with_label(inMenu->GetLabel().c_str());
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), inMenu->GetGtkMenu());
@@ -323,6 +347,9 @@ void MMenubar::AddMenu(
 	inMenu->SetTarget(mTarget);
 	inMenu->SetAcceleratorGroup(mGtkAccel);
 	mMenus.push_back(inMenu);
+	
+	if (isWindowMenu)
+		mWindowMenu = inMenu;
 }
 
 bool MMenubar::OnButtonPress(
@@ -330,6 +357,9 @@ bool MMenubar::OnButtonPress(
 {
 	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
 		(*m)->UpdateCommandStatus();
+	
+	if (mWindowMenu != nil)
+		gApp->UpdateWindowMenu(mWindowMenu);	
 	
 	return false;
 }

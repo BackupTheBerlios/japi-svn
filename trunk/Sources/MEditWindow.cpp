@@ -157,7 +157,7 @@ MEditWindow::MEditWindow()
 	windowMenu->AppendItem("Worksheet", cmd_Worksheet);	
 	windowMenu->AppendSeparator();
 	
-	mMenubar.AddMenu(windowMenu);
+	mMenubar.AddMenu(windowMenu, true);
 
 	// content
 	

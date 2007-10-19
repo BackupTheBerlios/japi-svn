@@ -50,6 +50,7 @@
 #include "MScrollBar.h"
 #include "MDrawingArea.h"
 #include "MDevice.h"
+#include "MFont.h"
 
 using namespace std;
 
@@ -116,8 +117,12 @@ bool MParsePopup::OnExposeEvent(
 		GetBounds(bounds);
 		
 		MDevice dev(this, bounds);
+		
+		dev.SetFont(kSansFont);
+		
+		int32 y = bounds.y + (dev.GetLineHeight() - bounds.height) / 2;
 
-		dev.DrawString(mName, bounds.x, bounds.y, true);
+		dev.DrawString(mName, bounds.x, y, true);
 	}
 	
 	return true;
@@ -182,23 +187,38 @@ MDocWindow::MDocWindow()
 	mStatusbar = gtk_statusbar_new();
 	gtk_box_pack_end(GTK_BOX(mVBox), mStatusbar, false, false, 0);
 	
+	GtkShadowType shadow_type;
+	gtk_widget_style_get(mStatusbar, "shadow_type", &shadow_type, nil);
+
 	// selection status
+
+	GtkWidget* frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
 	
-	mSelectionPanel = gtk_label_new("aap noot mies");
-	gtk_box_pack_start(GTK_BOX(mStatusbar), mSelectionPanel, false, false, 0);
-	gtk_box_reorder_child(GTK_BOX(mStatusbar), mSelectionPanel, 0);
+	mSelectionPanel = gtk_label_new("1, 1");
+	gtk_label_set_single_line_mode(GTK_LABEL(mSelectionPanel), true);
+	gtk_container_add(GTK_CONTAINER(frame), mSelectionPanel);	
+	
+	gtk_box_pack_start(GTK_BOX(mStatusbar), frame, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), frame, 0);
 	gtk_widget_set_size_request(mSelectionPanel, 100, -1);
 	
 	// parse popups
 	
 	mIncludePopup = new MParsePopup(50);
-	gtk_box_pack_start(GTK_BOX(mStatusbar), mIncludePopup->GetGtkWidget(), false, false, 0);
-	gtk_box_reorder_child(GTK_BOX(mStatusbar), mIncludePopup->GetGtkWidget(), 1);
+	frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	gtk_container_add(GTK_CONTAINER(frame), mIncludePopup->GetGtkWidget());
+	gtk_box_pack_start(GTK_BOX(mStatusbar), frame, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), frame, 1);
 	mIncludePopup->SetController(&mController, false);
 	
 	mParsePopup = new MParsePopup(200);
-	gtk_box_pack_start(GTK_BOX(mStatusbar), mParsePopup->GetGtkWidget(), true, true, 0);
-	gtk_box_reorder_child(GTK_BOX(mStatusbar), mParsePopup->GetGtkWidget(), 2);	
+	frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	gtk_container_add(GTK_CONTAINER(frame), mParsePopup->GetGtkWidget());
+	gtk_box_pack_start(GTK_BOX(mStatusbar), frame, true, true, 0);
+	gtk_box_reorder_child(GTK_BOX(mStatusbar), frame, 2);	
 	mParsePopup->SetController(&mController, true);
 	
 	mNext = sFirst;

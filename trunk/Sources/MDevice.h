@@ -6,6 +6,7 @@
 
 class MView;
 class MTextLayout;
+class MFont;
 
 class MDevice
 {
@@ -21,6 +22,9 @@ class MDevice
 	void			Save();
 	
 	void			Restore();
+
+	void			SetFont(
+						const MFont&		inFont);
 
 	void			SetForeColor(
 						MColor				inColor);

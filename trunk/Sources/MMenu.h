@@ -8,7 +8,7 @@
 #include "MCallbacks.h"
 
 struct MMenuItem;
-typedef std::list<MMenuItem*>	MMenuItemList;
+typedef std::vector<MMenuItem*>	MMenuItemList;
 
 class MMenu
 {
@@ -30,6 +30,12 @@ class MMenu
 
 	void			AppendRecentMenu(
 						const std::string&	inLabel);
+
+	uint32			CountItems();
+	
+	void			RemoveItems(
+						uint32				inFromIndex,
+						uint32				inCount);
 
 	void			SetTarget(
 						MHandler*			inHandler);
@@ -85,7 +91,8 @@ class MMenubar
 						GtkWidget*			inWindow);
 
 	void			AddMenu(
-						MMenu*				inMenu);
+						MMenu*				inMenu,
+						bool				isWindowMenu = false);
 
   private:
 	
@@ -99,6 +106,7 @@ class MMenubar
 	MHandler*		mTarget;
 	std::list<MMenu*>
 					mMenus;
+	MMenu*			mWindowMenu;
 };
 
 #endif
