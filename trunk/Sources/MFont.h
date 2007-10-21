@@ -14,11 +14,19 @@ class MFont
 
 			MFont(
 				MStandardFontEnum		inFont);
+			
+			MFont(
+				const PangoFontDescription*
+										inDesc);
 
 			~MFont();
 	
 	MFont&	operator=(
 				const MFont&			inRHS);
+
+	MFont&	operator=(
+				const PangoFontDescription*
+										inRHS);
 
 			operator PangoFontDescription*() const	{ return mDesc; }
 

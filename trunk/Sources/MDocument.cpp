@@ -63,6 +63,7 @@
 #include "MMenu.h"
 //#include "MProject.h"
 #include "MDevice.h"
+#include "MFont.h"
 
 using namespace std;
 
@@ -379,6 +380,8 @@ void MDocument::ReInit()
 #pragma message("zet mLayout opties hier")
 	
 	MDevice device;
+	
+	device.SetFont(kFixedFont);
 
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetStringWidth("          ") / 10.0f;
@@ -2688,6 +2691,8 @@ void MDocument::GetStyledText(
 	MDevice&	inDevice,
 	string&		outText) const
 {
+	inDevice.SetFont(kFixedFont);
+	
 	mText.GetText(inOffset, inLength, outText);
 
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')

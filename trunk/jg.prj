@@ -61,6 +61,7 @@
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
+			<file>MListView.cpp</file>
 			<file>MFont.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
@@ -99,11 +100,9 @@
 			<file>libglib-2.0.dylib</file>
 			<file>libintl.dylib</file>
 			<file>libiconv.dylib</file>
-			<file>libboost_thread-mt.dylib</file>
 			<file>libpcre.0.0.1.dylib</file>
 			<file>libicuuc.dylib</file>
 			<file>libboost_filesystem-mt.dylib</file>
-			<file>libboost_regex-mt.dylib</file>
 		</group>
 	</files>
 	<package/>

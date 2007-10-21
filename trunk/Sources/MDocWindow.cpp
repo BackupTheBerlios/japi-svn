@@ -118,7 +118,7 @@ bool MParsePopup::OnExposeEvent(
 		
 		MDevice dev(this, bounds);
 		
-		dev.SetFont(kSansFont);
+//		dev.SetFont(kSansFont);
 		
 		int32 y = bounds.y + (dev.GetLineHeight() - bounds.height) / 2;
 
@@ -178,7 +178,7 @@ MDocWindow::MDocWindow()
 	geom.min_width = 300;
 	geom.min_height = 100;
 	gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);	
-	gtk_window_set_default_size(GTK_WINDOW(GetGtkWidget()), 600, 700);
+	gtk_window_set_default_size(GTK_WINDOW(GetGtkWidget()), 600, 600);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 

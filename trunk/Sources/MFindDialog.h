@@ -38,7 +38,6 @@
 #define MFINDDIALOG_H
 
 #include <deque>
-#include <boost/thread.hpp>
 
 //#include "MDialog.h"
 #include "MFile.h"
@@ -145,8 +144,8 @@ class MFindDialog // : public MDialog
 	StringArray		mStartDirectories;
 	FileArray		mMultiFiles;
 
-	boost::thread*	mFindAllThread;
-	boost::mutex	mFindDialogMutex;
+//	boost::thread*	mFindAllThread;
+//	boost::mutex	mFindDialogMutex;
 	std::string		mCurrentMultiFile;
 	MMessageList*	mFindAllResult;
 };

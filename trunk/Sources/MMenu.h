@@ -1,7 +1,7 @@
 #ifndef MMENU_H
 #define MMENU_H
 
-#include <list>
+#include <vector>
 #include <gdk/gdkkeysyms.h>
 
 #include "MCommands.h"

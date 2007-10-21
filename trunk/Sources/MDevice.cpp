@@ -114,7 +114,9 @@ void MDeviceImp::Init()
 
 	PangoContext* pc = mView->GetPangoContext();
 	mLayout = pango_layout_new(pc);
-	pango_layout_set_font_description(mLayout, mFont);
+//	pango_layout_set_font_description(mLayout, mFont);
+
+	mFont = pango_context_get_font_description(pc);
 }
 
 MDeviceImp::~MDeviceImp()

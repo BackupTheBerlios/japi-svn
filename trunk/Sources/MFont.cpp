@@ -80,6 +80,13 @@ MFont::MFont(
 }
 
 MFont::MFont(
+	const PangoFontDescription*
+						inRHS)
+	: mDesc(pango_font_description_copy(inRHS))
+{
+}
+
+MFont::MFont(
 	MStandardFontEnum	inFontNr)
 	: mDesc(gFontMap.GetFont(inFontNr))
 {
@@ -97,6 +104,19 @@ MFont& MFont::operator=(
 	{
 		pango_font_description_free(mDesc);
 		mDesc = pango_font_description_copy(inRHS.mDesc);
+	}
+	
+	return *this;
+}
+
+MFont& MFont::operator=(
+	const PangoFontDescription*
+							inRHS)
+{
+	if (mDesc != inRHS)
+	{
+		pango_font_description_free(mDesc);
+		mDesc = pango_font_description_copy(inRHS);
 	}
 	
 	return *this;

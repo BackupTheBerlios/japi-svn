@@ -32,11 +32,7 @@
 
 #include "MJapieG.h"
 
-#if DEBUG
-#define BOOST_DISABLE_ASSERTS 1
-#endif
-
-#include <boost/regex.hpp>
+#include <pcre.h>
 
 #include "MMessageWindow.h"
 #include "MListView.h"
@@ -261,6 +257,25 @@ void MMessageWindow::AddStdErr(
 {
 //cout << "AddStdErr: '" << string(inText, inSize) << "'" << endl;
 
+	static pcre* pattern = nil;
+	static pcre_extra* info = nil;
+	
+	if (pattern == nil)
+	{
+		const char* errmsg;
+		int errcode, erroffset;
+
+		pattern = pcre_compile2("^([^:]+):((\\d+):)?( (note|warning|error):)?([^:].+)$",
+			PCRE_UTF8 | PCRE_MULTILINE, &errcode, &errmsg, &erroffset, nil);
+		
+		if (pattern == nil or errcode != 0)
+			THROW(("Error compiling regular expression: %s", errmsg));
+		
+		info = pcre_study(pattern, 0, &errmsg);
+		if (errmsg != 0)
+			THROW(("Error studying regular expression: %s", errmsg));
+	}
+		
 	mText.append(inText, inSize);
 
 	if (mLastAddition + kDelay < GetLocalTime() or mText.find('\n') != string::npos)
@@ -272,21 +287,38 @@ void MMessageWindow::AddStdErr(
 			string line = mText.substr(0, n);
 			mText.erase(0, n + 1);
 			
-			boost::regex re("^([^:]+):((\\d+):)?( (note|warning|error):)?([^:].+)$",
-				boost::regex_constants::normal);
-		
-			boost::regex_constants::match_flag_type match_flags =
-				boost::regex_constants::match_not_dot_newline |
-				boost::regex_constants::match_not_dot_null |
-				boost::regex_constants::match_continuous;
-
-			boost::match_results<string::iterator> m;
+//			
+//			
+//			boost::regex re("^([^:]+):((\\d+):)?( (note|warning|error):)?([^:].+)$",
+//				boost::regex_constants::normal);
+//		
+//			boost::regex_constants::match_flag_type match_flags =
+//				boost::regex_constants::match_not_dot_newline |
+//				boost::regex_constants::match_not_dot_null |
+//				boost::regex_constants::match_continuous;
+//
+//			boost::match_results<string::iterator> m;
 
 			MPath spec;
+			int m[33] = {};
 
-			if (boost::regex_search(line.begin(), line.end(), m, re, match_flags) and m[0].matched)
+//			if (boost::regex_search(line.begin(), line.end(), m, re, match_flags) and m[0].matched)
+			if (pcre_exec(pattern, info, line.c_str(), line.length(), 0, PCRE_NOTEMPTY, m, 33) >= 0)
 			{
-				string file(m[1].first, m[1].second);
+				string file, warn, l_nr, mesg;
+				
+				if (m[2] >= 0 and m[3] > m[2])
+					file = line.substr(m[2], m[3] - m[2]);
+				
+				if (m[10] >= 0 and m[11] > m[10])
+					warn = line.substr(m[10], m[11] - m[10]);
+
+				if (m[6] >= 0 and m[7] > m[6])
+					l_nr = line.substr(m[6], m[7] - m[6]);
+				
+				if (m[12] >= 0 and m[13] > m[12])
+					mesg = line.substr(m[12], m[13] - m[12]);
+				
 				spec = mBaseDirectory / file;
 //	
 //try {
@@ -298,21 +330,20 @@ void MMessageWindow::AddStdErr(
 				if (fs::exists(spec))
 				{
 					MMessageKind kind = kMsgKindNone;
-					if (m[5].matched)
+					if (warn.length() > 0)
 					{
-						string k(m[5].first, m[5].second);
-						if (k == "error")
+						if (warn == "error")
 							kind = kMsgKindError;
-						else if (k == "warning")
+						else if (warn == "warning")
 							kind = kMsgKindWarning;
-						else if (k == "note")
+						else if (warn == "note")
 							kind = kMsgKindNote;
 					}
 					
 					uint32 lineNr = 0;
-					if (m[3].matched)
-						lineNr = atoi(string(m[3].first, m[3].second).c_str());
-					AddMessage(kind, spec, lineNr, 0, 0, string(m[6].first, m[6].second));
+					if (l_nr.length() > 0)
+						lineNr = atoi(l_nr.c_str());
+					AddMessage(kind, spec, lineNr, 0, 0, mesg);
 					
 					continue;
 				}

@@ -37,11 +37,6 @@
 
 #include "MJapieG.h"
 
-#if DEBUG
-#define BOOST_DISABLE_ASSERTS 1
-#endif
-
-#include <boost/regex.hpp>
 #include <sstream>
 #include <unicode/uchar.h>
 #include <unicode/ustring.h>
@@ -63,15 +58,26 @@ enum {
 	kOTHER			= 7
 };
 
-struct MUnicodeInfo
-{
-	CharBreakClass		cbc		: 4;
-	uint8				prop	: 3;
-};
-
 #include "MUnicodeTables.h"
 
 using namespace std;
+
+uint8 GetProperty(
+	wchar_t		inUnicode)
+{
+	uint8 result = 0;
+	
+	if (inUnicode < 0x110000)
+	{
+		uint32 ix = inUnicode >> 8;
+		uint32 p_ix = inUnicode & 0x00FF;
+		
+		ix = kUnicodeInfo.page_index[ix];
+		result = kUnicodeInfo.data[ix][p_ix].prop;
+	}
+	
+	return result;
+}
 
 WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 {
@@ -93,7 +99,7 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 		
 		default:
 		{
-			uint8 prop = kUCInfo[inUnicode].prop;
+			uint8 prop = GetProperty(inUnicode);
 			if (prop == kLETTER or prop == kNUMBER)
 			{
 				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
@@ -122,47 +128,94 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 CharBreakClass GetCharBreakClass(
 	wchar_t		inUnicode)
 {
-	return static_cast<CharBreakClass>(kUCInfo[inUnicode].cbc);
+	CharBreakClass result = kCBC_Other;
+	
+	if (inUnicode < 0x110000)
+	{
+		uint32 ix = inUnicode >> 8;
+		uint32 p_ix = inUnicode & 0x00FF;
+		
+		ix = kUnicodeInfo.page_index[ix];
+		result = kUnicodeInfo.data[ix][p_ix].cbc;
+	}
+	
+	return result;
 }
 
 wchar_t ToLower(
 	wchar_t		inUnicode)
 {
-	return u_tolower(inUnicode);
+	wchar_t result = 0;
+	
+	if (inUnicode < 0x110000)
+	{
+		uint32 ix = inUnicode >> 8;
+		uint32 p_ix = inUnicode & 0x00FF;
+		
+		ix = kUnicodeInfo.page_index[ix];
+		result = kUnicodeInfo.data[ix][p_ix].lower;
+	}
+	
+	return result;
 }
 
 wchar_t ToUpper(
 	wchar_t		inUnicode)
 {
-	return u_toupper(inUnicode);
+	wchar_t result = 0;
+	
+	if (inUnicode < 0x110000)
+	{
+		uint32 ix = inUnicode >> 8;
+		uint32 p_ix = inUnicode & 0x00FF;
+		
+		ix = kUnicodeInfo.page_index[ix];
+		result = kUnicodeInfo.data[ix][p_ix].upper;
+	}
+	
+	return result;
 }
 
 bool IsSpace(
 	wchar_t		inUnicode)
 {
-	return u_isUWhiteSpace(inUnicode);
+	return
+		(inUnicode >= 0x0009 and inUnicode <= 0x000D) or
+		inUnicode == 0x0020 or
+		inUnicode == 0x0085 or
+		inUnicode == 0x00A0 or
+		inUnicode == 0x1680 or
+		inUnicode == 0x180E or
+		(inUnicode >= 0x2000 and inUnicode <= 0x200A) or
+		inUnicode == 0x2028 or
+		inUnicode <= 0x2029 or
+		inUnicode == 0x202f or
+		inUnicode == 0x205f or
+		inUnicode == 0x3000;
 }
 
 bool IsAlpha(
 	wchar_t		inUnicode)
 {
-	return u_isUAlphabetic(inUnicode);
+	return GetProperty(inUnicode) == kLETTER;
 }
 
 bool IsNum(
 	wchar_t		inUnicode)
 {
-	return u_charType(inUnicode) == U_DECIMAL_DIGIT_NUMBER;
+	return GetProperty(inUnicode) == kNUMBER;
 }
 
 bool IsAlnum(wchar_t inUnicode)
 {
-	return u_hasBinaryProperty(inUnicode, UCHAR_POSIX_ALNUM);
+	uint8 prop = GetProperty(inUnicode);
+	
+	return prop == kLETTER or prop == kNUMBER;
 }
 
 bool IsCombining(wchar_t inUnicode)
 {
-	return u_charType(inUnicode) == U_COMBINING_SPACING_MARK;
+	return GetProperty(inUnicode) == kCOMBININGMARK;
 }
 
 template<MEncoding ENCODING>

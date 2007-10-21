@@ -182,4 +182,3 @@ void SaveGlobals()
 //		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
 	}
 }
-

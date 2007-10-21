@@ -41,8 +41,6 @@
 
 #include <memory>
 
-#include <boost/thread.hpp>
-
 #include "MTextBuffer.h"
 #include "MLineInfo.h"
 #include "MP2PEvents.h"
@@ -374,13 +372,13 @@ class MDocument
 	
 	MDocument*					mNext;
 	static MDocument*			sFirst;
-	static boost::mutex			sDocListMutex;
+//	static boost::mutex			sDocListMutex;
 	MControllerList				mControllers;
 	bool						mSpecified;
 	MPath						mURL;
 	double						mFileModDate;
 	MTextBuffer					mText;
-	boost::mutex				mMutex;
+//	boost::mutex				mMutex;
 	MTextView*					mTargetTextView;
 	MLineInfoArray				mLineInfo;
 	uint32						mLineHeight;

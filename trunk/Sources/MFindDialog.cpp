@@ -113,7 +113,7 @@ MFindDialog& MFindDialog::Instance()
 
 MFindDialog::MFindDialog()
 	: eIdle(this, &MFindDialog::Idle)
-	, mFindAllThread(nil)
+//	, mFindAllThread(nil)
 	, mFindAllResult(nil)
 //	, mScrap(kScrapFindScrap)
 {
