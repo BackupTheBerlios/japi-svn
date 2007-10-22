@@ -1921,9 +1921,13 @@ uint32 MTextBuffer::GetPrevCharLength(
 		if ((GetChar(inOffset) & 0x0080) != 0)
 		{
 			result = 2;
+			--inOffset;
 	
 			while ((GetChar(inOffset - 1) & 0x00C0) == 0x0080 and result < 6)
+			{
 				result++;
+				--inOffset;
+			}
 		
 			switch (result)
 			{

@@ -101,7 +101,6 @@
 			<file>libintl.dylib</file>
 			<file>libiconv.dylib</file>
 			<file>libpcre.0.0.1.dylib</file>
-			<file>libicuuc.dylib</file>
 			<file>libboost_filesystem-mt.dylib</file>
 		</group>
 	</files>
