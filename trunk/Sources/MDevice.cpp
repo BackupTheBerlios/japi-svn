@@ -382,6 +382,11 @@ void MDevice::SetText(
 	const string&	inText)
 {
 	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
+
+	// reset attributes
+	PangoAttrList* attrs = pango_attr_list_new ();
+	pango_layout_set_attributes (mImpl->mLayout, attrs);
+	pango_attr_list_unref (attrs);
 }
 
 void MDevice::SetTabStops(

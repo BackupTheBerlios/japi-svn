@@ -5,8 +5,8 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= icudata icuuc pcre boost_thread-mt boost_filesystem-mt
-LIBPATHS	= 
+LIBS		= pcre boost_filesystem
+LIBPATHS	=  
 INCPATHS	= 
 SYSINCPATHS	= 
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
@@ -31,7 +31,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS))
 
 Sources = $(wildcard Sources/*.cpp)
 
-Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp, $(Sources))
+Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp Sources/MDialog.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

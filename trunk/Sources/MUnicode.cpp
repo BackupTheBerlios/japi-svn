@@ -188,7 +188,7 @@ bool IsSpace(
 		inUnicode == 0x180E or
 		(inUnicode >= 0x2000 and inUnicode <= 0x200A) or
 		inUnicode == 0x2028 or
-		inUnicode <= 0x2029 or
+		inUnicode == 0x2029 or
 		inUnicode == 0x202f or
 		inUnicode == 0x205f or
 		inUnicode == 0x3000;
