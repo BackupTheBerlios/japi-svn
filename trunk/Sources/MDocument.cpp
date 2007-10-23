@@ -64,6 +64,7 @@
 //#include "MProject.h"
 #include "MDevice.h"
 #include "MFont.h"
+#include "MDocClosedNotifier.h"
 
 using namespace std;
 
@@ -3859,6 +3860,12 @@ MController* MDocument::GetFirstController() const
 		controller = mControllers.front();
 	
 	return controller;
+}
+
+void MDocument::AddNotifier(
+	MDocClosedNotifier&		inNotifier)
+{
+	mNotifiers.push_back(inNotifier);
 }
 
 void MDocument::Idle(

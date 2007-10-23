@@ -32,12 +32,17 @@
 
 #include "MJapieG.h"
 
+#include <sys/un.h>
+#include <sys/socket.h>
+#include <cerrno>
+
 #include "MDocument.h"
 #include "MEditWindow.h"
 #include "MPreferences.h"
 #include "MGlobals.h"
 #include "MUtils.h"
 #include "MAcceleratorTable.h"
+#include "MDocClosedNotifier.h"
 
 #include <iostream>
 
@@ -45,18 +50,57 @@ using namespace std;
 
 MJapieApp* gApp;
 
-MJapieApp::MJapieApp(
-	int				argc,
-	char*			argv[])
+const char
+	kSocketName[] = "/tmp/japie.%d.socket";
+
+MJapieApp::MJapieApp()
 	: MHandler(nil)
 	, mRecentMgr(gtk_recent_manager_get_default())
+	, mSocketFD(-1)
+	, mReceivedFirstMsg(false)
 	, mQuit(false)
 	, mQuitPending(false)
 {
+	mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
+
+	struct sockaddr_un addr = {};
+	addr.sun_family = AF_LOCAL;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
+	
+	unlink(addr.sun_path);	// allowed to fail
+
+	int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
+
+	if (err < 0)
+		cerr << "bind failed: " << strerror(errno) << endl;
+	else
+	{
+		err = listen(mSocketFD, 5);
+		if (err < 0)
+			cerr << "Failed to listen to socket: " << strerror(errno) << endl;
+		else
+		{
+			int flags = fcntl(mSocketFD, F_GETFL, 0);
+			if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
+				cerr << "Failed to set mSocketFD non blocking: " << strerror(errno) << endl;
+		}
+	}
+
+	if (err != 0)
+	{
+		close(mSocketFD);
+		mSocketFD = -1;
+	}
 }
 
 MJapieApp::~MJapieApp()
 {
+	if (mSocketFD >= 0)
+		close(mSocketFD);
+	
+	char path[1024] = {};
+	snprintf(path, sizeof(path), kSocketName, getuid());
+	unlink(path);
 }
 
 bool MJapieApp::ProcessCommand(
@@ -537,77 +581,232 @@ void MJapieApp::Pulse()
 	
 	mTrashCan.clear();
 	
-	if (MDocWindow::GetFirstDocWindow() == nil)
+	if (mSocketFD >= 0)
+		ProcessSocketMessages();
+	
+	if (MDocWindow::GetFirstDocWindow() == nil and mReceivedFirstMsg)
 		DoQuit();
 	else
 		eIdle(GetLocalTime());
 }
 
+// ----------------------------------------------------------------------------
+//	Main routines, forking a client/server e.g.
+
+void my_signal_handler(int inSignal)
+{
+	cout << "process " << getpid() << " received signal " << inSignal << endl;
+}
+
+void error(const char* msg, ...)
+{
+	fprintf(stderr, "Error launching %s\n", g_get_application_name());
+	va_list vl;
+	va_start(vl, msg);
+	vfprintf(stderr, msg, vl);
+	va_end(vl);
+	fprintf(stderr, "\n%s\n", strerror(errno));
+	exit(1);
+}
+
+struct MSockMsg
+{
+	uint32		msg;
+	int32		length;
+};
+
+void MJapieApp::ProcessSocketMessages()
+{
+	int fd = accept(mSocketFD, nil, nil);
+	
+	if (fd >= 0)
+	{
+		mReceivedFirstMsg = true;	
+		MDocClosedNotifier notify(fd);		// takes care of closing fd
+		
+		for (;;)
+		{
+			MSockMsg msg = {};
+			int r = read(fd, &msg, sizeof(msg));
+			
+			if (r == 0 or msg.msg == 'done' or msg.length > PATH_MAX)		// done
+				break;
+			
+			char buffer[PATH_MAX + 1];
+			if (msg.length > 0)
+			{
+				r = read(fd, buffer, msg.length);
+				if (r != msg.length)
+					break;
+				buffer[r] = 0;
+			}
+
+			try
+			{
+				MDocument* doc = nil;
+
+				switch (msg.msg)
+				{
+					case 'open':
+						doc = gApp->OpenOneDocument(MPath(buffer));
+						break;
+					
+					case 'new ':
+						doc = new MDocument(nil);
+						break;
+				}
+				
+				MDocWindow::DisplayDocument(doc);
+				doc->AddNotifier(notify);
+			}
+			catch (exception& e)
+			{
+				MError::DisplayError(e);
+			}
+		}
+	}
+}
+
+int OpenSocketToServer()
+{
+	int result = -1;
+
+	struct sockaddr_un addr = {};
+	addr.sun_family = AF_LOCAL;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
+
+	if (fs::exists(MPath(addr.sun_path)))
+	{
+		result = socket(AF_LOCAL, SOCK_STREAM, 0);
+		if (result < 0)
+			cerr << "sockfd failed: " << strerror(errno) << endl;
+		else
+		{
+			int err = connect(result, (const sockaddr*)&addr, sizeof(addr));
+			if (err < 0)
+			{
+				close(result);
+				result = -1;
+			}
+		}
+	}
+	
+	return result;
+}
+
+bool ForkServer(
+	const vector<MPath>&	inDocs)
+{
+	int sockfd = OpenSocketToServer();
+	
+	if (sockfd < 0)
+	{
+		// no server available, apparently. Create one
+		if (fork() > 0)
+			return true;
+		
+		sleep(1);
+		sockfd = OpenSocketToServer();
+	}
+	
+	if (sockfd < 0)
+		error("Failed to open connection to server: %s", strerror(errno));
+	
+	MSockMsg msg = { };
+
+	if (inDocs.size() > 0)
+	{
+		msg.msg = 'open';
+		for (vector<MPath>::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		{
+			msg.length = d->string().length();
+			write(sockfd, &msg, sizeof(msg));
+			write(sockfd, d->string().c_str(), d->string().length());
+		}
+	}
+	else
+	{
+		msg.msg = 'new ';
+		write(sockfd, &msg, sizeof(msg));
+	}
+	
+	msg.msg = 'done';
+	msg.length = 0;
+	write(sockfd, &msg, sizeof(msg));
+
+	// now block until all windows are closed or server dies
+	char c;
+	read(sockfd, &c, 1);
+	
+	return false;
+}
+
+void usage()
+{
+	cout << "usage: japie [options] [ - | files ]" << endl
+		 << "    available options: " << endl
+		 << "    -h      This help message" << endl
+		 << "    -f      Don't fork into client/server" << endl
+		 << "    -       Read from stdin" << endl;
+	
+	exit(1);
+}
+
 int main(int argc, char* argv[])
 {
+//	struct sigaction act, oact;
+//	act.sa_handler = my_signal_handler;
+//	sigemptyset(&act.sa_mask);
+//	act.sa_flags = 0;
+//	::sigaction(SIGTERM, &act, &oact);
+//	::sigaction(SIGUSR1, &act, &oact);
+//
 	try
 	{
+		bool fork = true;
+
 		fs::path::default_name_check(fs::no_check);
-		
 		gtk_init(&argc, &argv);
 
 		vector<MPath> docs;
 		
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?p:")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?f")) != -1)
 		{
 			switch (c)
 			{
-				case 'h':
-				case '?':
-					cout << "usage: " << argv[0] << " [files to open]" << endl;
-					exit(0);
-					break;
-				
-				case 'p':
+				case 'f':
+					fork = false;
 					break;
 				
 				default:
-					cerr << "unknown option: " << char(c) << endl;
-					exit(1);
+					usage();
 					break;
 			}
 		}
 
-		char b[PATH_MAX];
-		getcwd(b, PATH_MAX);
-		MPath cwd(b);
-
 		for (int32 i = optind; i < argc; ++i)
-			docs.push_back(cwd / argv[i]);
-
-		InitGlobals();
-
-		gApp = new MJapieApp(argc, argv);
-
-		if (docs.size() > 0)
 		{
-			for (vector<MPath>::iterator d = docs.begin(); d != docs.end(); ++d)
-			{
-				try
-				{
-					gApp->OpenOneDocument(*d);
-				}
-				catch (std::exception& inErr)
-				{
-					MError::DisplayError(inErr);
-				}
-			}
-		}
-		else
-			gApp->ProcessCommand(cmd_New, nil, 0);
-
-		gApp->RunEventLoop();
-
-		// we're done, clean up
-		SaveGlobals();
+			string a(argv[i]);
+			if (a.substr(0, 7) == "file://")
+				a.erase(0, 7);
 		
-		delete gApp;
+			docs.push_back(fs::system_complete(a));
+		}
+
+		if (ForkServer(docs))
+		{
+			InitGlobals();
+	
+			gApp = new MJapieApp();
+	
+			gApp->RunEventLoop();
+	
+			// we're done, clean up
+			SaveGlobals();
+			
+			delete gApp;
+		}
 	}
 	catch (exception& e)
 	{

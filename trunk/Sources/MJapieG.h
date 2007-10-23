@@ -52,90 +52,85 @@ class MDocument;
 class MJapieApp : public MHandler
 {
   public:
-					MJapieApp(
-						int					argc,
-						char*				argv[]);
-
-					~MJapieApp();
+						MJapieApp();
 	
-	void			RecycleWindow(
-						MWindow*			inWindow);
+						~MJapieApp();
 	
-	virtual bool	UpdateCommandStatus(
-						uint32				inCommand,
-						bool&				outEnabled,
-						bool&				outChecked);
+	void				RecycleWindow(
+							MWindow*			inWindow);
+	
+	virtual bool		UpdateCommandStatus(
+							uint32				inCommand,
+							bool&				outEnabled,
+							bool&				outChecked);
 
-	virtual bool	ProcessCommand(
-						uint32				inCommand,
-						const MMenu*		inMenu,
-						uint32				inItemIndex);
+	virtual bool		ProcessCommand(
+							uint32				inCommand,
+							const MMenu*		inMenu,
+							uint32				inItemIndex);
 
-	void			UpdateWindowMenu(
-						MMenu*				inMenu);
+	void				UpdateWindowMenu(
+							MMenu*				inMenu);
 
-	bool			LocateSystemIncludeFile(
-						const std::string&	inFileName,
-						MPath&				outFile);
+	bool				LocateSystemIncludeFile(
+							const std::string&	inFileName,
+							MPath&				outFile);
 
-	MDocument*		OpenOneDocument(
-						const MPath&			inFileRef);
+	MDocument*			OpenOneDocument(
+							const MPath&			inFileRef);
 
-	MDocument*		AskOpenOneDocument();
+	MDocument*			AskOpenOneDocument();
 
-	void			OpenProject(
-						const MPath&			inPath);
+	void				OpenProject(
+							const MPath&			inPath);
 
-	void			AddToRecentMenu(
-						const MPath&			inFileRef);
+	void				AddToRecentMenu(
+							const MPath&			inFileRef);
 
-	GtkRecentManager*
-					GetRecentMgr() const					{ return mRecentMgr; }
+	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
 	
 	MEventOut<void(double)>					eIdle;
 
-	void			RunEventLoop();
+	void				RunEventLoop();
 
   private:
 	typedef std::list<MWindow*>	MWindowList;
 
-	void			DoQuit();
+	void				DoQuit();
 
-	void			DoNew();
+	void				DoNew();
 
-	void			DoOpen();
+	void				DoOpen();
 
-	void			DoSaveAll();
+	void				DoSaveAll();
 
-	void			DoCloseAll(
-						MCloseReason		inReason);
+	void				DoCloseAll(
+							MCloseReason		inReason);
 
-	void			DoOpenTemplate(
-						uint32				inCommand);
+	void				DoOpenTemplate(
+							uint32				inCommand);
 	
-	void			DoSelectWindowFromWindowMenu(
-						uint32				inIndex);
+	void				DoSelectWindowFromWindowMenu(
+							uint32				inIndex);
 
-//	void			DoNavUserAction(NavCBRecPtr inParams);
-//	void			DoNavTerminate(NavCBRecPtr inParams);
-
-//	void			DoNavOpenDocument(NavCBRecPtr inParams);
-//	void			OpenListOfDocuments(const AEDesc& inDocList, const AEDesc& inSelectionList);
-
-	void			ShowWorksheet();
+	void				ShowWorksheet();
+		
+	void				Pulse();
 	
-	void			Pulse();
+	static gboolean		Timeout(
+							gpointer			inData);
+
+	static gint			Snooper(
+							GtkWidget*			inGrabWidget,
+							GdkEventKey*		inEvent,
+							gpointer			inFuncData); 
 	
-	static gboolean	Timeout(
-						gpointer			inData);
-
-	static gint		Snooper(
-						GtkWidget*			inGrabWidget,
-						GdkEventKey*		inEvent,
-						gpointer			inFuncData); 
-
+	void				ProcessSocketMessages();
+	
 	MWindowList			mTrashCan;
 	GtkRecentManager*	mRecentMgr;
+	int					mSocketFD;
+	bool				mReceivedFirstMsg;
 	bool				mQuit;
 	bool				mQuitPending;
 };

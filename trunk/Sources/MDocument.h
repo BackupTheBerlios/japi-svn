@@ -59,6 +59,7 @@ class MMessageWindow;
 class MMessageList;
 class MMenu;
 class MDevice;
+class MDocClosedNotifier;
 
 struct MTextInputAreaInfo
 {
@@ -110,6 +111,9 @@ class MDocument
 	uint32				CountControllers() const			{ return mControllers.size(); }
 	
 	MController*		GetFirstController() const;
+
+	void				AddNotifier(
+							MDocClosedNotifier&		inNotifier);
 	
 	void				SetTargetTextView(MTextView* inTextView);
 	
@@ -374,6 +378,8 @@ class MDocument
 	static MDocument*			sFirst;
 //	static boost::mutex			sDocListMutex;
 	MControllerList				mControllers;
+	std::vector<MDocClosedNotifier>
+								mNotifiers;
 	bool						mSpecified;
 	MPath						mURL;
 	double						mFileModDate;
