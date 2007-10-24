@@ -57,9 +57,10 @@ class MDialog : public MWindow
 	virtual				~MDialog();
 	
 						// pass NULL for a regular dialog
-	void				Show(MWindow* inParent);
+	void				Show(
+							MWindow*			inParent);
 
-	virtual void		Close();
+//	virtual void		Close();
 	
 	static void			CloseAllDialogs();
 
@@ -118,6 +119,37 @@ class MDialog : public MWindow
 							bool				inEnabled);
 
   protected:
+
+	void				AddVBox(
+							uint32				inID,
+							bool				inHomogenous,
+							int32				inSpacing,
+							uint32				inParentID = 0);
+
+	void				AddHBox(
+							uint32				inID,
+							bool				inHomogenous,
+							int32				inSpacing,
+							uint32				inParentID = 0);
+
+	void				AddButton(
+							uint32				inID,
+							const std::string&	inLabel,
+							uint32				inParentID = 0);
+							
+	void				AddStaticText(
+							uint32				inID,
+							const std::string&	inLabel,
+							uint32				inParentID = 0);
+							
+	void				AddEditField(
+							uint32				inID,
+							const std::string&	inText,
+							uint32				inParentID = 0);
+							
+	void				AddHSeparator(
+							uint32				inID,
+							uint32				inParentID = 0);
 
 //	virtual OSStatus	DoControlHit(EventRef inEvent);
 //	virtual OSStatus	DoWindowClose(EventRef inEvent);

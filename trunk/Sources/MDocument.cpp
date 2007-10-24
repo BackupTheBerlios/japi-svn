@@ -50,7 +50,6 @@
 #include "MFindDialog.h"
 #include "MError.h"
 #include "MController.h"
-//#include "MGoToLineDialog.h"
 #include "MStyles.h"
 #include "MPreferences.h"
 //#include "MPrefsDialog.h"

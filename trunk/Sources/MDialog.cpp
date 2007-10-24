@@ -37,6 +37,8 @@
 
 #include "MJapieG.h"
 
+#include <boost/bind.hpp>
+
 #include "MDialog.h"
 #include "MView.h"
 #include "MPreferences.h"
@@ -46,13 +48,71 @@ using namespace std;
 
 MDialog* MDialog::sFirst = nil;
 
+struct MDialogItem
+{
+	uint32			mID;
+	GtkWidget*		mWidget;
+	uint32			mParentID;
+	
+	uint32			GetID() const		{ return mID; }
+};
+
+struct MDialogImp
+{
+	GtkWidget*			mVBox;
+	vector<MDialogItem>	mItems;
+	
+	MDialogItem			GetItem(
+							uint32		inID);
+
+	void				Add(
+							MDialogItem	inItem);
+};
+
+MDialogItem MDialogImp::GetItem(
+	uint32			inID)
+{
+	vector<MDialogItem>::iterator i = find_if(mItems.begin(), mItems.end(),
+		boost::bind(&MDialogItem::GetID, _1) == inID);
+	
+	assert(i != mItems.end());
+	if (i == mItems.end())
+		THROW(("Item not found"));
+	
+	return *i;
+}
+
+void MDialogImp::Add(
+	MDialogItem		inItem)
+{
+	if (inItem.mParentID == 0)
+		gtk_box_pack_end(GTK_BOX(mVBox), inItem.mWidget, false, false, 0);
+	else
+	{
+		MDialogItem parent = GetItem(inItem.mParentID);
+		
+		if (GTK_IS_BOX(parent.mWidget))
+			gtk_box_pack_end(GTK_BOX(parent.mWidget), inItem.mWidget, false, false, 0);
+		else if (GTK_IS_CONTAINER(parent.mWidget))
+			gtk_container_add(GTK_CONTAINER(parent.mWidget), inItem.mWidget);
+		else
+			THROW(("Cannot add widget to this parent"));
+	}
+	
+	mItems.push_back(inItem);
+}
+
 MDialog::MDialog()
 	: mParentWindow(nil)
 	, mNext(nil)
+	, mImpl(new MDialogImp)
 	, mCloseImmediatelyOnOK(true)
 {
 	mNext = sFirst;
 	sFirst = this;
+	
+	mImpl->mVBox = gtk_vbox_new(false, 0);
+	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mImpl->mVBox);
 }
 
 MDialog::~MDialog()
@@ -72,6 +132,8 @@ MDialog::~MDialog()
 			dlog = dlog->mNext;
 		}
 	}
+	
+	delete mImpl;
 }
 
 bool MDialog::OKClicked()
@@ -96,269 +158,271 @@ void MDialog::CloseAllDialogs()
 	}
 }
 
-void MDialog::Initialize(CFStringRef inNib, MWindow* inParentWindow)
-{
-	MWindow::Initialize(inNib);
-	
-	mParentWindow = inParentWindow;
+//void MDialog::Initialize(CFStringRef inNib, MWindow* inParentWindow)
+//{
+//	MWindow::Initialize(inNib);
+//	
+//	mParentWindow = inParentWindow;
+//
+//	Install(kEventClassControl, kEventControlHit, this, &MDialog::DoControlHit);
+//}
 
-	Install(kEventClassControl, kEventControlHit, this, &MDialog::DoControlHit);
+void MDialog::AddVBox(
+	uint32				inID,
+	bool				inHomogenous,
+	int32				inSpacing,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_vbox_new(inHomogenous, inSpacing);
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
 }
 
-void MDialog::Show(MWindow*	inParent)
+void MDialog::AddHBox(
+	uint32				inID,
+	bool				inHomogenous,
+	int32				inSpacing,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_hbox_new(inHomogenous, inSpacing);
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+
+void MDialog::AddButton(
+	uint32				inID,
+	const std::string&	inLabel,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_button_new_with_label(inLabel.c_str());
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+	
+void MDialog::AddStaticText(
+	uint32				inID,
+	const std::string&	inLabel,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_label_new(inLabel.c_str());
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+	
+void MDialog::AddEditField(
+	uint32				inID,
+	const std::string&	inText,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_entry_new();
+	
+	if (inText.length() > 0)
+		gtk_entry_set_text(GTK_ENTRY(item.mWidget), inText.c_str());
+	
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+	
+void MDialog::AddHSeparator(
+	uint32				inID,
+	uint32				inParentID)
+{
+}
+
+void MDialog::Show(
+	MWindow*		inParent)
 {
 	if (inParent != nil)
 	{
-		THROW_IF_OSERROR(
-			::ShowSheetWindow(GetSysWindow(), inParent->GetSysWindow()));
+		gtk_window_set_transient_for(
+			GTK_WINDOW(GetGtkWidget()),
+			GTK_WINDOW(inParent->GetGtkWidget()));
 	}
+	
+	MWindow::Show();
+}
+
+void MDialog::GetText(
+	uint32			inID,
+	string&			outText) const
+{
+	MDialogItem item = mImpl->GetItem(inID);
+	if (GTK_IS_ENTRY(item.mWidget))
+		outText = gtk_entry_get_text(GTK_ENTRY(item.mWidget));
 	else
-		::ShowWindow(GetSysWindow());
+		THROW(("item is not an entry"));
 }
 
-void MDialog::GetText(uint32 inID, string& outText) const
+void MDialog::SetText(
+	uint32			inID,
+	const string&	inText)
 {
-	CFStringRef s;
-	THROW_IF_OSERROR(
-		::GetControlData(FindControl(inID), kControlEntireControl,
-			kControlEditTextCFStringTag, sizeof(CFStringRef), &s, nil));
-
-	MCFString txt(s, false);
-	
-	txt.GetString(outText);
-}
-
-void MDialog::SetText(uint32 inID, const string& inText)
-{
-	MCFString txt(inText);
-	CFStringRef txtRef = txt;
-
-	THROW_IF_OSERROR(
-		::SetControlData(FindControl(inID), kControlEntireControl,
-			kControlEditTextCFStringTag, sizeof(CFStringRef), &txtRef));
-}
-
-void MDialog::GetText(uint32 inID, ustring& outText) const
-{
-	CFStringRef s;
-	THROW_IF_OSERROR(
-		::GetControlData(FindControl(inID), kControlEntireControl,
-			kControlEditTextCFStringTag, sizeof(CFStringRef), &s, nil));
-
-	MCFString txt(s, false);
-	
-	txt.GetString(outText);
-}
-
-void MDialog::SetText(uint32 inID, const ustring& inText)
-{
-	MCFString txt(inText);
-	CFStringRef txtRef = txt;
-
-	THROW_IF_OSERROR(
-		::SetControlData(FindControl(inID), kControlEntireControl,
-			kControlEditTextCFStringTag, sizeof(CFStringRef), &txtRef));
+	MDialogItem item = mImpl->GetItem(inID);
+	if (GTK_IS_ENTRY(item.mWidget))
+		gtk_entry_set_text(GTK_ENTRY(item.mWidget), inText.c_str());
+	else
+		THROW(("item is not an entry"));
 }
 
 int32 MDialog::GetValue(uint32 inID) const
 {
-	return ::GetControl32BitValue(FindControl(inID));
+//	return ::GetControl32BitValue(FindControl(inID));
 }
 
 void MDialog::SetValue(uint32 inID, int32 inValue)
 {
-	::SetControl32BitValue(FindControl(inID), inValue);
+//	::SetControl32BitValue(FindControl(inID), inValue);
 }
 
-void MDialog::GetValues(uint32 inID, vector<string>& outValues) const
+void MDialog::GetValues(
+	uint32			inID,
+	vector<string>&	outValues) const
 {
-	outValues.clear();
-	
-	string s;
-	GetText(inID, s);
-	outValues.push_back(s);
-	
-	ControlRef cntrl = FindControl(inID);
-	
-	uint32 n = ::HIComboBoxGetItemCount(cntrl);
-	for (uint32 i = 0; i < n; ++i)
-	{
-		CFStringRef txt;
-		::HIComboBoxCopyTextItemAtIndex(cntrl, i, &txt);
-		
-		MCFString(txt, false).GetString(s);
-		
-		if (i > 0 or s != outValues.back())
-			outValues.push_back(s);
-	}
+//	outValues.clear();
+//	
+//	string s;
+//	GetText(inID, s);
+//	outValues.push_back(s);
+//	
+//	ControlRef cntrl = FindControl(inID);
+//	
+//	uint32 n = ::HIComboBoxGetItemCount(cntrl);
+//	for (uint32 i = 0; i < n; ++i)
+//	{
+//		CFStringRef txt;
+//		::HIComboBoxCopyTextItemAtIndex(cntrl, i, &txt);
+//		
+//		MCFString(txt, false).GetString(s);
+//		
+//		if (i > 0 or s != outValues.back())
+//			outValues.push_back(s);
+//	}
 }
 
-void MDialog::SetValues(uint32 inID, const vector<string>& inValues)
+void MDialog::SetValues(
+	uint32					inID,
+	const vector<string>&	inValues)
 {
-	ControlRef cntrl = FindControl(inID);
-
-	if (inValues.size() > 0)
-		SetText(inID, inValues[0]);
-	else
-		SetText(inID, "");
-	
-	while (::HIComboBoxGetItemCount(cntrl) > 0)
-		::HIComboBoxRemoveItemAtIndex(cntrl, 0);
-
-	for (uint32 i = 0; i < inValues.size(); ++i)
-		::HIComboBoxAppendTextItem(cntrl, MCFString(inValues[i]), NULL);
+//	ControlRef cntrl = FindControl(inID);
+//
+//	if (inValues.size() > 0)
+//		SetText(inID, inValues[0]);
+//	else
+//		SetText(inID, "");
+//	
+//	while (::HIComboBoxGetItemCount(cntrl) > 0)
+//		::HIComboBoxRemoveItemAtIndex(cntrl, 0);
+//
+//	for (uint32 i = 0; i < inValues.size(); ++i)
+//		::HIComboBoxAppendTextItem(cntrl, MCFString(inValues[i]), NULL);
 }
 
-void MDialog::GetValues(uint32 inID, vector<ustring>& outValues) const
+//OSStatus MDialog::DoControlHit(EventRef inEvent)
+//{
+//	ControlRef theControl;
+//	::GetEventParameter(inEvent, kEventParamDirectObject,
+//		typeControlRef, nil, sizeof(theControl), nil, &theControl);
+//
+//	ControlID id;
+//	THROW_IF_OSERROR(::GetControlID(theControl, &id));
+//
+//	if (id.signature == kJapieSignature)
+//	{
+//		switch (id.id)
+//		{
+//			case kMDialogOKButtonID:
+//				if (OKClicked())
+//				{
+//					if (mCloseImmediatelyOnOK and mParentWindow)
+//					{
+//						::DetachSheetWindow(GetSysWindow());
+//						::HideWindow(GetSysWindow());
+//						MWindow::Close();
+//					}
+//					else
+//						Close();
+//				}
+//				break;
+//	
+//			case kMDialogCancelButtonID:
+//				if (CancelClicked())
+//					Close();
+//				break;
+//		}
+//	}
+//	
+//	return noErr;
+//}
+
+//void MDialog::Close()
+//{
+//	if (mParentWindow != NULL)
+//		::HideSheetWindow(GetSysWindow());
+//
+//	delete this;
+//}
+
+void MDialog::SetFocus(
+	uint32			inID)
 {
-	outValues.clear();
-	
-	ustring s;
-	GetText(inID, s);
-	outValues.push_back(s);
-	
-	ControlRef cntrl = FindControl(inID);
-	
-	uint32 n = ::HIComboBoxGetItemCount(cntrl);
-	for (uint32 i = 0; i < n; ++i)
-	{
-		CFStringRef txt;
-		::HIComboBoxCopyTextItemAtIndex(cntrl, i, &txt);
-		
-		MCFString(txt, false).GetString(s);
-		
-		if (i > 0 or s != outValues.back())
-			outValues.push_back(s);
-	}
-}
-
-void MDialog::SetValues(uint32 inID, const vector<ustring>& inValues)
-{
-	ControlRef cntrl = FindControl(inID);
-
-	if (inValues.size() > 0)
-		SetText(inID, inValues[0]);
-	else
-		SetText(inID, "");
-	
-	while (::HIComboBoxGetItemCount(cntrl) > 0)
-		::HIComboBoxRemoveItemAtIndex(cntrl, 0);
-
-	for (uint32 i = 0; i < inValues.size(); ++i)
-		::HIComboBoxAppendTextItem(cntrl, MCFString(inValues[i]), NULL);
-}
-
-OSStatus MDialog::DoControlHit(EventRef inEvent)
-{
-	ControlRef theControl;
-	::GetEventParameter(inEvent, kEventParamDirectObject,
-		typeControlRef, nil, sizeof(theControl), nil, &theControl);
-
-	ControlID id;
-	THROW_IF_OSERROR(::GetControlID(theControl, &id));
-
-	if (id.signature == kJapieSignature)
-	{
-		switch (id.id)
-		{
-			case kMDialogOKButtonID:
-				if (OKClicked())
-				{
-					if (mCloseImmediatelyOnOK and mParentWindow)
-					{
-						::DetachSheetWindow(GetSysWindow());
-						::HideWindow(GetSysWindow());
-						MWindow::Close();
-					}
-					else
-						Close();
-				}
-				break;
-	
-			case kMDialogCancelButtonID:
-				if (CancelClicked())
-					Close();
-				break;
-		}
-	}
-	
-	return noErr;
-}
-
-void MDialog::Close()
-{
-	if (mParentWindow != NULL)
-		::HideSheetWindow(GetSysWindow());
-
-	delete this;
-}
-
-OSStatus MDialog::DoWindowClose(EventRef inEvent)
-{
-	Close();
-
-	return noErr;
-}
-
-ControlRef MDialog::FindControl(uint32 inID) const
-{
-	HIViewID id;
-	id.signature = kJapieSignature;
-	id.id = inID;
-
-	ControlRef result = nil;
-	
-	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &result));
-	
-	return result;
-}
-
-void MDialog::SetFocus(uint32 inID)
-{
-	ControlRef currentFocus;
-	if (::GetKeyboardFocus(GetSysWindow(), &currentFocus) != noErr)
-		currentFocus = nil;
-	
-	ControlRef nextFocus = FindControl(inID);
-	
-	if (currentFocus != nextFocus)
-		::SetKeyboardFocus(GetSysWindow(), nextFocus, kControlFocusNextPart);
+	MDialogItem item = mImpl->GetItem(inID);
+	gtk_widget_grab_focus(item.mWidget);
 }
 
 bool MDialog::IsChecked(uint32 inID) const
 {
-	return ::GetControl32BitValue(FindControl(inID)) != 0;
+//	return ::GetControl32BitValue(FindControl(inID)) != 0;
 }
 
 void MDialog::SetChecked(uint32 inID, bool inOn)
 {
-	::SetControl32BitValue(FindControl(inID), inOn);
+//	::SetControl32BitValue(FindControl(inID), inOn);
 }
 
 bool MDialog::IsVisible(uint32 inID) const
 {
-	return ::IsControlVisible(FindControl(inID));
+//	return ::IsControlVisible(FindControl(inID));
 }
 
 void MDialog::SetVisible(uint32 inID, bool inVisible)
 {
-	if (inVisible)
-		::ShowControl(FindControl(inID));
-	else
-		::HideControl(FindControl(inID));
+//	if (inVisible)
+//		::ShowControl(FindControl(inID));
+//	else
+//		::HideControl(FindControl(inID));
 }
 
 bool MDialog::IsEnabled(uint32 inID) const
 {
-	return ::IsControlEnabled(FindControl(inID));
+//	return ::IsControlEnabled(FindControl(inID));
 }
 
 void MDialog::SetEnabled(uint32 inID, bool inEnabled)
 {
-	if (inEnabled)
-		::EnableControl(FindControl(inID));
-	else
-		::DisableControl(FindControl(inID));
+//	if (inEnabled)
+//		::EnableControl(FindControl(inID));
+//	else
+//		::DisableControl(FindControl(inID));
 }
 
 void MDialog::SavePosition(const char* inName)

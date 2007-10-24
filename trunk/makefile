@@ -31,7 +31,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS))
 
 Sources = $(wildcard Sources/*.cpp)
 
-Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp Sources/MDialog.cpp, $(Sources))
+Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

@@ -41,7 +41,7 @@
 #include "MFindDialog.h"
 #include "MClipboard.h"
 //#include "MApplication.h"
-//#include "MGoToLineDialog.h"
+#include "MGoToLineDialog.h"
 //#include "MFindAndOpenDialog.h"
 //#include "MMarkMatchingDialog.h"
 #include "MUnicode.h"
@@ -647,9 +647,9 @@ void MController::DoGoToLine()
 	if (mDocument == nil)
 		return;
 	
-//	std::auto_ptr<MGoToLineDialog> dlog(new MGoToLineDialog);
-//	dlog->Initialize(mDocument, mWindow);
-//	dlog.release();
+	std::auto_ptr<MGoToLineDialog> dlog(new MGoToLineDialog);
+	dlog->Initialize(mDocument, mWindow);
+	dlog.release();
 }
 
 bool MController::OpenInclude(std::string inFileName)
