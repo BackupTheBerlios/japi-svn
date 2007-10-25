@@ -18,6 +18,18 @@ MWindow::MWindow()
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
 }
 
+MWindow::MWindow(
+	GtkWidget*		inWindow)
+	: MView(inWindow, false)
+	, MHandler(gApp)
+	, mOnDestroy(this, &MWindow::OnDestroy)
+	, mOnDelete(this, &MWindow::OnDelete)
+	, mModified(false)
+{
+	mOnDestroy.Connect(GetGtkWidget(), "destroy");
+	mOnDelete.Connect(GetGtkWidget(), "delete_event");
+}
+
 MWindow::~MWindow()
 {
 	cout << "deleting MWindow" << endl;

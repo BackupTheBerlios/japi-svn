@@ -86,13 +86,13 @@ void MDialogImp::Add(
 	MDialogItem		inItem)
 {
 	if (inItem.mParentID == 0)
-		gtk_box_pack_end(GTK_BOX(mVBox), inItem.mWidget, false, false, 0);
+		gtk_box_pack_start(GTK_BOX(mVBox), inItem.mWidget, false, false, 12);
 	else
 	{
 		MDialogItem parent = GetItem(inItem.mParentID);
 		
 		if (GTK_IS_BOX(parent.mWidget))
-			gtk_box_pack_end(GTK_BOX(parent.mWidget), inItem.mWidget, false, false, 0);
+			gtk_box_pack_start(GTK_BOX(parent.mWidget), inItem.mWidget, false, false, 12);
 		else if (GTK_IS_CONTAINER(parent.mWidget))
 			gtk_container_add(GTK_CONTAINER(parent.mWidget), inItem.mWidget);
 		else
@@ -103,16 +103,20 @@ void MDialogImp::Add(
 }
 
 MDialog::MDialog()
-	: mParentWindow(nil)
+	: MWindow(gtk_dialog_new())
+	, mOKClicked(this, &MDialog::OnOKClickedEvent)
+	, mCancelClicked(this, &MDialog::OnCancelClickedEvent)
+	, mParentWindow(nil)
 	, mNext(nil)
 	, mImpl(new MDialogImp)
 	, mCloseImmediatelyOnOK(true)
 {
 	mNext = sFirst;
 	sFirst = this;
+
+	gtk_window_set_resizable(GTK_WINDOW(GetGtkWidget()), false);
 	
-	mImpl->mVBox = gtk_vbox_new(false, 0);
-	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mImpl->mVBox);
+	mImpl->mVBox = GTK_DIALOG(GetGtkWidget())->vbox;
 }
 
 MDialog::~MDialog()
@@ -141,8 +145,24 @@ bool MDialog::OKClicked()
 	return true;
 }
 
+bool MDialog::OnOKClickedEvent()
+{
+	if (OKClicked())
+		Close();
+
+	return true;
+}
+
 bool MDialog::CancelClicked()
 {
+	return true;
+}
+
+bool MDialog::OnCancelClickedEvent()
+{
+	if (CancelClicked())
+		Close();
+	
 	return true;
 }
 
@@ -166,6 +186,22 @@ void MDialog::CloseAllDialogs()
 //
 //	Install(kEventClassControl, kEventControlHit, this, &MDialog::DoControlHit);
 //}
+
+void MDialog::AddOKButton(
+	const char*			inLabel)
+{
+	GtkWidget* button = gtk_button_new_with_label(inLabel);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, false, false, 0);
+	mOKClicked.Connect(button, "clicked");
+}
+
+void MDialog::AddCancelButton(
+	const char*			inLabel)
+{
+	GtkWidget* button = gtk_button_new_with_label(inLabel);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, false, false, 0);
+	mCancelClicked.Connect(button, "clicked");
+}
 
 void MDialog::AddVBox(
 	uint32				inID,

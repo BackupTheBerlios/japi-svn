@@ -120,6 +120,12 @@ class MDialog : public MWindow
 
   protected:
 
+	void				AddOKButton(
+							const char*			inLabel);
+
+	void				AddCancelButton(
+							const char*			inLabel);
+
 	void				AddVBox(
 							uint32				inID,
 							bool				inHomogenous,
@@ -168,6 +174,13 @@ class MDialog : public MWindow
 							bool				inCloseImmediately);
 
   private:
+
+	bool				OnOKClickedEvent();
+	bool				OnCancelClickedEvent();
+
+	MSlot<bool()>		mOKClicked;
+	MSlot<bool()>		mCancelClicked;
+
 	MWindow*			mParentWindow;
 	MDialog*			mNext;						// for the close all
 	struct MDialogImp*	mImpl;

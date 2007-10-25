@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,65 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCCLOSEDNOTIFIER_H
-#define MDOCCLOSEDNOTIFIER_H
+/*	$Id: MMarkMatchingDialog.cpp 75 2006-09-05 09:56:43Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Sunday August 15 2004 20:47:19
+*/
 
-class MDocClosedNotifier
+#include "Japie.h"
+
+#include "MMarkMatchingDialog.h"
+#include "MDocument.h"
+#include "MPreferences.h"
+#include "MView.h"
+#include "MUtils.h"
+
+namespace {
+
+enum
 {
-  public:
-						MDocClosedNotifier(
-							int							inFD);
-						
-						MDocClosedNotifier(
-							const MDocClosedNotifier&	inRHS);
-	
-	MDocClosedNotifier&	operator=(
-							const MDocClosedNotifier&	inRHS);
-
-						~MDocClosedNotifier();
-
-  private:
-
-	struct MDocClosedNotifierImp*						mImpl;
+	kTextBoxControlID = 'edit',
+	kIgnoreCaseControlID = 'ignc',
+	kRegularExpressionControlID = 'regx'
 };
 
-#endif
+}
+
+MMarkMatchingDialog::MMarkMatchingDialog()
+	: mDocument(nil)
+{
+	SetTitle("Mark Lines Matching");
+	
+	AddStaticText('lbl1', "Mark lines matching", 0);
+	AddEditField(kTextBoxControlID, "");
+	AddCheckBox(kIgnoreCaseControlID, "Ignore Case", 0);
+	AddCheckBox(kRegularExpressionControlID, "Regular Expression", 0);
+
+	AddCancelButton("Cancel");
+	AddOKButton("OK");
+}
+
+void MMarkMatchingDialog::Initialize(
+	MDocument*	inDocument,
+	MWindow*	inWindow)
+{
+	mDocument = inDocument;
+	
+	Show(inWindow);
+	SetFocus(kTextBoxControlID);
+}
+
+bool MMarkMatchingDialog::OKClicked()
+{
+	string txt;
+	GetText(kTextBoxControlID, txt);
+
+	if (txt.length() > 0 and mDocument != nil)
+	{
+		mDocument->MarkMatching(txt, 
+			IsChecked(kIgnoreCaseControlID),
+			IsChecked(kRegularExpressionControlID));
+	}
+	
+	return true;
+}

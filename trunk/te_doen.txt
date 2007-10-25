@@ -3,7 +3,6 @@
 - dialogs
 - project
 - drag&drop
-- openen doc vanaf commandline, met wait en zo
 - verminderen aantal gelinkte bibliotheken
 - entab/detab
 - preferences

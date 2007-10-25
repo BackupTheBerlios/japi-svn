@@ -57,13 +57,14 @@ enum
 MGoToLineDialog::MGoToLineDialog()
 	: mDocument(nil)
 {
-	AddVBox('vbox', false, 0);
-	AddHBox('hbox', false, 0, 'vbox');
+	SetTitle("Go To Line");
+	
+	AddHBox('hbox', false, 12);
 	AddStaticText('lbl1', "Go To Line:", 'hbox');
 	AddEditField('edit', "", 'hbox');
-	AddHBox('hbx2', false, 0, 'vbox');
-	AddButton('btn1', "OK", 'hbx2');
-	AddButton('btn2', "Cancel", 'hbx2');
+
+	AddCancelButton("Cancel");
+	AddOKButton("OK");
 }
 
 void MGoToLineDialog::Initialize(
@@ -71,8 +72,6 @@ void MGoToLineDialog::Initialize(
 	MWindow*		inWindow)
 {
 	mDocument = inDocument;
-	
-//	MDialog::Initialize(CFSTR("GoToLine"), inWindow);
 	
 	Show(inWindow);
 	SetFocus(kTextBoxControlID);

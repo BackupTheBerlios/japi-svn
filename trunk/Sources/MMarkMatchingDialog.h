@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,31 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCCLOSEDNOTIFIER_H
-#define MDOCCLOSEDNOTIFIER_H
+/*	$Id: MMarkMatchingDialog.h 75 2006-09-05 09:56:43Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Sunday August 15 2004 20:47:00
+*/
 
-class MDocClosedNotifier
+#ifndef MMARKMATCHINGDIALOG_H
+#define MMARKMATCHINGDIALOG_H
+
+#include "MDialog.h"
+
+class MDocument;
+
+class MMarkMatchingDialog : public MDialog
 {
   public:
-						MDocClosedNotifier(
-							int							inFD);
-						
-						MDocClosedNotifier(
-							const MDocClosedNotifier&	inRHS);
+					MMarkMatchingDialog();
+
+	void			Initialize(
+						MDocument*	inDocument,
+						MWindow*	inWindow);
+
+	virtual bool	OKClicked();
 	
-	MDocClosedNotifier&	operator=(
-							const MDocClosedNotifier&	inRHS);
-
-						~MDocClosedNotifier();
-
   private:
-
-	struct MDocClosedNotifierImp*						mImpl;
+	MDocument*		mDocument;
 };
 
-#endif
+#endif // MMARKMATCHINGDIALOG_H

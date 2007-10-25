@@ -578,11 +578,11 @@ int32 MListImp::GetSelected() const
 bool MListImp::OnExposeEvent(
 	GdkEventExpose*		inEvent)
 {
-	MDevice dev(this, inEvent->area);	
-	
 	MRect bounds;
 	GetBounds(bounds);
 
+	MDevice dev(this, bounds);	
+	
 //	if (mDrawListBox)
 //	{
 //		bounds = ::CGRectInset(bounds, 3, 3);

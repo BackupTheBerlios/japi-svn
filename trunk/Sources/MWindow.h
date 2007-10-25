@@ -12,41 +12,44 @@
 class MWindow : public MView, public MHandler
 {
   public:
-					MWindow();
-	virtual			~MWindow();
+							MWindow();
+	virtual					~MWindow();
 	
-	void			Show();
-	void			Hide();
-	void			Select();
+	void					Show();
+	void					Hide();
+	void					Select();
 	
-	void			Close();
+	void					Close();
+		
+	void					SetTitle(
+								const std::string&	inTitle);
+	std::string				GetTitle() const;
 	
-	void			SetTitle(
-						const std::string&	inTitle);
-	std::string		GetTitle() const;
-	
-	void			SetModifiedMarkInTitle(
-						bool			inModified);
+	void					SetModifiedMarkInTitle(
+								bool			inModified);
 
-	virtual bool	UpdateCommandStatus(
-						uint32			inCommand,
-						bool&			outEnabled,
-						bool&			outChecked);
+	virtual bool			UpdateCommandStatus(
+								uint32			inCommand,
+								bool&			outEnabled,
+								bool&			outChecked);
 
-	virtual bool	ProcessCommand(
-						uint32			inCommand,
-						const MMenu*	inMenu,
-						uint32			inItemIndex);
+	virtual bool			ProcessCommand(
+								uint32			inCommand,
+								const MMenu*	inMenu,
+								uint32			inItemIndex);
 
-	MEventOut<void(MWindow*)>			eWindowClosed;
+	MEventOut<void(MWindow*)>	eWindowClosed;
 
   protected:
 
-	virtual bool	DoClose();
+							MWindow(
+								GtkWidget*	inWindow);
 
-	virtual bool	OnDestroy();
-	virtual bool	OnDelete(
-						GdkEvent*	inEvent);
+	virtual bool			DoClose();
+
+	virtual bool			OnDestroy();
+	virtual bool			OnDelete(
+								GdkEvent*	inEvent);
 
   private:
 	MSlot<bool()>			mOnDestroy;

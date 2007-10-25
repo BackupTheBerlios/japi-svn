@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,29 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCCLOSEDNOTIFIER_H
-#define MDOCCLOSEDNOTIFIER_H
+/*	$Id: MFindAndOpenDialog.h 75 2006-09-05 09:56:43Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Sunday August 15 2004 20:47:00
+*/
 
-class MDocClosedNotifier
+#ifndef MFINDANDOPENDIALOG_H
+#define MFINDANDOPENDIALOG_H
+
+#include "MDialog.h"
+
+class MController;
+
+class MFindAndOpenDialog : public MDialog
 {
   public:
-						MDocClosedNotifier(
-							int							inFD);
-						
-						MDocClosedNotifier(
-							const MDocClosedNotifier&	inRHS);
+					MFindAndOpenDialog();
+
+	void			Initialize(MController* inController, MWindow* inWindow);
+
+	virtual bool	OKClicked();
 	
-	MDocClosedNotifier&	operator=(
-							const MDocClosedNotifier&	inRHS);
-
-						~MDocClosedNotifier();
-
   private:
-
-	struct MDocClosedNotifierImp*						mImpl;
+	MController*	mController;
 };
 
-#endif
+#endif // MFINDANDOPENDIALOG_H

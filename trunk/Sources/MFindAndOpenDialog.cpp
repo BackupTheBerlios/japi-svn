@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,74 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCCLOSEDNOTIFIER_H
-#define MDOCCLOSEDNOTIFIER_H
+/*	$Id: MFindAndOpenDialog.cpp 158 2007-05-28 10:08:18Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Sunday August 15 2004 20:47:19
+*/
 
-class MDocClosedNotifier
-{
-  public:
-						MDocClosedNotifier(
-							int							inFD);
-						
-						MDocClosedNotifier(
-							const MDocClosedNotifier&	inRHS);
-	
-	MDocClosedNotifier&	operator=(
-							const MDocClosedNotifier&	inRHS);
+#include "Japie.h"
 
-						~MDocClosedNotifier();
+#include "MFindAndOpenDialog.h"
+#include "MController.h"
+#include "MProject.h"
+#include "MPreferences.h"
+#include "MView.h"
+#include "MUnicode.h"
+#include "MApplication.h"
 
-  private:
+using namespace std;
 
-	struct MDocClosedNotifierImp*						mImpl;
+namespace {
+
+enum {
+	kTextBoxControlID = 2
 };
 
-#endif
+}
+
+MFindAndOpenDialog::MFindAndOpenDialog()
+	: mController(nil)
+{
+}
+
+void MFindAndOpenDialog::Initialize(MController* inController, MWindow* inWindow)
+{
+	mController = inController;
+	
+	MDialog::Initialize(CFSTR("Include"), inWindow);
+	
+	SetText(kTextBoxControlID,
+		Preferences::GetString("last open include", ""));
+
+	Show(inWindow);
+	SetFocus(kTextBoxControlID);
+}
+
+bool MFindAndOpenDialog::OKClicked()
+{
+	std::string s;
+
+	GetText(kTextBoxControlID, s);
+
+	Preferences::SetString("last open include", s);
+
+	if (mController != nil)
+	{
+		if (not mController->OpenInclude(s))
+			::AlertSoundPlay();
+	}
+	else
+	{
+		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
+		
+		if (project == nil)
+			project = MProject::Instance();
+
+		MPath p(s);
+		
+		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
+			MApplication::Instance().OpenOneDocument(p);
+	}
+	
+	return true;
+}

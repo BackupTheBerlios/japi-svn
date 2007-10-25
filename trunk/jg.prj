@@ -28,9 +28,6 @@
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
-		<path>../../../../usr/pkg/lib</path>
-		<path>../../../../opt/local/lib</path>
-		<path>../../../../usr/pkg/lib</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib</path>
@@ -45,6 +42,7 @@
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
 			<file>MDocument.cpp</file>
+			<file>MDocClosedNotifier.cpp</file>
 			<file>MTextView.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
@@ -66,7 +64,10 @@
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
+				<file>MDialog.cpp</file>
 				<file>MFindDialog.cpp</file>
+				<file>MGoToLineDialog.cpp</file>
+				<file>MMarkMatchingDialog.cpp</file>
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>

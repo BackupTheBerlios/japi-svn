@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,26 +30,53 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCCLOSEDNOTIFIER_H
-#define MDOCCLOSEDNOTIFIER_H
+#ifndef MPREFSDIALOG_H
+#define MPREFSDIALOG_H
 
-class MDocClosedNotifier
+#include "MDialog.h"
+#include "MCarbonEvents.h"
+#include "MP2PEvents.h"
+
+class MColorSwatch;
+
+class MPrefsDialog : public MDialog
 {
   public:
-						MDocClosedNotifier(
-							int							inFD);
-						
-						MDocClosedNotifier(
-							const MDocClosedNotifier&	inRHS);
+	static void			Create();
 	
-	MDocClosedNotifier&	operator=(
-							const MDocClosedNotifier&	inRHS);
-
-						~MDocClosedNotifier();
-
+	static MEventOut<void()>
+						ePrefsChanged;
+	
   private:
+	
+	enum
+	{
+		kKeywordSwatchNr,
+		kPreprocessorSwatchNr,
+		kCharConstSwatchNr,
+		kCommentSwatchNr,
+		kStringSwatchNr,
+		kHTMLTagSwatchNr,
+		kHTMLAttributeSwatchNr,
+		kSwatchCount
+	};
 
-	struct MDocClosedNotifierImp*						mImpl;
+
+						MPrefsDialog();
+
+	void				Initialize();
+	
+	void				SelectPage(UInt32 inPageID);
+	
+	MColorSwatch*		MakeSwatch(UInt32 inID, MColor inColor);
+	
+	virtual bool		OKClicked();
+	virtual bool		CancelClicked();
+
+	virtual OSStatus	DoControlHit(EventRef inEvent);
+
+	UInt32				mCurrentPage;
+	MColorSwatch*		mColorSwatches[kSwatchCount];
 };
 
 #endif
