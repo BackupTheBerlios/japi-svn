@@ -43,7 +43,7 @@
 //#include "MApplication.h"
 #include "MGoToLineDialog.h"
 //#include "MFindAndOpenDialog.h"
-//#include "MMarkMatchingDialog.h"
+#include "MMarkMatchingDialog.h"
 #include "MUnicode.h"
 #include "MGlobals.h"
 //#include "MProject.h"
@@ -841,8 +841,8 @@ void MController::DoMarkMatching()
 	if (mDocument == nil)
 		return;
 	
-//	std::auto_ptr<MMarkMatchingDialog> dlog(new MMarkMatchingDialog);
-//	dlog->Initialize(mDocument, mWindow);
-//	dlog.release();
+	std::auto_ptr<MMarkMatchingDialog> dlog(new MMarkMatchingDialog);
+	dlog->Initialize(mDocument, mWindow);
+	dlog.release();
 }
 

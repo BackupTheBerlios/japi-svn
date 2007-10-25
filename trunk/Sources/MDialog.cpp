@@ -218,6 +218,19 @@ void MDialog::AddVBox(
 	mImpl->Add(item);
 }
 
+void MDialog::AddVButtonBox(
+	uint32				inID,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_vbutton_box_new();
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+
 void MDialog::AddHBox(
 	uint32				inID,
 	bool				inHomogenous,
@@ -227,6 +240,19 @@ void MDialog::AddHBox(
 	MDialogItem item;
 	
 	item.mWidget = gtk_hbox_new(inHomogenous, inSpacing);
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+
+void MDialog::AddHButtonBox(
+	uint32				inID,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_hbutton_box_new();
 	item.mID = inID;
 	item.mParentID = inParentID;
 	
@@ -255,6 +281,7 @@ void MDialog::AddStaticText(
 	MDialogItem item;
 	
 	item.mWidget = gtk_label_new(inLabel.c_str());
+	gtk_label_set_justify(GTK_LABEL(item.mWidget), GTK_JUSTIFY_LEFT);
 	item.mID = inID;
 	item.mParentID = inParentID;
 	
@@ -283,6 +310,20 @@ void MDialog::AddHSeparator(
 	uint32				inID,
 	uint32				inParentID)
 {
+}
+
+void MDialog::AddCheckBox(
+	uint32				inID,
+	const string&		inLabel,
+	uint32				inParentID)
+{
+	MDialogItem item;
+	
+	item.mWidget = gtk_check_button_new_with_label(inLabel.c_str());
+	item.mID = inID;
+	item.mParentID = inParentID;
+	
+	mImpl->Add(item);
 }
 
 void MDialog::Show(
@@ -427,12 +468,16 @@ void MDialog::SetFocus(
 
 bool MDialog::IsChecked(uint32 inID) const
 {
-//	return ::GetControl32BitValue(FindControl(inID)) != 0;
+	MDialogItem item = mImpl->GetItem(inID);
+	assert(GTK_IS_CHECK_BUTTON(item.mWidget));
+	return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(item.mWidget));
 }
 
 void MDialog::SetChecked(uint32 inID, bool inOn)
 {
-//	::SetControl32BitValue(FindControl(inID), inOn);
+	MDialogItem item = mImpl->GetItem(inID);
+	assert(GTK_IS_CHECK_BUTTON(item.mWidget));
+	return gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item.mWidget), inOn);
 }
 
 bool MDialog::IsVisible(uint32 inID) const

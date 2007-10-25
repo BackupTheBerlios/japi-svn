@@ -35,13 +35,15 @@
 	Created Sunday August 15 2004 20:47:19
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MMarkMatchingDialog.h"
 #include "MDocument.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUtils.h"
+
+using namespace std;
 
 namespace {
 
@@ -59,10 +61,15 @@ MMarkMatchingDialog::MMarkMatchingDialog()
 {
 	SetTitle("Mark Lines Matching");
 	
-	AddStaticText('lbl1', "Mark lines matching", 0);
-	AddEditField(kTextBoxControlID, "");
-	AddCheckBox(kIgnoreCaseControlID, "Ignore Case", 0);
-	AddCheckBox(kRegularExpressionControlID, "Regular Expression", 0);
+	AddVButtonBox('boxv');
+	
+	AddHBox('boxh', false, 0, 'boxv');
+	
+	AddStaticText('lbl1', "Mark lines matching", 'boxh');
+	AddEditField(kTextBoxControlID, "", 'boxh');
+
+	AddCheckBox(kIgnoreCaseControlID, "Ignore Case", 'boxv');
+	AddCheckBox(kRegularExpressionControlID, "Regular Expression", 'boxv');
 
 	AddCancelButton("Cancel");
 	AddOKButton("OK");

@@ -1532,10 +1532,14 @@ bool MTextBuffer::Find(
 			{
 				options = 0;
 				
-				int r = pcre_exec(pattern, info, mData + inOffset,
+				int r = pcre_exec(pattern, info, mData,
 					mLogicalLength, inOffset, options, matches, 33);
 				
-				result = r >= 0;
+				if (r >= 0)
+				{
+					outFound.Set(matches[0], matches[1]);
+					result = true;
+				}
 			}
 			else
 			{
@@ -1575,7 +1579,11 @@ bool MTextBuffer::Find(
 						r = pcre_exec(pattern, info, mData, mLogicalLength, inOffset,
 							PCRE_ANCHORED, matches, 33);
 						
-						result = r >= 0;
+						if (r >= 0)
+						{
+							outFound.Set(matches[0], matches[1]);
+							result = true;
+						}
 					}
 				}
 			}

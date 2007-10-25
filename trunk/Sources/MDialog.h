@@ -132,10 +132,18 @@ class MDialog : public MWindow
 							int32				inSpacing,
 							uint32				inParentID = 0);
 
+	void				AddVButtonBox(
+							uint32				inID,
+							uint32				inParentID = 0);
+
 	void				AddHBox(
 							uint32				inID,
 							bool				inHomogenous,
 							int32				inSpacing,
+							uint32				inParentID = 0);
+
+	void				AddHButtonBox(
+							uint32				inID,
 							uint32				inParentID = 0);
 
 	void				AddButton(
@@ -155,6 +163,11 @@ class MDialog : public MWindow
 							
 	void				AddHSeparator(
 							uint32				inID,
+							uint32				inParentID = 0);
+
+	void				AddCheckBox(
+							uint32				inID,
+							const std::string&	inLabel,
 							uint32				inParentID = 0);
 
 //	virtual OSStatus	DoControlHit(EventRef inEvent);
