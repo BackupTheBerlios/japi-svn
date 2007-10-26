@@ -35,22 +35,22 @@
 	Created Sunday August 15 2004 20:47:19
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include "MFindAndOpenDialog.h"
 #include "MController.h"
-#include "MProject.h"
+//#include "MProject.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUnicode.h"
-#include "MApplication.h"
+#include "MUtils.h"
 
 using namespace std;
 
 namespace {
 
 enum {
-	kTextBoxControlID = 2
+	kTextBoxControlID = 'edit'
 };
 
 }
@@ -58,13 +58,23 @@ enum {
 MFindAndOpenDialog::MFindAndOpenDialog()
 	: mController(nil)
 {
+	SetTitle("Find and Open File");
+	
+	AddHBox('hbox', false, 12);
+	AddStaticText('lbl1', "Filename:", 'hbox');
+	AddEditField('edit', "", 'hbox');
+
+	AddCancelButton("Cancel");
+	AddOKButton("OK");
 }
 
-void MFindAndOpenDialog::Initialize(MController* inController, MWindow* inWindow)
+void MFindAndOpenDialog::Initialize(
+	MController*	inController,
+	MWindow*		inWindow)
 {
 	mController = inController;
 	
-	MDialog::Initialize(CFSTR("Include"), inWindow);
+//	MDialog::Initialize(CFSTR("Include"), inWindow);
 	
 	SetText(kTextBoxControlID,
 		Preferences::GetString("last open include", ""));
@@ -75,7 +85,7 @@ void MFindAndOpenDialog::Initialize(MController* inController, MWindow* inWindow
 
 bool MFindAndOpenDialog::OKClicked()
 {
-	std::string s;
+	string s;
 
 	GetText(kTextBoxControlID, s);
 
@@ -84,19 +94,19 @@ bool MFindAndOpenDialog::OKClicked()
 	if (mController != nil)
 	{
 		if (not mController->OpenInclude(s))
-			::AlertSoundPlay();
+			Beep();
 	}
 	else
 	{
-		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
-		
-		if (project == nil)
-			project = MProject::Instance();
+//		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
+//		
+//		if (project == nil)
+//			project = MProject::Instance();
 
 		MPath p(s);
 		
-		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
-			MApplication::Instance().OpenOneDocument(p);
+		if (exists(p) /*or (project != nil and project->LocateFile(s, true, p))*/)
+			gApp->OpenOneDocument(p);
 	}
 	
 	return true;

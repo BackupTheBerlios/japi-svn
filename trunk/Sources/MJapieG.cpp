@@ -43,6 +43,7 @@
 #include "MUtils.h"
 #include "MAcceleratorTable.h"
 #include "MDocClosedNotifier.h"
+#include "MFindAndOpenDialog.h"
 
 #include <iostream>
 
@@ -166,13 +167,13 @@ bool MJapieApp::ProcessCommand(
 //			MFindDialog::Instance().FindNext();
 //			break;
 		
-//		case cmd_OpenIncludeFile:
-//		{
-//			std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
-//			dlog->Initialize(nil, nil);
-//			dlog.release();
-//			break;
-//		}
+		case cmd_OpenIncludeFile:
+		{
+			std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
+			dlog->Initialize(nil, nil);
+			dlog.release();
+			break;
+		}
 		
 		case cmd_Worksheet:
 			ShowWorksheet();

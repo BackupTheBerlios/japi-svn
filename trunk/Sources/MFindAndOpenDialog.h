@@ -47,7 +47,9 @@ class MFindAndOpenDialog : public MDialog
   public:
 					MFindAndOpenDialog();
 
-	void			Initialize(MController* inController, MWindow* inWindow);
+	void			Initialize(
+						MController*	inController,
+						MWindow*		inWindow);
 
 	virtual bool	OKClicked();
 	

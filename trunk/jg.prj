@@ -67,6 +67,7 @@
 				<file>MDialog.cpp</file>
 				<file>MFindDialog.cpp</file>
 				<file>MGoToLineDialog.cpp</file>
+				<file>MFindAndOpenDialog.cpp</file>
 				<file>MMarkMatchingDialog.cpp</file>
 			</group>
 			<file>MUnicode.cpp</file>

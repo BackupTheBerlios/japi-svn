@@ -42,7 +42,7 @@
 #include "MClipboard.h"
 //#include "MApplication.h"
 #include "MGoToLineDialog.h"
-//#include "MFindAndOpenDialog.h"
+#include "MFindAndOpenDialog.h"
 #include "MMarkMatchingDialog.h"
 #include "MUnicode.h"
 #include "MGlobals.h"
@@ -685,9 +685,9 @@ void MController::DoOpenIncludeFile()
 	
 	if (selection.IsEmpty())
 	{
-//		std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
-//		dlog->Initialize(this, mWindow);
-//		dlog.release();
+		std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
+		dlog->Initialize(this, mWindow);
+		dlog.release();
 		result = true;
 	}
 	else
