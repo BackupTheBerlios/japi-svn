@@ -516,6 +516,8 @@ MRect MListImp::GetItemRect(
 	
 	MRect result = GetItemsBounds();
 	
+	result.y = 0;
+	
 	for (uint32 ix = 0; ix < inItemNr; ++ix)
 		result.y += mItems[ix].GetHeight();
 	
@@ -534,6 +536,7 @@ uint32 MListImp::PointToItem(
 	uint32 itemNr = 0;
 	
 	MRect r = GetItemsBounds();
+	r.y = 0;
 	r.height = 0;
 	
 	while (itemNr < mItems.size())
@@ -578,10 +581,10 @@ int32 MListImp::GetSelected() const
 bool MListImp::OnExposeEvent(
 	GdkEventExpose*		inEvent)
 {
+	MDevice dev(this, inEvent->area);
+
 	MRect bounds;
 	GetBounds(bounds);
-
-	MDevice dev(this, bounds);	
 	
 //	if (mDrawListBox)
 //	{
