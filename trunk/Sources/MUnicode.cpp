@@ -38,10 +38,6 @@
 #include "MJapieG.h"
 
 #include <sstream>
-#include <unicode/uchar.h>
-#include <unicode/ustring.h>
-#include <unicode/utext.h>
-#include <unicode/unistr.h>
 
 #include "MUnicode.h"
 #include "MError.h"

@@ -146,6 +146,12 @@ class MDialog : public MWindow
 							uint32				inID,
 							uint32				inParentID = 0);
 
+	void				AddTable(
+							uint32				inID,
+							uint32				inColumnCount,
+							uint32				inRowCount,
+							uint32				inParentID = 0);
+
 	void				AddButton(
 							uint32				inID,
 							const std::string&	inLabel,
@@ -159,6 +165,10 @@ class MDialog : public MWindow
 	void				AddEditField(
 							uint32				inID,
 							const std::string&	inText,
+							uint32				inParentID = 0);
+
+	void				AddComboBoxEntry(
+							uint32				inID,
 							uint32				inParentID = 0);
 							
 	void				AddHSeparator(

@@ -44,6 +44,7 @@
 #include "MAcceleratorTable.h"
 #include "MDocClosedNotifier.h"
 #include "MFindAndOpenDialog.h"
+#include "MFindDialog.h"
 
 #include <iostream>
 
@@ -159,13 +160,13 @@ bool MJapieApp::ProcessCommand(
 			DoOpenTemplate(inCommand);
 			break;
 		
-//		case cmd_Find:
-//			MFindDialog::Instance().Select();
-//			break;
-		
-//		case cmd_FindInNextFile:
-//			MFindDialog::Instance().FindNext();
-//			break;
+		case cmd_Find:
+			MFindDialog::Instance().Select();
+			break;
+	
+		case cmd_FindInNextFile:
+			MFindDialog::Instance().FindNext();
+			break;
 		
 		case cmd_OpenIncludeFile:
 		{

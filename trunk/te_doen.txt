@@ -1,6 +1,5 @@
 ﻿Te doen
 
-- dialogs
 - project
 - drag&drop
 - verminderen aantal gelinkte bibliotheken

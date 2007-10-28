@@ -5,8 +5,8 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= pcre boost_filesystem
-LIBPATHS	=  
+LIBS		= pcre boost_filesystem-gcc41
+LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
@@ -17,6 +17,8 @@ LDFLAGS		= -fdata-sections -g
 LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
 CC			= c++
 OPT			+= -O3
+
+include make.config
 
 ifeq ($(DEBUG),0)
 	CFLAGS	+= $(OPT)
@@ -31,7 +33,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS))
 
 Sources = $(wildcard Sources/*.cpp)
 
-Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp, $(Sources))
+Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp Sources/MPrefsDialog.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

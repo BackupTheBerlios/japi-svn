@@ -38,8 +38,9 @@
 #define MFINDDIALOG_H
 
 #include <deque>
+#include <vector>
 
-//#include "MDialog.h"
+#include "MDialog.h"
 #include "MFile.h"
 #include "MP2PEvents.h"
 //#include "MScrap.h"
@@ -57,14 +58,13 @@ enum MMultiMethod
 	eMMIncludes
 };	
 
-class MFindDialog // : public MDialog
+class MFindDialog : public MDialog
 {
   public:
 
 	static MFindDialog&	Instance();
 	
 	void			Select();
-	virtual void	Close();
 
 	void			FindNext();
 	void			FindAll(
@@ -88,12 +88,15 @@ class MFindDialog // : public MDialog
 
   private:
 
-	typedef std::deque<std::string>			StringArray;
+
+	typedef std::vector<std::string>		StringArray;
 	typedef std::deque<MPath>				FileArray;
 
 					MFindDialog();
 
 	void			Initialize();
+
+	virtual bool	DoClose();
 
 	virtual bool	OKClicked();
 

@@ -17,7 +17,7 @@ class MWindow : public MView, public MHandler
 	
 	void					Show();
 	void					Hide();
-	void					Select();
+	virtual void			Select();
 	
 	void					Close();
 		
