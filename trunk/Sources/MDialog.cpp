@@ -38,6 +38,7 @@
 #include "MJapieG.h"
 
 #include <boost/bind.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 #include "MDialog.h"
 #include "MView.h"
@@ -48,8 +49,12 @@ using namespace std;
 
 MDialog* MDialog::sFirst = nil;
 
+const uint32 kActionAreaID = 0x3f3f3f3f;
+
 struct MDialogItem
 {
+	virtual			~MDialogItem() {}
+	
 	uint32			mID;
 	GtkWidget*		mWidget;
 	uint32			mParentID;
@@ -58,25 +63,51 @@ struct MDialogItem
 	uint32			mColumns;
 	uint32			mIndex;
 	
+	// for combo boxes
+	int32			mCount;
+					
 	uint32			GetID() const		{ return mID; }
 };
+
+struct MButtonItem : public MDialogItem
+{
+						MButtonItem(
+							MDialog*	inDialog,
+							GtkWidget*	inWidget)
+							: mDialog(inDialog)
+							, mClicked(this, &MButtonItem::OnClicked)
+						{
+							mWidget = inWidget;
+							mClicked.Connect(mWidget, "clicked");
+						}
+
+	void				OnClicked()
+						{
+							mDialog->ButtonClicked(mID);
+						}
+	
+	MDialog*			mDialog;
+	MSlot<void()>		mClicked;
+};
+
+typedef boost::ptr_vector<MDialogItem>	MDialogItemList;
 
 struct MDialogImp
 {
 	GtkWidget*			mVBox;
-	vector<MDialogItem>	mItems;
-	
+	MDialogItemList		mItems;
+
 	MDialogItem&		GetItem(
-							uint32		inID);
+							uint32			inID);
 
 	void				Add(
-							MDialogItem	inItem);
+							MDialogItem*	inItem);
 };
 
 MDialogItem& MDialogImp::GetItem(
 	uint32			inID)
 {
-	vector<MDialogItem>::iterator i = find_if(mItems.begin(), mItems.end(),
+	MDialogItemList::iterator i = find_if(mItems.begin(), mItems.end(),
 		boost::bind(&MDialogItem::GetID, _1) == inID);
 	
 	assert(i != mItems.end());
@@ -87,28 +118,33 @@ MDialogItem& MDialogImp::GetItem(
 }
 
 void MDialogImp::Add(
-	MDialogItem		inItem)
+	MDialogItem*	inItem)
 {
-	if (inItem.mParentID == 0)
-		gtk_box_pack_start(GTK_BOX(mVBox), inItem.mWidget, false, false, 12);
-	else
+	if (inItem->mParentID == 0)
+		gtk_box_pack_start(GTK_BOX(mVBox), inItem->mWidget, true, true, 3);
+	else if (inItem->mParentID != kActionAreaID)
 	{
-		MDialogItem& parent = GetItem(inItem.mParentID);
+		MDialogItem& parent = GetItem(inItem->mParentID);
 		
 		if (GTK_IS_TABLE(parent.mWidget))
 		{
 			uint32 row = parent.mIndex / parent.mColumns;
 			uint32 col = parent.mIndex % parent.mColumns;
 			
-			gtk_table_attach(GTK_TABLE(parent.mWidget), inItem.mWidget,
-				col, col + 1, row, row + 1, GTK_FILL, GTK_FILL, 3, 3);
+			GtkAttachOptions opt = GtkAttachOptions(GTK_FILL | GTK_EXPAND);
+			
+//			if (GTK_IS_COMBO_BOX(inItem->mWidget) or GTK_IS_ENTRY(inItem->mWidget))
+//				opt = GTK_EXPAND;
+			
+			gtk_table_attach(GTK_TABLE(parent.mWidget), inItem->mWidget,
+				col, col + 1, row, row + 1, opt, GtkAttachOptions(0), 3, 3);
 			
 			++parent.mIndex;
 		}
 		else if (GTK_IS_BOX(parent.mWidget))
-			gtk_box_pack_start(GTK_BOX(parent.mWidget), inItem.mWidget, false, false, 12);
+			gtk_box_pack_start(GTK_BOX(parent.mWidget), inItem->mWidget, true, true, 12);
 		else if (GTK_IS_CONTAINER(parent.mWidget))
-			gtk_container_add(GTK_CONTAINER(parent.mWidget), inItem.mWidget);
+			gtk_container_add(GTK_CONTAINER(parent.mWidget), inItem->mWidget);
 		else
 			THROW(("Cannot add widget to this parent"));
 	}
@@ -205,7 +241,7 @@ void MDialog::AddOKButton(
 	const char*			inLabel)
 {
 	GtkWidget* button = gtk_button_new_with_label(inLabel);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, true, true, 0);
 	mOKClicked.Connect(button, "clicked");
 }
 
@@ -213,7 +249,7 @@ void MDialog::AddCancelButton(
 	const char*			inLabel)
 {
 	GtkWidget* button = gtk_button_new_with_label(inLabel);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, true, true, 0);
 	mCancelClicked.Connect(button, "clicked");
 }
 
@@ -223,11 +259,11 @@ void MDialog::AddVBox(
 	int32				inSpacing,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_vbox_new(inHomogenous, inSpacing);
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_vbox_new(inHomogenous, inSpacing);
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -236,11 +272,11 @@ void MDialog::AddVButtonBox(
 	uint32				inID,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_vbutton_box_new();
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_vbutton_box_new();
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -251,11 +287,11 @@ void MDialog::AddHBox(
 	int32				inSpacing,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_hbox_new(inHomogenous, inSpacing);
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_hbox_new(inHomogenous, inSpacing);
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -264,11 +300,11 @@ void MDialog::AddHButtonBox(
 	uint32				inID,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_hbutton_box_new();
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_hbutton_box_new();
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -279,13 +315,30 @@ void MDialog::AddTable(
 	uint32				inRowCount,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_table_new(inRowCount, inColumnCount, false);
-	item.mID = inID;
-	item.mParentID = inParentID;
-	item.mColumns = inColumnCount;
-	item.mIndex = 0;
+	item->mWidget = gtk_table_new(inRowCount, inColumnCount, false);
+	item->mID = inID;
+	item->mParentID = inParentID;
+	item->mColumns = inColumnCount;
+	item->mIndex = 0;
+	
+	mImpl->Add(item);
+}
+
+void MDialog::AddAlignment(
+	uint32				inID,
+	float				inXAlign,
+	float				inYAlign,
+	float				inXScale,
+	float				inYScale,
+	uint32				inParentID)
+{
+	MDialogItem* item = new MDialogItem;
+	
+	item->mWidget = gtk_alignment_new(inXAlign, inYAlign, inXScale, inYScale);
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -295,12 +348,18 @@ void MDialog::AddButton(
 	const std::string&	inLabel,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MButtonItem(this, gtk_button_new_with_label(inLabel.c_str()));
 	
-	item.mWidget = gtk_button_new_with_label(inLabel.c_str());
-	item.mID = inID;
-	item.mParentID = inParentID;
-	
+	item->mID = inID;
+
+	if (inParentID == 0)
+	{
+		gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), item->mWidget, true, true, 0);
+		item->mParentID = kActionAreaID;
+	}
+	else
+		item->mParentID = inParentID;
+
 	mImpl->Add(item);
 }
 	
@@ -309,14 +368,15 @@ void MDialog::AddStaticText(
 	const std::string&	inLabel,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_label_new(inLabel.c_str());
-	gtk_label_set_justify(GTK_LABEL(item.mWidget), GTK_JUSTIFY_LEFT);
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_label_new(inLabel.c_str());
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
+
+	gtk_label_set_justify(GTK_LABEL(item->mWidget), GTK_JUSTIFY_LEFT);
 }
 	
 void MDialog::AddEditField(
@@ -324,28 +384,51 @@ void MDialog::AddEditField(
 	const std::string&	inText,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_entry_new();
+	item->mWidget = gtk_entry_new();
 	
 	if (inText.length() > 0)
-		gtk_entry_set_text(GTK_ENTRY(item.mWidget), inText.c_str());
+		gtk_entry_set_text(GTK_ENTRY(item->mWidget), inText.c_str());
 	
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
 
+void MDialog::AddComboBox(
+	uint32				inID,
+	const vector<string>&
+						inOptions,
+	uint32				inParentID)
+{
+	MDialogItem* item = new MDialogItem;
+	
+	item->mWidget = gtk_combo_box_new_text();
+	item->mID = inID;
+	item->mParentID = inParentID;
+	item->mCount = 0;
+	
+	mImpl->Add(item);
+	
+	for (vector<string>::const_iterator s = inOptions.begin(); s != inOptions.end(); ++s)
+		gtk_combo_box_append_text(GTK_COMBO_BOX(item->mWidget), s->c_str());
+	
+	item->mCount = inOptions.size();
+	gtk_combo_box_set_active(GTK_COMBO_BOX(item->mWidget), 0);
+}
+	
 void MDialog::AddComboBoxEntry(
 	uint32				inID,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_combo_box_entry_new();
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_combo_box_entry_new_text();
+	item->mID = inID;
+	item->mParentID = inParentID;
+	item->mCount = 0;
 	
 	mImpl->Add(item);
 }
@@ -354,11 +437,11 @@ void MDialog::AddHSeparator(
 	uint32				inID,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MDialogItem;
 	
-	item.mWidget = gtk_hseparator_new();
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mWidget = gtk_hseparator_new();
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -368,11 +451,24 @@ void MDialog::AddCheckBox(
 	const string&		inLabel,
 	uint32				inParentID)
 {
-	MDialogItem item;
+	MDialogItem* item = new MButtonItem(this, gtk_check_button_new_with_label(inLabel.c_str()));
 	
-	item.mWidget = gtk_check_button_new_with_label(inLabel.c_str());
-	item.mID = inID;
-	item.mParentID = inParentID;
+	item->mID = inID;
+	item->mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+
+void MDialog::AddExpander(
+	uint32				inID,
+	const char*			inLabel,
+	uint32				inParentID)
+{
+	MDialogItem* item = new MDialogItem;
+	
+	item->mWidget = gtk_expander_new(inLabel);
+	item->mID = inID;
+	item->mParentID = inParentID;
 	
 	mImpl->Add(item);
 }
@@ -455,18 +551,17 @@ void MDialog::SetValues(
 	uint32					inID,
 	const vector<string>&	inValues)
 {
-//	ControlRef cntrl = FindControl(inID);
-//
-//	if (inValues.size() > 0)
-//		SetText(inID, inValues[0]);
-//	else
-//		SetText(inID, "");
-//	
-//	while (::HIComboBoxGetItemCount(cntrl) > 0)
-//		::HIComboBoxRemoveItemAtIndex(cntrl, 0);
-//
-//	for (uint32 i = 0; i < inValues.size(); ++i)
-//		::HIComboBoxAppendTextItem(cntrl, MCFString(inValues[i]), NULL);
+	MDialogItem& item = mImpl->GetItem(inID);
+	assert(GTK_IS_COMBO_BOX(item.mWidget));
+	
+	while (item.mCount-- > 0)
+		gtk_combo_box_remove_text(GTK_COMBO_BOX(item.mWidget), 0);
+
+	for (vector<string>::const_iterator s = inValues.begin(); s != inValues.end(); ++s)
+		gtk_combo_box_append_text(GTK_COMBO_BOX(item.mWidget), s->c_str());
+	
+	item.mCount = inValues.size();
+	gtk_combo_box_set_active(GTK_COMBO_BOX(item.mWidget), 0);
 }
 
 //OSStatus MDialog::DoControlHit(EventRef inEvent)
@@ -561,6 +656,23 @@ void MDialog::SetEnabled(uint32 inID, bool inEnabled)
 //		::DisableControl(FindControl(inID));
 }
 
+bool MDialog::IsExpanded(
+	uint32				inID) const
+{
+	MDialogItem& item = mImpl->GetItem(inID);
+	assert(GTK_IS_EXPANDER(item.mWidget));
+	return gtk_expander_get_expanded(GTK_EXPANDER(item.mWidget));
+}
+
+void MDialog::SetExpanded(
+	uint32				inID,
+	bool				inExpanded)
+{
+	MDialogItem& item = mImpl->GetItem(inID);
+	assert(GTK_IS_EXPANDER(item.mWidget));
+	gtk_expander_set_expanded(GTK_EXPANDER(item.mWidget), inExpanded);
+}
+
 void MDialog::SavePosition(const char* inName)
 {//
 //	Rect r;
@@ -589,3 +701,8 @@ void MDialog::SetCloseImmediatelyFlag(
 	mCloseImmediatelyOnOK = inCloseImmediately;
 }
 
+void MDialog::ButtonClicked(
+	uint32	inButonID)
+{
+	cout << "Button clicked: " << hex << inButonID << dec << endl;
+}

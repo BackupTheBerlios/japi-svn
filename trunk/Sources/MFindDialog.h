@@ -103,14 +103,12 @@ class MFindDialog : public MDialog
 	void			ShowHideMultiPanel(
 						bool				inShow);
 
-//	virtual OSStatus
-//					DoControlHit(EventRef inEvent);
-//
-//	OSStatus		DoWindowActivate(
-//						EventRef			inEvent);
+	virtual void	ButtonClicked(
+						uint32				inButonID);
 
 	void			StoreComboText(
 						uint32				inID,
+						const std::string&	inActiveString,
 						StringArray&		inArray);
 	
 	void			DoFindCommand(

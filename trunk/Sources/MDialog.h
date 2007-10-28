@@ -118,6 +118,16 @@ class MDialog : public MWindow
 							uint32				inID,
 							bool				inEnabled);
 
+	bool				IsExpanded(
+							uint32				inID) const;
+	
+	void				SetExpanded(
+							uint32				inID,
+							bool				inExpanded);
+
+	virtual void		ButtonClicked(
+							uint32				inID);
+
   protected:
 
 	void				AddOKButton(
@@ -152,6 +162,19 @@ class MDialog : public MWindow
 							uint32				inRowCount,
 							uint32				inParentID = 0);
 
+	void				AddAlignment(
+							uint32				inID,
+							float				inXAlign,
+							float				inYAlign,
+							float				inXScale,
+							float				inYScale,
+							uint32				inParentID = 0);
+
+	void				AddExpander(
+							uint32				inID,
+							const char*			inLabel,
+							uint32				inParentID = 0);
+
 	void				AddButton(
 							uint32				inID,
 							const std::string&	inLabel,
@@ -167,6 +190,12 @@ class MDialog : public MWindow
 							const std::string&	inText,
 							uint32				inParentID = 0);
 
+	void				AddComboBox(
+							uint32				inID,
+							const std::vector<std::string>&
+												inOptions,
+							uint32				inParentID = 0);
+							
 	void				AddComboBoxEntry(
 							uint32				inID,
 							uint32				inParentID = 0);

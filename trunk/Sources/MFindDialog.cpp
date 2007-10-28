@@ -58,10 +58,10 @@ const uint32
 	kMaxComboListSize =			10;
 
 enum {
-	kFindButtonID =				0,
-	kReplaceAndFindButtonID =	2,
-	kReplaceButtonID =			3,
-	kReplaceAllButtonID =		4,
+	kFindButtonID =				1001,
+	kReplaceAndFindButtonID =	1002,
+	kReplaceButtonID =			1003,
+	kReplaceAllButtonID =		1004,
 	kFindComboboxID =			'find',
 	kReplaceComboboxID =	 	'repl',
 	kInSelectionCheckboxID = 	'insl',
@@ -73,7 +73,7 @@ enum {
 	
 	// --- multi
 	
-	kShowHideMultiTriangleID =	201,
+	kMultiFileExpanderID	 =	201,
 	kMethodPopupID = 			202,
 	kRecursiveCheckboxID =		203,
 	kStartDirComboboxID =		204,
@@ -124,16 +124,54 @@ MFindDialog::MFindDialog()
 	AddComboBoxEntry(kFindComboboxID, 'tbl1');
 	AddStaticText('lbl2', "Replace", 'tbl1');
 	AddComboBoxEntry(kReplaceComboboxID, 'tbl1');
+
+//	AddHSeparator('sep1');
+
+	AddAlignment('ali2', 0.5, 0, 0.0, 0.0);
 	
-	AddTable('tbl2', 3, 2);
+	AddTable('tbl2', 3, 2, 'ali2');
 	AddCheckBox(kIgnoreCaseCheckboxID, "Ignore Case", 'tbl2');
 	AddCheckBox(kInSelectionCheckboxID, "In Selection", 'tbl2');
 	AddCheckBox(kRegexCheckboxID, "Regular Expression", 'tbl2');
 	AddCheckBox(kWrapCheckboxID, "Wrap Around", 'tbl2');
 	AddCheckBox(kEntireWordCheckboxID, "Entire Word", 'tbl2');
 	AddCheckBox(kBatchCheckboxID, "Batch", 'tbl2');
+
+	AddHSeparator('sep2');
 	
-	AddOKButton("Find");
+	AddExpander(kMultiFileExpanderID, "Multi File Search");
+	
+	AddVBox('vbx1', true, 3, kMultiFileExpanderID);
+	AddTable('tbl3', 3, 2, 'vbx1');
+	
+	AddStaticText('lbl3', "Method", 'tbl3');
+	vector<string> methods;
+	methods.push_back("Directory Search");
+	methods.push_back("Open Windows");
+	methods.push_back("Include Files");
+	AddComboBox(kMethodPopupID, methods, 'tbl3');
+	AddCheckBox(kRecursiveCheckboxID, "Recursive", 'tbl3');
+
+	AddStaticText('lbl4', "Starting Directory", 'tbl3');
+	AddComboBoxEntry(kStartDirComboboxID, 'tbl3');
+	AddButton('xxxx', "...", 'tbl3');
+	
+	AddHBox('hbx1', false, 3, 'vbx1');
+	AddCheckBox(kTextFilesOnlyCheckboxID, "Text Files Only", 'hbx1');
+	AddCheckBox(kEnableFilterCheckboxID, "Filter File Name", 'hbx1');
+	AddEditField(kNameFilterEditboxID, "", 'hbx1');
+	
+	// sep3
+	
+	AddButton(kReplaceAllButtonID, "Replace All");
+	AddButton(kReplaceButtonID, "Replace");
+	AddButton(kReplaceAndFindButtonID, "Replace & Find");
+	AddButton(kFindButtonID, "Find");
+
+	mFindStrings.push_back("aap");
+	mFindStrings.push_back("noot");
+	mFindStrings.push_back("mies");
+	SetValues(kFindComboboxID, mFindStrings);
 }
 
 bool MFindDialog::DoClose()
@@ -149,7 +187,7 @@ bool MFindDialog::DoClose()
 	Preferences::SetArray("find replace strings", mReplaceStrings);
 	Preferences::SetArray("find directories", mStartDirectories);
 
-////	Preferences::SetInteger("find multi", GetValue(kShowHideMultiTriangleID));
+////	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
 //	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
 //	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
 //	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
@@ -182,7 +220,7 @@ void MFindDialog::Initialize()
 //
 //	// never set multi-mode automatically
 //	mMultiMode = false;
-//	SetValue(kShowHideMultiTriangleID, mMultiMode);
+//	SetValue(kMultiFileExpanderID, mMultiMode);
 //	ShowHideMultiPanel(mMultiMode);
 //
 //	Preferences::GetArray("find find strings", mFindStrings);
@@ -202,8 +240,8 @@ void MFindDialog::Initialize()
 
 void MFindDialog::Select()
 {
-//	MDialog::Select();
 	Show(nil);
+	MWindow::Select();
 	SetFocus(kFindComboboxID);
 }
 
@@ -213,40 +251,39 @@ bool MFindDialog::OKClicked()
 	GetText(kFindComboboxID, s);
 	Preferences::SetString("last find", s);
 
-	if (mFindStrings.size() > 0)
-		mFindStrings.erase(mFindStrings.begin());
-	
-	StoreComboText(kFindComboboxID, mFindStrings);
+	StoreComboText(kFindComboboxID, s, mFindStrings);
 
 	return false;
 }
 
 void MFindDialog::DoFindCommand(
 	uint32		inCommand)
-{//
-//	// check regular expression first?
-//	
+{
+	// check regular expression first?
+	
 //	if (mMultiMode and IsChecked(kBatchCheckboxID) and mFindAllThread != nil)
 //	{
 //		::AlertSoundPlay();
 //		return;
 //	}
-//	
-//	mInSelection = IsChecked(kInSelectionCheckboxID);
-//	
-//	StoreComboText(kFindComboboxID, mFindStrings);
-//	if (inCommand != cmd_FindNext)
-//		StoreComboText(kReplaceComboboxID, mReplaceStrings);
-//
-//	ustring what;
-//	GetText(kFindComboboxID, what);
-//
-//	mScrap.PutScrap(what);
-//
-//	MDocument* doc = MDocument::GetFirstDocument();
-//
-//	if (mMultiMode)
-//	{
+	
+	mInSelection = IsChecked(kInSelectionCheckboxID);
+
+	string what;
+	GetText(kFindComboboxID, what);
+	
+	StoreComboText(kFindComboboxID, what, mFindStrings);
+	if (inCommand != cmd_FindNext)
+	{
+		string with;
+		GetText(kReplaceComboboxID, with);
+		StoreComboText(kReplaceComboboxID, with, mReplaceStrings);
+	}
+
+	MDocument* doc = MDocument::GetFirstDocument();
+
+	if (IsExpanded(kMultiFileExpanderID))
+	{
 //		MPath dir;
 //		bool recursive, textFilesOnly;
 //		string filter;
@@ -301,28 +338,28 @@ void MFindDialog::DoFindCommand(
 //
 //			FindNext();
 //		}
-//	}
-//	else if (IsChecked(kBatchCheckboxID))
-//	{
-//		if (doc != nil)
-//		{
-//			MMessageList list;
-//			
-//			doc->FindAll(what, IsChecked(kIgnoreCaseCheckboxID),
-//				IsChecked(kRegexCheckboxID), IsChecked(kInSelectionCheckboxID), list);
-//
-//			if (list.GetCount())
-//			{
-//				MMessageWindow* w = new MMessageWindow;
-//				w->AddMessages(list);
-//			}
-//		}
-//	}
-//	else
-//	{
-//		if (doc != nil)
-//			doc->HandleFindDialogCommand(inCommand);
-//	}
+	}
+	else if (IsChecked(kBatchCheckboxID))
+	{
+		if (doc != nil)
+		{
+			MMessageList list;
+			
+			doc->FindAll(what, IsChecked(kIgnoreCaseCheckboxID),
+				IsChecked(kRegexCheckboxID), IsChecked(kInSelectionCheckboxID), list);
+
+			if (list.GetCount())
+			{
+				MMessageWindow* w = new MMessageWindow;
+				w->AddMessages(list);
+			}
+		}
+	}
+	else
+	{
+		if (doc != nil)
+			doc->HandleFindDialogCommand(inCommand);
+	}
 }
 
 void
@@ -337,14 +374,13 @@ MFindDialog::SetFindString(
 		if (inReplaceFirst and mFindStrings.size() > 0)
 			mFindStrings.erase(mFindStrings.begin());
 		
-		SetText(kFindComboboxID, inString);
-		StoreComboText(kFindComboboxID, mFindStrings);
+		StoreComboText(kFindComboboxID, inString, mFindStrings);
 
-//		SetChecked(kRegexCheckboxID, false);
-//		SetChecked(kBatchCheckboxID, false);
+		SetChecked(kRegexCheckboxID, false);
+		SetChecked(kBatchCheckboxID, false);
 
 		mMultiMode = false;
-//		SetValue(kShowHideMultiTriangleID, mMultiMode);
+		SetExpanded(kMultiFileExpanderID, mMultiMode);
 //		ShowHideMultiPanel(mMultiMode);
 		
 //		mScrap.PutScrap(inString);
@@ -371,9 +407,10 @@ void MFindDialog::SetReplaceString(
 
 	if (s != GetReplaceString())
 	{
-//		SetText(kReplaceComboboxID, inString);
 		if (mReplaceStrings.size() > 10)
 			mReplaceStrings.pop_back();
+
+		StoreComboText(kReplaceComboboxID, inString, mReplaceStrings);
 	}
 }
 
@@ -390,61 +427,32 @@ string MFindDialog::GetReplaceString()
 	return result;
 }
 
-//OSStatus MFindDialog::DoControlHit(EventRef inEvent)
-//{
-//	OSStatus err = noErr;
-//	
-//	ControlRef theControl;
-//	::GetEventParameter(inEvent, kEventParamDirectObject,
-//		typeControlRef, nil, sizeof(theControl), nil, &theControl);
-//
-//	MCarbonEvent event;
-//	
-//	ControlID id;
-//	if (::GetControlID(theControl, &id) == noErr and id.signature == kJapieSignature)
-//	{
-//		switch (id.id)
-//		{
-//			case kFindButtonID:
-//				DoFindCommand(cmd_FindNext);
-//				break;
-//			
-//			case kReplaceButtonID:
-//				DoFindCommand(cmd_Replace);
-//				break;
-//			
-//			case kReplaceAndFindButtonID:
-//				DoFindCommand(cmd_ReplaceFindNext);
-//				break;
-//			
-//			case kReplaceAllButtonID:
-//				DoFindCommand(cmd_ReplaceAll);
-//				break;
-//			
-//			case kShowHideMultiTriangleID:
-//				ShowHideMultiPanel(GetValue(kShowHideMultiTriangleID) == 1);
-//				break;
-//			
-//			default:
-//				err = MDialog::DoControlHit(inEvent);
-//				break;
-//		}
-//	}
-//	
-//	return err;
-//}
-//
-//OSStatus MFindDialog::DoWindowActivate(
-//	EventRef		inEvent)
-//{
-//	OSStatus result = eventNotHandledErr;
-//	
-//	ustring txt;
-//	if (mScrap.LoadOSScrapIfNewer(txt))
-//		SetText(kFindComboboxID, txt);
-//	
-//	return result;
-//}
+void MFindDialog::ButtonClicked(
+	uint32		inButonID)
+{
+	switch (inButonID)
+	{
+		case kFindButtonID:
+			DoFindCommand(cmd_FindNext);
+			break;
+		
+		case kReplaceButtonID:
+			DoFindCommand(cmd_Replace);
+			break;
+		
+		case kReplaceAndFindButtonID:
+			DoFindCommand(cmd_ReplaceFindNext);
+			break;
+		
+		case kReplaceAllButtonID:
+			DoFindCommand(cmd_ReplaceAll);
+			break;
+		
+//		case kMultiFileExpanderID:
+//			ShowHideMultiPanel(GetValue(kMultiFileExpanderID) == 1);
+//			break;
+	}
+}
 
 bool MFindDialog::GetInSelection() const
 {
@@ -466,75 +474,18 @@ bool MFindDialog::GetRegex() const
 	return IsChecked(kRegexCheckboxID);
 }
 
-void MFindDialog::ShowHideMultiPanel(
-	bool		inShow)
-{//
-//	Rect sr, cr;
-//	::GetWindowBounds(GetSysWindow(), kWindowContentRgn, &cr);
-//	::GetWindowBounds(GetSysWindow(), kWindowStructureRgn, &sr);
-//	
-//	int16 d = (sr.bottom - sr.top) - (cr.bottom - cr.top);
-//	
-//	mMultiMode = inShow;
-//	SetValue(kShowHideMultiTriangleID, inShow);
-//	
-//	if (mMultiMode)
-//	{
-//		SetVisible(kMethodPopupID, mMultiMode);
-//		SetVisible(kRecursiveCheckboxID, mMultiMode);
-//		SetVisible(kStartDirComboboxID, mMultiMode);
-//		SetVisible(kTextFilesOnlyCheckboxID, mMultiMode);
-//		SetVisible(kEnableFilterCheckboxID, mMultiMode);
-//		SetVisible(kNameFilterEditboxID, mMultiMode);
-//	}
-//	
-//	if (mMultiMode)
-//		sr.bottom = sr.top + kFindDialogExpandedHeight + d;
-//	else
-//		sr.bottom = sr.top + kFindDialogCollapsedHeight + d;
-//
-//	::TransitionWindow(GetSysWindow(), kWindowSlideTransitionEffect,
-//		kWindowResizeTransitionAction, &sr);
-//	
-//	SetFocus(kFindComboboxID);
-//
-//	if (not mMultiMode)
-//	{
-//		SetVisible(kMethodPopupID, mMultiMode);
-//		SetVisible(kRecursiveCheckboxID, mMultiMode);
-//		SetVisible(kStartDirComboboxID, mMultiMode);
-//		SetVisible(kTextFilesOnlyCheckboxID, mMultiMode);
-//		SetVisible(kEnableFilterCheckboxID, mMultiMode);
-//		SetVisible(kNameFilterEditboxID, mMultiMode);
-//	}
-}
-
 void MFindDialog::StoreComboText(
 	uint32			inID,
+	const string&	inActiveString,
 	StringArray&	inArray)
 {
-	string s;
-	GetText(inID, s);
+	inArray.erase(remove(inArray.begin(), inArray.end(), inActiveString), inArray.end());
+	inArray.insert(inArray.begin(), inActiveString);
 	
-	if (s.length())	// don't store empty strings
-	{
-		// see if s is in inArray already, if so, remove it.
-		for (StringArray::iterator i = inArray.begin(); i != inArray.end(); ++i)
-		{
-			if (s == *i)
-			{
-				inArray.erase(i);
-				break;
-			}
-		}
-		
-		inArray.insert(inArray.begin(), s);
-		
-		if (inArray.size() > kMaxComboListSize)
-			inArray.erase(inArray.begin() + kMaxComboListSize, inArray.end());
-		
-//		SetValues(inID, inArray);
-	}
+	if (inArray.size() > kMaxComboListSize)
+		inArray.erase(inArray.begin() + kMaxComboListSize, inArray.end());
+	
+	SetValues(inID, inArray);
 }
 
 void MFindDialog::FindNext()
