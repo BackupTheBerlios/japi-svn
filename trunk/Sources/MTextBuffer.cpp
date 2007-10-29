@@ -150,11 +150,6 @@ class wc_iterator : public boost::iterator_facade<wc_iterator, const wchar_t,
 	uint32			mOffset;
 };
 
-//	wc_iterator	wc_begin() const							{ return wc_iterator(this, 0); }
-//	wc_iterator	wc_end() const								{ return wc_iterator(this, mLogicalLength); }
-	
-
-
 }
 
 // -----------------------------------------------------------------------------
@@ -1195,7 +1190,7 @@ uint32 MTextBuffer::PreviousCursorPosition(
 		    	result = c.GetOffset();
 		    	
 				CharBreakClass c2 = GetCharBreakClass(*c);
-				
+
 				if (kCharBreakTable[c1][c2])
 					break;
 				
@@ -1598,113 +1593,6 @@ bool MTextBuffer::Find(
 			
 			throw;
 		}
-		
-	
-//		pcre* re = nil;
-//		
-//		try
-//		{
-//			
-//			
-//			re = pcre_compile2();
-//		}
-//		catch (...)
-//		{
-//			if (re != nil)
-//				pcre_free(re);
-//			throw;
-//		}
-//		
-//		boost::regex::flag_type flags = boost::regex_constants::normal;
-//		
-//		if (inIgnoreCase)
-//			flags |= boost::regex_constants::icase;
-//		
-//		boost::u32regex re = boost::make_u32regex(inWhat.c_str(), flags);
-//		boost::match_results<iterator> m;
-//
-//		boost::regex_constants::match_flag_type match_flags =
-//			boost::regex_constants::match_not_dot_newline |
-//			boost::regex_constants::match_not_dot_null;
-//		
-//		const_iterator start = const_iterator(this, inOffset);
-//		const_iterator end = const_iterator(this, mLogicalLength);
-//
-//		if (inDirection == kDirectionForward)
-//		{
-//			if (inOffset > 0)
-//			{
-//				match_flags |= boost::regex_constants::match_not_bob;
-//			
-//				if (GetChar(inOffset - 1) != '\n')
-//					match_flags |= boost::regex_constants::match_not_bol;
-//			}
-//			
-//			if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
-//			{
-//				result = true;
-//				
-//				iterator begin = m[0].first;
-//				iterator end = m[0].second;
-//				
-//				// special case, never match an empty string
-//				// if the result is the same offset as the start
-//				
-//				if (begin == end and begin == start)
-//				{
-//					if (inOffset == mLogicalLength)
-//						result = false;
-//					else
-//					{
-//						++start;
-//						if (boost::u32regex_search(start, end, m, re, match_flags) and
-//							m[0].matched)
-//						{
-//							begin = m[0].first;
-//							end = m[0].second;
-//						}
-//						else
-//							result = false;
-//					}
-//				}
-//				
-//				outFound.Set(begin.GetOffset(), end.GetOffset());
-//			}
-//		}
-//		else
-//		{
-//			match_flags |= boost::regex_constants::match_continuous;
-//
-//			while (result == false and start.GetOffset() > 0)
-//			{
-//				--start;
-//
-//				if (start.GetOffset() > 0)
-//				{
-//					match_flags |= boost::regex_constants::match_not_bob;
-//				
-//					if (GetChar(start.GetOffset() - 1) != '\n')
-//						match_flags |= boost::regex_constants::match_not_bol;
-//					else
-//						match_flags &= ~boost::regex_constants::match_not_bol;
-//				}
-//				else
-//				{
-//					match_flags &= ~boost::regex_constants::match_not_bob;
-//					match_flags &= ~boost::regex_constants::match_not_bol;
-//				}
-//				
-//				if (boost::u32regex_search(start, end, m, re, match_flags) and m[0].matched)
-//				{
-//					result = true;
-//
-//					iterator begin = m[0].first;
-//					iterator end = m[0].second;
-//					
-//					outFound.Set(begin.GetOffset(), end.GetOffset());
-//				}
-//			}
-//		}
 	}
 	else
 	{
@@ -1729,44 +1617,67 @@ bool MTextBuffer::CanReplace(
 	MSelection		inSelection)
 {
 	bool result = false;
-	
+
 	if (inRegex)
-	{//
-//		uint32 offset = inSelection.GetMinOffset();
-//		
-//		iterator b = iterator(this, offset);
-//		iterator e = iterator(this, inSelection.GetMaxOffset());
-//	
-//		boost::regex::flag_type flags = boost::regex_constants::normal;
-//		
-//		if (inIgnoreCase)
-//			flags |= boost::regex_constants::icase;
-//	
-//		boost::u32regex re(inWhat, flags);
-//	
-//		boost::regex_constants::match_flag_type match_flags =
-//			boost::regex_constants::match_not_dot_newline |
-//			boost::regex_constants::match_not_dot_null;
-//		
-//		if (offset > 0)
-//		{
-//			match_flags |= boost::regex_constants::match_prev_avail;
-//		
-//			if (GetChar(offset - 1) != '\n')
-//				match_flags |= boost::regex_constants::match_not_bol;
-//		}
-//		
-//		result = boost::u32regex_match(b, e, re, match_flags);
+	{
+		MoveGapTo(mLogicalLength);
+		
+		int32 a = inSelection.GetMinOffset();
+		int32 c = inSelection.GetMaxOffset();
+
+		const char* errmsg;
+		int errcode, erroffset;
+		
+		if (inWhat.length() == 0)
+			THROW(("Regular expression is too short"));
+		
+		int options = PCRE_MULTILINE | PCRE_UTF8;
+		
+		if (inIgnoreCase)
+			options |= PCRE_CASELESS;
+		
+		pcre* pattern = nil;
+		pcre_extra* info = nil;
+		
+		try
+		{
+			pattern = pcre_compile2(inWhat.c_str(),
+				options, &errcode, &errmsg, &erroffset, nil);
+			
+			if (pattern == nil or errcode != 0)
+				THROW(("Error compiling regular expression: %s", kPCRE_ERR_STR[errcode]));
+			
+			info = pcre_study(pattern, 0, &errmsg);
+			if (errmsg != nil)
+				THROW(("Error studying compiled regular expression: %s", errmsg));
+			
+			int matches[33] = {};
+			
+			int r = pcre_exec(pattern, info, mData, mLogicalLength, a, PCRE_ANCHORED, matches, 33);
+			
+			if (r >= 0 and matches[0] == a and matches[1] == c)
+				result = true;
+		}
+		catch (...)
+		{
+			if (pattern != nil)
+				free(pattern);
+			
+			if (info != nil)
+				free(info);
+			
+			throw;
+		}
 	}
 	else
 	{
 		string s;
 		GetText(inSelection.GetMinOffset(),
 			inSelection.GetMaxOffset() - inSelection.GetMinOffset(), s);
-			
-//		if (inIgnoreCase)
-//			result = tolower(inWhat) == tolower(s);
-//		else
+
+		if (inIgnoreCase)
+			result = tolower(inWhat) == tolower(s);
+		else
 			result = inWhat == s;
 	}
 	
@@ -1780,31 +1691,120 @@ void MTextBuffer::ReplaceExpression(
 	string			inFormat,
 	string&			outReplacement)
 {
-//	uint32 offset = inSelection.GetMinOffset();
-//	
-//	iterator b = iterator(this, offset);
-//	iterator e = iterator(this, inSelection.GetMaxOffset());
-//
-//	boost::regex::flag_type flags = boost::regex_constants::normal;
-//	
-//	if (inIgnoreCase)
-//		flags |= boost::regex_constants::icase;
-//
-//	boost::u32regex re(inExpression, flags);
-//
-//	boost::regex_constants::match_flag_type match_flags =
-//		boost::regex_constants::match_not_dot_newline |
-//		boost::regex_constants::match_not_dot_null;
-//	
-//	if (offset > 0)
-//	{
-//		match_flags |= boost::regex_constants::match_not_bob;
-//	
-//		if (GetChar(offset - 1) != '\n')
-//			match_flags |= boost::regex_constants::match_not_bol;
-//	}
-//	
-//	(void)boost::u32regex_replace(back_inserter(outReplacement), b, e, re, fmt, match_flags);
+	MoveGapTo(mLogicalLength);
+	
+	int32 a = inSelection.GetMinOffset();
+	int32 c = inSelection.GetMaxOffset();
+
+	const char* errmsg;
+	int errcode, erroffset;
+	
+	if (inExpression.length() == 0)
+		THROW(("Regular expression is too short"));
+	
+	int options = PCRE_MULTILINE | PCRE_UTF8;
+	
+	if (inIgnoreCase)
+		options |= PCRE_CASELESS;
+	
+	pcre* pattern = nil;
+	pcre_extra* info = nil;
+	
+	try
+	{
+		pattern = pcre_compile2(inExpression.c_str(),
+			options, &errcode, &errmsg, &erroffset, nil);
+		
+		if (pattern == nil or errcode != 0)
+			THROW(("Error compiling regular expression: %s", kPCRE_ERR_STR[errcode]));
+		
+		info = pcre_study(pattern, 0, &errmsg);
+		if (errmsg != nil)
+			THROW(("Error studying compiled regular expression: %s", errmsg));
+		
+		int matches[33] = {};
+		
+		int r = pcre_exec(pattern, info, mData, mLogicalLength, a, PCRE_ANCHORED, matches, 33);
+		
+		if (r >= 0 and matches[0] == a and matches[1] == c)
+		{
+			string result, s;
+			
+			for (string::iterator ch = outReplacement.begin(); ch != outReplacement.end(); ++ch)
+			{
+				switch (*ch)
+				{
+					case '$':
+						++ch;
+						switch (*ch)
+						{
+							case '$':
+								result += '$';
+								break;
+							
+							case '&':
+							{
+								GetText(a, c - a, s);
+								result += s;
+								break;
+							}
+							
+							default:
+								if (isdigit(*ch))
+								{
+									uint32 m = *ch - '0';
+									GetText(matches[2 * m], matches[2 * m + 1] - matches[2 * m], s);
+									result += s;
+								}
+								else
+								{
+									result += '$';
+									result += *ch;
+								}
+								break;
+						}
+						break;
+					
+					case '\\':
+						++ch;
+						switch (*ch)
+						{
+							case 'n':
+								result += '\n';
+								break;
+
+							case 'r':
+								result += '\r';
+								break;
+
+							case 't':
+								result += '\t';
+								break;
+							
+							default:
+								result += *ch;
+								break;
+						}
+						break;
+					
+					default:
+						result += *ch;
+				}
+			}
+			
+			outReplacement = result;
+		}
+	}
+	catch (...)
+	{
+		if (pattern != nil)
+			free(pattern);
+		
+		if (info != nil)
+			free(info);
+		
+		throw;
+	}
 }
 
 void
@@ -1931,7 +1931,7 @@ uint32 MTextBuffer::GetPrevCharLength(
 			result = 2;
 			--inOffset;
 	
-			while ((GetChar(inOffset - 1) & 0x00C0) == 0x0080 and result < 6)
+			while ((GetChar(inOffset) & 0x00C0) == 0x0080 and result < 6)
 			{
 				result++;
 				--inOffset;

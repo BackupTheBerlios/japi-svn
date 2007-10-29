@@ -32,7 +32,6 @@ MWindow::MWindow(
 
 MWindow::~MWindow()
 {
-	cout << "deleting MWindow" << endl;
 }
 	
 void MWindow::Show()
@@ -52,7 +51,6 @@ void MWindow::Select()
 
 bool MWindow::DoClose()
 {
-	cout << "close" << endl;
 	return true;
 }
 
@@ -90,8 +88,6 @@ void MWindow::SetModifiedMarkInTitle(
 
 bool MWindow::OnDestroy()
 {
-	cout << "destroy" << endl;
-	
 	eWindowClosed(this);	
 	
 	gApp->RecycleWindow(this);
