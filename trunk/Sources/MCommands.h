@@ -173,38 +173,6 @@ enum MKeyCommand
 	kcmd_ScrollPageDown,
 	kcmd_ScrollToStartOfFile,
 	kcmd_ScrollToEndOfFile
-
-//// for emacs users:
-//	kcmd_OpenLine,
-//
-//	kcmd_Mark,
-//	kcmd_MarkAll,
-//	kcmd_MarkWord,
-//	kcmd_ExchangeMarkAndPoint,
-//
-//	kcmd_CutRegion,
-//	kcmd_CopyRegion,
-//	kcmd_ClearRegion,
-//
-//	kcmd_CuttoEndOfLine,
-//	kcmd_CutWord,
-//	kcmd_CutWordBackward,
-//	kcmd_CutSentence,
-//
-//	kcmd_AppendNextCut,
-//
-//	kcmd_Recenter,
-
-//	kcmd_NrPrefix,
-
-//	kcmd_SwitchActivePart,
-//	kcmd_SplitWindow,
-//	kcmd_UnsplitWindow,
-//
-//	kcmd_StartBlockSelect,
-//	kcmd_CopyLine,
-//	kcmd_CutLine,
-//	kcmd_ClearLine
 };
 
 #endif

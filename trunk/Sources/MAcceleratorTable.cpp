@@ -35,8 +35,8 @@
 #include <map>
 #include <gdk/gdkkeysyms.h>
 
-#include "MAcceleratorTable.h"
 #include "MCommands.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 
@@ -67,7 +67,17 @@ struct MCommandToString
 struct MAcceleratorTableImp
 {
 	map<int64,uint32>		mTable;
+	map<int64,MKeyCommand>	mNavTable;
 };
+
+inline
+int64
+MakeKey(
+	uint32	inKeyValue,
+	uint32	inModifiers)
+{
+	return (static_cast<int64>(inKeyValue) << 32) | (inModifiers);
+}	
 
 // -------------------------------------
 
@@ -123,6 +133,53 @@ MAcceleratorTable::MAcceleratorTable()
 	RegisterAcceleratorKey(cmd_MarkLine, GDK_F1, 0);
 	
 	RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
+
+/*
+	mImpl->mNavTable[MakeKey(GDK_Left, 0)] = kcmd_MoveCharacterLeft;
+	mImpl->mNavTable[MakeKey(GDK_Right, 0)] = kcmd_MoveCharacterRight;
+	mImpl->mNavTable[MakeKey(GDK_Left, GDK_CONTROL_MASK)] = kcmd_MoveWordLeft;
+	mImpl->mNavTable[MakeKey(GDK_Right, GDK_CONTROL_MASK)] = kcmd_MoveWordRight;
+	mImpl->mNavTable[MakeKey(GDK_Home, 0)] = kcmd_MoveToBeginningOfLine;
+	mImpl->mNavTable[MakeKey(GDK_End, 0)] = kcmd_MoveToEndOfLine;
+	mImpl->mNavTable[MakeKey(GDK_Up, 0)] = kcmd_MoveToPreviousLine;
+	mImpl->mNavTable[MakeKey(GDK_Down, 0)] = kcmd_MoveToNextLine;
+	mImpl->mNavTable[MakeKey(GDK_Up, GDK_MOD1_MASK)] = kcmd_MoveToTopOfPage;
+	mImpl->mNavTable[MakeKey(GDK_Down, GDK_MOD1_MASK)] = kcmd_MoveToEndOfPage;
+	mImpl->mNavTable[MakeKey(GDK_Home, GDK_CONTROL_MASK)] = kcmd_MoveToBeginningOfFile;
+	mImpl->mNavTable[MakeKey(GDK_End, GDK_CONTROL_MASK)] = kcmd_MoveToEndOfFile;
+
+	mImpl->mNavTable[MakeKey(GDK_Up, GDK_MOD1_MASK)] = kcmd_MoveLineUp;
+	mImpl->mNavTable[MakeKey(GDK_Down, GDK_MOD1_MASK)] = kcmd_MoveLineDown;
+
+	mImpl->mNavTable[MakeKey(GDK_BackSpace, 0)] = kcmd_DeleteCharacterLeft;
+	mImpl->mNavTable[MakeKey(GDK_Delete, 0)] = kcmd_DeleteCharacterRight;
+	mImpl->mNavTable[MakeKey(GDK_BackSpace, GDK_CONTROL_MASK)] = kcmd_DeleteWordLeft;
+	mImpl->mNavTable[MakeKey(GDK_Delete, GDK_CONTROL_MASK)] = kcmd_DeleteWordRight;
+	mImpl->mNavTable[MakeKey(GDK_Delete, GDK_MOD1_MASK)] = kcmd_DeleteToEndOfLine;
+	mImpl->mNavTable[MakeKey(GDK_Delete, GDK_MOD1_MASK | GDK_SHIFT_MASK)] = kcmd_DeleteToEndOfFile;
+
+	mImpl->mNavTable[MakeKey(GDK_Left, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionWithCharacterLeft;
+	mImpl->mNavTable[MakeKey(GDK_Right, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionWithCharacterRight;
+	mImpl->mNavTable[MakeKey(GDK_Left, GDK_SHIFT_MASK | GDK_CONTROL_MASK)] = kcmd_ExtendSelectionWithPreviousWord;
+	mImpl->mNavTable[MakeKey(GDK_Right, GDK_SHIFT_MASK | GDK_CONTROL_MASK)] = kcmd_ExtendSelectionWithNextWord;
+	mImpl->mNavTable[MakeKey(GDK_L, GDK_CONTROL_MASK)] = kcmd_ExtendSelectionToCurrentLine;
+	mImpl->mNavTable[MakeKey(GDK_Up, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionToPreviousLine;
+	mImpl->mNavTable[MakeKey(GDK_Down, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionToNextLine;
+	mImpl->mNavTable[MakeKey(GDK_Home, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionToBeginningOfLine;
+	mImpl->mNavTable[MakeKey(GDK_End, GDK_SHIFT_MASK)] = kcmd_ExtendSelectionToEndOfLine;
+	mImpl->mNavTable[MakeKey(GDK_Up, GDK_SHIFT_MASK | GDK_MOD1_MASK)] = kcmd_ExtendSelectionToBeginningOfPage;
+	mImpl->mNavTable[MakeKey(GDK_Down, GDK_SHIFT_MASK | GDK_MOD1_MASK)] = kcmd_ExtendSelectionToEndOfPage;
+	mImpl->mNavTable[MakeKey(GDK_Home, GDK_SHIFT_MASK | GDK_CONTROL_MASK)] = kcmd_ExtendSelectionToBeginningOfFile;
+	mImpl->mNavTable[MakeKey(GDK_End, GDK_SHIFT_MASK | GDK_CONTROL_MASK)] = kcmd_ExtendSelectionToEndOfFile;
+
+	mImpl->mNavTable[MakeKey(GDK_Up, GDK_CONTROL_MASK)] = kcmd_ScrollOneLineUp;
+	mImpl->mNavTable[MakeKey(GDK_Down, GDK_CONTROL_MASK)] = kcmd_ScrollOneLineDown;
+	mImpl->mNavTable[MakeKey(GDK_Page_Up, GDK_MOD1_MASK)] = kcmd_ScrollPageUp;
+	mImpl->mNavTable[MakeKey(GDK_Page_Down, GDK_MOD1_MASK)] = kcmd_ScrollPageDown;
+	mImpl->mNavTable[MakeKey(GDK_Home, GDK_MOD1_MASK)] = kcmd_ScrollToStartOfFile;
+	mImpl->mNavTable[MakeKey(GDK_End, GDK_MOD1_MASK)] = kcmd_ScrollToEndOfFile
+*/
+
 
 //	// debug code, dump the current table
 //	for (map<int64,uint32>::iterator a = mImpl->mTable.begin(); a != mImpl->mTable.end(); ++a)

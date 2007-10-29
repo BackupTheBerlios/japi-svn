@@ -22,6 +22,11 @@ class MAcceleratorTable
 						GdkEventKey*	inEvent,
 						uint32&			outCommand);
 
+	bool			IsNavigationKey(
+						uint32			inKeyValue,
+						uint32			inModifiers,
+						MKeyCommand&	outCommand);
+
   private:
 
 					MAcceleratorTable();
