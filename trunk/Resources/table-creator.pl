@@ -212,7 +212,7 @@ struct MUnicodeInfoAtom {
 	uint8			prop;
 };
 
-struct MUnicodeInfoPage	MUnicodeInfoAtom[256];
+typedef MUnicodeInfoAtom	MUnicodeInfoPage[256];
 
 struct MUnicodeInfo {
 	int16				page_index[$pageIndexSize];

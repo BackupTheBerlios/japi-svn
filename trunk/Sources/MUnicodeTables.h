@@ -1,3 +1,4 @@
+
 struct MUnicodeInfoAtom {
 	uint32			upper;
 	uint32			lower;
@@ -5,7 +6,7 @@ struct MUnicodeInfoAtom {
 	uint8			prop;
 };
 
-typedef	MUnicodeInfoAtom MUnicodeInfoPage[256];
+typedef MUnicodeInfoAtom	MUnicodeInfoPage[256];
 
 struct MUnicodeInfo {
 	int16				page_index[4352];

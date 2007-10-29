@@ -141,9 +141,9 @@ MFindDialog::MFindDialog()
 	
 	AddExpander(kMultiFileExpanderID, "Multi File Search");
 	
-	AddVBox('vbx1', true, 3, kMultiFileExpanderID);
+	AddVBox('vbx1', false, 0, kMultiFileExpanderID);
+
 	AddTable('tbl3', 3, 2, 'vbx1');
-	
 	AddStaticText('lbl3', "Method", 'tbl3');
 	vector<string> methods;
 	methods.push_back("Directory Search");
@@ -156,7 +156,7 @@ MFindDialog::MFindDialog()
 	AddComboBoxEntry(kStartDirComboboxID, 'tbl3');
 	AddButton('xxxx', "...", 'tbl3');
 	
-	AddHBox('hbx1', false, 3, 'vbx1');
+	AddHBox('hbx1', false, 0, 'vbx1');
 	AddCheckBox(kTextFilesOnlyCheckboxID, "Text Files Only", 'hbx1');
 	AddCheckBox(kEnableFilterCheckboxID, "Filter File Name", 'hbx1');
 	AddEditField(kNameFilterEditboxID, "", 'hbx1');
