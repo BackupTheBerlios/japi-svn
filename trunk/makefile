@@ -5,7 +5,7 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= pcre boost_filesystem
+#LIBS		= pcre
 LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 
@@ -18,8 +18,6 @@ LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
 CC			= c++
 OPT			+= -O3
 
-include make.config
-
 ifeq ($(DEBUG),0)
 	CFLAGS	+= $(OPT)
 	OBJDIR	= Obj.NoDebug
@@ -29,7 +27,9 @@ else
 	DEFINES	+= DEBUG
 endif
 
-LDFLAGS += $(addprefix -L, $(LIBPATHS)) 
+include make.config
+
+LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
 Sources = $(wildcard Sources/*.cpp)
 

@@ -167,11 +167,6 @@ MFindDialog::MFindDialog()
 	AddButton(kReplaceButtonID, "Replace");
 	AddButton(kReplaceAndFindButtonID, "Replace & Find");
 	AddButton(kFindButtonID, "Find");
-
-	mFindStrings.push_back("aap");
-	mFindStrings.push_back("noot");
-	mFindStrings.push_back("mies");
-	SetValues(kFindComboboxID, mFindStrings);
 }
 
 bool MFindDialog::DoClose()
@@ -206,32 +201,32 @@ void MFindDialog::Initialize()
 //
 //	RestorePosition("find dialog position");
 //	
-//	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
-//	SetChecked(kWrapCheckboxID, Preferences::GetInteger("find wrap around", 0));
-//	SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
-//	SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
-//	SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
-////	SetChecked(kBatchCheckboxID, Preferences::GetInteger("find batch", 0));
-//	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
-//	SetChecked(kTextFilesOnlyCheckboxID, Preferences::GetInteger("find only TEXT", 1));
-//	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
-//
-//	SetValue(kMethodPopupID, Preferences::GetInteger("find multi method", kMethodDirectory));
-//
-//	// never set multi-mode automatically
-//	mMultiMode = false;
-//	SetValue(kMultiFileExpanderID, mMultiMode);
-//	ShowHideMultiPanel(mMultiMode);
-//
-//	Preferences::GetArray("find find strings", mFindStrings);
-//	SetValues(kFindComboboxID, mFindStrings);
-//	
-//	Preferences::GetArray("find replace strings", mReplaceStrings);
-//	SetValues(kReplaceComboboxID, mReplaceStrings);
-//
-//	Preferences::GetArray("find directories", mStartDirectories);
-//	SetValues(kStartDirComboboxID, mStartDirectories);
-//	
+	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
+	SetChecked(kWrapCheckboxID, Preferences::GetInteger("find wrap around", 0));
+	SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
+	SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
+	SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
+//	SetChecked(kBatchCheckboxID, Preferences::GetInteger("find batch", 0));
+	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
+	SetChecked(kTextFilesOnlyCheckboxID, Preferences::GetInteger("find only TEXT", 1));
+	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
+
+	SetValue(kMethodPopupID, Preferences::GetInteger("find multi method", kMethodDirectory));
+
+	// never set multi-mode automatically
+	mMultiMode = false;
+	SetExpanded(kMultiFileExpanderID, mMultiMode);
+//	SetExpanded(mMultiMode);
+
+	Preferences::GetArray("find find strings", mFindStrings);
+	SetValues(kFindComboboxID, mFindStrings);
+	
+	Preferences::GetArray("find replace strings", mReplaceStrings);
+	SetValues(kReplaceComboboxID, mReplaceStrings);
+
+	Preferences::GetArray("find directories", mStartDirectories);
+	SetValues(kStartDirComboboxID, mStartDirectories);
+	
 //	AddRoute(eIdle, MApplication::Instance().eIdle);
 //	
 //	SetVisible(kChasingArrowsID, false);

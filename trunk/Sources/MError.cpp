@@ -37,6 +37,7 @@
 
 #include "MError.h"
 #include "MTypes.h"
+#include "MUtils.h"
 
 using namespace std;
 
@@ -73,20 +74,14 @@ namespace MError
 void DisplayError(
 	const exception&	inErr)
 {
-	cerr << "error!" << endl << inErr.what() << endl;
+	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+		inErr.what());
 	
-//	AlertStdCFStringAlertParamRec pb;
-//	OSStatus err;
-//	
-//	MCFString errStr(inErr.what());
-//	MCFString explStr("an exception was raised");
-//	DialogRef d;
-//	
-//	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-//	err = ::CreateStandardAlert(kAlertCautionAlert, errStr, explStr, &pb, &d);
-//	
-//	DialogItemIndex item;
-//	err = ::RunStandardAlert(d, NULL, &item);
+	Beep();
+	(void)gtk_dialog_run(GTK_DIALOG(dlg));
+	
+	gtk_widget_destroy(dlg);
 }
 
 }
@@ -117,62 +112,15 @@ void __signal_throw(
 	if (StOKToThrow::IsOK())
 		return;
 
-//	AlertStdCFStringAlertParamRec pb;
-//	OSStatus err;
-//	
-//	MCFString errStr("Throwing an exception");
-//	
-//	char msg[1024];
-//	snprintf(msg, sizeof(msg), "File: %s\rLine: %d\rFunction: %s\rCode: %s",
-//		inFile, inLine, inFunction, inCode);
-//	
-//	MCFString explStr(msg);
-//	DialogRef d;
-//	
-//	err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-//	err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
-//	
-//	DialogItemIndex item;
-//	err = ::RunStandardAlert(d, NULL, &item);
-}
-
-//void __report_mach_error(const char* func, mach_error_t e)
-//{
-//	cerr << "Mach error in " << func << ": '" << mach_error_string(e) << '\'' << endl;
-//}
-
-void __msl_assertion_failed(
-	char const*		inCode,
-	char const*		inFile,
-	char const*		inFunction,
-	int				inLine)
-{
-	try
-	{
-//		AlertStdCFStringAlertParamRec pb;
-//		OSStatus err;
-//		
-//		MCFString errStr("Assertion failure");
-		
-		char msg[1024];
-		snprintf(msg, sizeof(msg), "File: %s\rLine: %d\rFunction: %s\rassert: %s",
-			inFile, inLine, inFunction, inCode);
-		
-		cerr << "Assertion failure: " << endl << msg << endl;
-		abort();
-		
-//		MCFString explStr(msg);
-//		DialogRef d;
-//		
-//		err = ::GetStandardAlertDefaultParams(&pb, kStdCFStringAlertVersionOne);
-//		err = ::CreateStandardAlert(kAlertStopAlert, errStr, explStr, &pb, &d);
-//		
-//		DialogItemIndex item;
-//		err = ::RunStandardAlert(d, NULL, &item);
-	}
-	catch (...) 
-	{
-	}
+	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+		"Exception thrown in file '%s', line %d, function: '%s'\n\n"
+		"code: %s", inFile, inLine, inFunction, inCode);
+	
+	Beep();
+	(void)gtk_dialog_run(GTK_DIALOG(dlg));
+	
+	gtk_widget_destroy(dlg);
 }
 
 #endif

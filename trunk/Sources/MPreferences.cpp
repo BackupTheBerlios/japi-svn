@@ -37,21 +37,127 @@
 
 #include "MJapieG.h"
 
+#include <sstream>
+#include <cerrno>
+#include <boost/bind.hpp>
+
 #include "MTypes.h"
 #include "MPreferences.h"
-#include <sstream>
 
 using namespace std;
 
 namespace Preferences
 {
+	
+class IniFile
+{
+  public:
+
+	static IniFile&	Instance();
+	
+					operator GKeyFile*()		{ return mKeyFile; }	
+
+  private:
+					IniFile();
+					~IniFile();
+	
+	GKeyFile*		mKeyFile;
+	MPath			mIniFile;
+};
+
+IniFile::IniFile()
+{
+	mKeyFile = g_key_file_new();
+	
+	try
+	{
+		MPath configDir(g_get_user_config_dir());
+		
+		if (not fs::exists(configDir))
+			fs::create_directories(configDir);
+		
+		mIniFile = configDir / "japierc";
+
+		GError *err = nil;
+		GKeyFileFlags flags =
+			GKeyFileFlags(G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS);
+		
+		if (not g_key_file_load_from_file(mKeyFile, mIniFile.string().c_str(),
+			flags, &err))
+		{
+			cerr << err->message << endl;
+			g_error_free(err);
+		}
+	}
+	catch (exception& e)
+	{
+		cerr << "Exception reading preferences: " << e.what() << endl;		
+	}
+}
+
+IniFile::~IniFile()
+{
+	try
+	{
+		GError* err = nil;
+		gsize length;
+		
+		char* data = g_key_file_to_data(mKeyFile, &length, &err);
+		
+		if (data == nil)
+		{
+			cerr << "Error writing preferences data" << endl;
+
+			if (err != nil)
+			{
+				cerr << err->message << endl;
+				g_error_free(err);
+			}
+		}
+		else
+		{
+			int fd = open(mIniFile.string().c_str(), O_CREAT|O_RDWR, 0600);
+			if (fd >= 0)
+			{
+				write(fd, data, length);
+				close(fd);
+			}
+			else
+			{
+				cerr << "Error writing preferences data to file: "
+					 << strerror(errno) << endl;
+			}
+			
+			g_free(data);
+		}
+	}
+	catch (exception& e)
+	{
+		
+	}
+	catch (...) {}
+}
+
+IniFile& IniFile::Instance()
+{
+	static IniFile sInstance;
+	return sInstance;
+}
 
 int32
 GetInteger(
 	const char*	inName,
 	int32		inDefaultValue)
 {
-	int32 result = inDefaultValue;
+	GError* err = nil;
+	
+	int32 result = g_key_file_get_integer(IniFile::Instance(), "Settings", inName, &err);
+	
+	if (err != nil)
+	{
+		result = inDefaultValue;
+		g_error_free(err);
+	}
 	
 	return result;
 }
@@ -61,14 +167,7 @@ SetInteger(
 	const char*	inName,
 	int32		inValue)
 {
-//	MCFString key(inName);
-//	CFNumberRef	value = ::CFNumberCreate(nil, kCFNumberIntType, &inValue);
-//	
-//	::CFPreferencesSetAppValue(key, value, kCFPreferencesCurrentApplication);
-//
-//	::CFRelease(value);
-//
-//	::CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+	g_key_file_set_integer(IniFile::Instance(), "Settings", inName, inValue);
 }
 
 string
@@ -76,15 +175,22 @@ GetString(
 	const char*	inName,
 	string		inDefaultValue)
 {
-	string result = inDefaultValue;
+	GError* err = nil;
+	char* data = g_key_file_get_value(IniFile::Instance(), "Settings", inName, &err);
 	
-//	MCFString key(inName);
-//	MCFString value(static_cast<CFStringRef>(::CFPreferencesCopyAppValue(key,
-//		kCFPreferencesCurrentApplication)), false);
-//
-//	if (value.IsValid() != nil)
-//		value.GetString(result);
+	string result;
 	
+	if (data == nil)
+		result = inDefaultValue;
+	else
+	{
+		result = data;
+		g_free(data);
+	}
+	
+	if (err != nil)
+		g_error_free(err);
+
 	return result;
 }
 
@@ -92,12 +198,7 @@ void SetString(
 	const char*	inName,
 	string		inValue)
 {
-//	MCFString key(inName);
-//	MCFString value(inValue);
-//	
-//	::CFPreferencesSetAppValue(key, value, kCFPreferencesCurrentApplication);
-//
-//	::CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+	g_key_file_set_value(IniFile::Instance(), "Settings", inName, inValue.c_str());
 }
 
 void
@@ -105,26 +206,20 @@ GetArray(
 	const char*		inName,
 	vector<string>&	outArray)
 {
-//	outArray.clear();
-//	
-//	MCFString key(inName);
-//	CFArrayRef value = reinterpret_cast<CFArrayRef>(
-//		::CFPreferencesCopyAppValue(key,
-//			kCFPreferencesCurrentApplication));
-//
-//	if (value != nil)
-//	{
-//		for (int32 index = 0; index < ::CFArrayGetCount(value); ++index)
-//		{
-//			MCFString str(
-//				static_cast<CFStringRef>(::CFArrayGetValueAtIndex(value, index)), true);
-//			string s;
-//			str.GetString(s);
-//			outArray.push_back(s);
-//		}
-//
-//		::CFRelease(value);
-//	}
+	GError* err = nil;
+	gsize length;
+	char** data = g_key_file_get_string_list(IniFile::Instance(), "Settings", inName, &length, &err);
+	
+	if (data != nil)
+	{
+		for (int i = 0; i < length; ++i)
+			outArray.push_back(data[i]);
+
+		g_strfreev(data);
+	}
+	
+	if (err != nil)
+		g_error_free(err);
 }
 
 void
@@ -132,33 +227,13 @@ SetArray(
 	const char*				inName,
 	const vector<string>&	inArray)
 {
-//	auto_array<MCFString> ss(new MCFString[inArray.size()]);
-//	MCFString* aa = ss.get();
-//
-//	auto_array<CFStringRef> s(new CFStringRef[inArray.size()]);
-//	CFStringRef* a = s.get();
-//	
-//	for (UInt32 i = 0; i < inArray.size(); ++i)
-//	{
-//		aa[i] = MCFString(inArray[i]);
-//		a[i] = aa[i];
-//	}
-//	
-//	CFArrayRef value = ::CFArrayCreate(
-//		kCFAllocatorDefault, (const void **)a, inArray.size(),
-//			&kCFTypeArrayCallBacks);
-//	
-//	if (value != nil)
-//	{
-//		MCFString key(inName);
-//	
-//		::CFPreferencesSetAppValue(key, value,
-//			kCFPreferencesCurrentApplication);
-//		
-//		::CFRelease(value);
-//	}
-//
-//	::CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+	const char** data = new const char*[inArray.size()];
+	
+	transform(inArray.begin(), inArray.end(), data, boost::bind(&string::c_str, _1));
+	
+	g_key_file_set_string_list(IniFile::Instance(), "Settings", inName, data, inArray.size());
+	
+	delete[] data;
 }
 
 MColor GetColor(const char* inName, MColor inDefaultValue)
