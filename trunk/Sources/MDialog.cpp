@@ -239,11 +239,13 @@ void MDialog::CloseAllDialogs()
 //}
 
 void MDialog::AddOKButton(
-	const char*			inLabel)
+	const char*			inLabel,
+	uint32				inButonID)
 {
-	GtkWidget* button = gtk_button_new_with_label(inLabel);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(GetGtkWidget())->action_area), button, true, true, 0);
+	GtkWidget* button = gtk_dialog_add_button(
+							GTK_DIALOG(GetGtkWidget()), inLabel, inButonID);
 	mOKClicked.Connect(button, "clicked");
+	gtk_dialog_set_default_response(GTK_DIALOG(GetGtkWidget()), inButonID);
 }
 
 void MDialog::AddCancelButton(
@@ -509,18 +511,31 @@ void MDialog::SetText(
 ;//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(item.mWidget), inText.c_str());
 	else if (GTK_IS_ENTRY(item.mWidget))
 		gtk_entry_set_text(GTK_ENTRY(item.mWidget), inText.c_str());
+	else if (GTK_IS_LABEL(item.mWidget))
+		gtk_label_set_text(GTK_LABEL(item.mWidget), inText.c_str());
 	else
 		THROW(("item is not an entry"));
 }
 
 int32 MDialog::GetValue(uint32 inID) const
 {
-//	return ::GetControl32BitValue(FindControl(inID));
+	int32 result = 0;
+	
+	MDialogItem item = mImpl->GetItem(inID);
+	if (GTK_IS_COMBO_BOX(item.mWidget))
+		result = gtk_combo_box_get_active(GTK_COMBO_BOX(item.mWidget)) + 1;
+	else
+		THROW(("Cannot get value"));
+	return result;
 }
 
 void MDialog::SetValue(uint32 inID, int32 inValue)
 {
-//	::SetControl32BitValue(FindControl(inID), inValue);
+	MDialogItem item = mImpl->GetItem(inID);
+	if (GTK_IS_COMBO_BOX(item.mWidget))
+		gtk_combo_box_set_active(GTK_COMBO_BOX(item.mWidget), inValue - 1);
+	else
+		THROW(("Cannot get value"));
 }
 
 void MDialog::GetValues(
@@ -633,15 +648,17 @@ void MDialog::SetChecked(uint32 inID, bool inOn)
 
 bool MDialog::IsVisible(uint32 inID) const
 {
-//	return ::IsControlVisible(FindControl(inID));
+	MDialogItem item = mImpl->GetItem(inID);
+	return GTK_WIDGET_VISIBLE(item.mWidget);
 }
 
 void MDialog::SetVisible(uint32 inID, bool inVisible)
 {
-//	if (inVisible)
-//		::ShowControl(FindControl(inID));
-//	else
-//		::HideControl(FindControl(inID));
+	MDialogItem item = mImpl->GetItem(inID);
+	if (inVisible)
+		gtk_widget_show(item.mWidget);
+	else
+		gtk_widget_hide(item.mWidget);
 }
 
 bool MDialog::IsEnabled(uint32 inID) const

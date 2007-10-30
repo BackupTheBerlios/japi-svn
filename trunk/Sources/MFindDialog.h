@@ -40,6 +40,8 @@
 #include <deque>
 #include <vector>
 
+#include <boost/thread.hpp>
+
 #include "MDialog.h"
 #include "MFile.h"
 #include "MP2PEvents.h"
@@ -135,8 +137,9 @@ class MFindDialog : public MDialog
 	void			SetStatusString(
 						const std::string&	inMessage);
 
-	MEventIn<void()>	eIdle;
-	void			Idle();
+	MEventIn<void(double)>	eIdle;
+	void			Idle(
+						double				inSystemTime);
 
 	bool			mMultiMode;
 	bool			mInSelection;
@@ -145,8 +148,8 @@ class MFindDialog : public MDialog
 	StringArray		mStartDirectories;
 	FileArray		mMultiFiles;
 
-//	boost::thread*	mFindAllThread;
-//	boost::mutex	mFindDialogMutex;
+	boost::thread*	mFindAllThread;
+	boost::mutex	mFindDialogMutex;
 	std::string		mCurrentMultiFile;
 	MMessageList*	mFindAllResult;
 };

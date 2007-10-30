@@ -24,11 +24,11 @@ class MDummyWindow : public MWindow
 	static MDummyWindow*
 					Instance();
 	
-	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea; }
+	MDrawingArea*	GetDrawingArea()	{ return mDrawingArea; }
 	
-	PangoFontDescription*
-					GetLabelFont() const		{ return mLabel->style->font_desc; }
-	GdkColor		GetLabelForeColor() const	{ return mLabel->style->text[GTK_STATE_NORMAL]; }
+	GtkWidget*		GetLabel()			{ return mLabel; }
+	
+	PangoLayout*	GetLabelLayout()	{ return gtk_label_get_layout(GTK_LABEL(mLabel)); }
 	
   private:
 	
@@ -45,8 +45,11 @@ MDummyWindow::MDummyWindow()
 	mDrawingArea = new MDrawingArea(10, 10);
 	gtk_container_add(GTK_CONTAINER(mVBox), mDrawingArea->GetGtkWidget());
 	
+	GtkWidget* sb = gtk_statusbar_new();
+	gtk_container_add(GTK_CONTAINER(mVBox), sb);
+	
 	mLabel = gtk_label_new("x");
-	gtk_container_add(GTK_CONTAINER(mVBox), mLabel);
+	gtk_container_add(GTK_CONTAINER(sb), mLabel);
 	
 //	gtk_widget_realize(GetGtkWidget());
 	Show();
@@ -179,11 +182,18 @@ void MDevice::SetFont(
 
 void MDevice::SetLabelFont()
 {
-	mImpl->mFont = MDummyWindow::Instance()->GetLabelFont();
+	PangoLayout* labelLayout = MDummyWindow::Instance()->GetLabelLayout();
+	PangoContext* pc = pango_layout_get_context(labelLayout);
+
+	mImpl->mFont = pango_context_get_font_description(pc);
 	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
 	
-	GdkColor color = MDummyWindow::Instance()->GetLabelForeColor();
-	SetForeColor(MColor(color.red >> 8, color.green >> 8, color.blue >> 8));
+	PangoAttrList *list = pango_layout_get_attributes(labelLayout);
+	if (list != nil)
+	{
+		pango_layout_set_attributes(mImpl->mLayout, list);
+		pango_attr_list_unref(list);
+	}
 }
 
 void MDevice::SetForeColor(
@@ -388,6 +398,37 @@ void MDevice::DrawString(
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }
 
+void MDevice::DrawLabel(
+	const string&	inText,
+	float			inX,
+	float			inY)
+{
+	PangoLayout* labelLayout = MDummyWindow::Instance()->GetLabelLayout();
+	PangoContext* pc = pango_layout_get_context(labelLayout);
+
+	mImpl->mFont = pango_context_get_font_description(pc);
+	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
+	
+	PangoAttrList *list = pango_layout_get_attributes(labelLayout);
+	if (list != nil)
+	{
+		pango_layout_set_attributes(mImpl->mLayout, list);
+		pango_attr_list_unref(list);
+	}
+	
+	pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_END);
+	pango_layout_set_width(mImpl->mLayout, mImpl->mRect.width * PANGO_SCALE);
+	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
+	
+	GtkWidget* widget = mImpl->mView->GetGtkWidget();
+	
+	GdkRectangle area = { mImpl->mRect.x, mImpl->mRect.y, mImpl->mRect.width, mImpl->mRect.height };
+	
+	gtk_paint_layout(MDummyWindow::Instance()->GetLabel()->style,
+		widget->window, (GtkStateType)GTK_WIDGET_STATE(widget),
+		false, &area, widget, "label", inX, inY, mImpl->mLayout);
+}
+
 uint32 MDevice::GetStringWidth(
 	const std::string&	inText)
 {
@@ -489,9 +530,9 @@ void MDevice::SetTextSelection(
 		pango_attr_list_change(attrs, attr);
 	}
 	
-	pango_layout_set_attributes (mImpl->mLayout, attrs);
+	pango_layout_set_attributes(mImpl->mLayout, attrs);
 	
-	pango_attr_list_unref (attrs);
+	pango_attr_list_unref(attrs);
 }
 
 void MDevice::IndexToPosition(

@@ -357,37 +357,37 @@ MEncodingTraits<kEncodingUCS2>::WriteUnicode(
 	return sizeof(wchar_t);
 }
 
-//// MacOS Roman
-//
-//template<>
-//template<class ByteIterator>
-//uint32
-//MEncodingTraits<kEncodingMacOSRoman>::GetNextCharLength(
-//	ByteIterator		inText)
-//{
-//	return 1;
-//}
-//
-//template<>
-//template<class ByteIterator>
-//void
-//MEncodingTraits<kEncodingMacOSRoman>::ReadUnicode(
-//	ByteIterator		inText,
-//	uint32&				outLength,
-//	wchar_t&			outUnicode)
-//{
-//	outUnicode = MUnicodeMapping::GetUnicode(kEncodingMacOSRoman, *inText);
-//	outLength = 1;
-//}
-//
-//template<>
-//template<class ByteIterator>
-//uint32
-//MEncodingTraits<kEncodingMacOSRoman>::WriteUnicode(
-//	ByteIterator&		inText,
-//	wchar_t				inUnicode)
-//{
-//	char ch = MUnicodeMapping::GetChar(kEncodingMacOSRoman, inUnicode);
-//	*inText++ = ch;
-//	return 1;
-//}
+// MacOS Roman
+
+template<>
+template<class ByteIterator>
+uint32
+MEncodingTraits<kEncodingMacOSRoman>::GetNextCharLength(
+	ByteIterator		inText)
+{
+	return 1;
+}
+
+template<>
+template<class ByteIterator>
+void
+MEncodingTraits<kEncodingMacOSRoman>::ReadUnicode(
+	ByteIterator		inText,
+	uint32&				outLength,
+	wchar_t&			outUnicode)
+{
+	outUnicode = MUnicodeMapping::GetUnicode(kEncodingMacOSRoman, *inText);
+	outLength = 1;
+}
+
+template<>
+template<class ByteIterator>
+uint32
+MEncodingTraits<kEncodingMacOSRoman>::WriteUnicode(
+	ByteIterator&		inText,
+	wchar_t				inUnicode)
+{
+	char ch = MUnicodeMapping::GetChar(kEncodingMacOSRoman, inUnicode);
+	*inText++ = ch;
+	return 1;
+}

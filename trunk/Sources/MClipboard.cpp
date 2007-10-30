@@ -196,18 +196,13 @@ void MClipboard::OnOwnerChange(
 
 void MClipboard::LoadClipboardIfNeeded()
 {
-	if (mOwnerChanged)
+	if (mOwnerChanged and gtk_clipboard_wait_is_text_available(mGtkClipboard))
 	{
-		string text;
-		
-		if (gtk_clipboard_wait_is_text_available(mGtkClipboard))
+		gchar* text = gtk_clipboard_wait_for_text(mGtkClipboard);
+		if (text != nil)
 		{
-			gchar* text = gtk_clipboard_wait_for_text(mGtkClipboard);
-			if (text != nil)
-			{
-				SetData(text, false);
-				g_free(text);
-			}
+			SetData(text, false);
+			g_free(text);
 		}
 		
 		mOwnerChanged = false;

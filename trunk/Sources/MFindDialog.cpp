@@ -161,12 +161,15 @@ MFindDialog::MFindDialog()
 	AddCheckBox(kEnableFilterCheckboxID, "Filter File Name", 'hbx1');
 	AddEditField(kNameFilterEditboxID, "", 'hbx1');
 	
+	AddStaticText(kStatusPanelID, "", 'vbx1');
+	SetVisible(kStatusPanelID, false);
+	
 	// sep3
 	
 	AddButton(kReplaceAllButtonID, "Replace All");
 	AddButton(kReplaceButtonID, "Replace");
 	AddButton(kReplaceAndFindButtonID, "Replace & Find");
-	AddButton(kFindButtonID, "Find");
+	AddOKButton("Find");
 }
 
 bool MFindDialog::DoClose()
@@ -182,10 +185,16 @@ bool MFindDialog::DoClose()
 	Preferences::SetArray("find replace strings", mReplaceStrings);
 	Preferences::SetArray("find directories", mStartDirectories);
 
-////	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
-//	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
-//	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
-//	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
+//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
+	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
+	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
+	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
+
+	Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
+	
+	string s;
+	GetText(kNameFilterEditboxID, s);
+	Preferences::SetString("find name filter", s);
 
 	Hide();
 	
@@ -211,6 +220,9 @@ void MFindDialog::Initialize()
 	SetChecked(kTextFilesOnlyCheckboxID, Preferences::GetInteger("find only TEXT", 1));
 	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
 
+	SetChecked(kEnableFilterCheckboxID, Preferences::GetInteger("find name filter enabled", 1));
+	SetText(kNameFilterEditboxID, Preferences::GetString("find name filter", "*.h;*.cpp;*.inl"));
+
 	SetValue(kMethodPopupID, Preferences::GetInteger("find multi method", kMethodDirectory));
 
 	// never set multi-mode automatically
@@ -227,10 +239,10 @@ void MFindDialog::Initialize()
 	Preferences::GetArray("find directories", mStartDirectories);
 	SetValues(kStartDirComboboxID, mStartDirectories);
 	
-//	AddRoute(eIdle, MApplication::Instance().eIdle);
-//	
+	AddRoute(eIdle, gApp->eIdle);
+	
 //	SetVisible(kChasingArrowsID, false);
-//	SetVisible(kStatusPanelID, false);
+	SetVisible(kStatusPanelID, false);
 }
 
 void MFindDialog::Select()
@@ -243,12 +255,7 @@ void MFindDialog::Select()
 
 bool MFindDialog::OKClicked()
 {
-	string s;
-	GetText(kFindComboboxID, s);
-	Preferences::SetString("last find", s);
-
-	StoreComboText(kFindComboboxID, s, mFindStrings);
-
+	DoFindCommand(cmd_FindNext);
 	return false;
 }
 
@@ -257,11 +264,11 @@ void MFindDialog::DoFindCommand(
 {
 	// check regular expression first?
 	
-//	if (mMultiMode and IsChecked(kBatchCheckboxID) and mFindAllThread != nil)
-//	{
-//		::AlertSoundPlay();
-//		return;
-//	}
+	if (mMultiMode and IsChecked(kBatchCheckboxID) and mFindAllThread != nil)
+	{
+		::Beep();
+		return;
+	}
 	
 	mInSelection = IsChecked(kInSelectionCheckboxID);
 
@@ -280,60 +287,61 @@ void MFindDialog::DoFindCommand(
 
 	if (IsExpanded(kMultiFileExpanderID))
 	{
-//		MPath dir;
-//		bool recursive, textFilesOnly;
-//		string filter;
-//		MMultiMethod method;
-//
-//		recursive = IsChecked(kRecursiveCheckboxID);
-//		textFilesOnly = IsChecked(kTextFilesOnlyCheckboxID);
-//		
-//		if (IsChecked(kEnableFilterCheckboxID))
-//			GetText(kNameFilterEditboxID, filter);
-//		
-//		switch (GetValue(kMethodPopupID))
-//		{
-//			case kMethodDirectory:
-//			{
-//				StoreComboText(kStartDirComboboxID, mStartDirectories);
-//				
-//				string dirStr;
-//				GetText(kStartDirComboboxID, dirStr);
-//				dir = dirStr;
-//
-//				if (not exists(dir) or not is_directory(dir))
-//					THROW(("Start directory does not exist or is not a directory"));
-//				
-//				method = eMMDirectory;
-//				break;
-//			}
-//			
-//			case kMethodIncludeFiles:
-//				method = eMMIncludes;
-//				break;
-//			
-//			case kMethodOpenWindows:
-//				method = eMMOpenWindows;
-//				break;
-//		}
-//
-//		if (IsChecked(kBatchCheckboxID))
-//		{
-//			mFindAllThread = new boost::thread(
-//				boost::bind(&MFindDialog::FindAll, this, what,
-//					IsChecked(kIgnoreCaseCheckboxID),
-//					IsChecked(kRegexCheckboxID),
-//					method, dir, recursive, textFilesOnly, filter));
-//		}
-//		else
-//		{
-//			mMultiFiles.clear();
-//			
-//			GetFilesForFindAll(method, dir,
-//				recursive, textFilesOnly, filter, mMultiFiles);
-//
-//			FindNext();
-//		}
+		MPath dir;
+		bool recursive, textFilesOnly;
+		string filter;
+		MMultiMethod method;
+
+		recursive = IsChecked(kRecursiveCheckboxID);
+		textFilesOnly = IsChecked(kTextFilesOnlyCheckboxID);
+		
+		if (IsChecked(kEnableFilterCheckboxID))
+			GetText(kNameFilterEditboxID, filter);
+		
+		switch (GetValue(kMethodPopupID))
+		{
+			case kMethodDirectory:
+			{
+				string dirStr;
+				GetText(kStartDirComboboxID, dirStr);
+
+				StoreComboText(kStartDirComboboxID, dirStr, mStartDirectories);
+				
+				dir = dirStr;
+
+				if (not exists(dir) or not is_directory(dir))
+					THROW(("Start directory does not exist or is not a directory"));
+				
+				method = eMMDirectory;
+				break;
+			}
+			
+			case kMethodIncludeFiles:
+				method = eMMIncludes;
+				break;
+			
+			case kMethodOpenWindows:
+				method = eMMOpenWindows;
+				break;
+		}
+
+		if (IsChecked(kBatchCheckboxID))
+		{
+			mFindAllThread = new boost::thread(
+				boost::bind(&MFindDialog::FindAll, this, what,
+					IsChecked(kIgnoreCaseCheckboxID),
+					IsChecked(kRegexCheckboxID),
+					method, dir, recursive, textFilesOnly, filter));
+		}
+		else
+		{
+			mMultiFiles.clear();
+			
+			GetFilesForFindAll(method, dir,
+				recursive, textFilesOnly, filter, mMultiFiles);
+
+			FindNext();
+		}
 	}
 	else if (IsChecked(kBatchCheckboxID))
 	{
@@ -485,43 +493,43 @@ void MFindDialog::StoreComboText(
 }
 
 void MFindDialog::FindNext()
-{//
-//	if (mMultiFiles.size() == 0)
-//	{
-//		::SysBeep(10);
-//		return;
-//	}
-//	
-//	bool found = false;
-//	
-//	while (not found and mMultiFiles.size() > 0)
-//	{
-//		try
-//		{
-//			MPath file = mMultiFiles.front();
-//			mMultiFiles.pop_front();
-//		
-//			MDocument* doc = MDocument::GetDocForFile(file);
-//			
-//			if (doc != nil and doc->DoFindNext(kDirectionForward))
-//				found = true;
-//			else
-//			{
-//				auto_ptr<MDocument> newDoc(new MDocument(&file));
-//
-//				if (newDoc->DoFindNext(kDirectionForward))
-//				{
-//					doc = newDoc.release();
-//					MEditWindow::DisplayDocument(doc);
-//					found = true;
-//				}
-//			}
-//		}
-//		catch (...)
-//		{
-//			found = false;
-//		}		
-//	}
+{
+	if (mMultiFiles.size() == 0)
+	{
+		::Beep();
+		return;
+	}
+	
+	bool found = false;
+	
+	while (not found and mMultiFiles.size() > 0)
+	{
+		try
+		{
+			MPath file = mMultiFiles.front();
+			mMultiFiles.pop_front();
+		
+			MDocument* doc = MDocument::GetDocumentForURL(file, false);
+			
+			if (doc != nil and doc->DoFindNext(kDirectionForward))
+				found = true;
+			else
+			{
+				auto_ptr<MDocument> newDoc(new MDocument(&file));
+
+				if (newDoc->DoFindNext(kDirectionForward))
+				{
+					doc = newDoc.release();
+					MEditWindow::DisplayDocument(doc);
+					found = true;
+				}
+			}
+		}
+		catch (...)
+		{
+			found = false;
+		}		
+	}
 }
 
 void MFindDialog::FindAll(
@@ -533,39 +541,39 @@ void MFindDialog::FindAll(
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter)
-{//
-//	try
-//	{
-//		FileArray files;
-//		auto_ptr<MMessageList> list(new MMessageList);
-//		
-//		GetFilesForFindAll(inMethod, inDirectory,
-//			inRecursive, inTextFilesOnly, inFileNameFilter, files);
-//		
-//		while (files.size() > 0)
-//		{
-//			SetStatusString(files.front().string());
+{
+	try
+	{
+		FileArray files;
+		auto_ptr<MMessageList> list(new MMessageList);
+		
+		GetFilesForFindAll(inMethod, inDirectory,
+			inRecursive, inTextFilesOnly, inFileNameFilter, files);
+		
+		while (files.size() > 0)
+		{
+			SetStatusString(files.front().string());
+			
+//			MDocument* doc = MDocument::GetDocForFile(files.front());
 //			
-////			MDocument* doc = MDocument::GetDocForFile(files.front());
-////			
-////			if (doc != nil)
-////				doc->FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
-////			else
-////			{
-//				MDocument newDoc(files.front());
-//				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
-////			}
-//
-//			files.pop_front();
-//		}
-//		
-//		mFindAllResult = list.release();
-//	}
-//	catch (...)
-//	{
-//		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-//		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
-//	}	
+//			if (doc != nil)
+//				doc->FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
+//			else
+//			{
+				MDocument newDoc(files.front());
+				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
+//			}
+
+			files.pop_front();
+		}
+		
+		mFindAllResult = list.release();
+	}
+	catch (...)
+	{
+		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
+		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
+	}	
 }
 
 void MFindDialog::GetFilesForFindAll(
@@ -575,45 +583,45 @@ void MFindDialog::GetFilesForFindAll(
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter,
 	FileArray&		outFiles)
-{//
-//	SetStatusString(inDirectory.string());
-//	
-//	switch (inMethod)
-//	{
-//		case eMMDirectory:
-//		{
-//			uint32 flags;
-//			
-//			if (inRecursive)
-//				flags |= kFileIter_Deep;
-//			
-//			if (inTextFilesOnly)
-//				flags |= kFileIter_TEXTFilesOnly;
-//			
-//			MFileIterator iter(inDirectory, flags);
-//		
-//			if (inFileNameFilter.c_str())
-//				iter.SetFilter(inFileNameFilter);
-//		
-//			MPath file;
-//			while (iter.Next(file))
-//				outFiles.push_back(file);
-//			break;
-//		}
-//		
-//		case eMMOpenWindows:
-//		{
-//			MDocument* doc = MDocument::GetFirstDocument();
-//			while (doc != nil)
-//			{
-//				MPath file = doc->GetFilePath();
-//				if (exists(file))
-//					outFiles.push_back(file);
-//				doc = doc->GetNextDocument();
-//			}
-//			break;
-//		}
-//		
+{
+	SetStatusString(inDirectory.string());
+	
+	switch (inMethod)
+	{
+		case eMMDirectory:
+		{
+			uint32 flags;
+			
+			if (inRecursive)
+				flags |= kFileIter_Deep;
+			
+			if (inTextFilesOnly)
+				flags |= kFileIter_TEXTFilesOnly;
+			
+			MFileIterator iter(inDirectory, flags);
+		
+			if (inFileNameFilter.c_str())
+				iter.SetFilter(inFileNameFilter);
+		
+			MPath file;
+			while (iter.Next(file))
+				outFiles.push_back(file);
+			break;
+		}
+		
+		case eMMOpenWindows:
+		{
+			MDocument* doc = MDocument::GetFirstDocument();
+			while (doc != nil)
+			{
+				MPath file = doc->GetURL();
+				if (exists(file))
+					outFiles.push_back(file);
+				doc = doc->GetNextDocument();
+			}
+			break;
+		}
+		
 //		case eMMIncludes:
 //		{
 //			MProject* project = MProject::Instance();
@@ -626,55 +634,56 @@ void MFindDialog::GetFilesForFindAll(
 //			}
 //			break;
 //		}
-//	}
+	}
 }
 
 void MFindDialog::SetStatusString(
 	const string&		inMessage)
-{//
-//	if (mFindAllThread != nil)
-//	{
-//		boost::mutex::scoped_lock lock(mFindDialogMutex);
-//		mCurrentMultiFile = inMessage;
-//	}
-//	else
-//		SetText(kStatusPanelID, mCurrentMultiFile);
+{
+	if (mFindAllThread != nil)
+	{
+		boost::mutex::scoped_lock lock(mFindDialogMutex);
+		mCurrentMultiFile = inMessage;
+	}
+	else
+		SetText(kStatusPanelID, mCurrentMultiFile);
 }
 
-void MFindDialog::Idle()
-{//
-//	if (mFindAllThread != nil)
-//	{
-//		boost::mutex::scoped_lock lock(mFindDialogMutex);
-//	
-//		if (mFindAllResult != nil)
-//		{
-//			auto_ptr<MMessageList> list(mFindAllResult);
-//			mFindAllResult = nil;
-//
+void MFindDialog::Idle(
+	double	inSystemTime)
+{
+	if (mFindAllThread != nil)
+	{
+		boost::mutex::scoped_lock lock(mFindDialogMutex);
+	
+		if (mFindAllResult != nil)
+		{
+			auto_ptr<MMessageList> list(mFindAllResult);
+			mFindAllResult = nil;
+
 //			SetVisible(kChasingArrowsID, false);
-//			SetVisible(kStatusPanelID, false);
-//
-//			mFindAllThread->join();
-//			delete mFindAllThread;
-//			
-//			mFindAllThread = nil;
-//			
-//			if (list->GetCount() > 0)
-//			{
-//				MMessageWindow* w = new MMessageWindow;
-//				w->AddMessages(*list.get());
-//			}
-//			else
-//				::AlertSoundPlay();
-//		}
-//		else
-//		{
+			SetVisible(kStatusPanelID, false);
+
+			mFindAllThread->join();
+			delete mFindAllThread;
+			
+			mFindAllThread = nil;
+			
+			if (list->GetCount() > 0)
+			{
+				MMessageWindow* w = new MMessageWindow;
+				w->AddMessages(*list.get());
+			}
+			else
+				Beep();
+		}
+		else
+		{
 //			SetVisible(kChasingArrowsID, true);
-//			SetVisible(kStatusPanelID, true);
-//
-//			SetText(kStatusPanelID, mCurrentMultiFile);
-//		}
-//	}
+			SetVisible(kStatusPanelID, true);
+
+			SetText(kStatusPanelID, mCurrentMultiFile);
+		}
+	}
 }
 

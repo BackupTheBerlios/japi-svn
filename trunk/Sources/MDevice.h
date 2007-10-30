@@ -70,6 +70,11 @@ class MDevice
 						float				inX,
 						float				inY,
 						bool				inTruncate = false);
+
+	void			DrawLabel(
+						const std::string&	inText,
+						float				inX,
+						float				inY);
 	
 	uint32			GetStringWidth(
 						const std::string&	inText);

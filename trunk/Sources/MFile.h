@@ -104,14 +104,23 @@ enum {
 class MFileIterator
 {
   public:
-					MFileIterator(const MPath& inDirectory, uint32 inFlags);
+					MFileIterator(
+						const MPath&		inDirectory,
+						uint32				inFlags);
+
 					~MFileIterator();
 
-	void			SetFilter(const std::string& inFilter);
+	void			SetFilter(
+						const std::string&	inFilter);
 	
 	bool			Next(MPath& outFile);
 
   private:
+
+					MFileIterator(
+						const MFileIterator&);
+	MFileIterator&	operator=(
+						const MFileIterator&);
 
 	struct MFileIteratorImp*
 					mImpl;

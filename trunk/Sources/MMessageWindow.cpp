@@ -132,14 +132,14 @@ void MMessageList::AddMessage(
 {
 	uint32 fileNr = 0;
 	
-//	if (exists(inFile))
-//	{
-//		MFileTable::iterator f = find(mImpl->mFileTable.begin(), mImpl->mFileTable.end(), inFile);
-//		if (f == mImpl->mFileTable.end())
-//			f = mImpl->mFileTable.insert(f, inFile);
-//
-//		fileNr = f - mImpl->mFileTable.begin() + 1;
-//	}
+	if (fs::exists(inFile))
+	{
+		MFileTable::iterator f = find(mImpl->mFileTable.begin(), mImpl->mFileTable.end(), inFile);
+		if (f == mImpl->mFileTable.end())
+			f = mImpl->mFileTable.insert(f, inFile);
+
+		fileNr = f - mImpl->mFileTable.begin() + 1;
+	}
 	
 	mImpl->mArray.push_back(MMessageItem::Create(inKind, fileNr, inLine,
 		inMinOffset, inMaxOffset, inMessage));

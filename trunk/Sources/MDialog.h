@@ -46,8 +46,8 @@
 class MView;
 
 enum {
-	kMDialogOKButtonID	= 		0,
-	kMDialogCancelButtonID = 	1
+	kMDialogOKButtonID	= 		'okok',
+	kMDialogCancelButtonID = 	'cncl'
 };
 
 class MDialog : public MWindow
@@ -131,7 +131,8 @@ class MDialog : public MWindow
   protected:
 
 	void				AddOKButton(
-							const char*			inLabel);
+							const char*			inLabel,
+							uint32				inButtonID = kMDialogOKButtonID);
 
 	void				AddCancelButton(
 							const char*			inLabel);

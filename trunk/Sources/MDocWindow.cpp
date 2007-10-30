@@ -51,7 +51,6 @@
 #include "MDrawingArea.h"
 #include "MDevice.h"
 #include "MFont.h"
-#include "MLabel.h"
 
 using namespace std;
 
@@ -119,11 +118,11 @@ bool MParsePopup::OnExposeEvent(
 		
 		MDevice dev(this, bounds);
 		
-		dev.SetLabelFont();
+//		dev.SetLabelFont();
 
 		int32 y = bounds.y + (dev.GetLineHeight() - bounds.height) / 2;
 		
-		dev.DrawString(mName, bounds.x, y, true);
+		dev.DrawLabel(mName, bounds.x, y);
 	}
 	
 	return true;
