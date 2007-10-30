@@ -25,6 +25,8 @@ class MDummyWindow : public MWindow
 	
 	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea; }
 	
+	PangoFontDesc*	GetLabelFont() const		{ return mLabel->style->font_desc; }
+	
   private:
 	
 	GtkWidget*		mVBox;
@@ -125,7 +127,9 @@ void MDeviceImp::Init()
 	mLayout = pango_layout_new(pc);
 //	pango_layout_set_font_description(mLayout, mFont);
 
-	mFont = pango_context_get_font_description(pc);
+//	mFont = pango_context_get_font_description(pc);
+	
+	mFont = MDummyWindow::Instance()->GetLabelFont();
 }
 
 MDeviceImp::~MDeviceImp()
