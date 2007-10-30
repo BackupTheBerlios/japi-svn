@@ -687,8 +687,7 @@ void MDialog::SavePosition(const char* inName)
 
 void MDialog::RestorePosition(const char* inName)
 {
-	string s;
-	Preferences::GetString(inName, s);
+	string s = Preferences::GetString(inName, "");
 	if (s.length() > 0)
 	{
 		int x, y;

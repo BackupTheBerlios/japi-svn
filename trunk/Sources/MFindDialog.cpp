@@ -235,8 +235,8 @@ void MFindDialog::Initialize()
 
 void MFindDialog::Select()
 {
-	Show(nil);
 	RestorePosition("find dialog position");
+	Show(nil);
 	MWindow::Select();
 	SetFocus(kFindComboboxID);
 }
