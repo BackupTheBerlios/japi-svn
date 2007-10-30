@@ -118,8 +118,6 @@ bool MParsePopup::OnExposeEvent(
 		
 		MDevice dev(this, bounds);
 		
-//		dev.SetFont(kSansFont);
-		
 		int32 y = bounds.y + (dev.GetLineHeight() - bounds.height) / 2;
 
 		dev.DrawString(mName, bounds.x, y, true);

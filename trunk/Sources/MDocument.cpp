@@ -289,6 +289,22 @@ void MDocument::SetTargetTextView(MTextView* inTextView)
 void MDocument::SetWorksheet(bool inIsWorksheet)
 {
 	mIsWorksheet = inIsWorksheet;
+	
+	if (inIsWorksheet)
+	{
+		string cwd = Preferences::GetString("worksheet wd", "");
+		if (cwd.length() > 0)
+		{
+			mShell.reset(new MShell(true));
+
+			mShell->SetCWD(cwd);
+
+			AddRoute(mShell->eStdOut, eStdOut);
+			AddRoute(mShell->eStdErr, eStdErr);
+			AddRoute(mShell->eShellStatus, eShellStatusIn);
+			
+		}
+	}		
 }
 
 const char* MDocument::GetCWD() const
@@ -855,8 +871,12 @@ void MDocument::CloseDocument()
 			
 			if (mShell.get() != nil)
 			{
-				write_attribute(mURL, kJapieCWD,
-					mShell->GetCWD().c_str(), mShell->GetCWD().length());
+				string cwd = mShell->GetCWD();
+				
+				write_attribute(mURL, kJapieCWD, cwd.c_str(), cwd.length());
+					
+				if (mIsWorksheet)
+					Preferences::SetString("worksheet wd", cwd);
 			}
 		}
 		

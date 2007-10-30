@@ -24,15 +24,24 @@ class MDummyWindow : public MWindow
 	static MDummyWindow*	Instance();
 	
 	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea; }
-
+	
   private:
+	
+	GtkWidget*		mVBox;
 	MDrawingArea*	mDrawingArea;
+	GtkWidget*		mLabel;
 };
 
 MDummyWindow::MDummyWindow()
 {
+	mVBox = gtk_vbox_new(false, 0);
+	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
+	
 	mDrawingArea = new MDrawingArea(10, 10);
-	Add(mDrawingArea);
+	gtk_container_add(GTK_CONTAINER(mVBox), mDrawingArea->GetGtkWidget());
+	
+	mLabel = gtk_label_new("x");
+	gtk_container_add(GTK_CONTAINER(mVBox), mLabel);
 	
 //	gtk_widget_realize(GetGtkWidget());
 	Show();
