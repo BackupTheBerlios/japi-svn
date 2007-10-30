@@ -37,6 +37,7 @@
 
 #include "MJapieG.h"
 
+#include <sstream>
 #include <boost/bind.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -674,25 +675,29 @@ void MDialog::SetExpanded(
 }
 
 void MDialog::SavePosition(const char* inName)
-{//
-//	Rect r;
-//	::GetWindowBounds(GetSysWindow(), kWindowContentRgn, &r);
-//	
-//	Preferences::SetRect(inName, r);
+{
+	int x, y;
+	gtk_window_get_position(GTK_WINDOW(GetGtkWidget()), &x, &y);
+	
+	stringstream s;
+	s << x << ' ' << y;
+	
+	Preferences::SetString(inName, s.str());
 }
 
 void MDialog::RestorePosition(const char* inName)
-{//
-//	Rect r;
-//	::GetWindowBounds(GetSysWindow(), kWindowContentRgn, &r);
-//	
-//	r = Preferences::GetRect(inName, r);
-//	
-//	::MoveWindow(GetSysWindow(), r.left, r.top, true);
-////	::SizeWindow(GetSysWindow(), r.right - r.left, r.bottom - r.top, true);
-//	::ConstrainWindowToScreen(GetSysWindow(),
-//		kWindowStructureRgn, kWindowConstrainStandardOptions,
-//		NULL, NULL);
+{
+	string s;
+	Preferences::GetString(inName, s);
+	if (s.length() > 0)
+	{
+		int x, y;
+		
+		stringstream ss(s);
+		ss >> x >> y;
+		
+		gtk_window_move(GTK_WINDOW(GetGtkWidget()), x, y);
+	}
 }
 
 void MDialog::SetCloseImmediatelyFlag(

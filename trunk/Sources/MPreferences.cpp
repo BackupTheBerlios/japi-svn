@@ -43,6 +43,7 @@
 
 #include "MTypes.h"
 #include "MPreferences.h"
+#include "MGlobals.h"
 
 using namespace std;
 
@@ -71,12 +72,10 @@ IniFile::IniFile()
 	
 	try
 	{
-		MPath configDir(g_get_user_config_dir());
+		if (not fs::exists(gPrefsDir))
+			fs::create_directories(gPrefsDir);
 		
-		if (not fs::exists(configDir))
-			fs::create_directories(configDir);
-		
-		mIniFile = configDir / "japierc";
+		mIniFile = gPrefsDir / "settings";
 
 		GError *err = nil;
 		GKeyFileFlags flags =
@@ -85,7 +84,6 @@ IniFile::IniFile()
 		if (not g_key_file_load_from_file(mKeyFile, mIniFile.string().c_str(),
 			flags, &err))
 		{
-			cerr << err->message << endl;
 			g_error_free(err);
 		}
 	}

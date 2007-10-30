@@ -198,9 +198,9 @@ void MFindDialog::Initialize()
 //
 //	Install(kEventClassWindow, kEventWindowHandleActivate,
 //		this, &MFindDialog::DoWindowActivate);
-//
-//	RestorePosition("find dialog position");
-//	
+
+	RestorePosition("find dialog position");
+	
 	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
 	SetChecked(kWrapCheckboxID, Preferences::GetInteger("find wrap around", 0));
 	SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
@@ -236,6 +236,7 @@ void MFindDialog::Initialize()
 void MFindDialog::Select()
 {
 	Show(nil);
+	RestorePosition("find dialog position");
 	MWindow::Select();
 	SetFocus(kFindComboboxID);
 }

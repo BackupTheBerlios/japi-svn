@@ -82,6 +82,11 @@ MPath			gTemplatesDir, gPrefsDir;
 
 void InitGlobals()
 {
+	gPrefsDir = g_get_user_config_dir();
+	gPrefsDir /= "japie";
+	
+	gTemplatesDir = gPrefsDir / "Templates";
+
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
 	gKiss = Preferences::GetInteger("kiss", gKiss);
@@ -110,58 +115,6 @@ void InitGlobals()
 	gHiliteColor = kHiliteColor;
 	gInactiveHiliteColor = kInactiveHighlightColor;
 	gOddRowColor = kOddRowBackColor;
-
-//	try
-//	{
-//		FSRef folderRef;
-//		THROW_IF_OSERROR(::FSFindFolder(kUserDomain, kDomainLibraryFolderType, true, &folderRef));
-//
-//		char lib[PATH_MAX];
-//		THROW_IF_OSERROR(::FSRefMakePath(&folderRef, reinterpret_cast<UInt8*>(lib), PATH_MAX));
-//
-//		MPath libPath(lib);
-//		
-//		if (not exists(libPath) or not is_directory(libPath))
-//			THROW(("%s is not a directory", lib));
-//
-//		gPrefsDir = libPath / "Japie";
-//
-//		if (not exists(gPrefsDir))
-//			create_directory(gPrefsDir);
-//	}
-//	catch (const std::exception& e)
-//	{
-//		cerr << "Initialising preferences directory failed: " << e.what() << endl;
-//	}
-//	
-//	try
-//	{
-//		gTemplatesDir = gPrefsDir / "Templates";
-//
-//		if (not exists(gTemplatesDir))
-//		{
-//			create_directory(gTemplatesDir);
-//			
-//			MPath resDir = MApplication::Instance().GetResourceDir();
-//			
-//			// copy over the default template files to the newly created templates directory
-//			
-//			MFileIterator iter(resDir, 0);
-//			MPath file;
-//			
-//			while (iter.Next(file))
-//			{
-//				if (is_directory(file) or file.leaf() == ".DS_Store")
-//					continue;
-//				
-//				copy_file(file, gTemplatesDir / file.leaf());
-//			}
-//		}
-//	}
-//	catch (const std::exception& e)
-//	{
-//		cerr << "Initialising Templates directory failed: " << e.what() << endl;
-//	}
 }
 
 void SaveGlobals()
