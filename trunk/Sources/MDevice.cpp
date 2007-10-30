@@ -21,11 +21,14 @@ class MDummyWindow : public MWindow
 					MDummyWindow();
 //					~MDummyWindow();
 
-	static MDummyWindow*	Instance();
+	static MDummyWindow*
+					Instance();
 	
 	MDrawingArea*	GetDrawingArea()			{ return mDrawingArea; }
 	
-	PangoFontDesc*	GetLabelFont() const		{ return mLabel->style->font_desc; }
+	PangoFontDescription*
+					GetLabelFont() const		{ return mLabel->style->font_desc; }
+	GdkColor		GetLabelForeColor() const	{ return mLabel->style->text[GTK_STATE_NORMAL]; }
 	
   private:
 	
@@ -127,9 +130,7 @@ void MDeviceImp::Init()
 	mLayout = pango_layout_new(pc);
 //	pango_layout_set_font_description(mLayout, mFont);
 
-//	mFont = pango_context_get_font_description(pc);
-	
-	mFont = MDummyWindow::Instance()->GetLabelFont();
+	mFont = pango_context_get_font_description(pc);
 }
 
 MDeviceImp::~MDeviceImp()
@@ -174,6 +175,15 @@ void MDevice::SetFont(
 {
 	mImpl->mFont = inFont;
 	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
+}
+
+void MDevice::SetLabelFont()
+{
+	mImpl->mFont = MDummyWindow::Instance()->GetLabelFont();
+	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
+	
+	GdkColor color = MDummyWindow::Instance()->GetLabelForeColor();
+	SetForeColor(MColor(color.red >> 8, color.green >> 8, color.blue >> 8));
 }
 
 void MDevice::SetForeColor(

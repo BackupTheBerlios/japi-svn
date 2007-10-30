@@ -26,6 +26,8 @@ class MDevice
 	void			SetFont(
 						const MFont&		inFont);
 
+	void			SetLabelFont();
+
 	void			SetForeColor(
 						MColor				inColor);
 

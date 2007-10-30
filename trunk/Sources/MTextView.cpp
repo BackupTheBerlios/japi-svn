@@ -350,9 +350,12 @@ bool MTextView::OnExposeEvent(
 	if (mDocument == nil)
 		return false;
 	
-	MRect update(inEvent->area);
+	MRect bounds;
+	GetBounds(bounds);
+	
+	MDevice dev(this, bounds);
 
-	MDevice dev(this, update);
+	MRect update(inEvent->area);
 
 	try
 	{

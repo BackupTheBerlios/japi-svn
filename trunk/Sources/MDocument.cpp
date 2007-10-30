@@ -2209,7 +2209,7 @@ void MDocument::DoComment()
 			string text;
 			mText.GetText(offset, length, text);
 			
-			if (text[length - 1] == '\n')
+			if (length > 0 and text[length - 1] == '\n')
 			{
 				--length;
 				text.erase(length, 1);
