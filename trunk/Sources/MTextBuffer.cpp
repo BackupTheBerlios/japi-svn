@@ -531,7 +531,7 @@ MTextBuffer::MTextBuffer()
 	else
 		mEncoding = kEncodingUTF8;
 	
-	mBOM = Preferences::GetInteger("add bom", 1);
+	mBOM = Preferences::GetInteger("add bom", 0);
 
 	s = Preferences::GetString("newline char", "LF");
 	if (s == "CR")
@@ -550,7 +550,7 @@ MTextBuffer::MTextBuffer(
 	, mGapOffset(0)
 {
 	mEncoding = kEncodingUTF8;
-	mBOM = Preferences::GetInteger("add bom", 1);
+	mBOM = Preferences::GetInteger("add bom", 0);
 
 	string s = Preferences::GetString("newline char", "LF");
 	
