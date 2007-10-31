@@ -57,7 +57,7 @@ using namespace std;
 // ------------------------------------------------------------------
 //
 
-class MParsePopup : public MDrawingArea
+class MParsePopup : public MView
 {
   public:
 						MParsePopup(
@@ -72,22 +72,25 @@ class MParsePopup : public MDrawingArea
 
   private:
 
-	bool				OnExposeEvent(
-							GdkEventExpose*	inEvent);
-	
 	bool				OnButtonPressEvent(
 							GdkEventButton*	inEvent);
 
 	MController*		mController;
-	string				mName;
 	bool				mIsFunctionParser;
 };
 
 MParsePopup::MParsePopup(
 	int32			inWidth)
-	: MDrawingArea(inWidth, -1)
+	: MView(gtk_label_new(nil), true)
 	, mIsFunctionParser(false)
 {
+	MRect b;
+	GetBounds(b);
+	b.width = inWidth;
+	SetBounds(b);
+	
+	gtk_label_set_selectable(GTK_LABEL(GetGtkWidget()), true);
+	gtk_misc_set_alignment(GTK_MISC(GetGtkWidget()), 0, 0.5);
 }
 
 void MParsePopup::SetController(
@@ -102,30 +105,9 @@ void MParsePopup::SetController(
 }
 
 void MParsePopup::SetText(
-	const string&	inName)
+	const string&	inText)
 {
-	mName = inName;
-	Invalidate();
-}
-
-bool MParsePopup::OnExposeEvent(
-	GdkEventExpose*		inEvent)
-{
-	if (mName.length())
-	{
-		MRect bounds;
-		GetBounds(bounds);
-		
-		MDevice dev(this, bounds);
-		
-//		dev.SetLabelFont();
-
-		int32 y = bounds.y + (dev.GetLineHeight() - bounds.height) / 2;
-		
-		dev.DrawLabel(mName, bounds.x, y);
-	}
-	
-	return true;
+	gtk_label_set_text(GTK_LABEL(GetGtkWidget()), inText.c_str());
 }
 
 bool MParsePopup::OnButtonPressEvent(

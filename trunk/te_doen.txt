@@ -1,9 +1,10 @@
 ﻿Te doen
 
 - project
+- soft wrapping
+- verticaal scrollen
+- scrollen in lange documenten
 - drag&drop
-- verminderen aantal gelinkte bibliotheken
 - entab/detab
-- preferences
-- import clipboard bij startup
-
+- split windows?
+- Venster positie bewaren

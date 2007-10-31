@@ -100,6 +100,8 @@ void MView::GetBounds(
 void MView::SetBounds(
 	const MRect&	inBounds)
 {
+	GtkRequisition r = { inBounds.width, inBounds.height };
+	gtk_widget_size_request(mGtkWidget, &r);
 }
 
 void MView::ResizeTo(

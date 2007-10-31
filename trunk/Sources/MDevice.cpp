@@ -48,7 +48,7 @@ MDummyWindow::MDummyWindow()
 	GtkWidget* sb = gtk_statusbar_new();
 	gtk_container_add(GTK_CONTAINER(mVBox), sb);
 	
-	mLabel = gtk_label_new("x");
+	mLabel = gtk_label_new("xxyx");
 	gtk_container_add(GTK_CONTAINER(sb), mLabel);
 	
 //	gtk_widget_realize(GetGtkWidget());

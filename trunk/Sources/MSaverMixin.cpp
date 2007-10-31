@@ -118,6 +118,7 @@ void MSaverMixin::TryCloseDocument(
 	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Don't save", kAskSaveChanges_DontSave);
 	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Cancel", kAskSaveChanges_Cancel);
 	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Save", kAskSaveChanges_Save);
+	gtk_dialog_set_default_response(GTK_DIALOG(mDialog), kAskSaveChanges_Save);
 	
 	slClose.Connect(mDialog, "close");
 	slResponse.Connect(mDialog, "response");
