@@ -61,7 +61,7 @@ void MView::SetWidget(
 		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
 		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
 		mKeyPressEvent.Connect(mGtkWidget, "key-press-event");
-		mConfigureEvent.Connect(mGtkWidget, "configure-event");
+//		mConfigureEvent.Connect(mGtkWidget, "configure-event");
 		mScrollEvent.Connect(mGtkWidget, "scroll-event");
 		mRealize.Connect(mGtkWidget, "realize");
 	}

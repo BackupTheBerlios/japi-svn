@@ -396,7 +396,10 @@ void MJapieApp::DoCloseAll(
 			
 			assert(controller != nil);
 			
-			(void)controller->TryCloseDocument(inAction);
+			if (controller != nil)
+				(void)controller->TryCloseDocument(inAction);
+			else
+				cerr << "Weird, document without controller: " << doc->GetURL().string() << endl;
 		}
 		
 		doc = next;
