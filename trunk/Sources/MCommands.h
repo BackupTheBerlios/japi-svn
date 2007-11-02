@@ -99,7 +99,7 @@ const uint32
 	cmd_ShowDocInfoDialog = 	'DocI',
 	cmd_AddFileToProject =		'Padd',
 	cmd_CheckSyntax =			'Psyn',
-	cmd_Precompile =			'Ppre',
+	cmd_Preprocess =			'Ppre',
 	cmd_Compile =				'Pcmp',
 	cmd_BringUpToDate =			'Pupd',
 	cmd_Make =					'Pmak',

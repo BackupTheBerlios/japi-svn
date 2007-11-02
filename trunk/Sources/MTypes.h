@@ -73,6 +73,10 @@ struct MRect
 	bool		ContainsPoint(
 					int32				inX,
 					int32				inY) const;
+	
+	void		InsetBy(
+					int32				inDeltaX,
+					int32				inDeltaY);
 };
 
 enum MDirection
@@ -259,6 +263,33 @@ inline bool MRect::ContainsPoint(
 	return
 		x <= inX and x + width > inX and
 		y <= inY and y + height > inY;
+}
+
+void MRect::InsetBy(
+	int32				inDeltaX,
+	int32				inDeltaY)
+{
+	if (inDeltaX < 0 or 2 * inDeltaX >= width)
+	{
+		x += inDeltaX;
+		width -= inDeltaX * 2;
+	}
+	else
+	{
+		x += width / 2;
+		width = 0;
+	}
+
+	if (inDeltaY < 0 or 2 * inDeltaY >= height)
+	{
+		y += inDeltaY;
+		height -= inDeltaY * 2;
+	}
+	else
+	{
+		y += height / 2;
+		height = 0;
+	}
 }
 
 #endif
