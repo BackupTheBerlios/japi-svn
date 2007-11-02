@@ -293,6 +293,29 @@ void MJapieApp::RecycleWindow(
 
 void MJapieApp::RunEventLoop()
 {
+//	switch (Preferences::GetInteger("at launch", 1))
+//	{
+//		case 1:
+//			if (MDocument::GetFirstDocument() == nil)
+//				DoNew();
+//			break;
+//		
+//		case 2:
+//			if (MDocument::GetFirstDocument() == nil)
+//				DoOpen();
+//			break;
+//		
+//		default:
+//			break;
+//	}
+	
+	if (Preferences::GetInteger("reopen project", 1))
+	{
+		MPath pp = Preferences::GetString("last project", "");
+		if (fs::exists(pp))
+			OpenProject(pp);
+	}
+
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
@@ -807,7 +830,7 @@ int main(int argc, char* argv[])
 			InitGlobals();
 	
 			gApp = new MJapieApp();
-	
+
 			gApp->RunEventLoop();
 	
 			// we're done, clean up

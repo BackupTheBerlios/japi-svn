@@ -1,6 +1,7 @@
 ﻿Te doen
 
-- project
+- project afronden, bugs fixen
+- state informatie in project area opslaan
 - soft wrapping
 - verticaal scrollen
 - scrollen in lange documenten
