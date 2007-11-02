@@ -45,6 +45,7 @@
 #include "MDocClosedNotifier.h"
 #include "MFindAndOpenDialog.h"
 #include "MFindDialog.h"
+#include "MProject.h"
 
 #include <iostream>
 
@@ -113,13 +114,8 @@ bool MJapieApp::ProcessCommand(
 	bool result = true;
 
 //	MProject* project = MProject::Instance();
-//	if (project != nil)
-//	{
-//		result = project->ProcessCommand(inEvent, inCommand);
-//	
-//		if (result != eventNotHandledErr)
-//			return result;
-//	}
+//	if (project != nil and project->ProcessCommand(inCommand, inMenu, inItemIndex))
+//		return true;
 
 	switch (inCommand)
 	{
@@ -218,13 +214,8 @@ bool MJapieApp::UpdateCommandStatus(
 	bool result = true;
 
 //	MProject* project = MProject::Instance();
-//	if (project != nil)
-//	{
-//		result = project->UpdateCommandStatus(inEvent, inCommand);
-//	
-//		if (result != eventNotHandledErr)
-//			return result;
-//	}
+//	if (project != nil and project->UpdateCommandStatus(inCommand, outEnabled, outChecked))
+//		return true;
 
 	switch (inCommand)
 	{
@@ -415,15 +406,15 @@ void MJapieApp::DoQuit()
 	DoCloseAll(kSaveChangesQuittingApplication);
 //	MDialog::CloseAllDialogs();
 	
-//	if (MProject::Instance() != nil)
-//	{
-//		string p = MProject::Instance()->GetPath().string();
-//		Preferences::SetString("last project", p);
-//	}
-//	
-//	MProject::CloseAllProjects(kNavSaveChangesQuittingApplication);
+	if (MProject::Instance() != nil)
+	{
+		string p = MProject::Instance()->GetPath().string();
+		Preferences::SetString("last project", p);
+	}
 	
-	if (MDocument::GetFirstDocument() == nil /* and MProject::Instance() == nil*/)
+	MProject::CloseAllProjects(kSaveChangesQuittingApplication);
+	
+	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
 		gtk_main_quit();
 }
 
@@ -455,6 +446,7 @@ void MJapieApp::DoOpen()
 		while (file != nil)
 		{
 			MPath url(reinterpret_cast<char*>(file->data));
+			
 			doc = OpenOneDocument(url);
 			
 			g_free(file->data);
@@ -478,13 +470,20 @@ MDocument* MJapieApp::OpenOneDocument(
 	const MPath&			inFileRef)
 {
 	AddToRecentMenu(inFileRef);
+
+	MDocument* doc = nil;
 	
-	MDocument* doc = MDocument::GetDocumentForURL(inFileRef, false);
-
-	if (doc == nil)
-		doc = new MDocument(&inFileRef);
-
-	MDocWindow::DisplayDocument(doc);
+	if (FileNameMatches("*.prj", inFileRef))
+		OpenProject(inFileRef);
+	else
+	{
+		doc = MDocument::GetDocumentForURL(inFileRef, false);
+	
+		if (doc == nil)
+			doc = new MDocument(&inFileRef);
+	
+		MDocWindow::DisplayDocument(doc);
+	}
 	
 	return doc;
 }
@@ -497,10 +496,10 @@ void MJapieApp::OpenProject(
 {
 	AddToRecentMenu(inPath);
 	
-//	auto_ptr<MProject> project(new MProject(inPath));
-//	project->Initialize();
-//	project->Show();
-//	project.release();
+	auto_ptr<MProject> project(new MProject(inPath));
+	project->Initialize();
+	project->Show();
+	project.release();
 }
 
 void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
@@ -586,8 +585,12 @@ void MJapieApp::Pulse()
 	if (mSocketFD >= 0)
 		ProcessSocketMessages();
 	
-	if (MDocWindow::GetFirstDocWindow() == nil and mReceivedFirstMsg)
+	if (MDocWindow::GetFirstDocWindow() == nil and
+		mReceivedFirstMsg and
+		MProject::Instance() == nil)
+	{
 		DoQuit();
+	}
 	else
 		eIdle(GetLocalTime());
 }
@@ -658,8 +661,11 @@ void MJapieApp::ProcessSocketMessages()
 						break;
 				}
 				
-				MDocWindow::DisplayDocument(doc);
-				doc->AddNotifier(notify);
+				if (doc != nil)
+				{
+					MDocWindow::DisplayDocument(doc);
+					doc->AddNotifier(notify);
+				}
 			}
 			catch (exception& e)
 			{

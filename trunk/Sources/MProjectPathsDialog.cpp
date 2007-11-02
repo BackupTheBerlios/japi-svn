@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <sstream>
 #include <iterator>
@@ -82,102 +82,91 @@ void MProjectPathsDialog::Initialize(
 	const vector<MPath>&	inLibPaths,
 	const vector<MPath>&	inFrameworks)
 {
-	MView::RegisterSubclass<MListView>();
-
+//	MView::RegisterSubclass<MListView>();
+//
 	mProject = inProject;
 	
-	MDialog::Initialize(CFSTR("AccessPaths"), inProject);
-
-	::SetAutomaticControlDragTrackingEnabledForWindow(GetSysWindow(), true);
-
-	ControlID id = { kJapieSignature };
-	ControlRef cntrl;
-
-	ControlButtonContentInfo addBtnInfo = { kControlContentCGImageRef };
-	addBtnInfo.u.imageRef = LoadImage("TableViewPlus");
-	ControlButtonContentInfo delBtnInfo = { kControlContentCGImageRef };
-	delBtnInfo.u.imageRef = LoadImage("TableViewMinus");
-
-	for (int page = 1; page <= 4; ++page)
-	{
-		uint32 baseID = kPathsBaseID * page;
-		
-		id.id = baseID + kAddControlID;
-		THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &cntrl));
-		THROW_IF_OSERROR(::SetBevelButtonContentInfo(cntrl, &addBtnInfo));
-
-		id.id = baseID + kDelControlID;
-		THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &cntrl));
-		THROW_IF_OSERROR(::SetBevelButtonContentInfo(cntrl, &delBtnInfo));
-
-		MListView* listView = FindViewByID<MListView>(baseID + kListViewControlID);
-		
-		listView->SetDrawBox(true);
-		
-		SetCallBack(listView->cbDrawItem, this, &MProjectPathsDialog::DrawPath);
-		SetCallBack(listView->cbItemDragged, this, &MProjectPathsDialog::ItemDragged);
-		SetCallBack(listView->cbFilesDropped, this, &MProjectPathsDialog::FilesDropped);
-		
-	//	AddRoute(listView->eRowInvoked, eInvokeProjectItem);
-	//	AddRoute(listView->eRowDeleted, eDeleteProjectItem);
-	
-		vector<MPath>::const_iterator b, e;
-		
-		switch (page)
-		{
-			case 1:	b = inUserPaths.begin();	e = inUserPaths.end();	break;
-			case 2:	b = inSysPaths.begin();		e = inSysPaths.end();	break;
-			case 3:	b = inLibPaths.begin();		e = inLibPaths.end();	break;
-			case 4:	b = inFrameworks.begin();	e = inFrameworks.end();	break;
-		}
-		
-		for (; b != e; ++b)
-			listView->InsertItem(kListItemLast, b->string().c_str(), b->string().length());
-	}
-
-	ControlRef tabControl = FindControl(kTabControlID);
-	
-	::SetControlValue(tabControl, 1);
-	SelectPage(1);
+//	MDialog::Initialize(CFSTR("AccessPaths"), inProject);
+//
+//	::SetAutomaticControlDragTrackingEnabledForWindow(GetSysWindow(), true);
+//
+//	ControlID id = { kJapieSignature };
+//	ControlRef cntrl;
+//
+//	ControlButtonContentInfo addBtnInfo = { kControlContentCGImageRef };
+//	addBtnInfo.u.imageRef = LoadImage("TableViewPlus");
+//	ControlButtonContentInfo delBtnInfo = { kControlContentCGImageRef };
+//	delBtnInfo.u.imageRef = LoadImage("TableViewMinus");
+//
+//	for (int page = 1; page <= 4; ++page)
+//	{
+//		uint32 baseID = kPathsBaseID * page;
+//		
+//		id.id = baseID + kAddControlID;
+//		THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &cntrl));
+//		THROW_IF_OSERROR(::SetBevelButtonContentInfo(cntrl, &addBtnInfo));
+//
+//		id.id = baseID + kDelControlID;
+//		THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &cntrl));
+//		THROW_IF_OSERROR(::SetBevelButtonContentInfo(cntrl, &delBtnInfo));
+//
+//		MListView* listView = FindViewByID<MListView>(baseID + kListViewControlID);
+//		
+//		listView->SetDrawBox(true);
+//		
+//		SetCallBack(listView->cbDrawItem, this, &MProjectPathsDialog::DrawPath);
+//		SetCallBack(listView->cbItemDragged, this, &MProjectPathsDialog::ItemDragged);
+//		SetCallBack(listView->cbFilesDropped, this, &MProjectPathsDialog::FilesDropped);
+//		
+//	//	AddRoute(listView->eRowInvoked, eInvokeProjectItem);
+//	//	AddRoute(listView->eRowDeleted, eDeleteProjectItem);
+//	
+//		vector<MPath>::const_iterator b, e;
+//		
+//		switch (page)
+//		{
+//			case 1:	b = inUserPaths.begin();	e = inUserPaths.end();	break;
+//			case 2:	b = inSysPaths.begin();		e = inSysPaths.end();	break;
+//			case 3:	b = inLibPaths.begin();		e = inLibPaths.end();	break;
+//			case 4:	b = inFrameworks.begin();	e = inFrameworks.end();	break;
+//		}
+//		
+//		for (; b != e; ++b)
+//			listView->InsertItem(kListItemLast, b->string().c_str(), b->string().length());
+//	}
+//
+//	ControlRef tabControl = FindControl(kTabControlID);
+//	
+//	::SetControlValue(tabControl, 1);
+//	SelectPage(1);
 
 	Show(inProject);
 }
 
-OSStatus MProjectPathsDialog::DoControlHit(EventRef inEvent)
+void MProjectPathsDialog::ButtonClicked(
+	uint32		inButtonID)
 {
-    ControlRef theControl;
-	::GetEventParameter(inEvent, kEventParamDirectObject,
-		typeControlRef, NULL, sizeof(ControlRef), NULL, &theControl);
-
-	ControlID controlID;
-	::GetControlID(theControl, &controlID);
-	
-	OSStatus result = noErr;
-	
-	switch (controlID.id)
+	switch (inButtonID)
 	{
-		case kTabControlID:
-			if (static_cast<uint32>(::GetControlValue(theControl)) != mCurrentPage)
-			{
-				SelectPage(::GetControlValue(theControl));
-				result = noErr;
-			}
-			break;
-		
-		case (1 * kPathsBaseID) + kDelControlID:
-		case (2 * kPathsBaseID) + kDelControlID:
-		case (3 * kPathsBaseID) + kDelControlID:
-		case (4 * kPathsBaseID) + kDelControlID:
-		{
-			MListView* listView =
-				FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
-			
-			int32 selected = listView->GetSelected();
-			if (selected >= 0 and static_cast<uint32>(selected) < listView->GetCount())
-				listView->RemoveItem(selected);
-			
-			break;
-		}
+//		case kTabControlID:
+//			if (static_cast<uint32>(::GetControlValue(theControl)) != mCurrentPage)
+//				SelectPage(::GetControlValue(theControl));
+//			break;
+//		
+//		case (1 * kPathsBaseID) + kDelControlID:
+//		case (2 * kPathsBaseID) + kDelControlID:
+//		case (3 * kPathsBaseID) + kDelControlID:
+//		case (4 * kPathsBaseID) + kDelControlID:
+//		{
+//			MListView* listView =
+//				FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
+//			
+//			int32 selected = listView->GetSelected();
+//			if (selected >= 0 and static_cast<uint32>(selected) < listView->GetCount())
+//				listView->RemoveItem(selected);
+//			
+//			break;
+//		}
 		
 		case (1 * kPathsBaseID) + kAddControlID:
 		case (2 * kPathsBaseID) + kAddControlID:
@@ -185,138 +174,133 @@ OSStatus MProjectPathsDialog::DoControlHit(EventRef inEvent)
 		case (4 * kPathsBaseID) + kAddControlID:
 			ChooseDirectory();
 			break;
-		
-		default:
-	    	result = MDialog::DoControlHit(inEvent);
 	}
-    
-    return result;
 }
 
 void MProjectPathsDialog::ChooseDirectory()
-{
-	NavDialogCreationOptions options;
-	::NavGetDefaultDialogCreationOptions(&options);
-	options.optionFlags |= kNavNoTypePopup | kNavAllowInvisibleFiles |
-		kNavSupportPackages | kNavAllowOpenPackages;
-	options.parentWindow = GetParentWindow()->GetSysWindow();
-	options.modality = kWindowModalityWindowModal;
-	
-	static NavEventUPP sNavEvent = ::NewNavEventUPP(&MProjectPathsDialog::NavEvent);
-
-	NavDialogRef navDialog;
-	THROW_IF_OSERROR(::NavCreateChooseFolderDialog(
-		&options, sNavEvent, nil, this, &navDialog));
-
-	::HideSheetWindow(GetSysWindow());
-
-	OSStatus err = ::NavDialogRun(navDialog);
-	
-	if (err != noErr)
-	{
-		::NavDialogDispose(navDialog);
-		THROW_IF_OSERROR(err);
-	}
+{//
+//	NavDialogCreationOptions options;
+//	::NavGetDefaultDialogCreationOptions(&options);
+//	options.optionFlags |= kNavNoTypePopup | kNavAllowInvisibleFiles |
+//		kNavSupportPackages | kNavAllowOpenPackages;
+//	options.parentWindow = GetParentWindow()->GetSysWindow();
+//	options.modality = kWindowModalityWindowModal;
+//	
+//	static NavEventUPP sNavEvent = ::NewNavEventUPP(&MProjectPathsDialog::NavEvent);
+//
+//	NavDialogRef navDialog;
+//	THROW_IF_OSERROR(::NavCreateChooseFolderDialog(
+//		&options, sNavEvent, nil, this, &navDialog));
+//
+//	::HideSheetWindow(GetSysWindow());
+//
+//	OSStatus err = ::NavDialogRun(navDialog);
+//	
+//	if (err != noErr)
+//	{
+//		::NavDialogDispose(navDialog);
+//		THROW_IF_OSERROR(err);
+//	}
 }
 
-pascal void	MProjectPathsDialog::NavEvent(
-	NavEventCallbackMessage	inMessage,
-	NavCBRecPtr				inParams,
-	void*					inUserData)
-{
-	MProjectPathsDialog* obj = static_cast<MProjectPathsDialog*>(inUserData);
-							
-	try
-	{
-		if (inMessage == kNavCBUserAction)
-			obj->DoNavUserAction(inParams);
-		else if (inMessage == kNavCBTerminate)
-		{
-			::NavDialogDispose(inParams->context);
-			::ShowSheetWindow(obj->GetSysWindow(), obj->GetParentWindow()->GetSysWindow());
-		}
-	}
-	catch (...) { }
-}
-
-void MProjectPathsDialog::DoNavUserAction(NavCBRecPtr inParams)
-{
-	switch (inParams->userAction)
-	{
-		case kNavUserActionChoose:			// User wants to open a file
-		{
-			NavReplyRecord navReply = {};
-			
-			try
-			{
-				MListView* listView = FindViewByID<MListView>(
-					mCurrentPage * kPathsBaseID + kListViewControlID);
-				
-				THROW_IF_OSERROR(::NavDialogGetReply(inParams->context, &navReply));
-
-				long numDocs;
-				THROW_IF_OSERROR(::AECountItems(&navReply.selection, &numDocs));
-				
-				for (int32 ix = 1; ix <= numDocs; ++ix)
-				{
-					FSRef fileRef;
-					THROW_IF_OSERROR(::AEGetNthPtr(&navReply.selection, 1,
-						typeFSRef, nil, nil, &fileRef, sizeof(FSRef), nil));
-					
-					MPath path;
-					THROW_IF_OSERROR(FSRefMakePath(fileRef, path));
-					
-					listView->InsertItem(kListItemLast, path.string().c_str(),
-						path.string().length());
-				}
-			}
-			catch (std::exception& inErr)
-			{
-				MError::DisplayError(inErr);
-			}
-			catch (...) {}
-			
-			::NavDisposeReply(&navReply);
-			break;
-		}
-			
-		case kNavUserActionCancel:
-			break;
-	}
-}
+//pascal void	MProjectPathsDialog::NavEvent(
+//	NavEventCallbackMessage	inMessage,
+//	NavCBRecPtr				inParams,
+//	void*					inUserData)
+//{
+//	MProjectPathsDialog* obj = static_cast<MProjectPathsDialog*>(inUserData);
+//							
+//	try
+//	{
+//		if (inMessage == kNavCBUserAction)
+//			obj->DoNavUserAction(inParams);
+//		else if (inMessage == kNavCBTerminate)
+//		{
+//			::NavDialogDispose(inParams->context);
+//			::ShowSheetWindow(obj->GetSysWindow(), obj->GetParentWindow()->GetSysWindow());
+//		}
+//	}
+//	catch (...) { }
+//}
+//
+//void MProjectPathsDialog::DoNavUserAction(NavCBRecPtr inParams)
+//{
+//	switch (inParams->userAction)
+//	{
+//		case kNavUserActionChoose:			// User wants to open a file
+//		{
+//			NavReplyRecord navReply = {};
+//			
+//			try
+//			{
+//				MListView* listView = FindViewByID<MListView>(
+//					mCurrentPage * kPathsBaseID + kListViewControlID);
+//				
+//				THROW_IF_OSERROR(::NavDialogGetReply(inParams->context, &navReply));
+//
+//				long numDocs;
+//				THROW_IF_OSERROR(::AECountItems(&navReply.selection, &numDocs));
+//				
+//				for (int32 ix = 1; ix <= numDocs; ++ix)
+//				{
+//					FSRef fileRef;
+//					THROW_IF_OSERROR(::AEGetNthPtr(&navReply.selection, 1,
+//						typeFSRef, nil, nil, &fileRef, sizeof(FSRef), nil));
+//					
+//					MPath path;
+//					THROW_IF_OSERROR(FSRefMakePath(fileRef, path));
+//					
+//					listView->InsertItem(kListItemLast, path.string().c_str(),
+//						path.string().length());
+//				}
+//			}
+//			catch (std::exception& inErr)
+//			{
+//				MError::DisplayError(inErr);
+//			}
+//			catch (...) {}
+//			
+//			::NavDisposeReply(&navReply);
+//			break;
+//		}
+//			
+//		case kNavUserActionCancel:
+//			break;
+//	}
+//}
 
 bool MProjectPathsDialog::OKClicked()
 {
-	vector<MPath> userPaths, sysPaths, libPaths, frameworks;
-	
-	for (int page = 1; page <= 4; ++page)
-	{
-		MListView* listView = FindViewByID<MListView>(page * kPathsBaseID + kListViewControlID);
-		
-		vector<MPath>* paths;
-		switch (page)
-		{
-			case 1:	paths = &userPaths; break;
-			case 2:	paths = &sysPaths; break;
-			case 3:	paths = &libPaths; break;
-			case 4:	paths = &frameworks; break;
-		}
-		
-		for (uint32 p = 0; p < listView->GetCount(); ++p)
-		{
-			uint32 size = listView->GetItem(p, nil, 0);
-			char* b = new char[size + 1];
-			listView->GetItem(p, b, size);
-			b[size] = 0;
-			
-			MPath path(b);
-			paths->push_back(path);
-			
-			delete[] b;
-		}
-	}
-	
-	mProject->SetProjectPaths(userPaths, sysPaths, libPaths, frameworks);
+//	vector<MPath> userPaths, sysPaths, libPaths, frameworks;
+//	
+//	for (int page = 1; page <= 4; ++page)
+//	{
+//		MListView* listView = FindViewByID<MListView>(page * kPathsBaseID + kListViewControlID);
+//		
+//		vector<MPath>* paths;
+//		switch (page)
+//		{
+//			case 1:	paths = &userPaths; break;
+//			case 2:	paths = &sysPaths; break;
+//			case 3:	paths = &libPaths; break;
+//			case 4:	paths = &frameworks; break;
+//		}
+//		
+//		for (uint32 p = 0; p < listView->GetCount(); ++p)
+//		{
+//			uint32 size = listView->GetItem(p, nil, 0);
+//			char* b = new char[size + 1];
+//			listView->GetItem(p, b, size);
+//			b[size] = 0;
+//			
+//			MPath path(b);
+//			paths->push_back(path);
+//			
+//			delete[] b;
+//		}
+//	}
+//	
+//	mProject->SetProjectPaths(userPaths, sysPaths, libPaths, frameworks);
 	
 	return true;
 }
@@ -324,73 +308,71 @@ bool MProjectPathsDialog::OKClicked()
 void MProjectPathsDialog::SelectPage(
 	uint32 		inPage)
 {
-	ControlRef select = nil;
-	
-	for (UInt32 page = 1; page <= kPageCount; ++page)
-	{
-		ControlRef pane = FindControl(kPageIDs[page]);
-		
-		if (page == inPage)
-			select = pane;
-		else
-		{
-            ::SetControlVisibility(pane, false, false);
-            ::DisableControl(pane);
-		}
-	}
-	
-    if (select != NULL)
-    {
-        ::EnableControl(select);
-        ::SetControlVisibility(select, true, true);
-    }
-
-	mCurrentPage = inPage;
+//	ControlRef select = nil;
+//	
+//	for (UInt32 page = 1; page <= kPageCount; ++page)
+//	{
+//		ControlRef pane = FindControl(kPageIDs[page]);
+//		
+//		if (page == inPage)
+//			select = pane;
+//		else
+//		{
+//            ::SetControlVisibility(pane, false, false);
+//            ::DisableControl(pane);
+//		}
+//	}
+//	
+//    if (select != NULL)
+//    {
+//        ::EnableControl(select);
+//        ::SetControlVisibility(select, true, true);
+//    }
+//
+//	mCurrentPage = inPage;
 }
 
 void MProjectPathsDialog::DrawPath(
-	CGContextRef		inContext,
-	HIRect				inFrame,
+	MDevice&			inDevice,
+	MRect				inFrame,
 	uint32				inRow,
 	bool				inSelected,
 	const void*			inData,
 	uint32				inDataLength)
 {
-	MDevice dev(inContext, inFrame);
-
 	if (inSelected)
-		dev.SetBackColor(gHiliteColor);
+		inDevice.SetBackColor(gHiliteColor);
 	else if ((inRow % 2) == 0)
-		dev.SetBackColor(gOddRowColor);
+		inDevice.SetBackColor(gOddRowColor);
 	else
-		dev.SetBackColor(kWhite);
+		inDevice.SetBackColor(kWhite);
 	
-	dev.EraseRect(inFrame);
+	inDevice.EraseRect(inFrame);
 	
 	float x, y;
-	x = inFrame.origin.x + 4;
-	y = inFrame.origin.y + dev.GetAscent() + 1;
+	x = inFrame.x + 4;
+	y = inFrame.y + 1;
 
 	string s(reinterpret_cast<const char*>(inData), inDataLength);
 
-	dev.DrawString(s, x, y);
+	inDevice.DrawString(s, x, y);
 }
 
 void MProjectPathsDialog::FilesDropped(
 	uint32			inTargetRow,
 	vector<MPath>	inFiles)
 {
-	MListView* listView =
-		FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
-	
-	for (vector<MPath>::iterator p = inFiles.begin(); p != inFiles.end(); ++p)
-	{
-		MPath path = *p;
-		if (not is_directory(path))
-			path = path.branch_path();
-		
-		listView->InsertItem(inTargetRow, path.string().c_str(), path.string().length());
-	}
+//	MListView* listView =
+//		FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
+//	
+//	for (vector<MPath>::iterator p = inFiles.begin(); p != inFiles.end(); ++p)
+//	{
+//		MPath path = *p;
+//		if (not is_directory(path))
+//			path = path.branch_path();
+//		
+//		listView->InsertItem(inTargetRow, path.string().c_str(), path.string().length());
+//	}
 }
 
 void MProjectPathsDialog::ItemDragged(
@@ -398,19 +380,19 @@ void MProjectPathsDialog::ItemDragged(
 	uint32				inNewRow,
 	bool				inDropUnder)
 {
-	MListView* listView =
-		FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
-
-	uint32 size = listView->GetItem(inTargetRow, nil, 0);
-	char* b = new char[size + 1];
-	listView->GetItem(inTargetRow, b, size);
-	b[size] = 0;
-	listView->RemoveItem(inTargetRow);
-	
-	if (inNewRow > inTargetRow)
-		inNewRow -= 1;
-	
-	listView->InsertItem(inNewRow, b, size);
-	
-	delete[] b;	
+//	MListView* listView =
+//		FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
+//
+//	uint32 size = listView->GetItem(inTargetRow, nil, 0);
+//	char* b = new char[size + 1];
+//	listView->GetItem(inTargetRow, b, size);
+//	b[size] = 0;
+//	listView->RemoveItem(inTargetRow);
+//	
+//	if (inNewRow > inTargetRow)
+//		inNewRow -= 1;
+//	
+//	listView->InsertItem(inNewRow, b, size);
+//	
+//	delete[] b;	
 }

@@ -12,7 +12,7 @@ SYSINCPATHS	=
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8 -pthread
 #CFLAGS		+= -fmessage-length=200 -fdiagnostics-show-location=every-line
-CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0)
+CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0) -m64
 LDFLAGS		= -fdata-sections -g -pthread
 LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
 CC			= c++

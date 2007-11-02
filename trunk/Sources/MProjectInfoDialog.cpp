@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <sstream>
 #include <iterator>
@@ -98,12 +98,12 @@ void MProjectInfoDialog::Initialize(
 	MProject*		inProject,
 	MProjectTarget*	inTarget)
 {
-	MView::RegisterSubclass<MListView>();
+//	MView::RegisterSubclass<MListView>();
 
 	mProject = inProject;
 	mTarget = inTarget;
 	
-	MDialog::Initialize(CFSTR("ProjectInfo"), inProject);
+//	MDialog::Initialize(CFSTR("ProjectInfo"), inProject);
 
 //	ControlRef tabControl = FindControl(kTabControlID);
 //	
@@ -254,18 +254,10 @@ void MProjectInfoDialog::SelectProjectType(
 	}
 }
 
-OSStatus MProjectInfoDialog::DoControlHit(EventRef inEvent)
+void MProjectInfoDialog::ButtonClicked(
+	uint32		inButtonID)
 {
-    ControlRef theControl;
-	::GetEventParameter(inEvent, kEventParamDirectObject,
-		typeControlRef, NULL, sizeof(ControlRef), NULL, &theControl);
-
-	ControlID controlID;
-	::GetControlID(theControl, &controlID);
-	
-	OSStatus result = noErr;
-	
-	switch (controlID.id)
+	switch (inButtonID)
 	{
 		case kProjectTypeControlID:
 			SelectProjectType(GetValue(kProjectTypeControlID));
@@ -273,22 +265,14 @@ OSStatus MProjectInfoDialog::DoControlHit(EventRef inEvent)
 		
 		case kTabControlID:
 			if (GetValue(kTabControlID) != mCurrentPage)
-			{
 				SelectPage(GetValue(kTabControlID));
-				result = noErr;
-			}
 			break;
-		
-		default:
-	    	result = MDialog::DoControlHit(inEvent);
 	}
-    
-    return result;
 }
 
 bool MProjectInfoDialog::OKClicked()
 {
-	std::string s;
+	string s;
 
 	// page 1
 

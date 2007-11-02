@@ -30,40 +30,24 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MPROJECTINFODIALOG_H
-#define MPROJECTINFODIALOG_H
+#ifndef MNEWGROUPDIALOG_H
+#define MNEWGROUPDIALOG_H
 
 #include "MDialog.h"
-#include "MCallbacks.h"
 
 class MProject;
-class MProjectTarget;
 
-class MProjectInfoDialog : public MDialog
+class MNewGroupDialog : public MDialog
 {
   public:
-						MProjectInfoDialog();
+					MNewGroupDialog();
 
-	void				Initialize(
-							MProject*		inWindow,
-							MProjectTarget*	inTarget);
+	void			Initialize(MProject* inWindow);
 
-	virtual bool		OKClicked();
+	virtual bool	OKClicked();
 	
   private:
-
-	virtual void		ButtonClicked(
-							uint32			inButtonID);
-
-	void				SelectPage(
-							int32			inPage);
-
-	void				SelectProjectType(
-							int32			inProjectType);
-
-	MProject*			mProject;
-	MProjectTarget*		mTarget;
-	int32				mCurrentPage;
+	MProject*		mProject;
 };
 
 #endif // MFINDANDOPENDIALOG_H

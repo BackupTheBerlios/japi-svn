@@ -36,6 +36,7 @@
 #define MTYPES_H
 
 #include <string>
+#include <ostream>
 
 #define	nil					NULL
 
@@ -265,11 +266,11 @@ inline bool MRect::ContainsPoint(
 		y <= inY and y + height > inY;
 }
 
-void MRect::InsetBy(
+inline void MRect::InsetBy(
 	int32				inDeltaX,
 	int32				inDeltaY)
 {
-	if (inDeltaX < 0 or 2 * inDeltaX >= width)
+	if (inDeltaX < 0 or 2 * inDeltaX <= width)
 	{
 		x += inDeltaX;
 		width -= inDeltaX * 2;
@@ -280,7 +281,7 @@ void MRect::InsetBy(
 		width = 0;
 	}
 
-	if (inDeltaY < 0 or 2 * inDeltaY >= height)
+	if (inDeltaY < 0 or 2 * inDeltaY <= height)
 	{
 		y += inDeltaY;
 		height -= inDeltaY * 2;
@@ -290,6 +291,14 @@ void MRect::InsetBy(
 		y += height / 2;
 		height = 0;
 	}
+}
+
+template<class charT>
+inline
+std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& lhs, MRect rhs)
+{
+	lhs << rhs.x << ',' << rhs.y << '-' << rhs.width << ',' << rhs.height;
+	return lhs;
 }
 
 #endif

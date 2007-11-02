@@ -46,7 +46,7 @@
 #include "MMarkMatchingDialog.h"
 #include "MUnicode.h"
 #include "MGlobals.h"
-//#include "MProject.h"
+#include "MProject.h"
 //#include "MDocInfoDialog.h"
 #include "MUtils.h"
 
@@ -153,7 +153,7 @@ bool MController::ProcessCommand(
 	if (mDocument != nil)
 	{
 		result = true;
-//		MProject* project = MProject::Instance();
+		MProject* project = MProject::Instance();
 
 		string s;
 		
@@ -373,10 +373,10 @@ bool MController::ProcessCommand(
 	//		}
 	//#endif
 			
-//			case cmd_Compile:
-//				if (project != nil)
-//					project->Compile(mDocument->GetFilePath());
-//				break;
+			case cmd_Compile:
+				if (project != nil)
+					project->Compile(mDocument->GetURL());
+				break;
 	
 			default:
 				result = false;
@@ -396,8 +396,8 @@ bool MController::UpdateCommandStatus(
 	bool result = true;
 //	if (HIWindowIsDocumentModalTarget(mWindow->GetSysWindow(), nil) or mDocument == nil)
 //		return noErr;
-//
-//	MProject* project = MProject::Instance();
+
+	MProject* project = MProject::Instance();
 
 	string title;
 		
@@ -482,7 +482,9 @@ bool MController::UpdateCommandStatus(
 			break;
 
 		case cmd_Compile:
-//			outEnabled = project != nil and project->IsFileInProject(mDocument->GetFilePath());
+			outEnabled =
+				project != nil and
+				project->IsFileInProject(mDocument->GetURL());
 			break;
 		
 		default:
@@ -654,15 +656,14 @@ void MController::DoGoToLine()
 
 bool MController::OpenInclude(std::string inFileName)
 {
-//	MProject* project = MProject::Instance();
+	MProject* project = MProject::Instance();
 	MPath p;
 	
 	bool result = false;
 		
-//	if (project != nil and project->LocateFile(inFileName, true, p))
-//		result = true;
-//	else
-	if (mDocument != nil)
+	if (project != nil and project->LocateFile(inFileName, true, p))
+		result = true;
+	else if (mDocument != nil)
 	{
 		p = mDocument->GetURL().branch_path() / inFileName;
 		result = exists(p);
@@ -757,15 +758,16 @@ void MController::DoOpenCounterpart()
 		if (ext != nil)
 		{
 			name.erase(name.rfind('.') + 1);
-//			MProject* project = MProject::Instance();
-//		
-//			if (project != nil)
-//			{
-//				for (const char** e = ext; result == false and *e != nil; ++e)
-//					result = project->LocateFile(name + *e, true, p);
-//			if (result)
-//				MApplication::Instance().OpenOneDocument(p);
-//			}
+			MProject* project = MProject::Instance();
+		
+			if (project != nil)
+			{
+				for (const char** e = ext; result == false and *e != nil; ++e)
+					result = project->LocateFile(name + *e, true, p);
+
+				if (result)
+					gApp->OpenOneDocument(p);
+			}
 
 			if (not result)
 			{

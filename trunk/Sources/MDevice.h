@@ -55,7 +55,8 @@ class MDevice
 						MRect				inRect,
 						bool				inSelected,
 						bool				inActive,
-						bool				inOdd);
+						bool				inOdd,
+						bool				inRoundEdges);
 
 	uint32			GetAscent() const;
 	

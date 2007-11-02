@@ -30,10 +30,13 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <vector>
 #include <deque>
+#include <cerrno>
+#include <signal.h>
+#include <wait.h>
 
 #undef check
 #ifndef BOOST_DISABLE_ASSERTS
@@ -49,7 +52,7 @@
 #include "MProject.h"
 #include "MProjectJob.h"
 
-extern const char** environ;
+extern char** environ;
 
 using namespace std;
 

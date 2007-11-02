@@ -39,7 +39,7 @@
 
 #include "MFindAndOpenDialog.h"
 #include "MController.h"
-//#include "MProject.h"
+#include "MProject.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUnicode.h"
@@ -98,14 +98,14 @@ bool MFindAndOpenDialog::OKClicked()
 	}
 	else
 	{
-//		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
-//		
-//		if (project == nil)
-//			project = MProject::Instance();
+		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
+		
+		if (project == nil)
+			project = MProject::Instance();
 
 		MPath p(s);
 		
-		if (exists(p) /*or (project != nil and project->LocateFile(s, true, p))*/)
+		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
 			gApp->OpenOneDocument(p);
 	}
 	

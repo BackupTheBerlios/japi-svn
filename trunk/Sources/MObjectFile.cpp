@@ -32,7 +32,7 @@
 
 #include "MJapieG.h"
 
-#include <mach-o/loader.h>
+//#include <mach-o/loader.h>
 #include <boost/filesystem/fstream.hpp>
 
 #include "MObjectFile.h"
@@ -60,7 +60,12 @@ template<>
 inline
 uint32 swapper::operator()(uint32 inValue) const
 {
-	return static_cast<uint32>(Endian32_Swap(inValue));
+	return static_cast<uint32>(
+		((inValue & 0xFF000000UL) >> 24) |
+		((inValue & 0x00FF0000UL) >>  8) |
+		((inValue & 0x0000FF00UL) <<  8) |
+		((inValue & 0x000000FFUL) << 24)
+	);
 }
 
 struct MObjectFileImp
@@ -69,56 +74,56 @@ struct MObjectFileImp
 	uint32		mTextSize;
 	uint32		mDataSize;
 	
-	template<class SWAPPER>
-	void		Read(
-					struct mach_header&	mh,
-					istream&			inData);
+//	template<class SWAPPER>
+//	void		Read(
+//					struct mach_header&	mh,
+//					istream&			inData);
 	
 	void		SetFile(
 					const MPath&		inFile);
 };
 
-template<class SWAPPER>
-void MObjectFileImp::Read(
-	struct mach_header&	mh,
-	istream&			inData)
-{
-	SWAPPER	swap;
-	
-	if (swap(mh.filetype) != MH_OBJECT)
-		THROW(("File is not an object file"));
-	
-	for (uint32 segment = 0; segment < swap(mh.ncmds); ++segment)
-	{
-		struct load_command lc;
-		inData.read((char*)&lc, sizeof(lc));
-		
-		switch (swap(lc.cmd))
-		{
-			case LC_SEGMENT:
-			{
-				struct segment_command sc;
-				inData.read(sc.segname, sizeof(sc) - sizeof(lc));
-				
-				for (uint32 sn = 0; sn < swap(sc.nsects); ++sn)
-				{
-					struct section section;
-					inData.read((char*)&section, sizeof(section));
-					
-					if (strcmp(section.sectname, SECT_TEXT) == 0)
-						mTextSize += swap(section.size);
-					else if (strcmp(section.sectname, SECT_DATA) == 0)
-						mDataSize += swap(section.size);
-				}
-				break;
-			}
-			
-			default:
-				inData.seekg(swap(lc.cmdsize) - sizeof(lc), ios_base::cur);
-		}
-	}
-	
-}
+//template<class SWAPPER>
+//void MObjectFileImp::Read(
+//	struct mach_header&	mh,
+//	istream&			inData)
+//{
+//	SWAPPER	swap;
+//	
+//	if (swap(mh.filetype) != MH_OBJECT)
+//		THROW(("File is not an object file"));
+//	
+//	for (uint32 segment = 0; segment < swap(mh.ncmds); ++segment)
+//	{
+//		struct load_command lc;
+//		inData.read((char*)&lc, sizeof(lc));
+//		
+//		switch (swap(lc.cmd))
+//		{
+//			case LC_SEGMENT:
+//			{
+//				struct segment_command sc;
+//				inData.read(sc.segname, sizeof(sc) - sizeof(lc));
+//				
+//				for (uint32 sn = 0; sn < swap(sc.nsects); ++sn)
+//				{
+//					struct section section;
+//					inData.read((char*)&section, sizeof(section));
+//					
+//					if (strcmp(section.sectname, SECT_TEXT) == 0)
+//						mTextSize += swap(section.size);
+//					else if (strcmp(section.sectname, SECT_DATA) == 0)
+//						mDataSize += swap(section.size);
+//				}
+//				break;
+//			}
+//			
+//			default:
+//				inData.seekg(swap(lc.cmdsize) - sizeof(lc), ios_base::cur);
+//		}
+//	}
+//	
+//}
 
 void MObjectFileImp::SetFile(
 	const MPath&		inFile)
@@ -132,15 +137,15 @@ void MObjectFileImp::SetFile(
 	if (not file.is_open())
 		THROW(("Could not open object file"));
 	
-	struct mach_header mh;
-	file.read((char*)&mh, sizeof(mh));
-	
-	if (mh.magic == MH_CIGAM)
-		Read<swapper>(mh, file);
-	else if (mh.magic == MH_MAGIC)
-		Read<no_swapper>(mh, file);
-	else
-		THROW(("File is not an object file"));
+//	struct mach_header mh;
+//	file.read((char*)&mh, sizeof(mh));
+//	
+//	if (mh.magic == MH_CIGAM)
+//		Read<swapper>(mh, file);
+//	else if (mh.magic == MH_MAGIC)
+//		Read<no_swapper>(mh, file);
+//	else
+//		THROW(("File is not an object file"));
 }
 
 MObjectFile::MObjectFile(

@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "Japie.h"
+#include "MJapieG.h"
 
 #include <sstream>
 
@@ -42,7 +42,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <boost/foreach.hpp>
+//#include <boost/foreach.hpp>
 
 #include "MProject.h"
 #include "MListView.h"
@@ -50,9 +50,8 @@
 #include "MGlobals.h"
 #include "MCommands.h"
 #include "MMessageWindow.h"
-#include "MApplication.h"
 #include "MUtils.h"
-#include "MSound.h"
+//#include "MSound.h"
 #include "MProjectItem.h"
 #include "MProjectTarget.h"
 #include "MProjectJob.h"
@@ -61,7 +60,7 @@
 #include "MProjectPathsDialog.h"
 #include "MFindAndOpenDialog.h"
 
-#define foreach BOOST_FOREACH
+//#define foreach BOOST_FOREACH
 
 using namespace std;
 
@@ -85,11 +84,12 @@ enum {
 const string
 	kIQuote("-iquote"),
 	kI("-I"),
-	kF("-F");
+	kF("-F"),
+	kl("-l");
 
 const MColor
-	kOutOfDateColor = MColor( 1.0f, 0.4f, 0.3f ),
-	kCompilingColor = MColor( 0.37f, 0.65f, 0.05f );
+	kOutOfDateColor = MColor("#ff664c"),
+	kCompilingColor = MColor("#5ea50c");
 
 const uint32
 	cmd_SwitchTarget		= 'Stg\0',
@@ -147,6 +147,8 @@ MProject* MProject::Instance()
 MProject::MProject(const MPath& inPath)
 	: eProjectFileStatusChanged(this, &MProject::ProjectFileStatusChanged)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
+	, mTargetSelected(this, &MProject::TargetSelected)
+	, ePoll(this, &MProject::Poll)
 	, mModified(false)
 	, mCurrentTarget(nil)
 	, mProjectFile(inPath)
@@ -157,6 +159,7 @@ MProject::MProject(const MPath& inPath)
 	, mCurrentJob(nil)
 	, mVBox(gtk_vbox_new(false, 0))
 	, mMenubar(this, mVBox, GetGtkWidget())
+	, mTargetPopupCount(0)
 	, mNext(nil)
 {
     LIBXML_TEST_VERSION
@@ -171,7 +174,7 @@ MProject::MProject(const MPath& inPath)
 	geom.min_width = 250;
 	geom.min_height = 100;
 	gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);	
-	gtk_window_set_default_size(GTK_WINDOW(GetGtkWidget()), 600, 600);
+	gtk_window_set_default_size(GTK_WINDOW(GetGtkWidget()), 300, 600);
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 	
@@ -231,7 +234,12 @@ MProject::MProject(const MPath& inPath)
 	
 	mStatusPanel = gtk_label_new(nil);
 	gtk_label_set_single_line_mode(GTK_LABEL(mStatusPanel), true);
+	gtk_misc_set_alignment(GTK_MISC(mStatusPanel), 0, 0.5);
 	gtk_container_add(GTK_CONTAINER(frame), mStatusPanel);
+//	gtk_container_add(GTK_CONTAINER(statusBar), frame);
+
+	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 0);
 	
 	// blok 1, target popup en wat buttons
 	
@@ -243,6 +251,17 @@ MProject::MProject(const MPath& inPath)
 	
 	mTargetPopup = gtk_combo_box_new_text();
 	gtk_box_pack_start(GTK_BOX(hbox), mTargetPopup, false, false, 0);
+
+	mTargetPopupCount = 0;
+	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
+		target != mTargets.end(); ++target, ++mTargetPopupCount)
+	{
+		gtk_combo_box_append_text(GTK_COMBO_BOX(mTargetPopup), (*target)->GetName().c_str());
+	}
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), 0);
+	
+	mTargetSelected.Connect(mTargetPopup, "changed");
 	
 	GtkWidget* btn1 = gtk_button_new_with_label("Info");
 	gtk_box_pack_start(GTK_BOX(hbox), btn1, false, false, 0);
@@ -255,8 +274,8 @@ MProject::MProject(const MPath& inPath)
 	GtkWidget* ab = gtk_alignment_new(0.5, 0, 0, 0);
 	gtk_box_pack_start(GTK_BOX(mVBox), ab, false, false, 0);
 	
-	hbox = gtk_hbutton_box_new(false, 2);
-	gtk_box_pack_start(GTK_BOX(ab), hbox, false, false, 0);
+	hbox = gtk_hbutton_box_new();
+	gtk_container_add(GTK_CONTAINER(ab), hbox);
 	
 	btn1 = gtk_button_new_with_label("Files");
 	gtk_box_pack_start(GTK_BOX(hbox), btn1, false, false, 0);
@@ -266,8 +285,10 @@ MProject::MProject(const MPath& inPath)
 	
 	// lijst
 	
-	mFileList = new MListView();
-	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mFileList->GetGtkWidget());
+	mFileList = new MListView(this);
+	mFileList->SetRoundedSelectionEdges(true);
+//	gtk_container_add(GTK_CONTAINER(mV)), mFileList->GetGtkWidget());
+	gtk_box_pack_start(GTK_BOX(mVBox), mFileList->GetGtkWidget(), true, true, 0);
 
 	SetCallBack(mFileList->cbDrawItem, this, &MProject::DrawProjectItem);
 	SetCallBack(mFileList->cbClickItem, this, &MProject::ClickProjectItem);
@@ -277,7 +298,7 @@ MProject::MProject(const MPath& inPath)
 	SetCallBack(mFileList->cbItemDragged, this, &MProject::FileItemDragged);
 	SetCallBack(mFileList->cbFilesDropped, this, &MProject::FilesDropped);
 	
-	
+	AddRoute(gApp->eIdle, ePoll);
 }
 
 // ---------------------------------------------------------------------------
@@ -380,7 +401,7 @@ void MProject::Initialize()
 
 	UpdateList();
 
-	Install(kEventClassKeyboard, kEventRawKeyDown, this, &MProject::DoRawKeyDown);
+//	Install(kEventClassKeyboard, kEventRawKeyDown, this, &MProject::DoRawKeyDown);
 }
 
 // ---------------------------------------------------------------------------
@@ -463,9 +484,9 @@ bool MProject::ReadState()
 	{
 		state.Swap();
 		
-		mFileList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelFiles]));
-		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
-		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
+		mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
+//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
+//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
 		
 //		if (state.mSelectedPanel < ePanelCount)
 //		{
@@ -498,12 +519,12 @@ bool MProject::ReadState()
 // ---------------------------------------------------------------------------
 //	MProject::Close
 
-bool MProject::DoWindow()
+bool MProject::DoClose()
 {
 	bool result = false;
 	
 	if (mModified)
-		TryCloseDocument(kNavSaveChangesClosingDocument, this);
+		TryCloseDocument(kSaveChangesClosingDocument, this);
 	else
 	{
 		try
@@ -514,7 +535,7 @@ bool MProject::DoWindow()
 			
 			state.Swap();
 
-			state.mSelectedTarget = ::GetControl32BitValue(mTargetPopupRef) - 1;
+//			state.mSelectedTarget = ::GetControl32BitValue(mTargetPopupRef) - 1;
 
 //			HIPoint pt;
 //
@@ -566,7 +587,7 @@ bool MProject::DoWindow()
 //	MProject::DrawProjectItem
 
 void MProject::DrawProjectItem(
-	MDevice		inDevice,
+	MDevice&	inDevice,
 	MRect		inFrame,
 	uint32		inRow,
 	bool		inSelected,
@@ -577,41 +598,8 @@ void MProject::DrawProjectItem(
 
 	float h = inFrame.height;
 
-	if ((inRow % 2) == 0)
-		inDevice.SetBackColor(gOddRowColor);
-	else
-		inDevice.SetBackColor(kWhite);
-	
-	inDevice.EraseRect(inFrame);
-
-	if (inSelected)
-	{
-		Rect selectionRect = inFrame;
-		selectionRect.InsetBy(2, 0);
-		
-		MCGContextSaver save(inContext);
-
-		inDevice.SetForeColor(gHiliteColor);
-		
-		HIRect r = selectionRect;
-		r.InsetBy(h / 2, 0);
-		inDevice.FillRect(r);
-		
-		r = selectionRect;
-		r.width = h;
-		
-		inDevice.FillEllipse(r);
-		
-		r = selectionRect;
-		r.x += r.width - h;
-		r.width = h;
-		inDevice.FillEllipse(r);
-	}
-	
 	if (item->IsOutOfDate())
 	{
-		inDevice.Save();
-
 		MRect r = inFrame;
 		
 		r.x += 4;
@@ -648,6 +636,7 @@ void MProject::DrawProjectItem(
 		}
 	}
 
+	inDevice.SetForeColor(kBlack);
 	inDevice.DrawString(item->GetName(), x, y);
 		
 	for (int i = 0; i < 2; ++i)
@@ -734,7 +723,7 @@ void MProject::InvokeProjectItem(
 //					THROW_IF_OSERROR(::LSOpenFSRef(&ref, nil));
 				}
 				else
-					(void)MApplication::Instance().OpenOneDocument(file);
+					gApp->OpenOneDocument(file);
 			}
 			break;
 		
@@ -743,7 +732,7 @@ void MProject::InvokeProjectItem(
 			{
 				MProjectFile* file = static_cast<MProjectFile*>(item);
 				MPath p = fs::system_complete(file->GetPath());
-				(void)MApplication::Instance().OpenOneDocument(p);
+				gApp->OpenOneDocument(p);
 			}
 			break;
 	}
@@ -1037,9 +1026,9 @@ void MProject::ProjectFileStatusChanged()
 {
 	switch (mPanel)
 	{
-		case ePanelFiles:		mFileList->SetNeedsDisplay(true);		break;
-		case ePanelLinkOrder:	mLinkOrderList->SetNeedsDisplay(true);	break;
-		case ePanelPackage:		mPackageList->SetNeedsDisplay(true);	break;
+		case ePanelFiles:		mFileList->Invalidate();		break;
+//		case ePanelLinkOrder:	mLinkOrderList->Invalidate();	break;
+//		case ePanelPackage:		mPackageList->Invalidate();	break;
 	}
 }
 
@@ -1050,13 +1039,13 @@ bool MProject::SaveDocument()
 {
 	bool result = false;
 	
-	MSafeSaver save(mProjectFile, 'TEXT', kJapieSignature);
+	MSafeSaver save(mProjectFile);
 		
 	if (Write(save.GetTempFile()))
 	{
 		save.Commit(mProjectFile);
 
-		MApplication::Instance().AddToRecentMenu(mProjectFile);
+		gApp->AddToRecentMenu(mProjectFile);
 
 		SetModified(false);
 		result = true;
@@ -1087,16 +1076,12 @@ bool MProject::DoSaveAs(
 
 	if (SaveDocument())
 	{
-		FSRef fsRef;
-		::FSPathMakeRef(mProjectFile, fsRef);
-		
-		::HIWindowSetProxyFSRef(GetSysWindow(), &fsRef);
-		::SetWindowTitleWithCFString(GetSysWindow(), MCFString(mProjectFile.leaf()));
+		SetModifiedMarkInTitle(false);
 		
 		result = true;
 
 		mModified = false;
-		SelectTarget(::GetControl32BitValue(mTargetPopupRef) - 1);
+//		SelectTarget(::GetControl32BitValue(mTargetPopupRef) - 1);
 	}
 	
 	return result;
@@ -1105,19 +1090,20 @@ bool MProject::DoSaveAs(
 // ---------------------------------------------------------------------------
 //	MProject::CloseAfterNav
 
-void MProject::CloseAfterNav()
+void MProject::CloseAfterNavigationDialog()
 {
-	MWindow::DoWindowClose(nil);
+	MWindow::Close();
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::ProcessCommand
 
-OSStatus MProject::ProcessCommand(
-	EventRef			inEvent,
-	const HICommand&	inCommand)
+bool MProject::ProcessCommand(
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
 {
-	OSStatus result = noErr;
+	bool result = true;
 
 	MProjectItem* item = nil;
 
@@ -1132,14 +1118,14 @@ OSStatus MProject::ProcessCommand(
 			break;
 		}
 		
-		case ePanelLinkOrder:
-		{
-			int32 selected = mLinkOrderList->GetSelected();
-			
-			if (selected >= 0)
-				item = GetItem(selected);
-			break;
-		}
+//		case ePanelLinkOrder:
+//		{
+//			int32 selected = mLinkOrderList->GetSelected();
+//			
+//			if (selected >= 0)
+//				item = GetItem(selected);
+//			break;
+//		}
 		
 		default:
 			break;
@@ -1147,17 +1133,17 @@ OSStatus MProject::ProcessCommand(
 	
 	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 	
-	switch (inCommand.commandID)
+	switch (inCommand)
 	{
-		case kHICommandSave:
+		case cmd_Save:
 			SaveDocument();
 			break;
 
-		case kHICommandSaveAs:
-			SaveDocumentAs(this, 'TEXT', kJapieSignature);
+		case cmd_SaveAs:
+			SaveDocumentAs(this, mProjectFile.leaf());
 			break;
 
-		case kHICommandRevert:
+		case cmd_Revert:
 			TryDiscardChanges(mName, this);
 			break;
 		
@@ -1211,27 +1197,27 @@ OSStatus MProject::ProcessCommand(
 			break;
 		}
 		
-		case cmd_ChangePanel:
-			switch (::GetControl32BitValue(mPanelSegmentRef))
-			{
-				case 1:	SelectPanel(ePanelFiles); break;
-				case 2: SelectPanel(ePanelLinkOrder); break;
-				case 3: SelectPanel(ePanelPackage); break;
-			}
-			break;
+//		case cmd_ChangePanel:
+//			switch (::GetControl32BitValue(mPanelSegmentRef))
+//			{
+//				case 1:	SelectPanel(ePanelFiles); break;
+//				case 2: SelectPanel(ePanelLinkOrder); break;
+//				case 3: SelectPanel(ePanelPackage); break;
+//			}
+//			break;
 		
 		default:
-			if ((inCommand.commandID & 0xFFFFFF00) == cmd_SwitchTarget)
-			{
-				uint32 target = inCommand.commandID & 0x000000FF;
-				SelectTarget(target);
-//				SetNeedsDisplay(true);
-				mFileList->SetNeedsDisplay(true);
-				mLinkOrderList->SetNeedsDisplay(true);
-				mPackageList->SetNeedsDisplay(true);
-			}
+//			if ((inCommand & 0xFFFFFF00) == cmd_SwitchTarget)
+//			{
+//				uint32 target = inCommand & 0x000000FF;
+//				SelectTarget(target);
+////				Invalidate();
+//				mFileList->Invalidate();
+////				mLinkOrderList->Invalidate();
+////				mPackageList->Invalidate();
+//			}
 
-			result = eventNotHandledErr;
+			result = MWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
 			break;
 	}
 	
@@ -1241,13 +1227,14 @@ OSStatus MProject::ProcessCommand(
 // ---------------------------------------------------------------------------
 //	MProject::UpdateCommandStatus
 
-OSStatus MProject::UpdateCommandStatus(
-	EventRef 			inEvent,
-	const HICommand&	inCommand)
+bool MProject::UpdateCommandStatus(
+	uint32				inCommand,
+	bool&				outEnabled,
+	bool&				outChecked)
 {
-	OSStatus err = noErr;
+	bool result = true, isCompilable = false;
 	
-	bool enable = false, isCompilable = false;
+	outEnabled = false;
 	
 	switch (mPanel)
 	{
@@ -1260,60 +1247,52 @@ OSStatus MProject::UpdateCommandStatus(
 			break;
 		}
 		
-		case ePanelLinkOrder:
-		{
-			int32 selected = mLinkOrderList->GetSelected();
-			
-			if (selected >= 0)
-				isCompilable = GetItem(selected)->IsCompilable();
-			break;
-		}
+//		case ePanelLinkOrder:
+//		{
+//			int32 selected = mLinkOrderList->GetSelected();
+//			
+//			if (selected >= 0)
+//				isCompilable = GetItem(selected)->IsCompilable();
+//			break;
+//		}
 		
 		default:
 			break;
 	}
 	
-	switch (inCommand.commandID)
+	switch (inCommand)
 	{
-		case kHICommandSave:
-			enable = mModified;
+		case cmd_Save:
+			outEnabled = mModified;
 			break;
 		
 		case cmd_AddFileToProject:
 			break;
 
-		case cmd_Precompile:
+		case cmd_Preprocess:
 			break;
 	
 		case cmd_CheckSyntax:
 		case cmd_Compile:
-			enable = isCompilable;
+			outEnabled = isCompilable;
 			break;
 
 		case cmd_BringUpToDate:
 		case cmd_MakeClean:
 		case cmd_Make:
 		case cmd_NewGroup:
-			enable = true;
+			outEnabled = true;
 			break;
 
 		case cmd_Run:
 			break;		
 		
 		default:
-			err = eventNotHandledErr;
+			result = MWindow::UpdateCommandStatus(inCommand, outEnabled, outChecked);
 			break;
 	}
 	
-	if (err == noErr)
-	{
-		if (enable)
-			::EnableMenuCommand(nil, inCommand.commandID);
-		else
-			::DisableMenuCommand(nil, inCommand.commandID);
-	}
-
-	return err;
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1381,22 +1360,32 @@ void MProject::CreateNewGroup(
 
 void MProject::TargetUpdated()
 {
-	ControlID id = { kJapieSignature, kTargetPopupViewID };
-	
-	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &mTargetPopupRef));
-	MenuRef targetMenuRef = ::GetControlPopupMenuHandle(mTargetPopupRef);
-	if (mTargetPopupRef == nil)
-		THROW(("Missing target menu"));
-	
-	THROW_IF_OSERROR(::DeleteMenuItems(targetMenuRef, 1, ::CountMenuItems(targetMenuRef)));
-	uint32 ix = 1;
-	
+//	ControlID id = { kJapieSignature, kTargetPopupViewID };
+//	
+//	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &mTargetPopupRef));
+//	MenuRef targetMenuRef = ::GetControlPopupMenuHandle(mTargetPopupRef);
+//	if (mTargetPopupRef == nil)
+//		THROW(("Missing target menu"));
+//	
+//	THROW_IF_OSERROR(::DeleteMenuItems(targetMenuRef, 1, ::CountMenuItems(targetMenuRef)));
+//	uint32 ix = 1;
+//	
+//	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
+//		target != mTargets.end(); ++target, ++ix)
+//	{
+//		MCFString targetTitle((*target)->GetName());
+//		THROW_IF_OSERROR(::InsertMenuItemTextWithCFString(
+//			targetMenuRef, targetTitle, ix, 0, cmd_SwitchTarget + ix - 1));
+//	}
+
+	while (mTargetPopupCount-- > 0)
+		gtk_combo_box_remove_text(GTK_COMBO_BOX(mTargetPopup), 0);
+
+	mTargetPopupCount = 0;
 	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
-		target != mTargets.end(); ++target, ++ix)
+		target != mTargets.end(); ++target, ++mTargetPopupCount)
 	{
-		MCFString targetTitle((*target)->GetName());
-		THROW_IF_OSERROR(::InsertMenuItemTextWithCFString(
-			targetMenuRef, targetTitle, ix, 0, cmd_SwitchTarget + ix - 1));
+		gtk_combo_box_append_text(GTK_COMBO_BOX(mTargetPopup), (*target)->GetName().c_str());
 	}
 
 	SetModified(true);
@@ -1562,6 +1551,14 @@ void MProject::ReadFiles(
 				MError::DisplayError(e);
 			}
 		}
+		else if (strcmp((const char*)node->name, "link") == 0)
+		{
+			const char* linkName = (const char*)XML_GET_CONTENT(node->children);
+			if (linkName == nil)
+				THROW(("Invalid project file"));
+			
+			inGroup->AddProjectItem(new MProjectLib(linkName, inGroup));
+		}
 		else if (strcmp((const char*)node->name, "group") == 0)
 		{
 			const char* name = (const char*)xmlGetProp(node, BAD_CAST "name");
@@ -1691,8 +1688,8 @@ void MProject::Read(
 			else
 				THROW(("Unsupported target kind"));
 			
-			if (kind == eTargetExecutable or kind == eTargetStaticLibrary or kind == eTargetSharedLibrary)
-				::DisableControl(mPackagePanelRef);
+//			if (kind == eTargetExecutable or kind == eTargetStaticLibrary or kind == eTargetSharedLibrary)
+//				::DisableControl(mPackagePanelRef);
 			
 			MTargetArch arch;
 #if defined(__i386__)
@@ -1700,7 +1697,8 @@ void MProject::Read(
 #elif defined(__ppc__)
 			arch = eTargetArchPPC_32;
 #else
-#	error
+			arch = eTargetArchx86_32;
+//#	error
 #endif				
 
 			if ((p = (const char*)xmlGetProp(targetNode, BAD_CAST "arch")) != nil)
@@ -2055,16 +2053,17 @@ bool MProject::Write(
 // ---------------------------------------------------------------------------
 //	MProject::Poll
 
-void MProject::Poll()
+void MProject::Poll(
+	double		inSystemTime)
 {
 	if (mCurrentJob.get() != nil)
 	{
 		if (mCurrentJob->IsDone())
 		{
-			if (mCurrentJob->mStatus == 0)
-				PlaySound("Ping");
-			else
-				PlaySound("Basso");
+//			if (mCurrentJob->mStatus == 0)
+//				PlaySound("Ping");
+//			else
+//				PlaySound("Basso");
 
 			mCurrentJob.reset(nil);
 			SetStatus("", false);
@@ -2099,19 +2098,6 @@ void MProject::SetStatus(
 	bool				inActive)
 {
 	gtk_label_set_text(GTK_LABEL(mStatusPanel), inMessage.c_str());
-	
-//	HIViewRef viewRef;
-//
-//	HIViewID id = { kJapieSignature, kChasingArrowsViewID };
-//
-//	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &viewRef));
-//	::HIViewSetVisible(viewRef, inActive);
-//
-//	id.id = kStatusViewID;
-//	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &viewRef));
-//		
-//	MCFString s(inMessage);
-//	::HIViewSetText(viewRef, s);
 }
 
 // ---------------------------------------------------------------------------
@@ -2223,11 +2209,11 @@ void MProject::GetIncludePaths(
 	
 	// duh... ••• TODO, fix? We only search at most one sub framework level deep
 	
-	foreach (const MPath& p, mFrameworkPaths)
-//	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
+//	foreach (const MPath& p, mFrameworkPaths)
+	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
 	{
 		fs::directory_iterator end;
-		for (fs::directory_iterator fw(p); fw != end; ++fw)
+		for (fs::directory_iterator fw(*p); fw != end; ++fw)
 		{
 			if (not fs::is_directory(*fw))
 				continue;
@@ -2296,7 +2282,6 @@ MPath MProject::GetObjectPathForFile(
 	return file->GetObjectPath();
 }
 
-
 // ---------------------------------------------------------------------------
 //	MProject::CreateCompileJob
 
@@ -2314,15 +2299,19 @@ MProjectJob* MProject::CreateCompileJob(
 	
 	vector<string> argv;
 	
-	argv.push_back("/usr/bin/c++");
+	const char* CC = getenv("CC");
+	if (CC == nil)
+		CC = "/usr/bin/c++";
+	
+	argv.push_back(CC);
 
-	argv.push_back("-arch");
-	if (target.GetArch() == eTargetArchPPC_32)
-		argv.push_back("ppc");
-	else if (target.GetArch() == eTargetArchx86_32)
-		argv.push_back("i386");
-	else
-		assert(false);
+//	argv.push_back("-arch");
+//	if (target.GetArch() == eTargetArchPPC_32)
+//		argv.push_back("ppc");
+//	else if (target.GetArch() == eTargetArchx86_32)
+//		argv.push_back("i386");
+//	else
+//		assert(false);
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -2396,15 +2385,21 @@ MProjectJob* MProject::CreateLinkJob(
 	
 	vector<string> argv;
 	
-	argv.push_back("/usr/bin/c++");
+	const char* CC = getenv("CC");
+	if (CC == nil)
+		CC = "/usr/bin/c++";
+	
+	argv.push_back(CC);
+//
+//	argv.push_back("-arch");
+//	if (target.GetArch() == eTargetArchPPC_32)
+//		argv.push_back("ppc");
+//	else if (target.GetArch() == eTargetArchx86_32)
+//		argv.push_back("i386");
+//	else
+//		assert(false);
 
-	argv.push_back("-arch");
-	if (target.GetArch() == eTargetArchPPC_32)
-		argv.push_back("ppc");
-	else if (target.GetArch() == eTargetArchx86_32)
-		argv.push_back("i386");
-	else
-		assert(false);
+	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
 
 	switch (mCurrentTarget->GetKind())
 	{
@@ -2442,46 +2437,25 @@ MProjectJob* MProject::CreateLinkJob(
 	{
 		MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
 		
-		if (f == nil)
+		if (f != nil)
+		{
+			if (f->IsCompilable())
+				argv.push_back(f->GetObjectPath().string());
+			else if (FileNameMatches("*.a;*.o;*.dylib", f->GetName()))
+				argv.push_back(f->GetPath().string());
+			
 			continue;
+		}
 		
-		if (f->IsCompilable())
-			argv.push_back(f->GetObjectPath().string());
-		else if (FileNameMatches("*.a;*.o;*.dylib", f->GetName()))
-			argv.push_back(f->GetPath().string());
+		MProjectLib* l = dynamic_cast<MProjectLib*>(*file);
+
+		if (l != nil)
+			argv.push_back(kl + l->GetName());
 	}
 	
 	return new MProjectExecJob("Linking", this, argv);
 }
 
-// ---------------------------------------------------------------------------
-//	MProject::CreateGenerateDSymJob
-
-MProjectJob* MProject::CreateGenerateDSymJob(
-	const MPath&		inLinkerOutput,
-	const MPath&		inDSymFile)
-{
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
-	
-	vector<string> argv;
-	
-	argv.push_back("/usr/bin/dsymutil");
-
-	if (target.GetArch() == eTargetArchPPC_32)
-		argv.push_back("--arch=ppc");
-	else if (target.GetArch() == eTargetArchx86_32)
-		argv.push_back("--arch=i386");
-	else
-		assert(false);
-
-	argv.push_back(inLinkerOutput.string());
-	argv.push_back("-o");
-	argv.push_back(inDSymFile.string());
-	
-	return new MProjectExecJob("Generating dSYM file", this, argv);
-}
-	
 // ---------------------------------------------------------------------------
 //	MProject::Compile
 
@@ -2515,7 +2489,7 @@ void MProject::Make()
 {
 	auto_ptr<MProjectJob> job(CreateCompileAllJob());
 
-	MPath targetPath, dsymPath;
+	MPath targetPath;
 
 	switch (mCurrentTarget->GetKind())
 	{
@@ -2527,8 +2501,7 @@ void MProject::Make()
 				fs::create_directories(macOsDir);
 			
 			targetPath = macOsDir / mCurrentTarget->GetLinkTarget();
-			dsymPath = mProjectDir / (fs::basename(mCurrentTarget->GetBundleName()) + ".dSYM");
-			
+						
 			string pkginfo = mCurrentTarget->GetType() + mCurrentTarget->GetCreator();
 			if (pkginfo.length() == 8)
 			{
@@ -2541,7 +2514,6 @@ void MProject::Make()
 		
 		case eTargetSharedLibrary:
 			targetPath = mProjectDir / mCurrentTarget->GetBundleName();
-			dsymPath = mProjectDir / (mCurrentTarget->GetLinkTarget() + ".dSYM");
 			break;
 		
 		case eTargetStaticLibrary:
@@ -2559,11 +2531,6 @@ void MProject::Make()
 	// combine with link job
 	job.reset(new MProjectIfJob("", this, job.release(), CreateLinkJob(targetPath)));
 
-	// and a dSYM generating step, if needed
-	if (mCurrentTarget->GetDebugFlag())
-		job.reset(new MProjectIfJob("", this, job.release(),
-			CreateGenerateDSymJob(targetPath, dsymPath)));
-	
 	if (mCurrentTarget->GetKind() == eTargetApplicationPackage and mPackageItems.Count() > 0)
 	{
 		// and a copy job for the Package contents, if needed
@@ -2602,8 +2569,7 @@ void MProject::Make()
 //	MProject::MsgWindowClosed
 
 void MProject::MsgWindowClosed(
-	MWindow*		inWindow,
-	WindowRef		inWindowRef)
+	MWindow*		inWindow)
 {
 	assert(inWindow == mStdErrWindow.get());
 	mStdErrWindow.release();
@@ -2711,6 +2677,17 @@ void MProject::SelectTarget(
 }
 
 // ---------------------------------------------------------------------------
+//	MProject::TargetSelected
+
+void MProject::TargetSelected()
+{
+	int32 target = gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup));
+	
+	if (target >= 0)
+		SelectTarget(target);
+}
+
+// ---------------------------------------------------------------------------
 //	MProject::SelectPanel
 
 void MProject::SelectPanel(
@@ -2718,29 +2695,29 @@ void MProject::SelectPanel(
 {
 	mPanel = inPanel;
 
-	switch (mPanel)
-	{
-		case ePanelFiles:
-            ::SetControlVisibility(mFilePanelRef, true, true);
-            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-            ::SetControlVisibility(mPackagePanelRef, false, false);
-			break;
-
-		case ePanelLinkOrder:
-            ::SetControlVisibility(mFilePanelRef, false, false);
-            ::SetControlVisibility(mLinkOrderPanelRef, true, true);
-            ::SetControlVisibility(mPackagePanelRef, false, false);
-			break;
-
-		case ePanelPackage:
-            ::SetControlVisibility(mFilePanelRef, false, false);
-            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-            ::SetControlVisibility(mPackagePanelRef, true, true);
-			break;
-
-		default:
-			break;
-	}
+//	switch (mPanel)
+//	{
+//		case ePanelFiles:
+//            ::SetControlVisibility(mFilePanelRef, true, true);
+//            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
+//            ::SetControlVisibility(mPackagePanelRef, false, false);
+//			break;
+//
+//		case ePanelLinkOrder:
+//            ::SetControlVisibility(mFilePanelRef, false, false);
+//            ::SetControlVisibility(mLinkOrderPanelRef, true, true);
+//            ::SetControlVisibility(mPackagePanelRef, false, false);
+//			break;
+//
+//		case ePanelPackage:
+//            ::SetControlVisibility(mFilePanelRef, false, false);
+//            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
+//            ::SetControlVisibility(mPackagePanelRef, true, true);
+//			break;
+//
+//		default:
+//			break;
+//	}
 	
 	UpdateList();
 }
@@ -2752,7 +2729,7 @@ void MProject::SetModified(
 	bool	inModified)
 {
 	mModified = inModified;
-	::SetWindowModified(GetSysWindow(), inModified);
+	SetModifiedMarkInTitle(inModified);
 }
 
 // ---------------------------------------------------------------------------

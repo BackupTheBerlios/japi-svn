@@ -48,7 +48,7 @@
 #include "MCommands.h"
 #include "MGlobals.h"
 //#include "MApplication.h"
-//#include "MProject.h"
+#include "MProject.h"
 
 using namespace std;
 
@@ -622,18 +622,18 @@ void MFindDialog::GetFilesForFindAll(
 			break;
 		}
 		
-//		case eMMIncludes:
-//		{
-//			MProject* project = MProject::Instance();
-//			if (project != nil)
-//			{
-//				vector<MPath> includePaths;
-//				project->GetIncludePaths(includePaths);
-//				for (vector<MPath>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
-//					GetFilesForFindAll(eMMDirectory, *p, false, false, "", outFiles);
-//			}
-//			break;
-//		}
+		case eMMIncludes:
+		{
+			MProject* project = MProject::Instance();
+			if (project != nil)
+			{
+				vector<MPath> includePaths;
+				project->GetIncludePaths(includePaths);
+				for (vector<MPath>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
+					GetFilesForFindAll(eMMDirectory, *p, false, false, "", outFiles);
+			}
+			break;
+		}
 	}
 }
 

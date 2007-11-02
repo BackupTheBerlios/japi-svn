@@ -74,12 +74,13 @@ struct MButtonItem : public MDialogItem
 {
 						MButtonItem(
 							MDialog*	inDialog,
-							GtkWidget*	inWidget)
+							GtkWidget*	inWidget,
+							const char*	inSignal)
 							: mDialog(inDialog)
 							, mClicked(this, &MButtonItem::OnClicked)
 						{
 							mWidget = inWidget;
-							mClicked.Connect(mWidget, "clicked");
+							mClicked.Connect(mWidget, inSignal);
 						}
 
 	void				OnClicked()
@@ -351,7 +352,8 @@ void MDialog::AddButton(
 	const std::string&	inLabel,
 	uint32				inParentID)
 {
-	MDialogItem* item = new MButtonItem(this, gtk_button_new_with_label(inLabel.c_str()));
+	MDialogItem* item = new MButtonItem(this,
+		gtk_button_new_with_label(inLabel.c_str()), "clicked");
 	
 	item->mID = inID;
 
@@ -406,9 +408,9 @@ void MDialog::AddComboBox(
 						inOptions,
 	uint32				inParentID)
 {
-	MDialogItem* item = new MDialogItem;
+	MDialogItem* item = new MButtonItem(this,
+		gtk_combo_box_new_text(), "changed");
 	
-	item->mWidget = gtk_combo_box_new_text();
 	item->mID = inID;
 	item->mParentID = inParentID;
 	item->mCount = 0;
@@ -454,7 +456,8 @@ void MDialog::AddCheckBox(
 	const string&		inLabel,
 	uint32				inParentID)
 {
-	MDialogItem* item = new MButtonItem(this, gtk_check_button_new_with_label(inLabel.c_str()));
+	MDialogItem* item = new MButtonItem(this,
+		gtk_check_button_new_with_label(inLabel.c_str()), "clicked");
 	
 	item->mID = inID;
 	item->mParentID = inParentID;
@@ -663,15 +666,14 @@ void MDialog::SetVisible(uint32 inID, bool inVisible)
 
 bool MDialog::IsEnabled(uint32 inID) const
 {
-//	return ::IsControlEnabled(FindControl(inID));
+	MDialogItem item = mImpl->GetItem(inID);
+	return GTK_WIDGET_IS_SENSITIVE(item.mWidget);
 }
 
 void MDialog::SetEnabled(uint32 inID, bool inEnabled)
 {
-//	if (inEnabled)
-//		::EnableControl(FindControl(inID));
-//	else
-//		::DisableControl(FindControl(inID));
+	MDialogItem item = mImpl->GetItem(inID);
+	gtk_widget_set_sensitive(item.mWidget, inEnabled);
 }
 
 bool MDialog::IsExpanded(

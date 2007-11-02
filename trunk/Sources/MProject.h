@@ -38,17 +38,19 @@
 #include "MCallbacks.h"
 #include "MSaverMixin.h"
 #include "MProjectItem.h"
+#include "MMenu.h"
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-#include <libxml/xmlWriter.h>
+#include <libxml/xmlwriter.h>
 
 class MListView;
 class MMessageWindow;
 class MProjectJob;
 class MProjectTarget;
+class MDevice;
 
 enum MProjectListPanel
 {
@@ -310,6 +312,11 @@ class MProject : public MWindow, public MSaverMixin
 	MProjectItem*		GetItem(
 							int32				inItemNr);
 
+	void				TargetSelected();
+
+	MSlot<void()>			mTargetSelected;
+	MEventIn<void(double)>	ePoll;
+
 	bool				mModified;
 	std::string			mName;
 	MProjectTarget*		mCurrentTarget;
@@ -340,6 +347,7 @@ class MProject : public MWindow, public MSaverMixin
 	GtkWidget*			mVBox;
 	MMenubar			mMenubar;
 	GtkWidget*			mTargetPopup;
+	uint32				mTargetPopupCount;
 	GtkWidget*			mPanelSegment;
 	GtkWidget*			mFilePanel;
 	GtkWidget*			mLinkOrderPanel;

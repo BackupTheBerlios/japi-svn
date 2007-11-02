@@ -55,15 +55,15 @@ class MProjectPathsDialog : public MDialog
 	
   private:
 
-	virtual OSStatus	DoControlHit(
-							EventRef		inEvent);
+	virtual void		ButtonClicked(
+							uint32				inButtonID);
 
 	void				SelectPage(
-							uint32			inPage);
+							uint32				inPage);
 
 	void				DrawPath(
-							CGContextRef		inContext,
-							HIRect				inFrame,
+							MDevice&			inDevice,
+							MRect				inFrame,
 							uint32				inRow,
 							bool				inSelected,
 							const void*			inData,
@@ -80,10 +80,10 @@ class MProjectPathsDialog : public MDialog
 
 	void				ChooseDirectory();
 
-	static pascal void	NavEvent(NavEventCallbackMessage inMessage,
-								NavCBRecPtr inParams, void* inUserData);
-
-	void				DoNavUserAction(NavCBRecPtr inParams);
+//	static pascal void	NavEvent(NavEventCallbackMessage inMessage,
+//								NavCBRecPtr inParams, void* inUserData);
+//
+//	void				DoNavUserAction(NavCBRecPtr inParams);
 
 	MProject*			mProject;
 	MProjectTarget*		mTarget;

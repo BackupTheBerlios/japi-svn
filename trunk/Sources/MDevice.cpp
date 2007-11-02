@@ -306,9 +306,10 @@ void MDevice::DrawListItemBackground(
 	MRect				inRect,
 	bool				inSelected,
 	bool				inActive,
-	bool				inOdd)
+	bool				inOdd,
+	bool				inRoundEdges)
 {
-	if (inSelected)
+	if (inSelected and not inRoundEdges)
 	{
 		if (inActive)
 			SetBackColor(gHiliteColor);
@@ -321,6 +322,31 @@ void MDevice::DrawListItemBackground(
 		SetBackColor(kWhite);
 	
 	EraseRect(inRect);
+
+	if (inSelected and inRoundEdges)
+	{
+		MRect selectionRect = inRect;
+		selectionRect.InsetBy(2, 0);
+
+		if (inActive)
+			SetForeColor(gHiliteColor);
+		else
+			SetForeColor(gInactiveHiliteColor);
+		
+		MRect sr = selectionRect;
+		sr.InsetBy(sr.height / 2, 0);
+		FillRect(sr);
+		
+		sr = selectionRect;
+		sr.width = sr.height;
+		
+		FillEllipse(sr);
+		
+		sr = selectionRect;
+		sr.x += sr.width - sr.height;
+		sr.width = sr.height;
+		FillEllipse(sr);
+	}
 }
 
 uint32 MDevice::GetAscent() const

@@ -157,7 +157,7 @@ MMessageWindow::MMessageWindow()
 {
     gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 200);
 	
-	mList = new MListView();
+	mList = new MListView(this);
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mList->GetGtkWidget());
 
 	SetCallBack(mList->cbDrawItem, this, &MMessageWindow::DrawItem);

@@ -249,4 +249,16 @@ class MProjectCpFile : public MProjectItem
 	MPath			mPath;
 };
 
+// ---------------------------------------------------------------------------
+//	MProjectLib
+
+class MProjectLib : public MProjectItem
+{
+  public:
+					MProjectLib(
+						const std::string&	inName,
+						MProjectGroup*		inParent)
+						: MProjectItem(inName, inParent) {}
+};
+
 #endif

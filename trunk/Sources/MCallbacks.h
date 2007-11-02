@@ -234,6 +234,28 @@ struct Handler<Derived, Owner, R(T1, T2)> : public HandlerBase<R(T1, T2)>
 										}
 };
 
+template<class Derived, class Owner, typename T1, typename T2>
+struct Handler<Derived, Owner, void(T1, T2)> : public HandlerBase<void(T1, T2)>
+{
+	typedef void (Owner::*Callback)(T1, T2);
+	
+	virtual void						DoCallBack(T1 a1, T2 a2)
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+											
+											try
+											{
+												(owner->*func)(a1, a2);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+										}
+};
+
 template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3>
 struct Handler<Derived, Owner, R(T1, T2, T3)> : public HandlerBase<R(T1, T2, T3)>
 {
@@ -260,6 +282,28 @@ struct Handler<Derived, Owner, R(T1, T2, T3)> : public HandlerBase<R(T1, T2, T3)
 										}
 };
 
+template<class Derived, class Owner, typename T1, typename T2, typename T3>
+struct Handler<Derived, Owner, void(T1, T2, T3)> : public HandlerBase<void(T1, T2, T3)>
+{
+	typedef void (Owner::*Callback)(T1, T2, T3);
+	
+	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3)
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+											
+											try
+											{
+												(owner->*func)(a1, a2, a3);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
+										}
+};
+
 template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3, typename T4>
 struct Handler<Derived, Owner, R(T1, T2, T3, T4)> : public HandlerBase<R(T1, T2, T3, T4)>
 {
@@ -283,6 +327,28 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4)> : public HandlerBase<R(T1, T2,
 											}
 											
 											return result;
+										}
+};
+
+template<class Derived, class Owner, typename T1, typename T2, typename T3, typename T4>
+struct Handler<Derived, Owner, void(T1, T2, T3, T4)> : public HandlerBase<void(T1, T2, T3, T4)>
+{
+	typedef void (Owner::*Callback)(T1, T2, T3, T4);
+	
+	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4)
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+											
+											try
+											{
+												(owner->*func)(a1, a2, a3, a4);
+											}
+											catch (const std::exception& e)
+											{
+												MError::DisplayError(e);
+											}
 										}
 };
 

@@ -30,40 +30,53 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MPROJECTINFODIALOG_H
-#define MPROJECTINFODIALOG_H
+#include "MJapieG.h"
 
-#include "MDialog.h"
-#include "MCallbacks.h"
+#include "MNewGroupDialog.h"
+#include "MProject.h"
+#include "MPreferences.h"
+#include "MView.h"
+#include "MUnicode.h"
 
-class MProject;
-class MProjectTarget;
+using namespace std;
 
-class MProjectInfoDialog : public MDialog
-{
-  public:
-						MProjectInfoDialog();
+namespace {
 
-	void				Initialize(
-							MProject*		inWindow,
-							MProjectTarget*	inTarget);
-
-	virtual bool		OKClicked();
-	
-  private:
-
-	virtual void		ButtonClicked(
-							uint32			inButtonID);
-
-	void				SelectPage(
-							int32			inPage);
-
-	void				SelectProjectType(
-							int32			inProjectType);
-
-	MProject*			mProject;
-	MProjectTarget*		mTarget;
-	int32				mCurrentPage;
+enum {
+	kTextBoxControlID = 'edit'
 };
 
-#endif // MFINDANDOPENDIALOG_H
+}
+
+MNewGroupDialog::MNewGroupDialog()
+	: mProject(nil)
+{
+	SetTitle("Find and Open File");
+	
+	AddHBox('hbox', false, 12);
+	AddStaticText('lbl1', "Filename:", 'hbox');
+	AddEditField(kTextBoxControlID, "", 'hbox');
+
+	AddCancelButton("Cancel");
+	AddOKButton("OK");
+}
+
+void MNewGroupDialog::Initialize(MProject* inProject)
+{
+	mProject = inProject;
+	
+	Show(inProject);
+	SetFocus(kTextBoxControlID);
+}
+
+bool MNewGroupDialog::OKClicked()
+{
+	std::string s;
+
+	GetText(kTextBoxControlID, s);
+
+	if (mProject != nil)
+		mProject->CreateNewGroup(s);
+	
+	return true;
+}

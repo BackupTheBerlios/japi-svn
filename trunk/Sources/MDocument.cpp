@@ -60,7 +60,7 @@
 #include "MDocWindow.h"
 #include "MUtils.h"
 #include "MMenu.h"
-//#include "MProject.h"
+#include "MProject.h"
 #include "MDevice.h"
 #include "MFont.h"
 #include "MDocClosedNotifier.h"
@@ -925,7 +925,7 @@ bool MDocument::DoSave()
 		SetModified(false);
 		
 		gApp->AddToRecentMenu(mURL);
-//		MProject::RecheckFiles();
+		MProject::RecheckFiles();
 	
 		eFileSpecChanged(mURL);
 		
@@ -3975,11 +3975,11 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 				gApp->OpenOneDocument(url);
 		}
 
-//		MProject* project = MProject::Instance();
-//		MPath p;
-//		
-//		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-//			gApp->OpenOneDocument(p);
+		MProject* project = MProject::Instance();
+		MPath p;
+		
+		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
+			gApp->OpenOneDocument(p);
 	}
 }
 

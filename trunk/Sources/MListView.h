@@ -46,15 +46,19 @@ class MDevice;
 const uint32
 	kListItemLast = ~0UL;
 
-class MListView : public MView
+class MListView : public MView, public MHandler
 {
 	friend struct MListImp;
 	
   public:
-						MListView();
+						MListView(
+							MHandler*		inSuperHandler);
 	
 	void				SetDrawBox(
 							bool			inDrawBox);
+	
+	void				SetRoundedSelectionEdges(
+							bool			inRoundEdges);
 
 	typedef std::vector<std::pair<uint32,std::string> >	ColumnInfo;
 	void				CreateColumns(const ColumnInfo& inColumns);

@@ -193,7 +193,7 @@ typedef std::vector<MListItem>	MItemList;
 
 // the impl
 
-struct MListImp : public MDrawingArea
+struct MListImp : public MDrawingArea, public MHandler
 {
 						MListImp(
 							MListView*		inListView,
@@ -296,6 +296,7 @@ struct MListImp : public MDrawingArea
 	int32				mDraggedItemNr;
 	int32				mDropItemNr;
 	bool				mDropUnder;
+	bool				mDrawRoundEdges;
 	
 	uint32				mItemHeight;
 	uint32				mLastClickedItemNr;
@@ -308,6 +309,7 @@ MListImp::MListImp(
 	MListView*		inListView,
 	MScrollBar*		inVScrollBar)
 	: MDrawingArea(100, 100)
+	, MHandler(inListView)
 	, mList(inListView)
 	, mVScrollBar(inVScrollBar)
 	, mSupportsDragAndDrop(false)
@@ -317,6 +319,7 @@ MListImp::MListImp(
 	, mDraggedItemNr(-1)
 	, mDropItemNr(-1)
 	, mDropUnder(false)
+	, mDrawRoundEdges(false)
 {
 	MDevice dev;
 	mItemHeight = dev.GetLineHeight() + 2;
@@ -581,11 +584,11 @@ int32 MListImp::GetSelected() const
 bool MListImp::OnExposeEvent(
 	GdkEventExpose*		inEvent)
 {
-	MDevice dev(this, inEvent->area);
-
 	MRect bounds;
 	GetBounds(bounds);
-	
+
+	MDevice dev(this, bounds);
+
 //	if (mDrawListBox)
 //	{
 //		bounds = ::CGRectInset(bounds, 3, 3);
@@ -611,7 +614,8 @@ bool MListImp::OnExposeEvent(
 		
 		bool selected = item.GetSelected() or (mDropUnder and static_cast<int32>(ix) == mDropItemNr);
 		
-		dev.DrawListItemBackground(r, selected, IsActive(), ix & 1);
+		dev.DrawListItemBackground(r, selected, IsActive(), ix & 1, mDrawRoundEdges);
+
 		mList->cbDrawItem(dev, r, ix, selected, item.Peek(), item.Size());
 		
 		if (static_cast<int32>(ix) == mDropItemNr and mDropItemNr != mDraggedItemNr and not mDropUnder)
@@ -639,18 +643,24 @@ bool MListImp::OnExposeEvent(
 bool MListImp::OnFocusInEvent(
 	GdkEventFocus*	inEvent)
 {
-	return false;
+	TakeFocus();
+	Invalidate();
+	return true;
 }
 
 bool MListImp::OnFocusOutEvent(
 	GdkEventFocus*	inEvent)
 {
-	return false;
+	ReleaseFocus();
+	Invalidate();
+	return true;
 }
 	
 bool MListImp::OnButtonPressEvent(
 	GdkEventButton*	inEvent)
 {
+	gtk_widget_grab_focus(GetGtkWidget());
+	
 	int32 itemNr = PointToItem(inEvent->x, inEvent->y);
 
 	SelectItem(itemNr);
@@ -660,19 +670,19 @@ bool MListImp::OnButtonPressEvent(
 	else
 		mList->cbRowSelected(itemNr);
 	
-	return false;
+	return true;
 }
 
 bool MListImp::OnMotionNotifyEvent(
 	GdkEventMotion*	inEvent)
 {
-	return false;
+	return true;
 }
 
 bool MListImp::OnButtonReleaseEvent(
 	GdkEventButton*	inEvent)
 {
-	return false;
+	return true;
 }
 
 //OSStatus MListImp::HandleTrack(EventRef ioEvent)
@@ -1103,8 +1113,10 @@ void MListImp::GetScrollPosition(
 
 // the list interface implementation
 
-MListView::MListView()
-	: mImpl(nil)
+MListView::MListView(
+	MHandler*		inSuperHandler)
+	: MHandler(inSuperHandler)
+	, mImpl(nil)
 {
 	SetWidget(gtk_hbox_new(false, 0), false);
 	
@@ -1245,3 +1257,10 @@ void MListView::SetDrawBox(
 //	f = ::CGRectInset(f, 3, 3);
 //	mImpl->SetFrame(f);
 }
+
+void MListView::SetRoundedSelectionEdges(
+	bool			inRoundEdges)
+{
+	mImpl->mDrawRoundEdges = inRoundEdges;
+}
+
