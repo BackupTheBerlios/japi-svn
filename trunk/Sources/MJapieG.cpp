@@ -802,6 +802,8 @@ int main(int argc, char* argv[])
 		fs::path::default_name_check(fs::no_check);
 		gtk_init(&argc, &argv);
 
+//		gdk_set_show_events(true);
+
 		vector<MPath> docs;
 		
 		int c;

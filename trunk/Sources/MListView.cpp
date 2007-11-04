@@ -224,6 +224,9 @@ struct MListImp : public MDrawingArea, public MHandler
 	
 	virtual bool		OnButtonReleaseEvent(
 							GdkEventButton*	inEvent);
+
+	virtual bool		OnScrollEvent(
+							GdkEventScroll*	inEvent);
 	
 	void				DoScrollTo(
 							int32			inX,
@@ -662,13 +665,19 @@ bool MListImp::OnButtonPressEvent(
 	gtk_widget_grab_focus(GetGtkWidget());
 	
 	int32 itemNr = PointToItem(inEvent->x, inEvent->y);
-
-	SelectItem(itemNr);
 	
-	if (inEvent->type == GDK_2BUTTON_PRESS)
-		mList->cbRowInvoked(itemNr);
-	else
-		mList->cbRowSelected(itemNr);
+	if (itemNr >= 0 and itemNr < mItems.size())
+	{
+		SelectItem(itemNr);
+		
+		if (inEvent->type == GDK_2BUTTON_PRESS)
+			mList->cbRowInvoked(itemNr);
+		else
+			mList->cbRowSelected(itemNr);
+	
+		MRect r = GetItemRect(itemNr);
+		mList->cbClickItem(r, itemNr, inEvent->x, inEvent->y);
+	}
 	
 	return true;
 }
@@ -761,6 +770,45 @@ bool MListImp::OnButtonReleaseEvent(
 //	
 //	return noErr;
 //}
+
+bool MListImp::OnScrollEvent(
+	GdkEventScroll*		inEvent)
+{
+	if (mItems.size() == 0)
+		return true;
+	
+	int32 x, y;
+	GetScrollPosition(x, y);
+	
+	MRect bounds;
+	GetBounds(bounds);
+	
+	MRect lastItemBounds = GetItemRect(mItems.size() - 1);
+	
+	switch (inEvent->direction)
+	{
+		case GDK_SCROLL_UP:
+			if (y > mItemHeight)
+				DoScrollTo(x, y - mItemHeight);
+			else if (y > 0)
+				DoScrollTo(x, 0);
+			break; 
+
+		case GDK_SCROLL_DOWN:
+			if (y + bounds.height + mItemHeight < lastItemBounds.y + lastItemBounds.height)
+				DoScrollTo(x, y + mItemHeight);
+			break; 
+
+		case GDK_SCROLL_LEFT:
+			break; 
+
+		case GDK_SCROLL_RIGHT:
+			break; 
+
+	}	
+	
+	return true;
+}
 
 void MListImp::DoScrollTo(
 	int32		inX,

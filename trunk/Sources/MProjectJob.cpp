@@ -36,7 +36,7 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
-#include <wait.h>
+//#include <wait.h>
 
 #undef check
 #ifndef BOOST_DISABLE_ASSERTS
@@ -61,6 +61,10 @@ using namespace std;
 
 void MProjectExecJob::Execute()
 {
+cout << "About to execute:" << endl;
+copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, " "));
+cout << endl;
+
 	int ifd[2], ofd[2];
 	
 	pipe(ifd);

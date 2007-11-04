@@ -14,6 +14,17 @@
 		<path>/usr/lib64/glib-2.0/include</path>
 		<path>/usr/include/freetype2</path>
 		<path>/usr/include/libpng12</path>
+		<path>/usr/pkg/include/gtk-2.0</path>
+		<path>/usr/pkg/lib/gtk-2.0/include</path>
+		<path>/usr/pkg/include/atk-1.0</path>
+		<path>/usr/pkg/include/cairo</path>
+		<path>/usr/pkg/include/pango-1.0</path>
+		<path>/usr/pkg/include/glib/glib-2.0</path>
+		<path>/usr/pkg/lib/glib-2.0/include</path>
+		<path>/usr/pkg/include/freetype2</path>
+		<path>/usr/pkg/include</path>
+		<path>/usr/pkg/include/libpng12</path>
+		<path>/usr/X11R6/include</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -21,6 +32,7 @@
 	<libpaths>
 		<path>/usr/lib64</path>
 		<path>/usr/local/lib64</path>
+		<path>/usr/pkg/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -85,16 +97,18 @@
 		</group>
 		<group name="Libraries">
 			<link>xml2</link>
-			<link>gtk-x11-2.0</link>
-			<link>gdk-x11-2.0</link>
-			<link>atk-1.0</link>
-			<link>gdk_pixbuf-2.0</link>
-			<link>pangocairo-1.0</link>
-			<link>cairo</link>
-			<link>gobject-2.0</link>
-			<link>gmodule-2.0</link>
-			<link>dl</link>
-			<link>glib-2.0</link>
+<link>gtk-x11-2.0</link>
+<link>gdk-x11-2.0</link>
+<link>atk-1.0</link>
+<link>gdk_pixbuf-2.0</link>
+<link>pangocairo-1.0</link>
+<link>pango-1.0</link>
+<link>cairo</link>
+<link>gobject-2.0</link>
+<link>gmodule-2.0</link>
+<link>glib-2.0</link>
+<link>intl</link>
+<link>iconv</link>
 <!--			<file>libxml2.dylib</file>-->
 <!--			<file>libgtk-x11-2.0.dylib</file>-->
 <!--			<file>libgdk-x11-2.0.dylib</file>-->
@@ -110,9 +124,9 @@
 <!--			<file>libintl.dylib</file>-->
 <!--			<file>libiconv.dylib</file>-->
 <!--			<file>libpcre.0.0.1.dylib</file>-->
-			<file>libboost_filesystem.a</file>
+			<file>libboost_filesystem-mt.a</file>
 			<file>libboost_thread-mt.a</file>
-			<file>libboost_regex.a</file>
+			<file>libboost_regex-mt.a</file>
 			<file>libpcre.a</file>
 		</group>
 	</files>

@@ -85,7 +85,8 @@ const string
 	kIQuote("-iquote"),
 	kI("-I"),
 	kF("-F"),
-	kl("-l");
+	kl("-l"),
+	kL("-L");
 
 const MColor
 	kOutOfDateColor = MColor("#ff664c"),
@@ -2432,6 +2433,9 @@ MProjectJob* MProject::CreateLinkJob(
 
 	vector<MProjectItem*> files;
 	mProjectItems.Flatten(files);
+
+	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
+		argv.push_back(kL + p->string());
 	
 	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
 	{
