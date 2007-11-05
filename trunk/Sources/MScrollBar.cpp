@@ -13,22 +13,28 @@ using namespace std;
 
 MScrollBar::MScrollBar(
 	bool			inVertical)
-	: mAdjustment(GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, 0, 0, 0, 0)))
+	: slOnValueChanged(this, &MScrollBar::OnValueChanged)
+	, mAdjustment(GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, 0, 0, 0, 0)))
+	, mValue(0)
 {
 	if (inVertical)
 		SetWidget(gtk_vscrollbar_new(mAdjustment), false);
 	else
 		SetWidget(gtk_hscrollbar_new(mAdjustment), false);
+	
+	slOnValueChanged.Connect(GetGtkWidget(), "value-changed");
 }
 
 uint32 MScrollBar::GetValue() const
 {
-	return static_cast<uint32>(gtk_adjustment_get_value(mAdjustment));
+	assert(gtk_adjustment_get_value(mAdjustment) == mValue);
+	return mValue;
 }
 
 void MScrollBar::SetValue(
 	uint32			inValue)
 {
+	mValue = inValue;
 	gtk_adjustment_set_value(mAdjustment, inValue);
 }
 
@@ -56,6 +62,8 @@ void MScrollBar::SetAdjustmentValues(
 	uint32			inPageSize,
 	uint32			inValue)
 {
+	assert(inValue == mValue);
+	
 	mAdjustment->lower = inLower;
 	mAdjustment->upper = inUpper;
 	mAdjustment->step_increment = inStepIncrement;
@@ -64,13 +72,15 @@ void MScrollBar::SetAdjustmentValues(
 	mAdjustment->value = inValue;
 	
 	gtk_adjustment_changed(mAdjustment);
-//
-//	cout << "lower: " << inLower
-//		 << " upper: " << inUpper
-//		 << " step: " << inStepIncrement
-//		 << " page: " << inPageIncrement
-//		 << " size: " << inPageSize
-//		 << " value: " << inValue
-//		 << endl;
-// 
+}
+
+void MScrollBar::OnValueChanged()
+{
+	uint32 value = gtk_adjustment_get_value(mAdjustment);
+	
+	if (value != mValue)
+	{
+		mValue = value;
+		cbValueChanged(value);
+	}
 }

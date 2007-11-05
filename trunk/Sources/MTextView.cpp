@@ -101,8 +101,6 @@ MTextView::MTextView(
 	, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
 	, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
 	
-	, slOnSBValueChanged(this, &MTextView::OnSBValueChanged)
-	
 	, slOnEvent(this, &MTextView::OnEvent)
 	
 	, mController(nil)
@@ -124,7 +122,7 @@ MTextView::MTextView(
 	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
 	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
 	
-	slOnSBValueChanged.Connect(G_OBJECT(mVScrollBar->GetAdjustment()), "value-changed");
+	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
 
 	slOnEvent.Connect(GetGtkWidget(), "event");
 
@@ -334,37 +332,31 @@ bool MTextView::OnExposeEvent(
 	if (mDocument == nil)
 		return false;
 
+	mNeedsDisplay = false;
+
 	MRect bounds;
 	GetBounds(bounds);
-	
-	MDevice dev(this, bounds);
 
 	MRect update(inEvent->area);
-
-	try
-	{
-		mNeedsDisplay = false;
-		
-		if (not mDrawForDragImage)
-			dev.EraseRect(update);
-		
-		int32 minLine = (mImageOriginY + update.y) / mLineHeight - 1;
-		if (minLine < 0)
-			minLine = 0;
-		
-		uint32 maxLine = minLine + update.height / mLineHeight + 2;
-		if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
-			maxLine = mDocument->CountLines() - 1;
 	
-		for (uint32 line = minLine; line <= maxLine; ++line)
-		{
-			MRect lr = GetLineRect(line);
-			if (update.Intersects(lr))
-				DrawLine(line, dev);
-		}
-	}
-	catch (exception& e)
+	MDevice dev(this, update);
+	
+	if (not mDrawForDragImage)
+		dev.EraseRect(bounds);
+	
+	int32 minLine = (mImageOriginY + update.y) / mLineHeight - 1;
+	if (minLine < 0)
+		minLine = 0;
+	
+	uint32 maxLine = minLine + update.height / mLineHeight + 2;
+	if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
+		maxLine = mDocument->CountLines() - 1;
+
+	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
+		MRect lr = GetLineRect(line);
+		if (update.Intersects(lr))
+			DrawLine(line, dev);
 	}
 
 //	if (mDragRef != nil)
@@ -580,9 +572,10 @@ void MTextView::DrawLine(
 	}
 }
 
-void MTextView::OnSBValueChanged()
+void MTextView::OnSBValueChanged(
+	uint32			inValue)
 {
-	DoScrollTo(mImageOriginX, mVScrollBar->GetValue());
+	DoScrollTo(mImageOriginX, inValue);
 }
 
 void MTextView::AdjustScrollBars()
@@ -600,7 +593,7 @@ void MTextView::AdjustScrollBars()
 	
 	uint32 linesPerPage = bounds.height / mLineHeight;
 
-	mVScrollBar->SetAdjustmentValues(0, height/* - (linesPerPage * mLineHeight)*/,
+	mVScrollBar->SetAdjustmentValues(0, height,
 		mLineHeight, linesPerPage * mLineHeight,
 		bounds.height, mImageOriginY);
 }
@@ -627,6 +620,8 @@ void MTextView::DoScrollTo(
 	mImageOriginY = inY;
 	
 	mVScrollBar->SetValue(inY);
+	
+	UpdateNow();
 }
 
 void MTextView::ScrollToPosition(
@@ -954,9 +949,11 @@ bool MTextView::ScrollToCaret()
 //			newY += mLineHeight;
 	}
 	
-	if (x < bounds.x + 3)
-		newX = max(0, static_cast<int32>(x - 3));
-	else if (x > bounds.x + bounds.width - 3 - kLeftMargin)
+	if (x < 3)
+		newX = 0;
+	else if (x < mImageOriginX)
+		newX = mImageOriginX;
+	else if (x > mImageOriginX + bounds.width - 3 - kLeftMargin)
 		newX = x - bounds.width + 3 + kLeftMargin;
 	
 	bool result = false;
@@ -1069,27 +1066,23 @@ void MTextView::ScrollToSelection(
    
 	ScrollToCaret();
 
-	GetBounds(bounds);
-
-	if (/*not fDoc->GetSoftWrap() and */not selection.IsEmpty())
-	{
-		int32 ax, cx;
-		uint32 line;
-		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
-		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
-
-		int32 center = (ax + cx) / 2;
-
-		if (center < mImageOriginX + 10 or
-			center > mImageOriginX + bounds.width - 10)
-		{
-			int32 x, y;
-			y = bounds.y;
-			x = bounds.x + center -
-				(bounds.x + bounds.width / 2);
-			DoScrollTo(x, y);
-		}
-	}
+//	GetBounds(bounds);
+//
+//	if (not fDoc->GetSoftWrap() and not selection.IsEmpty())
+//	{
+//		int32 ax, cx;
+//		uint32 line;
+//		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
+//		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
+//
+//		int32 center = (ax + cx) / 2;
+//
+//		if (center < mImageOriginX + 10 or
+//			center > mImageOriginX + bounds.width - 10)
+//		{
+//			DoScrollTo(mImageOriginX + (center - bounds.width) / 2, mImageOriginY);
+//		}
+//	}
 }
 
 // ---------------------------------------------------------------------------

@@ -204,7 +204,6 @@ void MClipboard::LoadClipboardIfNeeded()
 			SetData(text, false);
 			g_free(text);
 		}
-		
 		mOwnerChanged = false;
 	}
 }

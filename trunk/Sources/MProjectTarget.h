@@ -85,6 +85,12 @@ class MProjectTarget
 							mCFlags.push_back(inFlag); 
 						}
 
+	void				AddLDFlag(
+							const char*		inFlag)
+						{
+							mLDFlags.push_back(inFlag); 
+						}
+
 	void				AddWarning(
 							const char*		inWarning)
 						{
@@ -142,6 +148,8 @@ class MProjectTarget
 	const std::vector<std::string>&
 						GetCFlags() const		{ return mCFlags; }
 	const std::vector<std::string>&
+						GetLDFlags() const		{ return mLDFlags; }
+	const std::vector<std::string>&
 						GetWarnings() const		{ return mWarnings; }
 	const std::vector<std::string>&
 						GetDefines() const		{ return mDefines; }
@@ -176,6 +184,8 @@ class MProjectTarget
 	MTargetArch			mArch;
 	std::vector<std::string>
 						mCFlags;
+	std::vector<std::string>
+						mLDFlags;
 	std::vector<std::string>
 						mWarnings;
 	std::vector<std::string>

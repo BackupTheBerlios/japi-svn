@@ -234,7 +234,8 @@ class MTextView : public MDrawingArea, public MHandler
 	
 	bool				OnRetrieveSurrounding();
 
-	void				OnSBValueChanged();
+	void				OnSBValueChanged(
+							uint32			inValue);
 	
 	MSlot<bool(gchar*)>						slOnCommit;
 	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
@@ -242,8 +243,6 @@ class MTextView : public MDrawingArea, public MHandler
 	MSlot<bool()>							slOnPreeditStart;
 	MSlot<bool()>							slOnPreeditEnd;
 	MSlot<bool()>							slOnRetrieveSurrounding;
-
-	MSlot<void()>							slOnSBValueChanged;
 
 	bool				OnEvent(
 							GdkEvent*		inEvent);

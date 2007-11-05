@@ -107,7 +107,7 @@ struct MProjectState
 	uint8			mSelectedTarget;
 	uint8			mSelectedPanel;
 	uint8			mFillers[2];
-	uint32			mScrollPosition[ePanelCount];
+	int32			mScrollPosition[ePanelCount];
 	
 	void			Swap();
 };
@@ -401,6 +401,7 @@ void MProject::Initialize()
 	}
 
 	UpdateList();
+	TargetSelected();
 
 //	Install(kEventClassKeyboard, kEventRawKeyDown, this, &MProject::DoRawKeyDown);
 }
@@ -507,9 +508,9 @@ bool MProject::ReadState()
 //		::ConstrainWindowToScreen(GetSysWindow(),
 //			kWindowStructureRgn, kWindowConstrainStandardOptions,
 //			NULL, NULL);
-//
-//		SelectTarget(state.mSelectedTarget);
-//		::SetControl32BitValue(mTargetPopupRef, state.mSelectedTarget + 1);
+
+		SelectTarget(state.mSelectedTarget);
+		mFileList->SelectItem(state.mSelectedTarget);
 		
 		result = true;
 	}
@@ -536,12 +537,10 @@ bool MProject::DoClose()
 			
 			state.Swap();
 
-//			state.mSelectedTarget = ::GetControl32BitValue(mTargetPopupRef) - 1;
+			state.mSelectedTarget = mFileList->GetSelected();
 
-//			HIPoint pt;
-//
-//			mFileList->GetScrollPosition(pt);
-//			state.mScrollPosition[ePanelFiles] = static_cast<uint32>(pt.y);
+			int32 x;
+			mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
 //			mLinkOrderList->GetScrollPosition(pt);
 //			state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
 //			mPackageList->GetScrollPosition(pt);
@@ -1741,6 +1740,8 @@ void MProject::Read(
 					ReadOptions(node, "define", target.get(), &MProjectTarget::AddDefine);
 				else if (strcmp((const char*)node->name, "cflags") == 0)
 					ReadOptions(node, "cflag", target.get(), &MProjectTarget::AddCFlag);
+				else if (strcmp((const char*)node->name, "ldflags") == 0)
+					ReadOptions(node, "ldflag", target.get(), &MProjectTarget::AddLDFlag);
 				else if (strcmp((const char*)node->name, "frameworks") == 0)
 					ReadOptions(node, "framework", target.get(), &MProjectTarget::AddFramework);
 				else if (strcmp((const char*)node->name, "warnings") == 0)
@@ -2400,7 +2401,7 @@ MProjectJob* MProject::CreateLinkJob(
 //	else
 //		assert(false);
 
-	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+	argv.insert(argv.end(), target.GetLDFlags().begin(), target.GetLDFlags().end());
 
 	switch (mCurrentTarget->GetKind())
 	{

@@ -7,6 +7,7 @@
 #define MSCROLLBAR_H
 
 #include "MView.h"
+#include "MCallBacks.h"
 
 class MScrollBar : public MView
 {
@@ -37,8 +38,16 @@ class MScrollBar : public MView
 							uint32			inPageSize,
 							uint32			inValue);
 
+	MCallBack<void(uint32)>	cbValueChanged;
+
   private:
+
+	void				OnValueChanged();
+
+	MSlot<void()>		slOnValueChanged;
+
 	GtkAdjustment*		mAdjustment;
+	uint32				mValue;
 };
 
 #endif // MSCROLLBAR_H

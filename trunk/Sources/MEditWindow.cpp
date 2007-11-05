@@ -39,7 +39,6 @@
 #include "MGlobals.h"
 //#include "MToolbar.h"
 //#include "MTextViewContainer.h"
-#include "MViewPort.h"
 #include "MScrollBar.h"
 #include "MTextView.h"
 #include "MUtils.h"

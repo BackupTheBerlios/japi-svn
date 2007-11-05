@@ -36,7 +36,6 @@
 #include "MGlobals.h"
 #include "MDevice.h"
 #include "MUtils.h"
-#include "MViewPort.h"
 #include "MScrollBar.h"
 #include "MDevice.h"
 
@@ -227,6 +226,10 @@ struct MListImp : public MDrawingArea, public MHandler
 
 	virtual bool		OnScrollEvent(
 							GdkEventScroll*	inEvent);
+
+	virtual bool		OnConfigureEvent(
+							GdkEventConfigure*
+											inEvent);
 	
 	void				DoScrollTo(
 							int32			inX,
@@ -285,9 +288,13 @@ struct MListImp : public MDrawingArea, public MHandler
 //	OSStatus			DoDragLeave(EventRef inEvent);
 //	OSStatus			DoDragReceive(EventRef inEvent);
 	
+	void				OnSBValueChanged(
+							uint32			inValue);
+
 	MItemList			mItems;
 	MListView*			mList;
 	static MListImp*	sDraggingView;
+	int32				mOriginX, mOriginY;
 	vector<uint32>		mColumns;
 	
 	MScrollBar*			mVScrollBar;
@@ -327,6 +334,8 @@ MListImp::MListImp(
 	MDevice dev;
 	mItemHeight = dev.GetLineHeight() + 2;
 
+	SetCallBack(mVScrollBar->cbValueChanged, this, &MListImp::OnSBValueChanged);
+
 //	Install(kEventClassControl, kEventControlDraw,
 //		this, &MListImp::HandleDraw);
 //	Install(kEventClassControl, kEventControlTrack,
@@ -344,6 +353,7 @@ MListImp::MListImp(
 //	Install(kEventClassTextInput, kEventTextInputUnicodeForKeyEvent,
 //		this, &MListImp::HandleUnicodeForKeyEvent);
 	
+	mOriginX = mOriginY = 0;
 	mLastClickTime = 0;
 }
 
@@ -499,11 +509,34 @@ void MListImp::RemoveAll()
 	CountChanged();
 }
 
+bool MListImp::OnConfigureEvent(
+	GdkEventConfigure*	inEvent)
+{
+	CountChanged();
+	return false;
+}
+
 void MListImp::CountChanged()
 {
 	uint32 count = mItems.size();
 	uint32 height = count * mItemHeight;
-	ResizeTo(100, height);
+//	ResizeTo(100, height);
+
+	MRect bounds;
+	GetBounds(bounds);
+	
+	uint32 itemsPerPage = bounds.height / mItemHeight;
+
+	mVScrollBar->SetAdjustmentValues(0, height,
+		mItemHeight, itemsPerPage * mItemHeight,
+		bounds.height, mOriginY);
+}
+
+void MListImp::OnSBValueChanged(
+	uint32		inValue)
+{
+	if (mOriginY != inValue)
+		DoScrollTo(0, inValue);
 }
 
 MRect MListImp::GetItemsBounds() const
@@ -522,7 +555,7 @@ MRect MListImp::GetItemRect(
 	
 	MRect result = GetItemsBounds();
 	
-	result.y = 0;
+	result.y -= mOriginY;
 	
 	for (uint32 ix = 0; ix < inItemNr; ++ix)
 		result.y += mItems[ix].GetHeight();
@@ -542,7 +575,7 @@ uint32 MListImp::PointToItem(
 	uint32 itemNr = 0;
 	
 	MRect r = GetItemsBounds();
-	r.y = 0;
+	r.y = -mOriginY;
 	r.height = 0;
 	
 	while (itemNr < mItems.size())
@@ -777,34 +810,28 @@ bool MListImp::OnScrollEvent(
 	if (mItems.size() == 0)
 		return true;
 	
-	int32 x, y;
-	GetScrollPosition(x, y);
-	
 	MRect bounds;
 	GetBounds(bounds);
-	
-	MRect lastItemBounds = GetItemRect(mItems.size() - 1);
 	
 	switch (inEvent->direction)
 	{
 		case GDK_SCROLL_UP:
-			if (y > mItemHeight)
-				DoScrollTo(x, y - mItemHeight);
-			else if (y > 0)
-				DoScrollTo(x, 0);
+			if (mOriginY > mItemHeight)
+				DoScrollTo(mOriginX, mOriginY - mItemHeight);
+			else if (mOriginY > 0)
+				DoScrollTo(mOriginX, 0);
 			break; 
 
 		case GDK_SCROLL_DOWN:
-			if (y + bounds.height + mItemHeight < lastItemBounds.y + lastItemBounds.height)
-				DoScrollTo(x, y + mItemHeight);
+			if (mOriginY + bounds.height + mItemHeight < mItems.size() * mItemHeight)
+				DoScrollTo(mOriginX, mOriginY + mItemHeight);
 			break; 
 
 		case GDK_SCROLL_LEFT:
 			break; 
 
 		case GDK_SCROLL_RIGHT:
-			break; 
-
+			break;
 	}	
 	
 	return true;
@@ -814,7 +841,17 @@ void MListImp::DoScrollTo(
 	int32		inX,
 	int32		inY)
 {
+	int32 dx = inX - mOriginX;
+	int32 dy = inY - mOriginY;
+	
+	gdk_window_scroll(GetGtkWidget()->window, -dx, -dy);
+	
+	mOriginX = inX;
+	mOriginY = inY;
+	
 	mVScrollBar->SetValue(inY);
+
+	UpdateNow();
 }
 
 void MListImp::GetScrollPosition(
@@ -1169,16 +1206,10 @@ MListView::MListView(
 	SetWidget(gtk_hbox_new(false, 0), false);
 	
 	MScrollBar* scrollBar = new MScrollBar(true);
-	
-	MViewPort* viewPort = new MViewPort(nil, scrollBar);
-	viewPort->SetShadowType(GTK_SHADOW_NONE);
-	
-	gtk_box_pack_end(GTK_BOX(GetGtkWidget()), scrollBar->GetGtkWidget(), false, false, 0);
-	gtk_box_pack_start(GTK_BOX(GetGtkWidget()), viewPort->GetGtkWidget(), true, true, 0);
-	
 	mImpl = new MListImp(this, scrollBar);
-	
-	viewPort->Add(mImpl);
+
+	gtk_box_pack_end(GTK_BOX(GetGtkWidget()), scrollBar->GetGtkWidget(), false, false, 0);
+	gtk_box_pack_start(GTK_BOX(GetGtkWidget()), mImpl->GetGtkWidget(), true, true, 0);
 	
 	gtk_widget_show_all(GetGtkWidget());
 }
