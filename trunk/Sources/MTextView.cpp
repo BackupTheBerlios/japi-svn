@@ -602,6 +602,9 @@ bool MTextView::OnConfigureEvent(
 	GdkEventConfigure*	inEvent)
 {
 	AdjustScrollBars();
+	
+	eBoundsChanged();
+	
 	return false;
 }
 
@@ -609,8 +612,9 @@ void MTextView::DoScrollTo(
 	int32			inX,
 	int32			inY)
 {
-//	inX = mImageOriginX;
-
+	if (mDocument != nil and mDocument->GetSoftwrap())
+		inX = 0;
+	
 	int32 dx = inX - mImageOriginX;
 	int32 dy = inY - mImageOriginY;
 	
@@ -949,7 +953,7 @@ bool MTextView::ScrollToCaret()
 //			newY += mLineHeight;
 	}
 	
-	if (x < 3)
+	if (x < 3 or mDocument != nil and mDocument->GetSoftwrap())
 		newX = 0;
 	else if (x < mImageOriginX)
 		newX = mImageOriginX;
@@ -1068,7 +1072,7 @@ void MTextView::ScrollToSelection(
 
 //	GetBounds(bounds);
 //
-//	if (not fDoc->GetSoftWrap() and not selection.IsEmpty())
+//	if (not fDoc->GetSoftwrap() and not selection.IsEmpty())
 //	{
 //		int32 ax, cx;
 //		uint32 line;

@@ -280,7 +280,12 @@ void MDocument::SetTargetTextView(MTextView* inTextView)
 {
 	if (inTextView != mTargetTextView)
 	{
+		if (mTargetTextView != nil)
+			RemoveRoute(eBoundsChanged, mTargetTextView->eBoundsChanged);
+		
 		mTargetTextView = inTextView;
+		
+		AddRoute(eBoundsChanged, inTextView->eBoundsChanged);
 
 		BoundsChanged();
 	}
@@ -1401,18 +1406,20 @@ uint32 MDocument::FindLineBreak(
 	
 	uint32 result = (t - mText.begin()) + 1;
 	
-//	if (GetSoftwrap() /*and mTargetTextView != nil*/ and result > inFromOffset + 1)
-//	{
-//		uint32 width = mTargetTextView->GetWrapWidth();
-//		
-//		width -= static_cast<uint32>(inIndent * mCharsPerTab * mCharWidth);
-//		
-//		string txt;
-//		uint32 l = result - inFromOffset;
-//		if (inFromOffset + l > mText.GetSize())
-//			l = mText.GetSize() - inFromOffset;
-//		(void)GetStyledLayout(inFromOffset, l, inState, txt);
-//		
+	if (GetSoftwrap() and mTargetTextView != nil and result > inFromOffset + 1)
+	{
+		uint32 width = mTargetTextView->GetWrapWidth();
+		
+		width -= static_cast<uint32>(inIndent * mCharsPerTab * mCharWidth);
+		
+		string txt;
+		uint32 l = result - inFromOffset;
+		if (inFromOffset + l > mText.GetSize())
+			l = mText.GetSize() - inFromOffset;
+		
+		MDevice dev;
+		(void)GetStyledText(inFromOffset, l, inState, dev, txt);
+		
 //		uint32 s = 0;
 //		while (s < txt.length() and txt[s] == '\t' and width > mTabWidth)
 //		{
@@ -1424,14 +1431,15 @@ uint32 MDocument::FindLineBreak(
 //			result = inFromOffset + s;
 //		else
 //		{
-//			uint32 br;
-//			if (::ATSUBreakLine(mTextLayout, s, Long2Fix(width), false, &br) == noErr
-//				and br < txt.length() - 1)
-//			{
-//				result = inFromOffset + br;
-//			}
+			uint32 br;
+			if (dev.BreakLine(width, br) and
+				//::ATSUBreakLine(mTextLayout, s, width, false, &br) == noErr and
+				br < txt.length() - 1)
+			{
+				result = inFromOffset + br;
+			}
 //		}
-//	}
+	}
 	
 	return result;
 }
@@ -1898,7 +1906,7 @@ void MDocument::PositionToOffset(
 			inLocationX -= GetLineIndentWidth(line);
 		
 		bool trailing;
-		bool hit = device.PositionToIndex(inLocationX, outOffset, trailing);
+		/*bool hit = */device.PositionToIndex(inLocationX, outOffset, trailing);
 		
 		outOffset += mLineInfo[line].start;
 	}

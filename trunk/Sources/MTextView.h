@@ -92,6 +92,8 @@ class MTextView : public MDrawingArea, public MHandler
 	MEventIn<void(MDocument*)>			eDocumentChanged;
 	
 	MEventIn<void(double)>				eIdle;
+	
+	MEventOut<void()>					eBoundsChanged;
 
 	void				SetDocument(
 							MDocument*			inDocument);

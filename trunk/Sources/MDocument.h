@@ -365,6 +365,7 @@ class MDocument
 	void				Complete(int inDirection);
 	
 	void				BoundsChanged();
+
 	void				PrefsChanged();
 	
 	void				Execute();

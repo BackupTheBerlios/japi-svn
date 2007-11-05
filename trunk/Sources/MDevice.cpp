@@ -612,6 +612,29 @@ uint32 MDevice::GetTextWidth()
 	return r.width;
 }
 
+bool MDevice::BreakLine(
+	uint32				inWidth,
+	uint32&				outBreak)
+{
+	bool result = false;
+	
+	pango_layout_set_width(mImpl->mLayout, inWidth * PANGO_SCALE);
+	pango_layout_set_wrap(mImpl->mLayout, PANGO_WRAP_WORD_CHAR);
+	
+	if (pango_layout_is_wrapped(mImpl->mLayout))
+	{
+		PangoLayoutLine* line = pango_layout_get_line_readonly(mImpl->mLayout, 0);
+		
+		if (line != nil)
+		{
+			outBreak = line->length;
+			result = true;
+		}
+	}
+	
+	return result;
+}
+
 void MDevice::DrawCaret(
 	float				inX,
 	float				inY,

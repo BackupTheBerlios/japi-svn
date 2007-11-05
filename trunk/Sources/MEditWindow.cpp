@@ -171,8 +171,6 @@ MEditWindow::MEditWindow()
 	
 	mController.AddTextView(mTextView);
 	
-//	AddRoute(eBoundsChanged, mTextView->eBoundsChanged);
-
 	mTextView->SetSuper(this);
 	
 	gtk_widget_show_all(GetGtkWidget());

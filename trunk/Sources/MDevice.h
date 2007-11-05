@@ -119,6 +119,10 @@ class MDevice
 						float				inY,
 						uint32				inOffset);
 	
+	bool			BreakLine(
+						uint32				inWidth,
+						uint32&				outBreak);
+	
   private:
 
 					MDevice(const MDevice&);
