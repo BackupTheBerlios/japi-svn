@@ -80,8 +80,6 @@ class MTextView : public MDrawingArea, public MHandler
 	void				SetController(
 							MController*		inController);
 
-	MEventIn<void()>					eBoundsChanged;
-
 	MEventIn<void()>					eLineCountChanged;
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
 	MEventIn<void(MScrollMessage)>		eScroll;
@@ -120,8 +118,6 @@ class MTextView : public MDrawingArea, public MHandler
 //	OSStatus			DoGetClickActivation(EventRef inEvent);
 //	OSStatus			DoContextualMenuClick(EventRef inEvent);
 //	OSStatus			DoSetFocusPart(EventRef inEvent);
-
-	void				BoundsChanged();
 
 	virtual bool		OnExposeEvent(
 							GdkEventExpose*	inEvent);
@@ -226,6 +222,10 @@ class MTextView : public MDrawingArea, public MHandler
 							gint			inStart,
 							gint			inLength);
 
+	bool				OnConfigureEvent(
+							GdkEventConfigure*
+											inEvent);
+
 	bool				OnPreeditChanged();
 	
 	bool				OnPreeditEnd();
@@ -233,6 +233,8 @@ class MTextView : public MDrawingArea, public MHandler
 	bool				OnPreeditStart();
 	
 	bool				OnRetrieveSurrounding();
+
+	void				OnSBValueChanged();
 	
 	MSlot<bool(gchar*)>						slOnCommit;
 	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
@@ -240,6 +242,13 @@ class MTextView : public MDrawingArea, public MHandler
 	MSlot<bool()>							slOnPreeditStart;
 	MSlot<bool()>							slOnPreeditEnd;
 	MSlot<bool()>							slOnRetrieveSurrounding;
+
+	MSlot<void()>							slOnSBValueChanged;
+
+	bool				OnEvent(
+							GdkEvent*		inEvent);
+	
+	MSlot<bool(GdkEvent*)>					slOnEvent;
 	
 	MController*		mController;
 	MDocument*			mDocument;

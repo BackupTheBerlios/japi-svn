@@ -599,6 +599,8 @@ void MDevice::DrawText(
 	float			inX,
 	float			inY)
 {
+cout << "DrawText " << inX << ',' << inY << endl;
+
 	cairo_move_to(mImpl->mContext, inX, inY);	
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
 }

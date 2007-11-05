@@ -38,18 +38,19 @@ class MWindow : public MView, public MHandler
 								const MMenu*	inMenu,
 								uint32			inItemIndex);
 
-	MEventOut<void(MWindow*)>	eWindowClosed;
+	MEventOut<void(MWindow*)>		eWindowClosed;
 
   protected:
 
 							MWindow(
-								GtkWidget*	inWindow);
+								GtkWidget*		inWindow);
 
 	virtual bool			DoClose();
 
 	virtual bool			OnDestroy();
+
 	virtual bool			OnDelete(
-								GdkEvent*	inEvent);
+								GdkEvent*		inEvent);
 
   private:
 	MSlot<bool()>			mOnDestroy;

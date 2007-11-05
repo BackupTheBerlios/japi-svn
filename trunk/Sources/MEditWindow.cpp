@@ -165,19 +165,14 @@ MEditWindow::MEditWindow()
 	gtk_box_pack_start(GTK_BOX(mVBox), hbox, true, true, 0);
 
 	MScrollBar* scrollBar = new MScrollBar(true);
-	
-	MViewPort* viewPort = new MViewPort(nil, scrollBar);
-	viewPort->SetShadowType(GTK_SHADOW_NONE);
+    mTextView = new MTextView(scrollBar);
 	
 	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), viewPort->GetGtkWidget(), true, true, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), mTextView->GetGtkWidget(), true, true, 0);
 	
-    mTextView = new MTextView(scrollBar);
 	mController.AddTextView(mTextView);
 	
-	AddRoute(viewPort->eBoundsChanged, mTextView->eBoundsChanged);
-
-	viewPort->Add(mTextView);
+//	AddRoute(eBoundsChanged, mTextView->eBoundsChanged);
 
 	mTextView->SetSuper(this);
 	

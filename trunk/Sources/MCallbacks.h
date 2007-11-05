@@ -468,7 +468,7 @@ struct MCallBackOutHandler<CallBackIn, R()>
 					GObject*		inObject,
 					gpointer		inData)
 				{
-					R result;
+					R result = R();
 					
 					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
 					

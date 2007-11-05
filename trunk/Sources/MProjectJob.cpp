@@ -36,7 +36,9 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
-//#include <wait.h>
+#if HAVE_WAIT_H
+#include <wait.h>
+#endif
 
 #undef check
 #ifndef BOOST_DISABLE_ASSERTS
