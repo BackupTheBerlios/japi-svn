@@ -1131,6 +1131,9 @@ void MTextView::ScrollForDiff()
 
 void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 {
+	// start with a flushed window
+	UpdateNow();
+	
 	// get our bounds
 	MRect bounds;
 	GetBounds(bounds);
@@ -1163,11 +1166,10 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	{
 		Scroll(r, 0, dy);
 	}
-	
-	// otherwise just invalidate the entire view
-	
 	else
 		Invalidate();
+
+	UpdateNow();
 }
 
 void MTextView::GetVisibleLineSpan(
