@@ -206,6 +206,7 @@ MProject::MProject(const MPath& inPath)
 	projectMenu->AppendItem("Check Syntax", cmd_CheckSyntax);
 	projectMenu->AppendItem("Preprocess", cmd_Preprocess);
 	projectMenu->AppendItem("Compile", cmd_Compile);
+	projectMenu->AppendItem("Dissassemble", cmd_Disassemble);
 	projectMenu->AppendSeparator();
 	projectMenu->AppendItem("Bring Up To Date", cmd_BringUpToDate);
 	projectMenu->AppendItem("Make", cmd_Make);
@@ -1159,9 +1160,24 @@ bool MProject::ProcessCommand(
 			BringUpToDate();
 			break;
 		
+		case cmd_Preprocess:
+			if (file != nil)
+				Preprocess(file->GetPath());
+			break;
+		
+		case cmd_CheckSyntax:
+			if (file != nil)
+				CheckSyntax(file->GetPath());
+			break;
+		
 		case cmd_Compile:
 			if (file != nil)
 				Compile(file->GetPath());
+			break;
+
+		case cmd_Disassemble:
+			if (file != nil)
+				Disassemble(file->GetPath());
 			break;
 		
 		case cmd_MakeClean:
@@ -1270,10 +1286,9 @@ bool MProject::UpdateCommandStatus(
 			break;
 
 		case cmd_Preprocess:
-			break;
-	
 		case cmd_CheckSyntax:
 		case cmd_Compile:
+		case cmd_Disassemble:
 			outEnabled = isCompilable;
 			break;
 
@@ -2338,7 +2353,7 @@ MProjectJob* MProject::CreateCompileJob(
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");
 	
-	argv.push_back("-fmessage-length=120");
+	argv.push_back("-fmessage-length=132");
 	
 	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
 		argv.push_back(kIQuote + p->string());
@@ -2459,6 +2474,192 @@ MProjectJob* MProject::CreateLinkJob(
 	}
 	
 	return new MProjectExecJob("Linking", this, argv);
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::Preprocess
+
+void MProject::Preprocess(
+	const MPath&	inFile)
+{
+	CheckDataDir();
+	
+	MProjectFile* file = GetProjectFileForPath(inFile);
+	if (file == nil)
+		THROW(("File is not part of the target project"));
+
+	assert(mCurrentTarget != nil);
+	MProjectTarget& target = *mCurrentTarget;
+	
+	vector<string> argv;
+	
+	const char* CC = getenv("CC");
+	if (CC == nil)
+		CC = "/usr/bin/c++";
+	
+	argv.push_back(CC);
+
+	transform(target.GetDefines().begin(), target.GetDefines().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-D"));
+
+	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-W"));
+
+	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+
+	argv.push_back("-E");
+	
+	if (target.IsAnsiStrict())
+		argv.push_back("-ansi");
+	
+	if (target.IsPedantic())
+		argv.push_back("-pedantic");
+	
+	argv.push_back("-fmessage-length=132");
+	
+	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
+		argv.push_back(kIQuote + p->string());
+
+	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
+		argv.push_back(kI + p->string());
+	
+	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
+		argv.push_back(kF + p->string());
+	
+	argv.push_back(inFile.string());
+
+	MProjectExecJob* job = new MProjectCompileJob(
+		string("Preprocessing ") + inFile.leaf(), this, argv, file);
+	
+	MDocument* output = new MDocument("", inFile.leaf() + " # preprocessed");
+	
+	AddRoute(job->eStdOut, output->eStdOut);
+	MDocWindow::DisplayDocument(output);
+
+	StartJob(job);
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::Disassemble
+
+void MProject::Disassemble(
+	const MPath&	inFile)
+{
+	CheckDataDir();
+	
+	MProjectFile* file = GetProjectFileForPath(inFile);
+	if (file == nil)
+		THROW(("File is not part of the target project"));
+
+	assert(mCurrentTarget != nil);
+	MProjectTarget& target = *mCurrentTarget;
+	
+	vector<string> argv;
+	
+	const char* CC = getenv("CC");
+	if (CC == nil)
+		CC = "/usr/bin/c++";
+	
+	argv.push_back(CC);
+
+	transform(target.GetDefines().begin(), target.GetDefines().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-D"));
+
+	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-W"));
+
+	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+
+	argv.push_back("-S");
+	argv.push_back("-o");
+	argv.push_back("-");
+	
+	if (target.IsAnsiStrict())
+		argv.push_back("-ansi");
+	
+	if (target.IsPedantic())
+		argv.push_back("-pedantic");
+	
+	argv.push_back("-fmessage-length=132");
+	
+	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
+		argv.push_back(kIQuote + p->string());
+
+	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
+		argv.push_back(kI + p->string());
+	
+	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
+		argv.push_back(kF + p->string());
+	
+	argv.push_back(inFile.string());
+
+	MProjectExecJob* job = new MProjectCompileJob(
+		string("Disassembling ") + inFile.leaf(), this, argv, file);
+	
+	MDocument* output = new MDocument("", inFile.leaf() + " # disassembled");
+	
+	AddRoute(job->eStdOut, output->eStdOut);
+	MDocWindow::DisplayDocument(output);
+
+	StartJob(job);
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::CheckSyntax
+
+void MProject::CheckSyntax(
+	const MPath&	inFile)
+{
+	CheckDataDir();
+	
+	MProjectFile* file = GetProjectFileForPath(inFile);
+	if (file == nil)
+		THROW(("File is not part of the target project"));
+
+	assert(mCurrentTarget != nil);
+	MProjectTarget& target = *mCurrentTarget;
+	
+	vector<string> argv;
+	
+	const char* CC = getenv("CC");
+	if (CC == nil)
+		CC = "/usr/bin/c++";
+	
+	argv.push_back(CC);
+
+	transform(target.GetDefines().begin(), target.GetDefines().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-D"));
+
+	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
+		back_inserter(argv), bind1st(plus<string>(), "-W"));
+
+	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+
+	argv.push_back("-c");
+	argv.push_back("-o");
+	argv.push_back("/dev/null");
+	
+	if (target.IsAnsiStrict())
+		argv.push_back("-ansi");
+	
+	if (target.IsPedantic())
+		argv.push_back("-pedantic");
+	
+	argv.push_back("-fmessage-length=132");
+	
+	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
+		argv.push_back(kIQuote + p->string());
+
+	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
+		argv.push_back(kI + p->string());
+	
+	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
+		argv.push_back(kF + p->string());
+	
+	argv.push_back(inFile.string());
+
+	StartJob(new MProjectCompileJob(
+		string("Checking syntax of ") + inFile.leaf(), this, argv, file));
 }
 
 // ---------------------------------------------------------------------------

@@ -63,14 +63,15 @@ using namespace std;
 
 void MProjectExecJob::Execute()
 {
-cout << "About to execute:" << endl;
-copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, " "));
-cout << endl;
-
-	int ifd[2], ofd[2];
+//cout << "About to execute:" << endl;
+//copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, " "));
+//cout << endl;
+//
+	int ifd[2], ofd[2], efd[2];
 	
 	pipe(ifd);
 	pipe(ofd);
+	pipe(efd);
 	
 	int pid = fork();
 	
@@ -80,6 +81,8 @@ cout << endl;
 		close(ifd[1]);
 		close(ofd[0]);
 		close(ofd[1]);
+		close(efd[0]);
+		close(efd[1]);
 		
 		THROW(("fork failed"));
 	}
@@ -95,9 +98,12 @@ cout << endl;
 			close(ifd[1]);
 
 			dup2(ofd[1], STDOUT_FILENO);
-			dup2(ofd[1], STDERR_FILENO);
 			close(ofd[0]);
 			close(ofd[1]);
+
+			dup2(efd[1], STDERR_FILENO);
+			close(efd[0]);
+			close(efd[1]);
 
 			vector<const char*> argv;
 			for (vector<string>::iterator a = mArgv.begin(); a != mArgv.end(); ++a)
@@ -115,6 +121,8 @@ cout << endl;
 		}
 		exit(-1);
 	}
+
+	mPID = pid;
 	
 	close(ifd[0]);
 	close(ifd[1]);
@@ -122,11 +130,17 @@ cout << endl;
 	close(ofd[1]);
 	int flags = fcntl(ofd[0], F_GETFL, 0);
 	fcntl(ofd[0], F_SETFL, flags | O_NONBLOCK);
-	
+
 	mStdOutDone = false;
-	mPID = pid;
 	mStdOut = ofd[0];
 
+	close(efd[1]);
+	flags = fcntl(efd[0], F_GETFL, 0);
+	fcntl(efd[0], F_SETFL, flags | O_NONBLOCK);
+
+	mStdErrDone = false;
+	mStdErr = efd[0];
+		
 	mProject->SetStatus(mTitle, true);
 }
 
@@ -164,23 +178,48 @@ bool MProjectExecJob::IsDone()
 			r = read(mStdOut, buffer, sizeof(buffer));
 
 			if (r > 0)
+				eStdOut(buffer, r);
+			else if (r == 0 or errno != EAGAIN)
+			{
+				if (mStdOut >= 0)
+					close(mStdOut);
+				mStdOut = -1;
+				mStdOutDone = true;
+			}
+			else
+				break;
+		}
+	}
+	
+	if (not mStdErrDone)
+	{
+		char buffer[10240];
+		int r, n;
+		
+		n = 0;
+		while (not mStdErrDone)
+		{
+			r = read(mStdErr, buffer, sizeof(buffer));
+
+			if (r > 0)
 			{
 				MMessageWindow* messageWindow = mProject->GetMessageWindow();
 				messageWindow->AddStdErr(buffer, r);
 			}
 			else if (r == 0 or errno != EAGAIN)
-				mStdOutDone = true;
+			{
+				if (mStdErr >= 0)
+					close(mStdErr);
+				mStdErr = -1;
+				mStdErrDone = true;
+			}
 			else
 				break;
 		}
 	}
 
-	if (mStdOutDone)
+	if (mStdOutDone and mStdErrDone)
 	{
-		if (mStdOut >= 0)
-			close(mStdOut);
-		mStdOut = -1;
-		
 		if (mPID >= 0)
 		{
 			waitpid(mPID, &mStatus, WNOHANG);
@@ -190,7 +229,7 @@ bool MProjectExecJob::IsDone()
 			mStatus = 0;
 	}
 	
-	return mStdOutDone;
+	return mStdOutDone and mStdErrDone;
 }
 
 // ---------------------------------------------------------------------------

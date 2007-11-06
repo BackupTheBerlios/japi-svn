@@ -101,6 +101,7 @@ const uint32
 	cmd_CheckSyntax =			'Psyn',
 	cmd_Preprocess =			'Ppre',
 	cmd_Compile =				'Pcmp',
+	cmd_Disassemble =			'Pdis',
 	cmd_BringUpToDate =			'Pupd',
 	cmd_Make =					'Pmak',
 	cmd_MakeClean =				'Pcln',

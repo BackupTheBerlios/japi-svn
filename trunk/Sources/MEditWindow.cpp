@@ -151,6 +151,17 @@ MEditWindow::MEditWindow()
 	
 	mMenubar.AddMenu(markMenu);
 
+	MMenu* projectMenu = new MMenu("Project");
+	
+	projectMenu->AppendItem("Add to Project", cmd_AddFileToProject);
+	projectMenu->AppendSeparator();
+	projectMenu->AppendItem("Preprocess", cmd_Preprocess);
+	projectMenu->AppendItem("Check Syntax", cmd_CheckSyntax);
+	projectMenu->AppendItem("Compile", cmd_Compile);
+	projectMenu->AppendItem("Dissassemble", cmd_Disassemble);
+	
+	mMenubar.AddMenu(projectMenu);
+
 	MMenu* windowMenu = new MMenu("Window");
 	
 	windowMenu->AppendItem("Worksheet", cmd_Worksheet);	

@@ -48,7 +48,6 @@
 #include "MView.h"
 #include "MScrollBar.h"
 #include "MDevice.h"
-#include "MFont.h"
 
 using namespace std;
 

@@ -92,21 +92,21 @@ MAcceleratorTable::MAcceleratorTable()
 {
 	RegisterAcceleratorKey(cmd_New, GDK_N, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Open, GDK_O, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_OpenIncludeFile, GDK_d, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_OpenIncludeFile, GDK_D, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_SwitchHeaderSource, GDK_1, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Close, GDK_W, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_CloseAll, GDK_w, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_CloseAll, GDK_W, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Save, GDK_S, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_SaveAll, GDK_s, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_SaveAll, GDK_S, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Quit, GDK_Q, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Undo, GDK_Z, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_Redo, GDK_z, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_Redo, GDK_Z, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Cut, GDK_X, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_CutAppend, GDK_x, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_CutAppend, GDK_X, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Copy, GDK_C, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_CopyAppend, GDK_c, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_CopyAppend, GDK_C, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_Paste, GDK_V, GDK_CONTROL_MASK);
-	RegisterAcceleratorKey(cmd_PasteNext, GDK_v, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+	RegisterAcceleratorKey(cmd_PasteNext, GDK_V, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_SelectAll, GDK_A, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_Balance, GDK_B, GDK_CONTROL_MASK);
 	RegisterAcceleratorKey(cmd_ShiftLeft, GDK_bracketleft, GDK_CONTROL_MASK);
@@ -131,6 +131,11 @@ MAcceleratorTable::MAcceleratorTable()
 	RegisterAcceleratorKey(cmd_JumpToNextMark, GDK_F2, 0);
 	RegisterAcceleratorKey(cmd_JumpToPrevMark, GDK_F2, GDK_SHIFT_MASK);
 	RegisterAcceleratorKey(cmd_MarkLine, GDK_F1, 0);
+	
+	RegisterAcceleratorKey(cmd_BringUpToDate, GDK_U, GDK_CONTROL_MASK);
+	RegisterAcceleratorKey(cmd_Compile, GDK_K, GDK_CONTROL_MASK);
+	RegisterAcceleratorKey(cmd_CheckSyntax, GDK_semicolon, GDK_CONTROL_MASK);
+	RegisterAcceleratorKey(cmd_Make, GDK_M, GDK_CONTROL_MASK | GDK_MOD1_MASK);
 	
 	RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
 

@@ -75,17 +75,23 @@ struct MProjectExecJob : public MProjectJob
 								, mArgv(inArgv)
 								, mPID(-1)
 								, mStdOut(-1)
-								, mStdOutDone(false) {}
+								, mStdOutDone(false)
+								, mStdErr(-1)
+								, mStdErrDone(false) {}
 
 	virtual void			Execute();
 	virtual void			Kill();
 	virtual bool			IsDone();
+
+	MEventOut<void(const char* inText, uint32 inSize)>	eStdOut;
 
 	std::vector<std::string>
 							mArgv;
 	int						mPID;
 	int						mStdOut;
 	bool					mStdOutDone;
+	int						mStdErr;
+	bool					mStdErrDone;
 };
 
 // ---------------------------------------------------------------------------

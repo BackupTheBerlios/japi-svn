@@ -105,8 +105,8 @@ MTextView::MTextView(
 	
 	, mController(nil)
 	, mDocument(nil)
-	, mLineHeight(10)
 	, mVScrollBar(inVScrollBar)
+	, mLineHeight(10)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
 	, mClickMode(eSelectNone)

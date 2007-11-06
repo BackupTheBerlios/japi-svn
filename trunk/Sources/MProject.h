@@ -98,7 +98,16 @@ class MProject : public MWindow, public MSaverMixin
 
 	void				StopBuilding();
 
+	void				Preprocess(
+							const MPath&		inFile);
+
+	void				CheckSyntax(
+							const MPath&		inFile);
+
 	void				Compile(
+							const MPath&		inFile);
+
+	void				Disassemble(
 							const MPath&		inFile);
 
 	bool				IsFileInProject(

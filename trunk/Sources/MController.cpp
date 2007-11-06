@@ -372,10 +372,25 @@ bool MController::ProcessCommand(
 	//			break;
 	//		}
 	//#endif
-			
+
+			case cmd_Preprocess:
+				if (project != nil)
+					project->Preprocess(mDocument->GetURL());
+				break;
+				
+			case cmd_CheckSyntax:
+				if (project != nil)
+					project->CheckSyntax(mDocument->GetURL());
+				break;
+				
 			case cmd_Compile:
 				if (project != nil)
 					project->Compile(mDocument->GetURL());
+				break;
+
+			case cmd_Disassemble:
+				if (project != nil)
+					project->Disassemble(mDocument->GetURL());
 				break;
 	
 			default:
@@ -481,7 +496,10 @@ bool MController::UpdateCommandStatus(
 			outChecked = mDocument->GetSoftwrap();
 			break;
 
+		case cmd_Preprocess:
 		case cmd_Compile:
+		case cmd_CheckSyntax:
+		case cmd_Disassemble:
 			outEnabled =
 				project != nil and
 				project->IsFileInProject(mDocument->GetURL());
