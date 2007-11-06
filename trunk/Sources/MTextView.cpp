@@ -339,7 +339,7 @@ bool MTextView::OnExposeEvent(
 
 	MRect update(inEvent->area);
 	
-	MDevice dev(this, update);
+	MDevice dev(this, bounds);
 	
 	if (not mDrawForDragImage)
 		dev.EraseRect(bounds);

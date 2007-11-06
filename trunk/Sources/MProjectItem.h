@@ -36,7 +36,7 @@
 #include "MPatriciaTree.h"
 #include "MP2PEvents.h"
 
-typedef MPatriciaTree<time_t> MModDateCache;
+typedef MPatriciaTree<double> MModDateCache;
 
 // ---------------------------------------------------------------------------
 //	MProjectItem

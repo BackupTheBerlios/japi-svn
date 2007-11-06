@@ -37,8 +37,6 @@
 #include "MCarbonEvents.h"
 #include "MP2PEvents.h"
 
-class MColorSwatch;
-
 class MPrefsDialog : public MDialog
 {
   public:
@@ -66,17 +64,17 @@ class MPrefsDialog : public MDialog
 
 	void				Initialize();
 	
-	void				SelectPage(UInt32 inPageID);
-	
-	MColorSwatch*		MakeSwatch(UInt32 inID, MColor inColor);
+	void				SelectPage(
+							uint32			inPageID);
 	
 	virtual bool		OKClicked();
+
 	virtual bool		CancelClicked();
 
-	virtual OSStatus	DoControlHit(EventRef inEvent);
+	virtual void		ButtonClicked(
+							uint32			inButtonID);
 
-	UInt32				mCurrentPage;
-	MColorSwatch*		mColorSwatches[kSwatchCount];
+	uint32				mCurrentPage;
 };
 
 #endif

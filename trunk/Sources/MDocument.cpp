@@ -1401,44 +1401,52 @@ uint32 MDocument::FindLineBreak(
 
 	MTextBuffer::const_iterator t = mText.begin() + inFromOffset;
 	
+	uint32 tabCount = 0;
+	
 	while (t != mText.end() and *t != '\n')
+	{
+		if (*t == '\t')
+			++tabCount;
 		++t;
+	}
 	
 	uint32 result = (t - mText.begin()) + 1;
 	
 	if (GetSoftwrap() and mTargetTextView != nil and result > inFromOffset + 1)
 	{
-		uint32 width = mTargetTextView->GetWrapWidth();
+		int32 width = mTargetTextView->GetWrapWidth();
 		
-		width -= static_cast<uint32>(inIndent * mCharsPerTab * mCharWidth);
-		
-		string txt;
-		uint32 l = result - inFromOffset;
-		if (inFromOffset + l > mText.GetSize())
-			l = mText.GetSize() - inFromOffset;
-		
-		MDevice dev;
-		(void)GetStyledText(inFromOffset, l, inState, dev, txt);
-		
-//		uint32 s = 0;
-//		while (s < txt.length() and txt[s] == '\t' and width > mTabWidth)
-//		{
-//			width -= static_cast<uint32>(mTabWidth);
-//			++s;
-//		}
-//		
-//		if (width <= mTabWidth)
-//			result = inFromOffset + s;
-//		else
-//		{
-			uint32 br;
-			if (dev.BreakLine(width, br) and
-				//::ATSUBreakLine(mTextLayout, s, width, false, &br) == noErr and
-				br < txt.length() - 1)
+		width -= inIndent * mCharsPerTab * mCharWidth;
+
+		if (tabCount * mTabWidth > width)
+		{
+			tabCount = width / mTabWidth;
+			result = inFromOffset + tabCount;
+		}
+		else
+		{
+			inFromOffset += tabCount;
+			
+			width -= tabCount * mTabWidth;
+	
+			uint32 l = result - inFromOffset;
+			if (inFromOffset + l > mText.GetSize())
+				l = mText.GetSize() - inFromOffset;
+	
+			if (width <= mTabWidth)
+				result = inFromOffset + tabCount;
+			else
 			{
-				result = inFromOffset + br;
+				string txt;
+				MDevice dev;
+	
+				(void)GetStyledText(inFromOffset, l, inState, dev, txt);
+	
+				uint32 br;
+				if (dev.BreakLine(width, br))
+					result = inFromOffset + br;
 			}
-//		}
+		}
 	}
 	
 	return result;

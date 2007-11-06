@@ -1,11 +1,14 @@
 ﻿Te doen
 
-- project afronden, bugs fixen
-- state informatie in project area opslaan
-- soft wrapping
-- verticaal scrollen
-- scrollen in lange documenten
+- preferences dialog
+- project afronden (refactor?), bugs fixen
+- state informatie in project area opslaan? Ergens anders?
+- onzichtbare tekens tekenen
 - drag&drop
 - entab/detab
+- upper/lower case
+- truncate strings in lijsten
+
 - split windows?
-- Venster positie bewaren
+
+- xml parser: pad in popup?

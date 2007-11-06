@@ -33,7 +33,6 @@
 #include "Japie.h"
 
 #include "MGlobals.h"
-#include "MColorSwatch.h"
 #include "MPrefsDialog.h"
 #include "MLanguage.h"
 #include "MUtils.h"
@@ -43,12 +42,12 @@ using namespace std;
 
 namespace {
 
-const UInt32
+const uint32
 	kPageIDs[] = { 0, 128, 129, 130, 131, 132 },
-	kPageCount = sizeof(kPageIDs) / sizeof(UInt32) - 1,
+	kPageCount = sizeof(kPageIDs) / sizeof(uint32) - 1,
 	kTabControlID = 140;
 
-const UInt32
+const uint32
 	kTabWidthEditTextID			= 101,
 	kTabEntersSpacesCheckboxID	= 102,
 	kSpacesPerTabEditTextID		= 103,
@@ -76,6 +75,9 @@ MEventOut<void()>	MPrefsDialog::ePrefsChanged;
 
 MPrefsDialog::MPrefsDialog()
 {
+	SetTitle("Preferences");
+	
+	
 }
 
 void MPrefsDialog::Create()
@@ -89,9 +91,7 @@ void MPrefsDialog::Create()
 	
 void MPrefsDialog::Initialize()
 {
-	MView::RegisterSubclass<MColorSwatch>();
-	
-	MDialog::Initialize(CFSTR("Preferences"));
+//	MDialog::Initialize(CFSTR("Preferences"));
 
 	// set up the first page
 	
@@ -145,7 +145,7 @@ void MPrefsDialog::Initialize()
 	SelectPage(1);
 }
 
-MColorSwatch* MPrefsDialog::MakeSwatch(UInt32 inID, MColor inColor)
+MColorSwatch* MPrefsDialog::MakeSwatch(uint32 inID, MColor inColor)
 {
 	ControlRef placeholder = FindControl(inID);
 	
@@ -161,11 +161,11 @@ MColorSwatch* MPrefsDialog::MakeSwatch(UInt32 inID, MColor inColor)
 	return result;
 }
 
-void MPrefsDialog::SelectPage(UInt32 inPage)
+void MPrefsDialog::SelectPage(uint32 inPage)
 {
 	ControlRef select = nil;
 	
-	for (UInt32 page = 1; page <= kPageCount; ++page)
+	for (uint32 page = 1; page <= kPageCount; ++page)
 	{
 		ControlRef pane = FindControl(kPageIDs[page]);
 		
@@ -222,7 +222,7 @@ bool MPrefsDialog::OKClicked()
 	string s;
 	
 	GetText(kTabWidthEditTextID, s);
-	UInt32 n = StringToNum(s);
+	uint32 n = StringToNum(s);
 	if (n > 0 and n < 100)
 		Preferences::SetInteger("chars per tab", gCharsPerTab = n);
 	

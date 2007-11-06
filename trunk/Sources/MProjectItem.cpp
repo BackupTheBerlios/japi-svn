@@ -37,8 +37,8 @@
 #include <stack>
 
 #include <boost/bind.hpp>
-#include <boost/regex.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <pcre.h>
 
 #include "MFile.h"
 #include "MProjectItem.h"
@@ -48,9 +48,103 @@ using namespace std;
 
 namespace {
 
-const boost::regex
-	kPathRE("\\s*(('([^']+)')|[^\\s]+)");
+const char kPathRE[] = "\\s*(('([^']+)')|[^\\s]+)";
 	
+class MPathIterator : public boost::iterator_facade<MPathIterator, string,
+		boost::forward_traversal_tag, string>
+{
+  public:
+					MPathIterator();		// means 'end'
+	
+					MPathIterator(
+						const string&		inData);
+					
+  private:
+	
+	friend class boost::iterator_core_access;
+
+	string			dereference() const;
+
+	void			increment();
+	bool			equal(
+						const MPathIterator&	rhs) const;
+
+	static pcre*		sPattern;
+	static pcre_extra*	sInfo;
+
+	const string*		mData;
+	uint32				mOffset;
+	uint32				mLength;
+};
+
+pcre*		MPathIterator::sPattern = nil;
+pcre_extra*	MPathIterator::sInfo = nil;
+
+MPathIterator::MPathIterator()
+	: mData(nil)
+	, mOffset(0)
+	, mLength(0)
+{
+}
+
+MPathIterator::MPathIterator(
+	const string&		inData)
+	: mData(&inData)
+	, mOffset(0)
+	, mLength(0)
+{
+	if (sPattern == nil)
+	{
+		const char* errmsg;
+		int errcode, erroffset;
+		
+		sPattern = pcre_compile2(kPathRE, PCRE_MULTILINE | PCRE_UTF8,
+			&errcode, &errmsg, &erroffset, nil);
+		
+		if (sPattern == nil or errcode != 0)
+			THROW(("Error compiling pattern: %s", errmsg));
+		
+		sInfo = pcre_study(sPattern, 0, &errmsg);
+		if (errcode != 0)
+			THROW(("Error studying pattern: %s", errmsg));
+	}
+
+	increment();
+}
+
+string MPathIterator::dereference() const
+{
+	return mData->substr(mOffset, mLength);
+}
+
+void MPathIterator::increment()
+{
+	int matches[33] = {};
+	
+	assert(mData != nil);
+	
+	if (pcre_exec(sPattern, sInfo, mData->c_str(), mData->length(),
+		mOffset + mLength, 0, matches, 33) >= 0)
+	{
+		mOffset = matches[2];
+		mLength = matches[3] - matches[2];
+	}
+	else
+	{
+		mData = nil;
+		mOffset = 0;
+		mLength = 0;
+	}
+}
+
+bool MPathIterator::equal(const MPathIterator& rhs) const
+{
+	return
+		mData == rhs.mData and
+		mOffset == rhs.mOffset and
+		mLength == rhs.mLength;
+}
+
 }
 
 // ---------------------------------------------------------------------------
@@ -215,13 +309,12 @@ void MProjectFile::CheckCompilationResult()
 			}
 		}
 		
-		boost::sregex_iterator m1(text.begin(), text.end(), kPathRE);
-		boost::sregex_iterator m2;
+		MPathIterator m1(text), m2;
 		
 		while (m1 != m2)
 		{
-			string path = m1->str(1);
-			
+			string path = *m1;
+
 			if (path.length() > 2 and path[0] == '\'' and path[path.length() - 1] == '\'')
 				path = path.substr(1, path.length() - 2);
 			

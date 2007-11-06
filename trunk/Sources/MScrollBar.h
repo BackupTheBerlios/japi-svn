@@ -7,7 +7,7 @@
 #define MSCROLLBAR_H
 
 #include "MView.h"
-#include "MCallBacks.h"
+#include "MCallbacks.h"
 
 class MScrollBar : public MView
 {

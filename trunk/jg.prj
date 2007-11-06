@@ -96,36 +96,20 @@
 		</group>
 		<group name="Libraries">
 			<link>xml2</link>
-<link>gtk-x11-2.0</link>
-<link>gdk-x11-2.0</link>
-<link>atk-1.0</link>
-<link>gdk_pixbuf-2.0</link>
-<link>pangocairo-1.0</link>
-<link>pango-1.0</link>
-<link>cairo</link>
-<link>gobject-2.0</link>
-<link>gmodule-2.0</link>
-<link>glib-2.0</link>
-<link>intl</link>
-<link>iconv</link>
-<!--			<file>libxml2.dylib</file>-->
-<!--			<file>libgtk-x11-2.0.dylib</file>-->
-<!--			<file>libgdk-x11-2.0.dylib</file>-->
-<!--			<file>libatk-1.0.dylib</file>-->
-<!--			<file>libgdk_pixbuf-2.0.dylib</file>-->
-<!--			<file>libm.dylib</file>-->
-<!--			<file>libpangocairo-1.0.dylib</file>-->
-<!--			<file>libpango-1.0.dylib</file>-->
-<!--			<file>libcairo.dylib</file>-->
-<!--			<file>libgobject-2.0.dylib</file>-->
-<!--			<file>libgmodule-2.0.dylib</file>-->
-<!--			<file>libglib-2.0.dylib</file>-->
-<!--			<file>libintl.dylib</file>-->
-<!--			<file>libiconv.dylib</file>-->
-<!--			<file>libpcre.0.0.1.dylib</file>-->
-			<file>libboost_filesystem-mt.a</file>
+			<link>gtk-x11-2.0</link>
+			<link>gdk-x11-2.0</link>
+			<link>atk-1.0</link>
+			<link>gdk_pixbuf-2.0</link>
+			<link>pangocairo-1.0</link>
+			<link>pango-1.0</link>
+			<link>cairo</link>
+			<link>gobject-2.0</link>
+			<link>gmodule-2.0</link>
+			<link>dl</link>
+			<link>glib-2.0</link>
+			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
-			<file>libboost_regex-mt.a</file>
+			<file>libboost_regex.a</file>
 			<file>libpcre.a</file>
 		</group>
 	</files>
@@ -146,6 +130,8 @@
 			<defines>
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
+				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -168,6 +154,8 @@
 			<defines>
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
+				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
