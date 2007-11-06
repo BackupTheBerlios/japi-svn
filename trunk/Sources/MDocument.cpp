@@ -2303,10 +2303,30 @@ void MDocument::DoUncomment()
 								
 void MDocument::DoEntab()
 {
+	StartAction("Entab");
+
+	uint32 offset = mSelection.GetMinOffset();
+	uint32 length = mSelection.GetMaxOffset() - offset;
+	
+	mText.Entab(offset, length, mCharsPerTab);
+	
+	Select(offset, offset + length);
+	
+	FinishAction();
 }
 								
 void MDocument::DoDetab()
 {
+	StartAction("Detab");
+
+	uint32 offset = mSelection.GetMinOffset();
+	uint32 length = mSelection.GetMaxOffset() - offset;
+	
+	mText.Detab(offset, length, mCharsPerTab);
+	
+	Select(offset, offset + length);
+	
+	FinishAction();
 }
 								
 void MDocument::DoCut(bool inAppend)

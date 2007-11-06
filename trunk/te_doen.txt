@@ -12,6 +12,9 @@
 - upper/lower case
 - truncate strings in lijsten
 - resources/localisatie
+- context menu's
+
+- clean up code na leaks test
 
 - split windows?
 

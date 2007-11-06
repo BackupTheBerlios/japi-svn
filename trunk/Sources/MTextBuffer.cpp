@@ -2028,3 +2028,75 @@ void MTextBuffer::SetEncoding(
 {
 	mEncoding = inEncoding;
 }
+
+void MTextBuffer::Entab(
+	uint32			inPosition,
+	uint32&			ioLength,
+	uint32			inCharsPerTab)
+{
+	int column = 0;
+	uint32 offset = inPosition;
+	uint32 end = inPosition + ioLength;
+	
+	while (offset < end)
+	{
+		switch (GetChar(offset))
+		{
+			case ' ':
+			{
+				uint32 spaces = 1;
+				uint32 savedOffset = offset;
+				
+				++offset;
+	
+				while (offset < end and
+					   (column & inCharsPerTab) != 0 and
+					   GetChar(offset) == ' ')
+				{
+					++spaces;
+					++column;
+					++offset;
+				}
+				
+				if (spaces > 1 and (column % inCharsPerTab) == 0)
+				{
+					Delete(savedOffset, offset - savedOffset);
+					Insert(savedOffset, "\t", 1);
+					end -= offset - savedOffset - 1;
+				}
+				else if (GetChar(offset) == '\t')
+				{
+					Delete(savedOffset, offset);
+					end -= offset - savedOffset;
+					column = inCharsPerTab * ((column / inCharsPerTab) + 1);
+				}
+				break;
+			}
+
+			case '\t':
+				column = inCharsPerTab * ((column / inCharsPerTab) + 1);
+				++offset;
+				break;
+
+			case '\n':
+				column = 0;
+				++offset;
+				break;
+
+			default:
+				offset = NextCursorPosition(offset, eMoveOneCharacter);
+				++column;
+				break;
+		}
+	}
+	
+	ioLength = end - inPosition;
+}
+
+void MTextBuffer::Detab(
+	uint32			inPosition,
+	uint32&			ioLength,
+	uint32			inCharsPerTab)
+{
+}
+

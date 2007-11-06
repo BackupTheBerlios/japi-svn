@@ -211,6 +211,16 @@ class MTextBuffer
 					char*			outText,
 					uint32			inLength) const;
 
+	void		Entab(
+					uint32			inPosition,
+					uint32&			ioLength,
+					uint32			inCharsPerTab);
+
+	void		Detab(
+					uint32			inPosition,
+					uint32&			ioLength,
+					uint32			inCharsPerTab);
+
 	// wchar_t support
 	uint32		GetNextCharLength(
 					uint32			inOffset) const;
