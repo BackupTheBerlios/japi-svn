@@ -6,7 +6,6 @@
 
 class MView;
 class MTextLayout;
-class MFont;
 
 class MDevice
 {
@@ -24,9 +23,7 @@ class MDevice
 	void			Restore();
 
 	void			SetFont(
-						const MFont&		inFont);
-
-	void			SetLabelFont();
+						const std::string&	inFont);
 
 	void			SetForeColor(
 						MColor				inColor);
@@ -72,11 +69,6 @@ class MDevice
 						float				inY,
 						bool				inTruncate = false);
 
-	void			DrawLabel(
-						const std::string&	inText,
-						float				inX,
-						float				inY);
-	
 	uint32			GetStringWidth(
 						const std::string&	inText);
 

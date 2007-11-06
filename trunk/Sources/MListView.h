@@ -36,7 +36,7 @@
 #include <vector>
 #include <string>
 
-#include "MDrawingArea.h"
+#include "MView.h"
 #include "MP2PEvents.h"
 #include "MCallbacks.h"
 #include "MFile.h"

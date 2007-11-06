@@ -1,5 +1,8 @@
 ﻿Te doen
 
+- paste/paste next werkt niet
+- shift lines gaat erg vaak mis
+
 - preferences dialog
 - project afronden (refactor?), bugs fixen
 - state informatie in project area opslaan? Ergens anders?
@@ -8,6 +11,7 @@
 - entab/detab
 - upper/lower case
 - truncate strings in lijsten
+- resources/localisatie
 
 - split windows?
 

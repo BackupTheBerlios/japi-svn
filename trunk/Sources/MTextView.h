@@ -35,9 +35,9 @@
 #pragma once
 
 #include "MColor.h"
-#include "MDrawingArea.h"
 #include "MHandler.h"
 #include "MP2PEvents.h"
+#include "MView.h"
 #include "MSelection.h"
 
 class MDocument;
@@ -46,7 +46,7 @@ class MController;
 class MDevice;
 class MScrollBar;
 
-class MTextView : public MDrawingArea, public MHandler
+class MTextView : public MView, public MHandler
 {
   public:
 						MTextView(
@@ -160,7 +160,7 @@ class MTextView : public MDrawingArea, public MHandler
 							MSelection		inNewSelection,
 							std::string		inRangeName);
 
-	void				Scroll(
+	void				ScrollMessage(
 							MScrollMessage	inMessage);
 
 	void				ShiftLines(

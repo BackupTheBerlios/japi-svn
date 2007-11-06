@@ -3,9 +3,7 @@
 #include <cmath>
 
 #include "MDevice.h"
-#include "MDrawingArea.h"
-#include "MFont.h"
-#include "MDrawingArea.h"
+#include "MView.h"
 #include "MWindow.h"
 #include "MGlobals.h"
 
@@ -24,7 +22,7 @@ class MDummyWindow : public MWindow
 	static MDummyWindow*
 					Instance();
 	
-	MDrawingArea*	GetDrawingArea()	{ return mDrawingArea; }
+	MView*			GetDrawingArea()	{ return mDrawingArea; }
 	
 	GtkWidget*		GetLabel()			{ return mLabel; }
 	
@@ -33,7 +31,7 @@ class MDummyWindow : public MWindow
   private:
 	
 	GtkWidget*		mVBox;
-	MDrawingArea*	mDrawingArea;
+	MView*			mDrawingArea;
 	GtkWidget*		mLabel;
 };
 
@@ -42,7 +40,7 @@ MDummyWindow::MDummyWindow()
 	mVBox = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 	
-	mDrawingArea = new MDrawingArea(10, 10);
+	mDrawingArea = new MView(10, 10);
 	gtk_container_add(GTK_CONTAINER(mVBox), mDrawingArea->GetGtkWidget());
 	
 	GtkWidget* sb = gtk_statusbar_new();
@@ -70,32 +68,36 @@ MDummyWindow* MDummyWindow::Instance()
 
 struct MDeviceImp
 {
-					MDeviceImp();
+							MDeviceImp();
+				
+							MDeviceImp(
+								MView*		inView,
+								MRect		inRect);
 		
-					MDeviceImp(
-						MView*		inView,
-						MRect		inRect);
-		
-					~MDeviceImp();
+							~MDeviceImp();
 	
-	void			Init();
+	void					Init();
+
+	PangoFontMetrics*		GetMetrics();
 	
-	MDrawingArea*	mView;
-	MRect			mRect;
-	MColor			mForeColor;
-	MColor			mBackColor;
-//	MWindow*		mWindow;
-	cairo_t*		mContext;
-	PangoLayout*	mLayout;
-	PangoLanguage*	mLanguage;
-	MFont			mFont;
-	uint32			mPatternData[8][8];
+	MView*					mView;
+	MRect					mRect;
+	MColor					mForeColor;
+	MColor					mBackColor;
+//	MWindow*				mWindow;
+	cairo_t*				mContext;
+	PangoLayout*			mLayout;
+	PangoLanguage*			mLanguage;
+	PangoFontDescription*	mFont;
+	PangoFontMetrics*		mMetrics;
+	uint32					mPatternData[8][8];
 };
 
 MDeviceImp::MDeviceImp()
 	: mView(MDummyWindow::Instance()->GetDrawingArea())
 	, mRect(0, 0, 10000, 10)
-	, mFont(kFixedFont)
+	, mFont(nil)
+	, mMetrics(nil)
 {
 	Init();
 }
@@ -103,9 +105,10 @@ MDeviceImp::MDeviceImp()
 MDeviceImp::MDeviceImp(
 	MView*		inView,
 	MRect		inRect)
-	: mView(dynamic_cast<MDrawingArea*>(inView))
+	: mView(inView)
 	, mRect(inRect)
-	, mFont(kFixedFont)
+	, mFont(nil)
+	, mMetrics(nil)
 {
 	Init();
 }
@@ -131,17 +134,35 @@ void MDeviceImp::Init()
 
 	PangoContext* pc = mView->GetPangoContext();
 	mLayout = pango_layout_new(pc);
-//	pango_layout_set_font_description(mLayout, mFont);
-
-	mFont = pango_context_get_font_description(pc);
 }
 
 MDeviceImp::~MDeviceImp()
 {
+	if (mMetrics != nil)
+		pango_font_metrics_unref(mMetrics);
+	
 	if (mLayout != nil)
 		g_object_unref(mLayout);
 	
+	if (mFont != nil)
+		pango_font_description_free(mFont);
+	
 	cairo_destroy(mContext);
+}
+
+PangoFontMetrics* MDeviceImp::GetMetrics()
+{
+	if (mMetrics == nil)
+	{
+		PangoContext* pc = pango_layout_get_context(mLayout);
+		
+		if (mFont == nil)
+			mMetrics = pango_context_get_metrics(pc, pango_context_get_font_description(pc), mLanguage);
+		else
+			mMetrics = pango_context_get_metrics(pc, mFont, mLanguage);
+	}
+	
+	return mMetrics;
 }
 
 // -------------------------------------------------------------------
@@ -174,26 +195,18 @@ void MDevice::Restore()
 }
 
 void MDevice::SetFont(
-	const MFont&	inFont)
+	const string&	inFont)
 {
-	mImpl->mFont = inFont;
-	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
-}
-
-void MDevice::SetLabelFont()
-{
-	PangoLayout* labelLayout = MDummyWindow::Instance()->GetLabelLayout();
-	PangoContext* pc = pango_layout_get_context(labelLayout);
-
-	mImpl->mFont = pango_context_get_font_description(pc);
-	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
+	if (mImpl->mMetrics != nil)
+		pango_font_metrics_unref(mImpl->mMetrics);
 	
-	PangoAttrList *list = pango_layout_get_attributes(labelLayout);
-	if (list != nil)
-	{
-		pango_layout_set_attributes(mImpl->mLayout, list);
-		pango_attr_list_unref(list);
-	}
+	if (mImpl->mFont != nil)
+		pango_font_description_free(mImpl->mFont);
+	
+	mImpl->mFont = pango_font_description_from_string(inFont.c_str());
+
+	if (mImpl->mFont != nil)
+		pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
 }
 
 void MDevice::SetForeColor(
@@ -353,14 +366,9 @@ uint32 MDevice::GetAscent() const
 {
 	uint32 result = 10;
 
-	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
-	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
-
+	PangoFontMetrics* metrics = mImpl->GetMetrics();
 	if (metrics != nil)
-	{
 		result = pango_font_metrics_get_ascent(metrics) / PANGO_SCALE;
-		pango_font_metrics_unref(metrics);
-	}
 
 	return result;
 }
@@ -369,14 +377,9 @@ uint32 MDevice::GetDescent() const
 {
 	uint32 result = 10;
 
-	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
-	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
-
+	PangoFontMetrics* metrics = mImpl->GetMetrics();
 	if (metrics != nil)
-	{
 		result = pango_font_metrics_get_descent(metrics) / PANGO_SCALE;
-		pango_font_metrics_unref(metrics);
-	}
 
 	return result;
 }
@@ -390,16 +393,13 @@ uint32 MDevice::GetLineHeight() const
 {
 	uint32 result = 10;
 
-	PangoContext* pc = pango_layout_get_context(mImpl->mLayout);
-	PangoFontMetrics* metrics = pango_context_get_metrics(pc, mImpl->mFont, mImpl->mLanguage);
-
+	PangoFontMetrics* metrics = mImpl->GetMetrics();
 	if (metrics != nil)
 	{
 		uint32 ascent = pango_font_metrics_get_ascent(metrics);
 		uint32 descent = pango_font_metrics_get_descent(metrics);
-		
+
 		result = (ascent + descent) / PANGO_SCALE;
-		pango_font_metrics_unref(metrics);
 	}
 
 	return result;
@@ -422,37 +422,6 @@ void MDevice::DrawString(
 	cairo_move_to(mImpl->mContext, inX, inY);	
 
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);
-}
-
-void MDevice::DrawLabel(
-	const string&	inText,
-	float			inX,
-	float			inY)
-{
-	PangoLayout* labelLayout = MDummyWindow::Instance()->GetLabelLayout();
-	PangoContext* pc = pango_layout_get_context(labelLayout);
-
-	mImpl->mFont = pango_context_get_font_description(pc);
-	pango_layout_set_font_description(mImpl->mLayout, mImpl->mFont);
-	
-	PangoAttrList *list = pango_layout_get_attributes(labelLayout);
-	if (list != nil)
-	{
-		pango_layout_set_attributes(mImpl->mLayout, list);
-		pango_attr_list_unref(list);
-	}
-	
-	pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_END);
-	pango_layout_set_width(mImpl->mLayout, mImpl->mRect.width * PANGO_SCALE);
-	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
-	
-	GtkWidget* widget = mImpl->mView->GetGtkWidget();
-	
-	GdkRectangle area = { mImpl->mRect.x, mImpl->mRect.y, mImpl->mRect.width, mImpl->mRect.height };
-	
-	gtk_paint_layout(MDummyWindow::Instance()->GetLabel()->style,
-		widget->window, (GtkStateType)GTK_WIDGET_STATE(widget),
-		false, &area, widget, "label", inX, inY, mImpl->mLayout);
 }
 
 uint32 MDevice::GetStringWidth(

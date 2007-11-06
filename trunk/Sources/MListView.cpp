@@ -38,6 +38,7 @@
 #include "MUtils.h"
 #include "MScrollBar.h"
 #include "MDevice.h"
+#include "MPreferences.h"
 
 using namespace std;
 
@@ -192,7 +193,7 @@ typedef std::vector<MListItem>	MItemList;
 
 // the impl
 
-struct MListImp : public MDrawingArea, public MHandler
+struct MListImp : public MView, public MHandler
 {
 						MListImp(
 							MListView*		inListView,
@@ -318,7 +319,7 @@ MListImp* MListImp::sDraggingView = nil;
 MListImp::MListImp(
 	MListView*		inListView,
 	MScrollBar*		inVScrollBar)
-	: MDrawingArea(100, 100)
+	: MView(100, 100)
 	, MHandler(inListView)
 	, mList(inListView)
 	, mVScrollBar(inVScrollBar)
@@ -332,6 +333,9 @@ MListImp::MListImp(
 	, mDrawRoundEdges(false)
 {
 	MDevice dev;
+	
+	dev.SetFont(Preferences::GetString("list font", "monospace 9"));
+	
 	mItemHeight = dev.GetLineHeight() + 2;
 
 	SetCallBack(mVScrollBar->cbValueChanged, this, &MListImp::OnSBValueChanged);
@@ -624,6 +628,8 @@ bool MListImp::OnExposeEvent(
 	GetBounds(bounds);
 
 	MDevice dev(this, bounds);
+	
+	dev.SetFont(Preferences::GetString("list font", "monospace 9"));
 
 //	if (mDrawListBox)
 //	{
@@ -1203,7 +1209,7 @@ MListView::MListView(
 	: MHandler(inSuperHandler)
 	, mImpl(nil)
 {
-	SetWidget(gtk_hbox_new(false, 0), false);
+	SetWidget(gtk_hbox_new(false, 0), false, false);
 	
 	MScrollBar* scrollBar = new MScrollBar(true);
 	mImpl = new MListImp(this, scrollBar);

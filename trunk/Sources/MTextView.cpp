@@ -81,11 +81,11 @@ MColor		MTextView::sCurrentLineColor,
 
 MTextView::MTextView(
 	MScrollBar*		inVScrollBar)
-	: MDrawingArea(10, 10)
+	: MView(-1, -1)
 	, MHandler(nil)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
-	, eScroll(this, &MTextView::Scroll)
+	, eScroll(this, &MTextView::ScrollMessage)
 	, eShiftLines(this, &MTextView::ShiftLines)
 	, eInvalidateDirtyLines(this, &MTextView::InvalidateDirtyLines)
 	, eInvalidateAll(this, &MTextView::InvalidateAll)
@@ -105,6 +105,7 @@ MTextView::MTextView(
 	
 	, mController(nil)
 	, mDocument(nil)
+	, mLineHeight(10)
 	, mVScrollBar(inVScrollBar)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
@@ -618,7 +619,7 @@ void MTextView::DoScrollTo(
 	int32 dx = inX - mImageOriginX;
 	int32 dy = inY - mImageOriginY;
 	
-	gdk_window_scroll(GetGtkWidget()->window, -dx, -dy);
+	Scroll(-dx, -dy);
 	
 	mImageOriginX = inX;
 	mImageOriginY = inY;
@@ -649,11 +650,11 @@ bool MTextView::OnScrollEvent(
 	switch (inEvent->direction)
 	{
 		case GDK_SCROLL_UP:
-			Scroll(kScrollLineDown);
+			ScrollMessage(kScrollLineDown);
 			break; 
 
 		case GDK_SCROLL_DOWN:
-			Scroll(kScrollLineUp);
+			ScrollMessage(kScrollLineUp);
 			break; 
 
 		case GDK_SCROLL_LEFT:
@@ -799,7 +800,7 @@ void MTextView::InvalidateLine(
 // ---------------------------------------------------------------------------
 //	Scroll
 
-void MTextView::Scroll(MScrollMessage inCommand)
+void MTextView::ScrollMessage(MScrollMessage inCommand)
 {
 	assert(mDocument);
 	
@@ -1160,10 +1161,7 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 		fabs(dy) < bounds.height and
 		not mNeedsDisplay)
 	{
-		GdkRectangle gr = { r.x, r.y, r.width, r.height };
-		GdkRegion* rgn = gdk_region_rectangle(&gr);
-		gdk_window_move_region(GetGtkWidget()->window, rgn, 0, dy);
-		gdk_region_destroy(rgn);
+		Scroll(r, 0, dy);
 	}
 	
 	// otherwise just invalidate the entire view
@@ -1870,9 +1868,16 @@ uint32 MTextView::GetWrapWidth() const
 
 void MTextView::StylesChanged()
 {
-	MDevice dev;
-	mDescent = dev.GetDescent();
-	mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
+	if (mDocument != nil)
+	{
+		MDevice dev;
+		string txt;
+		mDocument->GetStyledText(0, dev, txt);
+		mDescent = dev.GetDescent();
+		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
+	}
+	else
+		mLineHeight = 10;
 }
 
 void MTextView::DocumentClosed()
@@ -1908,6 +1913,7 @@ void MTextView::SetDocument(MDocument* inDocument)
 		if (IsActive())
 			mDocument->SetTargetTextView(this);
 		
+		StylesChanged();
 		LineCountChanged();
 	}
 }

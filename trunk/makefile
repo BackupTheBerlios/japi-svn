@@ -33,7 +33,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
 Sources = $(wildcard Sources/*.cpp)
 
-Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp Sources/MPrefsDialog.cpp, $(Sources))
+Sources := $(filter-out Sources/MMessageQueue.cpp Sources/MStyles.cpp Sources/MPrefsDialog.cpp Sources/MDrawingArea.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

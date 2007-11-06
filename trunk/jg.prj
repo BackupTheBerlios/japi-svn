@@ -53,12 +53,10 @@
 			</group>
 			<file>MScrollBar.cpp</file>
 			<file>MView.cpp</file>
-			<file>MDrawingArea.cpp</file>
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
 			<file>MListView.cpp</file>
-			<file>MFont.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
@@ -67,6 +65,7 @@
 				<file>MGoToLineDialog.cpp</file>
 				<file>MFindAndOpenDialog.cpp</file>
 				<file>MMarkMatchingDialog.cpp</file>
+				<!--file>MPrefsDialog.cpp</file-->
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
@@ -109,7 +108,6 @@
 			<link>glib-2.0</link>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
-			<file>libboost_regex.a</file>
 			<file>libpcre.a</file>
 		</group>
 	</files>

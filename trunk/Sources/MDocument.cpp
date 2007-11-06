@@ -62,7 +62,6 @@
 #include "MMenu.h"
 #include "MProject.h"
 #include "MDevice.h"
-#include "MFont.h"
 #include "MDocClosedNotifier.h"
 
 using namespace std;
@@ -400,9 +399,11 @@ void MDocument::ReInit()
 {
 #pragma message("zet mLayout opties hier")
 	
+	mFont = Preferences::GetString("font", "monospace 9");
+	
 	MDevice device;
 	
-	device.SetFont(kFixedFont);
+	device.SetFont(mFont);
 
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetStringWidth("          ") / 10.0f;
@@ -2727,7 +2728,7 @@ void MDocument::GetStyledText(
 	MDevice&	inDevice,
 	string&		outText) const
 {
-	inDevice.SetFont(kFixedFont);
+	inDevice.SetFont(mFont);
 	
 	mText.GetText(inOffset, inLength, outText);
 

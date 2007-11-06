@@ -11,6 +11,10 @@
 class MView
 {
   public:
+					MView(
+						int32			inWidth,
+						int32			inHeight);
+
 	virtual			~MView();
 
 	GtkWidget*		GetGtkWidget() const		{ return mGtkWidget; }
@@ -38,10 +42,21 @@ class MView
 	void			Invalidate(
 						const MRect&	inRect);
 
+	void			Scroll(
+						const MRect&	inRect,
+						int32			inX,
+						int32			inY);
+
+	void			Scroll(
+						int32			inX,
+						int32			inY);
+
 	void			UpdateNow();
 
 	virtual void	Add(
 						MView*			inSubView);
+
+	PangoContext*	GetPangoContext();
 
   protected:
 
@@ -53,7 +68,8 @@ class MView
 
 	void			SetWidget(
 						GtkWidget*		inWidget,
-						bool			inCanActivate);
+						bool			inCanActivate,
+						bool			inCanDraw);
 
 	virtual void	Added();
 
@@ -84,6 +100,9 @@ class MView
 
 	virtual bool	OnRealize();
 
+	virtual bool	OnExposeEvent(
+						GdkEventExpose*	inEvent);
+
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
 	MSlot<bool(GdkEventFocus*)>			mFocusOutEvent;
 	MSlot<bool(GdkEventButton*)>		mButtonPressEvent;
@@ -93,9 +112,11 @@ class MView
 	MSlot<bool(GdkEventConfigure*)>		mConfigureEvent;
 	MSlot<bool(GdkEventScroll*)>		mScrollEvent;
 	MSlot<bool()>						mRealize;
+	MSlot<bool(GdkEventExpose*)>		mExposeEvent;
 
   private:
 	GtkWidget*		mGtkWidget;
+	PangoContext*	mPangoContext;
 };
 
 

@@ -18,9 +18,9 @@ MScrollBar::MScrollBar(
 	, mValue(0)
 {
 	if (inVertical)
-		SetWidget(gtk_vscrollbar_new(mAdjustment), false);
+		SetWidget(gtk_vscrollbar_new(mAdjustment), false, false);
 	else
-		SetWidget(gtk_hscrollbar_new(mAdjustment), false);
+		SetWidget(gtk_hscrollbar_new(mAdjustment), false, false);
 	
 	slOnValueChanged.Connect(GetGtkWidget(), "value-changed");
 }

@@ -47,7 +47,6 @@
 #include "MEditWindow.h"
 #include "MView.h"
 #include "MScrollBar.h"
-#include "MDrawingArea.h"
 #include "MDevice.h"
 #include "MFont.h"
 

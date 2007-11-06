@@ -24,9 +24,33 @@ MView::MView(
 	, mConfigureEvent(this, &MView::OnConfigureEvent)
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
+	, mExposeEvent(this, &MView::OnExposeEvent)
 	, mGtkWidget(nil)
+	, mPangoContext(nil)
 {
-	SetWidget(inWidget, inCanActivate);
+	SetWidget(inWidget, inCanActivate, false);
+}
+
+MView::MView(
+	int32		inWidth,
+	int32		inHeight)
+	: mFocusInEvent(this, &MView::OnFocusInEvent)
+	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
+	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
+	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
+	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
+	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
+	, mConfigureEvent(this, &MView::OnConfigureEvent)
+	, mScrollEvent(this, &MView::OnScrollEvent)
+	, mRealize(this, &MView::OnRealize)
+	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mGtkWidget(nil)
+	, mPangoContext(nil)
+{
+	SetWidget(gtk_drawing_area_new(), true, true);
+	
+	if (inWidth > 0 or inHeight > 0)
+		gtk_widget_set_size_request(mGtkWidget, inWidth, inHeight);
 }
 
 MView::MView()
@@ -39,13 +63,16 @@ MView::MView()
 	, mConfigureEvent(this, &MView::OnConfigureEvent)
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
+	, mExposeEvent(this, &MView::OnExposeEvent)
 	, mGtkWidget(nil)
+	, mPangoContext(nil)
 {
 }
 
 void MView::SetWidget(
 	GtkWidget*		inWidget,
-	bool			inCanActivate)
+	bool			inCanActivate,
+	bool			inCanDraw)
 {
 	assert(mGtkWidget == nil);
 	
@@ -65,10 +92,18 @@ void MView::SetWidget(
 		mScrollEvent.Connect(mGtkWidget, "scroll-event");
 		mRealize.Connect(mGtkWidget, "realize");
 	}
+	
+	if (inCanDraw)
+	{
+		mExposeEvent.Connect(mGtkWidget, "expose-event");
+		
+	}
 }
 
 MView::~MView()
 {
+	if (mPangoContext != nil)
+		g_object_unref(mPangoContext);
 }
 
 MWindow* MView::GetWindow() const
@@ -142,6 +177,27 @@ void MView::Invalidate(
 		inRect.x, inRect.y, inRect.width, inRect.height);
 }
 
+void MView::Scroll(
+	int32			inX,
+	int32			inY)
+{
+	UpdateNow();
+	gdk_window_scroll(mGtkWidget->window, inX, inY);
+}
+
+void MView::Scroll(
+	const MRect&	inRect,
+	int32			inX,
+	int32			inY)
+{
+	UpdateNow();
+
+	GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
+	GdkRegion* rgn = gdk_region_rectangle(&gr);
+	gdk_window_move_region(mGtkWidget->window, rgn, inX, inY);
+	gdk_region_destroy(rgn);
+}
+
 void MView::UpdateNow()
 {
 	GtkWidget* w = mGtkWidget; 
@@ -151,6 +207,17 @@ void MView::UpdateNow()
 		w = toplevel;
 
 	gdk_window_process_all_updates();
+}
+
+PangoContext* MView::GetPangoContext()
+{
+	if (mPangoContext == nil)
+	{
+		mPangoContext = pango_cairo_font_map_create_context(
+			PANGO_CAIRO_FONT_MAP(pango_cairo_font_map_get_default()));
+	}
+	
+	return mPangoContext;
 }
 
 void MView::Add(
@@ -226,6 +293,12 @@ bool MView::OnConfigureEvent(
 
 bool MView::OnScrollEvent(
 	GdkEventScroll*	inEvent)
+{
+	return false;
+}
+
+bool MView::OnExposeEvent(
+	GdkEventExpose*	inEvent)
 {
 	return false;
 }

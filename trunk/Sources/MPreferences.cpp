@@ -155,6 +155,8 @@ GetInteger(
 	{
 		result = inDefaultValue;
 		g_error_free(err);
+		
+		SetInteger(inName, inDefaultValue);
 	}
 	
 	return result;
@@ -168,8 +170,7 @@ SetInteger(
 	g_key_file_set_integer(IniFile::Instance(), "Settings", inName, inValue);
 }
 
-string
-GetString(
+string GetString(
 	const char*	inName,
 	string		inDefaultValue)
 {
@@ -179,7 +180,10 @@ GetString(
 	string result;
 	
 	if (data == nil)
+	{
 		result = inDefaultValue;
+		SetString(inName, inDefaultValue);
+	}
 	else
 	{
 		result = data;

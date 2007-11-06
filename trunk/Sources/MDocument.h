@@ -388,6 +388,7 @@ class MDocument
 //	boost::mutex				mMutex;
 	MTextView*					mTargetTextView;
 	MLineInfoArray				mLineInfo;
+	std::string					mFont;
 	uint32						mLineHeight;
 	float						mCharWidth;	// to be able to calculate tab widths
 	float						mTabWidth;
