@@ -69,6 +69,7 @@
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
+			<file>MSound.cpp</file>
 			<group name="Project">
 				<file>MProject.cpp</file>
 				<file>MProjectInfoDialog.cpp</file>

@@ -51,7 +51,7 @@
 #include "MCommands.h"
 #include "MMessageWindow.h"
 #include "MUtils.h"
-//#include "MSound.h"
+#include "MSound.h"
 #include "MProjectItem.h"
 #include "MProjectTarget.h"
 #include "MProjectJob.h"
@@ -2077,10 +2077,10 @@ void MProject::Poll(
 	{
 		if (mCurrentJob->IsDone())
 		{
-//			if (mCurrentJob->mStatus == 0)
-//				PlaySound("Ping");
-//			else
-//				PlaySound("Basso");
+			if (mCurrentJob->mStatus == 0)
+				PlaySound("Ping");
+			else
+				PlaySound("Basso");
 
 			mCurrentJob.reset(nil);
 			SetStatus("", false);
