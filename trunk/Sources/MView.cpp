@@ -94,10 +94,7 @@ void MView::SetWidget(
 	}
 	
 	if (inCanDraw)
-	{
 		mExposeEvent.Connect(mGtkWidget, "expose-event");
-		
-	}
 }
 
 MView::~MView()
@@ -182,6 +179,7 @@ void MView::Scroll(
 	int32			inY)
 {
 	UpdateNow();
+
 	gdk_window_scroll(mGtkWidget->window, inX, inY);
 }
 

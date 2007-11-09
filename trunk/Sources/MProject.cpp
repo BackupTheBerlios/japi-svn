@@ -2078,9 +2078,9 @@ void MProject::Poll(
 		if (mCurrentJob->IsDone())
 		{
 			if (mCurrentJob->mStatus == 0)
-				PlaySound("Ping");
+				PlaySound("success");
 			else
-				PlaySound("Basso");
+				PlaySound("failure");
 
 			mCurrentJob.reset(nil);
 			SetStatus("", false);

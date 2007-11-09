@@ -1045,20 +1045,6 @@ void MTextBuffer::GetText(
 		outText.append(mData + offset2, mData + offset2 + cnt2);
 }
 
-const bool kCharBreakTable[10][10] = {
-	//	CR	LF	Cnt	Ext	L	V	T	LV	LVT	Oth
-	{	1,	0,	1,	1,	1,	1,	1,	1,	1,	1	 },		// CR
-	{	1,	1,	1,	1,	1,	1,	1,	1,	1,	1	 },		// LF
-	{	1,	1,	1,	1,	1,	1,	1,	1,	1,	1	 },		// Control
-	{	1,	1,	1,	0,	1,	1,	1,	1,	1,	1	 },		// Extend
-	{	1,	1,	1,	0,	0,	0,	1,	0,	0,	1	 },		// L
-	{	1,	1,	1,	0,	1,	0,	0,	1,	1,	1	 },		// V
-	{	1,	1,	1,	0,	1,	1,	0,	1,	1,	1	 },		// T
-	{	1,	1,	1,	0,	1,	0,	0,	1,	1,	1	 },		// LV
-	{	1,	1,	1,	0,	1,	1,	0,	1,	1,	1	 },		// LVT
-	{	1,	1,	1,	0,	1,	1,	1,	1,	1,	1	 },		// Other
-};
-
 uint32 MTextBuffer::NextCursorPosition(
 	uint32			inOffset,
 	CursorMovement	inMovement) const
@@ -2028,75 +2014,3 @@ void MTextBuffer::SetEncoding(
 {
 	mEncoding = inEncoding;
 }
-
-void MTextBuffer::Entab(
-	uint32			inPosition,
-	uint32&			ioLength,
-	uint32			inCharsPerTab)
-{
-	int column = 0;
-	uint32 offset = inPosition;
-	uint32 end = inPosition + ioLength;
-	
-	while (offset < end)
-	{
-		switch (GetChar(offset))
-		{
-			case ' ':
-			{
-				uint32 spaces = 1;
-				uint32 savedOffset = offset;
-				
-				++offset;
-	
-				while (offset < end and
-					   (column & inCharsPerTab) != 0 and
-					   GetChar(offset) == ' ')
-				{
-					++spaces;
-					++column;
-					++offset;
-				}
-				
-				if (spaces > 1 and (column % inCharsPerTab) == 0)
-				{
-					Delete(savedOffset, offset - savedOffset);
-					Insert(savedOffset, "\t", 1);
-					end -= offset - savedOffset - 1;
-				}
-				else if (GetChar(offset) == '\t')
-				{
-					Delete(savedOffset, offset);
-					end -= offset - savedOffset;
-					column = inCharsPerTab * ((column / inCharsPerTab) + 1);
-				}
-				break;
-			}
-
-			case '\t':
-				column = inCharsPerTab * ((column / inCharsPerTab) + 1);
-				++offset;
-				break;
-
-			case '\n':
-				column = 0;
-				++offset;
-				break;
-
-			default:
-				offset = NextCursorPosition(offset, eMoveOneCharacter);
-				++column;
-				break;
-		}
-	}
-	
-	ioLength = end - inPosition;
-}
-
-void MTextBuffer::Detab(
-	uint32			inPosition,
-	uint32&			ioLength,
-	uint32			inCharsPerTab)
-{
-}
-

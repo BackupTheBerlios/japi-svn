@@ -274,7 +274,7 @@ bool MAcceleratorTable::IsAcceleratorKey(
 		
 //cout << " mapped to " << MCommandToString(outCommand);
 	}
-//
+
 //cout << endl;
 	
 	return result;

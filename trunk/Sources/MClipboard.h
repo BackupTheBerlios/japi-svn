@@ -110,6 +110,7 @@ class MClipboard
 	Data*				mRing[kClipboardRingSize];
 	uint32				mCount;
 	bool				mOwnerChanged;
+	bool				mClipboardIsMine;
 	GtkClipboard*		mGtkClipboard;
 };
 

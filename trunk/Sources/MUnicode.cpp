@@ -54,6 +54,20 @@ enum {
 	kOTHER			= 7
 };
 
+const bool kCharBreakTable[10][10] = {
+	//	CR	LF	Cnt	Ext	L	V	T	LV	LVT	Oth
+	{	1,	0,	1,	1,	1,	1,	1,	1,	1,	1	 },		// CR
+	{	1,	1,	1,	1,	1,	1,	1,	1,	1,	1	 },		// LF
+	{	1,	1,	1,	1,	1,	1,	1,	1,	1,	1	 },		// Control
+	{	1,	1,	1,	0,	1,	1,	1,	1,	1,	1	 },		// Extend
+	{	1,	1,	1,	0,	0,	0,	1,	0,	0,	1	 },		// L
+	{	1,	1,	1,	0,	1,	0,	0,	1,	1,	1	 },		// V
+	{	1,	1,	1,	0,	1,	1,	0,	1,	1,	1	 },		// T
+	{	1,	1,	1,	0,	1,	0,	0,	1,	1,	1	 },		// LV
+	{	1,	1,	1,	0,	1,	1,	0,	1,	1,	1	 },		// LVT
+	{	1,	1,	1,	0,	1,	1,	1,	1,	1,	1	 },		// Other
+};
+
 #include "MUnicodeTables.h"
 
 using namespace std;
@@ -437,5 +451,35 @@ void MDecoder::GetText(wstring& outText)
 string tolower(
 	string		inText)
 {
+	return inText;
+}
+
+string::iterator next_cursor_position(
+	string::iterator	inStart,
+	string::iterator	inEnd)
+{
+	string::iterator result = inEnd;
+
+	uint32 length;
+	wchar_t ch;
 	
+	MEncodingTraits<kEncodingUTF8>::ReadUnicode(inStart, length, ch);
+	CharBreakClass c1 = GetCharBreakClass(ch);
+
+	while (inEnd - inStart >= length)
+    {
+		inStart += length;
+		result = inStart;
+
+		MEncodingTraits<kEncodingUTF8>::ReadUnicode(inStart, length, ch);
+
+		CharBreakClass c2 = GetCharBreakClass(ch);
+		
+		if (kCharBreakTable[c1][c2])
+			break;
+		
+		c1 = c2;
+	}
+	
+	return result;
 }

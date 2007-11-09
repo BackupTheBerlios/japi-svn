@@ -38,7 +38,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <pcre.h>
 
 #include "MFile.h"
 #include "MProjectItem.h"
@@ -48,10 +47,13 @@ using namespace std;
 
 namespace {
 
-const char kPathRE[] = "\\s*(('([^']+)')|[^\\s]+)";
-	
-class MPathIterator : public boost::iterator_facade<MPathIterator, string,
-		boost::forward_traversal_tag, string>
+class MPathIterator : public boost::iterator_facade
+<
+	MPathIterator,
+	string,
+	boost::forward_traversal_tag,
+	string
+>
 {
   public:
 					MPathIterator();		// means 'end'
@@ -69,16 +71,11 @@ class MPathIterator : public boost::iterator_facade<MPathIterator, string,
 	bool			equal(
 						const MPathIterator&	rhs) const;
 
-	static pcre*		sPattern;
-	static pcre_extra*	sInfo;
-
-	const string*		mData;
-	uint32				mOffset;
-	uint32				mLength;
+	const string*	mData;
+	uint32			mOffset;
+	uint32			mLength;
+	bool			mQuoted;
 };
-
-pcre*		MPathIterator::sPattern = nil;
-pcre_extra*	MPathIterator::sInfo = nil;
 
 MPathIterator::MPathIterator()
 	: mData(nil)
@@ -93,43 +90,79 @@ MPathIterator::MPathIterator(
 	, mOffset(0)
 	, mLength(0)
 {
-	if (sPattern == nil)
-	{
-		const char* errmsg;
-		int errcode, erroffset;
-		
-		sPattern = pcre_compile2(kPathRE, PCRE_MULTILINE | PCRE_UTF8,
-			&errcode, &errmsg, &erroffset, nil);
-		
-		if (sPattern == nil or errcode != 0)
-			THROW(("Error compiling pattern: %s", errmsg));
-		
-		sInfo = pcre_study(sPattern, 0, &errmsg);
-		if (errcode != 0)
-			THROW(("Error studying pattern: %s", errmsg));
-	}
-
 	increment();
 }
 
 string MPathIterator::dereference() const
 {
-	return mData->substr(mOffset, mLength);
+	string::const_iterator a = mData->begin() + mOffset;
+	string::const_iterator b = a + mLength;
+	
+	string result;
+	result.reserve(b - a);
+	
+	bool esc = false;
+	for (; a != b; ++a)
+	{
+		if (not esc and *a == '\\')
+			esc = true;
+		else
+		{
+			result += *a;
+			esc = false;
+		}
+	}
+
+	return result;
 }
 
 void MPathIterator::increment()
 {
-	int matches[33] = {};
+	bool found = false;
 	
-	assert(mData != nil);
+	string::const_iterator s = mData->begin() + mOffset + mLength;
+	if (mQuoted)
+		s += 1;
 	
-	if (pcre_exec(sPattern, sInfo, mData->c_str(), mData->length(),
-		mOffset + mLength, 0, matches, 33) >= 0)
+	while (s != mData->end() and isspace(*s))
+		++s;
+	
+	if (*s == '\'')
 	{
-		mOffset = matches[2];
-		mLength = matches[3] - matches[2];
+		mQuoted = true;
+		++s;
+		
+		mOffset = s - mData->begin();
+		
+		while (s != mData->end() and *s != '\'')
+			++s;
+		
+		if (*s == '\'')
+		{
+			++s;
+			found = true;
+			mLength = (s - mData->begin()) - mOffset - 1;
+		}
 	}
-	else
+	else if (s != mData->end())
+	{
+		found = true;
+		mQuoted = false;
+		mOffset = s - mData->begin();
+		
+		bool esc = false;
+		for (; s != mData->end(); ++s)
+		{
+			if (esc or (*s == '\\' and not esc))
+				esc = not esc;
+			else if (isspace(*s))
+				break;
+		}
+		
+		mLength = (s - mData->begin()) - mOffset;
+	}
+
+	if (not found)
 	{
 		mData = nil;
 		mOffset = 0;
@@ -285,27 +318,19 @@ void MProjectFile::CheckCompilationResult()
 		
 		if (dependsFile.is_open())
 		{
-			text.reserve(dependsFile.rdbuf()->in_avail());
+			char buffer[10240];
 			
-			char c;
-			while (dependsFile.get(c))
-			{
-				if (c == ':')
-					break;
-			}
+			dependsFile.getline(buffer, sizeof(buffer), ':');
 			
-			while (dependsFile.get(c))
+			while (not dependsFile.eof())
 			{
-				if (c == '\\')
-				{
-					if (dependsFile.get(c) and c == '\n')
-						continue;
-				}
+				string line;
+				getline(dependsFile, line);
 				
-				if (text.capacity() == text.size())
-					text.reserve(text.capacity() * 3);
-
-				text.append(1, c);
+				if (line.length() > 0 and line[line.length() - 1] == '\\')
+					line.erase(line.end() - 1);
+				
+				text += line;
 			}
 		}
 		
@@ -313,13 +338,7 @@ void MProjectFile::CheckCompilationResult()
 		
 		while (m1 != m2)
 		{
-			string path = *m1;
-
-			if (path.length() > 2 and path[0] == '\'' and path[path.length() - 1] == '\'')
-				path = path.substr(1, path.length() - 2);
-			
-			mIncludedFiles.push_back(path);
-
+			mIncludedFiles.push_back(*m1);
 			++m1;
 		}
 
@@ -343,7 +362,7 @@ void MProjectFile::CheckIsOutOfDate(
 	
 	if (not IsCompilable())
 		return;
-	
+
 	if (not exists(mObjectPath) or not exists(mDependsPath))
 	{
 		isOutOfDate = true;

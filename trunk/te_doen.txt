@@ -1,14 +1,19 @@
 ﻿Te doen
 
-- paste/paste next werkt niet
-- shift lines gaat erg vaak mis
+- shift lines gaat nog steeds erg vaak mis
 
+- current working directory gebruiken in Open dialoog venster
+
+- vierkante selectie
+
+- toetsenbord navigatie in lijsten, typeahead
+
+- diff
 - preferences dialog
 - project afronden (refactor?), bugs fixen
 - state informatie in project area opslaan? Ergens anders?
 - onzichtbare tekens tekenen
 - drag&drop
-- entab/detab
 - upper/lower case
 - truncate strings in lijsten
 - resources/localisatie

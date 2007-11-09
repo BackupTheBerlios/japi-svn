@@ -46,6 +46,14 @@
 
 using namespace std;
 
+template<class charT>
+basic_ostream<charT>& operator<<(basic_ostream<charT>& lhs, MClipboard::Data& rhs)
+{
+	lhs << "Data block: '" << rhs.mText << '\'' << endl;
+	
+	return lhs;
+} 
+
 MClipboard::Data::Data(const string& inText, bool inBlock)
 	: mText(inText)
 	, mBlock(inBlock)
@@ -68,6 +76,7 @@ MClipboard::MClipboard()
 	: mOwnerChange(this, &MClipboard::OnOwnerChange)
 	, mCount(0)
 	, mOwnerChanged(true)
+	, mClipboardIsMine(false)
 	, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
 {
 	mOwnerChange.Connect(G_OBJECT(mGtkClipboard), "owner-change");
@@ -75,6 +84,9 @@ MClipboard::MClipboard()
 
 MClipboard::~MClipboard()
 {
+	if (mCount > 0 and mClipboardIsMine)
+		gtk_clipboard_store(mGtkClipboard);
+	
 	for (uint32 i = 0; i < mCount; ++i)
 		delete mRing[i];
 }
@@ -89,6 +101,13 @@ bool MClipboard::HasData()
 {
 	MClipboard::Instance().LoadClipboardIfNeeded();
 	
+//	cout << "Clipboard now contains " << mCount << " data items:" << endl;
+//	
+//	for (uint32 i = 0; i < mCount; ++i)
+//		cout << *mRing[i];
+//	
+//	cout << endl;
+
 	return mCount > 0;
 }
 
@@ -159,6 +178,7 @@ void MClipboard::SetData(const string& inText, bool inBlock)
 //	gtk_clipboard_set_text(mGtkClipboard, inText.c_str(), inText.length());
 	
 	mOwnerChanged = false;
+	mClipboardIsMine = true;
 }
 
 void MClipboard::AddData(const string& inText)
@@ -175,6 +195,7 @@ void MClipboard::GtkClipboardGet(
 	guint				inInfo,
 	gpointer			inUserDataOrOwner)
 {
+//cout << "GtkClipboardGet" << endl;
 	MClipboard& self = Instance();	
 	
 	gtk_selection_data_set_text(inSelectionData, 
@@ -185,19 +206,27 @@ void MClipboard::GtkClipboardClear(
 	GtkClipboard*		inClipboard,
 	gpointer			inUserDataOrOwner)
 {
+//cout << "GtkClipboardClear" << endl;
 	Instance().mOwnerChanged = true;
+	Instance().mClipboardIsMine = false;
 }
 
 void MClipboard::OnOwnerChange(
 	GdkEventOwnerChange*	inEvent)
 {
-	mOwnerChanged = true;
+//cout << "OnOwnerChange" << endl;
+
+	if (not mClipboardIsMine)
+		mOwnerChanged = true;
 }
 
 void MClipboard::LoadClipboardIfNeeded()
 {
-	if (mOwnerChanged and gtk_clipboard_wait_is_text_available(mGtkClipboard))
+	if (not mClipboardIsMine and
+		mOwnerChanged and
+		gtk_clipboard_wait_is_text_available(mGtkClipboard))
 	{
+//cout << "Reloading clipboard" << endl;
 		gchar* text = gtk_clipboard_wait_for_text(mGtkClipboard);
 		if (text != nil)
 		{

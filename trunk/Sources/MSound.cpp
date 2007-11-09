@@ -39,11 +39,14 @@
 #include "MFile.h"
 #include "MSound.h"
 #include "MPreferences.h"
+#include "MGlobals.h"
 
-#if defined(__APPLE__) and defined(__MACH__)
-#define SO_EXT ".dylib"
+#if defined(G_MODULE_SUFFIX)
+#	define SO_EXT	"." G_MODULE_SUFFIX
+#elif defined(__APPLE__) and defined(__MACH__)
+#	define SO_EXT ".dylib"
 #else
-#define SO_EXT ".so"
+#	define SO_EXT ".so"
 #endif
 
 using namespace std;
@@ -121,11 +124,20 @@ void PlaySound(
 	const string&		inSoundName)
 {
 	static const MPath
-		kSystemSoundDirectory("/System/Library/Sounds");
+		kSoundDirectory = gPrefsDir / "Sounds";
 
 	try
 	{
-		MPath path = kSystemSoundDirectory / (inSoundName + ".aiff");
+		string filename;
+		
+		if (inSoundName == "success")
+			filename = Preferences::GetString("success sound", "Ping.aiff");
+		else if (inSoundName == "failure")
+			filename = Preferences::GetString("failure sound", "Basso.aiff");
+		else
+			THROW(("Unknown sound name"));;
+		
+		MPath path = kSoundDirectory / filename;
 		if (fs::exists(path))
 			MAudioSocket::Instance().Play(path.string());
 		else

@@ -2280,7 +2280,7 @@ void MDocument::DoUncomment()
 			string text;
 			mText.GetText(offset, length, text);
 
-			if (text[length - 1] == '\n')
+			if (length > 0 and text[length - 1] == '\n')
 			{
 				--length;
 				text.erase(length, 1);
@@ -2304,13 +2304,78 @@ void MDocument::DoUncomment()
 void MDocument::DoEntab()
 {
 	StartAction("Entab");
+	
+	if (mSelection.IsEmpty())
+		Select(0, mText.GetSize());
 
 	uint32 offset = mSelection.GetMinOffset();
-	uint32 length = mSelection.GetMaxOffset() - offset;
+	bool block = mSelection.IsBlock();
+
+	string text;
+	GetSelectedText(text);
+	DeleteSelectedText();
+
+	int startColumn = OffsetToColumn(offset);
+	int column = startColumn;
+	string::iterator i = text.begin();
 	
-	mText.Entab(offset, length, mCharsPerTab);
+	while (i != text.end())
+	{
+		switch (*i)
+		{
+			case ' ':
+			{
+				string::iterator s = i;
+
+				do
+				{
+					++i;
+					++column;
+				}
+				while (i != text.end() and *i == ' ' and (column % mCharsPerTab) != 0);
+				
+				if (i - s > 1 and (column % mCharsPerTab) == 0)
+				{
+					text.erase(s, i);
+					i = text.insert(s, '\t') + 1;
+				}
+				else if (*i == '\t')
+				{
+					text.erase(s, i);
+					i = s + 1;
+					column = mCharsPerTab * ((column / mCharsPerTab) + 1);
+				}
+				break;
+			}
+
+			case '\t':
+				column = mCharsPerTab * ((column / mCharsPerTab) + 1);
+				++i;
+				break;
+
+			case '\n':
+				if (block)
+					column = startColumn;
+				else
+					column = 0;
+				++i;
+				break;
+
+			default:
+				i = next_cursor_position(i, text.end());
+				++column;
+				break;
+		}
+	}
 	
-	Select(offset, offset + length);
+	if (block)
+	{
+	}
+	else
+	{
+		Insert(offset, text);
+		Select(offset, offset + text.length());
+	}
 	
 	FinishAction();
 }
@@ -2319,12 +2384,58 @@ void MDocument::DoDetab()
 {
 	StartAction("Detab");
 
+	if (mSelection.IsEmpty())
+		Select(0, mText.GetSize());
+
 	uint32 offset = mSelection.GetMinOffset();
-	uint32 length = mSelection.GetMaxOffset() - offset;
+	bool block = mSelection.IsBlock();
+
+	string text;
+	GetSelectedText(text);
+	DeleteSelectedText();
+
+    string::iterator i = text.begin();
+	int startColumn = OffsetToColumn(offset);
+	int column = startColumn;
+    
+    while (i != text.end())
+    {
+		switch (*i)
+		{
+			case '\t':
+			{
+				int toInsert = mCharsPerTab - (column % mCharsPerTab);
+				
+				text.erase(i, i + 1);
+				while (toInsert-- > 0)
+				{
+					i = text.insert(i, ' ');
+					++column;
+				}
+				break;
+			}
+			case '\n':
+				if (block)
+					column = startColumn;
+				else
+					column = 0;
+				++i;
+				break;
+			
+			default:
+				i = next_cursor_position(i, text.end());
+				break;
+		}
+	}
 	
-	mText.Detab(offset, length, mCharsPerTab);
-	
-	Select(offset, offset + length);
+	if (block)
+	{
+	}
+	else
+	{
+		Insert(offset, text);
+		Select(offset, offset + text.length());
+	}
 	
 	FinishAction();
 }
