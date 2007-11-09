@@ -355,7 +355,7 @@ void MProjectPathsDialog::DrawPath(
 
 	string s(reinterpret_cast<const char*>(inData), inDataLength);
 
-	inDevice.DrawString(s, x, y);
+	inDevice.DrawString(s, x, y, inFrame.width - x);
 }
 
 void MProjectPathsDialog::FilesDropped(

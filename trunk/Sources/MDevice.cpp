@@ -409,11 +409,16 @@ void MDevice::DrawString(
 	const string&	inText,
 	float 			inX,
 	float 			inY,
-	bool			inTruncate)
+	uint32			inTruncateWidth)
 {
-	if (inTruncate)
+	if (inTruncateWidth)
 	{
 		pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_END);
+		pango_layout_set_width(mImpl->mLayout, inTruncateWidth * PANGO_SCALE);
+	}
+	else
+	{
+		pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_NONE);
 		pango_layout_set_width(mImpl->mLayout, mImpl->mRect.width * PANGO_SCALE);
 	}
 

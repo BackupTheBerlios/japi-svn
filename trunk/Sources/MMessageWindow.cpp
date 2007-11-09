@@ -391,13 +391,23 @@ void MMessageWindow::DrawItem(
 	inDevice.SetForeColor(kBlack);
 	
 	if (item->mFileNr > 0)
-		inDevice.DrawString(mFileTable[item->mFileNr - 1].leaf(), x + kFileColumnOffset, y, true);
+	{
+		inDevice.DrawString(
+			mFileTable[item->mFileNr - 1].leaf(),
+			x + kFileColumnOffset, y,
+			kLineColumnOffset - kFileColumnOffset);
+	}
 
 	if (item->mLineNr > 0)
-		inDevice.DrawString(NumToString(item->mLineNr), x + kLineColumnOffset, y, true);
+	{
+		inDevice.DrawString(
+			NumToString(item->mLineNr),
+			x + kLineColumnOffset, y,
+			kMessageColumnOffset - kLineColumnOffset);
+	}
 
 	inDevice.DrawString(string(item->mMessage, item->mMessage + item->mMessageLength), 
-		x + kMessageColumnOffset, y, true);
+		x + kMessageColumnOffset, y);
 }
 
 uint32 MMessageWindow::AddFileToTable(

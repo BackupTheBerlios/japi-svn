@@ -66,6 +66,10 @@ using namespace std;
 
 namespace
 {
+
+const uint32
+	kSizeColumnWidth = 40;
+	
 enum {
 	kStatusViewID			= 129,
 	kChasingArrowsViewID	= 130,
@@ -638,7 +642,8 @@ void MProject::DrawProjectItem(
 	}
 
 	inDevice.SetForeColor(kBlack);
-	inDevice.DrawString(item->GetName(), x, y);
+	inDevice.DrawString(item->GetName(), x, y,
+		inFrame.width - x - 2 * kSizeColumnWidth);
 		
 	for (int i = 0; i < 2; ++i)
 	{
@@ -670,7 +675,7 @@ void MProject::DrawProjectItem(
 			s << suffix;
 		
 		x = inFrame.x + inFrame.width - (2 - i) * 40;
-		inDevice.DrawString(s.str(), x, y);
+		inDevice.DrawString(s.str(), x, y, kSizeColumnWidth);
 	}
 }
 

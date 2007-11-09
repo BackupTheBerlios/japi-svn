@@ -67,7 +67,7 @@ class MDevice
 						const std::string&	inText,
 						float				inX,
 						float				inY,
-						bool				inTruncate = false);
+						uint32				inTruncateWidth = 0);
 
 	uint32			GetStringWidth(
 						const std::string&	inText);

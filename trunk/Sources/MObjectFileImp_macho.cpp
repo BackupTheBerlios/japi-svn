@@ -33,52 +33,74 @@
 #include "MJapieG.h"
 
 #if defined(__APPLE__) and defined(__MACH__)
-#	include "MObjectFileImp_macho.h"
 
-struct MNativeOjectFileImp : public MMachoObjectFileImp {};
+#include <mach-o/loader.h>
 
-#else
-#	include "MObjectFileImp_elf.h"
+#include "MUtils.h"
+#include "MObjectFileImp_macho.h"
 
-struct MNativeOjectFileImp : public MELFObjectFileImp {};
+template<class SWAPPER>
+void MObjectFileImp::Read(
+	struct mach_header&	mh,
+	istream&			inData)
+{
+	SWAPPER	swap;
+	
+	if (swap(mh.filetype) != MH_OBJECT)
+		THROW(("File is not an object file"));
+	
+	for (uint32 segment = 0; segment < swap(mh.ncmds); ++segment)
+	{
+		struct load_command lc;
+		inData.read((char*)&lc, sizeof(lc));
+		
+		switch (swap(lc.cmd))
+		{
+			case LC_SEGMENT:
+			{
+				struct segment_command sc;
+				inData.read(sc.segname, sizeof(sc) - sizeof(lc));
+				
+				for (uint32 sn = 0; sn < swap(sc.nsects); ++sn)
+				{
+					struct section section;
+					inData.read((char*)&section, sizeof(section));
+					
+					if (strcmp(section.sectname, SECT_TEXT) == 0)
+						mTextSize += swap(section.size);
+					else if (strcmp(section.sectname, SECT_DATA) == 0)
+						mDataSize += swap(section.size);
+				}
+				break;
+			}
+			
+			default:
+				inData.seekg(swap(lc.cmdsize) - sizeof(lc), ios_base::cur);
+		}
+	}
+}
+
+void MObjectFileImp::SetFile(
+	const MPath&		inFile)
+{
+	mFile = inFile;
+	
+	mTextSize = 0;
+	mDataSize = 0;
+	
+	fs::ifstream file(mFile, ios::binary);
+	if (not file.is_open())
+		THROW(("Could not open object file"));
+	
+	struct mach_header mh;
+	file.read((char*)&mh, sizeof(mh));
+	
+	if (mh.magic == MH_CIGAM)
+		Read<swapper>(mh, file);
+	else if (mh.magic == MH_MAGIC)
+		Read<no_swapper>(mh, file);
+	else
+		THROW(("File is not an object file"));
+}
 
 #endif
-
-#include <boost/filesystem/fstream.hpp>
-
-#include "MObjectFile.h"
-
-using namespace std;
-
-namespace fs = boost::filesystem;
-
-MObjectFile::MObjectFile(
-	const MPath&		inFile)
-	: mImpl(new MNativeOjectFileImp)
-{
-	try
-	{
-		mImpl->SetFile(inFile);
-	}
-	catch (std::exception& e)
-	{
-		MError::DisplayError(e);
-		mImpl->mTextSize = 0;
-		mImpl->mDataSize = 0;
-	}
-}
-
-MObjectFile::~MObjectFile()
-{
-	delete mImpl;
-}
-
-uint32 MObjectFile::GetTextSize() const
-{
-	return mImpl->mTextSize;
-}
-
-uint32 MObjectFile::GetDataSize() const
-{
-	return mImpl->mDataSize;
-}

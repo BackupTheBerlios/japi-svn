@@ -77,6 +77,8 @@
 				<file>MProjectJob.cpp</file>
 				<file>MProjectPathsDialog.cpp</file>
 				<file>MObjectFile.cpp</file>
+				<file>MObjectFileImp_elf.cpp</file>
+				<file>MObjectFileImp_macho.cpp</file>
 				<file>MNewGroupDialog.cpp</file>
 			</group>
 			<group name="Language">

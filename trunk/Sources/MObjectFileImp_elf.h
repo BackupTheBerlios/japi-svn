@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2006, Maarten L. Hekkelman
+	Copyright (c) 2007, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,55 +30,28 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#ifndef MOBJECTFILEIMP_ELF_H
+#define MOBJECTFILEIMP_ELF_H
 
-#if defined(__APPLE__) and defined(__MACH__)
-#	include "MObjectFileImp_macho.h"
-
-struct MNativeOjectFileImp : public MMachoObjectFileImp {};
-
-#else
-#	include "MObjectFileImp_elf.h"
-
-struct MNativeOjectFileImp : public MELFObjectFileImp {};
-
-#endif
-
-#include <boost/filesystem/fstream.hpp>
+#include <elf.h>
 
 #include "MObjectFile.h"
 
-using namespace std;
-
-namespace fs = boost::filesystem;
-
-MObjectFile::MObjectFile(
-	const MPath&		inFile)
-	: mImpl(new MNativeOjectFileImp)
+struct MELFObjectFileImp : public MObjectFileImp
 {
-	try
-	{
-		mImpl->SetFile(inFile);
-	}
-	catch (std::exception& e)
-	{
-		MError::DisplayError(e);
-		mImpl->mTextSize = 0;
-		mImpl->mDataSize = 0;
-	}
-}
+	template
+	<
+		class		SWAPPER,
+		typename	Elf_Ehdr,
+		typename	Elf_Shdr
+	>
+	void			Read(
+						Elf_Ehdr&		eh,
+						std::istream&	inData);
 
-MObjectFile::~MObjectFile()
-{
-	delete mImpl;
-}
+	virtual void	SetFile(
+						const MPath&	inFile);
+	
+};
 
-uint32 MObjectFile::GetTextSize() const
-{
-	return mImpl->mTextSize;
-}
-
-uint32 MObjectFile::GetDataSize() const
-{
-	return mImpl->mDataSize;
-}
+#endif

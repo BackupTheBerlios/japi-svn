@@ -35,6 +35,93 @@
 
 #include "MTypes.h"
 
+struct no_swapper
+{
+	template<typename T>
+	T			operator()(T inValue) const			{ return inValue; }
+};
+
+struct swapper
+{
+	template<typename T>
+	T			operator()(T inValue) const
+	{
+		this_will_not_compile_I_hope(inValue);
+	}
+};
+
+template<>
+inline
+uint16 swapper::operator()(uint16 inValue) const
+{
+	return static_cast<uint16>(
+		((inValue & 0xFF00UL) >>  8) |
+		((inValue & 0x00FFUL) <<  8)
+	);
+}
+
+template<>
+inline
+uint32 swapper::operator()(uint32 inValue) const
+{
+	return static_cast<uint32>(
+		((inValue & 0xFF000000UL) >> 24) |
+		((inValue & 0x00FF0000UL) >>  8) |
+		((inValue & 0x0000FF00UL) <<  8) |
+		((inValue & 0x000000FFUL) << 24)
+	);
+}
+
+template<>
+inline
+long unsigned int swapper::operator()(long unsigned int inValue) const
+{
+	return static_cast<long unsigned int>(
+		((inValue & 0xFF000000UL) >> 24) |
+		((inValue & 0x00FF0000UL) >>  8) |
+		((inValue & 0x0000FF00UL) <<  8) |
+		((inValue & 0x000000FFUL) << 24)
+	);
+}
+
+template<>
+inline
+int64 swapper::operator()(int64 inValue) const
+{
+	return static_cast<int64>(
+		(((static_cast<uint64>(inValue))<<56) & 0xFF00000000000000ULL)  |
+		(((static_cast<uint64>(inValue))<<40) & 0x00FF000000000000ULL)  |
+		(((static_cast<uint64>(inValue))<<24) & 0x0000FF0000000000ULL)  |
+		(((static_cast<uint64>(inValue))<< 8) & 0x000000FF00000000ULL)  |
+		(((static_cast<uint64>(inValue))>> 8) & 0x00000000FF000000ULL)  |
+		(((static_cast<uint64>(inValue))>>24) & 0x0000000000FF0000ULL)  |
+		(((static_cast<uint64>(inValue))>>40) & 0x000000000000FF00ULL)  |
+		(((static_cast<uint64>(inValue))>>56) & 0x00000000000000FFULL));
+}
+
+template<>
+inline
+uint64 swapper::operator()(uint64 inValue) const
+{
+	return static_cast<uint64>(
+		((((uint64)inValue)<<56) & 0xFF00000000000000ULL)  |
+		((((uint64)inValue)<<40) & 0x00FF000000000000ULL)  |
+		((((uint64)inValue)<<24) & 0x0000FF0000000000ULL)  |
+		((((uint64)inValue)<< 8) & 0x000000FF00000000ULL)  |
+		((((uint64)inValue)>> 8) & 0x00000000FF000000ULL)  |
+		((((uint64)inValue)>>24) & 0x0000000000FF0000ULL)  |
+		((((uint64)inValue)>>40) & 0x000000000000FF00ULL)  |
+		((((uint64)inValue)>>56) & 0x00000000000000FFULL));
+}
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+typedef no_swapper	lsb_swapper;
+typedef swapper		msb_swapper;
+#else
+typedef swapper		lsb_swapper;
+typedef no_swapper	msb_swapper;
+#endif
+
 uint16 CalculateCRC(const void* inData, uint32 inLength, uint16 inCRC);
 
 std::string Escape(std::string inString);

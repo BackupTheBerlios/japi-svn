@@ -35,6 +35,18 @@
 
 #include "MFile.h"
 
+struct MObjectFileImp
+{
+	MPath			mFile;
+	uint32			mTextSize;
+	uint32			mDataSize;
+					
+	virtual			~MObjectFileImp() {}
+					
+	virtual void	SetFile(
+						const MPath&		inFile) = 0;
+};
+
 class MObjectFile
 {
   public:
