@@ -33,15 +33,17 @@
 #ifndef MOBJECTFILEIMP_MACHO_H
 #define MOBJECTFILEIMP_MACHO_H
 
+#include "MObjectFile.h"
+
 struct MMachoObjectFileImp : public MObjectFileImp
 {
 	template<class SWAPPER>
 	void		Read(
 					struct mach_header&	mh,
-					istream&			inData);
+					std::istream&		inData);
 	
 	virtual void	SetFile(
-						const MPath&		inFile) = 0;
+						const MPath&	inFile);
 	
 };
 

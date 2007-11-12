@@ -109,7 +109,7 @@
 			<link>gmodule-2.0</link>
 			<link>dl</link>
 			<link>glib-2.0</link>
-			<file>libboost_filesystem.a</file>
+			<file>libboost_filesystem-mt.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libpcre.a</file>
 		</group>
@@ -132,7 +132,6 @@
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -156,7 +155,6 @@
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

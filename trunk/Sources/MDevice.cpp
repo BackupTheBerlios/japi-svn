@@ -26,6 +26,8 @@ class MDummyWindow : public MWindow
 	
 	GtkWidget*		GetLabel()			{ return mLabel; }
 	
+	GtkWidget*		GetTreeView()		{ return mTreeView; }
+	
 	PangoLayout*	GetLabelLayout()	{ return gtk_label_get_layout(GTK_LABEL(mLabel)); }
 	
   private:
@@ -33,6 +35,7 @@ class MDummyWindow : public MWindow
 	GtkWidget*		mVBox;
 	MView*			mDrawingArea;
 	GtkWidget*		mLabel;
+	GtkWidget*		mTreeView;
 };
 
 MDummyWindow::MDummyWindow()
@@ -42,6 +45,9 @@ MDummyWindow::MDummyWindow()
 	
 	mDrawingArea = new MView(10, 10);
 	gtk_container_add(GTK_CONTAINER(mVBox), mDrawingArea->GetGtkWidget());
+	
+	mTreeView = gtk_tree_view_new();
+	gtk_container_add(GTK_CONTAINER(mVBox), mTreeView);
 	
 	GtkWidget* sb = gtk_statusbar_new();
 	gtk_container_add(GTK_CONTAINER(mVBox), sb);
@@ -79,6 +85,9 @@ struct MDeviceImp
 	void					Init();
 
 	PangoFontMetrics*		GetMetrics();
+	
+	void					SetRowBackColor(
+								bool		inOdd);
 	
 	MView*					mView;
 	MRect					mRect;
@@ -163,6 +172,35 @@ PangoFontMetrics* MDeviceImp::GetMetrics()
 	}
 	
 	return mMetrics;
+}
+
+void MDeviceImp::SetRowBackColor(
+	bool		inOdd)
+{
+//	GValue value = {};
+//	g_value_init(&value, GDK_TYPE_COLOR);
+//
+//	const char* colorName = "even-row-color";
+//	if (inOdd)
+//		colorName = "odd-row-color";
+//
+//	gtk_widget_style_get_property(
+//		MDummyWindow::Instance()->GetTreeView(),
+//		colorName, &value);
+//
+//	cout << g_strdup_value_contents(&value) << endl;
+//	
+//	if (G_VALUE_HOLDS(&value, GDK_TYPE_COLOR) and
+//		g_value_peek_pointer(&value) != nil)
+//	{
+//		GdkColor* color = (GdkColor*)g_value_peek_pointer(&value);
+//		
+//		mBackColor.red = color->red >> 8;
+//		mBackColor.green = color->green >> 8;
+//		mBackColor.blue = color->blue >> 8;
+//	}
+//	else
+		mBackColor = kWhite;
 }
 
 // -------------------------------------------------------------------
@@ -329,10 +367,12 @@ void MDevice::DrawListItemBackground(
 		else
 			SetBackColor(gInactiveHiliteColor);
 	}
-	else if (inOdd)
-		SetBackColor(gOddRowColor);
 	else
-		SetBackColor(kWhite);
+		mImpl->SetRowBackColor(inOdd);
+//	else if (inOdd)
+//		SetBackColor(gOddRowColor);
+//	else
+//		SetBackColor(kWhite);
 	
 	EraseRect(inRect);
 

@@ -32,6 +32,8 @@
 
 #include "MJapieG.h"
 
+#include <boost/filesystem/fstream.hpp>
+
 #if defined(__APPLE__) and defined(__MACH__)
 
 #include <mach-o/loader.h>
@@ -39,8 +41,10 @@
 #include "MUtils.h"
 #include "MObjectFileImp_macho.h"
 
+using namespace std;
+
 template<class SWAPPER>
-void MObjectFileImp::Read(
+void MMachoObjectFileImp::Read(
 	struct mach_header&	mh,
 	istream&			inData)
 {
@@ -80,7 +84,7 @@ void MObjectFileImp::Read(
 	}
 }
 
-void MObjectFileImp::SetFile(
+void MMachoObjectFileImp::SetFile(
 	const MPath&		inFile)
 {
 	mFile = inFile;
