@@ -257,23 +257,28 @@ bool MTextView::OnButtonPressEvent(
 bool MTextView::OnMotionNotifyEvent(
 	GdkEventMotion*	inEvent)
 {
+	int32 x, y;
+	GdkModifierType state;
+	
+	if (inEvent->is_hint)
+		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
+	else
+	{
+		x = inEvent->x;
+		y = inEvent->y;
+		state = GdkModifierType(inEvent->state);
+	}
+
+	x += mImageOriginX - kLeftMargin;
+	y += mImageOriginY;
+
+	if (x >= 0)
+		SetCursor(eIBeamCursor);
+	else
+		SetCursor(eRightCursor);
+
 	if (mClickMode != eSelectNone and IsActive())
 	{
-		int32 x, y;
-		GdkModifierType state;
-		
-		if (inEvent->is_hint)
-			gdk_window_get_pointer(inEvent->window, &x, &y, &state);
-		else
-		{
-			x = inEvent->x;
-			y = inEvent->y;
-			state = GdkModifierType(inEvent->state);
-		}
-	
-		x += mImageOriginX - kLeftMargin;
-		y += mImageOriginY;
-	
 		mDocument->PositionToOffset(x, y, mClickCaret);
 	
 		if (mClickMode == eSelectRegular)

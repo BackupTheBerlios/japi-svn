@@ -691,7 +691,8 @@ void MDocument::Type(
 	const char*		inText,
 	uint32			inLength)
 {
-	ObscureCursor();
+	if (mTargetTextView != nil)
+		mTargetTextView->ObscureCursor();
 	
 	StartAction(kTypeAction);
 	
@@ -2538,7 +2539,8 @@ void MDocument::DoFastFind(MDirection inDirection)
 
 void MDocument::FastFindType(const char* inText, uint32 inTextLength)
 {
-	ObscureCursor();
+	if (mTargetTextView != nil)
+		mTargetTextView->ObscureCursor();
 	
 	string what = mFastFindWhat;
 	
@@ -3531,8 +3533,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 //	if (firstLine > 0)
 //		--firstLine;
 	
-	if (handled)
-		ObscureCursor();
+	if (handled and mTargetTextView != nil)
+		mTargetTextView->ObscureCursor();
 	
 	return handled;
 }

@@ -12,6 +12,13 @@
 
 using namespace std;
 
+namespace
+{
+
+GdkCursor* gGdkCursors[eCursorCount];
+
+}
+
 MView::MView(
 	GtkWidget*		inWidget,
 	bool			inCanActivate)
@@ -218,6 +225,52 @@ PangoContext* MView::GetPangoContext()
 	return mPangoContext;
 }
 
+void MView::SetCursor(
+	MCursor			inCursor)
+{
+	assert(inCursor < eCursorCount);
+
+	if (gGdkCursors[inCursor] == nil)
+	{
+		switch (inCursor)
+		{
+			case eNormalCursor:
+				gGdkCursors[inCursor] = gdk_cursor_new(GDK_LEFT_PTR);
+				break;
+			
+			case eIBeamCursor:	
+				gGdkCursors[inCursor] = gdk_cursor_new(GDK_XTERM);
+				break;
+			
+			case eRightCursor:
+				gGdkCursors[inCursor] = gdk_cursor_new(GDK_RIGHT_PTR);
+				break;
+			
+			case eBlankCursor:
+			{
+				GdkPixmap* pixmap = gdk_pixmap_new(nil, 1, 1, 1);
+				GdkColor c = {};
+				
+				gGdkCursors[inCursor] = gdk_cursor_new_from_pixmap(
+					pixmap, pixmap, &c, &c, 0, 0);
+				gdk_pixmap_unref(pixmap);
+				break;
+			}
+			
+			default:
+				assert(false);
+		}
+	}
+	
+	if (GDK_IS_WINDOW(mGtkWidget->window) and gGdkCursors[inCursor] != nil)
+		gdk_window_set_cursor(mGtkWidget->window, gGdkCursors[inCursor]);
+}
+
+void MView::ObscureCursor()
+{
+	SetCursor(eBlankCursor);
+}
+
 void MView::Add(
 	MView*			inSubView)
 {
@@ -300,3 +353,4 @@ bool MView::OnExposeEvent(
 {
 	return false;
 }
+

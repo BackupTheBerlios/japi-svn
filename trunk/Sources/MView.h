@@ -8,6 +8,17 @@
 
 #include "MCallbacks.h"
 
+enum MCursor
+{
+	eNormalCursor,
+	eIBeamCursor,
+	eRightCursor,
+	
+	eBlankCursor,
+	
+	eCursorCount
+};
+
 class MView
 {
   public:
@@ -57,6 +68,11 @@ class MView
 						MView*			inSubView);
 
 	PangoContext*	GetPangoContext();
+	
+	void			SetCursor(
+						MCursor			inCursor);
+
+	void			ObscureCursor();
 
   protected:
 
