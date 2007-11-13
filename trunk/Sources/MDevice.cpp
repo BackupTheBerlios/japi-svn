@@ -12,7 +12,7 @@ using namespace std;
 namespace {
 
 #pragma message("GdkPixmap gaan gebruiken")
-	
+
 class MDummyWindow : public MWindow
 {
   public:
@@ -51,10 +51,10 @@ MDummyWindow::MDummyWindow()
 	
 	GtkWidget* sb = gtk_statusbar_new();
 	gtk_container_add(GTK_CONTAINER(mVBox), sb);
-	
+
 	mLabel = gtk_label_new("xxyx");
 	gtk_container_add(GTK_CONTAINER(sb), mLabel);
-	
+		
 //	gtk_widget_realize(GetGtkWidget());
 	Show();
 	Hide();
@@ -93,6 +93,7 @@ struct MDeviceImp
 	MRect					mRect;
 	MColor					mForeColor;
 	MColor					mBackColor;
+	MColor					mEvenRowColor;
 //	MWindow*				mWindow;
 	cairo_t*				mContext;
 	PangoLayout*			mLayout;
@@ -100,7 +101,11 @@ struct MDeviceImp
 	PangoFontDescription*	mFont;
 	PangoFontMetrics*		mMetrics;
 	uint32					mPatternData[8][8];
+	
+	static GtkStyle*		sGtkTreeViewStyle;
 };
+
+GtkStyle* MDeviceImp::sGtkTreeViewStyle = nil;
 
 MDeviceImp::MDeviceImp()
 	: mView(MDummyWindow::Instance()->GetDrawingArea())
@@ -177,30 +182,39 @@ PangoFontMetrics* MDeviceImp::GetMetrics()
 void MDeviceImp::SetRowBackColor(
 	bool		inOdd)
 {
-//	GValue value = {};
-//	g_value_init(&value, GDK_TYPE_COLOR);
-//
-//	const char* colorName = "even-row-color";
-//	if (inOdd)
-//		colorName = "odd-row-color";
-//
-//	gtk_widget_style_get_property(
-//		MDummyWindow::Instance()->GetTreeView(),
-//		colorName, &value);
-//
-//	cout << g_strdup_value_contents(&value) << endl;
-//	
-//	if (G_VALUE_HOLDS(&value, GDK_TYPE_COLOR) and
-//		g_value_peek_pointer(&value) != nil)
-//	{
-//		GdkColor* color = (GdkColor*)g_value_peek_pointer(&value);
-//		
-//		mBackColor.red = color->red >> 8;
-//		mBackColor.green = color->green >> 8;
-//		mBackColor.blue = color->blue >> 8;
-//	}
-//	else
-		mBackColor = kWhite;
+	const char* styleName = "even-row-color";
+	if (inOdd)
+		styleName = "odd-row-color";
+
+	GdkColor* color;
+	gtk_widget_style_get(MDummyWindow::Instance()->GetTreeView(),
+		styleName, &color, nil);
+
+	if (color != nil)
+	{
+		mBackColor.red = color->red >> 8;
+		mBackColor.green = color->green >> 8;
+		mBackColor.blue = color->blue >> 8;
+		
+		gdk_color_free(color);
+	}
+	else
+	{
+		GtkStyle* style = MDummyWindow::Instance()->GetTreeView()->style;
+		
+		GdkColor color = style->base[GTK_STATE_NORMAL];
+		
+		if (inOdd)
+		{
+			color.red = static_cast<uint16>(0.93 * color.red);
+			color.green = static_cast<uint16>(0.93 * color.green);
+			color.blue = static_cast<uint16>(0.93 * color.blue);
+		}
+		
+		mBackColor.red = color.red >> 8;
+		mBackColor.green = color.green >> 8;
+		mBackColor.blue = color.blue >> 8;
+	}
 }
 
 // -------------------------------------------------------------------
@@ -369,10 +383,6 @@ void MDevice::DrawListItemBackground(
 	}
 	else
 		mImpl->SetRowBackColor(inOdd);
-//	else if (inOdd)
-//		SetBackColor(gOddRowColor);
-//	else
-//		SetBackColor(kWhite);
 	
 	EraseRect(inRect);
 
