@@ -2,8 +2,6 @@
 
 - shift lines gaat nog steeds erg vaak mis
 
-- current working directory gebruiken in Open dialoog venster
-
 - vierkante selectie
 
 - toetsenbord navigatie in lijsten, typeahead

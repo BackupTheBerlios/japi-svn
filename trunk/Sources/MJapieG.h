@@ -87,6 +87,11 @@ class MJapieApp : public MHandler
 	void				AddToRecentMenu(
 							const MPath&			inFileRef);
 
+	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
+
+	void				SetCurrentFolder(
+							const char*				inFolder);
+
 	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
 	
 	MEventOut<void(double)>					eIdle;
@@ -133,6 +138,7 @@ class MJapieApp : public MHandler
 	bool				mReceivedFirstMsg;
 	bool				mQuit;
 	bool				mQuitPending;
+	std::string			mCurrentFolder;
 };
 
 extern MJapieApp*	gApp;

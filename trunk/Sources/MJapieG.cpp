@@ -450,6 +450,13 @@ void MJapieApp::DoNew()
 	MDocWindow::DisplayDocument(doc);
 }
 
+void MJapieApp::SetCurrentFolder(
+	const char*	inFolder)
+{
+	if (inFolder != nil)
+		mCurrentFolder = inFolder;
+}
+
 void MJapieApp::DoOpen()
 {
 	GtkWidget* dialog = 
@@ -460,6 +467,12 @@ void MJapieApp::DoOpen()
 			NULL);
 
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+	
+	if (mCurrentFolder.length() > 0)
+	{
+		gtk_file_chooser_set_current_folder(
+			GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
+	}
 	
 	MDocument* doc = nil;
 	
@@ -481,6 +494,13 @@ void MJapieApp::DoOpen()
 		}
 		
 		g_slist_free(files);
+	}
+	
+	char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
+	if (cwd != nil)
+	{
+		mCurrentFolder = cwd;
+		g_free(cwd);
 	}
 	
 	gtk_widget_destroy(dialog);

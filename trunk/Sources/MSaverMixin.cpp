@@ -187,6 +187,8 @@ void MSaverMixin::SaveDocumentAs(
 		MPath url(filename);
 		DoSaveAs(url);
 		g_free(filename);
+		
+		gApp->SetCurrentFolder(gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog)));
 	}
 	
 	gtk_widget_destroy (dialog);
