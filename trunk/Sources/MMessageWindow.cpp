@@ -63,8 +63,8 @@ const uint32
 	kDotWidth				= 8,
 	kIconColumnOffset		= 4,
 	kFileColumnOffset		= kIconColumnOffset + kDotWidth + 2 * kIconColumnOffset,
-	kLineColumnOffset		= kFileColumnOffset + 150,
-	kMessageColumnOffset	= kLineColumnOffset + 30;
+	kLineColumnOffset		= kFileColumnOffset + 175,
+	kMessageColumnOffset	= kLineColumnOffset + 35;
 
 }
 
@@ -403,7 +403,8 @@ void MMessageWindow::DrawItem(
 		inDevice.DrawString(
 			NumToString(item->mLineNr),
 			x + kLineColumnOffset, y,
-			kMessageColumnOffset - kLineColumnOffset);
+			kMessageColumnOffset - kLineColumnOffset,
+			eAlignRight);
 	}
 
 	inDevice.DrawString(string(item->mMessage, item->mMessage + item->mMessageLength), 

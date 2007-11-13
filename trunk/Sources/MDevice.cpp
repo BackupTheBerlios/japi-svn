@@ -459,12 +459,29 @@ void MDevice::DrawString(
 	const string&	inText,
 	float 			inX,
 	float 			inY,
-	uint32			inTruncateWidth)
+	uint32			inTruncateWidth,
+	MAlignment		inAlign)
 {
-	if (inTruncateWidth)
+	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
+	
+	if (inTruncateWidth != 0)
 	{
 		pango_layout_set_ellipsize(mImpl->mLayout, PANGO_ELLIPSIZE_END);
 		pango_layout_set_width(mImpl->mLayout, inTruncateWidth * PANGO_SCALE);
+	
+		if (inAlign != eAlignNone and inAlign != eAlignLeft)
+		{
+			PangoRectangle r;
+			pango_layout_get_pixel_extents(mImpl->mLayout, nil, &r);
+		
+			if (static_cast<uint32>(r.width) < inTruncateWidth)
+			{
+				if (inAlign == eAlignCenter)
+					inX += (inTruncateWidth - r.width) / 2;
+				else
+					inX += inTruncateWidth - r.width;
+			}
+		}
 	}
 	else
 	{
@@ -472,8 +489,6 @@ void MDevice::DrawString(
 		pango_layout_set_width(mImpl->mLayout, mImpl->mRect.width * PANGO_SCALE);
 	}
 
-	pango_layout_set_text(mImpl->mLayout, inText.c_str(), inText.length());
-	
 	cairo_move_to(mImpl->mContext, inX, inY);	
 
 	pango_cairo_show_layout(mImpl->mContext, mImpl->mLayout);

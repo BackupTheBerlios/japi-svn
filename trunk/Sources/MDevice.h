@@ -7,6 +7,13 @@
 class MView;
 class MTextLayout;
 
+enum MAlignment {
+	eAlignNone,
+	eAlignLeft,
+	eAlignCenter,
+	eAlignRight	
+};
+
 class MDevice
 {
   public:
@@ -67,7 +74,8 @@ class MDevice
 						const std::string&	inText,
 						float				inX,
 						float				inY,
-						uint32				inTruncateWidth = 0);
+						uint32				inTruncateWidth = 0,
+						MAlignment			inAlign = eAlignNone);
 
 	uint32			GetStringWidth(
 						const std::string&	inText);

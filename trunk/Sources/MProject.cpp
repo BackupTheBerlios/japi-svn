@@ -607,9 +607,8 @@ void MProject::DrawProjectItem(
 	{
 		MRect r = inFrame;
 		
-		r.x += 4;
+		r.x += 2;
 		r.width = h;
-
 		r.InsetBy((h - 5) / 2, (h - 5) / 2);
 
 		if (item->IsCompiling())
@@ -620,30 +619,35 @@ void MProject::DrawProjectItem(
 		inDevice.FillEllipse(r);
 	}
 
-	float x = inFrame.x + h + 12;
+	inFrame.InsetBy(h / 2, 0);
+
+	float x = inFrame.x + 12;
 	float y = inFrame.y + 1;
 
 	if (mPanel != ePanelLinkOrder)
 	{
 		x += item->GetLevel() * 12;
 	
-		if (dynamic_cast<const MProjectGroup*>(item) != nil)
-		{
-			MRect r = inFrame;
-			
-			r.x += h + (item->GetLevel() - 1) * 12;
-			r.width = h;
-	
-			r.InsetBy((h - 4) / 2, (h - 4) / 2);
-	
-//			inDevice.DrawButton(r, kThemeDisclosureTriangle, kThemeStateActive,
-//				kThemeDisclosureDown);
-		}
+//		if (dynamic_cast<const MProjectGroup*>(item) != nil)
+//		{
+//			MRect r = inFrame;
+//			
+//			r.x += h + (item->GetLevel() - 1) * 12;
+//			r.width = h;
+//	
+//			r.InsetBy((h - 4) / 2, (h - 4) / 2);
+//	
+////			inDevice.DrawButton(r, kThemeDisclosureTriangle, kThemeStateActive,
+////				kThemeDisclosureDown);
+//		}
 	}
 
+	uint32 w = inFrame.width - x - 2 * kSizeColumnWidth;
+
 	inDevice.SetForeColor(kBlack);
-	inDevice.DrawString(item->GetName(), x, y,
-		inFrame.width - x - 2 * kSizeColumnWidth);
+	inDevice.DrawString(item->GetName(), x, y, w - 1);
+
+	x = inFrame.x + inFrame.width - 2 * kSizeColumnWidth;
 		
 	for (int i = 0; i < 2; ++i)
 	{
@@ -674,8 +678,8 @@ void MProject::DrawProjectItem(
 		if (suffix != 0)
 			s << suffix;
 		
-		x = inFrame.x + inFrame.width - (2 - i) * 40;
-		inDevice.DrawString(s.str(), x, y, kSizeColumnWidth);
+		inDevice.DrawString(s.str(), x + 1, y, kSizeColumnWidth - 1, eAlignRight);
+		x += kSizeColumnWidth;
 	}
 }
 
