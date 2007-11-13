@@ -44,6 +44,8 @@
 
 #define nil NULL
 
+extern const char kAppName[], kVersionString[];
+
 class MWindow;
 class MDocument;
 

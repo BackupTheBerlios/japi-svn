@@ -25,9 +25,11 @@
 		<path>/usr/pkg/include</path>
 		<path>/usr/pkg/include/libpng12</path>
 		<path>/usr/X11R6/include</path>
+		<path>/usr/pkg/include/cryptopp</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
+		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib64</path>
@@ -95,6 +97,16 @@
 			<file>MSaverMixin.cpp</file>
 			<file>MShell.cpp</file>
 			<file>MSelection.cpp</file>
+			<group name="SFTP">
+				<file>MAuthDialog.cpp</file>
+				<file>MCertificate.cpp</file>
+				<file>MKnownHosts.cpp</file>
+				<file>MSftpChannel.cpp</file>
+				<file>MSshChannel.cpp</file>
+				<file>MSshConnection.cpp</file>
+				<file>MSshConnectionPool.cpp</file>
+				<file>MSshTerminalChannel.cpp</file>
+			</group>
 		</group>
 		<group name="Libraries">
 			<link>xml2</link>

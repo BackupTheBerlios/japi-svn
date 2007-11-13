@@ -51,6 +51,10 @@
 
 using namespace std;
 
+const char
+	kAppName[] = "japie",
+	kVersionString[] = "0.1";
+
 MJapieApp* gApp;
 
 const char

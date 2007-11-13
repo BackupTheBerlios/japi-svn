@@ -117,9 +117,13 @@ uint64 swapper::operator()(uint64 inValue) const
 #if BYTE_ORDER == LITTLE_ENDIAN
 typedef no_swapper	lsb_swapper;
 typedef swapper		msb_swapper;
+
+typedef swapper		net_swapper;
 #else
 typedef swapper		lsb_swapper;
 typedef no_swapper	msb_swapper;
+
+typedef no_swapper	net_swapper;
 #endif
 
 uint16 CalculateCRC(const void* inData, uint32 inLength, uint16 inCRC);
