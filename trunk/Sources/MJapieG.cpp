@@ -349,18 +349,16 @@ gint MJapieApp::Snooper(
 	if (inEvent->type == GDK_KEY_PRESS and 
 		MAcceleratorTable::Instance().IsAcceleratorKey(inEvent, cmd))
 	{
-		result = true;
-		
 		MHandler* handler = MHandler::GetFocus();
 		if (handler == nil)
 			handler = gApp;
 		
 		bool enabled, checked;
 		if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
-			handler->ProcessCommand(cmd, nil, 0);
+			result = handler->ProcessCommand(cmd, nil, 0);
 	}
 
-	return false;
+	return result;
 }
 
 void MJapieApp::DoSaveAll()
@@ -411,7 +409,7 @@ void MJapieApp::DoCloseAll(
 			if (controller != nil)
 				(void)controller->TryCloseDocument(inAction);
 			else
-				cerr << "Weird, document without controller: " << doc->GetURL().str() << endl;
+				cerr << "Weird, document without controller: " << doc->GetURL() << endl;
 		}
 		
 		doc = next;

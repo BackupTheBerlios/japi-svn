@@ -185,9 +185,12 @@ void MView::Scroll(
 	int32			inX,
 	int32			inY)
 {
-	UpdateNow();
-
-	gdk_window_scroll(mGtkWidget->window, inX, inY);
+	if (GDK_IS_WINDOW(mGtkWidget->window))
+	{
+		UpdateNow();
+	
+		gdk_window_scroll(mGtkWidget->window, inX, inY);
+	}
 }
 
 void MView::Scroll(
@@ -195,12 +198,17 @@ void MView::Scroll(
 	int32			inX,
 	int32			inY)
 {
-	UpdateNow();
+	if (GDK_IS_WINDOW(mGtkWidget->window))
+	{
+		UpdateNow();
 
-	GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
-	GdkRegion* rgn = gdk_region_rectangle(&gr);
-	gdk_window_move_region(mGtkWidget->window, rgn, inX, inY);
-	gdk_region_destroy(rgn);
+cout << "scrolling " << inRect << " by " << inX << " and " << inY << endl;
+
+		GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
+		GdkRegion* rgn = gdk_region_rectangle(&gr);
+		gdk_window_move_region(mGtkWidget->window, rgn, inX, inY);
+		gdk_region_destroy(rgn);
+	}
 }
 
 void MView::UpdateNow()

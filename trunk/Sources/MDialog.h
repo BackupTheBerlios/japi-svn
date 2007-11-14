@@ -185,11 +185,14 @@ class MDialog : public MWindow
 							uint32				inID,
 							const std::string&	inLabel,
 							uint32				inParentID = 0);
-							
+						
 	void				AddEditField(
 							uint32				inID,
 							const std::string&	inText,
 							uint32				inParentID = 0);
+
+	void				SetPasswordField(
+							uint32				inID);
 
 	void				AddComboBox(
 							uint32				inID,

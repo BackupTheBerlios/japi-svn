@@ -157,6 +157,12 @@ struct MSshPacket
 		return *this;
 	}
 
+	MSshPacket&		operator<<(bool inValue)
+	{
+		data.append(reinterpret_cast<char*>(&inValue), 1);
+		return *this;
+	}
+	
 	MSshPacket&		operator<<(std::string inValue)
 	{
 		uint32 l = inValue.length();

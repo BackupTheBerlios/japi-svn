@@ -402,6 +402,14 @@ void MDialog::AddEditField(
 	mImpl->Add(item);
 }
 
+void MDialog::SetPasswordField(
+	uint32				inID)
+{
+	MDialogItem& item = mImpl->GetItem(inID);
+	gtk_entry_set_visibility(GTK_ENTRY(item.mWidget), false);
+	gtk_entry_set_invisible_char(GTK_ENTRY(item.mWidget), 0x2022);
+}
+
 void MDialog::AddComboBox(
 	uint32				inID,
 	const vector<string>&

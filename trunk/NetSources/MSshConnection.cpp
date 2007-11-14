@@ -196,6 +196,9 @@ MSshConnection::MSshConnection()
 	, fOpeningChannel(nil)
 	, fOpenedAt(GetLocalTime())
 {
+	for (int i = 0; i < 6; ++i)
+		fKeys[i] = nil;
+
 	AddRoute(gApp->eIdle, eIdle);
 
 	static bool sInited = false;
@@ -223,6 +226,9 @@ MSshConnection::MSshConnection()
 
 MSshConnection::~MSshConnection()
 {
+	for (int i = 0; i < 6; ++i)
+		delete[] fKeys[i];
+
 	try
 	{
 		RemoveRoute(gApp->eIdle, eIdle);
@@ -430,9 +436,8 @@ void MSshConnection::Idle(
 		{
 			if (not ProcessBuffer())
 				break;
+			eConnectionEvent(SSH_CHANNEL_PACKET_DONE);
 		}
-		
-		eConnectionEvent(SSH_CHANNEL_PACKET_DONE);
 		
 		// see if there's data to be sent
 		ChannelList::iterator ch;
@@ -625,7 +630,7 @@ void MSshConnection::ProcessPacket()
 {
 	uint8 message = fInPacket[0];
 
-	PRINT((LookupToken(kTokens, message)));
+	PRINT((">> %s", LookupToken(kTokens, message)));
 
 	MSshPacket in, out;
 	in.data = fInPacket;
@@ -767,7 +772,7 @@ void MSshConnection::ProcessConnect()
 		data << rng->GenerateByte();
 
 	string compress;
-	if (true) //Preferences::GetInteger("compress-sftp", true) != 0)
+	if (Preferences::GetInteger("compress-sftp", true))
 		compress = kUseCompressionAlgorithms;
 	else
 		compress = kDontUseCompressionAlgorithms;
@@ -940,7 +945,10 @@ void MSshConnection::ProcessKexdhReply(
 			keyLen = 32;
 
 		for (int i = 0; i < 6; ++i)
-			fKeys[i] = DeriveKey(&H[0], i, keyLen);
+		{
+			delete[] fKeys[i];
+			DeriveKey(&H[0], i, keyLen, fKeys[i]);
+		}
 		
 		fHandler = &MSshConnection::ProcessNewKeys;
 	}
@@ -967,26 +975,19 @@ void MSshConnection::ProcessNewKeys(
 		protocol = ChooseProtocol(fEncryptionAlgC2S, kEncryptionAlgorithms);
 		
 		if (protocol == "3des-cbc")
-			fEncryptorCipher.reset(new DES_EDE3_Encryption(
-				reinterpret_cast<const byte*>(fKeys[2].c_str())));
+			fEncryptorCipher.reset(new DES_EDE3::Encryption(fKeys[2]));
 		else if (protocol == "blowfish-cbc")
-			fEncryptorCipher.reset(new BlowfishEncryption(
-				reinterpret_cast<const byte*>(fKeys[2].c_str())));
+			fEncryptorCipher.reset(new BlowfishEncryption(fKeys[2]));
 		else if (protocol == "aes128-cbc")
-			fEncryptorCipher.reset(new AESEncryption(
-				reinterpret_cast<const byte*>(fKeys[2].c_str())));
+			fEncryptorCipher.reset(new AES::Encryption(fKeys[2], 16));
 		else if (protocol == "aes192-cbc")
-			fEncryptorCipher.reset(new AESEncryption(
-				reinterpret_cast<const byte*>(fKeys[2].c_str()), 24));
+			fEncryptorCipher.reset(new AES::Encryption(fKeys[2], 24));
 		else if (protocol == "aes256-cbc")
-			fEncryptorCipher.reset(new AESEncryption(
-				reinterpret_cast<const byte*>(fKeys[2].c_str()), 32));
+			fEncryptorCipher.reset(new AES::Encryption(fKeys[2], 32));
 
 		fEncryptorCBC.reset(
 			new CBC_Mode_ExternalCipher::Encryption(
-				*fEncryptorCipher.get(),
-				reinterpret_cast<const byte*>(fKeys[0].c_str()),
-				fKeys[0].length()));
+				*fEncryptorCipher.get(), fKeys[0]));
 		
 		fEncryptor.reset(new StreamTransformationFilter(
 			*fEncryptorCBC.get(), new StringSink(fOutPacket),
@@ -996,26 +997,19 @@ void MSshConnection::ProcessNewKeys(
 		protocol = ChooseProtocol(fEncryptionAlgS2C, kEncryptionAlgorithms);
 
 		if (protocol == "3des-cbc")
-			fDecryptorCipher.reset(new DES_EDE3_Decryption(
-				reinterpret_cast<const byte*>(fKeys[3].c_str())));
+			fDecryptorCipher.reset(new DES_EDE3_Decryption(fKeys[3]));
 		else if (protocol == "blowfish-cbc")
-			fDecryptorCipher.reset(new BlowfishDecryption(
-				reinterpret_cast<const byte*>(fKeys[3].c_str())));
+			fDecryptorCipher.reset(new BlowfishDecryption(fKeys[3]));
 		else if (protocol == "aes128-cbc")
-			fDecryptorCipher.reset(new AESDecryption(
-				reinterpret_cast<const byte*>(fKeys[3].c_str()), 16));
+			fDecryptorCipher.reset(new AESDecryption(fKeys[3], 16));
 		else if (protocol == "aes192-cbc")
-			fDecryptorCipher.reset(new AESDecryption(
-				reinterpret_cast<const byte*>(fKeys[3].c_str()), 24));
+			fDecryptorCipher.reset(new AESDecryption(fKeys[3], 24));
 		else if (protocol == "aes256-cbc")
-			fDecryptorCipher.reset(new AESDecryption(
-				reinterpret_cast<const byte*>(fKeys[3].c_str()), 32));
+			fDecryptorCipher.reset(new AESDecryption(fKeys[3], 32));
 
 		fDecryptorCBC.reset(
 			new CBC_Mode_ExternalCipher::Decryption(
-				*fEncryptorCipher.get(),
-				reinterpret_cast<const byte*>(fKeys[0].c_str()),
-				fKeys[0].length()));
+				*fDecryptorCipher.get(), fKeys[1]));
 		
 		fDecryptor.reset(new StreamTransformationFilter(
 			*fDecryptorCBC.get(), new StringSink(fInPacket),
@@ -1024,22 +1018,18 @@ void MSshConnection::ProcessNewKeys(
 		protocol = ChooseProtocol(fMACAlgC2S, kMacAlgorithms);
 		if (protocol == "hmac-sha1")
 			fSigner.reset(
-				new HMAC<SHA1>(
-					reinterpret_cast<const byte*>(fKeys[4].c_str()), 20));
+				new HMAC<SHA1>(fKeys[4], 20));
 		else
 			fSigner.reset(
-				new HMAC<SHA256>(
-					reinterpret_cast<const byte*>(fKeys[4].c_str())));
+				new HMAC<SHA256>(fKeys[4]));
 
 		protocol = ChooseProtocol(fMACAlgS2C, kMacAlgorithms);
 		if (protocol == "hmac-sha1")
 			fVerifier.reset(
-				new HMAC<SHA1>(
-					reinterpret_cast<const byte*>(fKeys[5].c_str()), 20));
+				new HMAC<SHA1>(fKeys[5], 20));
 		else
 			fVerifier.reset(
-				new HMAC<SHA256>(
-					reinterpret_cast<const byte*>(fKeys[5].c_str())));
+				new HMAC<SHA256>(fKeys[5]));
 	
 		string compress;
 		if (true) // Preferences::GetInteger("compress-sftp", true) != 0)
@@ -1262,11 +1252,11 @@ void MSshConnection::ProcessUserAuthKeyboardInteractive(
 			{
 				if (title.length() == 0)
 //					title = MStrings::GetIndString(1011, 0);
-					title = "please enter password";
+					title = "Logging in";
 				
 				if (instruction.length() == 0)
 //					instruction = MStrings::GetFormattedIndString(1011, 1, fUserName, fIPAddress);
-					instruction = " for acount " + fUserName + " ip address " + fIPAddress;
+					instruction = "Please enter password for acount " + fUserName + " ip address " + fIPAddress;
 				
 				if (n > 5)
 					THROW(("Invalid authentication protocol", 0));
@@ -1274,23 +1264,12 @@ void MSshConnection::ProcessUserAuthKeyboardInteractive(
 				for (uint32 i = 0; i < n; ++i)
 					in >> p[i] >> e[i];
 				
-//				MAuthDialogBase* dlog = nil;
-//				switch (n)
-//				{
-//					case 0: dlog = CreateHDialog<MAuthDialogBase>(nil); break;
-//					case 1: dlog = CreateHDialog<MAuthDialog<1> >(nil); break;
-//					case 2: dlog = CreateHDialog<MAuthDialog<2> >(nil); break;
-//					case 3: dlog = CreateHDialog<MAuthDialog<3> >(nil); break;
-//					case 4: dlog = CreateHDialog<MAuthDialog<4> >(nil); break;
-//					case 5: dlog = CreateHDialog<MAuthDialog<5> >(nil); break;
-//				}
-//	
-//				if (dlog != nil)
-//				{
-//					dlog->SetTexts(title, instruction, p, e);
-//					AddRoute(dlog->eOKClicked, eRecvAuthInfo);
-//					dlog->Show();
-//				}
+				if (n == 0)
+					n = 1;
+				
+				MAuthDialog* dlog = new MAuthDialog(title, instruction, n, p, e);
+				AddRoute(dlog->eAuthInfo, eRecvAuthInfo);
+				dlog->Show(nil);
 			}
 			break;
 		}
@@ -1901,10 +1880,11 @@ string MSshConnection::ChooseProtocol(
 	return result;
 }
 
-string MSshConnection::DeriveKey(
+void MSshConnection::DeriveKey(
 	char*		inHash,
 	int			inNr,
-	int			inLength)
+	int			inLength,
+	byte*&		outKey)
 {
 	MSshPacket p;
 	p << fSharedSecret;
@@ -1932,7 +1912,8 @@ string MSshConnection::DeriveKey(
 		result += string(&H[0], hash.DigestSize());
 	}
 	
-	return result;
+	outKey = new byte[result.length()];
+	copy(result.begin(), result.end(), outKey);
 }
 
 uint32 MSshConnection::GetMaxPacketSize(const MSshChannel* inChannel) const

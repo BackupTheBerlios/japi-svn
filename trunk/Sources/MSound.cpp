@@ -41,9 +41,9 @@
 #include "MPreferences.h"
 #include "MGlobals.h"
 
-#if defined(G_MODULE_SUFFIX)
-#	define SO_EXT	"." G_MODULE_SUFFIX
-#elif defined(__APPLE__) and defined(__MACH__)
+//#if defined(G_MODULE_SUFFIX)
+//#	define SO_EXT	"." G_MODULE_SUFFIX
+#if defined(__APPLE__) and defined(__MACH__)
 #	define SO_EXT ".dylib"
 #else
 #	define SO_EXT ".so"

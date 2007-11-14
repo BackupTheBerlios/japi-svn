@@ -1136,9 +1136,6 @@ void MTextView::ScrollForDiff()
 
 void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 {
-	// start with a flushed window
-	UpdateNow();
-	
 	// get our bounds
 	MRect bounds;
 	GetBounds(bounds);
@@ -1147,7 +1144,7 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	MRect r = bounds;
 
 	// the top of the scrolling rect
-	r.y = inFromLine * mLineHeight - bounds.y;
+	r.y = inFromLine * mLineHeight - mImageOriginY;
 	if (r.y < bounds.y)
 		r.y = bounds.y;
 	

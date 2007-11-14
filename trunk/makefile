@@ -5,7 +5,7 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-#LIBS		= pcre
+LIBS		= pcre z cryptopp
 LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 
@@ -31,9 +31,9 @@ include make.config
 
 LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
-Sources = $(wildcard Sources/*.cpp)
+Sources = $(wildcard Sources/*.cpp NetSources/*.cpp)
 
-Sources := $(filter-out Sources/MStyles.cpp Sources/MPrefsDialog.cpp, $(Sources))
+Sources := $(filter-out Sources/MStyles.cpp Sources/MPrefsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)

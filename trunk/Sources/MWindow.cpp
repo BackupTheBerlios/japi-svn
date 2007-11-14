@@ -91,7 +91,7 @@ bool MWindow::OnDestroy()
 	eWindowClosed(this);	
 	
 	gApp->RecycleWindow(this);
-	return false;
+	return true;
 }
 
 bool MWindow::OnDelete(

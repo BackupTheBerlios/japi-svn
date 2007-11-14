@@ -1,6 +1,7 @@
 #include "MJapieG.h"
 
 #include <sstream>
+#include <sys/stat.h>
 
 #include "MUrl.h"
 

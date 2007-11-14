@@ -106,10 +106,11 @@ class MSshConnection
 						const std::string&	inServer,
 						const std::string&	inClient) const;
 
-	std::string		DeriveKey(
+	void			DeriveKey(
 						char*				inHash,
 						int					inNr,
-						int					inLength);
+						int					inLength,
+						byte*&				outKey);
 	
 	void			AdjustMyWindowSize(
 						int32				inDelta);
@@ -297,7 +298,7 @@ class MSshConnection
 	std::string					fLangC2S;
 	std::string					fLangS2C;
 	
-	std::string					fKeys[6];
+	byte*						fKeys[6];
 	
 	uint32						fOutSequenceNr;
 	uint32						fInSequenceNr;

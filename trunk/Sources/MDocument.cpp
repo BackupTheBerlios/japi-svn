@@ -150,7 +150,6 @@ MDocument::MDocument(
 	}
 
 //	boost::mutex::scoped_lock lock(sDocListMutex);
-
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -181,7 +180,6 @@ MDocument::MDocument(
 	Rewrap();
 
 //	boost::mutex::scoped_lock lock(sDocListMutex);
-
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -205,6 +203,10 @@ MDocument::MDocument(const MUrl& inFile)
 
 	ReadFile();
 	Rewrap();
+
+//	boost::mutex::scoped_lock lock(sDocListMutex);
+	mNext = sFirst;
+	sFirst = this;
 }
 
 void MDocument::Init()

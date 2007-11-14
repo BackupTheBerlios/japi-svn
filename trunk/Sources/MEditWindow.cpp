@@ -296,6 +296,8 @@ void MEditWindow::DocumentChanged(
 	{
 		FileSpecChanged(inDocument->GetURL());
 		ModifiedChanged(inDocument->IsModified());
+		
+		MDocWindow::DocumentChanged(inDocument);
 	}
 	else
 		Close();

@@ -11,6 +11,8 @@
 #include "MPreferences.h"
 #include "MDocWindow.h"
 
+using namespace std;
+
 MSftpGetDialog::MSftpGetDialog(
 	const MUrlList&	inUrls)
 	: eChannelEvent(this, &MSftpGetDialog::ChannelEvent)
@@ -81,6 +83,8 @@ void MSftpGetDialog::FetchNext()
 void MSftpGetDialog::ChannelEvent(
 	int		inMessage)
 {
+cout << "--> SFTP Channel Event " << inMessage << endl;
+
 	switch (inMessage)
 	{
 		case SFTP_INIT_DONE:

@@ -25,7 +25,6 @@
 		<path>/usr/pkg/include</path>
 		<path>/usr/pkg/include/libpng12</path>
 		<path>/usr/X11R6/include</path>
-		<path>/usr/pkg/include/cryptopp</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -126,6 +125,7 @@
 			<file>libboost_thread-mt.a</file>
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
+			<link>z</link>
 		</group>
 	</files>
 	<package/>
