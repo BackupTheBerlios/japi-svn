@@ -783,7 +783,7 @@ void MSshConnection::ProcessConnect()
 		<< ""
 		<< ""
 		<< false
-		<< 0UL;
+		<< uint32(0);
 
 	fMyPayLoad = data.data;
 	fHandler = &MSshConnection::ProcessKexInit;
@@ -1257,7 +1257,7 @@ void MSshConnection::ProcessUserAuthKeyboardInteractive(
 			in >> msg >> title >> instruction >> lang >> n;
 			
 			if (n == 0)
-				out << uint8(SSH_MSG_USERAUTH_INFO_RESPONSE) << 0UL;
+				out << uint8(SSH_MSG_USERAUTH_INFO_RESPONSE) << uint32(0);
 			else
 			{
 				if (title.length() == 0)
@@ -1603,7 +1603,7 @@ void MSshConnection::SendWindowResize(MSshChannel* inChannel, uint32 inColumns, 
 		p << uint8(SSH_MSG_CHANNEL_REQUEST) << ch->fHostChannel
 			<< "window-change" << false
 			<< inColumns << inRows
-			<< 0UL << 0UL;
+			<< uint32(0) << uint32(0);
 
 		Send(p);
 	}
@@ -1654,8 +1654,9 @@ void MSshConnection::ProcessConfirmChannel(
 						<< "pty-req"
 						<< true
 						<< "vt100"
-						<< 80UL << 24UL << 0UL << 0UL <<
-						"";
+						<< uint32(80) << uint32(24)
+						<< uint32(0) << uint32(0)
+						<< "";
 					
 					Send(p);
 					
@@ -1817,7 +1818,7 @@ string MSshConnection::Wrap(string inData)
 		inData += rng->GenerateByte();
 		++padding;
 	}
-	while (inData.size() < 8 or padding < 4 or
+	while (inData.size() < blockSize or padding < 4 or
 		(inData.size() + 5) % blockSize);
 
 	inData.insert(0, &padding, 1);
