@@ -506,7 +506,7 @@ void MFindDialog::FindNext()
 	{
 		try
 		{
-			MPath file = mMultiFiles.front();
+			MUrl file(mMultiFiles.front());
 			mMultiFiles.pop_front();
 		
 			MDocument* doc = MDocument::GetDocumentForURL(file, false);
@@ -560,7 +560,7 @@ void MFindDialog::FindAll(
 //				doc->FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
 //			else
 //			{
-				MDocument newDoc(files.front());
+				MDocument newDoc(MUrl(files.front()));
 				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
 //			}
 
@@ -614,7 +614,7 @@ void MFindDialog::GetFilesForFindAll(
 			MDocument* doc = MDocument::GetFirstDocument();
 			while (doc != nil)
 			{
-				MPath file = doc->GetURL();
+				MPath file = doc->GetURL().GetPath();
 				if (exists(file))
 					outFiles.push_back(file);
 				doc = doc->GetNextDocument();

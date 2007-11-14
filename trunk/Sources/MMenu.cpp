@@ -5,6 +5,7 @@
 #include "MMenu.h"
 #include "MWindow.h"
 #include "MAcceleratorTable.h"
+#include "MUrl.h"
 
 using namespace std;
 
@@ -93,13 +94,14 @@ void MMenuItem::RecentItemActivated()
 	
 	char* uri = gtk_recent_chooser_get_current_uri(GTK_RECENT_CHOOSER(mSubMenu->GetGtkMenu()));
 	
-	if (uri != nil and strncmp(uri, "file://", 7) == 0)
+	if (uri != nil)
 	{
-		MPath p(uri + 7);
-		gApp->OpenOneDocument(p);
+		MUrl url(uri);
+
+		g_free(uri);
+
+		gApp->OpenOneDocument(url);
 	}
-	
-	g_free(uri);
 }
 
 // --------------------------------------------------------------------

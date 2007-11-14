@@ -66,42 +66,67 @@ using namespace std;
 
 struct MSftpChannelImp
 {
-							MSftpChannelImp(MSftpChannel& inChannel);
+							MSftpChannelImp(
+								MSftpChannel&	inChannel);
 	virtual					~MSftpChannelImp();
 	
-	static MSftpChannelImp*	CreateImpl(MSshPacket& in, MSshPacket& out, MSftpChannel& inChannel);
+	static MSftpChannelImp*	CreateImpl(
+								MSshPacket&		in,
+								MSshPacket&		out,
+								MSftpChannel&	inChannel);
 	
-	virtual void			Init(MSshPacket& out) = 0;
-	virtual void			MandlePacket(uint8 inMessage, MSshPacket& in, MSshPacket& out) = 0;
+	virtual void			Init(
+								MSshPacket&		out) = 0;
+
+	virtual void			MandlePacket(
+								uint8			inMessage,
+								MSshPacket&		in,
+								MSshPacket&		out) = 0;
 	
 //	uint32					GetStatusCode(MSshPacket& inPacket);
 	
-	void					Send(string inData)			{ fChannel.Send(inData); }
+	void					Send(
+								string			inData)
+							{
+								fChannel.Send(inData);
+							}
 
 	// action interface
 	
-	virtual void			SetCWD(string inPath) = 0;
+	virtual void			SetCWD(
+								string			inPath) = 0;
+
 	virtual void			OpenDir() = 0;
-	virtual void			MkDir(string inPath) = 0;
-	virtual void			ReadFile(string inPath) = 0;
-	virtual void			WriteFile(string inPath) = 0;
-	virtual void			SendData(const string& inData) = 0;
+
+	virtual void			MkDir(
+								string			inPath) = 0;
+
+	virtual void			ReadFile(
+								string			inPath) = 0;
+
+	virtual void			WriteFile(
+								string			inPath) = 0;
+
+	virtual void			SendData(
+								const string&	inData) = 0;
+
 	virtual void			CloseFile() = 0;
 
 	struct DirEntry {
-		string			name;
+		string				name;
 		uint64				size;
 		uint32				date;
 		char				type;
 	};
+
 	typedef std::vector<DirEntry>	DirList;
 
 	MSftpChannel&			fChannel;
 	uint32					fRequestId;
 	uint32					fPacketSize;
 	string					fHandle;
-	uint64					fFileSize;
-	uint64					fOffset;
+	int64					fFileSize;
+	int64					fOffset;
 	DirList					fDirList;
 	string					fCurrentDir;
 	string					fData;
@@ -112,7 +137,10 @@ struct MSftpChannelImp3 : public MSftpChannelImp
 							MSftpChannelImp3(MSftpChannel& inChannel);
 
 	virtual void			Init(MSshPacket& out);
-	virtual void			MandlePacket(uint8 inMessage, MSshPacket& in, MSshPacket& out);
+	virtual void			MandlePacket(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
 
 	// action interface
 	virtual void			SetCWD(string inPath);
@@ -123,17 +151,60 @@ struct MSftpChannelImp3 : public MSftpChannelImp
 	virtual void			SendData(const string& inData);
 	virtual void			CloseFile();
 
-	void (MSftpChannelImp3::*fHandler)(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessRealPath(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessOpenDir(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessReadDir(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessMkDir(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessOpenFile(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessFStat(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessRead(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessCreateFile(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessWrite(uint8 inMessage, MSshPacket& in, MSshPacket& out);
-	void					ProcessClose(uint8 inMessage, MSshPacket& in, MSshPacket& out);
+	void (MSftpChannelImp3::*fHandler)(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessRealPath(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessOpenDir(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessReadDir(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessMkDir(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessOpenFile(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessFStat(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessRead(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessCreateFile(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessWrite(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
+
+	void					ProcessClose(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
 };
 
 struct MSftpChannelImp4 : public MSftpChannelImp3
@@ -141,7 +212,11 @@ struct MSftpChannelImp4 : public MSftpChannelImp3
 							MSftpChannelImp4(MSftpChannel& inChannel);
 
 	virtual void			Init(MSshPacket& out);
-	virtual void			MandlePacket(uint8 inMessage, MSshPacket& in, MSshPacket& out);
+
+	virtual void			MandlePacket(
+								uint8		inMessage,
+								MSshPacket&	in,
+								MSshPacket&	out);
 };
 
 /*
@@ -193,7 +268,10 @@ void MSftpChannelImp3::Init(MSshPacket& out)
 	fChannel.eChannelEvent(SFTP_INIT_DONE);
 }
 
-void MSftpChannelImp3::MandlePacket(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::MandlePacket(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	PRINT(("SFTP: %d", inMessage));
 
@@ -226,7 +304,10 @@ void MSftpChannelImp3::OpenDir()
 	fHandler = &MSftpChannelImp3::ProcessOpenDir;
 }
 
-void MSftpChannelImp3::ProcessRealPath(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessRealPath(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	try
 	{
@@ -253,7 +334,10 @@ void MSftpChannelImp3::ProcessRealPath(uint8 inMessage, MSshPacket& in, MSshPack
 	}	
 }
 
-void MSftpChannelImp3::ProcessOpenDir(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessOpenDir(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_HANDLE)
 	{
@@ -266,7 +350,10 @@ void MSftpChannelImp3::ProcessOpenDir(uint8 inMessage, MSshPacket& in, MSshPacke
 		fHandler = nil;
 }
 
-void MSftpChannelImp3::ProcessReadDir(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessReadDir(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	bool done = true;
 	
@@ -351,7 +438,10 @@ void MSftpChannelImp3::MkDir(string inPath)
 	fHandler = &MSftpChannelImp3::ProcessMkDir;
 }
 
-void MSftpChannelImp3::ProcessMkDir(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessMkDir(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_STATUS)
 	{
@@ -373,7 +463,10 @@ void MSftpChannelImp3::ReadFile(string inPath)
 	fHandler = &MSftpChannelImp3::ProcessOpenFile;
 }
 
-void MSftpChannelImp3::ProcessOpenFile(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessOpenFile(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_HANDLE)
 	{
@@ -392,7 +485,10 @@ void MSftpChannelImp3::ProcessOpenFile(uint8 inMessage, MSshPacket& in, MSshPack
 	}
 }
 
-void MSftpChannelImp3::ProcessFStat(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessFStat(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_ATTRS)
 	{
@@ -422,7 +518,10 @@ void MSftpChannelImp3::ProcessFStat(uint8 inMessage, MSshPacket& in, MSshPacket&
 	}
 }
 
-void MSftpChannelImp3::ProcessRead(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessRead(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_DATA)
 	{
@@ -455,7 +554,10 @@ void MSftpChannelImp3::WriteFile(string inPath)
 	fHandler = &MSftpChannelImp3::ProcessCreateFile;
 }
 
-void MSftpChannelImp3::ProcessCreateFile(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessCreateFile(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	if (inMessage == SSH_FXP_HANDLE)
 	{
@@ -487,7 +589,10 @@ void MSftpChannelImp3::SendData(const string& inData)
 	assert(fHandler == &MSftpChannelImp3::ProcessWrite);
 }
 
-void MSftpChannelImp3::ProcessWrite(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessWrite(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	fChannel.eChannelEvent(SFTP_CAN_SEND_DATA);
 }
@@ -501,7 +606,10 @@ void MSftpChannelImp3::CloseFile()
 	fHandler = &MSftpChannelImp3::ProcessClose;
 }
 
-void MSftpChannelImp3::ProcessClose(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp3::ProcessClose(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	assert(inMessage == SSH_FXP_STATUS);
 	assert(fChannel.GetStatusCode() == 0);
@@ -525,7 +633,10 @@ void MSftpChannelImp4::Init(MSshPacket& out)
 	assert(false);
 }
 
-void MSftpChannelImp4::MandlePacket(uint8 inMessage, MSshPacket& in, MSshPacket& out)
+void MSftpChannelImp4::MandlePacket(
+	uint8		inMessage,
+	MSshPacket&	in,
+	MSshPacket&	out)
 {
 	assert(false);
 }

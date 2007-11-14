@@ -45,7 +45,7 @@
 #include "MLineInfo.h"
 #include "MP2PEvents.h"
 #include "MSelection.h"
-#include "MFile.h"
+#include "MUrl.h"
 #include "MCommands.h"
 
 class MLanguage;
@@ -95,9 +95,9 @@ class MDocument
 {
   public:
 	explicit			MDocument(
-							const MPath*			inURL);
+							const MUrl*				inURL);
 	explicit			MDocument(
-							const MPath&			inURL);
+							const MUrl&				inURL);
 						MDocument(
 							const std::string&	inText,
 							const std::string&	inFileNameHint);
@@ -119,7 +119,7 @@ class MDocument
 	
 	MTextBuffer&		GetTextBuffer()						{ return mText; }
 
-	MPath				GetURL() const						{ return mURL; }
+	MUrl				GetURL() const						{ return mURL; }
 
 	void				SetWorksheet(bool inIsWorksheet);
 	bool				IsWorksheet() const					{ return mIsWorksheet; }
@@ -137,7 +137,7 @@ class MDocument
 	MDocument*			GetNextDocument()					{ return mNext; }
 
 	static MDocument*	GetDocumentForURL(
-							const MPath&		inURL,
+							const MUrl&		inURL,
 							bool			inCreateIfNeeded);
 
 	void				MakeFirstDocument();
@@ -147,7 +147,7 @@ class MDocument
 	
 	bool				IsSpecified() const;
 
-	bool				UsesFile(const MPath& inFileRef) const;
+	bool				UsesFile(const MUrl& inFileRef) const;
 	
 	void				GoToLine(uint32 inLineNr);
 	
@@ -190,7 +190,7 @@ class MDocument
 	bool				IsLineMarked(uint32 inLine) const;
 
 	uint32				GetLineIndent(uint32 inLine) const;
-	float				GetLineIndentWidth(uint32 inLine) const;
+	uint32				GetLineIndentWidth(uint32 inLine) const;
 	uint32				GetIndent(uint32 inOffset) const;
 	
 	MLanguage*			GetLanguage() const					{ return mLanguage; }
@@ -263,10 +263,10 @@ class MDocument
 	MEventOut<void()>					eInvalidateDirtyLines;
 	MEventOut<void(uint32,int32)>		eShiftLines;
 	MEventOut<void()>					eDocumentClosed;
-	MEventOut<void(const MPath&)>		eFileSpecChanged;
+	MEventOut<void(const MUrl&)>		eFileSpecChanged;
 	MEventOut<void(MScrollMessage)>		eScroll;
 	MEventOut<void(bool)>				eShellStatus;
-	MEventOut<void(const MPath&)>		eBaseDirChanged;
+	MEventOut<void(const MUrl&)>		eBaseDirChanged;
 
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
@@ -312,7 +312,7 @@ class MDocument
 	
 	void				RevertDocument();
 	bool				DoSave();
-	bool				DoSaveAs(const MPath& inFile);
+	bool				DoSaveAs(const MUrl& inFile);
 
 	bool				CanReplace();
 
@@ -382,7 +382,7 @@ class MDocument
 	std::vector<MDocClosedNotifier>
 								mNotifiers;
 	bool						mSpecified;
-	MPath						mURL;
+	MUrl						mURL;
 	double						mFileModDate;
 	MTextBuffer					mText;
 //	boost::mutex				mMutex;
@@ -390,8 +390,8 @@ class MDocument
 	MLineInfoArray				mLineInfo;
 	std::string					mFont;
 	uint32						mLineHeight;
-	float						mCharWidth;	// to be able to calculate tab widths
-	float						mTabWidth;
+	uint32						mCharWidth;	// to be able to calculate tab widths
+	uint32						mTabWidth;
 	uint32						mCharsPerTab;
 	MSelection					mSelection;
 	int32						mWalkOffset;

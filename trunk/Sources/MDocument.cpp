@@ -114,7 +114,7 @@ void MDocState::Swap()
 //	MDocument
 
 MDocument::MDocument(
-	const MPath*			inURL)
+	const MUrl*			inURL)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -128,7 +128,12 @@ MDocument::MDocument(
 	if (inURL != nil)
 	{
 		mURL = *inURL;
-		mFileModDate = fs::last_write_time(mURL);
+		
+		if (mURL.IsLocal())
+			mFileModDate = fs::last_write_time(mURL.GetPath());
+		else
+			mFileModDate = GetLocalTime();
+
 		mSpecified = true;
 	}
 
@@ -161,7 +166,7 @@ MDocument::MDocument(
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 
-	, mURL(MPath("/tmp") / inFileNameHint)
+	, mURL(MUrl("file:///tmp") / inFileNameHint)
 {
 	Init();
 	
@@ -171,7 +176,7 @@ MDocument::MDocument(
 	
 	ReInit();
 
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
 	
 	Rewrap();
 
@@ -181,7 +186,7 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(const MPath& inFile)
+MDocument::MDocument(const MUrl& inFile)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -320,7 +325,7 @@ const char* MDocument::GetCWD() const
 	{
 		static auto_array<char> cwd(new char[PATH_MAX]);
 
-		int32 r = read_attribute(mURL, kJapieCWD, cwd.get(), PATH_MAX);
+		int32 r = read_attribute(mURL.GetPath(), kJapieCWD, cwd.get(), PATH_MAX);
 		if (r > 0 and r < PATH_MAX)
 		{
 			cwd.get()[r] = 0;
@@ -343,7 +348,7 @@ void MDocument::Reset()
 }
 
 MDocument* MDocument::GetDocumentForURL(
-	const MPath&		inFile,
+	const MUrl&		inFile,
 	bool			inCreateIfNeeded)
 {
 //	boost::mutex::scoped_lock lock(sDocListMutex);
@@ -406,7 +411,7 @@ void MDocument::ReInit()
 	device.SetFont(mFont);
 
 	mLineHeight = device.GetLineHeight();
-	mCharWidth = device.GetStringWidth("          ") / 10.0f;
+	mCharWidth = device.GetStringWidth("          ") / 10;
 	mTabWidth = mCharWidth * mCharsPerTab;
 }
 
@@ -464,7 +469,7 @@ bool MDocument::IsSpecified() const
 //	UsesFile
 
 bool MDocument::UsesFile(
-	const MPath&	inFileRef) const
+	const MUrl&	inFileRef) const
 {
 //	CheckFile();
 	return mSpecified and mURL == inFileRef;
@@ -476,7 +481,7 @@ bool MDocument::ReadDocState(MDocState& ioDocState)
 	
 	if (IsSpecified())
 	{
-		ssize_t r = read_attribute(mURL, kJapieDocState, &ioDocState, kMDocStateSize);
+		ssize_t r = read_attribute(mURL.GetPath(), kJapieDocState, &ioDocState, kMDocStateSize);
 		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
 		{
 			ioDocState.Swap();
@@ -833,7 +838,7 @@ void MDocument::CloseDocument()
 		{
 			MDocState state = { };
 
-			(void)read_attribute(mURL, kJapieDocState, &state, kMDocStateSize);
+			(void)read_attribute(mURL.GetPath(), kJapieDocState, &state, kMDocStateSize);
 			
 			state.Swap();
 			
@@ -874,13 +879,13 @@ void MDocument::CloseDocument()
 			
 			state.Swap();
 			
-			write_attribute(mURL, kJapieDocState, &state, kMDocStateSize);
+			write_attribute(mURL.GetPath(), kJapieDocState, &state, kMDocStateSize);
 			
 			if (mShell.get() != nil)
 			{
 				string cwd = mShell->GetCWD();
 				
-				write_attribute(mURL, kJapieCWD, cwd.c_str(), cwd.length());
+				write_attribute(mURL.GetPath(), kJapieCWD, cwd.c_str(), cwd.length());
 					
 				if (mIsWorksheet)
 					Preferences::SetString("worksheet wd", cwd);
@@ -908,7 +913,7 @@ bool MDocument::DoSave()
 	
 	CheckFile();	// make sure our filespec is valid
 	
-	MPath file = mURL;
+	MUrl file = mURL;
 	bool specified = mSpecified;
 	
 	try
@@ -925,9 +930,12 @@ bool MDocument::DoSave()
 		}
 		catch (...) {}
 		
-		MSafeSaver safe(mURL);
-		mText.WriteToFile(*safe.GetTempFile());
-		safe.Commit(mURL);
+		MFile file(mURL.GetPath());
+		file.Open(O_RDWR | O_TRUNC | O_CREAT);
+		mText.WriteToFile(file);
+//		MSafeSaver safe(mURL.GetPath());
+//		mText.WriteToFile(*safe.GetTempFile());
+//		safe.Commit(mURL.GetPath());
 		
 		SetModified(false);
 		
@@ -950,7 +958,7 @@ bool MDocument::DoSave()
 	return result;
 }
 
-bool MDocument::DoSaveAs(const MPath& inFile)
+bool MDocument::DoSaveAs(const MUrl& inFile)
 {
 	bool result = false;
 	
@@ -965,7 +973,7 @@ bool MDocument::DoSaveAs(const MPath& inFile)
 		
 		if (mLanguage == nil)
 		{
-			mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
+			mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
 	
 			if (mLanguage != nil)
 			{
@@ -991,11 +999,11 @@ bool MDocument::DoSaveAs(const MPath& inFile)
 
 void MDocument::ReadFile()
 {
-	auto_ptr<MFile> file(new MFile(mURL));
+	auto_ptr<MFile> file(new MFile(mURL.GetPath()));
 	
 	mText.ReadFromFile(*file);
 	
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.leaf(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
 	
 	if (mLanguage != nil)
 	{
@@ -1386,7 +1394,7 @@ uint32 MDocument::GetLineIndent(uint32 inLine) const
 	return GetIndent(mLineInfo[inLine].start);
 }
 
-float MDocument::GetLineIndentWidth(uint32 inLine) const
+uint32 MDocument::GetLineIndentWidth(uint32 inLine) const
 {
 	return GetLineIndent(inLine) * mCharsPerTab * mCharWidth;
 }
@@ -1416,7 +1424,7 @@ uint32 MDocument::FindLineBreak(
 	
 	if (GetSoftwrap() and mTargetTextView != nil and result > inFromOffset + 1)
 	{
-		int32 width = mTargetTextView->GetWrapWidth();
+		uint32 width = mTargetTextView->GetWrapWidth();
 		
 		width -= inIndent * mCharsPerTab * mCharWidth;
 
@@ -1512,7 +1520,7 @@ int32 MDocument::RewrapLines(
 	lineInfoEnd = lineInfoStart + 1;
 	
 	if (mLanguage and lineInfoStart == mLineInfo.begin())
-		(*lineInfoStart).state = mLanguage->GetInitialState(mURL.leaf(), mText);
+		(*lineInfoStart).state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
 	
 	uint16 state = (*lineInfoStart).state;
 	uint32 start = (*lineInfoStart).start;
@@ -1604,7 +1612,7 @@ void MDocument::RestyleDirtyLines(
 		{
 			uint16 state;
 			if (line == 0)
-				state = mLanguage->GetInitialState(mURL.leaf(), mText);
+				state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
 			else
 				state = mLineInfo[line].state;
 			
@@ -2674,7 +2682,7 @@ void MDocument::FindAll(string inWhat, bool inIgnoreCase,
 		string s;
 		GetLine(lineNr, s);
 		
-		outHits.AddMessage(kMsgKindNone, mURL, lineNr + 1,
+		outHits.AddMessage(kMsgKindNone, mURL.GetPath(), lineNr + 1,
 			sel.GetMinOffset(*this), sel.GetMaxOffset(*this), s);
 		
 		minOffset = sel.GetMaxOffset();
@@ -3105,7 +3113,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 
 	int32 x, y;
 	x = mWalkOffset;
-	y = (caretLine + 0.5) * mLineHeight;
+	y = caretLine * mLineHeight;
 	
 	uint32 firstLine, lastLine;
 	mTargetTextView->GetVisibleLineSpan(firstLine, lastLine);
@@ -3198,7 +3206,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				caret = 0;
 			else if (minLine > firstLine)
 			{
-				y = (firstLine + 0.5) * mLineHeight;
+				y = firstLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			else
@@ -3207,7 +3215,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 					caretLine -= linesPerPage;
 				else
 					caretLine = 0;
-				y = (caretLine + 0.5) * mLineHeight;
+				y = caretLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			anchor = caret;
@@ -3218,7 +3226,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (maxLine < lastLine)
 			{
-				y = (lastLine + 0.5) * mLineHeight;
+				y = lastLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			else
@@ -3227,7 +3235,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (maxLine >= mLineInfo.size())
 					maxLine = mLineInfo.size() - 1;
 				
-				y = (maxLine + 0.5) * mLineHeight;
+				y = maxLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			anchor = caret;
@@ -3363,7 +3371,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				caret = 0;
 			else if (caretLine - 1 > firstLine)
 			{
-				y = (firstLine + 0.5) * mLineHeight;
+				y = firstLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			else
@@ -3372,7 +3380,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 					caretLine -= linesPerPage;
 				else
 					caretLine = 0;
-				y = (caretLine + 0.5) * mLineHeight;
+				y = caretLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			updateWalkOffset = false;
@@ -3382,7 +3390,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			mFastFindMode = false;
 			if (caretLine < lastLine)
 			{
-				y = (lastLine + 0.5) * mLineHeight;
+				y = lastLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			else
@@ -3391,7 +3399,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (maxLine >= mLineInfo.size())
 					maxLine = mLineInfo.size() - 1;
 				
-				y = (maxLine + 0.5) * mLineHeight;
+				y = maxLine * mLineHeight;
 				PositionToOffset(x, y, caret);
 			}
 			updateWalkOffset = false;
@@ -3997,7 +4005,7 @@ void MDocument::Execute()
 		if (IsSpecified())
 		{
 			char cwd[1024] = { 0 };
-			ssize_t size = read_attribute(mURL, kJapieCWD, cwd, sizeof(cwd));
+			ssize_t size = read_attribute(mURL.GetPath(), kJapieCWD, cwd, sizeof(cwd));
 			if (size > 0)
 			{
 				string d(cwd, size);
@@ -4118,18 +4126,18 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem);
 
-		if (mSpecified)
+		if (mSpecified and mURL.IsLocal())
 		{
-			MPath url = mURL.branch_path() / file.name;
-			if (fs::exists(url))
-				gApp->OpenOneDocument(url);
+			MPath path = mURL.GetPath().branch_path() / file.name;
+			if (fs::exists(path))
+				gApp->OpenOneDocument(MUrl(path));
 		}
 
 		MProject* project = MProject::Instance();
 		MPath p;
 		
 		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			gApp->OpenOneDocument(p);
+			gApp->OpenOneDocument(MUrl(p));
 	}
 }
 

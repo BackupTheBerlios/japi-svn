@@ -210,9 +210,11 @@ void MMessageWindow::SelectItem(
 	
 	if (item.mFileNr > 0)
 	{
-		MDocument* doc = MDocument::GetDocumentForURL(mFileTable[item.mFileNr - 1], false);
+		MUrl url(mFileTable[item.mFileNr - 1]);
+		
+		MDocument* doc = MDocument::GetDocumentForURL(url, false);
 		if (doc == nil)
-			doc = new MDocument(&mFileTable[item.mFileNr - 1]);
+			doc = new MDocument(&url);
 		
 //		if (doc == mController.GetDocument() or
 //			mController.TryCloseController(kSaveChangesClosingDocument))
@@ -237,7 +239,7 @@ void MMessageWindow::InvokeItem(
 	
 	if (item.mFileNr > 0)
 	{
-		MDocument* doc = gApp->OpenOneDocument(mFileTable[item.mFileNr - 1]);
+		MDocument* doc = gApp->OpenOneDocument(MUrl(mFileTable[item.mFileNr - 1]));
 		
 		if (doc != nil)
 		{
@@ -373,7 +375,7 @@ void MMessageWindow::DrawItem(
 	const MMessageItem* item = static_cast<const MMessageItem*>(inData);
 	assert(item->Size() == inDataLength);
 	
-	float x, y;
+	int32 x, y;
 	x = inFrame.x;
 	y = inFrame.y + 1;
 
@@ -385,7 +387,7 @@ void MMessageWindow::DrawItem(
 		case kMsgKindError:		inDevice.SetForeColor(kErrorColor); break;
 	}
 	
-	float ny = inFrame.y + (inFrame.height - kDotWidth) / 2;
+	int32 ny = inFrame.y + (inFrame.height - kDotWidth) / 2;
 	
 	inDevice.FillEllipse(MRect(x + kIconColumnOffset, ny, kDotWidth, kDotWidth));
 	inDevice.SetForeColor(kBlack);

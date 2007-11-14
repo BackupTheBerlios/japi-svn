@@ -23,7 +23,7 @@ MSshChannel::MSshChannel(
 		MSshConnectionPool::Instance().Get(inIPAddress, inUserName, inPort);
 
 	if (connection == nil)
-		throw MError("Could not open connection");
+		THROW(("Could not open connection"));
 
 	AddRoute(eConnectionEvent, connection->eConnectionEvent);
 	AddRoute(eConnectionMessage, connection->eConnectionMessage);

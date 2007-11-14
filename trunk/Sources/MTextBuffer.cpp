@@ -786,7 +786,7 @@ void MTextBuffer::WriteToFile(
 	MFile&		inFile)
 {
 	if (not inFile.IsOpen())
-		inFile.Open(O_RDWR);
+		inFile.Open(O_RDWR | O_TRUNC);
 
 	MoveGapTo(mLogicalLength);
 

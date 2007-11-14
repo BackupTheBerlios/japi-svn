@@ -539,7 +539,7 @@ void MListImp::CountChanged()
 void MListImp::OnSBValueChanged(
 	uint32		inValue)
 {
-	if (mOriginY != inValue)
+	if (mOriginY != static_cast<int32>(inValue))
 		DoScrollTo(0, inValue);
 }
 
@@ -703,9 +703,9 @@ bool MListImp::OnButtonPressEvent(
 {
 	gtk_widget_grab_focus(GetGtkWidget());
 	
-	int32 itemNr = PointToItem(inEvent->x, inEvent->y);
+	int32 itemNr = PointToItem(static_cast<int32>(inEvent->x), static_cast<int32>(inEvent->y));
 	
-	if (itemNr >= 0 and itemNr < mItems.size())
+	if (itemNr >= 0 and itemNr < static_cast<int32>(mItems.size()))
 	{
 		SelectItem(itemNr);
 		
@@ -715,7 +715,7 @@ bool MListImp::OnButtonPressEvent(
 			mList->cbRowSelected(itemNr);
 	
 		MRect r = GetItemRect(itemNr);
-		mList->cbClickItem(r, itemNr, inEvent->x, inEvent->y);
+		mList->cbClickItem(r, itemNr, static_cast<int32>(inEvent->x), static_cast<int32>(inEvent->y));
 	}
 	
 	return true;
@@ -822,7 +822,7 @@ bool MListImp::OnScrollEvent(
 	switch (inEvent->direction)
 	{
 		case GDK_SCROLL_UP:
-			if (mOriginY > mItemHeight)
+			if (mOriginY > static_cast<int32>(mItemHeight))
 				DoScrollTo(mOriginX, mOriginY - mItemHeight);
 			else if (mOriginY > 0)
 				DoScrollTo(mOriginX, 0);

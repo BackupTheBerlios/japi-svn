@@ -601,7 +601,7 @@ void MProject::DrawProjectItem(
 {
 	const MProjectItem* item = *reinterpret_cast<const MProjectItem* const*>(inData);
 
-	float h = inFrame.height;
+	int32 h = inFrame.height;
 
 	if (item->IsOutOfDate())
 	{
@@ -621,8 +621,8 @@ void MProject::DrawProjectItem(
 
 	inFrame.InsetBy(h / 2, 0);
 
-	float x = inFrame.x + 12;
-	float y = inFrame.y + 1;
+	int32 x = inFrame.x + 12;
+	int32 y = inFrame.y + 1;
 
 	if (mPanel != ePanelLinkOrder)
 	{
@@ -694,9 +694,9 @@ void MProject::ClickProjectItem(
 {
 	MProjectItem* item = GetItem(inRow);
 	
-	float h = inFrame.height;
+	uint32 h = inFrame.height;
 
-	float x;
+	int32 x;
 	x = inFrame.x + 8 + h;
 	
 	MRect r = inFrame;
@@ -733,7 +733,7 @@ void MProject::InvokeProjectItem(
 //					THROW_IF_OSERROR(::LSOpenFSRef(&ref, nil));
 				}
 				else
-					gApp->OpenOneDocument(file);
+					gApp->OpenOneDocument(MUrl(file));
 			}
 			break;
 		
@@ -742,7 +742,7 @@ void MProject::InvokeProjectItem(
 			{
 				MProjectFile* file = static_cast<MProjectFile*>(item);
 				MPath p = fs::system_complete(file->GetPath());
-				gApp->OpenOneDocument(p);
+				gApp->OpenOneDocument(MUrl(p));
 			}
 			break;
 	}
@@ -1055,7 +1055,7 @@ bool MProject::SaveDocument()
 	{
 		save.Commit(mProjectFile);
 
-		gApp->AddToRecentMenu(mProjectFile);
+		gApp->AddToRecentMenu(MUrl(mProjectFile));
 
 		SetModified(false);
 		result = true;

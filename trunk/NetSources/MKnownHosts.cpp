@@ -14,8 +14,8 @@
 #include "MUtils.h"
 #include "MError.h"
 
-#include <base64.h>
-#include <md5.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/md5.h>
 
 using namespace std;
 

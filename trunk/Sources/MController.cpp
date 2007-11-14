@@ -375,22 +375,22 @@ bool MController::ProcessCommand(
 
 			case cmd_Preprocess:
 				if (project != nil)
-					project->Preprocess(mDocument->GetURL());
+					project->Preprocess(mDocument->GetURL().GetPath());
 				break;
 				
 			case cmd_CheckSyntax:
 				if (project != nil)
-					project->CheckSyntax(mDocument->GetURL());
+					project->CheckSyntax(mDocument->GetURL().GetPath());
 				break;
 				
 			case cmd_Compile:
 				if (project != nil)
-					project->Compile(mDocument->GetURL());
+					project->Compile(mDocument->GetURL().GetPath());
 				break;
 
 			case cmd_Disassemble:
 				if (project != nil)
-					project->Disassemble(mDocument->GetURL());
+					project->Disassemble(mDocument->GetURL().GetPath());
 				break;
 	
 			default:
@@ -502,7 +502,8 @@ bool MController::UpdateCommandStatus(
 		case cmd_Disassemble:
 			outEnabled =
 				project != nil and
-				project->IsFileInProject(mDocument->GetURL());
+				mDocument->GetURL().IsLocal() and
+				project->IsFileInProject(mDocument->GetURL().GetPath());
 			break;
 		
 		default:
@@ -560,7 +561,7 @@ void MController::SaveDocumentAs()
 	string name;	
 	
 	if (mDocument->IsSpecified())
-		name = mDocument->GetURL().leaf();
+		name = mDocument->GetURL().GetFileName();
 	else
 		name = mWindow->GetTitle();
 	
@@ -572,7 +573,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	MSaverMixin::TryDiscardChanges(mDocument->GetURL().leaf(), mWindow);
+	MSaverMixin::TryDiscardChanges(mDocument->GetURL().GetFileName(), mWindow);
 }
 
 bool MController::SaveDocument()
@@ -609,7 +610,7 @@ void MController::RevertDocument()
 bool MController::DoSaveAs(
 	const MPath&			inPath)
 {
-	return mDocument->DoSaveAs(inPath);
+	return mDocument->DoSaveAs(MUrl(inPath));
 }
 
 void MController::CloseAfterNavigationDialog()
@@ -681,14 +682,15 @@ bool MController::OpenInclude(std::string inFileName)
 		
 	if (project != nil and project->LocateFile(inFileName, true, p))
 		result = true;
-	else if (mDocument != nil)
+	else if (mDocument != nil and mDocument->GetURL().IsLocal())
 	{
-		p = mDocument->GetURL().branch_path() / inFileName;
+		p = mDocument->GetURL().GetPath();
+		p = p.branch_path() / inFileName;
 		result = exists(p);
 	}
 	
 	if (result)
-		gApp->OpenOneDocument(p);
+		gApp->OpenOneDocument(MUrl(p));
 	
 	return result;
 }
@@ -763,7 +765,7 @@ void MController::DoOpenCounterpart()
 
 	if (mDocument->IsSpecified())
 	{
-		string name = mDocument->GetURL().leaf();
+		string name = mDocument->GetURL().GetFileName();
 		MPath p;
 	
 		const char** ext = nil;
@@ -784,7 +786,7 @@ void MController::DoOpenCounterpart()
 					result = project->LocateFile(name + *e, true, p);
 
 				if (result)
-					gApp->OpenOneDocument(p);
+					gApp->OpenOneDocument(MUrl(p));
 			}
 
 			if (not result)

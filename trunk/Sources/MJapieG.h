@@ -48,6 +48,7 @@ extern const char kAppName[], kVersionString[];
 
 class MWindow;
 class MDocument;
+class MUrl;
 
 // ===========================================================================
 
@@ -79,20 +80,20 @@ class MJapieApp : public MHandler
 							MPath&				outFile);
 
 	MDocument*			OpenOneDocument(
-							const MPath&			inFileRef);
+							const MUrl&			inFileRef);
 
 	MDocument*			AskOpenOneDocument();
 
 	void				OpenProject(
-							const MPath&			inPath);
+							const MPath&		inPath);
 
 	void				AddToRecentMenu(
-							const MPath&			inFileRef);
+							const MUrl&			inFileRef);
 
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
 	void				SetCurrentFolder(
-							const char*				inFolder);
+							const char*			inFolder);
 
 	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
 	

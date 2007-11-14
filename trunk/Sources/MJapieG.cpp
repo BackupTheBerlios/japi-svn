@@ -46,6 +46,7 @@
 #include "MFindAndOpenDialog.h"
 #include "MFindDialog.h"
 #include "MProject.h"
+#include "MSftpGetDialog.h"
 
 #include <iostream>
 
@@ -260,7 +261,14 @@ void MJapieApp::UpdateWindowMenu(
 			string label;
 			
 			if (doc->IsSpecified())
-				label = doc->GetURL().leaf();
+			{
+				const MUrl& url = doc->GetURL();
+				
+				if (not url.IsLocal())
+					label += url.GetScheme() + ':';
+				
+				label += url.GetFileName();
+			}
 			else
 			{
 				MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
@@ -403,7 +411,7 @@ void MJapieApp::DoCloseAll(
 			if (controller != nil)
 				(void)controller->TryCloseDocument(inAction);
 			else
-				cerr << "Weird, document without controller: " << doc->GetURL().string() << endl;
+				cerr << "Weird, document without controller: " << doc->GetURL().str() << endl;
 		}
 		
 		doc = next;
@@ -471,6 +479,7 @@ void MJapieApp::DoOpen()
 			NULL);
 
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+	gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
 	
 	if (mCurrentFolder.length() > 0)
 	{
@@ -482,13 +491,13 @@ void MJapieApp::DoOpen()
 	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
-		GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));	
+		GSList* urls = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
 		
-		GSList* file = files;	
+		GSList* file = urls;	
 		
 		while (file != nil)
 		{
-			MPath url(reinterpret_cast<char*>(file->data));
+			MUrl url(reinterpret_cast<char*>(file->data));
 			
 			doc = OpenOneDocument(url);
 			
@@ -497,7 +506,7 @@ void MJapieApp::DoOpen()
 			file = file->next;
 		}
 		
-		g_slist_free(files);
+		g_slist_free(urls);
 	}
 	
 	char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
@@ -517,15 +526,15 @@ void MJapieApp::DoOpen()
 //	OpenOneDocument
 
 MDocument* MJapieApp::OpenOneDocument(
-	const MPath&			inFileRef)
+	const MUrl&			inFileRef)
 {
 	AddToRecentMenu(inFileRef);
 
 	MDocument* doc = nil;
 	
-	if (FileNameMatches("*.prj", inFileRef))
-		OpenProject(inFileRef);
-	else
+	if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
+		OpenProject(inFileRef.GetPath());
+	else if (inFileRef.IsLocal())
 	{
 		doc = MDocument::GetDocumentForURL(inFileRef, false);
 	
@@ -533,6 +542,13 @@ MDocument* MJapieApp::OpenOneDocument(
 			doc = new MDocument(&inFileRef);
 	
 		MDocWindow::DisplayDocument(doc);
+	}
+	else
+	{
+		vector<MUrl> urls;
+		urls.push_back(inFileRef);
+		MSftpGetDialog* dlog = new MSftpGetDialog(urls);
+//		dlog->Show(nil);
 	}
 	
 	return doc;
@@ -544,7 +560,7 @@ MDocument* MJapieApp::OpenOneDocument(
 void MJapieApp::OpenProject(
 	const MPath&		inPath)
 {
-	AddToRecentMenu(inPath);
+	AddToRecentMenu(MUrl(inPath));
 	
 	auto_ptr<MProject> project(new MProject(inPath));
 	project->Initialize();
@@ -552,15 +568,12 @@ void MJapieApp::OpenProject(
 	project.release();
 }
 
-void MJapieApp::AddToRecentMenu(const MPath& inFileRef)
+void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 {
-	string path = "file://";
-	path += fs::system_complete(inFileRef).string();
-
-	if (gtk_recent_manager_has_item(mRecentMgr, path.c_str()))
-		gtk_recent_manager_remove_item(mRecentMgr, path.c_str(), nil);
+	if (gtk_recent_manager_has_item(mRecentMgr, inFileRef.str().c_str()))
+		gtk_recent_manager_remove_item(mRecentMgr, inFileRef.str().c_str(), nil);
 	
-	gtk_recent_manager_add_item(mRecentMgr, path.c_str());
+	gtk_recent_manager_add_item(mRecentMgr, inFileRef.str().c_str());
 }
 
 void MJapieApp::DoOpenTemplate(
@@ -613,7 +626,7 @@ void MJapieApp::ShowWorksheet()
 		file.Open(O_CREAT | O_RDWR);
 	}
 		
-	MDocument* doc = OpenOneDocument(worksheet);
+	MDocument* doc = OpenOneDocument(MUrl(worksheet));
 	if (doc != nil)
 		doc->SetWorksheet(true);
 }
@@ -703,7 +716,7 @@ void MJapieApp::ProcessSocketMessages()
 				switch (msg.msg)
 				{
 					case 'open':
-						doc = gApp->OpenOneDocument(MPath(buffer));
+						doc = gApp->OpenOneDocument(MUrl(buffer));
 						break;
 					
 					case 'new ':
@@ -753,7 +766,7 @@ int OpenSocketToServer()
 }
 
 bool ForkServer(
-	const vector<MPath>&	inDocs)
+	const vector<MUrl>&	inDocs)
 {
 	int sockfd = OpenSocketToServer();
 	
@@ -775,11 +788,13 @@ bool ForkServer(
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (vector<MPath>::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (vector<MUrl>::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
-			msg.length = d->string().length();
+			string url = d->str();
+			
+			msg.length = url.length();
 			write(sockfd, &msg, sizeof(msg));
-			write(sockfd, d->string().c_str(), d->string().length());
+			write(sockfd, url.c_str(), url.length());
 		}
 	}
 	else
@@ -828,7 +843,7 @@ int main(int argc, char* argv[])
 
 //		gdk_set_show_events(true);
 
-		vector<MPath> docs;
+		vector<MUrl> docs;
 		
 		int c;
 		while ((c = getopt(argc, const_cast<char**>(argv), "h?f")) != -1)
@@ -848,10 +863,11 @@ int main(int argc, char* argv[])
 		for (int32 i = optind; i < argc; ++i)
 		{
 			string a(argv[i]);
-			if (a.substr(0, 7) == "file://")
-				a.erase(0, 7);
-		
-			docs.push_back(fs::system_complete(a));
+
+			if (a.substr(0, 7) == "file://" or a.substr(0, 7) == "sftp://")
+				docs.push_back(MUrl(a));
+			else
+				docs.push_back(MUrl(fs::system_complete(a)));
 		}
 
 		if (ForkServer(docs))

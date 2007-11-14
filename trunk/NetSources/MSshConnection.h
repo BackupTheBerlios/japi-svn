@@ -12,13 +12,13 @@
 #include "MP2PEvents.h"
 #include "MUtils.h"
 
-#include <cryptlib.h>
-#include <integer.h>
-#include <modes.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/integer.h>
+#include <cryptopp/modes.h>
 
 class MSshChannel;
 class MCertificate;
-class MSshAgentChannel;
+//class MSshAgentChannel;
 struct MSshPacket;
 struct ZLibHelper;
 
@@ -240,15 +240,16 @@ class MSshConnection
 						MSshPacket&			in,
 						MSshPacket&			out);
 
-	MEventIn<void(bool)>	eRecvAuthInfo;
+	MEventIn<void(std::vector<std::string>)>	eRecvAuthInfo;
 
 	void			RecvAuthInfo(
-						bool				inOK);
+						std::vector<std::string>
+											inAuthInfo);
 
-	MEventIn<void(bool)>	eRecvPassword;
+	MEventIn<void(std::string)>	eRecvPassword;
 	
 	void			RecvPassword(
-						bool				inOK);
+						std::string			inPassword);
 
 	std::string					fUserName;
 	std::string					fPassword;
@@ -264,10 +265,12 @@ class MSshConnection
 	uint32						fPacketLength;
 	uint32						fPasswordAttempts;
 
-	std::auto_ptr<CryptoPP::BlockTransformation>			fDecryptorCipher;
-	std::auto_ptr<CryptoPP::CipherModeDocumentation>		fDecryptorCBC;
-	std::auto_ptr<CryptoPP::BlockTransformation>			fEncryptorCipher;
-	std::auto_ptr<CryptoPP::CipherModeDocumentation>		fEncryptorCBC;
+	std::auto_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;
+	std::auto_ptr<CryptoPP::StreamTransformation>			fDecryptorCBC;
+	std::auto_ptr<CryptoPP::BufferedTransformation>			fDecryptor;
+	std::auto_ptr<CryptoPP::BlockCipher>					fEncryptorCipher;
+	std::auto_ptr<CryptoPP::StreamTransformation>			fEncryptorCBC;
+	std::auto_ptr<CryptoPP::BufferedTransformation>			fEncryptor;
 	std::auto_ptr<CryptoPP::MessageAuthenticationCode>		fSigner;
 	std::auto_ptr<CryptoPP::MessageAuthenticationCode>		fVerifier;
 	std::auto_ptr<ZLibHelper>								fCompressor;
@@ -302,11 +305,12 @@ class MSshConnection
 	bool						fAuthenticated;
 
 	std::auto_ptr<MCertificate>		fCertificate;
-	std::auto_ptr<MSshAgentChannel>	fAgentChannel;
+//	std::auto_ptr<MSshAgentChannel>	fAgentChannel;
 
-	MEventIn<void(bool)>		eCertificateDeleted;
+	MEventIn<void(MCertificate*)>	eCertificateDeleted;
+
 	void						CertificateDeleted(
-									bool			inFlag);
+									MCertificate*	inCertificate);
 	
 	MSshChannel*				fOpeningChannel;
 	

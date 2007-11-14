@@ -44,7 +44,7 @@
 class MDevice;
 
 const uint32
-	kListItemLast = ~0UL;
+	kListItemLast = static_cast<uint32>(~0UL);
 
 class MListView : public MView, public MHandler
 {

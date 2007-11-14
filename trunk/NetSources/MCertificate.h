@@ -52,7 +52,7 @@ class MCertificate
 						MSshPacket&			in,
 						MSshPacket&			out);
 	
-	static MEventOut<void()>				eCertificateDeleted;
+	static MEventOut<void(MCertificate*)>	eCertificateDeleted;
 	
   private:
 					MCertificate(

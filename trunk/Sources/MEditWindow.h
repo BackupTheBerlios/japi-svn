@@ -64,7 +64,7 @@ class MEditWindow : public MDocWindow
 							bool			inModified);
 
 	virtual void		FileSpecChanged(
-							const MPath&		inFile);
+							const MUrl&		inFile);
 
   private:
 

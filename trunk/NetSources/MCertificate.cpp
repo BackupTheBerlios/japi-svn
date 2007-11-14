@@ -9,7 +9,7 @@
 
 using namespace std;
 
-MEventOut<void()>	MCertificate::eCertificateDeleted;
+MEventOut<void(MCertificate*)>	MCertificate::eCertificateDeleted;
 
 struct MCertificateImp {};
 

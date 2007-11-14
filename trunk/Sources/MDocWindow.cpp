@@ -319,7 +319,7 @@ void MDocWindow::ModifiedChanged(
 }
 
 void MDocWindow::FileSpecChanged(
-	const MPath&		inFile)
+	const MUrl&		inFile)
 {
 }
 
@@ -349,7 +349,7 @@ void MDocWindow::DocumentChanged(
 	// set title
 	
 	if (inDocument->IsSpecified())
-		SetTitle(inDocument->GetURL().string());
+		SetTitle(inDocument->GetURL().str());
 	else
 		SetTitle(GetUntitledTitle());
 }

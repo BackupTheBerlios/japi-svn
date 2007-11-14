@@ -32,7 +32,7 @@ MSshConnection* MSshConnectionPool::Get(
 			i->PortNumber() == inPortNr)
 		{
 			if (i->IsConnected() or i->Busy())
-				result = *i;
+				result = &(*i);
 			else
 				fConnections.erase(i);
 
@@ -63,7 +63,7 @@ MSshConnection* MSshConnectionPool::Get(
 		if (i->IsConnectionForChannel(inChannel))
 		{
 			if (i->IsConnected() or i->Busy())
-				result = *i;
+				result = &(*i);
 			else
 				i = fConnections.erase(i);
 
@@ -77,9 +77,14 @@ MSshConnection* MSshConnectionPool::Get(
 void MSshConnectionPool::Remove(
 	MSshConnection*	inConnection)
 {
-	fConnections.erase(
-		remove(fConnections.begin(), fConnections.end(), inConnection),
-		fConnections.end());
+//	for (MConnectionArray::iterator i = fConnections.begin(); i != fConnections.end(); ++i)
+//	{
+//		if (&(*i) == inConnection)
+//		{
+//			fConnections.erase(i);
+//			break;
+//		}
+//	}
 }
 
 MSshConnectionPool::MSshConnectionPool()

@@ -12,7 +12,7 @@
 #include "MUtils.h"
 #include "MError.h"
 
-#include "integer.h"
+#include <cryptopp/integer.h>
 
 enum eSshMsg {
 	SSH_MSG_DISCONNECT = 1,

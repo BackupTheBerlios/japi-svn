@@ -52,11 +52,54 @@ struct swapper
 
 template<>
 inline
+bool swapper::operator()(bool inValue) const
+{
+	return inValue;
+}
+
+template<>
+inline
+int8 swapper::operator()(int8 inValue) const
+{
+	return inValue;
+}
+
+template<>
+inline
+uint8 swapper::operator()(uint8 inValue) const
+{
+	return inValue;
+}
+
+template<>
+inline
+int16 swapper::operator()(int16 inValue) const
+{
+	return static_cast<int16>(
+		((inValue & 0xFF00UL) >>  8) |
+		((inValue & 0x00FFUL) <<  8)
+	);
+}
+
+template<>
+inline
 uint16 swapper::operator()(uint16 inValue) const
 {
 	return static_cast<uint16>(
 		((inValue & 0xFF00UL) >>  8) |
 		((inValue & 0x00FFUL) <<  8)
+	);
+}
+
+template<>
+inline
+int32 swapper::operator()(int32 inValue) const
+{
+	return static_cast<int32>(
+		((inValue & 0xFF000000UL) >> 24) |
+		((inValue & 0x00FF0000UL) >>  8) |
+		((inValue & 0x0000FF00UL) <<  8) |
+		((inValue & 0x000000FFUL) << 24)
 	);
 }
 
@@ -125,6 +168,30 @@ typedef no_swapper	msb_swapper;
 
 typedef no_swapper	net_swapper;
 #endif
+
+// value changer, stack based
+
+template<class T>
+class MValueChanger
+{
+  public:
+				MValueChanger(
+					T&				inVariable,		
+					const T&		inNewValue)
+					: mVariable(inVariable)
+					, mValue(inVariable)
+				{
+					mVariable = inNewValue;
+				}
+				
+				~MValueChanger()
+				{
+					mVariable = mValue;
+				}
+  private:
+	T&			mVariable;
+	T			mValue;
+};
 
 uint16 CalculateCRC(const void* inData, uint32 inLength, uint16 inCRC);
 

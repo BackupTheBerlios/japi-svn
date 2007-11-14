@@ -214,8 +214,8 @@ bool MTextView::OnButtonPressEvent(
 	MSelection selection = mDocument->GetSelection();
 
 	int32 x, y;
-	x = inEvent->x + mImageOriginX - kLeftMargin;
-	y = inEvent->y + mImageOriginY;
+	x = static_cast<int32>(inEvent->x) + mImageOriginX - kLeftMargin;
+	y = static_cast<int32>(inEvent->y) + mImageOriginY;
 
 	if (InitiateDrag(inEvent))
 		return false;
@@ -264,8 +264,8 @@ bool MTextView::OnMotionNotifyEvent(
 		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
 	else
 	{
-		x = inEvent->x;
-		y = inEvent->y;
+		x = static_cast<int32>(inEvent->x);
+		y = static_cast<int32>(inEvent->y);
 		state = GdkModifierType(inEvent->state);
 	}
 

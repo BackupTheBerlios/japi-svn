@@ -44,6 +44,7 @@
 #include "MView.h"
 #include "MUnicode.h"
 #include "MUtils.h"
+#include "MUrl.h"
 
 using namespace std;
 
@@ -106,7 +107,7 @@ bool MFindAndOpenDialog::OKClicked()
 		MPath p(s);
 		
 		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
-			gApp->OpenOneDocument(p);
+			gApp->OpenOneDocument(MUrl(p));
 	}
 	
 	return true;

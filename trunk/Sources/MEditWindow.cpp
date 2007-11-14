@@ -281,10 +281,10 @@ void MEditWindow::ModifiedChanged(bool inModified)
 }
 
 void MEditWindow::FileSpecChanged(
-	const MPath&		inFile)
+	const MUrl&		inFile)
 {
-	if (fs::exists(inFile))
-		SetTitle(inFile.string());
+	if (not inFile.IsLocal() or fs::exists(inFile.GetPath()))
+		SetTitle(inFile.str());
 	else
 		SetTitle(GetUntitledTitle());
 }
