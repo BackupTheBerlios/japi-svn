@@ -1336,14 +1336,11 @@ void MSshConnection::ProcessUserAuthPublicKey(
 			string sig;
 				// no matter what, send a bogus sig if needed
 			fSshAgent->SignData(blob, out.data, sig);
-
+			
+			// strip off the session id from the beginning of the out packet
 			string sink;
 			out >> sink;
-					
-//			MSshPacket ps;
-//			ps << "ssh-rsa" << sig;
-//			
-//			out << ps.data;
+
 			out << sig;
 			break;
 		}
@@ -1368,6 +1365,8 @@ void MSshConnection::ProcessUserAuthPublicKey(
 				out << uint8(SSH_MSG_USERAUTH_REQUEST)
 					<< fUserName << "ssh-connection" << "publickey" << false
 					<< "ssh-rsa" << blob.data;
+
+				fHandler = &MSshConnection::ProcessUserAuthPublicKey;
 			}
 			else if (ChooseProtocol(s, "password") == "password")
 				TryPassword();
@@ -1549,6 +1548,7 @@ void MSshConnection::ProcessUserAuthSuccess(
 void MSshConnection::UserAuthSuccess()
 {
 	fAuthenticated = true;
+	fSshAgent.release();
 
 	eConnectionMessage("Authenticated");
 	

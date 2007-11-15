@@ -131,6 +131,8 @@ bool MSshAgent::GetFirstIdentity(
 		else
 		{
 			*mPacket >> mCount;
+
+			PRINT(("++ SSH_AGENT returned %d identities", mCount));
 			
 			if (mCount > 0 and mCount < 1024)
 				result = GetNextIdentity(e, n, outComment);
@@ -147,7 +149,7 @@ bool MSshAgent::GetNextIdentity(
 {
 	bool result = false;
 	
-	while (mCount-- > 0 and result == false)
+	while (mCount > 0 and result == false)
 	{
 		MSshPacket p;
 		
@@ -160,8 +162,18 @@ bool MSshAgent::GetNextIdentity(
 		if (type == "ssh-rsa")
 		{
 			p >> e >> n;
+			
+			if (p.data.length() > 0)
+				p >> outComment;
+			else
+				outComment.clear();
+			
+			PRINT(("++ returning yet another identity"));
+
 			result = true;
 		}
+		
+		--mCount;
 	}
 	
 	return result;
