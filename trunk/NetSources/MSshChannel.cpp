@@ -8,7 +8,6 @@
 #include "MError.h"
 #include "MSshChannel.h"
 #include "MSshConnection.h"
-#include "MSshConnectionPool.h"
 
 using namespace std;
 
@@ -19,35 +18,26 @@ MSshChannel::MSshChannel(
 	: eConnectionEvent(this, &MSshChannel::ConnectionEvent)
 	, eConnectionMessage(this, &MSshChannel::ConnectionMessage)
 {
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(inIPAddress, inUserName, inPort);
-
-	if (connection == nil)
+	fConnection = MSshConnection::Get(inIPAddress, inUserName, inPort);
+	
+	if (fConnection == nil)
 		THROW(("Could not open connection"));
 
-	AddRoute(eConnectionEvent, connection->eConnectionEvent);
-	AddRoute(eConnectionMessage, connection->eConnectionMessage);
+	AddRoute(eConnectionEvent, fConnection->eConnectionEvent);
+	AddRoute(eConnectionMessage, fConnection->eConnectionMessage);
 
-	connection->OpenChannel(this);
-}
-
-MSshChannel::MSshChannel(
-	MSshConnection&		inConnection)
-	: eConnectionEvent(this, &MSshChannel::ConnectionEvent)
-	, eConnectionMessage(this, &MSshChannel::ConnectionMessage)
-{
-	AddRoute(eConnectionEvent, inConnection.eConnectionEvent);
-	AddRoute(eConnectionMessage, inConnection.eConnectionMessage);
+	fConnection->OpenChannel(this);
 }
 
 MSshChannel::~MSshChannel()
 {
 	try
 	{
-		MSshConnection* connection =
-			MSshConnectionPool::Instance().Get(this);
-		if (connection != nil)
-			connection->CloseChannel(this);
+		if (fConnection != nil)
+		{
+			fConnection->CloseChannel(this);
+			fConnection->Release();
+		}
 	}
 	catch (...) {}
 }
@@ -55,65 +45,50 @@ MSshChannel::~MSshChannel()
 void MSshChannel::Send(
 	string		inData)
 {
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(this);
+	assert(fConnection != nil);
 
-	assert(connection);
-
-	if (connection != nil)
-		connection->SendChannelData(this, 0, inData);
+	if (fConnection != nil)
+		fConnection->SendChannelData(this, 0, inData);
 }
 
 void MSshChannel::SendExtra(
 	uint32		inType,
 	string		inData)
 {
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(this);
+	assert(fConnection);
 
-	assert(connection);
-
-	if (connection != nil)
-		connection->SendChannelData(this, inType, inData);
+	if (fConnection != nil)
+		fConnection->SendChannelData(this, inType, inData);
 }
 
 uint32 MSshChannel::GetMaxPacketSize() const
 {
 	uint32 result = 1024;
 
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(this);
+	assert(fConnection);
 
-	assert(connection);
-
-	if (connection != nil)
-		result = connection->GetMaxPacketSize(this);
+	if (fConnection != nil)
+		result = fConnection->GetMaxPacketSize(this);
 
 	return result;
 }
 
 void MSshChannel::ResetTimer()
 {
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(this);
+	assert(fConnection);
 
-	assert(connection);
-
-	if (connection != nil)
-		connection->ResetTimer();
+	if (fConnection != nil)
+		fConnection->ResetTimer();
 }
 
 string MSshChannel::GetEncryptionParams() const
 {
 	string result;
 	
-	MSshConnection* connection =
-		MSshConnectionPool::Instance().Get(this);
+	assert(fConnection);
 
-	assert(connection);
-
-	if (connection != nil)
-		result = connection->GetEncryptionParams();
+	if (fConnection != nil)
+		result = fConnection->GetEncryptionParams();
 	
 	return result;
 }
@@ -121,6 +96,12 @@ string MSshChannel::GetEncryptionParams() const
 void MSshChannel::ConnectionEvent(
 	int		inEvent)
 {
+	if (inEvent == SSH_CHANNEL_CLOSED)
+	{
+		fConnection->Release();
+		fConnection = nil;
+	}
+	
 	eChannelEvent(inEvent);
 }
 

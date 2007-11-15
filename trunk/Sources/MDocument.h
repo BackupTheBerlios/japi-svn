@@ -96,11 +96,17 @@ class MDocument
   public:
 	explicit			MDocument(
 							const MUrl*				inURL);
+
 	explicit			MDocument(
 							const MUrl&				inURL);
+
 						MDocument(
-							const std::string&	inText,
-							const std::string&	inFileNameHint);
+							const MUrl&				inURL,
+							const std::string&		inText);
+
+						MDocument(
+							const std::string&		inText,
+							const std::string&		inFileNameHint);
 
 	virtual				~MDocument();
 

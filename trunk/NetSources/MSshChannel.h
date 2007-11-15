@@ -76,9 +76,6 @@ class MSshChannel
 								std::string		inUserName,
 								uint16			inPort);
 
-							MSshChannel(
-								MSshConnection&	inConnection);
-
 	MEventIn<void(int)>		eConnectionEvent;
 	MEventIn<void(std::string)>
 							eConnectionMessage;
@@ -90,6 +87,8 @@ class MSshChannel
 								std::string		inMessage);
 	
 	uint32					GetMaxPacketSize() const;
+
+	MSshConnection*			fConnection;
 };
 
 #endif // MSSHCHANNEL_H

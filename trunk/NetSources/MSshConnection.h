@@ -42,8 +42,15 @@ class MSshConnection
 	typedef std::vector<ChannelInfo>	ChannelList;
 	
   public:
-					MSshConnection();
-	virtual 		~MSshConnection();
+	
+	static MSshConnection*
+					Get(
+						const std::string&	inIPAddress,
+						const std::string&	inUserName,
+						uint16				inPort);
+
+	void			Reference();
+	void			Release();
 
 	std::string		UserName() const		{ return fUserName; }
 	std::string		IPAddress() const		{ return fIPAddress; }
@@ -53,20 +60,12 @@ class MSshConnection
 	bool			IsConnected() const		{ return fIsConnected; }
 	bool			Busy() const			{ return fBusy; }
 
-	bool			Connect(
-						std::string			inIPAddress,
-						std::string			inUserName,
-						uint16				inPortNr);
-
 	void			Disconnect();
 	
 	void			ResetTimer();
 	
 	std::string		GetEncryptionParams() const;
 	
-	bool			IsConnectionForChannel(
-						const MSshChannel*	inChannel);
-
 	void			OpenChannel(
 						MSshChannel*		inChannel);
 
@@ -94,6 +93,20 @@ class MSshConnection
 	MEventOut<void(std::string)>	eConnectionBanner;
 	
   private:
+
+					MSshConnection();
+
+					MSshConnection(
+						const MSshConnection&);
+	MSshConnection&	operator=(
+						const MSshConnection&);
+
+	virtual 		~MSshConnection();
+
+	bool			Connect(
+						std::string			inIPAddress,
+						std::string			inUserName,
+						uint16				inPortNr);
 
 	std::string		Wrap(
 						std::string inData);
@@ -247,10 +260,11 @@ class MSshConnection
 						std::vector<std::string>
 											inAuthInfo);
 
-	MEventIn<void(std::string)>	eRecvPassword;
+	MEventIn<void(std::vector<std::string>)>	eRecvPassword;
 	
 	void			RecvPassword(
-						std::string			inPassword);
+						std::vector<std::string>
+											inPassword);
 
 	std::string					fUserName;
 	std::string					fPassword;
@@ -314,12 +328,15 @@ class MSshConnection
 									MCertificate*	inCertificate);
 	
 	MSshChannel*				fOpeningChannel;
-	
+	int32						fRefCount;
 	ChannelList					fChannels;
 	std::string					fErrString;
 	uint32						fErrCode;
 	double						fOpenedAt;
 	static uint32				sNextChannelId;
+
+	static MSshConnection*		sFirstConnection;
+	MSshConnection*				fNext;
 };
 
 #endif // MSSHCONNECTION_H

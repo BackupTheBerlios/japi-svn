@@ -165,6 +165,8 @@ MDocument::MDocument(
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 
+	, mText(inText)
+
 	, mURL(MUrl("file:///tmp") / inFileNameHint)
 {
 	Init();
@@ -202,6 +204,35 @@ MDocument::MDocument(const MUrl& inFile)
 //	ReInit();
 
 	ReadFile();
+	Rewrap();
+
+//	boost::mutex::scoped_lock lock(sDocListMutex);
+	mNext = sFirst;
+	sFirst = this;
+}
+
+MDocument::MDocument(
+	const MUrl&		inFile,
+	const string&	inText)
+	: eBoundsChanged(this, &MDocument::BoundsChanged)
+	, ePrefsChanged(this, &MDocument::PrefsChanged)
+	, eShellStatusIn(this, &MDocument::ShellStatusIn)
+	, eStdOut(this, &MDocument::StdOut)
+	, eStdErr(this, &MDocument::StdErr)
+	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
+	, eIdle(this, &MDocument::Idle)
+	
+	, mText(inText)
+
+	, mURL(inFile)
+{
+	Init();
+
+	mSpecified = true;
+
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+
+	ReInit();
 	Rewrap();
 
 //	boost::mutex::scoped_lock lock(sDocListMutex);

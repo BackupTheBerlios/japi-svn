@@ -32,7 +32,6 @@
 #include "MSshUtil.h"
 #include "MError.h"
 #include "MSshConnection.h"
-#include "MSshConnectionPool.h"
 #include "MSshChannel.h"
 //#include "MSshAgentChannel.h"
 #include "MAuthDialog.h"
@@ -45,6 +44,7 @@ using namespace std;
 using namespace CryptoPP;
 
 uint32 MSshConnection::sNextChannelId;
+MSshConnection*	MSshConnection::sFirstConnection;
 
 namespace {
 
@@ -194,6 +194,7 @@ MSshConnection::MSshConnection()
 	, fAuthenticated(false)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
 	, fOpeningChannel(nil)
+	, fRefCount(1)
 	, fOpenedAt(GetLocalTime())
 {
 	for (int i = 0; i < 6; ++i)
@@ -222,10 +223,32 @@ MSshConnection::MSshConnection()
 		g = Integer(2);
 		q = ((p - 1) / g);
 	}
+	
+	fNext = sFirstConnection;
+	sFirstConnection = this;
 }
 
 MSshConnection::~MSshConnection()
 {
+	assert(fRefCount == 0);
+
+	if (this == sFirstConnection)
+		sFirstConnection = fNext;
+	else
+	{
+		MSshConnection* c = sFirstConnection;
+		while (c != nil)
+		{
+			MSshConnection* next = c->fNext;
+			if (next == this)
+			{
+				c->fNext = fNext;
+				break;
+			}
+			c = next;
+		}
+	}
+	
 	for (int i = 0; i < 6; ++i)
 		delete[] fKeys[i];
 
@@ -237,6 +260,50 @@ MSshConnection::~MSshConnection()
 			Disconnect();
 	}
 	catch (...) {}
+}
+
+void MSshConnection::Reference()
+{
+	++fRefCount;
+}
+
+void MSshConnection::Release()
+{
+	--fRefCount;
+}
+
+MSshConnection* MSshConnection::Get(
+	const string&	inIPAddress,
+	const string&	inUserName,
+	uint16			inPort)
+{
+	MSshConnection* connection = sFirstConnection;
+	while (connection != nil)
+	{
+		if (connection->fIPAddress == inIPAddress and
+			connection->fUserName == inUserName and
+			connection->fPortNumber == inPort)
+		{
+			if (connection->IsConnected() or connection->Busy())
+				break;
+		}
+		
+		connection = connection->fNext;
+	}
+	
+	if (connection != nil)
+		connection->Reference();
+	else
+	{
+		connection = new MSshConnection();
+		if (not connection->Connect(inIPAddress, inUserName, inPort))
+		{
+			connection->Release();
+			connection = nil;
+		}
+	}
+	
+	return connection;
 }
 
 void MSshConnection::Error(
@@ -317,19 +384,21 @@ bool MSshConnection::Connect(
 
 void MSshConnection::Disconnect()
 {
-//	MSshConnectionPool::Instance().Remove(this);
-	fIsConnected = false;
+	if (fIsConnected)
+	{
+		fIsConnected = false;
+	
+		PRINT(("Disconnect %s", fIPAddress.c_str()));
+		RemoveRoute(eIdle, gApp->eIdle);
+		
+		close(fSocket);
+	
+		fBusy = false;
+		
+		eConnectionMessage("Connection closed");
+		eConnectionEvent(SSH_CHANNEL_CLOSED);
+	}
 
-	PRINT(("Disconnect %s", fIPAddress.c_str()));
-	RemoveRoute(eIdle, gApp->eIdle);
-	
-	close(fSocket);
-
-	fBusy = false;
-	
-	eConnectionEvent(SSH_CHANNEL_CLOSED);
-	eConnectionMessage("Connection closed");
-	
 	fChannels.clear();
 }
 
@@ -355,6 +424,9 @@ void MSshConnection::Idle(
 		return;
 	
 	MValueChanger<bool> saveFlag(fInhibitIdle, true);
+	
+	// avoid being deleted while processing this command
+	Reference();
 	
 	try
 	{
@@ -407,7 +479,9 @@ void MSshConnection::Idle(
 				/* Something wrong... no connection anymore */
 				if (lResult == 0 or lResult < 0)
 				{
-					assert(errno != EAGAIN);
+//					assert(errno != EAGAIN);
+					if (errno != EAGAIN)
+						PRINT(("connection error %s", strerror(errno)));
 					Disconnect();
 				}
 				else
@@ -481,6 +555,11 @@ void MSshConnection::Idle(
 		eConnectionMessage("exception");
 		PRINT(("Catched unhandled exception"));
 	}
+	
+	Release();
+	
+	if (fRefCount <= 0 and not fIsConnected and not fBusy)
+		delete this;
 }
 
 void MSshConnection::Send(string inMessage)
@@ -493,6 +572,57 @@ void MSshConnection::Send(string inMessage)
 
 void MSshConnection::Send(const MSshPacket& inPacket)
 {
+#if DEBUG
+cout << "<< " << inPacket.data.length() << " bytes" << endl;
+
+	const char kHex[] = "0123456789abcdef";
+	char s[] = "xxxxxxxx  cccc cccc cccc cccc  cccc cccc cccc cccc  |................|";
+	const int kHexOffset[] = { 10, 12, 15, 17, 20, 22, 25, 27, 31, 33, 36, 38, 41, 43, 46, 48 };
+	const int kAsciiOffset = 53;
+	
+	const unsigned char* data = reinterpret_cast<const unsigned char*>(inPacket.data.c_str());
+	
+	unsigned long offset = 0;
+	
+	while (offset < inPacket.data.length())
+	{
+		int rr = inPacket.data.length() - offset;
+		if (rr > 16)
+			rr = 16;
+		
+		char* t = s + 7;
+		long o = offset;
+		
+		while (t >= s)
+		{
+			*t-- = kHex[o % 16];
+			o /= 16;
+		}
+		
+		for (int i = 0; i < rr; ++i)
+		{
+			s[kHexOffset[i] + 0] = kHex[data[i] >> 4];
+			s[kHexOffset[i] + 1] = kHex[data[i] & 0x0f];
+			if (isprint(data[i]))
+				s[kAsciiOffset + i] = data[i];
+			else
+				s[kAsciiOffset + i] = '.';
+		}
+		
+		for (int i = rr; i < 16; ++i)
+		{
+			s[kHexOffset[i] + 0] = ' ';
+			s[kHexOffset[i] + 1] = ' ';
+			s[kAsciiOffset + i] = ' ';
+		}
+		
+		puts(s);
+		
+		data += rr;
+		offset += rr;
+	}
+#endif
+
 	Send(Wrap(inPacket.data));
 }
 
@@ -1032,7 +1162,7 @@ void MSshConnection::ProcessNewKeys(
 				new HMAC<SHA256>(fKeys[5]));
 	
 		string compress;
-		if (true) // Preferences::GetInteger("compress-sftp", true) != 0)
+		if (Preferences::GetInteger("compress-sftp", true))
 			compress = kUseCompressionAlgorithms;
 		else
 			compress = kDontUseCompressionAlgorithms;
@@ -1301,7 +1431,7 @@ void MSshConnection::RecvAuthInfo(
 	if (inAuthInfo.size() > 0)
 	{
 		MSshPacket out;
-		out << uint8(SSH_MSG_USERAUTH_INFO_RESPONSE) << inAuthInfo.size();
+		out << uint8(SSH_MSG_USERAUTH_INFO_RESPONSE) << uint32(inAuthInfo.size());
 		for (vector<string>::iterator s = inAuthInfo.begin(); s != inAuthInfo.end(); ++s)
 			out << *s;
 		Send(out);
@@ -1314,29 +1444,31 @@ void MSshConnection::TryPassword()
 {
 	eConnectionMessage("Password authentication");
 
-//	string p[1];
-//	bool e[1];
-//	
+	string p[1];
+	bool e[1];
+	
 //	p[0] = MStrings::GetIndString(1011, 2);
-//	e[0] = false;
-//
-//	MAuthDialog<1>* dlog = CreateHDialog<MAuthDialog<1> >(nil);
-//	dlog->SetTexts(MStrings::GetIndString(1011, 0),
-//		MStrings::GetFormattedIndString(1011, 1, fUserName, fIPAddress),
-//		p, e);
-//	AddRoute(dlog->eOKClicked, eRecvPassword);
-//	dlog->Show();	
+	p[0] = "Password";
+	e[0] = false;
+
+	MAuthDialog* dlog = new MAuthDialog("Logging in",
+		string("Please enter password for acount ") + fUserName + " ip address " + fIPAddress,
+		1, p, e);
+
+	AddRoute(dlog->eAuthInfo, eRecvPassword);
+
+	dlog->Show(nil);	
 }
 
 void MSshConnection::RecvPassword(
-	string		inPassword)
+	vector<string>	inPassword)
 {
-	if (inPassword.length() > 0)
+	if (inPassword.size() == 1 and inPassword[0].length() > 0)
 	{
 		MSshPacket out;
 		
 		out << uint8(SSH_MSG_USERAUTH_REQUEST)
-			<< fUserName << "ssh-connection" << "password" << false << inPassword;
+			<< fUserName << "ssh-connection" << "password" << false << inPassword[0];
 		
 		Send(out);
 		
@@ -1423,47 +1555,36 @@ void MSshConnection::ProcessChannelOpen(
 	
 	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
 	
-//	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
-//	{
+	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
+	{
 //		fAgentChannel.reset(new MSshAgentChannel(*this));
-//		
-//		ChannelInfo info;
-//		
+		
+		ChannelInfo info = {};
+		
 //		info.fChannel = fAgentChannel.get();
-//		info.fMyChannel = sNextChannelId++;
-//		info.fHostChannel = channelId;
-//		info.fMaxSendPacketSize = maxPacketSize;
-//		info.fMyWindowSize = kWindowSize;
-//		info.fHostWindowSize = windowSize;
-//		info.fChannelOpen = true;
-//		
-//		fChannels.push_back(info);
-//
-//		out << uint8(SSH_MSG_CHANNEL_OPEN_CONFIRMATION) << channelId
-//			<< info.fMyChannel << info.fMyWindowSize << kMaxPacketSize;
-//	}
-//	else
-//	{
-//		PRINT(("Wrong type of channel requested"));
+		info.fMyChannel = sNextChannelId++;
+		info.fHostChannel = channelId;
+		info.fMaxSendPacketSize = maxPacketSize;
+		info.fMyWindowSize = kWindowSize;
+		info.fHostWindowSize = windowSize;
+		info.fChannelOpen = true;
+		
+		fChannels.push_back(info);
+
+		out << uint8(SSH_MSG_CHANNEL_OPEN_CONFIRMATION) << channelId
+			<< info.fMyChannel << info.fMyWindowSize << kMaxPacketSize;
+	}
+	else
+	{
+		PRINT(("Wrong type of channel requested"));
 		
 		out << uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << channelId
 			<< uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << "unsupported" << "en";
-//	}
-}
-
-bool MSshConnection::IsConnectionForChannel(const MSshChannel* inChannel)
-{
-	bool result = (fOpeningChannel == inChannel);
-	if (result == false)
-	{
-		ChannelInfo info;
-		info.fChannel = const_cast<MSshChannel*>(inChannel);
-		result = find(fChannels.begin(), fChannels.end(), info) != fChannels.end();
 	}
-	return result;
 }
 
-void MSshConnection::OpenChannel(MSshChannel* inChannel)
+void MSshConnection::OpenChannel(
+	MSshChannel*	inChannel)
 {
 	if (not fAuthenticated)
 	{
@@ -1508,7 +1629,8 @@ void MSshConnection::OpenChannel(MSshChannel* inChannel)
 	}
 }
 
-void MSshConnection::CloseChannel(MSshChannel* inChannel)
+void MSshConnection::CloseChannel(
+	MSshChannel*	inChannel)
 {
 	ChannelInfo info;
 	info.fChannel = inChannel;

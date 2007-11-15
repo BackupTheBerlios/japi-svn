@@ -147,7 +147,7 @@ void MSftpGetDialog::GotFile()
 {
 	fUrl.SetPassword("");
 	
-	MDocument* doc = new MDocument(fText, fUrl.GetFileName());
+	MDocument* doc = new MDocument(fUrl, fText);
 	
 	MDocWindow::DisplayDocument(doc);
 	

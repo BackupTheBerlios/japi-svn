@@ -104,7 +104,6 @@
 				<file>MSftpChannel.cpp</file>
 				<file>MSshChannel.cpp</file>
 				<file>MSshConnection.cpp</file>
-				<file>MSshConnectionPool.cpp</file>
 				<file>MSftpGetDialog.cpp</file>
 			</group>
 		</group>
