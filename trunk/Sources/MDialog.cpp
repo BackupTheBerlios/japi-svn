@@ -487,6 +487,30 @@ void MDialog::AddExpander(
 	mImpl->Add(item);
 }
 
+void MDialog::AddProgressBar(
+	uint32				inID,
+	uint32				inParentID)
+{
+	MDialogItem* item = new MDialogItem;
+	
+	item->mWidget = gtk_progress_bar_new();
+	item->mID = inID;
+	item->mParentID = inParentID;
+	
+	mImpl->Add(item);
+}
+
+void MDialog::SetProgressFraction(
+	uint32				inID,
+	float				inFraction)
+{
+	MDialogItem item = mImpl->GetItem(inID);
+	if (GTK_IS_PROGRESS_BAR(item.mWidget))
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(item.mWidget), inFraction);
+	else
+		THROW(("item is not a progress bar"));
+}
+
 void MDialog::Show(
 	MWindow*		inParent)
 {
@@ -524,6 +548,12 @@ void MDialog::SetText(
 		gtk_entry_set_text(GTK_ENTRY(item.mWidget), inText.c_str());
 	else if (GTK_IS_LABEL(item.mWidget))
 		gtk_label_set_text(GTK_LABEL(item.mWidget), inText.c_str());
+	else if (GTK_IS_PROGRESS_BAR(item.mWidget))
+	{
+		gtk_progress_bar_set_text(GTK_PROGRESS_BAR(item.mWidget), inText.c_str());
+		gtk_progress_bar_set_ellipsize(GTK_PROGRESS_BAR(item.mWidget),
+			PANGO_ELLIPSIZE_MIDDLE);
+	}
 	else
 		THROW(("item is not an entry"));
 }

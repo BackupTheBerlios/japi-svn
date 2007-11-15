@@ -35,6 +35,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <cerrno>
+#include <signal.h>
 
 #include "MDocument.h"
 #include "MEditWindow.h"
@@ -487,25 +488,35 @@ void MJapieApp::DoOpen()
 	
 	MDocument* doc = nil;
 	
+	vector<MUrl> urls;
+	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
-		GSList* urls = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
+		GSList* uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
 		
-		GSList* file = urls;	
+		GSList* file = uris;	
 		
 		while (file != nil)
 		{
+cout << "uri: " << reinterpret_cast<char*>(file->data) << endl;
+
 			MUrl url(reinterpret_cast<char*>(file->data));
 			
-			doc = OpenOneDocument(url);
+			if (url.IsLocal())
+				doc = OpenOneDocument(url);
+			else
+				urls.push_back(url);
 			
 			g_free(file->data);
 			file->data = nil;
 			file = file->next;
 		}
 		
-		g_slist_free(urls);
+		g_slist_free(uris);
 	}
+	
+	if (urls.size() > 0)
+		new MSftpGetDialog(urls);
 	
 	char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 	if (cwd != nil)
@@ -825,13 +836,14 @@ void usage()
 
 int main(int argc, char* argv[])
 {
-//	struct sigaction act, oact;
-//	act.sa_handler = my_signal_handler;
-//	sigemptyset(&act.sa_mask);
-//	act.sa_flags = 0;
-//	::sigaction(SIGTERM, &act, &oact);
-//	::sigaction(SIGUSR1, &act, &oact);
-//
+	struct sigaction act, oact;
+	act.sa_handler = my_signal_handler;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	::sigaction(SIGTERM, &act, &oact);
+	::sigaction(SIGUSR1, &act, &oact);
+	::sigaction(SIGPIPE, &act, &oact);
+
 	try
 	{
 		bool fork = true;
@@ -862,8 +874,17 @@ int main(int argc, char* argv[])
 		{
 			string a(argv[i]);
 
-			if (a.substr(0, 7) == "file://" or a.substr(0, 7) == "sftp://")
-				docs.push_back(MUrl(a));
+			if (a.substr(0, 7) == "file://" or
+				a.substr(0, 7) == "sftp://" or
+				a.substr(0, 6) == "ssh://")
+			{
+				MUrl url(a);
+				
+				if (url.GetScheme() == "ssh")
+					url.SetScheme("sftp");
+				
+				docs.push_back(url);
+			}
 			else
 				docs.push_back(MUrl(fs::system_complete(a)));
 		}

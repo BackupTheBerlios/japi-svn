@@ -37,7 +37,7 @@ void MUrlImp::Parse(
 		THROW(("Invalid url '%s'", inUrl));
 	
 	string scheme = url.substr(0, p);
-	if (scheme != "file" and scheme != "sftp")
+	if (scheme != "file" and scheme != "sftp" and scheme != "ssh")
 		THROW(("Unsupported scheme '%s'", scheme.c_str()));
 	
 	if (scheme == "file")
@@ -51,13 +51,13 @@ void MUrlImp::Parse(
 	}
 	else
 	{
-		url.erase(0, 7);
+		url.erase(0, scheme.length() + 3);
 		
 		p = url.find('/');
 		if (p == string::npos)
 			THROW(("Invalid url '%s'", inUrl));
 		
-		string path = url.substr(p + 1, string::npos);
+		string path = url.substr(p, string::npos);
 		url = url.substr(0, p);
 		
 		string user, pass, host;
@@ -83,7 +83,7 @@ void MUrlImp::Parse(
 			host.erase(p, string::npos);
 		}
 		
-		mScheme = "sftp";
+		mScheme = scheme;
 		mUser = user;
 		mPassword = pass;
 		mHost = host;

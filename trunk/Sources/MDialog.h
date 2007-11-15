@@ -213,6 +213,14 @@ class MDialog : public MWindow
 							const std::string&	inLabel,
 							uint32				inParentID = 0);
 
+	void				AddProgressBar(
+							uint32				inID,
+							uint32				inParentID = 0);
+
+	void				SetProgressFraction(
+							uint32				inID,
+							float				inFraction);
+
 //	virtual OSStatus	DoControlHit(EventRef inEvent);
 //	virtual OSStatus	DoWindowClose(EventRef inEvent);
 

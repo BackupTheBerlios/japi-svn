@@ -277,11 +277,16 @@ MSshConnection* MSshConnection::Get(
 	const string&	inUserName,
 	uint16			inPort)
 {
+	string username = inUserName;
+	
+	if (username.length() == 0)
+		username = getlogin();
+	
 	MSshConnection* connection = sFirstConnection;
 	while (connection != nil)
 	{
 		if (connection->fIPAddress == inIPAddress and
-			connection->fUserName == inUserName and
+			connection->fUserName == username and
 			connection->fPortNumber == inPort)
 		{
 			if (connection->IsConnected() or connection->Busy())
@@ -296,7 +301,7 @@ MSshConnection* MSshConnection::Get(
 	else
 	{
 		connection = new MSshConnection();
-		if (not connection->Connect(inIPAddress, inUserName, inPort))
+		if (not connection->Connect(inIPAddress, username, inPort))
 		{
 			connection->Release();
 			connection = nil;

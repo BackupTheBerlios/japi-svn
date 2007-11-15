@@ -80,11 +80,19 @@ MMenuItem::MMenuItem(
 
 void MMenuItem::ItemCallback()
 {
-	if (mMenu != nil and mMenu->GetTarget() != nil)
+	try
 	{
-		if (not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
-			cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
+		if (mMenu != nil and mMenu->GetTarget() != nil)
+		{
+			if (not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
+				cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
+		}
 	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
+	}
+	catch (...) {}
 }
 
 void MMenuItem::RecentItemActivated()
@@ -100,7 +108,15 @@ void MMenuItem::RecentItemActivated()
 
 		g_free(uri);
 
-		gApp->OpenOneDocument(url);
+		try
+		{
+			gApp->OpenOneDocument(url);
+		}
+		catch (exception& e)
+		{
+			MError::DisplayError(e);
+		}
+		catch (...) {}
 	}
 }
 

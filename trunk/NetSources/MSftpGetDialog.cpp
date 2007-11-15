@@ -22,8 +22,11 @@ MSftpGetDialog::MSftpGetDialog(
 {
 	SetTitle("Fetching file");
 	
-	AddStaticText('lbl1', "x");
-	AddStaticText('lbl2', "y");
+	ResizeTo(200, -1);
+	
+	AddStaticText('lbl1', "Filename");
+	AddProgressBar('prog');
+	AddStaticText('lbl2', "no message");
 	
 	RestorePosition("fetchdialog");
 
@@ -41,6 +44,8 @@ MSftpGetDialog::MSftpGetDialog(
 		AddRoute(fChannel->eChannelEvent, eChannelEvent);
 		AddRoute(fChannel->eChannelMessage, eChannelMessage);
 	}
+
+	AddCancelButton("Cancel");
 
 	Show(nil);
 }
@@ -70,7 +75,7 @@ void MSftpGetDialog::FetchNext()
 
 //		SetTitle(HStrings::GetFormattedIndString(5002, 2,
 //			fUrl.GetFileName()));
-		SetText('lbl1', fUrl.GetFileName());
+		SetText('lbl1', string("Fetching ") + fUrl.GetFileName());
 
 		fChannel->ReadFile(fUrl.GetPath().string(),
 			Preferences::GetInteger("text transfer", true));
@@ -83,8 +88,6 @@ void MSftpGetDialog::FetchNext()
 void MSftpGetDialog::ChannelEvent(
 	int		inMessage)
 {
-cout << "--> SFTP Channel Event " << inMessage << endl;
-
 	switch (inMessage)
 	{
 		case SFTP_INIT_DONE:
@@ -135,12 +138,7 @@ void MSftpGetDialog::GotData()
 	PRINT(("Fetched: %d", fFetched));
 	
 	if (fSize > 0)
-	{
-		double v = 1000.0 * fFetched / fSize;
-		if (v < 0.0 || v > 1000.0)
-			v = 1000;
-//		SetNodeValue('prog', static_cast<long>(v));
-	}
+		SetProgressFraction('prog', float(fFetched) / fSize);
 }
 
 void MSftpGetDialog::GotFile()
