@@ -33,7 +33,7 @@
 #include "MError.h"
 #include "MSshConnection.h"
 #include "MSshChannel.h"
-//#include "MSshAgentChannel.h"
+#include "MSshAgent.h"
 #include "MAuthDialog.h"
 #include "MCertificate.h"
 #include "MPreferences.h"
@@ -135,7 +135,10 @@ ZLibHelper::ZLibHelper(
 
 ZLibHelper::~ZLibHelper()
 {
-	inflateEnd(&fStream);
+	if (fInflate)
+		inflateEnd(&fStream);
+	else
+		deflateEnd(&fStream);
 }
 
 int ZLibHelper::Process(
@@ -415,11 +418,11 @@ void MSshConnection::ResetTimer()
 void MSshConnection::CertificateDeleted(
 	MCertificate*	inCertificate)
 {
-	if (inCertificate == fCertificate.get())
-	{
-		fCertificate.reset(nil);
-		Disconnect();
-	}
+//	if (inCertificate == fCertificate.get())
+//	{
+//		fCertificate.reset(nil);
+//		Disconnect();
+//	}
 }
 
 void MSshConnection::Idle(
@@ -1244,24 +1247,30 @@ void MSshConnection::ProcessUserAuthNone(
 			p = "keyboard-interactive,password";
 
 			Integer e, n;
+			string comment;
 			
-			try
-			{
-				if (Preferences::GetInteger("use-certificate", false) != 0)
-				{
-					fCertificate.reset(new MCertificate(
-						Preferences::GetString("auth-certificate", "")));
-				
-					AddRoute(MCertificate::eCertificateDeleted, eCertificateDeleted);
-
-					if (fCertificate->GetPublicRSAKey(e, n))
-						p.insert(0, "publickey,");
-				}
-			}
-			catch (exception& e)
-			{
-				MError::DisplayError(e);
-			}
+			fSshAgent.reset(MSshAgent::Create());
+			
+			if (fSshAgent.get() != nil and fSshAgent->GetFirstIdentity(e, n, comment))
+				p.insert(0, "publickey,");
+			
+//			try
+//			{
+//				if (Preferences::GetInteger("use-certificate", false) != 0)
+//				{
+//					fCertificate.reset(new MCertificate(
+//						Preferences::GetString("auth-certificate", "")));
+//				
+//					AddRoute(MCertificate::eCertificateDeleted, eCertificateDeleted);
+//
+//					if (fCertificate->GetPublicRSAKey(e, n))
+//						p.insert(0, "publickey,");
+//				}
+//			}
+//			catch (exception& e)
+//			{
+//				MError::DisplayError(e);
+//			}
 			
 			s = ChooseProtocol(s, p);
 			
@@ -1326,15 +1335,16 @@ void MSshConnection::ProcessUserAuthPublicKey(
 
 			string sig;
 				// no matter what, send a bogus sig if needed
-			(void)fCertificate->SignData(out.data, sig);
+			fSshAgent->SignData(blob, out.data, sig);
 
 			string sink;
 			out >> sink;
 					
-			MSshPacket ps;
-			ps << "ssh-rsa" << sig;
-			
-			out << ps.data;
+//			MSshPacket ps;
+//			ps << "ssh-rsa" << sig;
+//			
+//			out << ps.data;
+			out << sig;
 			break;
 		}
 		
@@ -1346,7 +1356,20 @@ void MSshConnection::ProcessUserAuthPublicKey(
 			
 			in >> msg >> s >> partial;
 			
-			if (ChooseProtocol(s, "password") == "password")
+			Integer e, n;
+			string comment;
+			
+			if (fSshAgent->GetNextIdentity(e, n, comment) and
+				ChooseProtocol(s, "publickey") == "publickey")
+			{
+				MSshPacket blob;
+				blob << "ssh-rsa" << e << n;
+
+				out << uint8(SSH_MSG_USERAUTH_REQUEST)
+					<< fUserName << "ssh-connection" << "publickey" << false
+					<< "ssh-rsa" << blob.data;
+			}
+			else if (ChooseProtocol(s, "password") == "password")
 				TryPassword();
 			else
 				UserAuthFailed();

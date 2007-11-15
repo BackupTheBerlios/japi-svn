@@ -22,7 +22,7 @@ MSftpGetDialog::MSftpGetDialog(
 {
 	SetTitle("Fetching file");
 	
-	ResizeTo(200, -1);
+	ResizeTo(350, -1);
 	
 	AddStaticText('lbl1', "Filename");
 	AddProgressBar('prog');

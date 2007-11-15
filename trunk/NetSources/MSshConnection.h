@@ -18,7 +18,7 @@
 
 class MSshChannel;
 class MCertificate;
-//class MSshAgentChannel;
+class MSshAgent;
 struct MSshPacket;
 struct ZLibHelper;
 
@@ -218,6 +218,8 @@ class MSshConnection
 						MSshPacket&			in,
 						MSshPacket&			out);
 
+	void			TryNextIdentity();
+
 	void			TryPassword();
 
 	void			UserAuthSuccess();
@@ -319,8 +321,8 @@ class MSshConnection
 	
 	bool						fAuthenticated;
 
-	std::auto_ptr<MCertificate>		fCertificate;
-//	std::auto_ptr<MSshAgentChannel>	fAgentChannel;
+//	std::auto_ptr<MCertificate>	fCertificate;
+	std::auto_ptr<MSshAgent>	fSshAgent;
 
 	MEventIn<void(MCertificate*)>	eCertificateDeleted;
 

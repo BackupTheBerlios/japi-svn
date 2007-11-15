@@ -47,7 +47,7 @@ class MCertificate
 						std::string			inData,
 						std::string&		outSignature);
 
-	static void		MandleAuthMessage(
+	static void		HandleAuthMessage(
 						uint8				inMessage,
 						MSshPacket&			in,
 						MSshPacket&			out);
