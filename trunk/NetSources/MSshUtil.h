@@ -159,7 +159,8 @@ struct MSshPacket
 
 	MSshPacket&		operator<<(bool inValue)
 	{
-		data.append(reinterpret_cast<char*>(&inValue), 1);
+		uint8 v = inValue;
+		data.append(reinterpret_cast<char*>(&v), 1);
 		return *this;
 	}
 	
@@ -209,6 +210,15 @@ struct MSshPacket
 		}
 		else
 			throw MSshPacketError();
+		return *this;
+	}
+
+	MSshPacket&		operator>>(bool& outValue)
+	{
+		uint8 v;
+		operator>>(v);
+		
+		outValue = (v != 0);
 		return *this;
 	}
 

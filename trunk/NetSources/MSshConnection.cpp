@@ -285,6 +285,9 @@ MSshConnection* MSshConnection::Get(
 	if (username.length() == 0)
 		username = getlogin();
 	
+	if (inPort == 0)
+		inPort = 22;
+	
 	MSshConnection* connection = sFirstConnection;
 	while (connection != nil)
 	{
@@ -611,7 +614,7 @@ cout << "<< " << inPacket.data.length() << " bytes" << endl;
 		{
 			s[kHexOffset[i] + 0] = kHex[data[i] >> 4];
 			s[kHexOffset[i] + 1] = kHex[data[i] & 0x0f];
-			if (isprint(data[i]))
+			if (data[i] < 128 and isprint(data[i]))
 				s[kAsciiOffset + i] = data[i];
 			else
 				s[kAsciiOffset + i] = '.';

@@ -99,13 +99,13 @@
 			<file>MSelection.cpp</file>
 			<group name="SFTP">
 				<file>MAuthDialog.cpp</file>
-				<file>MCertificate.cpp</file>
 				<file>MKnownHosts.cpp</file>
 				<file>MSftpChannel.cpp</file>
 				<file>MSshAgent.cpp</file>
 				<file>MSshChannel.cpp</file>
 				<file>MSshConnection.cpp</file>
 				<file>MSftpGetDialog.cpp</file>
+				<file>MSftpPutDialog.cpp</file>
 			</group>
 		</group>
 		<group name="Libraries">
@@ -146,7 +146,6 @@
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -170,7 +169,6 @@
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

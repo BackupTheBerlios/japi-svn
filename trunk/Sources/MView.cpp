@@ -144,8 +144,8 @@ void MView::SetBounds(
 }
 
 void MView::ResizeTo(
-	uint32			inWidth,
-	uint32			inHeight)
+	int32			inWidth,
+	int32			inHeight)
 {
 	gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
 }

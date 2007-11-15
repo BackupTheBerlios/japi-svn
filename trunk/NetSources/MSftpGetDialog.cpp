@@ -22,7 +22,7 @@ MSftpGetDialog::MSftpGetDialog(
 {
 	SetTitle("Fetching file");
 	
-	ResizeTo(350, -1);
+	ResizeTo(400, -1);
 	
 	AddStaticText('lbl1', "Filename");
 	AddProgressBar('prog');
@@ -30,20 +30,13 @@ MSftpGetDialog::MSftpGetDialog(
 	
 	RestorePosition("fetchdialog");
 
-	fUrls = inUrls;
+	fUrl = fUrls.front();
+	
+	fChannel.reset(
+		new MSftpChannel(fUrl.GetHost(), fUrl.GetUser(), fUrl.GetPort()));
 
-	if (fChannel.get() == nil)
-	{
-		fUrl = fUrls.front();
-		
-		unsigned short port = fUrl.GetPort();
-		if (port == 0)
-			port = 22;
-		fChannel.reset(
-			new MSftpChannel(fUrl.GetHost(), fUrl.GetUser(), port));
-		AddRoute(fChannel->eChannelEvent, eChannelEvent);
-		AddRoute(fChannel->eChannelMessage, eChannelMessage);
-	}
+	AddRoute(fChannel->eChannelEvent, eChannelEvent);
+	AddRoute(fChannel->eChannelMessage, eChannelMessage);
 
 	AddCancelButton("Cancel");
 
@@ -96,20 +89,24 @@ void MSftpGetDialog::ChannelEvent(
 			break;
 		
 		case SFTP_FILE_SIZE_KNOWN:
+			SetText('lbl2', "File size known");
 			fSize = fChannel->GetFileSize();
 //			SetNodeText('stat',
 //				HStrings::GetFormattedIndString(4007, 0, fUrl.GetFileName()));
 			break;
 		
 		case SFTP_DATA_AVAILABLE:
+			SetText('lbl2', "Receiving data");
 			GotData();
 			break;
 		
 		case SFTP_DATA_DONE:
+			SetText('lbl2', "File received");
 			GotFile();
 			break;
 		
 		case SFTP_FILE_CLOSED:
+			SetText('lbl2', "File closed");
 			FetchNext();
 			break;
 

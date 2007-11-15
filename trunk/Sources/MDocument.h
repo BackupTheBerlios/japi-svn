@@ -277,11 +277,16 @@ class MDocument
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
 	
-	MEventIn<void(bool)>								eShellStatusIn;
-	MEventIn<void(const char* inText, uint32 inSize)>	eStdOut;
-	MEventIn<void(const char* inText, uint32 inSize)>	eStdErr;
-	MEventIn<void(MWindow*)>							eMsgWindowClosed;
-	MEventIn<void(double)>								eIdle;
+	MEventIn<void(bool)>				eShellStatusIn;
+	MEventIn<void(
+		const char* inText,
+		uint32 inSize)>					eStdOut;
+	MEventIn<void(
+		const char* inText,
+		uint32		inSize)>			eStdErr;
+	MEventIn<void(MWindow*)>			eMsgWindowClosed;
+	MEventIn<void(double)>				eIdle;
+	MEventIn<void(bool)>				eNotifyPut;
 
 	// the actions MDocument can perform
 
@@ -378,6 +383,9 @@ class MDocument
 
 	void				Idle(
 							double		inSystemTime);
+	
+	void				NotifyPut(
+							bool		inPutting);
 
 	typedef std::list<MController*>	MControllerList;
 	
@@ -423,6 +431,7 @@ class MDocument
 	bool						mPreparedForStdOut;
 	bool						mIsWorksheet;
 	uint32						mPCLine;
+	int32						mPutCount;
 };
 
 inline

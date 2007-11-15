@@ -1,10 +1,11 @@
 ﻿Te doen
 
-- shift lines gaat nog steeds erg vaak mis
-
-- vierkante selectie
+- shift lines gaat nog een beetje mis, soms
 
 - toetsenbord navigatie in lijsten, typeahead
+	lijsten vervangen door GtkTreeView dingen
+
+- vierkante selectie
 
 - diff
 - preferences dialog
@@ -13,7 +14,7 @@
 - onzichtbare tekens tekenen
 - drag&drop
 - upper/lower case
-- truncate strings in lijsten
+- Lange foutmeldingen wrappen in meldingen lijsten
 - resources/localisatie
 - context menu's
 
@@ -22,3 +23,6 @@
 - split windows?
 
 - xml parser: pad in popup?
+
+- linker schrijven
+- debugger

@@ -63,6 +63,7 @@
 #include "MProject.h"
 #include "MDevice.h"
 #include "MDocClosedNotifier.h"
+#include "MSftpPutDialog.h"
 
 using namespace std;
 
@@ -122,6 +123,7 @@ MDocument::MDocument(
 	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
+	, eNotifyPut(this, &MDocument::NotifyPut)
 {
 	Init();
 	
@@ -164,10 +166,9 @@ MDocument::MDocument(
 	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
-
-	, mText(inText)
-
+	, eNotifyPut(this, &MDocument::NotifyPut)
 	, mURL(MUrl("file:///tmp") / inFileNameHint)
+	, mText(inText)
 {
 	Init();
 	
@@ -194,6 +195,7 @@ MDocument::MDocument(const MUrl& inFile)
 	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
+	, eNotifyPut(this, &MDocument::NotifyPut)
 
 	, mURL(inFile)
 {
@@ -221,10 +223,9 @@ MDocument::MDocument(
 	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
-	
-	, mText(inText)
-
+	, eNotifyPut(this, &MDocument::NotifyPut)
 	, mURL(inFile)
+	, mText(inText)
 {
 	Init();
 
@@ -259,6 +260,7 @@ void MDocument::Init()
 	mStdErrWindow = nil;
 	mIsWorksheet = false;
 	mPCLine = numeric_limits<uint32>::max();
+	mPutCount = 0;
 
 	mCharsPerTab = gCharsPerTab;
 
@@ -963,18 +965,27 @@ bool MDocument::DoSave()
 		}
 		catch (...) {}
 		
-		MFile file(mURL.GetPath());
-		file.Open(O_RDWR | O_TRUNC | O_CREAT);
-		mText.WriteToFile(file);
+		if (mURL.IsLocal())
+		{
+			MFile file(mURL.GetPath());
+			file.Open(O_RDWR | O_TRUNC | O_CREAT);
+			mText.WriteToFile(file);
+
 //		MSafeSaver safe(mURL.GetPath());
 //		mText.WriteToFile(*safe.GetTempFile());
 //		safe.Commit(mURL.GetPath());
+
+			MProject::RecheckFiles();
+		}
+		else
+		{
+			MSftpPutDialog* dlog = new MSftpPutDialog(this);
+			AddRoute(eNotifyPut, dlog->eNotifyPut);
+		}
 		
 		SetModified(false);
-		
 		gApp->AddToRecentMenu(mURL);
-		MProject::RecheckFiles();
-	
+		
 		eFileSpecChanged(mURL);
 		
 		result = true;
@@ -4174,3 +4185,14 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 	}
 }
 
+// ---------------------------------------------------------------------------
+//	MDocument::SelectIncludePopupItem
+
+void MDocument::NotifyPut(
+	bool		inPutting)
+{
+	if (inPutting)
+		++mPutCount;
+	else
+		--mPutCount;
+}

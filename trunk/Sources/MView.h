@@ -39,8 +39,8 @@ class MView
 						const MRect&	inBounds);
 
 	void			ResizeTo(
-						uint32			inWidth,
-						uint32			inHeight);
+						int32			inWidth,
+						int32			inHeight);
 
 	void			ConvertToGlobal(
 						int32&			ioX,

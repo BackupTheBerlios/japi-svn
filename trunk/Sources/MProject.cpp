@@ -249,14 +249,14 @@ MProject::MProject(const MPath& inPath)
 	
 	// blok 1, target popup en wat buttons
 	
-	GtkWidget* hbox = gtk_hbox_new(false, 2);
-	gtk_box_pack_start(GTK_BOX(mVBox), hbox, false, false, 0);
+	GtkWidget* hbox = gtk_hbox_new(false, 4);
+	gtk_box_pack_start(GTK_BOX(mVBox), hbox, false, false, 4);
 	
 	GtkWidget* label = gtk_label_new("Target");
-	gtk_box_pack_start(GTK_BOX(hbox), label, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), label, false, false, 4);
 	
 	mTargetPopup = gtk_combo_box_new_text();
-	gtk_box_pack_start(GTK_BOX(hbox), mTargetPopup, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), mTargetPopup, false, false, 4);
 
 	mTargetPopupCount = 0;
 	for (vector<MProjectTarget*>::iterator target = mTargets.begin();

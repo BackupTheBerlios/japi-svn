@@ -556,7 +556,7 @@ MDocument* MJapieApp::OpenOneDocument(
 	{
 		vector<MUrl> urls;
 		urls.push_back(inFileRef);
-		MSftpGetDialog* dlog = new MSftpGetDialog(urls);
+		/*MSftpGetDialog* dlog = */new MSftpGetDialog(urls);
 //		dlog->Show(nil);
 	}
 	
