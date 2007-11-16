@@ -181,7 +181,7 @@ bool MSshAgent::RequestReply(
 		{
 			char b[1024];
 
-			uint32 k = l;
+			int32 k = l;
 			if (k > sizeof(b))
 				k = sizeof(b);
 			

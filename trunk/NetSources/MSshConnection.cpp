@@ -36,7 +36,7 @@
 #include "MSshAgent.h"
 #include "MAuthDialog.h"
 #include "MPreferences.h"
-
+#include "MUtils.h"
 #include "MKnownHosts.h"
 
 using namespace std;
@@ -282,7 +282,7 @@ MSshConnection* MSshConnection::Get(
 	string username = inUserName;
 	
 	if (username.length() == 0)
-		username = getlogin();
+		username = GetUserName(true);
 	
 	if (inPort == 0)
 		inPort = 22;

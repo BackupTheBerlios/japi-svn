@@ -36,6 +36,7 @@
 #include <sstream>
 #include <string>
 #include <stack>
+#include <pwd.h>
 
 #include <sys/time.h>
 
@@ -253,12 +254,35 @@ string GetLocalisedString(const char* inString)
 
 string GetUserName(bool inShortName)
 {
-	return "ikke";
-//	MCFString s(::CSCopyUserName(inShortName), false);
-//	
-//	string name;
-//	s.GetString(name);
-//	return name;
+	string result;
+	
+	int uid = getuid();
+	struct passwd* pw = getpwuid(uid);
+
+	if (pw != nil)
+	{
+		if (inShortName or *pw->pw_gecos == 0)
+			result = pw->pw_name;
+		else
+		{
+			result = pw->pw_gecos;
+			
+			if (result.length() > 0)
+			{
+				string::size_type p = result.find(',');
+
+				if (p != string::npos)
+					result.erase(p, result.length() - p);
+
+				p = result.find('&');
+
+				if (p != string::npos)
+					result.replace(p, 1, pw->pw_name);
+			}
+		}
+	}
+
+	return result;
 }
 
 string GetDateTime()
