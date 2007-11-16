@@ -345,19 +345,28 @@ gint MJapieApp::Snooper(
 	gpointer		inFuncData)
 {
 	bool result = false;
-	uint32 cmd;
 
-	if (inEvent->type == GDK_KEY_PRESS and 
-		MAcceleratorTable::Instance().IsAcceleratorKey(inEvent, cmd))
+	try
 	{
-		MHandler* handler = MHandler::GetFocus();
-		if (handler == nil)
-			handler = gApp;
-		
-		bool enabled, checked;
-		if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
-			result = handler->ProcessCommand(cmd, nil, 0);
+		uint32 cmd;
+	
+		if (inEvent->type == GDK_KEY_PRESS and 
+			MAcceleratorTable::Instance().IsAcceleratorKey(inEvent, cmd))
+		{
+			MHandler* handler = MHandler::GetFocus();
+			if (handler == nil)
+				handler = gApp;
+			
+			bool enabled, checked;
+			if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
+				result = handler->ProcessCommand(cmd, nil, 0);
+		}
 	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
+	}
+	catch (...) {}
 
 	return result;
 }

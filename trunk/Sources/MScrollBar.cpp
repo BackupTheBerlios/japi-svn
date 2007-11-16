@@ -76,7 +76,7 @@ void MScrollBar::SetAdjustmentValues(
 
 void MScrollBar::OnValueChanged()
 {
-	uint32 value = gtk_adjustment_get_value(mAdjustment);
+	uint32 value = static_cast<uint32>(gtk_adjustment_get_value(mAdjustment));
 	
 	if (value != mValue)
 	{

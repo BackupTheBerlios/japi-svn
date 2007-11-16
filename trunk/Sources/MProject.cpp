@@ -803,7 +803,7 @@ void MProject::FileItemDragged(
 		if (group == nil)
 			THROW(("No group for item"));
 		
-		int32 itemNr = (i - flat.begin());
+		uint32 itemNr = (i - flat.begin());
 		assert(itemNr != inNewRow);
 		
 		if (inNewRow > itemNr)
@@ -885,7 +885,7 @@ void MProject::PackageItemDragged(
 		if (group == nil)
 			THROW(("No group for item"));
 		
-		int32 itemNr = (i - flat.begin());
+		uint32 itemNr = (i - flat.begin());
 		assert(itemNr != inNewRow);
 		
 		if (inNewRow > itemNr)
@@ -1039,6 +1039,7 @@ void MProject::ProjectFileStatusChanged()
 		case ePanelFiles:		mFileList->Invalidate();		break;
 //		case ePanelLinkOrder:	mLinkOrderList->Invalidate();	break;
 //		case ePanelPackage:		mPackageList->Invalidate();	break;
+		default:												break;
 	}
 }
 
@@ -1366,7 +1367,7 @@ void MProject::CreateNewGroup(
 	MProjectGroup* parent = &mProjectItems;
 	int32 position = kListItemLast;
 	
-	if (selected >= 0 and selected < mFileList->GetCount())
+	if (selected >= 0 and selected < static_cast<int32>(mFileList->GetCount()))
 	{
 		MProjectItem* item = GetItem(selected);
 		parent = item->GetParent();
@@ -2996,7 +2997,7 @@ MProjectItem* MProject::GetItem(
 		default:											break;
 	}
 	
-	if (inItemNr < 0 or inItemNr >= listView->GetCount())
+	if (inItemNr < 0 or inItemNr >= static_cast<int32>(listView->GetCount()))
 		THROW(("Item number out of range"));
 	
 	MProjectItem* item = nil;

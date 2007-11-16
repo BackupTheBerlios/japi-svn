@@ -238,6 +238,60 @@ struct MSshPacket
 		return *this;
 	}
 	
+#if DEBUG
+	void			Dump() const
+					{
+						std::cout << "<< " << data.length() << " bytes" << std::endl;
+					
+						const char kHex[] = "0123456789abcdef";
+						char s[] = "xxxxxxxx  cccc cccc cccc cccc  cccc cccc cccc cccc  |................|";
+						const int kHexOffset[] = { 10, 12, 15, 17, 20, 22, 25, 27, 31, 33, 36, 38, 41, 43, 46, 48 };
+						const int kAsciiOffset = 53;
+						
+						const unsigned char* text = reinterpret_cast<const unsigned char*>(data.c_str());
+						
+						unsigned long offset = 0;
+						
+						while (offset < data.length())
+						{
+							int rr = data.length() - offset;
+							if (rr > 16)
+								rr = 16;
+							
+							char* t = s + 7;
+							long o = offset;
+							
+							while (t >= s)
+							{
+								*t-- = kHex[o % 16];
+								o /= 16;
+							}
+							
+							for (int i = 0; i < rr; ++i)
+							{
+								s[kHexOffset[i] + 0] = kHex[text[i] >> 4];
+								s[kHexOffset[i] + 1] = kHex[text[i] & 0x0f];
+								if (text[i] < 128 and isprint(text[i]))
+									s[kAsciiOffset + i] = text[i];
+								else
+									s[kAsciiOffset + i] = '.';
+							}
+							
+							for (int i = rr; i < 16; ++i)
+							{
+								s[kHexOffset[i] + 0] = ' ';
+								s[kHexOffset[i] + 1] = ' ';
+								s[kAsciiOffset + i] = ' ';
+							}
+							
+							puts(s);
+							
+							text += rr;
+							offset += rr;
+						}
+					}
+#endif
+	
 	std::string		data;
 };
 

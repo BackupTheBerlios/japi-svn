@@ -349,7 +349,7 @@ void MProjectPathsDialog::DrawPath(
 	
 	inDevice.EraseRect(inFrame);
 	
-	float x, y;
+	int32 x, y;
 	x = inFrame.x + 4;
 	y = inFrame.y + 1;
 

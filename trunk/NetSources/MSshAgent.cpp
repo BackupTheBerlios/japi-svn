@@ -12,50 +12,52 @@
 using namespace std;
 using namespace CryptoPP;
 
-/* Messages for the authentication agent connection. */
-#define SSH_AGENTC_REQUEST_RSA_IDENTITIES	1
-#define SSH_AGENT_RSA_IDENTITIES_ANSWER		2
-#define SSH_AGENTC_RSA_CHALLENGE		3
-#define SSH_AGENT_RSA_RESPONSE			4
-#define SSH_AGENT_FAILURE			5
-#define SSH_AGENT_SUCCESS			6
-#define SSH_AGENTC_ADD_RSA_IDENTITY		7
-#define SSH_AGENTC_REMOVE_RSA_IDENTITY		8
-#define SSH_AGENTC_REMOVE_ALL_RSA_IDENTITIES	9
-
-/* private OpenSSH extensions for SSH2 */
-#define SSH2_AGENTC_REQUEST_IDENTITIES		11
-#define SSH2_AGENT_IDENTITIES_ANSWER		12
-#define SSH2_AGENTC_SIGN_REQUEST		13
-#define SSH2_AGENT_SIGN_RESPONSE		14
-#define SSH2_AGENTC_ADD_IDENTITY		17
-#define SSH2_AGENTC_REMOVE_IDENTITY		18
-#define SSH2_AGENTC_REMOVE_ALL_IDENTITIES	19
-
-/* smartcard */
-#define SSH_AGENTC_ADD_SMARTCARD_KEY		20
-#define SSH_AGENTC_REMOVE_SMARTCARD_KEY		21
-
-/* lock/unlock the agent */
-#define SSH_AGENTC_LOCK				22
-#define SSH_AGENTC_UNLOCK			23
-
-/* add key with constraints */
-#define SSH_AGENTC_ADD_RSA_ID_CONSTRAINED	24
-#define SSH2_AGENTC_ADD_ID_CONSTRAINED		25
-#define SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED 26
-
-#define	SSH_AGENT_CONSTRAIN_LIFETIME		1
-#define	SSH_AGENT_CONSTRAIN_CONFIRM		2
-
-/* extended failure messages */
-#define SSH2_AGENT_FAILURE			30
-
-/* additional error code for ssh.com's ssh-agent2 */
-#define SSH_COM_AGENT2_FAILURE			102
-
-#define	SSH_AGENT_OLD_SIGNATURE			0x01
-
+enum {
+	
+	/* Messages for the authentication agent connection. */
+	SSH_AGENTC_REQUEST_RSA_IDENTITIES =	1,
+	SSH_AGENT_RSA_IDENTITIES_ANSWER,
+	SSH_AGENTC_RSA_CHALLENGE,
+	SSH_AGENT_RSA_RESPONSE,
+	SSH_AGENT_FAILURE,
+	SSH_AGENT_SUCCESS,
+	SSH_AGENTC_ADD_RSA_IDENTITY,
+	SSH_AGENTC_REMOVE_RSA_IDENTITY,
+	SSH_AGENTC_REMOVE_ALL_RSA_IDENTITIES,
+	
+	/* private OpenSSH extensions for SSH2 */
+	SSH2_AGENTC_REQUEST_IDENTITIES = 11,
+	SSH2_AGENT_IDENTITIES_ANSWER,
+	SSH2_AGENTC_SIGN_REQUEST,
+	SSH2_AGENT_SIGN_RESPONSE,
+	SSH2_AGENTC_ADD_IDENTITY = 17,
+	SSH2_AGENTC_REMOVE_IDENTITY,
+	SSH2_AGENTC_REMOVE_ALL_IDENTITIES,
+	
+	/* smartcard */
+	SSH_AGENTC_ADD_SMARTCARD_KEY,
+	SSH_AGENTC_REMOVE_SMARTCARD_KEY,
+	
+	/* lock/unlock the agent */
+	SSH_AGENTC_LOCK,
+	SSH_AGENTC_UNLOCK,
+	
+	/* add key with constraints */
+	SSH_AGENTC_ADD_RSA_ID_CONSTRAINED,
+	SSH2_AGENTC_ADD_ID_CONSTRAINED,
+	SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED,
+	
+	SSH_AGENT_CONSTRAIN_LIFETIME = 1,
+	SSH_AGENT_CONSTRAIN_CONFIRM,
+	
+	/* extended failure messages */
+	SSH2_AGENT_FAILURE = 30,
+	
+	/* additional error code for ssh.com's ssh-agent2 */
+	SSH_COM_AGENT2_FAILURE = 102,
+	
+	SSH_AGENT_OLD_SIGNATURE = 0x01
+};
 
 MSshAgent* MSshAgent::Create()
 {
@@ -87,14 +89,12 @@ MSshAgent* MSshAgent::Create()
 MSshAgent::MSshAgent(
 	int			inSock)
 	: mSock(inSock)
-	, mPacket(nil)
+	, mCount(0)
 {
 }
 
 MSshAgent::~MSshAgent()
 {
-	delete mPacket;
-	
 	close(mSock);
 }
 
@@ -105,32 +105,22 @@ bool MSshAgent::GetFirstIdentity(
 {
 	bool result = false;
 	
-	delete mPacket;
-	mPacket = new MSshPacket;
 	mCount = 0;
 
 	MSshPacket out;
 	uint8 msg = SSH2_AGENTC_REQUEST_IDENTITIES;
 	out << msg;
 	
-	if (not RequestReply(out, *mPacket))
+	if (RequestReply(out, mIdentities))
 	{
-		delete mPacket;
-		mPacket = nil;
-	}
-	
-	if (mPacket != nil)
-	{
-		*mPacket >> msg;
+#if DEBUG
+		mIdentities.Dump();
+#endif
+		mIdentities >> msg;
 		
-		if (msg != SSH2_AGENT_IDENTITIES_ANSWER)
+		if (msg == SSH2_AGENT_IDENTITIES_ANSWER)
 		{
-			delete mPacket;
-			mPacket = nil;
-		}
-		else
-		{
-			*mPacket >> mCount;
+			mIdentities >> mCount;
 
 			PRINT(("++ SSH_AGENT returned %d identities", mCount));
 			
@@ -149,31 +139,22 @@ bool MSshAgent::GetNextIdentity(
 {
 	bool result = false;
 	
-	while (mCount > 0 and result == false)
+	while (result == false and mCount-- > 0 and mIdentities.data.length() > 0)
 	{
-		MSshPacket p;
-		
-		*mPacket >> p.data;
+		MSshPacket blob;
+
+		mIdentities >> blob.data >> outComment;
 		
 		string type;
+		blob >> type;
 		
-		p >> type;
-		
-		if (type == "ssh-rsa")
-		{
-			p >> e >> n;
-			
-			if (p.data.length() > 0)
-				p >> outComment;
-			else
-				outComment.clear();
-			
-			PRINT(("++ returning yet another identity"));
+		if (type != "ssh-rsa")
+			continue;
 
-			result = true;
-		}
-		
-		--mCount;
+		blob >> e >> n;
+
+		result = true;
+		PRINT(("++ returning identity %s", outComment.c_str()));
 	}
 	
 	return result;

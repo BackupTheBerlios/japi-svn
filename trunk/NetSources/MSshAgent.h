@@ -34,7 +34,7 @@ class MSshAgent
 							MSshPacket&	in);
 
 	int					mSock;
-	MSshPacket*			mPacket;
+	MSshPacket			mIdentities;
 	uint32				mCount;
 	CryptoPP::Integer	e, n;
 };

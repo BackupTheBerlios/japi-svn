@@ -290,7 +290,7 @@ void MFindDialog::DoFindCommand(
 		MPath dir;
 		bool recursive, textFilesOnly;
 		string filter;
-		MMultiMethod method;
+		MMultiMethod method = eMMDirectory;
 
 		recursive = IsChecked(kRecursiveCheckboxID);
 		textFilesOnly = IsChecked(kTextFilesOnlyCheckboxID);
@@ -590,7 +590,7 @@ void MFindDialog::GetFilesForFindAll(
 	{
 		case eMMDirectory:
 		{
-			uint32 flags;
+			uint32 flags = 0;
 			
 			if (inRecursive)
 				flags |= kFileIter_Deep;

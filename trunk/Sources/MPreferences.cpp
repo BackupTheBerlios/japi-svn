@@ -214,7 +214,7 @@ GetArray(
 	
 	if (data != nil)
 	{
-		for (int i = 0; i < length; ++i)
+		for (uint32 i = 0; i < length; ++i)
 			outArray.push_back(data[i]);
 
 		g_strfreev(data);

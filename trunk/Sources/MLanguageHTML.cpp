@@ -248,7 +248,7 @@ MLanguageHTML::StyleLine(
 		kStyleMask =	1 << kStyleBit,
 		kFlagXMask =	1 << kFlagXBit,
 		kScriptMask =	1 << kScriptBit,
-		kStateMask =	~(kStyleMask | kFlagXMask | kScriptMask);
+		kStateMask =	static_cast<uint16>(~(kStyleMask | kFlagXMask | kScriptMask));
 
 	style =		(ioState & kStyleMask);
 	flagX =	(ioState & kFlagXMask);

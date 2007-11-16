@@ -268,10 +268,14 @@ void MDocument::Init()
 
 	for (int i = kActiveInputArea; i <= kSelectedText; ++i)
 		mTextInputAreaInfo.fOffset[i] = -1;
+	
+	PRINT(("Document created %x", this));
 }
 
 MDocument::~MDocument()
 {
+	PRINT(("Deleting document %x (%s)", this,
+		IsSpecified() ? mURL.str().c_str() : "unspecified"));
 //	boost::mutex::scoped_lock lock(sDocListMutex);
 
 	if (sFirst == this)
