@@ -110,7 +110,7 @@ MLanguagePerl::Init()
 		"symlink", "syscall", "sysread", "system",
 		"syswrite", "tell", "telldir", "time", "tr", "y", "truncate",
 		"umask", "undef", "unlink", "unpack", "unshift", "utime",
-		"values", "vec", "wait", "waitpid", "wantarray", "warn", "write",
+		"values", "vec", "wait", "waitpid", "wantarray", "warn", "warning", "write",
 		"abs", "bless", "chomp", "chr", "formline", "glob", "import",
 		"lc", "lcfirst", "map", "no", "our", "prototype", "qw",
 		"readline", "readpipe", "ref", "sysopen", "tie", "tied",
@@ -135,7 +135,7 @@ MLanguagePerl::StyleLine(
 	MTextBuffer::const_iterator text = inText.begin() + inOffset;
 	MTextBuffer::const_iterator end = inText.end();
 	uint32 i = 0, s = 0, kws = 0, esc = 0;
-	bool leave = false;
+	bool leave = false, start_regex = true;
 	
 	if (ioState == COMMENT or ioState == LCOMMENT)
 		SetStyle(0, kLCommentColor);
@@ -171,6 +171,7 @@ MLanguagePerl::StyleLine(
 				{
 					kws = Move(c, 1);
 					ioState = IDENT;
+					start_regex = true;
 				}
 				else if (c == '=' and IsAlpha(text[i]))
 					ioState = POD1;
@@ -185,17 +186,20 @@ MLanguagePerl::StyleLine(
 				else if (c == '@' or c == '*' or c == '%')
 					ioState = VAR1a;
 				else if (c == '~')
+				{
+					start_regex = true;
 					ioState = REGEX0;
+				}
 				else if (c == '<' and text[i] == '<')
 				{
 					ioState = HERE_DOC_0;
 					++i;
 				}
-//				else if (c == '/')
-//				{
-//					mc = '/';
-//					ioState = REGEX1;
-//				}
+				else if (c == '/' and start_regex)
+				{
+					mc = '/';
+					ioState = REGEX1;
+				}
 				else if (c == '\n' or c == 0)
 					leave = true;
 					
@@ -395,6 +399,8 @@ MLanguagePerl::StyleLine(
 
 					leave = true;
 				}
+				else if (esc)
+					esc = false;
 				else if (c == mc)
 				{
 					if (nest-- == 0)
@@ -425,10 +431,14 @@ MLanguagePerl::StyleLine(
 					++nest;
 				else if (c == '(' and mc == ')' and nest < 3)
 					++nest;
+				else 
+					esc = (c == '\\');
 				break;
 			
 			case QUOTE5:
-				if (c == '{' and mc == '}')
+				if (esc)
+					esc = false;
+				else if (c == '{' and mc == '}')
 				{
 					ioState = QUOTE2;
 					nest = 0;
@@ -450,6 +460,8 @@ MLanguagePerl::StyleLine(
 				}
 				else if (c == '\n')
 					leave = true;
+				else if (c == '\\')
+					esc = true;
 				else if (not IsSpace(c))
 				{
 					ioState = START;
@@ -471,8 +483,10 @@ MLanguagePerl::StyleLine(
 					s = inLength;
 					leave = true;
 				}
+				else if (esc)
+					esc = false;
 				else
-					esc = not esc and (c == '\\');
+					esc = (c == '\\');
 				break;
 			
 			case STRING2:
@@ -488,8 +502,10 @@ MLanguagePerl::StyleLine(
 					s = inLength;
 					leave = true;
 				}
+				else if (esc)
+					esc = false;
 				else
-					esc = not esc and (c == '\\');
+					esc = (c == '\\');
 				break;
 			
 			case REGEX0:
@@ -534,8 +550,10 @@ MLanguagePerl::StyleLine(
 					s = i;
 					ioState = START;
 				}
+				else if (esc)
+					esc = false;
 				else
-					esc = not esc and (c == '\\');
+					esc = (c == '\\');
 				break;
 			
 			case REGEX2:
@@ -564,8 +582,10 @@ MLanguagePerl::StyleLine(
 					if (ioState != START)
 						ioState = REGEX1;
 				}
+				else if (esc)
+					esc = false;
 				else
-					esc = not esc and (c == '\\');
+					esc = (c == '\\');
 				break;
 			
 			case SCOPE:
@@ -669,6 +689,7 @@ MLanguagePerl::StyleLine(
 					SetStyle(s, kLPreProcessorColor);
 					s = --i;
 					ioState = START;
+					start_regex = false;
 				}
 				break;
 			
@@ -689,6 +710,7 @@ MLanguagePerl::StyleLine(
 						SetStyle(s, kLPreProcessorColor);
 						s = i;
 						ioState = START;
+						start_regex = false;
 					}
 				}
 				break;
@@ -706,7 +728,10 @@ MLanguagePerl::StyleLine(
 					ioState = POD2;
 				}
 				else
+				{
+					s = --i;
 					ioState = START;
+				}
 				break;
 			
 			case POD2: {

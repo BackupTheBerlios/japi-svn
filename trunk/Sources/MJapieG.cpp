@@ -479,59 +479,79 @@ void MJapieApp::SetCurrentFolder(
 
 void MJapieApp::DoOpen()
 {
-	GtkWidget* dialog = 
-		gtk_file_chooser_dialog_new("Open", nil,
-			GTK_FILE_CHOOSER_ACTION_OPEN,
-			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-			NULL);
-
-	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
-	gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
-	
-	if (mCurrentFolder.length() > 0)
-	{
-		gtk_file_chooser_set_current_folder(
-			GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
-	}
-	
+	GtkWidget* dialog = nil;
 	MDocument* doc = nil;
 	
-	vector<MUrl> urls;
-	
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+	try
 	{
-		GSList* uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
+		dialog = 
+			gtk_file_chooser_dialog_new("Open", nil,
+				GTK_FILE_CHOOSER_ACTION_OPEN,
+				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				NULL);
 		
-		GSList* file = uris;	
+		THROW_IF_NIL(dialog);
+	
+		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
 		
-		while (file != nil)
+		if (mCurrentFolder.length() > 0)
 		{
-cout << "uri: " << reinterpret_cast<char*>(file->data) << endl;
-
-			MUrl url(reinterpret_cast<char*>(file->data));
-			
-			if (url.IsLocal())
-				doc = OpenOneDocument(url);
-			else
-				urls.push_back(url);
-			
-			g_free(file->data);
-			file->data = nil;
-			file = file->next;
+			gtk_file_chooser_set_current_folder(
+				GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
 		}
 		
-		g_slist_free(uris);
+		vector<MUrl> urls;
+		
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			GSList* uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
+			
+			GSList* file = uris;	
+			
+			while (file != nil)
+			{
+cout << "uri: " << reinterpret_cast<char*>(file->data) << endl;
+				MUrl url(reinterpret_cast<char*>(file->data));
+				g_free(file->data);
+
+				urls.push_back(url);
+
+				file->data = nil;
+				file = file->next;
+			}
+			
+			g_slist_free(uris);
+		}
+		
+		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end();)
+		{
+			if (url->IsLocal())
+			{
+				doc = OpenOneDocument(*url);
+				url = urls.erase(url);
+			}
+			else
+				++url;
+		}
+
+		if (urls.size() > 0)
+			new MSftpGetDialog(urls);
+		
+		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
+		if (cwd != nil)
+		{
+			mCurrentFolder = cwd;
+			g_free(cwd);
+		}
 	}
-	
-	if (urls.size() > 0)
-		new MSftpGetDialog(urls);
-	
-	char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
-	if (cwd != nil)
+	catch (exception& e)
 	{
-		mCurrentFolder = cwd;
-		g_free(cwd);
+		if (dialog)
+			gtk_widget_destroy(dialog);
+		
+		throw;
 	}
 	
 	gtk_widget_destroy(dialog);

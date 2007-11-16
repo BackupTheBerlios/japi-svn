@@ -1,6 +1,7 @@
 #include "MJapieG.h"
 
 #include <sstream>
+#include <vector>
 #include <sys/stat.h>
 
 #include "MUrl.h"
@@ -8,6 +9,34 @@
 using namespace std;
 
 // --------------------------------------------------------------------
+
+namespace {
+
+unsigned char kURLAcceptable[96] =
+{/* 0 1 2 3 4 5 6 7 8 9 A B C D E F */
+    0,0,0,0,0,0,0,0,0,0,7,6,0,7,7,4,		/* 2x   !"#$%&'()*+,-./	 */
+    7,7,7,7,7,7,7,7,7,7,0,0,0,0,0,0,		/* 3x  0123456789:;<=>?	 */
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,		/* 4x  @ABCDEFGHIJKLMNO  */
+    7,7,7,7,7,7,7,7,7,7,7,0,0,0,0,7,		/* 5X  PQRSTUVWXYZ[\]^_	 */
+    0,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,		/* 6x  `abcdefghijklmno	 */
+    7,7,7,7,7,7,7,7,7,7,7,0,0,0,0,0			/* 7X  pqrstuvwxyz{\}~	DEL */
+};
+
+inline char ConvertHex(
+	char		inChar)
+{
+	int	value = inChar - '0';
+
+	if (inChar >= 'A' and inChar <= 'F') {
+		value = inChar - 'A' + 10;
+	} else if (inChar >= 'a' and inChar <= 'f') {
+		value = inChar - 'a' + 10;
+	}
+
+	return char(value);
+}
+	
+}
 
 struct MUrlImp
 {
@@ -18,6 +47,9 @@ struct MUrlImp
 	int16			mPort;
 	fs::path		mPath;
 	
+	void			Decode(
+						std::string&		ioURL);
+
 	void			Parse(
 						const char*		inURL);
 };
@@ -31,6 +63,9 @@ void MUrlImp::Parse(
 	// see RFC 1738
 	
 	string url(inUrl);
+
+	Decode(url);
+
 	string::size_type p;
 	
 	if ((p = url.find("://")) == string::npos)
@@ -47,7 +82,7 @@ void MUrlImp::Parse(
 		mPassword.clear();
 		mHost.clear();
 		mPort = 0;
-		mPath = inUrl + 7;
+		mPath = url.substr(7, string::npos);
 	}
 	else
 	{
@@ -90,6 +125,30 @@ void MUrlImp::Parse(
 		mPort = port;
 		mPath = path;
 	}
+}
+
+void MUrlImp::Decode(
+	string&		ioURL)
+{
+	vector<char> buf(ioURL.length() + 1);
+	char* r = &buf[0];
+	
+	for (string::iterator p = ioURL.begin(); p != ioURL.end(); ++p)
+	{
+		char q = *p;
+
+		if (q == '%' and ++p != ioURL.end())
+		{
+			q = (char) (ConvertHex(*p) * 16);
+
+			if (++p != ioURL.end())
+				q = (char) (q + ConvertHex(*p));
+		}
+
+		*r++ = q;
+	}
+	
+	ioURL.assign(&buf[0], r);
 }
 
 // --------------------------------------------------------------------
@@ -313,3 +372,4 @@ MUrl operator/(const MUrl& lhs, std::string rhs)
 	result /= rhs;
 	return result;
 }
+

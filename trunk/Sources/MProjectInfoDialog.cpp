@@ -115,7 +115,7 @@ void MProjectInfoDialog::Initialize(
 	stringstream s;
 	string txt;
 	
-	int32 projectType;
+	int32 projectType = 1;
 	switch (mTarget->GetKind())
 	{
 		case eTargetApplicationPackage:	projectType = 1; break;
@@ -329,7 +329,7 @@ bool MProjectInfoDialog::OKClicked()
 void MProjectInfoDialog::SelectPage(
 	int32 		inPage)
 {
-	for (int32 page = 1; page <= kPageCount; ++page)
+	for (int32 page = 1; page <= int32(kPageCount); ++page)
 	{
 		SetEnabled(kPageIDs[page], page == inPage);
 		SetVisible(kPageIDs[page], page == inPage);

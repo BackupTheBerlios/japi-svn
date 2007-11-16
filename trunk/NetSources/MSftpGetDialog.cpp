@@ -144,6 +144,8 @@ void MSftpGetDialog::GotFile()
 	
 	MDocument* doc = new MDocument(fUrl, fText);
 	
+	gApp->AddToRecentMenu(fUrl);
+	
 	MDocWindow::DisplayDocument(doc);
 	
 	fChannel->CloseFile();

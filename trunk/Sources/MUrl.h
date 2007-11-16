@@ -72,6 +72,7 @@ class MUrl
 						const std::string&	inPartialPath);
 
   private:
+
 	struct MUrlImp*	mImpl;
 };
 
