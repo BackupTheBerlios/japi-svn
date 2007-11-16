@@ -179,6 +179,11 @@ MDocument::MDocument(
 	ReInit();
 
 	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	if (mLanguage != nil)
+	{
+		mNamedRange = new MNamedRange;
+		mIncludeFiles = new MIncludeFileList;
+	}
 	
 	Rewrap();
 
@@ -232,6 +237,11 @@ MDocument::MDocument(
 	mSpecified = true;
 
 	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	if (mLanguage != nil)
+	{
+		mNamedRange = new MNamedRange;
+		mIncludeFiles = new MIncludeFileList;
+	}
 
 	ReInit();
 	Rewrap();

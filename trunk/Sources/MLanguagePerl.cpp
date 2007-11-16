@@ -110,7 +110,7 @@ MLanguagePerl::Init()
 		"symlink", "syscall", "sysread", "system",
 		"syswrite", "tell", "telldir", "time", "tr", "y", "truncate",
 		"umask", "undef", "unlink", "unpack", "unshift", "utime",
-		"values", "vec", "wait", "waitpid", "wantarray", "warn", "warning", "write",
+		"values", "vec", "wait", "waitpid", "wantarray", "warn", "write",
 		"abs", "bless", "chomp", "chr", "formline", "glob", "import",
 		"lc", "lcfirst", "map", "no", "our", "prototype", "qw",
 		"readline", "readpipe", "ref", "sysopen", "tie", "tied",
@@ -984,7 +984,7 @@ MLanguagePerl::UncommentLine(
 
 uint32
 MLanguagePerl::MatchLanguage(
-	const std::string&	inFile,
+	const string&		inFile,
 	MTextBuffer&		inText)
 {
 	uint32 result = 0;
@@ -1010,3 +1010,380 @@ bool MLanguagePerl::Softwrap() const
 {
 	return false;
 }
+
+namespace {
+
+typedef MTextBuffer::const_iterator	MTextPtr;
+
+const uint32 kMaxNameSize = 256;
+
+MTextPtr skip(MTextPtr text, int ch);
+MTextPtr skip_nc(MTextPtr text, int ch);
+MTextPtr skip_for_balance(MTextPtr txt);
+MTextPtr skippod(MTextPtr text);
+MTextPtr comment(MTextPtr text);
+MTextPtr parens(MTextPtr text, char open);
+MTextPtr regex(MTextPtr text, char mc);
+MTextPtr regex2(MTextPtr text, char mc);
+MTextPtr name_append(MTextPtr text, string& name);
+MTextPtr package(MTextPtr text, MNamedRange& ns);
+
+MTextPtr skip(MTextPtr text, int ch)
+{
+	while (*text)
+	{
+		if (*text == ch)
+		{
+			text++;
+			break;
+		}
+		if (*text == '\\' and *(text + 1) != 0)
+			++text;
+		text++;
+	}
+
+	return text;
+}
+
+MTextPtr skip_nc(MTextPtr text, int ch)
+{
+	while (*text)
+	{
+		if (*text == ch)
+		{
+			text++;
+			break;
+		}
+		else if (*text == '"')
+			text = skip(text + 1, '"');
+		else
+			text++;
+	}
+
+	return text;
+}
+
+MTextPtr skippod(MTextPtr text)
+{
+	while (*text)
+	{
+		if (*text++ == '=')
+		{
+			if (text == "cut")
+			{
+				text += 3;
+				break;
+			}
+		}
+	}
+	return text;
+}
+
+MTextPtr name_append(MTextPtr text, string& name)
+{
+	MTextPtr s(text);
+	
+	while (isalnum(*text) or *text == '_')
+		name += *text++;
+	
+	return text;
+}
+
+MTextPtr regex(MTextPtr text, char mc)
+{
+	MTextPtr backRef(text);
+
+	while (*text)
+	{
+		if (*text == '\n' or *text == 0)
+			return backRef;
+		else if (*text == mc)
+		{
+			++text;
+			break;
+		}
+		else if (*text == '\\')
+			text += 2;
+		else
+			++text;
+	}
+	return text;
+}
+
+MTextPtr regex2(MTextPtr text, char mc)
+{
+	MTextPtr backRef(text);
+	
+	switch (mc)
+	{
+		case '[':	mc = ']'; break;
+		case '(':	mc = ')'; break;
+		case '<':	mc = '>'; break;
+		case '{':	mc = '}'; break;
+		case ' ':	return text;
+	}
+	
+	while (*++text)
+	{
+		if (*text == '\n' or *text == 0)
+			return backRef;
+		
+		if (*text == mc)
+		{
+			if (mc == ')' or mc == '}' or mc == ']' or mc == '>')
+			{
+				switch (*++text)
+				{
+					case '(':	mc = ')'; break;
+					case '{':	mc = '}'; break;
+					case '[':	mc = ']'; break;
+					case '<':	mc = '>'; break;
+					case ' ':	return text;
+					default:	mc = *text; break;
+				}
+			}
+			return regex(text + 1, mc);
+		}
+		else if (*text == '\\')
+			++text;
+	}
+	
+	return text;
+}
+
+MTextPtr comment(MTextPtr text)
+{
+	do
+	{
+		while (isspace(*text))
+			++text;
+		
+		if (*text == '=' and isalpha(*(text + 1)))
+		{
+			string ident;
+			MTextPtr s(text);
+			
+			text = name_append(text + 1, ident);
+			
+			if (ident == "head0" or
+				ident == "head1" or
+				ident == "item" or
+				ident == "over" or
+				ident == "back" or
+				ident == "pod" or
+				ident == "for" or
+				ident == "begin" or
+				ident == "end")
+			{
+				text = skippod(text);
+			}
+			else
+				text = s + 1;
+		}
+		else if (*text == '/')
+		{
+			text = regex(text + 1, '/');
+			
+			string opts; // regular expression options, if any
+			
+			if (isalpha(*text))
+				text = name_append(text, opts);
+		}
+		else if (*text == '#' and *(text - 1) != '$')
+			text = skip(text + 1, '\n');
+		else if (isalpha(*text))
+		{
+			string name;
+			MTextPtr s(text);
+			
+			text = name_append(text, name);
+			
+			if (name == "q" or
+				name == "qq" or
+				name == "qx" or
+				name == "qw" or
+				name == "qr" or
+				name == "m")
+			{
+				text = regex(text, *text);
+			}
+			else if (name == "s" or
+					 name == "y" or
+					 name == "tr")
+			{
+				text = regex2(text, *text);
+			}
+			else
+			{
+				text = s;
+				break;
+			}
+		}
+		else
+			break;
+	}
+	while (*text);
+
+	return text;
+}
+
+MTextPtr parens(MTextPtr text, char open)
+{
+	int c;
+	char close;
+	
+	switch (open)
+	{
+		case '(':	close = ')'; break;
+		case '{':	close = '}'; break;
+		case '[':	close = ']'; break;
+//		default:	ASSERT(false); return text;
+	}
+
+	while (true)
+	{
+		text = comment(text);
+
+		c = *text++;
+		
+		if (c == '\'') 
+		{
+			text = skip(text, '\'');
+			continue;
+		}
+		
+		if (c == '"') 
+		{
+			text = skip(text, '"');
+			continue;
+		}
+		
+		if (c == open)
+		{
+			text = parens(text, open);
+			continue;
+		}
+		
+		if (c == '/')
+		{
+			text = regex(text, c);
+			continue;
+		}
+		
+		if (c == close)
+			return text;
+		
+		if (isalpha(c))
+		{
+			while (isalpha(*text))
+				++text;
+		}
+		
+		if (c == '\0')
+			return text - 1;
+	}
+}
+
+MTextPtr package(MTextPtr text, MNamedRange& ns)
+{
+	while (*text)
+	{
+		text = comment(text);
+		
+		switch (*text)
+		{
+			case 0:
+				break;
+			case '(':
+			case '{':
+			case '[':
+				text = parens(text + 1, *text);
+				break;
+			case '"':
+			case '\'':
+				text = skip(text + 1, *text);
+				break;
+			default:
+				if (text == "sub")
+				{
+					MNamedRange n;
+					
+					n.begin = text.GetOffset();
+					
+					text = comment(text + 3);
+
+					n.selectFrom = text.GetOffset();
+					text = name_append(text, n.name);
+					
+					n.selectTo = text.GetOffset();
+			
+					text = comment(text);
+					if (*text == '(')
+					{
+						text = parens(text + 1, '(');
+						text = comment(text);
+					}
+					
+					if (*text == '{')
+						text = parens(text + 1, '{');
+					
+					n.end = text.GetOffset();
+					
+					ns.subrange.push_back(n);
+				}
+				else if (isalnum(*text))
+				{
+					if (text == "package")
+						return text;
+					
+					while (isalnum(*text))
+						++text;
+				}
+				else
+					++text;
+				break;
+		}
+	}
+	
+	return text;
+}
+
+}
+
+void MLanguagePerl::Parse(
+	const MTextBuffer&	inText,
+	MNamedRange&		outRange,
+	MIncludeFileList&	outIncludeFiles)
+{
+	outRange.name.clear();
+	outRange.subrange.clear();
+	outIncludeFiles.clear();
+
+	MTextPtr text(inText.begin());
+
+	outRange.begin = text.GetOffset();
+
+	text = package(text, outRange);
+	
+	while (*text and text == "package")
+	{
+		MNamedRange p;
+		p.begin = text.GetOffset();
+		
+		text = comment(text + 7);
+		
+		p.selectFrom = text.GetOffset();
+		text = name_append(text, p.name);
+		p.selectTo = text.GetOffset();
+		
+		text = package(text, p);
+		p.end = text.GetOffset();
+		
+		outRange.subrange.push_back(p);
+	}
+
+	outRange.end = text.GetOffset();
+}
+
+
+

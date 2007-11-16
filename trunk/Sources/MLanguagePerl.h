@@ -74,6 +74,11 @@ class MLanguagePerl : public MLanguage
 	virtual void	UncommentLine(
 						std::string&		ioLine);
 
+	virtual void	Parse(
+						const MTextBuffer&	inText,
+						MNamedRange&		outRange,
+						MIncludeFileList&	outIncludeFiles);
+
 	virtual bool	Softwrap() const;
 	
 	static uint32	MatchLanguage(
