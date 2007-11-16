@@ -51,8 +51,8 @@ using namespace std;
 enum State
 {
 	START, IDENT, OTHER, COMMENT, LCOMMENT, STRING1, STRING2,
-	LEAVE, REGEX0, REGEX1, REGEX2, SCOPE,
-	VAR1, VAR1a, VAR2, VAR3,
+	LEAVE, REGEX1, REGEX2, SCOPE,
+	VAR1, VAR2, VAR3,
 	QUOTE1, QUOTE2, QUOTE3, QUOTE4, QUOTE5,
 	SUB1, SUB2, POD1, POD2,
 	HERE_DOC_0, HERE_DOC_END, HERE_DOC_EOF,
@@ -173,8 +173,12 @@ MLanguagePerl::StyleLine(
 					ioState = IDENT;
 					start_regex = true;
 				}
-				else if (c == '=' and IsAlpha(text[i]))
+				else if (c == '=' and isalpha(text[i]))
 					ioState = POD1;
+				else if (c == '=' and text[i] == '~')
+					start_regex = true;
+				else if (c == '!' and text[i] == '~')
+					start_regex = true;
 				else if (c == '"')
 					ioState = STRING1;
 				else if (c == '\'')
@@ -184,12 +188,7 @@ MLanguagePerl::StyleLine(
 				else if (c == '$')
 					ioState = VAR1;
 				else if (c == '@' or c == '*' or c == '%')
-					ioState = VAR1a;
-				else if (c == '~')
-				{
-					start_regex = true;
-					ioState = REGEX0;
-				}
+					ioState = VAR1;
 				else if (c == '<' and text[i] == '<')
 				{
 					ioState = HERE_DOC_0;
@@ -202,6 +201,8 @@ MLanguagePerl::StyleLine(
 				}
 				else if (c == '\n' or c == 0)
 					leave = true;
+				else if (not isspace(c))
+					start_regex = not isalnum(c);
 					
 				if (leave or (ioState != START and s < i))
 				{
@@ -508,33 +509,6 @@ MLanguagePerl::StyleLine(
 					esc = (c == '\\');
 				break;
 			
-			case REGEX0:
-				if (IsAlpha(c) or c == '_')
-				{
-					kws = Move(c, 1);
-					ioState = IDENT;
-
-					SetStyle(s, kLTextColor);
-					s = i - 1;
-				}
-				else if (not IsSpace(c))
-				{
-					ioState = REGEX1;
-
-					switch (c)
-					{
-						case '(':	mc = ')'; break;
-						case '{':	mc = '}'; break;
-						case '[':	mc = ']'; break;
-						case '<':	mc = '>'; break;
-						default:	mc = c; break;
-					}
-					
-					SetStyle(s, kLStringColor);
-					s = i - 1;
-				}
-				break;
-			
 			case REGEX1:
 				if (c == 0)	// don't like this
 				{
@@ -667,21 +641,21 @@ MLanguagePerl::StyleLine(
 				}
 				break;
 			
-			case VAR1a:
-				if (isalnum(c))
-					ioState = VAR2;
-				else if (c == '{')
-				{
-					mc = 1;
-					ioState = VAR3;
-				}
-				else
-				{
-					SetStyle(s, kLTextColor);
-					s = --i;
-					ioState = START;
-				}
-				break;
+//			case VAR1a:
+//				if (isalnum(c))
+//					ioState = VAR2;
+//				else if (c == '{')
+//				{
+//					mc = 1;
+//					ioState = VAR3;
+//				}
+//				else
+//				{
+//					SetStyle(s, kLTextColor);
+//					s = --i;
+//					ioState = START;
+//				}
+//				break;
 			
 			case VAR2:
 				if (not isalnum(c) and c != '_')
@@ -1230,7 +1204,7 @@ MTextPtr comment(MTextPtr text)
 MTextPtr parens(MTextPtr text, char open)
 {
 	int c;
-	char close;
+	char close = 0;
 	
 	switch (open)
 	{
@@ -1373,7 +1347,15 @@ void MLanguagePerl::Parse(
 		text = comment(text + 7);
 		
 		p.selectFrom = text.GetOffset();
+
 		text = name_append(text, p.name);
+
+		while (text == "::")
+		{
+			p.name += "::";
+			text = name_append(text + 2, p.name);
+		}
+
 		p.selectTo = text.GetOffset();
 		
 		text = package(text, p);

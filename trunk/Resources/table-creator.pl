@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+my $a = 2 / 3;
+
 $| = 1;
 
 my $kUC_COUNT = 1114112;
