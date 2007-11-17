@@ -236,13 +236,13 @@ void MRecognizer::CreateAutomaton()
 	
 	for (map<string,uint8>::iterator w = mData->begin(); w != mData->end(); ++w)
 	{
-		q = (*w).first.length();
+		q = w->first.length();
 		
 		if (q == 0)
 			continue;
 		
-		unsigned char s1[kMaxStringLength];
-		(*w).first.copy(reinterpret_cast<int8*>(s1), q);
+		uint8 s1[kMaxStringLength];
+		memcpy(s1, w->first.c_str(), q);
 		s1[q] = 0;
 		
 		for (p = 0; s1[p] == s0[p]; ++p)
@@ -270,7 +270,7 @@ void MRecognizer::CreateAutomaton()
 		}
 		
 		s0[q] = 0;
-		is_terminal[q] = (*w).second;
+		is_terminal[q] = w->second;
 	}
 	
 	while (i > 0)

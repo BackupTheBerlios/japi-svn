@@ -6,11 +6,13 @@
 		<path>/usr/include/c++/4.0.0</path>
 		<path>/usr/X11R6/include</path>
 		<path>/usr/include/gtk-2.0</path>
+		<path>/usr/lib/gtk-2.0/include</path>
 		<path>/usr/lib64/gtk-2.0/include</path>
 		<path>/usr/include/atk-1.0</path>
 		<path>/usr/include/cairo</path>
 		<path>/usr/include/pango-1.0</path>
 		<path>/usr/include/glib-2.0</path>
+		<path>/usr/lib/glib-2.0/include</path>
 		<path>/usr/lib64/glib-2.0/include</path>
 		<path>/usr/include/freetype2</path>
 		<path>/usr/include/libpng12</path>
@@ -31,6 +33,7 @@
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
+		<path>/usr/lib</path>
 		<path>/usr/lib64</path>
 		<path>/usr/local/lib64</path>
 		<path>/usr/pkg/lib</path>
