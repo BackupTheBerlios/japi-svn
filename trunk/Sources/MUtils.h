@@ -201,8 +201,6 @@ std::string Unescape(std::string inString);
 std::string NumToString(uint32 inNumber);
 uint32 StringToNum(std::string inString);
 
-std::string GetLocalisedString(const char* inString);
-
 std::string	GetUserName(bool inShortName = false);
 std::string	GetDateTime();
 

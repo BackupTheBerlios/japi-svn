@@ -48,6 +48,7 @@
 #include "MFindDialog.h"
 #include "MProject.h"
 #include "MSftpGetDialog.h"
+#include "MStrings.h"
 
 #include <iostream>
 
@@ -81,17 +82,17 @@ MJapieApp::MJapieApp()
 	int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
 
 	if (err < 0)
-		cerr << "bind failed: " << strerror(errno) << endl;
+		cerr << _("bind failed: ") << strerror(errno) << endl;
 	else
 	{
 		err = listen(mSocketFD, 5);
 		if (err < 0)
-			cerr << "Failed to listen to socket: " << strerror(errno) << endl;
+			cerr << _("Failed to listen to socket: ") << strerror(errno) << endl;
 		else
 		{
 			int flags = fcntl(mSocketFD, F_GETFL, 0);
 			if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
-				cerr << "Failed to set mSocketFD non blocking: " << strerror(errno) << endl;
+				cerr << _("Failed to set mSocketFD non blocking: ") << strerror(errno) << endl;
 		}
 	}
 
@@ -276,7 +277,7 @@ void MJapieApp::UpdateWindowMenu(
 				if (w != nil)
 					label = w->GetTitle();
 				else
-					label = "weird";
+					label = _("weird");
 			}
 			
 			inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
@@ -419,7 +420,7 @@ void MJapieApp::DoCloseAll(
 			if (controller != nil)
 				(void)controller->TryCloseDocument(inAction);
 			else
-				cerr << "Weird, document without controller: " << doc->GetURL() << endl;
+				cerr << _("Weird, document without controller: ") << doc->GetURL() << endl;
 		}
 		
 		doc = next;
@@ -485,7 +486,7 @@ void MJapieApp::DoOpen()
 	try
 	{
 		dialog = 
-			gtk_file_chooser_dialog_new("Open", nil,
+			gtk_file_chooser_dialog_new(_("Open"), nil,
 				GTK_FILE_CHOOSER_ACTION_OPEN,
 				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -512,7 +513,6 @@ void MJapieApp::DoOpen()
 			
 			while (file != nil)
 			{
-cout << "uri: " << reinterpret_cast<char*>(file->data) << endl;
 				MUrl url(reinterpret_cast<char*>(file->data));
 				g_free(file->data);
 

@@ -73,6 +73,8 @@
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
+			<file>MStrings.cpp</file>
+			<file>MResources.cpp</file>
 			<file>MSound.cpp</file>
 			<group name="Project">
 				<file>MProject.cpp</file>
@@ -149,6 +151,7 @@
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -172,6 +175,7 @@
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

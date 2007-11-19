@@ -64,6 +64,7 @@
 #include "MDevice.h"
 #include "MDocClosedNotifier.h"
 #include "MSftpPutDialog.h"
+#include "MStrings.h"
 
 using namespace std;
 

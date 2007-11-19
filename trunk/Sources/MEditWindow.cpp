@@ -63,7 +63,7 @@ MEditWindow::MEditWindow()
 	fileMenu->AppendItem("New", cmd_New);
 	fileMenu->AppendItem("Open…", cmd_Open);
 	
-	fileMenu->AppendRecentMenu("Open Recent…");
+	fileMenu->AppendRecentMenu("Open Recent");
 	
 	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile);
 	fileMenu->AppendItem("Open Source/Header", cmd_SwitchHeaderSource);

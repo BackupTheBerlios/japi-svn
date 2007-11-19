@@ -6,6 +6,7 @@
 #include "MWindow.h"
 #include "MAcceleratorTable.h"
 #include "MUrl.h"
+#include "MStrings.h"
 
 using namespace std;
 
@@ -128,7 +129,7 @@ MMenu::MMenu(
 	: mOnDestroy(this, &MMenu::OnDestroy)
 	, mOnSelectionDone(this, &MMenu::OnSelectionDone)
 	, mGtkMenu(inMenuWidget)
-	, mLabel(inLabel)
+	, mLabel(GetLocalisedString(inLabel))
 	, mTarget(nil)
 	, mPopupX(-1)
 	, mPopupY(-1)
@@ -149,7 +150,7 @@ MMenuItem* MMenu::CreateNewItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
-	MMenuItem* item = new MMenuItem(this, inLabel, inCommand);
+	MMenuItem* item = new MMenuItem(this, GetLocalisedString(inLabel), inCommand);
 
 	item->mIndex = mItems.size();
 	mItems.push_back(item);
@@ -162,7 +163,7 @@ void MMenu::AppendItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
-	CreateNewItem(inLabel, inCommand);
+	CreateNewItem(GetLocalisedString(inLabel), inCommand);
 }
 
 void MMenu::AppendSeparator()
@@ -181,10 +182,10 @@ void MMenu::AppendMenu(
 void MMenu::AppendRecentMenu(
 	const string&	inLabel)
 {
-	MMenuItem* item = CreateNewItem(inLabel, 0);
+	MMenuItem* item = CreateNewItem(GetLocalisedString(inLabel), 0);
 	
 	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr());
-	item->mSubMenu = new MMenu(inLabel, recMenu);;
+	item->mSubMenu = new MMenu(GetLocalisedString(inLabel), recMenu);;
 
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
 	item->mRecentItemActivated.Connect(recMenu, "item-activated");

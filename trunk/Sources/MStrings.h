@@ -1,36 +1,45 @@
 #ifndef MSTRINGS_H
 #define MSTRINGS_H
 
+#include <string>
+#include <vector>
+#include <sstream>
+
 #define _(s)	(GetLocalisedString(s))
 
 const char* GetLocalisedString(
-				const char* inString);
+				const char* 		inString);
+
+std::string GetLocalisedString(
+				const std::string&	inString);
 
 std::string GetFormattedLocalisedStringWithArguments(
-				const std::string&			inString,
-				const std::vector<string>&	inArgs);
+				const std::string&	inString,
+				const std::vector<std::string>&
+									inArgs);
 
 template<class T1>
 std::string FormatString(
-				const char*					inString,
-				const T1&					inArg1);
+				const char*			inString,
+				const T1&			inArg1);
 
 template<class T1, class T2>
 std::string FormatString(
-				const char*					inString,
-				const T1&					inArg1,
-				const T2&					inArg2);
+				const char*			inString,
+				const T1&			inArg1,
+				const T2&			inArg2);
 
 template<class T1, class T2, class T3>
 std::string FormatString(
-				const char*					inString,
-				const T1&					inArg1,
-				const T2&					inArg2,
-				const T3&					inArg3);
+				const char*			inString,
+				const T1&			inArg1,
+				const T2&			inArg2,
+				const T3&			inArg3);
 
 // --------------------------------------------------------------------
 
 template<class T>
+inline 
 void PushArgument(
 	std::vector<std::string>&	inArgs,
 	const T&					inArg)
@@ -40,15 +49,16 @@ void PushArgument(
 	inArgs.push_back(s.str());
 }
 
-template<>
+inline
 void PushArgument(
 	std::vector<std::string>&	inArgs,
-	const char*&				inArg)
+	const char*					inArg)
 {
 	inArgs.push_back(GetLocalisedString(inArg));
 }
 
 template<>
+inline
 void PushArgument(
 	std::vector<std::string>&	inArgs,
 	const std::string&			inArg)

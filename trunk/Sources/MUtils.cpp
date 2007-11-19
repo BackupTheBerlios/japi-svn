@@ -241,17 +241,6 @@ double GetDoubleClickTime()
 	return 0.2;
 }
 
-string GetLocalisedString(const char* inString)
-{
-	return inString;
-//	MCFString key(inString);
-//	MCFString s(::CFCopyLocalizedString(key, "auto"), false);
-//	
-//	string r;
-//	s.GetString(r);
-//	return r;
-}
-
 string GetUserName(bool inShortName)
 {
 	string result;
