@@ -147,7 +147,7 @@ class MProjectFile : public MProjectItem
 	virtual uint32	GetTextSize() const						{ return mTextSize; }
 	virtual uint32	GetDataSize() const						{ return mDataSize; }
 
-  private:
+  protected:
 	MPath			mParentDir;
 	MPath			mObjectPath;
 	MPath			mDependsPath;
@@ -259,6 +259,26 @@ class MProjectLib : public MProjectItem
 						const std::string&	inName,
 						MProjectGroup*		inParent)
 						: MProjectItem(inName, inParent) {}
+};
+
+// ---------------------------------------------------------------------------
+//	MProjectResource
+
+class MProjectResource : public MProjectFile
+{
+  public:
+					MProjectResource(
+						const std::string&	inName,
+						MProjectGroup*		inParent,
+						MPath				inParentDir)
+						: MProjectFile(inName, inParent, inParentDir) {}
+
+	virtual bool	IsCompilable() const					{ return true; }
+
+	virtual void	CheckIsOutOfDate(
+						MModDateCache&		ioModDateCache);
+	
+	std::string		GetResourceName() const;
 };
 
 #endif

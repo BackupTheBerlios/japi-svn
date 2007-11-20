@@ -3,109 +3,77 @@
 #include <boost/filesystem/fstream.hpp>
 #include <vector>
 
+#include <mach-o/loader.h>
+#include <mach-o/stab.h>
+#include <mach-o/dyld.h>
+#define _AOUT_INCLUDE_
+#include <nlist.h>
+
 #include "MObjectFile.h"
 #include "MResources.h"
+#include "MPatriciaTree.h"
 
 using namespace std;
 
 namespace {
 
-enum {
-	kResourceFolderKind	= 'fold',
-	kResourceItemKind	= 'item'
-};
+MPatriciaTree<const void*>	gResources;
 
-struct MResourceItem
+bool LookupResourceInImage(
+	const struct mach_header&	mh,
+	uint32						inOffset,
+	const char*					inName,
+	const void*&				outData)
 {
-	uint32		name;
-	uint32		kind;
-	union
-	{
-		struct DataItem
-		{
-			uint32	offset;
-			uint32	size;
-		}			data;
-		struct FolderItem
-		{
-			uint32	offset;
-			int32	count;
-		}			folder;
-	}				item;
-};
-
-struct MResourceIndex
-{
-	char			sig[4];		// check
-	uint32			count;		// number of resources
-	uint32			strtable_offset;
-	uint32			data_offset;
-	MResourceItem	items[1];
-	
-	const char*		str(
-						uint32	inOffset) const
-					{
-						return sig + strtable_offset + inOffset;
-					}
-
-	const void*		data(
-						uint32	inOffset) const
-					{
-						return sig + data_offset + inOffset;
-					}
-};
-
-extern const MResourceIndex	gResourceIndex;
-
-bool FindResourceData(
-	const string&			inPath,
-	const MResourceItem&	inItem,
-	uint32&					outOffset,
-	uint32&					outSize)
-{
-	assert(inItem.kind == kResourceFolderKind);
-	
-	string name, path(inPath);
-	
-	string::size_type p = path.find('/');
-	if (p != string::npos)
-	{
-		name = path.substr(0, p);
-		path.erase(0, p + 1);
-	}
-	else
-		name = path;
-	
 	bool result = false;
+	const struct segment_command*	seg = nil;
+	const struct segment_command*	seg_data = nil;
+	const struct segment_command*	seg_linkedit = nil;
+	const struct symtab_command* symtab = nil;
 	
-	if (inItem.kind == kResourceFolderKind and
-		inItem.item.folder.count > 0)
+	const char* base = reinterpret_cast<const char*>(&mh);
+	const char* ptr = base + sizeof(mach_header);
+	
+	for (uint32 ix = 0; ix < mh.ncmds; ++ix)
 	{
-		int32 L = inItem.item.folder.offset;
-		int32 R = L + inItem.item.folder.count - 1;
+		const struct load_command* cmd = reinterpret_cast<const struct load_command*>(ptr);
 		
-		while (L <= R)
+		switch (cmd->cmd)
 		{
-			int32 i = (L + R) / 2;
+			case LC_SEGMENT:
+				seg = reinterpret_cast<const struct segment_command*>(ptr);
+				if (strcmp(seg->segname, SEG_DATA) == 0)
+					seg_data = seg;
+				else if (strcmp(seg->segname, SEG_LINKEDIT) == 0)
+					seg_linkedit = seg;
+				break;
 			
-			const MResourceItem& item = gResourceIndex.items[i];
+			case LC_SYMTAB:
+				symtab = reinterpret_cast<const struct symtab_command*>(ptr);
+				break;
+		}
+		
+		ptr += cmd->cmdsize;
+	}
+	
+	if (seg_data != nil and seg_linkedit != nil and symtab != nil)
+	{
+		const struct nlist* symbase =
+			reinterpret_cast<const struct nlist*>(base + symtab->symoff + inOffset);
+
+		const char* strings = base + symtab->stroff + inOffset;
+		
+		const struct nlist* sym = symbase;
+
+		for (uint32 ix = 0; ix < symtab->nsyms; ++ix, ++sym)
+		{
+			if (sym->n_type != 0x0f or sym->n_un.n_strx == 0)
+				continue;
 			
-			int d = name.compare(0, string::npos, gResourceIndex.str(item.name));
-			if (d < 0)
-				i = L + 1;
-			else if (d > 0)
-				i = R + 1;
-			else
+			if (strcmp(inName, strings + sym->n_un.n_strx) == 0)
 			{
-				if (item.kind == kResourceFolderKind)
-					result = FindResourceData(path, item, outOffset, outSize);
-				else
-				{
-					outOffset = item.item.data.offset;
-					outSize = item.item.data.size;
-					result = true;
-				}
-				
+				outData = reinterpret_cast<const void*>(sym->n_value + inOffset);
+				result = true;
 				break;
 			}
 		}
@@ -114,43 +82,39 @@ bool FindResourceData(
 	return result;
 }
 
-}
-
-bool LoadResource(
-	const char*		inName,
-	const void*&	outData,
-	uint32&			outSize)
+bool LookupResource(
+	const char*					inName,
+	const void*&				outData)
 {
 	bool result = false;
-	uint32 offset;
-	
-	const char* lang = getenv("LANG");
-	
-	if (lang != nil)
-	{
-		string locale(lang);
-		
-		string::size_type p = locale.find('.');
-		if (p != string::npos)
-			locale.erase(p, string::npos);
-		
-		result = FindResourceData(locale + '/' + inName,
-			gResourceIndex.items[0], offset, outSize);
-		
-		if (result == false and locale.length() == 5 and locale[3] == '_')
-		{
-			locale.erase(3, string::npos);
 
-			result = FindResourceData(locale + '/' + inName,
-				gResourceIndex.items[0], offset, outSize);
-		}
+	uint32  count = _dyld_image_count();
+	
+	for (uint32 ix = 0; result == false and ix < count; ++ix)
+	{
+		const struct mach_header* mh = _dyld_get_image_header(ix);
+		uint32 offset = _dyld_get_image_vmaddr_slide(ix);
+		
+		result = LookupResourceInImage(*mh, offset, inName, outData);
 	}
 	
-	if (result == false)
-		result = FindResourceData(inName, gResourceIndex.items[0], offset, outSize);
+	return result;
+}
+
+}
+
+const void* LoadResource(
+	const char*		inName)
+{
+	const void* result = gResources[inName];
 	
-	if (result)
-		outData = gResourceIndex.data(offset);
+	if (result == nil)
+	{
+		if (LookupResource(inName, result) == false)
+			THROW(("Could not find resource '%s'", inName));
+		
+		gResources[inName] = result;
+	}
 	
 	return result;
 }
@@ -297,100 +261,5 @@ void MResourceFile::Add(
 	Add(inLocale, inName, text, size);
 	
 	delete[] text;
-}
-
-uint32 CountResourceFileItems(
-	MResourceFileItem*	inItem)
-{
-	uint32 result = 1;
-	
-	if (inItem->children != nil)
-		result += CountResourceFileItems(inItem->children);
-	
-	if (inItem->next != nil)
-		result += CountResourceFileItems(inItem->next);
-	
-	return result;
-}
-
-void StoreItems(
-	MResourceFileItem*		inItem,
-	vector<MResourceItem>&	ioItems,
-	uint32&					outOffset,
-	uint32&					outCount)
-{
-	outOffset = ioItems.size();
-	outCount = 0;
-	
-	for (MResourceFileItem* item = inItem; item != nil; item = item->next)
-	{
-		MResourceItem n;
-		n.name = item->name;
-		if (item->children != nil)
-			n.kind = kResourceFolderKind;
-		else
-		{
-			n.kind = kResourceItemKind;
-			n.item.data.offset = item->data;
-			n.item.data.size = item->size;
-		}
-		
-		ioItems.push_back(n);
-		++outCount;
-	}
-
-	uint32 i = outOffset;
-	for (MResourceFileItem* item = inItem; item != nil; item = item->next, ++i)
-	{
-		if (item->children != nil)
-		{
-			uint32 offset, count;
-			StoreItems(item->children, ioItems, offset, count);
-			ioItems[i].item.folder.offset = offset;
-			ioItems[i].item.folder.count = count;
-		}
-	}
-}
-
-void MResourceFile::Write(
-	const MPath&	inFile)
-{
-	MResourceIndex index = { { 'r', 's', 'r', 'c' } };
-	
-	vector<MResourceItem> items;
-	items.reserve(index.count);
-	items.push_back(MResourceItem());
-	
-	uint32 offset, count;
-	
-	StoreItems(mImpl->root, items, offset, count);
-	index.count = items.size();
-
-	items[0].kind = kResourceFolderKind;
-	items[0].item.folder.offset = offset;
-	items[0].item.folder.count = count;
-	
-	index.strtable_offset = sizeof(index) + (items.size() - 1) * sizeof(MResourceItem);
-	index.data_offset = index.strtable_offset + mImpl->names.length();
-
-	// we've got all data now, write out to new object file
-	
-//	fs::ofstream f(inFile, ios::binary | ios::trunc);
-//	
-//	if (not f.is_open())
-//		THROW(("Failed to create new object file"));
-
-	uint32 size = index.data_offset + mImpl->data.length();
-	char* buffer = new char[size];
-	
-	memcpy(buffer, &index, sizeof(index) - sizeof(MResourceItem));
-	memcpy(buffer + sizeof(index) - sizeof(MResourceItem),
-			&items[0], sizeof(MResourceItem) * items.size());
-	memcpy(buffer, mImpl->names.c_str(), mImpl->names.length());
-	memcpy(buffer, mImpl->data.c_str(), mImpl->data.length());
-	
-	MObjectFile file;
-	file->AddGlobal("gResourceIndex", buffer, size);
-	file->Write(inFile);
 }
 

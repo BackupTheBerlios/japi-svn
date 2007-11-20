@@ -11,10 +11,11 @@
 	
 */
 
-bool LoadResource(
-		const char*		inName,
-		const void*&	outData,
-		uint32&			outSize);
+// LoadResource returns a pointer to the resource named inName
+// If this resources is not found, an exception is thrown 
+
+const void* LoadResource(
+		const char*		inName);
 
 class MResourceFile
 {

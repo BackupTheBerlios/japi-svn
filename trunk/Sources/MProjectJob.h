@@ -197,17 +197,18 @@ struct MProjectCreateResourceJob : public MProjectJob
 								MProject*			inProject,
 								const MPath&		inSrcFile,
 								const MPath&		inDstFile,
-								bool				inRecursive = true)		// in the package dir
+								const std::string&	inResourceName)		// in the package dir
 								: MProjectJob(inTitle, inProject)
 								, mSrcFile(inSrcFile)
 								, mDstFile(inDstFile)
-								, mRecursive(inRecursive) {}
+								, mResourceName(inResourceName) {}
 
 	virtual void			Execute();
 	virtual bool			IsDone()			{ return true; }
 
-	MResourceFile			mResourceFile;
-	std::vector<MPath>		mDataFiles;
+	MPath					mSrcFile;
+	MPath					mDstFile;
+	std::string				mResourceName;
 };
 
 #endif

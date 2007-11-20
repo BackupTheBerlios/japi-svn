@@ -47,12 +47,14 @@
 
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include "MFile.h"
 #include "MMessageWindow.h"
 #include "MProjectTarget.h"
 #include "MProject.h"
 #include "MProjectJob.h"
+#include "MObjectFile.h"
 
 extern char** environ;
 
@@ -427,5 +429,43 @@ void MProjectCopyFileJob::Execute()
 
 		fs::copy_file(mSrcFile, mDstFile);
 	}
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectCreateResourceJob::Execute
+
+void MProjectCreateResourceJob::Execute()
+{
+	fs::ifstream f(mSrcFile);
+	if (not f.is_open())
+		THROW(("Could not open source file %s", mSrcFile.string().c_str()));
+	
+	filebuf* b = f.rdbuf();
+
+	uint32 size = b->pubseekoff(0, ios::end);
+	b->pubseekpos(0);
+
+	char* data = new char[size + 1];
+	
+	try
+	{
+		b->sgetn(data, size);
+		data[size] = 0;
+	
+		f.close();
+		
+		MObjectFile obj;
+		
+		obj.AddGlobal(mResourceName, data, size + 1);
+		
+		obj.Write(mDstFile);
+	}
+	catch (...)
+	{
+		delete[] data;
+		throw;
+	}
+	
+	delete[] data;
 }
 

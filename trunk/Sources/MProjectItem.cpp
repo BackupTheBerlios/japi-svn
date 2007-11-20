@@ -637,3 +637,53 @@ uint32 MProjectCpFile::GetDataSize() const
 	return result;
 }
 
+// ---------------------------------------------------------------------------
+//	MProjectResource::GetDataSize
+
+string MProjectResource::GetResourceName() const
+{
+	stack<string> names;
+	
+	const MProjectItem* item = this;
+	while (item != nil)
+	{
+		names.push(item->GetName());
+		item = item->GetParent();
+	}
+	
+	string result = names.top();
+	
+	while (not names.empty())
+	{
+		result += '/';
+		result += names.top();
+		names.pop();
+	}
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectResource::CheckIsOutOfDate
+
+void MProjectResource::CheckIsOutOfDate(
+	MModDateCache&	ioModDateCache)
+{
+	bool isOutOfDate = false;
+	
+	MPath path = GetPath();
+	MPath object = GetObjectPath();
+	
+	if (not exists(object))
+	{
+		isOutOfDate = true;
+		mTextSize = 0;
+		mDataSize = 0;
+	}
+
+	if (isOutOfDate == false)
+		isOutOfDate = fs::last_write_time(path) > fs::last_write_time(object);
+	
+	SetOutOfDate(isOutOfDate);
+}
+

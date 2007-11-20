@@ -721,9 +721,9 @@ void MProject::InvokeProjectItem(
 	switch (mPanel)
 	{
 		case ePanelPackage:
-			if (dynamic_cast<MProjectCpFile*>(item) != nil)
+			if (dynamic_cast<MProjectResource*>(item) != nil)
 			{
-				MPath file = static_cast<MProjectCpFile*>(item)->GetSourcePath();
+				MPath file = static_cast<MProjectResource*>(item)->GetPath();
 				
 				if (FileNameMatches("*.nib;*.rsrc;*.png", file))
 				{
@@ -1512,8 +1512,8 @@ void MProject::ReadPackageAction(
 			{
 				MPath filePath = mProjectDir / fileName;
 
-				auto_ptr<MProjectCpFile> projectFile(
-					new MProjectCpFile(filePath.leaf(), inGroup, filePath));
+				auto_ptr<MProjectResource> projectFile(
+					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
 
 				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
 
@@ -1863,9 +1863,9 @@ void MProject::WritePackage(
 			
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
 		}
-		else if (dynamic_cast<MProjectCpFile*>(*item) != nil)
+		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
-			MPath path = static_cast<MProjectCpFile*>(*item)->GetSourcePath();
+			MPath path = static_cast<MProjectResource*>(*item)->GetPath();
 			
 			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
 				BAD_CAST relative_path(mProjectDir, path).string().c_str()));
@@ -2381,6 +2381,21 @@ MProjectJob* MProject::CreateCompileJob(
 }
 
 // ---------------------------------------------------------------------------
+//	MProject::CreateResourceJob
+
+MProjectJob* MProject::CreateResourceJob(
+	MProjectResource*	inFile)
+{
+	MPath srcFile = inFile->GetPath();
+	MPath dstFile = inFile->GetObjectPath();
+	string resourceName = inFile->GetResourceName();
+	
+	return new MProjectCreateResourceJob(
+					string("Creating resource") + resourceName,
+					this, srcFile, dstFile, resourceName);
+}
+
+// ---------------------------------------------------------------------------
 //	MProject::CreateCompileAllJob
 
 MProjectJob* MProject::CreateCompileAllJob()
@@ -2394,6 +2409,15 @@ MProjectJob* MProject::CreateCompileAllJob()
 	{
 		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
 			job->AddJob(CreateCompileJob(static_cast<MProjectFile*>(*file)->GetPath()));
+	}
+
+	files.clear();
+	mPackageItems.Flatten(files);
+
+	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+	{
+		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
+			job->AddJob(CreateResourceJob(static_cast<MProjectResource*>(*file)));
 	}
 
 	return job.release();
@@ -2747,34 +2771,34 @@ void MProject::Make()
 	// combine with link job
 	job.reset(new MProjectIfJob("", this, job.release(), CreateLinkJob(targetPath)));
 
-	if (mCurrentTarget->GetKind() == eTargetApplicationPackage and mPackageItems.Count() > 0)
-	{
-		// and a copy job for the Package contents, if needed
-		
-		auto_ptr<MProjectCompileAllJob> copyAllJob(new MProjectCompileAllJob("Copying", this));
-		MPath appPath = mProjectDir / mCurrentTarget->GetBundleName();
-
-		vector<MProjectItem*> files;
-		mPackageItems.Flatten(files);
-		
-		for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-		{
-			MProjectCpFile* f = dynamic_cast<MProjectCpFile*>(*file);
-			
-			if (f == nil)
-				continue;
-
-			MPath dstDir = f->GetDestPath(appPath).branch_path();
-			
-			if (not exists(dstDir))
-				fs::create_directories(dstDir);
-			
-			copyAllJob->AddJob(new MProjectCopyFileJob("Copying files", this,
-				f->GetSourcePath(), f->GetDestPath(appPath), true));
-		}
-
-		job.reset(new MProjectIfJob("", this, job.release(), copyAllJob.release()));
-	}
+//	if (mCurrentTarget->GetKind() == eTargetApplicationPackage and mPackageItems.Count() > 0)
+//	{
+//		// and a copy job for the Package contents, if needed
+//		
+//		auto_ptr<MProjectCompileAllJob> copyAllJob(new MProjectCompileAllJob("Copying", this));
+//		MPath appPath = mProjectDir / mCurrentTarget->GetBundleName();
+//
+//		vector<MProjectItem*> files;
+//		mPackageItems.Flatten(files);
+//		
+//		for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+//		{
+//			MProjectResource* f = dynamic_cast<MProjectResource*>(*file);
+//			
+//			if (f == nil)
+//				continue;
+//
+//			MPath dstDir = f->GetDestPath(appPath).branch_path();
+//			
+//			if (not exists(dstDir))
+//				fs::create_directories(dstDir);
+//			
+//			copyAllJob->AddJob(new MProjectCopyFileJob("Copying files", this,
+//				f->GetSourcePath(), f->GetDestPath(appPath), true));
+//		}
+//
+//		job.reset(new MProjectIfJob("", this, job.release(), copyAllJob.release()));
+//	}
 	
 	// and that's it for now
 	

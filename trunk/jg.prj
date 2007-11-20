@@ -133,7 +133,14 @@
 			<link>z</link>
 		</group>
 	</files>
-	<package/>
+	<package>
+		<mkdir name="en">
+			<copy>Resources/English/edit-window-menus.xml</copy>
+		</mkdir>
+		<mkdir name="nl">
+			<copy>Resources/Dutch/edit-window-menus.xml</copy>
+		</mkdir>
+	</package>
 	<targets>
 		<target kind="Executable" arch="i386" name="Japie Debug" linkTarget="jg" debug="true">
 			<bundle>
@@ -151,7 +158,6 @@
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -175,7 +181,6 @@
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
-				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

@@ -58,8 +58,7 @@ struct MObjectFileImp
 	struct MGlobal
 	{
 		std::string	name;
-		const void*	data;
-		uint32		size;
+		std::string	data;
 	};
 
 	typedef std::vector<MGlobal>	MGlobals;
@@ -81,7 +80,7 @@ class MObjectFile
 	uint32		GetDataSize() const;
 
 	void		AddGlobal(
-					const char*			inName,
+					const std::string&	inName,
 					const void*			inData,
 					uint32				inSize);
 

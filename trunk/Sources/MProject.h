@@ -219,6 +219,9 @@ class MProject : public MWindow, public MSaverMixin
 	MPath				GetObjectPathForFile(
 							const MPath&		inFile) const;
 
+	MProjectJob*		CreateResourceJob(
+							MProjectResource*	inFile);
+
 	MProjectJob*		CreateCompileJob(
 							const MPath&		inFile);
 

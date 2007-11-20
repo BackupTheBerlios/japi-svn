@@ -163,7 +163,7 @@ void MMachoObjectFileImp::Write(
 	{
 		(void)AddNameToNameTable(names, g->name.c_str());
 		
-		uint32 gs = g->size;
+		uint32 gs = g->data.length();
 		if (g + 1 != mGlobals.end() and (gs % alignment) != 0)
 			gs = ((gs / alignment) + 1) * alignment;
 		size += gs;
@@ -265,7 +265,7 @@ void MMachoObjectFileImp::Write(
 	size = 0;
 	for (MGlobals::iterator g = mGlobals.begin(); g != mGlobals.end(); ++g, ++sym)
 	{
-		uint32 gs = g->size;
+		uint32 gs = g->data.length();
 		if ((gs % alignment) != 0)
 			gs = ((gs / alignment) + 1) * alignment;
 		
@@ -279,7 +279,7 @@ void MMachoObjectFileImp::Write(
 		if (g + 1 == mGlobals.end())
 			align = 2;
 
-		WriteDataAligned(f, g->data, g->size, align);
+		WriteDataAligned(f, g->data.c_str(), g->data.length(), align);
 
 		size += gs;
 	}

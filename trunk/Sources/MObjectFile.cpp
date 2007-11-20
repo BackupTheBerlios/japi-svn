@@ -89,14 +89,13 @@ uint32 MObjectFile::GetDataSize() const
 }
 
 void MObjectFile::AddGlobal(
-	const char*		inName,
+	const string&	inName,
 	const void*		inData,
 	uint32			inSize)
 {
 	MObjectFileImp::MGlobal g;
 	g.name = inName;
-	g.data = inData;
-	g.size = inSize;
+	g.data.assign(reinterpret_cast<const char*>(inData), inSize);
 	
 	mImpl->mGlobals.push_back(g);
 }
