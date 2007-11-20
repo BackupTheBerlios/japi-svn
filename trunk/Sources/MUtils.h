@@ -206,6 +206,10 @@ std::string	GetDateTime();
 
 void NormalizePath(std::string& ioPath);
 
+uint32 AddNameToNameTable(
+			std::string&		ioNameTable,
+			const std::string&	inName);
+
 double GetLocalTime();
 double GetDoubleClickTime();
 

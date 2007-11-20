@@ -16,8 +16,29 @@ bool LoadResource(
 		const void*&	outData,
 		uint32&			outSize);
 
-void CreateResourceFile(
-		const MPath&	inResourceDirectory,
-		const MPath&	inResourceFile);
+class MResourceFile
+{
+  public:
+						MResourceFile();
+						
+						~MResourceFile();
+	
+	void				Add(
+							const char*		inLocale,
+							const char*		inName,
+							const void*		inData,
+							uint32			inSize);
+
+	void				Add(
+							const char*		inLocale,
+							const char*		inName,
+							const MPath&	inFile);
+	
+	void				Write(
+							const MPath&	inFile);
+
+  private:
+	struct MResourceFileImp*	mImpl;
+};
 
 #endif

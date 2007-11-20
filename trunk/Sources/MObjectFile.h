@@ -33,6 +33,8 @@
 #ifndef MOBJECTFILE_H
 #define MOBJECTFILE_H
 
+#include <vector>
+
 #include "MFile.h"
 
 struct MObjectFileImp
@@ -42,20 +44,49 @@ struct MObjectFileImp
 	uint32			mDataSize;
 					
 	virtual			~MObjectFileImp() {}
-					
-	virtual void	SetFile(
+	
+	virtual void	Read(
 						const MPath&		inFile) = 0;
+
+	virtual void	Write(
+						const MPath&		inFile) = 0;
+
+  protected:
+
+	friend class MObjectFile;
+
+	struct MGlobal
+	{
+		std::string	name;
+		const void*	data;
+		uint32		size;
+	};
+
+	typedef std::vector<MGlobal>	MGlobals;
+	
+	MGlobals		mGlobals;
 };
 
 class MObjectFile
 {
   public:
+				MObjectFile();
+
 				MObjectFile(
 					const MPath&		inFile);
+
 				~MObjectFile();
 
 	uint32		GetTextSize() const;
 	uint32		GetDataSize() const;
+
+	void		AddGlobal(
+					const char*			inName,
+					const void*			inData,
+					uint32				inSize);
+
+	void		Write(
+					const MPath&		inFile);
 
   private:
 	struct MObjectFileImp*	mImpl;

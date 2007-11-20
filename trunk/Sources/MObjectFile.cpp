@@ -52,13 +52,18 @@ using namespace std;
 
 namespace fs = boost::filesystem;
 
+MObjectFile::MObjectFile()
+	: mImpl(new MNativeOjectFileImp)
+{
+}
+
 MObjectFile::MObjectFile(
 	const MPath&		inFile)
 	: mImpl(new MNativeOjectFileImp)
 {
 	try
 	{
-		mImpl->SetFile(inFile);
+		mImpl->Read(inFile);
 	}
 	catch (std::exception& e)
 	{
@@ -82,3 +87,23 @@ uint32 MObjectFile::GetDataSize() const
 {
 	return mImpl->mDataSize;
 }
+
+void MObjectFile::AddGlobal(
+	const char*		inName,
+	const void*		inData,
+	uint32			inSize)
+{
+	MObjectFileImp::MGlobal g;
+	g.name = inName;
+	g.data = inData;
+	g.size = inSize;
+	
+	mImpl->mGlobals.push_back(g);
+}
+
+void MObjectFile::Write(
+	const MPath&		inFile)
+{
+	mImpl->Write(inFile);
+}
+

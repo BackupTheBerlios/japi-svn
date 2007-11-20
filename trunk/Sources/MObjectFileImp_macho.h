@@ -38,13 +38,15 @@
 struct MMachoObjectFileImp : public MObjectFileImp
 {
 	template<class SWAPPER>
-	void		Read(
-					struct mach_header&	mh,
-					std::istream&		inData);
+	void			Read(
+						struct mach_header&	mh,
+						std::istream&		inData);
 	
-	virtual void	SetFile(
-						const MPath&	inFile);
-	
+	virtual void	Read(
+						const MPath&		inFile);
+
+	virtual void	Write(
+						const MPath&		inFile);
 };
 
 #endif

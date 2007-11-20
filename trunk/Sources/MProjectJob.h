@@ -187,4 +187,27 @@ struct MProjectCopyFileJob : public MProjectJob
 	bool					mRecursive;
 };
 
+// ---------------------------------------------------------------------------
+//	MProjectCreateResourceJob
+
+struct MProjectCreateResourceJob : public MProjectJob
+{
+							MProjectCreateResourceJob(
+								const std::string&	inTitle,
+								MProject*			inProject,
+								const MPath&		inSrcFile,
+								const MPath&		inDstFile,
+								bool				inRecursive = true)		// in the package dir
+								: MProjectJob(inTitle, inProject)
+								, mSrcFile(inSrcFile)
+								, mDstFile(inDstFile)
+								, mRecursive(inRecursive) {}
+
+	virtual void			Execute();
+	virtual bool			IsDone()			{ return true; }
+
+	MResourceFile			mResourceFile;
+	std::vector<MPath>		mDataFiles;
+};
+
 #endif
