@@ -269,7 +269,7 @@ void MMachoObjectFileImp::Write(
 		if ((gs % alignment) != 0)
 			gs = ((gs / alignment) + 1) * alignment;
 		
-		sym->n_name = reinterpret_cast<char*>(AddNameToNameTable(names, g->name.c_str()));
+		sym->n_name = reinterpret_cast<char*>(AddNameToNameTable(names, g->name));
 		sym->n_type = 0x0f; //N_SECT | N_EXT;
 		sym->n_other = 3;
 		sym->n_desc = 0;

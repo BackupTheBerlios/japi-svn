@@ -37,6 +37,37 @@
 
 #include "MObjectFile.h"
 
+enum MTargetCPU {
+	eCPU_386,
+	eCPU_x86_64,
+	eCPU_PowerPC
+};
+
+template<MTargetCPU CPU>
+struct MCPUTraits
+{
+};
+
+template<>
+struct MCPUTraits<eCPU_PowerPC>
+{
+	
+};
+
+template<>
+struct MCPUTraits<eCPU_x86_64>
+{
+	typedef Elf64_Ehdr	Elf_Ehdr;
+	typedef Elf64_Shdr	Elf_Shdr;
+	typedef Elf64_Sym	Elf_Sym;
+	
+	enum {
+		ElfClass	= ELFCLASS64,
+		ElfData		= ELFDATA2LSB,
+		ElfMachine	= EM_X86_64
+	};
+};
+
 struct MELFObjectFileImp : public MObjectFileImp
 {
 	template
@@ -49,9 +80,15 @@ struct MELFObjectFileImp : public MObjectFileImp
 						Elf_Ehdr&		eh,
 						std::istream&	inData);
 
-	virtual void	SetFile(
+	virtual void	Read(
 						const MPath&	inFile);
-	
+
+	void			Write(
+						const MPath&	inFile);
+
+	template<MTargetCPU CPU>
+	void			WriteForCPU(
+						const MPath&	inFile);
 };
 
 #endif
