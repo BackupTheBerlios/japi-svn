@@ -109,7 +109,7 @@ void MMachoObjectFileImp::Read(
 		THROW(("File is not an object file"));
 }
 
-void WriteDataAligned(
+uint32 WriteDataAligned(
 	ofstream&	inStream,
 	const void*	inData,
 	uint32		inSize,
@@ -117,9 +117,10 @@ void WriteDataAligned(
 {
 	inStream.write(reinterpret_cast<const char*>(inData), inSize);
 
-	inSize %= inAlignment;
-	while (inSize-- > 0)
+	while (inStream.tellp() % inAlignment)
 		inStream.put('\0');
+	
+	return inStream.tellp();
 }
 
 void MMachoObjectFileImp::Write(
@@ -130,7 +131,7 @@ void MMachoObjectFileImp::Write(
 		THROW(("Failed to open object file for writing"));
 
 	string names;
-	names.append("\0", 1);	// add the null name
+	(void)AddNameToNameTable(names, "");	// add the null name
 
 	uint32
 		kSegmentCmdSize = 
@@ -153,18 +154,16 @@ void MMachoObjectFileImp::Write(
 		MH_SUBSECTIONS_VIA_SYMBOLS	// flags
 	};
 	
-	WriteDataAligned(f, &mh, sizeof(mh));
+	uint32 offset = WriteDataAligned(f, &mh, sizeof(mh));
 	
-	uint32 size = 0, alignment;
-	
-	alignment = 4;	// for now
+	uint32 size = 0, alignment = 4;
 	
 	for (MGlobals::iterator g = mGlobals.begin(); g != mGlobals.end(); ++g)
 	{
 		(void)AddNameToNameTable(names, g->name.c_str());
 		
 		uint32 gs = g->data.length();
-		if (g + 1 != mGlobals.end() and (gs % alignment) != 0)
+		if ((gs % alignment) != 0)
 			gs = ((gs / alignment) + 1) * alignment;
 		size += gs;
 	}
@@ -183,7 +182,7 @@ void MMachoObjectFileImp::Write(
 		0						// flags
 	};
 
-	WriteDataAligned(f, &sc, sizeof(sc));
+	WriteDataAligned(f, &sc, sizeof(sc), alignment);
 	
 	struct section sects[3] = {
 		{
@@ -225,26 +224,22 @@ void MMachoObjectFileImp::Write(
 		}
 	};
 
-	WriteDataAligned(f, &sects, sizeof(sects));
+	WriteDataAligned(f, &sects, sizeof(sects), alignment);
 
-	uint32 dataoff = kDataOffset + size;
-	if (dataoff & 1)
-		++dataoff;
+	uint32 symoff = kDataOffset + size;
 	
 	uint32 stroff = kDataOffset + size + sizeof(struct nlist) * mGlobals.size();
-	if (stroff & 1)
-		++stroff;
 
 	struct symtab_command st = {
 		LC_SYMTAB,				// cmd
 		sizeof(symtab_command),	// cmdsize
-		dataoff,				// symoff
+		symoff,					// symoff
 		mGlobals.size(),		// nsyms
 		stroff,					// stroff
 		names.length()			// strsize	
 	};
 
-	WriteDataAligned(f, &st, sizeof(st));
+	WriteDataAligned(f, &st, sizeof(st), alignment);
 	
 	struct dysymtab_command dst = {
 		LC_DYSYMTAB,				// cmd
@@ -257,7 +252,7 @@ void MMachoObjectFileImp::Write(
 		0							// nundefsym
 	};
 	
-	WriteDataAligned(f, &dst, sizeof(dst));
+	WriteDataAligned(f, &dst, sizeof(dst), alignment);
 	
 	struct nlist* strtab = new struct nlist[mGlobals.size()];
 	struct nlist* sym = strtab;
@@ -275,11 +270,7 @@ void MMachoObjectFileImp::Write(
 		sym->n_desc = 0;
 		sym->n_value = size;
 
-		uint32 align = alignment;
-		if (g + 1 == mGlobals.end())
-			align = 2;
-
-		WriteDataAligned(f, g->data.c_str(), g->data.length(), align);
+		WriteDataAligned(f, g->data.c_str(), g->data.length(), alignment);
 
 		size += gs;
 	}

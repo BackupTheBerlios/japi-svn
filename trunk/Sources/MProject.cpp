@@ -2481,12 +2481,12 @@ MProjectJob* MProject::CreateLinkJob(
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");
 
-	vector<MProjectItem*> files;
-	mProjectItems.Flatten(files);
-
 	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
 		argv.push_back(kL + p->string());
 	
+	vector<MProjectItem*> files;
+	mProjectItems.Flatten(files);
+
 	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
 	{
 		MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
@@ -2505,6 +2505,16 @@ MProjectJob* MProject::CreateLinkJob(
 
 		if (l != nil)
 			argv.push_back(kl + l->GetName());
+	}
+
+	files.clear();
+	mPackageItems.Flatten(files);
+
+	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+	{
+		MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
+		if (f != nil and f->IsCompilable())
+			argv.push_back(f->GetObjectPath().string());
 	}
 	
 	return new MProjectExecJob("Linking", this, argv);
@@ -2912,6 +2922,10 @@ void MProject::SelectTarget(
 	mProjectItems.UpdatePaths(mObjectDir);
 	mProjectItems.CheckCompilationResult();
 	mProjectItems.CheckIsOutOfDate(modDateCache);
+	
+	mPackageItems.UpdatePaths(mObjectDir);
+	mPackageItems.CheckCompilationResult();
+	mPackageItems.CheckIsOutOfDate(modDateCache);
 
 	SetStatus("", false);
 }
@@ -2979,6 +2993,7 @@ void MProject::CheckIsOutOfDate()
 {
 	MModDateCache modDateCache;
 	mProjectItems.CheckIsOutOfDate(modDateCache);
+	mPackageItems.CheckIsOutOfDate(modDateCache);
 }
 
 // ---------------------------------------------------------------------------

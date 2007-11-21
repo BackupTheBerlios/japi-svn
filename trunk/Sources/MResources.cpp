@@ -22,12 +22,13 @@ MPatriciaTree<const void*>	gResources;
 bool LookupResourceInImage(
 	const struct mach_header&	mh,
 	uint32						inOffset,
-	const char*					inName,
+	const string&				inName,
 	const void*&				outData)
 {
 	bool result = false;
 	const struct segment_command*	seg = nil;
 	const struct segment_command*	seg_data = nil;
+	const struct segment_command*	seg_text = nil;
 	const struct segment_command*	seg_linkedit = nil;
 	const struct symtab_command* symtab = nil;
 	
@@ -44,6 +45,8 @@ bool LookupResourceInImage(
 				seg = reinterpret_cast<const struct segment_command*>(ptr);
 				if (strcmp(seg->segname, SEG_DATA) == 0)
 					seg_data = seg;
+				else if (strcmp(seg->segname, SEG_TEXT) == 0)
+					seg_text = seg;
 				else if (strcmp(seg->segname, SEG_LINKEDIT) == 0)
 					seg_linkedit = seg;
 				break;
@@ -56,12 +59,20 @@ bool LookupResourceInImage(
 		ptr += cmd->cmdsize;
 	}
 	
-	if (seg_data != nil and seg_linkedit != nil and symtab != nil)
+	if (seg_data != nil and seg_linkedit != nil and symtab != nil and seg_text != nil)
 	{
-		const struct nlist* symbase =
-			reinterpret_cast<const struct nlist*>(base + symtab->symoff + inOffset);
+		uint32 ubase = reinterpret_cast<uint32>(base);
+		
+//		const struct nlist* symbase =
+//			reinterpret_cast<const struct nlist*>(base + symtab->symoff + inOffset);
+//
+//		const char* strings = base + symtab->stroff + inOffset;
 
-		const char* strings = base + symtab->stroff + inOffset;
+		uint32 vm_slide = ubase - seg_text->vmaddr;
+		uint32 file_slide = (seg_linkedit->vmaddr - seg_text->vmaddr) - seg_linkedit->fileoff;
+		const struct nlist* symbase =
+			(struct nlist*)(ubase + (symtab->symoff + file_slide));
+		const char* strings = (char*)(ubase + (symtab->stroff + file_slide));
 		
 		const struct nlist* sym = symbase;
 
@@ -69,10 +80,10 @@ bool LookupResourceInImage(
 		{
 			if (sym->n_type != 0x0f or sym->n_un.n_strx == 0)
 				continue;
-			
-			if (strcmp(inName, strings + sym->n_un.n_strx) == 0)
+
+			if (inName == (strings + sym->n_un.n_strx))
 			{
-				outData = reinterpret_cast<const void*>(sym->n_value + inOffset);
+				outData = reinterpret_cast<const void*>(sym->n_value + vm_slide);
 				result = true;
 				break;
 			}
@@ -83,7 +94,7 @@ bool LookupResourceInImage(
 }
 
 bool LookupResource(
-	const char*					inName,
+	const string&				inName,
 	const void*&				outData)
 {
 	bool result = false;
@@ -95,7 +106,13 @@ bool LookupResource(
 		const struct mach_header* mh = _dyld_get_image_header(ix);
 		uint32 offset = _dyld_get_image_vmaddr_slide(ix);
 		
-		result = LookupResourceInImage(*mh, offset, inName, outData);
+		if (LookupResourceInImage(*mh, offset, inName, outData))
+		{
+			gResources[inName] = outData;
+			result = true;
+		}
+		
+		break;
 	}
 	
 	return result;
@@ -106,14 +123,38 @@ bool LookupResource(
 const void* LoadResource(
 	const char*		inName)
 {
-	const void* result = gResources[inName];
+	static string lang;
 	
+	if (lang.length() == 0)
+	{
+		const char* kLang = getenv("LANG");
+		if (kLang == nil)
+			lang = "en";
+		else
+		{
+			lang = kLang;
+			
+			if (lang.length() > 2 and lang[2] == '_')
+				lang.erase(2, string::npos);
+		}
+	}
+
+	const void* result = gResources[lang + '/' + inName];
+
+	if (result == nil)
+		result = gResources[string("en/") + inName];
+
+	if (result == nil)
+		result = gResources[inName];
+
 	if (result == nil)
 	{
-		if (LookupResource(inName, result) == false)
+		if (LookupResource(lang + '/' + inName, result) == false and
+			LookupResource(string("en/") + inName, result) == false and
+			LookupResource(inName, result) == false)
+		{
 			THROW(("Could not find resource '%s'", inName));
-		
-		gResources[inName] = result;
+		}
 	}
 	
 	return result;

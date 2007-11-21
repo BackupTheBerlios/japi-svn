@@ -168,11 +168,7 @@ enum {
 	kNullSection,
 	kTextSection,
 	kDataSection,
-//	kRelDataSection,
 	kBssSection,
-//	kNoteSection,
-//	kRoDataSection,
-//	kCommentSection,
 	kShStrtabSection,
 	kSymtabSection,
 	kStrtabSection,
@@ -182,14 +178,9 @@ enum {
 
 enum {
 	kNullSymbol,
-//	kFileNameSymbol,
 	kTextSectionSymbol,
 	kDataSectionSymbol,
 	kBssSectionSymbol,
-//	kCompilerSymbol,
-//	kRoDataSectionSymbol,
-//	kNoteSectionSymbol,
-//	kCommentSectionSymbol,
 	kGlobalSymbol,
 	
 	kSymbolCount

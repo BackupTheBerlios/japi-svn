@@ -44,6 +44,7 @@
 #include "MUtils.h"
 #include "MMenu.h"
 #include "MFile.h"
+#include "MResources.h"
 
 using namespace std;
 
@@ -58,6 +59,17 @@ MEditWindow::MEditWindow()
 	sHead = this;
 
 	// the menubar
+	
+	try
+	{
+		const void* menuData = LoadResource("edit-window-menus.xml");
+		
+		cout << "Menu data: " << (const char*)menuData << endl;
+	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
+	}
 	
 	MMenu* fileMenu = new MMenu("File");
 	fileMenu->AppendItem("New", cmd_New);

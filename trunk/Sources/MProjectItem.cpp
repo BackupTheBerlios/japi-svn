@@ -655,7 +655,8 @@ string MProjectResource::GetResourceName() const
 	
 	while (not names.empty())
 	{
-		result += '/';
+		if (result.length() > 0)
+			result += '/';
 		result += names.top();
 		names.pop();
 	}
@@ -685,5 +686,21 @@ void MProjectResource::CheckIsOutOfDate(
 		isOutOfDate = fs::last_write_time(path) > fs::last_write_time(object);
 	
 	SetOutOfDate(isOutOfDate);
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectResource::CheckIsOutOfDate
+
+void MProjectResource::UpdatePaths(
+	const MPath&		inObjectDir)
+{
+	string baseName = GetResourceName();
+	
+	string::size_type p = 0;
+	while ((p = baseName.find('/', p)) != string::npos)
+		baseName[p] = '-';
+	
+	mObjectPath = inObjectDir / (baseName + ".o");
+	mDependsPath = inObjectDir / (baseName + ".d");
 }
 

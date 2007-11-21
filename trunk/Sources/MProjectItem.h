@@ -275,6 +275,9 @@ class MProjectResource : public MProjectFile
 
 	virtual bool	IsCompilable() const					{ return true; }
 
+	virtual void	UpdatePaths(
+						const MPath&		inObjectDir);
+
 	virtual void	CheckIsOutOfDate(
 						MModDateCache&		ioModDateCache);
 	
