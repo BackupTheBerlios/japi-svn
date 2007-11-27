@@ -36,9 +36,10 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
-#if HAVE_WAIT_H
+//#if HAVE_WAIT_H
 #include <wait.h>
-#endif
+//#endif
+#include "MResources.h"
 
 #undef check
 #ifndef BOOST_DISABLE_ASSERTS
@@ -436,36 +437,42 @@ void MProjectCopyFileJob::Execute()
 
 void MProjectCreateResourceJob::Execute()
 {
-	fs::ifstream f(mSrcFile);
-	if (not f.is_open())
-		THROW(("Could not open source file %s", mSrcFile.string().c_str()));
+	MResourceFile rsrcFile;
 	
-	filebuf* b = f.rdbuf();
-
-	uint32 size = b->pubseekoff(0, ios::end);
-	b->pubseekpos(0);
-
-	char* data = new char[size + 1];
-	
-	try
+	for (vector<MPath>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
 	{
-		b->sgetn(data, size);
-		data[size] = 0;
+		fs::ifstream f(*p);
+
+		string name = p->string();
+		
+		if (not f.is_open())
+			THROW(("Could not open source file %s", p->string().c_str()));
+		
+		filebuf* b = f.rdbuf();
 	
-		f.close();
+		uint32 size = b->pubseekoff(0, ios::end);
+		b->pubseekpos(0);
+	
+		char* data = new char[size + 1];
 		
-		MObjectFile obj;
+		try
+		{
+			b->sgetn(data, size);
+			data[size] = 0;
 		
-		obj.AddGlobal(mResourceName, data, size + 1);
+			f.close();
+			
+			rsrcFile.Add(name, data, size);
+		}
+		catch (...)
+		{
+			delete[] data;
+			throw;
+		}
 		
-		obj.Write(mDstFile);
-	}
-	catch (...)
-	{
 		delete[] data;
-		throw;
 	}
 	
-	delete[] data;
+	rsrcFile.Write(mDstFile);
 }
 

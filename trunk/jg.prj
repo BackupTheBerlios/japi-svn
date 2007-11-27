@@ -133,12 +133,12 @@
 			<link>z</link>
 		</group>
 	</files>
-	<package>
-		<mkdir name="en">
-			<copy>Resources/English/edit-window-menus.xml</copy>
+	<package resource_dir="Resources">
+		<mkdir name="English">
+			<copy>edit-window-menus.xml</copy>
 		</mkdir>
-		<mkdir name="nl">
-			<copy>Resources/Dutch/edit-window-menus.xml</copy>
+		<mkdir name="Dutch">
+			<copy>edit-window-menus.xml</copy>
 		</mkdir>
 	</package>
 	<targets>

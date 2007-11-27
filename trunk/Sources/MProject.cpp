@@ -1495,6 +1495,7 @@ void MProject::ReadOptions(
 
 void MProject::ReadPackageAction(
 	xmlNodePtr		inData,
+	MPath			inDir,
 	MProjectGroup*	inGroup)
 {
 	for (xmlNodePtr node = inData->children; node != nil; node = node->next)
@@ -1510,7 +1511,10 @@ void MProject::ReadPackageAction(
 			
 			try
 			{
-				MPath filePath = mProjectDir / fileName;
+				MPath filePath = inDir / fileName;
+				
+				if (not fs::exists(filePath))
+					cout << "File does not exists: " << fileName << endl;
 
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
@@ -1533,7 +1537,9 @@ void MProject::ReadPackageAction(
 			auto_ptr<MProjectMkDir> group(new MProjectMkDir(name, inGroup));
 			
 			if (node->children != nil)
-				ReadPackageAction(node, group.get());
+			{
+				ReadPackageAction(node, inDir / name, group.get());
+			}
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -1673,7 +1679,15 @@ void MProject::Read(
 	if (data != nil and data->nodesetval != nil)
 	{
 		for (int i = 0; i < data->nodesetval->nodeNr; ++i)
-			ReadPackageAction(data->nodesetval->nodeTab[i], &mPackageItems);
+		{
+			MPath dir = mProjectDir;
+			const char* rd;
+	
+			if ((rd = (const char*)xmlGetProp(data->nodesetval->nodeTab[i], BAD_CAST "resource_dir")) != nil)
+				dir = MPath(rd);
+	
+			ReadPackageAction(data->nodesetval->nodeTab[i], dir, &mPackageItems);
+		}
 	}
 	
 	if (data != nil)
@@ -2381,21 +2395,6 @@ MProjectJob* MProject::CreateCompileJob(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::CreateResourceJob
-
-MProjectJob* MProject::CreateResourceJob(
-	MProjectResource*	inFile)
-{
-	MPath srcFile = inFile->GetPath();
-	MPath dstFile = inFile->GetObjectPath();
-	string resourceName = inFile->GetResourceName();
-	
-	return new MProjectCreateResourceJob(
-					string("Creating resource") + resourceName,
-					this, srcFile, dstFile, resourceName);
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::CreateCompileAllJob
 
 MProjectJob* MProject::CreateCompileAllJob()
@@ -2414,10 +2413,22 @@ MProjectJob* MProject::CreateCompileAllJob()
 	files.clear();
 	mPackageItems.Flatten(files);
 
+	vector<MPath> rsrcFiles;
+
 	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-	{
+	{		
 		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
-			job->AddJob(CreateResourceJob(static_cast<MProjectResource*>(*file)));
+		{
+			MProjectFile& f(dynamic_cast<MProjectFile&>(**file));
+			rsrcFiles.push_back(f.GetPath());
+		}
+	}
+	
+	if (rsrcFiles.size() > 0)
+	{
+		job->AddJob(new MProjectCreateResourceJob(
+			"Creating resources",
+			this, mResourcesDir, rsrcFiles, mObjectDir / "__rsrc__.o"));
 	}
 
 	return job.release();
@@ -2514,7 +2525,11 @@ MProjectJob* MProject::CreateLinkJob(
 	{
 		MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
 		if (f != nil and f->IsCompilable())
-			argv.push_back(f->GetObjectPath().string());
+		{
+			MPath p(mObjectDir / "__rsrc__.o");
+			argv.push_back(p.string());
+			break;
+		}
 	}
 	
 	return new MProjectExecJob("Linking", this, argv);

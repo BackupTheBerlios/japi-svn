@@ -1,13 +1,16 @@
 #include "MJapieG.h"
 
-#include <boost/filesystem/fstream.hpp>
-#include <vector>
+#include <sstream>
 
-#include <mach-o/loader.h>
-#include <mach-o/stab.h>
-#include <mach-o/dyld.h>
-#define _AOUT_INCLUDE_
-#include <nlist.h>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/bind.hpp>
+
+//#include <mach-o/loader.h>
+//#include <mach-o/stab.h>
+//#include <mach-o/dyld.h>
+//#define _AOUT_INCLUDE_
+//#include <nlist.h>
 
 #include "MObjectFile.h"
 #include "MResources.h"
@@ -15,273 +18,324 @@
 
 using namespace std;
 
-namespace {
+extern const char gResourceIndex[];
+extern const char gResourceData[];
 
-MPatriciaTree<const void*>	gResources;
+//const char gResourceIndex[] = "\0\0\0\0";
+//const char gResourceData[] = "\0\0\0\0";
 
-bool LookupResourceInImage(
-	const struct mach_header&	mh,
-	uint32						inOffset,
-	const string&				inName,
-	const void*&				outData)
+namespace
 {
-	bool result = false;
-	const struct segment_command*	seg = nil;
-	const struct segment_command*	seg_data = nil;
-	const struct segment_command*	seg_text = nil;
-	const struct segment_command*	seg_linkedit = nil;
-	const struct symtab_command* symtab = nil;
 	
-	const char* base = reinterpret_cast<const char*>(&mh);
-	const char* ptr = base + sizeof(mach_header);
+using namespace boost;
+
+class MRSRCDirectory
+{
+  public:
+
+						MRSRCDirectory();
 	
-	for (uint32 ix = 0; ix < mh.ncmds; ++ix)
+						MRSRCDirectory(
+							const char*		inData,
+							uint32&			ioOffset);
+
+	static MRSRCDirectory&	Instance();
+
+	void				AddData(
+							const string&	inPath,
+							uint32			inOffset,
+							uint32			inSize);
+	
+	bool				GetData(
+							const char*		inPath,
+							uint32&			outOffset,
+							uint32&			outSize) const;
+
+	void				Flatten(
+							ostream&		inIndexStream);
+
+  private:
+
+	void				read(
+							const char*		inData,
+							uint32&			ioOffset,
+							uint32&			outValue)
+						{
+							memcpy(&outValue, inData + ioOffset, sizeof(uint32));
+							ioOffset += sizeof(uint32);
+						}
+
+	void				read(
+							const char*		inData,
+							uint32&			ioOffset,
+							string&			outValue)
+						{
+							uint8 length = *reinterpret_cast<const uint8*>(inData + ioOffset);
+
+							if (length > 0)
+								outValue.assign(inData + ioOffset + 1, inData + ioOffset + 1 + length);
+							else
+								outValue.clear();
+
+							ioOffset += length + 1;
+						}
+
+	void				write(
+							uint32			inValue,
+							ostream&		ioStream)
+						{
+							ioStream.write(reinterpret_cast<const char*>(&inValue), sizeof(inValue));
+						}
+
+	void				write(
+							string			inValue,
+							ostream&		ioStream)
+						{
+							if (inValue.length() > numeric_limits<uint8>::max())
+								THROW(("Trying to store a resource with a name that is too long: %s", inValue.c_str()));
+							
+							uint8 length = inValue.length();
+							
+							ioStream.write(reinterpret_cast<const char*>(&length), sizeof(length));
+							if (length > 0)
+								ioStream.write(reinterpret_cast<const char*>(inValue.c_str()), length);
+						}
+
+#if DEBUG
+  public:
+	void				Print(
+							int				inLevel);
+#endif
+
+	enum MRSRCType
 	{
-		const struct load_command* cmd = reinterpret_cast<const struct load_command*>(ptr);
-		
-		switch (cmd->cmd)
-		{
-			case LC_SEGMENT:
-				seg = reinterpret_cast<const struct segment_command*>(ptr);
-				if (strcmp(seg->segname, SEG_DATA) == 0)
-					seg_data = seg;
-				else if (strcmp(seg->segname, SEG_TEXT) == 0)
-					seg_text = seg;
-				else if (strcmp(seg->segname, SEG_LINKEDIT) == 0)
-					seg_linkedit = seg;
-				break;
-			
-			case LC_SYMTAB:
-				symtab = reinterpret_cast<const struct symtab_command*>(ptr);
-				break;
-		}
-		
-		ptr += cmd->cmdsize;
-	}
-	
-	if (seg_data != nil and seg_linkedit != nil and symtab != nil and seg_text != nil)
+		eRSRC_File	= 'file',
+		eRSRC_Dir	= 'dir '
+	};
+
+	struct MRSRCEntry
 	{
-		uint32 ubase = reinterpret_cast<uint32>(base);
+		string			name;
+		uint32			offset;
+		uint32			size;
+		uint32			type;
 		
-//		const struct nlist* symbase =
-//			reinterpret_cast<const struct nlist*>(base + symtab->symoff + inOffset);
-//
-//		const char* strings = base + symtab->stroff + inOffset;
-
-		uint32 vm_slide = ubase - seg_text->vmaddr;
-		uint32 file_slide = (seg_linkedit->vmaddr - seg_text->vmaddr) - seg_linkedit->fileoff;
-		const struct nlist* symbase =
-			(struct nlist*)(ubase + (symtab->symoff + file_slide));
-		const char* strings = (char*)(ubase + (symtab->stroff + file_slide));
-		
-		const struct nlist* sym = symbase;
-
-		for (uint32 ix = 0; ix < symtab->nsyms; ++ix, ++sym)
-		{
-			if (sym->n_type != 0x0f or sym->n_un.n_strx == 0)
-				continue;
-
-			if (inName == (strings + sym->n_un.n_strx))
-			{
-				outData = reinterpret_cast<const void*>(sym->n_value + vm_slide);
-				result = true;
-				break;
-			}
-		}
-	}
+		const string&	GetName() const		{ return name; }
+	};
 	
-	return result;
+	list<MRSRCEntry>			mEntries;
+	ptr_vector<MRSRCDirectory>	mSubDirs;
+};
+
+MRSRCDirectory::MRSRCDirectory()
+{
 }
 
-bool LookupResource(
-	const string&				inName,
-	const void*&				outData)
+MRSRCDirectory::MRSRCDirectory(
+	const char*		inData,
+	uint32&			ioOffset)
 {
-	bool result = false;
-
-	uint32  count = _dyld_image_count();
+	uint32 count;
+	read(inData, ioOffset, count);
 	
-	for (uint32 ix = 0; result == false and ix < count; ++ix)
+	while (count-- > 0)
 	{
-		const struct mach_header* mh = _dyld_get_image_header(ix);
-		uint32 offset = _dyld_get_image_vmaddr_slide(ix);
+		MRSRCEntry e;
+
+		read(inData, ioOffset, e.name);
+		read(inData, ioOffset, e.type);
 		
-		if (LookupResourceInImage(*mh, offset, inName, outData))
+		if (e.type == eRSRC_Dir)
 		{
-			gResources[inName] = outData;
-			result = true;
+			MRSRCDirectory* d = new MRSRCDirectory(inData, ioOffset);
+			e.offset = mSubDirs.size();
+			mSubDirs.push_back(d);
 		}
-		
-		break;
-	}
-	
-	return result;
-}
-
-}
-
-const void* LoadResource(
-	const char*		inName)
-{
-	static string lang;
-	
-	if (lang.length() == 0)
-	{
-		const char* kLang = getenv("LANG");
-		if (kLang == nil)
-			lang = "en";
 		else
 		{
-			lang = kLang;
-			
-			if (lang.length() > 2 and lang[2] == '_')
-				lang.erase(2, string::npos);
+			read(inData, ioOffset, e.offset);
+			read(inData, ioOffset, e.size);
 		}
+
+		mEntries.push_back(e);
 	}
+}
 
-	const void* result = gResources[lang + '/' + inName];
-
-	if (result == nil)
-		result = gResources[string("en/") + inName];
-
-	if (result == nil)
-		result = gResources[inName];
-
-	if (result == nil)
+#if DEBUG
+void MRSRCDirectory::Print(
+	int		inLevel)
+{
+	string tabs(inLevel, ' ');
+	
+	for (list<MRSRCEntry>::const_iterator e = mEntries.begin(); e != mEntries.end(); ++e)
 	{
-		if (LookupResource(lang + '/' + inName, result) == false and
-			LookupResource(string("en/") + inName, result) == false and
-			LookupResource(inName, result) == false)
+		cout << tabs << e->name << ' ';
+		if (e->type == eRSRC_Dir)
 		{
-			THROW(("Could not find resource '%s'", inName));
+			cout << '/' << endl;
+			mSubDirs[e->offset].Print(inLevel + 1);
+		}
+		else
+			cout << e->offset << '-' << e->size << endl;
+	}
+}
+#endif
+
+void MRSRCDirectory::AddData(
+	const string&	inPath,
+	uint32			inOffset,
+	uint32			inSize)
+{
+	string path(inPath);
+	string::size_type p = path.find('/');
+	string name = path.substr(0, p);
+
+	list<MRSRCEntry>::const_iterator e = find_if(
+		mEntries.begin(), mEntries.end(),
+		boost::bind(&MRSRCEntry::GetName, _1) == name);
+	
+	if (e != mEntries.end())
+	{
+		if (p == string::npos)
+			THROW(("Duplicate resource entry %s", inPath.c_str()));
+		
+		mSubDirs[e->offset].AddData(path.substr(p + 1), inOffset, inSize);
+	}
+	else
+	{
+		MRSRCEntry e;
+		e.name = name;
+		
+		if (p != string::npos)
+		{
+			e.type = eRSRC_Dir;
+			e.offset = mSubDirs.size();
+
+			MRSRCDirectory* d = new MRSRCDirectory;
+			mSubDirs.push_back(d);
+			
+			d->AddData(path.substr(p + 1), inOffset, inSize);
+		}
+		else
+		{
+			e.type = eRSRC_File;
+			e.offset = inOffset;
+			e.size = inSize;
+		}
+		
+		mEntries.push_back(e);
+	}
+}
+
+bool MRSRCDirectory::GetData(
+	const char*		inPath,
+	uint32&			outOffset,
+	uint32&			outSize) const
+{
+	string path(inPath);
+	string::size_type p = path.find('/');
+	string name = path.substr(0, p);
+
+	list<MRSRCEntry>::const_iterator e = find_if(
+		mEntries.begin(), mEntries.end(),
+		boost::bind(&MRSRCEntry::GetName, _1) == name);
+	
+	bool result = false;
+	if (e != mEntries.end())
+	{
+		if (p != string::npos)
+			result = mSubDirs[e->offset].GetData(inPath + p + 1, outOffset, outSize);
+		else
+		{
+			outOffset = e->offset;
+			outSize = e->size;
+			result = true;
 		}
 	}
 	
+	return result;
+}
+
+void MRSRCDirectory::Flatten(
+	ostream&		inIndexStream)
+{
+	uint32 count = mEntries.size();
+	write(count, inIndexStream);
+	
+	for (list<MRSRCEntry>::iterator e = mEntries.begin(); e != mEntries.end(); ++e)
+	{
+		write(e->name, inIndexStream);
+		write(e->type, inIndexStream);
+		
+		if (e->type == eRSRC_File)
+		{
+			write(e->offset, inIndexStream);
+			write(e->size, inIndexStream);
+		}
+		else //if (e->type == eRSRC_Dir)
+			mSubDirs[e->offset].Flatten(inIndexStream);
+	}
+}
+
+MRSRCDirectory& MRSRCDirectory::Instance()
+{
+	uint32 offset = 0;
+	static MRSRCDirectory sInstance(gResourceIndex, offset);
+	return sInstance;
+}
+
+}
+
+// --------------------------------------------------------------------
+
+bool LoadResource(
+		const char*		inName,
+		const char*&	outData,
+		uint32&			outSize)
+{
+	uint32 offset;
+	
+	bool result = MRSRCDirectory::Instance().GetData(inName, offset, outSize);
+
+	if (result)
+		outData = gResourceData + offset;
+
 	return result;
 }
 
 // --------------------------------------------------------------------
 
-struct MResourceFileItem
-{
-	uint32		name;
-	uint32		data;
-	uint32		size;
-	
-	MResourceFileItem*
-				next;
-
-	MResourceFileItem*
-				children;
-
-				MResourceFileItem()
-					: name(0)
-					, data(0)
-					, size(0)
-					, next(nil)
-					, children(nil)
-				{
-				}
-
-				~MResourceFileItem()
-				{
-					delete next;
-					delete children;
-				}
-};
-
 struct MResourceFileImp
 {
-	MResourceFileItem*	root;
-	string				data;
-	string				names;
-
-	uint32				AddName(
-							const char*		inName)
-						{
-							const char* p = names.c_str();
-							const char* end = p + names.length();
-							
-							for (; p < end; p += strlen(p) + 1)
-							{
-								if (strcmp(inName, p) == 0)
-									break;
-							}
-							
-							if (p == end)
-							{
-								names.append(inName);
-								names.append('\0');
-								p = names.c_str() + names.length();
-							}
-
-							return p - names.c_str();
-						}
-	
-	uint32				AddData(
-							const void*		inData,
-							uint32			inSize)
-						{
-							uint32 offset = data.length();
-							data.append(reinterpret_cast<const char*>(inData), inSize);
-							return offset;
-						}
+	MRSRCDirectory		mIndex;
+	stringstream		mData;
 };
 
 MResourceFile::MResourceFile()
 	: mImpl(new MResourceFileImp)
 {
-	mImpl->root = new MResourceFileItem;
 }
 
 MResourceFile::~MResourceFile()
 {
-	delete mImpl->root;
 	delete mImpl;
 }
 
 void MResourceFile::Add(
-	const char*		inLocale,
-	const char*		inName,
+	const string&	inPath,
 	const void*		inData,
 	uint32			inSize)
 {
-	MResourceFileItem* folder = mImpl->root;
+	uint32 offset = mImpl->mData.tellp();
+	mImpl->mData.write(reinterpret_cast<const char*>(inData), inSize);
+	mImpl->mIndex.AddData(inPath, offset, inSize);
 	
-	if (inLocale != nil)
-	{
-		for (MResourceFileItem* f = folder->children; f != nil; f = f->next)
-		{
-			if (strcmp(mImpl->data.c_str(), inLocale) == 0)
-			{
-				folder = f;
-				break;
-			}
-		}
-		
-		if (folder == mImpl->root)
-		{
-			folder = new MResourceFileItem;
-
-			folder->next = mImpl->root->children;
-			mImpl->root->children = folder;
-			
-			folder->name = mImpl->AddName(inLocale);
-		}
-	}
-	
-	MResourceFileItem* item = new MResourceFileItem;
-	item->name = mImpl->AddName(inName);
-	item->data = mImpl->AddData(inData, inSize);
-	item->size = inSize;
-	
-	item->next = folder->children;
-	folder->children = item;
+	while ((mImpl->mData.tellp() % 8) != 0)
+		mImpl->mData.put('\0');
 }
 
 void MResourceFile::Add(
-	const char*		inLocale,
-	const char*		inName,
+	const string&	inPath,
 	const MPath&	inFile)
 {
 	fs::ifstream f(inFile);
@@ -299,8 +353,25 @@ void MResourceFile::Add(
 	b->sgetn(text, size);
 	f.close();
 	
-	Add(inLocale, inName, text, size);
+	Add(inPath, text, size);
 	
 	delete[] text;
+}
+
+void MResourceFile::Write(
+	const MPath&		inFile)
+{
+	MObjectFile obj;
+
+	stringstream s;
+	mImpl->mIndex.Flatten(s);
+	
+	string index(s.str());
+	obj.AddGlobal("gResourceIndex", index.c_str(), index.length());
+	
+	string data(mImpl->mData.str());
+	obj.AddGlobal("gResourceData", data.c_str(), data.length());
+	
+	obj.Write(inFile);
 }
 

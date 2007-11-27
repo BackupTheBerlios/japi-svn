@@ -1,6 +1,8 @@
 #ifndef MRESOURCES_H
 #define MRESOURCES_H
 
+#include <istream>
+
 /*
 	Resources are data sources for the application.
 	
@@ -14,8 +16,10 @@
 // LoadResource returns a pointer to the resource named inName
 // If this resources is not found, an exception is thrown 
 
-const void* LoadResource(
-		const char*		inName);
+bool LoadResource(
+		const char*		inName,
+		const char*&	outData,
+		uint32&			outSize);
 
 class MResourceFile
 {
@@ -25,18 +29,16 @@ class MResourceFile
 						~MResourceFile();
 	
 	void				Add(
-							const char*		inLocale,
-							const char*		inName,
-							const void*		inData,
-							uint32			inSize);
+							const std::string&	inPath,
+							const void*			inData,
+							uint32				inSize);
 
 	void				Add(
-							const char*		inLocale,
-							const char*		inName,
-							const MPath&	inFile);
+							const std::string&	inPath,
+							const MPath&		inFile);
 	
 	void				Write(
-							const MPath&	inFile);
+							const MPath&		inFile);
 
   private:
 	struct MResourceFileImp*	mImpl;

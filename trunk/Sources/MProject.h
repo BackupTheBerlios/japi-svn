@@ -219,9 +219,6 @@ class MProject : public MWindow, public MSaverMixin
 	MPath				GetObjectPathForFile(
 							const MPath&		inFile) const;
 
-	MProjectJob*		CreateResourceJob(
-							MProjectResource*	inFile);
-
 	MProjectJob*		CreateCompileJob(
 							const MPath&		inFile);
 
@@ -261,6 +258,7 @@ class MProject : public MWindow, public MSaverMixin
 
 	void				ReadPackageAction(
 							xmlNodePtr			inData,
+							MPath				inDir,
 							MProjectGroup*		inGroup);
 
 	void				Read(
@@ -337,6 +335,7 @@ class MProject : public MWindow, public MSaverMixin
 	MPath				mOutputDir;
 	MPath				mProjectDataDir;
 	MPath				mObjectDir;
+	MPath				mResourcesDir;
 	MProjectGroup		mProjectItems;
 	MProjectGroup		mPackageItems;
 	MProjectListPanel	mPanel;

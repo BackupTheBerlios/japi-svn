@@ -260,7 +260,7 @@ void MELFObjectFileImp::WriteForCPU(
 		sym_offset = WriteDataAligned(f, g->data.c_str(), g->data.length(), 8);
 	}
 	
-	uint32 data_size = sym_offset - data_size;
+	uint32 data_size = sym_offset;
 
 	uint32 symtab_off = sym_offset;
 	assert((sizeof(Elf_Sym) % 8) == 0);
