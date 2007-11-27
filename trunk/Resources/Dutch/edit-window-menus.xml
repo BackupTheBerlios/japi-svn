@@ -1,0 +1,90 @@
+<?xml version="1.0" standalone="yes"?>
+<menubar>
+	<menu id='filemenu' label="Bestand">
+		<item label="Nieuw" cmd='new '/>
+		<item label="Open…" cmd='open'/>
+		<recentmenu id='recentmenu' label="Open Recente"/>
+		<item label="Zoek en open…" cmd='OInc'/>
+		<item label="Open Source/Header" cmd='SHdS'/>
+		<item label="-" />
+		<item label="Sluit" cmd='clos'/>
+		<item label="Bewaar" cmd='save'/>
+		<item label="Bewaar als…" cmd='sava'/>
+		<item label="Vorige versie" cmd='reve'/>
+		<item label="-" />
+		<item label="Afsluiten" cmd='quit'/>
+	</menu>
+	<menu id='editmenu' label="Wijzig">
+		<item label="Herstel" cmd='undo'/>
+		<item label="Herhaal" cmd='redo'/>
+		<item label="-" />
+		<item label="Knip" cmd='cut '/>
+		<item label="Knip en voeg toe" cmd='CutA'/>
+		<item label="Kopieer" cmd='copy'/>
+		<item label="Kopieer en voeg toe" cmd='CopA'/>
+		<item label="Plak" cmd='past'/>
+		<item label="Plak volgende" cmd='PstN'/>
+		<item label="Wis" cmd='clea'/>
+		<item label="Alles selecteren" cmd='sall'/>
+	</menu>
+	<menu id='textmenu' label="Tekst">
+		<item label="Balanceer" cmd='Bala'/>
+		<item label="Omlopen" cmd='SftW'/>
+		<item label="-" />
+		<item label="Schuif naar links" cmd='ShiL'/>
+		<item label="Schuif naar rechts" cmd='ShiR'/>
+		<item label="-" />
+		<item label="Maak commentaar" cmd='Comm'/>
+		<item label="Verwijder commentaar" cmd='Unco'/>
+		<item label="-" />
+		<item label="Spaties naar tabs" cmd='Enta'/>
+		<item label="Tabs naar spaties" cmd='Deta'/>
+		<item label="-" />
+		<item label="Bestandsinfo…" cmd='DocI'/>
+	</menu>
+	<menu id='' label="Zoek">
+		<item label="Snel zoeken" cmd='FFnd'/>
+		<item label="Snel zoeken achteruit" cmd='FFnb'/>
+		<item label="-" />
+		<item label="Zoek" cmd='Find'/>
+		<item label="Zoek volgende" cmd='FndN'/>
+		<item label="Zoek vorige" cmd='FndP'/>
+		<item label="Zoek in volgend bestand" cmd='FnND'/>
+		<item label="Gebruik als zoek tekst" cmd='EntF'/>
+		<item label="Gebruik als vervang tekst" cmd='EntR'/>
+		<item label="-" />
+		<item label="Vervang" cmd='Repl'/>
+		<item label="Vervang alles" cmd='RplA'/>
+		<item label="Vervang en zoek volgende" cmd='RpFN'/>
+		<item label="Vervang en zoek vorige" cmd='RpFP'/>
+		<item label="-" />
+		<item label="Completeer" cmd='ComB'/>
+		<item label="Completeer vooruit zoekend" cmd='ComF'/>
+		<item label="-" />
+		<item label="Ga naar regel" cmd='GoTo'/>
+	</menu>
+	<menu id='' label="Markeer">
+		<item label="Volgende markering" cmd='NxtM'/>
+		<item label="Vorige markering" cmd='PrvM'/>
+		<item label="-" />
+		<item label="Wis alle markeringen" cmd='ClML'/>
+		<item label="Markeer regel" cmd='Mark'/>
+		<item label="Zoek en markeer…" cmd='F&amp;Mk'/>
+		<item label="-" />
+		<item label="Kopieer gemarkeerde regels" cmd='CoML'/>
+		<item label="Knip gemarkeerde regels" cmd='CuML'/>
+		<item label="Wis gemarkeerde regels" cmd='ClML'/>
+	</menu>
+	<menu id='' label="Project">
+		<item label="Voeg toe aan project" cmd='Padd'/>
+		<item label="-" />
+		<item label="Preprocess" cmd='Ppre'/>
+		<item label="Controleer syntax" cmd='Psyn'/>
+		<item label="Compileer" cmd='Pcmp'/>
+		<item label="Dissassemble" cmd='Pdis'/>
+	</menu>
+	<menu id='' label="Venster">
+		<item label="Werkblad" cmd='Wrks'/>	
+		<item label="-" />
+	</menu>
+</menubar>

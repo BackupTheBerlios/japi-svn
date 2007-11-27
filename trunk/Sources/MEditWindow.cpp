@@ -59,30 +59,7 @@ MEditWindow::MEditWindow()
 	sHead = this;
 
 	// the menubar
-	
-	try
-	{
-//		const void* menuData = LoadResource("edit-window-menus.xml");
-//		
-//		cout << "Menu data: " << (const char*)menuData << endl;
-
-//		const char* data;
-//		uint32 size;
-//		if (LoadResource("Resources/English/edit-window-menus.xml", data, size))
-//		{
-//			cout << "Loaded resource: " << string(data, size) << endl;
-//		}
-
-//		rsrc_istream menuData("Resources/English/edit-window-menus.xml");
-//		string s;
-//		menuData >> s;
-//		cout << "Menu data: '" << s << '\'' << endl;
-	}
-	catch (exception& e)
-	{
-		MError::DisplayError(e);
-	}
-	
+		
 	MMenu* fileMenu = new MMenu("File");
 	fileMenu->AppendItem("New", cmd_New);
 	fileMenu->AppendItem("Open…", cmd_Open);

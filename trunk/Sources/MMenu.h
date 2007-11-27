@@ -88,7 +88,8 @@ class MMenubar
 					MMenubar(
 						MHandler*			inTarget,
 						GtkWidget*			inContainer,
-						GtkWidget*			inWindow);
+						GtkWidget*			inWindow,
+						const char*			inXML = nil);
 
 	void			AddMenu(
 						MMenu*				inMenu,

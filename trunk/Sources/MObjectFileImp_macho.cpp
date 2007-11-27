@@ -154,13 +154,15 @@ void MMachoObjectFileImp::Write(
 		MH_SUBSECTIONS_VIA_SYMBOLS	// flags
 	};
 	
-	uint32 offset = WriteDataAligned(f, &mh, sizeof(mh));
+	(void)WriteDataAligned(f, &mh, sizeof(mh));
 	
 	uint32 size = 0, alignment = 4;
 	
 	for (MGlobals::iterator g = mGlobals.begin(); g != mGlobals.end(); ++g)
 	{
-		(void)AddNameToNameTable(names, g->name.c_str());
+		g->name.insert(g->name.begin(), '_');
+		
+		(void)AddNameToNameTable(names, g->name);
 		
 		uint32 gs = g->data.length();
 		if ((gs % alignment) != 0)

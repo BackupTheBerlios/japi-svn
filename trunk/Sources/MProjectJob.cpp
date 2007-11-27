@@ -36,9 +36,9 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
-//#if HAVE_WAIT_H
+#if HAVE_WAIT_H
 #include <wait.h>
-//#endif
+#endif
 #include "MResources.h"
 
 #undef check

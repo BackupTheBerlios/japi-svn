@@ -55,7 +55,8 @@ struct MMenuItem
 MMenuItem::MMenuItem(
 	MMenu*			inMenu,
 	const string&	inLabel,
-	uint32			inCommand)
+	uint32			inCommand,
+	const char*		inXML)
 	: mCallback(this, &MMenuItem::ItemCallback)
 	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
@@ -77,6 +78,47 @@ MMenuItem::MMenuItem(
 	}
 
 	gtk_widget_show(mGtkMenuItem);
+	
+	if (inXML != nil)
+	{
+		xmlDocPtr			xmlDoc = nil;
+		xmlXPathContextPtr	xPathContext = nil;
+		
+		xmlInitParser();
+	
+		try
+		{
+			xmlDoc = xmlParseFile(inXML);
+			if (xmlDoc == nil or xmlDoc->children == nil)
+				THROW(("Failed to parse project file"));
+			
+			// build a menu
+			
+			for (xmlNodePtr node = xmlDoc->children; node != nil; node = node->next)
+			{
+				if (xmlNodeIsText(node) or strcmp((const char*)node->name, "menubar"))
+					continue;
+				
+				CreateMenus(node->children, menu);
+			}
+	
+			xmlXPathFreeContext(xPathContext);
+			xmlFreeDoc(xmlDoc);
+		}
+		catch (...)
+		{
+			if (xPathContext != nil)
+				xmlXPathFreeContext(xPathContext);
+			
+			if (xmlDoc != nil)
+				xmlFreeDoc(xmlDoc);
+			
+			xmlCleanupParser();
+			throw;
+		}
+		
+		xmlCleanupParser();
+	}
 }
 
 void MMenuItem::ItemCallback()
