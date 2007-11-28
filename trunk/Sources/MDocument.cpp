@@ -2477,13 +2477,15 @@ void MDocument::DoDetab()
 			case '\t':
 			{
 				int toInsert = mCharsPerTab - (column % mCharsPerTab);
-				
-				text.erase(i, i + 1);
+
+cout << "Inserting " << toInsert << " spaces";	
+				column += toInsert;
+			
+				text.erase(i);
 				while (toInsert-- > 0)
-				{
-					i = text.insert(i, ' ');
-					++column;
-				}
+					i = text.insert(i, ' ') + 1;
+
+cout << " column is now: " << column << endl;
 				break;
 			}
 			case '\n':
@@ -2496,6 +2498,7 @@ void MDocument::DoDetab()
 			
 			default:
 				i = next_cursor_position(i, text.end());
+				++column;
 				break;
 		}
 	}
