@@ -73,6 +73,7 @@
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
+			<file>MAlerts.cpp</file>
 			<file>MStrings.cpp</file>
 			<file>MResources.cpp</file>
 			<file>MSound.cpp</file>

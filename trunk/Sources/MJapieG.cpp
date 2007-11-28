@@ -49,6 +49,7 @@
 #include "MProject.h"
 #include "MSftpGetDialog.h"
 #include "MStrings.h"
+#include "MAlerts.h"
 
 #include <iostream>
 
@@ -204,7 +205,11 @@ bool MJapieApp::ProcessCommand(
 		case cmd_SelectWindowFromMenu:
 			DoSelectWindowFromWindowMenu(inItemIndex - 2);
 			break;
-
+		
+		case 'test':
+			DisplayAlert("Resources/English/unknown-host-alert.xml");
+			break;
+		
 		default:
 			result = false;
 			break;

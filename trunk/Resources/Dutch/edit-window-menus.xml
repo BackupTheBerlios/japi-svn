@@ -26,6 +26,8 @@
 		<item label="Plak volgende" cmd='PstN'/>
 		<item label="Wis" cmd='clea'/>
 		<item label="Alles selecteren" cmd='sall'/>
+		<item label="-"/>
+		<item label="Test" cmd='test'/>
 	</menu>
 	<menu id='textmenu' label="Tekst">
 		<item label="Balanceer" cmd='Bala'/>
