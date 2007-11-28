@@ -2478,14 +2478,11 @@ void MDocument::DoDetab()
 			{
 				int toInsert = mCharsPerTab - (column % mCharsPerTab);
 
-cout << "Inserting " << toInsert << " spaces";	
 				column += toInsert;
 			
 				text.erase(i);
 				while (toInsert-- > 0)
 					i = text.insert(i, ' ') + 1;
-
-cout << " column is now: " << column << endl;
 				break;
 			}
 			case '\n':
