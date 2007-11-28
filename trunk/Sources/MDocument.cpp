@@ -132,7 +132,7 @@ MDocument::MDocument(
 	{
 		mURL = *inURL;
 		
-		if (mURL.IsLocal())
+		if (mURL.IsLocal() and fs::exists(mURL.GetPath()))
 			mFileModDate = fs::last_write_time(mURL.GetPath());
 		else
 			mFileModDate = GetLocalTime();
@@ -146,7 +146,7 @@ MDocument::MDocument(
 	
 	ReInit();
 	
-	if (mSpecified)
+	if (mSpecified and mURL.IsLocal() and fs::exists(mURL.GetPath()))
 	{
 		ReadFile();
 		Rewrap();
@@ -193,7 +193,8 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(const MUrl& inFile)
+MDocument::MDocument(
+	const MUrl&		inFile)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -211,8 +212,11 @@ MDocument::MDocument(const MUrl& inFile)
 
 //	ReInit();
 
-	ReadFile();
-	Rewrap();
+	if (mURL.IsLocal() and fs::exists(mURL.GetPath()))
+	{
+		ReadFile();
+		Rewrap();
+	}
 
 //	boost::mutex::scoped_lock lock(sDocListMutex);
 	mNext = sFirst;

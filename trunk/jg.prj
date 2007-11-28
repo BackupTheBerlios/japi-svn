@@ -136,6 +136,7 @@
 	<package resource_dir="Resources">
 		<mkdir name="English">
 			<copy>edit-window-menus.xml</copy>
+			<copy>unknown-host-alert.xml</copy>
 		</mkdir>
 		<mkdir name="Dutch">
 			<copy>edit-window-menus.xml</copy>

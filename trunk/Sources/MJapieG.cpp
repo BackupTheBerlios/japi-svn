@@ -811,7 +811,7 @@ bool ForkServer(
 	if (sockfd < 0)
 	{
 		// no server available, apparently. Create one
-		if (fork() > 0)
+		if (fork() == 0)
 			return true;
 		
 		sleep(1);
