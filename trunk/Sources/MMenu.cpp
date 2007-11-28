@@ -1,12 +1,19 @@
 #include "MJapieG.h"
 #include <iostream>
 
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+//#include <libxml/xpath.h>
+//#include <libxml/xpathInternals.h>
+//#include <libxml/xmlwriter.h>
+
 #include "MCallbacks.h"
 #include "MMenu.h"
 #include "MWindow.h"
 #include "MAcceleratorTable.h"
 #include "MUrl.h"
 #include "MStrings.h"
+#include "MResources.h"
 
 using namespace std;
 
@@ -14,7 +21,8 @@ struct MCommandToString
 {
 	char mCommandString[10];
 	
-	MCommandToString(uint32 inCommand)
+	MCommandToString(
+		uint32			inCommand)
 	{
 		strcpy(mCommandString, "MCmd_xxxx");
 		
@@ -55,8 +63,7 @@ struct MMenuItem
 MMenuItem::MMenuItem(
 	MMenu*			inMenu,
 	const string&	inLabel,
-	uint32			inCommand,
-	const char*		inXML)
+	uint32			inCommand)
 	: mCallback(this, &MMenuItem::ItemCallback)
 	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
 	, mGtkMenuItem(nil)
@@ -78,47 +85,6 @@ MMenuItem::MMenuItem(
 	}
 
 	gtk_widget_show(mGtkMenuItem);
-	
-	if (inXML != nil)
-	{
-		xmlDocPtr			xmlDoc = nil;
-		xmlXPathContextPtr	xPathContext = nil;
-		
-		xmlInitParser();
-	
-		try
-		{
-			xmlDoc = xmlParseFile(inXML);
-			if (xmlDoc == nil or xmlDoc->children == nil)
-				THROW(("Failed to parse project file"));
-			
-			// build a menu
-			
-			for (xmlNodePtr node = xmlDoc->children; node != nil; node = node->next)
-			{
-				if (xmlNodeIsText(node) or strcmp((const char*)node->name, "menubar"))
-					continue;
-				
-				CreateMenus(node->children, menu);
-			}
-	
-			xmlXPathFreeContext(xPathContext);
-			xmlFreeDoc(xmlDoc);
-		}
-		catch (...)
-		{
-			if (xPathContext != nil)
-				xmlXPathFreeContext(xPathContext);
-			
-			if (xmlDoc != nil)
-				xmlFreeDoc(xmlDoc);
-			
-			xmlCleanupParser();
-			throw;
-		}
-		
-		xmlCleanupParser();
-	}
 }
 
 void MMenuItem::ItemCallback()
@@ -396,6 +362,115 @@ MMenubar::MMenubar(
 	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
 	
 //	gtk_window_add_accel_group(GTK_WINDOW(inWindow), mGtkAccel);
+}
+
+void MMenubar::BuildFromResource(
+	const char*		inResourceName)
+{
+	const char* xml;
+	uint32 size;
+	
+	if (not LoadResource(inResourceName, xml, size))
+		THROW(("Menu resource not found: %s", inResourceName));
+	
+	xmlDocPtr			xmlDoc = nil;
+	
+	xmlInitParser();
+
+	try
+	{
+		xmlDoc = xmlParseMemory(xml, size);
+		if (xmlDoc == nil or xmlDoc->children == nil)
+			THROW(("Failed to parse project file"));
+		
+		// build a menu
+		
+		for (xmlNodePtr node = xmlDoc->children; node != nil; node = node->next)
+		{
+			if (xmlNodeIsText(node) or strcmp((const char*)node->name, "menubar"))
+				continue;
+			
+			for (xmlNodePtr menu = node->children; menu != nil; menu = menu->next)
+			{
+				if (xmlNodeIsText(menu) or strcmp((const char*)menu->name, "menu"))
+					continue;
+			
+				MMenu* obj = CreateMenu(menu);
+
+				const char* wm = (const char*)xmlGetProp(menu, BAD_CAST "window_menu");
+				AddMenu(obj, wm != nil and strcmp(wm, "true") == 0);
+			}
+		}
+
+		xmlFreeDoc(xmlDoc);
+	}
+	catch (...)
+	{
+		if (xmlDoc != nil)
+			xmlFreeDoc(xmlDoc);
+		
+		xmlCleanupParser();
+		throw;
+	}
+	
+	xmlCleanupParser();
+}
+
+MMenu* MMenubar::CreateMenu(
+	xmlNodePtr		inXMLNode)
+{
+	const char* label = (const char*)xmlGetProp(inXMLNode, BAD_CAST "label");
+	if (label == nil)
+		THROW(("Invalid menu specification, label is missing"));
+	
+	MMenu* menu = new MMenu(label);
+	
+	for (xmlNodePtr item = inXMLNode->children; item != nil; item = item->next)
+	{
+		if (xmlNodeIsText(item))
+			continue;
+
+		if (strcmp((const char*)item->name, "item") == 0)
+		{
+			label = (const char*)xmlGetProp(item, BAD_CAST "label");
+			if (label == nil)
+				THROW(("Invalid menu item specification, label is missing"));
+			
+			if (strcmp(label, "-") == 0)
+				menu->AppendSeparator();
+			else
+			{
+				uint32 cmd = 0;
+
+				const char* cs = (const char*)xmlGetProp(item, BAD_CAST "cmd");
+				if (cs == nil or strlen(cs) != 4)
+					THROW(("Invalid menu item specification, cmd is not correct"));
+				
+				for (int i = 0; i < 4; ++i)
+					cmd |= cs[i] << ((3 - i) * 8);
+				
+//				cout << "command for " << label << " is " << MCommandToString(cmd) << endl; 
+				
+				menu->AppendItem(label, cmd);
+			}
+		}
+		else if (strcmp((const char*)item->name, "menu") == 0)
+		{
+			const char* rm = (const char*)xmlGetProp(item, BAD_CAST "recent_menu");
+			if (rm != nil and strcmp(rm, "true") == 0)
+			{
+				label = (const char*)xmlGetProp(item, BAD_CAST "label");
+				if (label == nil)
+					THROW(("Invalid menu item specification, label is missing"));
+
+				menu->AppendRecentMenu(label);
+			}
+			else
+				menu->AppendMenu(CreateMenu(item));
+		}
+	}
+	
+	return menu;
 }
 
 void MMenubar::AddMenu(

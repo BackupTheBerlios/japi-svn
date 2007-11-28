@@ -3,7 +3,7 @@
 	<menu id='filemenu' label="Bestand">
 		<item label="Nieuw" cmd='new '/>
 		<item label="Open…" cmd='open'/>
-		<recentmenu id='recentmenu' label="Open Recente"/>
+		<menu id='recentmenu' label="Open Recente" recent_menu="true" />
 		<item label="Zoek en open…" cmd='OInc'/>
 		<item label="Open Source/Header" cmd='SHdS'/>
 		<item label="-" />
@@ -83,7 +83,7 @@
 		<item label="Compileer" cmd='Pcmp'/>
 		<item label="Dissassemble" cmd='Pdis'/>
 	</menu>
-	<menu id='' label="Venster">
+	<menu id='' label="Venster" window_menu="true">
 		<item label="Werkblad" cmd='Wrks'/>	
 		<item label="-" />
 	</menu>

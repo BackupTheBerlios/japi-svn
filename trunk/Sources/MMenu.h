@@ -7,6 +7,9 @@
 #include "MCommands.h"
 #include "MCallbacks.h"
 
+typedef struct _xmlNode xmlNode;
+typedef xmlNode *xmlNodePtr;
+
 struct MMenuItem;
 typedef std::vector<MMenuItem*>	MMenuItemList;
 
@@ -88,17 +91,22 @@ class MMenubar
 					MMenubar(
 						MHandler*			inTarget,
 						GtkWidget*			inContainer,
-						GtkWidget*			inWindow,
-						const char*			inXML = nil);
+						GtkWidget*			inWindow);
 
 	void			AddMenu(
 						MMenu*				inMenu,
 						bool				isWindowMenu = false);
 
+	void			BuildFromResource(
+						const char*			inResourceName);
+
   private:
 	
 	bool			OnButtonPress(
 						GdkEventButton*		inEvent);
+
+	MMenu*			CreateMenu(
+						xmlNodePtr			inXMLNode);
 	
 	MSlot<bool(GdkEventButton*)>
 					mOnButtonPressEvent;
