@@ -340,6 +340,7 @@ void MJapieApp::RunEventLoop()
 	
 	/*uint32 timer = */g_timeout_add(250, &MJapieApp::Timeout, nil);
 	
+//	gdk_event_handler_set(&MJapieApp::EventHandler, nil, nil);
 	gtk_main();
 	
 	gtk_key_snooper_remove(snooper);
@@ -375,6 +376,17 @@ gint MJapieApp::Snooper(
 	catch (...) {}
 
 	return result;
+}
+
+void MJapieApp::EventHandler(
+	GdkEvent*			inEvent,
+	gpointer			inData)
+{
+//	if (inEvent->type != GDK_KEY_PRESS or
+//		Snooper(nil, (GdkEventKey*)inEvent, nil) == false)
+//	{
+		gtk_main_do_event(inEvent);
+//	}
 }
 
 void MJapieApp::DoSaveAll()

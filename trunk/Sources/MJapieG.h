@@ -132,6 +132,10 @@ class MJapieApp : public MHandler
 							GtkWidget*			inGrabWidget,
 							GdkEventKey*		inEvent,
 							gpointer			inFuncData); 
+
+	static void			EventHandler(
+							GdkEvent*			inEvent,
+							gpointer			inData); 
 	
 	void				ProcessSocketMessages();
 	
