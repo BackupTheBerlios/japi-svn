@@ -279,6 +279,8 @@ MSshConnection* MSshConnection::Get(
 	const string&	inUserName,
 	uint16			inPort)
 {
+	PRINT(("Connecting to %s:%d as user %s", inIPAddress.c_str(), inPort, inUserName.c_str())); 
+
 	string username = inUserName;
 	
 	if (username.length() == 0)

@@ -140,6 +140,8 @@ void MSftpGetDialog::GotData()
 
 void MSftpGetDialog::GotFile()
 {
+	PRINT(("Got file %s", fUrl.str().c_str()));
+	
 	fUrl.SetPassword("");
 	
 	MDocument* doc = new MDocument(fUrl, fText);

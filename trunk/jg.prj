@@ -141,6 +141,7 @@
 		</mkdir>
 		<mkdir name="Dutch">
 			<copy>edit-window-menus.xml</copy>
+			<copy>unknown-host-alert.xml</copy>
 		</mkdir>
 	</package>
 	<targets>
@@ -160,6 +161,7 @@
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -183,6 +185,7 @@
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>HAVE_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
