@@ -140,7 +140,7 @@ void MKnownHosts::CheckHost(
 	else if (value != (*i).second)
 	{
 		if (DisplayAlert("host-key-changed-alert", inHost, fingerprint) != 2)
-			THROW((0, 0));
+			THROW(("User cancelled"));
 		
 		fKnownHosts[inHost] = value;
 		fUpdated = true;

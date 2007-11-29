@@ -201,8 +201,8 @@ void MView::Scroll(
 	if (GDK_IS_WINDOW(mGtkWidget->window))
 	{
 		UpdateNow();
-
-cout << "scrolling " << inRect << " by " << inX << " and " << inY << endl;
+//
+//cout << "scrolling " << inRect << " by " << inX << " and " << inY << endl;
 
 		GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
 		GdkRegion* rgn = gdk_region_rectangle(&gr);

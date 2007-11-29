@@ -625,8 +625,6 @@ void MJapieApp::OpenProject(
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 {
-	PRINT(("Adding %s to recent menu", inFileRef.str().c_str()));
-	
 	if (gtk_recent_manager_has_item(mRecentMgr, inFileRef.str().c_str()))
 		gtk_recent_manager_remove_item(mRecentMgr, inFileRef.str().c_str(), nil);
 	

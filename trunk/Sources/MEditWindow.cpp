@@ -58,7 +58,7 @@ MEditWindow::MEditWindow()
 	mNext = sHead;
 	sHead = this;
 
-	mMenubar.BuildFromResource("Resources/Dutch/edit-window-menus.xml");
+	mMenubar.BuildFromResource("edit-window-menus");
 
 	// content
 	

@@ -65,6 +65,7 @@
 #include "MDocClosedNotifier.h"
 #include "MSftpPutDialog.h"
 #include "MStrings.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 
@@ -284,13 +285,13 @@ void MDocument::Init()
 	for (int i = kActiveInputArea; i <= kSelectedText; ++i)
 		mTextInputAreaInfo.fOffset[i] = -1;
 	
-	PRINT(("Document created %x", this));
+//	PRINT(("Document created %x", this));
 }
 
 MDocument::~MDocument()
 {
-	PRINT(("Deleting document %x (%s)", this,
-		IsSpecified() ? mURL.str().c_str() : "unspecified"));
+//	PRINT(("Deleting document %x (%s)", this,
+//		IsSpecified() ? mURL.str().c_str() : "unspecified"));
 //	boost::mutex::scoped_lock lock(sDocListMutex);
 
 	if (sFirst == this)
@@ -3616,252 +3617,116 @@ bool MDocument::HandleRawKeydown(
 {
 	MKeyCommand keyCommand = kcmd_None;
 	bool handled = false;
-	
-	switch (inKeyValue)
+
+	if (MAcceleratorTable::EditKeysInstance().IsNavigationKey(
+			inKeyValue, inModifiers, keyCommand))
 	{
-		case GDK_Left:
-			if (inModifiers & GDK_SHIFT_MASK)
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfLine;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_ExtendSelectionWithPreviousWord;
-				else
-					keyCommand = kcmd_ExtendSelectionWithCharacterLeft;
-			}
-			else
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_MoveToBeginningOfLine;
-				else if ((inModifiers & GDK_MOD1_MASK) == GDK_MOD1_MASK)
-					keyCommand = kcmd_MoveWordLeft;
-				else
-					keyCommand = kcmd_MoveCharacterLeft;
-			}
-			break;
-
-		case GDK_Right:
-			if (inModifiers & GDK_SHIFT_MASK)
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_ExtendSelectionToEndOfLine;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_ExtendSelectionWithNextWord;
-				else
-					keyCommand = kcmd_ExtendSelectionWithCharacterRight;
-			}
-			else
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_MoveToEndOfLine;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_MoveWordRight;
-				else
-					keyCommand = kcmd_MoveCharacterRight;
-			}
-			break;
-		
-		case GDK_Up:
-			if (inModifiers & GDK_SHIFT_MASK)
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfFile;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_ExtendSelectionToBeginningOfPage;
-				else if (inModifiers & GDK_CONTROL_MASK)
-					keyCommand = kcmd_MoveLineUp;
-				else
-					keyCommand = kcmd_ExtendSelectionToPreviousLine;
-			}
-			else if (inModifiers & GDK_CONTROL_MASK)
-				keyCommand = kcmd_ScrollOneLineDown;
-			else
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_MoveToBeginningOfFile;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_MoveToTopOfPage;
-				else
-					keyCommand = kcmd_MoveToPreviousLine;
-			}
-			break;
-
-		case GDK_Down:
-			if (inModifiers & GDK_SHIFT_MASK)
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_ExtendSelectionToEndOfFile;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_ExtendSelectionToEndOfPage;
-				else if (inModifiers & GDK_CONTROL_MASK)
-					keyCommand = kcmd_MoveLineDown;
-				else
-					keyCommand = kcmd_ExtendSelectionToNextLine;
-			}
-			else if (inModifiers & GDK_CONTROL_MASK)
-				keyCommand = kcmd_ScrollOneLineUp;
-			else
-			{
-				if (inModifiers & GDK_MOD2_MASK)
-					keyCommand = kcmd_MoveToEndOfFile;
-				else if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_MoveToEndOfPage;
-				else
-					keyCommand = kcmd_MoveToNextLine;
-			}
-			break;
-		
-		case GDK_Page_Down:
-			keyCommand = kcmd_ScrollPageDown;
-			break;
-
-		case GDK_Page_Up:
-			keyCommand = kcmd_ScrollPageUp;
-			break;
-
-		case GDK_Home:
-			if (inModifiers & GDK_CONTROL_MASK)
-				keyCommand = kcmd_MoveToBeginningOfFile;
-			else
-				keyCommand = kcmd_ScrollToStartOfFile;
-			break;
-
-		case GDK_End:
-			if (inModifiers & GDK_CONTROL_MASK)
-				keyCommand = kcmd_MoveToEndOfFile;	
-			else	
-				keyCommand = kcmd_ScrollToEndOfFile;	
-			break;
-		
-		case GDK_BackSpace:
-			if (inModifiers & GDK_MOD2_MASK)
-			{
-				if (inModifiers & GDK_SHIFT_MASK)
-					keyCommand = kcmd_DeleteToEndOfFile;
-				else
-					keyCommand = kcmd_DeleteToEndOfLine;
-			}
-			else if (inModifiers & GDK_SHIFT_MASK)
-			{
-				if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_DeleteWordRight;
-				else
-					keyCommand = kcmd_DeleteWordLeft;
-			}
-			else
-			{
-				if (inModifiers & GDK_MOD1_MASK)
-					keyCommand = kcmd_DeleteCharacterRight;
-				else
-					keyCommand = kcmd_DeleteCharacterLeft;
-			}
-			break;
-		
-		case GDK_Delete:
-			if (inModifiers & GDK_SHIFT_MASK)
-				keyCommand = kcmd_DeleteWordRight;
-			else
-				keyCommand = kcmd_DeleteCharacterRight;
-			break;
-
-		case GDK_KP_Enter:
-			Reset();
-			Execute();
-			handled = true;
-			break;		
-
-		case GDK_Return:
-			if (mFastFindMode)
-				mFastFindMode = false;
-			else if (inModifiers & GDK_MOD2_MASK or inModifiers & GDK_CONTROL_MASK)
-			{
+		HandleKeyCommand(keyCommand);
+		handled = true;
+	}
+	else
+	{
+		switch (inKeyValue)
+		{
+			case GDK_KP_Enter:
 				Reset();
 				Execute();
 				handled = true;
-//				updateSelection = false;
-			}
-			else
-			{
-				// Enter a return, optionally auto indented
-				uint32 minOffset = mSelection.GetMinOffset(*this);
-
-				string s;
-				s += '\n';
-
-				if (gAutoIndent)
+				break;		
+	
+			case GDK_Return:
+				if (mFastFindMode)
+					mFastFindMode = false;
+				else if (inModifiers & GDK_MOD2_MASK or inModifiers & GDK_CONTROL_MASK)
 				{
-					uint32 line = OffsetToLine(minOffset);
-					MTextBuffer::iterator c = mText.begin() + LineStart(line);
-					while (c.GetOffset() < minOffset and IsSpace(*c))
-					{
-						s += *c;
-						++c;
-					}
-				}
-				
-				if (gSmartIndent and
-					mLanguage and
-					mLanguage->IsSmartIndentLocation(mText, minOffset))
-				{
-					if (gTabEntersSpaces)
-					{
-						uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
-						while (o-- > 0)
-							s += ' ';
-					}
-					else
-						s += '\t';
-				}
-
-				Type(s.c_str(), s.length());
-			}
-			handled = true;
-			break;
-		
-		case GDK_Tab:
-			if (inModifiers == 0)
-			{
-				if (not mSelection.IsEmpty() and
-					not mFastFindMode and
-					mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
-				{
-					if (inModifiers & GDK_SHIFT_MASK)
-						DoShiftLeft();
-					else
-						DoShiftRight();
+					Reset();
+					Execute();
 					handled = true;
+	//				updateSelection = false;
 				}
 				else
 				{
-					Type("\t", 1);
-					handled = true;
-				}
-			}
-			break;
-		
-		case GDK_Escape:
-			mFastFindMode = false;
-//			updateSelection = false;
-			if (mShell.get() != nil and mShell->IsRunning())
-				mShell->Kill();
-			handled = true;
-			break;
-		
-		case GDK_period:
-			if (inModifiers & GDK_MOD2_MASK and mShell.get() != nil and mShell->IsRunning())
-				mShell->Kill();
-			else
-				handled = false;
-			break;
-		
-		default:
-			handled = false;
-//			updateSelection = false;
-			break;
-	}
+					// Enter a return, optionally auto indented
+					uint32 minOffset = mSelection.GetMinOffset(*this);
 	
-	if (not handled and keyCommand != kcmd_None)
-		handled = HandleKeyCommand(keyCommand);
+					string s;
+					s += '\n';
+	
+					if (gAutoIndent)
+					{
+						uint32 line = OffsetToLine(minOffset);
+						MTextBuffer::iterator c = mText.begin() + LineStart(line);
+						while (c.GetOffset() < minOffset and IsSpace(*c))
+						{
+							s += *c;
+							++c;
+						}
+					}
+					
+					if (gSmartIndent and
+						mLanguage and
+						mLanguage->IsSmartIndentLocation(mText, minOffset))
+					{
+						if (gTabEntersSpaces)
+						{
+							uint32 o = gSpacesPerTab - (OffsetToColumn(minOffset) % gSpacesPerTab);
+							while (o-- > 0)
+								s += ' ';
+						}
+						else
+							s += '\t';
+					}
+	
+					Type(s.c_str(), s.length());
+				}
+				handled = true;
+				break;
+			
+			case GDK_Tab:
+				if (inModifiers == 0)
+				{
+					if (not mSelection.IsEmpty() and
+						not mFastFindMode and
+						mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+					{
+						if (inModifiers & GDK_SHIFT_MASK)
+							DoShiftLeft();
+						else
+							DoShiftRight();
+						handled = true;
+					}
+					else
+					{
+						Type("\t", 1);
+						handled = true;
+					}
+				}
+				break;
+			
+			case GDK_Escape:
+				mFastFindMode = false;
+	//			updateSelection = false;
+				if (mShell.get() != nil and mShell->IsRunning())
+					mShell->Kill();
+				handled = true;
+				break;
+			
+			case GDK_period:
+				if (inModifiers & GDK_CONTROL_MASK and mShell.get() != nil and mShell->IsRunning())
+					mShell->Kill();
+				else
+					handled = false;
+				break;
+			
+			default:
+				handled = false;
+	//			updateSelection = false;
+				break;
+		}
+	
+		if (not handled and keyCommand != kcmd_None)
+			handled = HandleKeyCommand(keyCommand);
+	}
 	
 	return handled;
 }

@@ -104,7 +104,8 @@ void MParsePopup::SetController(
 void MParsePopup::SetText(
 	const string&	inText)
 {
-	gtk_label_set_text(GTK_LABEL(GetGtkWidget()), inText.c_str());
+	if (GTK_IS_LABEL(GetGtkWidget()))
+		gtk_label_set_text(GTK_LABEL(GetGtkWidget()), inText.c_str());
 }
 
 bool MParsePopup::OnButtonPressEvent(
@@ -338,7 +339,8 @@ void MDocWindow::SelectionChanged(
 	}
 	catch (...) {}
 
-	gtk_label_set_text(GTK_LABEL(mSelectionPanel), str.str().c_str());
+	if (GTK_IS_LABEL(mSelectionPanel))
+		gtk_label_set_text(GTK_LABEL(mSelectionPanel), str.str().c_str());
 	
 	mParsePopup->SetText(inRangeName);
 }

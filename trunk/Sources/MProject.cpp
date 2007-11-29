@@ -2138,7 +2138,8 @@ void MProject::SetStatus(
 	const string&		inMessage,
 	bool				inActive)
 {
-	gtk_label_set_text(GTK_LABEL(mStatusPanel), inMessage.c_str());
+	if (GTK_IS_LABEL(mStatusPanel))
+		gtk_label_set_text(GTK_LABEL(mStatusPanel), inMessage.c_str());
 }
 
 // ---------------------------------------------------------------------------

@@ -8,6 +8,9 @@ class MAcceleratorTable
 	static MAcceleratorTable&
 					Instance();
 
+	static MAcceleratorTable&
+					EditKeysInstance();
+
 	void			RegisterAcceleratorKey(
 						uint32			inCommand,
 						uint32			inKeyValue,

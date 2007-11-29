@@ -37,6 +37,7 @@ int32 DisplayAlertWithArgs(
 		
 		string text;
 		vector<pair<string,uint32> > btns;
+		int32 defaultButton = -1;
 		GtkMessageType type = GTK_MESSAGE_ERROR;
 		
 		XMLNode node(xmlDoc->children);
@@ -58,6 +59,8 @@ int32 DisplayAlertWithArgs(
 						{
 							string label = button->property("title");
 							uint32 cmd = atoi(button->property("cmd").c_str());
+							if (button->property("default") == "true")
+								defaultButton = cmd;
 							
 							btns.push_back(make_pair(label, cmd));
 						}
@@ -86,6 +89,9 @@ int32 DisplayAlertWithArgs(
 				b->first.c_str(), b->second);
 		}
 
+		if (defaultButton >= 0)
+			gtk_dialog_set_default_response(GTK_DIALOG(dlg), defaultButton);
+
 		result = gtk_dialog_run(GTK_DIALOG(dlg));
 		
 		gtk_widget_destroy(dlg);
@@ -101,36 +107,4 @@ int32 DisplayAlertWithArgs(
 	xmlCleanupParser();
 
 	return result;
-
-//	int32 result = -1;
-//	GtkBuilder* builder = gtk_builder_new();
-//	GError* err = nil;
-//	
-//	try
-//	{
-//		const char* xml;
-//		uint32 size;
-//		
-//		if (not LoadResource(inResourceName, xml, size))
-//			THROW(("Could not load resource %s", inResourceName));
-//		
-//		if (gtk_builder_add_from_string(builder, xml, size, &err) == 0)
-//			THROW(("Error building alert: %s", err->message));
-//		
-//		GtkWidget* dialog = GTK_WIDGET(gtk_builder_get_object(builder, "alert"));
-//		
-//		result = gtk_dialog_run(GTK_DIALOG(dialog));
-//		gtk_widget_destroy(dialog);	
-//	}
-//	catch (exception& e)
-//	{
-//		MError::DisplayError(e);
-//	}
-//	
-//	g_object_unref(builder);
-//
-//	if (err != nil)
-//		g_error_free(err);
-//	
-//	return result;
 }

@@ -274,14 +274,11 @@ void MFindDialog::DoFindCommand(
 
 	string what;
 	GetText(kFindComboboxID, what);
-	
 	StoreComboText(kFindComboboxID, what, mFindStrings);
-	if (inCommand != cmd_FindNext)
-	{
-		string with;
-		GetText(kReplaceComboboxID, with);
-		StoreComboText(kReplaceComboboxID, with, mReplaceStrings);
-	}
+
+	string with;
+	GetText(kReplaceComboboxID, with);
+	StoreComboText(kReplaceComboboxID, with, mReplaceStrings);
 
 	MDocument* doc = MDocument::GetFirstDocument();
 
@@ -378,7 +375,7 @@ MFindDialog::SetFindString(
 		if (inReplaceFirst and mFindStrings.size() > 0)
 			mFindStrings.erase(mFindStrings.begin());
 		
-		StoreComboText(kFindComboboxID, inString, mFindStrings);
+		StoreComboText(kFindComboboxID, s, mFindStrings);
 
 		SetChecked(kRegexCheckboxID, false);
 		SetChecked(kBatchCheckboxID, false);
@@ -414,7 +411,7 @@ void MFindDialog::SetReplaceString(
 		if (mReplaceStrings.size() > 10)
 			mReplaceStrings.pop_back();
 
-		StoreComboText(kReplaceComboboxID, inString, mReplaceStrings);
+		StoreComboText(kReplaceComboboxID, s, mReplaceStrings);
 	}
 }
 

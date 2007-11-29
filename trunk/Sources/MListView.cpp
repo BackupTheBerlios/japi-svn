@@ -850,7 +850,8 @@ void MListImp::DoScrollTo(
 	int32 dx = inX - mOriginX;
 	int32 dy = inY - mOriginY;
 	
-	gdk_window_scroll(GetGtkWidget()->window, -dx, -dy);
+	if (GDK_IS_WINDOW(GetGtkWidget()->window))
+		gdk_window_scroll(GetGtkWidget()->window, -dx, -dy);
 	
 	mOriginX = inX;
 	mOriginY = inY;
