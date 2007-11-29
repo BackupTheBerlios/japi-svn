@@ -7,9 +7,6 @@
 #include "MCommands.h"
 #include "MCallbacks.h"
 
-typedef struct _xmlNode xmlNode;
-typedef xmlNode *xmlNodePtr;
-
 struct MMenuItem;
 typedef std::vector<MMenuItem*>	MMenuItemList;
 

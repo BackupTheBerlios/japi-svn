@@ -244,7 +244,7 @@ string MUrl::str() const
 	stringstream s;
 	s << mImpl->mScheme << "://";
 	
-	if (mImpl->mScheme == "sftp")
+	if (mImpl->mScheme == "sftp" or mImpl->mScheme == "ssh")
 	{
 		if (mImpl->mUser.length() > 0)
 		{

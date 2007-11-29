@@ -3,9 +3,6 @@
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-//#include <libxml/xpath.h>
-//#include <libxml/xpathInternals.h>
-//#include <libxml/xmlwriter.h>
 
 #include "MCallbacks.h"
 #include "MMenu.h"
@@ -14,6 +11,7 @@
 #include "MUrl.h"
 #include "MStrings.h"
 #include "MResources.h"
+#include "MUtils.h"
 
 using namespace std;
 

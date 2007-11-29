@@ -32,6 +32,9 @@
 
 #include "MJapieG.h"
 
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+
 #include <string>
 #include <sstream>
 #include <string>
@@ -329,3 +332,58 @@ uint32 AddNameToNameTable(
 	return result;
 }
 
+string XMLNode::name() const
+{
+	return string((const char*)mNode->name);
+}
+
+string XMLNode::text() const
+{
+	string result;
+	
+	if (mNode->children != nil)
+	{
+		const char* t = (const char*)XML_GET_CONTENT(mNode->children);
+		if (t != nil)
+			result = t;
+	}
+	
+	return result;
+}
+
+string XMLNode::property(
+	const char*	inName) const
+{
+	const char* p = (const char*)xmlGetProp(mNode, BAD_CAST inName);
+	string result;
+	if (p != nil)
+		result = p;
+	return result;
+}
+
+
+void XMLNode::iterator::increment()
+{
+	mNode = mNode->next;
+}
+
+bool XMLNode::iterator::equal(const iterator& inOther) const
+{
+	return mNode == inOther.mNode;
+}
+
+XMLNode::iterator::reference  XMLNode::iterator::dereference() const
+{
+	mXMLNode->mNode = mNode;
+	return *mXMLNode;
+}
+
+XMLNode::iterator XMLNode::begin() const
+{
+	return iterator(mNode->children);
+}
+
+XMLNode::iterator XMLNode::end() const
+{
+	return iterator(nil);
+}

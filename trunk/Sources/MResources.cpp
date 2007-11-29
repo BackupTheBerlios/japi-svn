@@ -6,12 +6,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/bind.hpp>
 
-//#include <mach-o/loader.h>
-//#include <mach-o/stab.h>
-//#include <mach-o/dyld.h>
-//#define _AOUT_INCLUDE_
-//#include <nlist.h>
-
 #include "MObjectFile.h"
 #include "MResources.h"
 #include "MPatriciaTree.h"
@@ -294,8 +288,32 @@ bool LoadResource(
 		uint32&			outSize)
 {
 	uint32 offset;
+	MRSRCDirectory& dir = MRSRCDirectory::Instance();
 	
-	bool result = MRSRCDirectory::Instance().GetData(inName, offset, outSize);
+	bool result = dir.GetData(inName, offset, outSize);
+
+	if (result == false)
+	{
+		string path = "Resources/";
+
+		result =
+			dir.GetData((path + inName).c_str(), offset, outSize) or
+			dir.GetData((path + inName + ".xml").c_str(), offset, outSize);
+		
+		if (result == false)
+		{
+			static const char* LANG = getenv("LANG");
+			
+			if (LANG != nil and strncmp(LANG, "nl_", 3) == 0)
+				path += "Dutch/";
+			else
+				path += "English/";
+			
+			result =
+				dir.GetData((path + inName).c_str(), offset, outSize) or
+				dir.GetData((path + inName + ".xml").c_str(), offset, outSize);
+		}
+	}
 
 	if (result)
 		outData = gResourceData + offset;

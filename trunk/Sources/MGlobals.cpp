@@ -44,6 +44,8 @@
 
 using namespace std;
 
+const char kHexChars[] = "0123456789abcdef";
+
 struct RGBColor
 {
 	uint16	red, green, blue;
