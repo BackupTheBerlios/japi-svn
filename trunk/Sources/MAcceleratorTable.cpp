@@ -188,8 +188,8 @@ MAcceleratorTable::EditKeysInstance()
 		sInstance->RegisterAcceleratorKey(kcmd_ExtendSelectionToBeginningOfFile, GDK_Home, GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(kcmd_ExtendSelectionToEndOfFile, GDK_End, GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
-		sInstance->RegisterAcceleratorKey(kcmd_ScrollOneLineUp, GDK_Up, GDK_CONTROL_MASK);
-		sInstance->RegisterAcceleratorKey(kcmd_ScrollOneLineDown, GDK_Down, GDK_CONTROL_MASK);
+		sInstance->RegisterAcceleratorKey(kcmd_ScrollOneLineUp, GDK_Down, GDK_CONTROL_MASK);
+		sInstance->RegisterAcceleratorKey(kcmd_ScrollOneLineDown, GDK_Up, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(kcmd_ScrollPageUp, GDK_Page_Up, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(kcmd_ScrollPageDown, GDK_Page_Down, GDK_CONTROL_MASK);
 //		sInstance->RegisterAcceleratorKey(kcmd_ScrollToStartOfFile, GDK_Home, GDK_CONTROL_MASK);

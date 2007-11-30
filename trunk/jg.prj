@@ -16,6 +16,7 @@
 		<path>/usr/lib64/glib-2.0/include</path>
 		<path>/usr/include/freetype2</path>
 		<path>/usr/include/libpng12</path>
+		<path>/usr/include/libglade-2.0</path>
 		<path>/usr/pkg/include/gtk-2.0</path>
 		<path>/usr/pkg/lib/gtk-2.0/include</path>
 		<path>/usr/pkg/include/atk-1.0</path>
@@ -65,6 +66,7 @@
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MDialog.cpp</file>
+				<file>MDialog2.cpp</file>
 				<file>MFindDialog.cpp</file>
 				<file>MGoToLineDialog.cpp</file>
 				<file>MFindAndOpenDialog.cpp</file>
@@ -132,6 +134,7 @@
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
+			<link>glade-2.0</link>
 		</group>
 	</files>
 	<package resource_dir="Resources">
@@ -139,11 +142,13 @@
 			<copy>edit-window-menus.xml</copy>
 			<copy>unknown-host-alert.xml</copy>
 			<copy>host-key-changed-alert.xml</copy>
+			<copy>find-dialog.xml</copy>
 		</mkdir>
 		<mkdir name="Dutch">
 			<copy>edit-window-menus.xml</copy>
 			<copy>unknown-host-alert.xml</copy>
 			<copy>host-key-changed-alert.xml</copy>
+			<copy>find-dialog.xml</copy>
 		</mkdir>
 	</package>
 	<targets>

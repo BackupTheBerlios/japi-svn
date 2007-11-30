@@ -676,7 +676,7 @@ void MDialog::SetFocus(
 bool MDialog::IsChecked(uint32 inID) const
 {
 	MDialogItem item = mImpl->GetItem(inID);
-	assert(GTK_IS_CHECK_BUTTON(item.mWidget));
+	assert(GTK_IS_TOGGLE_BUTTON(item.mWidget));
 	return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(item.mWidget));
 }
 
@@ -684,7 +684,7 @@ void MDialog::SetChecked(uint32 inID, bool inOn)
 {
 	MDialogItem item = mImpl->GetItem(inID);
 	assert(GTK_IS_CHECK_BUTTON(item.mWidget));
-	return gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item.mWidget), inOn);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(item.mWidget), inOn);
 }
 
 bool MDialog::IsVisible(uint32 inID) const

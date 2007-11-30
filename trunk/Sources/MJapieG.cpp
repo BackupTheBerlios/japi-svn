@@ -50,6 +50,7 @@
 #include "MSftpGetDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
+#include "MDialog2.h"
 
 #include <iostream>
 
@@ -207,7 +208,8 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
-			DisplayAlert("Resources/Dutch/unknown-host-alert.xml");
+//			DisplayAlert("Resources/Dutch/unknown-host-alert.xml");
+			MDialog2::Create<MDialog2>("find-dialog");
 			break;
 		
 		default:
