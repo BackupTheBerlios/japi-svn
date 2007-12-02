@@ -198,8 +198,6 @@ void MDialog2::SetValues(
 	GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(wdgt));
 	int32 count = gtk_tree_model_iter_n_children(model, nil);
 
-PRINT(("Count of items: %d", count));
-
 	while (count-- > 0)
 		gtk_combo_box_remove_text(GTK_COMBO_BOX(wdgt), count);
 
@@ -281,8 +279,8 @@ void MDialog2::SetExpanded(
 void MDialog2::ValueChanged(
 	uint32				inID)
 {
-	char name[5];
-	cout << "Value Changed for " << IDToName(inID, name) << endl;
+//	char name[5];
+//	cout << "Value Changed for " << IDToName(inID, name) << endl;
 }
 
 void MDialog2::ChangedCallBack(

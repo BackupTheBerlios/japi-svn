@@ -43,9 +43,11 @@
 #include <cerrno>
 
 #include "MFile.h"
+#include "MUrl.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MUtils.h"
+#include "MStrings.h"
 //#include "MGlobals.h"
 
 using namespace std;
@@ -597,6 +599,63 @@ MPath relative_path(const MPath& inFromDir, const MPath& inFile)
 			++f;
 		}
 	}
+
+	return result;
+}
+
+bool ChooseDirectory(
+	MPath&	outDirectory)
+{
+	GtkWidget* dialog = nil;
+	bool result = false;
+
+	try
+	{
+		dialog = 
+			gtk_file_chooser_dialog_new(_("Open"), nil,
+				GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				NULL);
+		
+		THROW_IF_NIL(dialog);
+	
+//		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), true);
+		
+//		if (mCurrentFolder.length() > 0)
+//		{
+//			gtk_file_chooser_set_current_folder(
+//				GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
+//		}
+		
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
+			
+			MUrl url(uri);
+			outDirectory = url.GetPath();
+
+			g_free(uri);
+
+			result = true;
+		}
+
+//		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
+//		if (cwd != nil)
+//		{
+//			mCurrentFolder = cwd;
+//			g_free(cwd);
+//		}
+	}
+	catch (exception& e)
+	{
+		if (dialog)
+			gtk_widget_destroy(dialog);
+		
+		throw;
+	}
+	
+	gtk_widget_destroy(dialog);
 
 	return result;
 }

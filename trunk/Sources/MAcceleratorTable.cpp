@@ -194,6 +194,9 @@ MAcceleratorTable::EditKeysInstance()
 		sInstance->RegisterAcceleratorKey(kcmd_ScrollPageDown, GDK_Page_Down, GDK_CONTROL_MASK);
 //		sInstance->RegisterAcceleratorKey(kcmd_ScrollToStartOfFile, GDK_Home, GDK_CONTROL_MASK);
 //		sInstance->RegisterAcceleratorKey(kcmd_ScrollToEndOfFile, GDK_End, GDK_CONTROL_MASK);
+
+		sInstance->RegisterAcceleratorKey(kcmd_MoveLineUp, GDK_Up, GDK_CONTROL_MASK);
+		sInstance->RegisterAcceleratorKey(kcmd_MoveLineDown, GDK_Down, GDK_CONTROL_MASK);
 	}
 	
 	return *sInstance.get();

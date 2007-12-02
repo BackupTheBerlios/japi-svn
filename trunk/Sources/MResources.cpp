@@ -294,20 +294,19 @@ bool LoadResource(
 
 	if (result == false)
 	{
-		string path = "Resources/";
-
 		result =
-			dir.GetData((path + inName).c_str(), offset, outSize) or
-			dir.GetData((path + inName + ".xml").c_str(), offset, outSize);
+			dir.GetData(inName, offset, outSize) or
+			dir.GetData((string(inName) + ".xml").c_str(), offset, outSize);
 		
 		if (result == false)
 		{
+			string path;
 			static const char* LANG = getenv("LANG");
 			
 			if (LANG != nil and strncmp(LANG, "nl_", 3) == 0)
-				path += "Dutch/";
+				path = "Dutch/";
 			else
-				path += "English/";
+				path = "English/";
 			
 			result =
 				dir.GetData((path + inName).c_str(), offset, outSize) or

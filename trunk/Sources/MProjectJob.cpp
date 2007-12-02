@@ -441,7 +441,7 @@ void MProjectCreateResourceJob::Execute()
 	
 	for (vector<MPath>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
 	{
-		fs::ifstream f(*p);
+		fs::ifstream f(mRsrcDir / *p);
 
 		string name = p->string();
 		

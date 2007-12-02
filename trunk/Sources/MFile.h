@@ -126,6 +126,8 @@ class MFileIterator
 					mImpl;
 };
 
+bool ChooseDirectory(MPath&	outDirectory);
+
 bool FileNameMatches(const char* inPattern, const MPath& inFile);
 bool FileNameMatches(const char* inPattern, const std::string& inFile);
 

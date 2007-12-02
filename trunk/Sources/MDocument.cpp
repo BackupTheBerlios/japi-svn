@@ -919,15 +919,15 @@ void MDocument::CloseDocument()
 				state.mScrollPosition[1] = static_cast<uint32>(y);
 			}
 
-//			if (MWindow* w = MDocWindow::FindWindowForDocument(this))
-//			{
-//				MRect r;
-//				::GetWindowBounds(w->GetSysWindow(), kWindowContentRgn, &r);
-//				state.mWindowPosition[0] = r.left;
-//				state.mWindowPosition[1] = r.top;
-//				state.mWindowSize[0] = r.right - r.left;
-//				state.mWindowSize[1] = r.bottom - r.top;
-//			}
+			if (MWindow* w = MDocWindow::FindWindowForDocument(this))
+			{
+				MRect r;
+				w->GetWindowPosition(r);
+				state.mWindowPosition[0] = r.x;
+				state.mWindowPosition[1] = r.y;
+				state.mWindowSize[0] = r.width;
+				state.mWindowSize[1] = r.height;
+			}
 
 			state.mFlags.mSoftwrap = mSoftwrap;
 			state.mFlags.mTabWidth = mCharsPerTab;
@@ -1083,26 +1083,6 @@ void MDocument::ReadFile()
 	if (mTargetTextView)
 		Rewrap();
 }
-
-//void MDocument::ReadState()
-//{
-//	auto_ptr<MFile> file(new MFile(mURL));
-//	
-//	MDocState state;
-//
-//	if (file->GetAttribute(kJapieDocState, &state, kMDocStateSize) == kMDocStateSize)
-//	{
-//		if (state.mFlags.mSelectionIsBlock)
-//			mSelection.Set(state.mSelection[0], state.mSelection[1],
-//				state.mSelection[2], state.mSelection[3]);
-//		else
-//			mSelection.Set(state.mSelection[0], state.mSelection[1]);
-//
-//		mSoftwrap = state.mFlags.mSoftwrap;
-//	}
-//
-//	Rewrap();
-//}
 
 // ---------------------------------------------------------------------------
 //	MarkLine

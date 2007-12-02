@@ -341,7 +341,6 @@ class MDocument
 	void				CloseDocument();
 
 	void				ReadFile();
-	void				ReadState();
 	
 	void				Insert(uint32 inOffset, const char* inText, uint32 inLength);
 	void				Insert(uint32 inOffset, const std::string& inText);

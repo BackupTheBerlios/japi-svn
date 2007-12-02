@@ -40,6 +40,12 @@ class MWindow : public MView, public MHandler
 
 	MEventOut<void(MWindow*)>		eWindowClosed;
 
+	void					GetWindowPosition(
+								MRect&			outPosition);
+
+	void					SetWindowPosition(
+								const MRect&	outPosition);
+
   protected:
 
 							MWindow(

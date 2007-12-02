@@ -134,3 +134,25 @@ bool MWindow::ProcessCommand(
 	return result;
 }
 
+void MWindow::GetWindowPosition(
+	MRect&			outPosition)
+{
+	int x, y;
+	gtk_window_get_position(GTK_WINDOW(GetGtkWidget()), &x, &y);
+	
+	int w, h;
+	gtk_window_get_size(GTK_WINDOW(GetGtkWidget()), &w, &h);
+	
+	outPosition = MRect(x, y, w, h);
+}
+
+void MWindow::SetWindowPosition(
+	const MRect&	inPosition)
+{
+	gtk_window_move(GTK_WINDOW(GetGtkWidget()),
+		inPosition.x, inPosition.y);
+
+	gtk_window_resize(GTK_WINDOW(GetGtkWidget()),
+		inPosition.width, inPosition.height);
+}
+

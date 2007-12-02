@@ -1513,8 +1513,8 @@ void MProject::ReadPackageAction(
 			{
 				MPath filePath = inDir / fileName;
 				
-				if (not fs::exists(filePath))
-					cout << "File does not exists: " << fileName << endl;
+				if (not fs::exists(mResourcesDir / filePath))
+					cout << "File does not exist: " << fileName << endl;
 
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
@@ -1680,11 +1680,11 @@ void MProject::Read(
 	{
 		for (int i = 0; i < data->nodesetval->nodeNr; ++i)
 		{
-			MPath dir = mProjectDir;
+			MPath dir;
 			const char* rd;
 	
 			if ((rd = (const char*)xmlGetProp(data->nodesetval->nodeTab[i], BAD_CAST "resource_dir")) != nil)
-				dir = MPath(rd);
+				mResourcesDir = rd;
 	
 			ReadPackageAction(data->nodesetval->nodeTab[i], dir, &mPackageItems);
 		}

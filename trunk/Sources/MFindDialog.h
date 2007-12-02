@@ -139,6 +139,8 @@ class MFindDialog : public MDialog2
 	void			SetStatusString(
 						const std::string&	inMessage);
 
+	void			SelectSearchDir();
+
 	MEventIn<void(double)>	eIdle;
 	void			Idle(
 						double				inSystemTime);

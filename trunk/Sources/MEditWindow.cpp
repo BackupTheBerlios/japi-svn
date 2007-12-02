@@ -74,8 +74,6 @@ MEditWindow::MEditWindow()
 	mController.AddTextView(mTextView);
 	
 	mTextView->SetSuper(this);
-	
-	gtk_widget_show_all(GetGtkWidget());
 
 	ShellStatus(false);
 }
@@ -144,19 +142,12 @@ void MEditWindow::Initialize(
 			{
 				mTextView->ScrollToPosition(state.mScrollPosition[0], state.mScrollPosition[1]);
 				
-//				::MoveWindow(GetSysWindow(),
-//					state.mWindowPosition[0], state.mWindowPosition[1], true);
-//				::SizeWindow(GetSysWindow(),
-//					state.mWindowSize[0], state.mWindowSize[1], true);
-//				::ConstrainWindowToScreen(GetSysWindow(),
-//					kWindowStructureRgn, kWindowConstrainStandardOptions,
-//					NULL, NULL);
+				SetWindowPosition(MRect(
+					state.mWindowPosition[0], state.mWindowPosition[1],
+					state.mWindowSize[0], state.mWindowSize[1]));
 			}
-//			else
-//				::RepositionWindow(GetSysWindow(), nil, kWindowCascadeOnMainScreen);
 		}
 		catch (...) {
-//			::RepositionWindow(GetSysWindow(), nil, kWindowCascadeOnMainScreen);
 		}
 	}
 }

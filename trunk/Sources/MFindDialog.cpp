@@ -183,7 +183,7 @@ void MFindDialog::Init()
 	AddRoute(eIdle, gApp->eIdle);
 	
 //	SetVisible(kChasingArrowsID, false);
-	SetVisible(kStatusPanelID, false);
+	SetText(kStatusPanelID, "");
 }
 
 void MFindDialog::Select()
@@ -386,6 +386,14 @@ void MFindDialog::ValueChanged(
 			DoFindCommand(cmd_ReplaceAll);
 			break;
 		
+		case kBrowseStartDirButtonID:
+			SelectSearchDir();
+			break;
+		
+		case kMultiFileExpanderID:
+			SetVisible(kStatusPanelID, false);
+			break;
+		
 		default:
 			MDialog2::ValueChanged(inButonID);
 			break;
@@ -581,6 +589,13 @@ void MFindDialog::SetStatusString(
 	}
 	else
 		SetText(kStatusPanelID, mCurrentMultiFile);
+}
+
+void MFindDialog::SelectSearchDir()
+{
+	MPath dir;
+	if (ChooseDirectory(dir))
+		StoreComboText(kStartDirComboboxID, dir.string(), mStartDirectories);
 }
 
 void MFindDialog::Idle(
