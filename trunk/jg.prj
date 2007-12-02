@@ -27,6 +27,7 @@
 		<path>/usr/pkg/include/freetype2</path>
 		<path>/usr/pkg/include</path>
 		<path>/usr/pkg/include/libpng12</path>
+		<path>/usr/pkg/include/libglade-2.0</path>
 		<path>/usr/X11R6/include</path>
 	</syspaths>
 	<userpaths>

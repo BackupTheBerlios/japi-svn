@@ -42,7 +42,7 @@
 
 #include <boost/thread.hpp>
 
-#include "MDialog.h"
+#include "MDialog2.h"
 #include "MFile.h"
 #include "MP2PEvents.h"
 //#include "MScrap.h"
@@ -60,11 +60,17 @@ enum MMultiMethod
 	eMMIncludes
 };	
 
-class MFindDialog : public MDialog
+class MFindDialog : public MDialog2
 {
   public:
 
 	static MFindDialog&	Instance();
+
+					MFindDialog(
+						GladeXML*		inGlade,
+						GtkWidget*		inRoot);
+
+	virtual void	Init();
 	
 	void			Select();
 
@@ -94,10 +100,6 @@ class MFindDialog : public MDialog
 	typedef std::vector<std::string>		StringArray;
 	typedef std::deque<MPath>				FileArray;
 
-					MFindDialog();
-
-	void			Initialize();
-
 	virtual bool	DoClose();
 
 	virtual bool	OKClicked();
@@ -105,7 +107,7 @@ class MFindDialog : public MDialog
 	void			ShowHideMultiPanel(
 						bool				inShow);
 
-	virtual void	ButtonClicked(
+	virtual void	ValueChanged(
 						uint32				inButonID);
 
 	void			StoreComboText(

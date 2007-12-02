@@ -58,10 +58,10 @@ const uint32
 	kMaxComboListSize =			10;
 
 enum {
-	kFindButtonID =				1001,
-	kReplaceAndFindButtonID =	1002,
-	kReplaceButtonID =			1003,
-	kReplaceAllButtonID =		1004,
+	kFindButtonID =				'btnf',
+	kReplaceAndFindButtonID =	'btrf',
+	kReplaceButtonID =			'btnr',
+	kReplaceAllButtonID =		'btra',
 	kFindComboboxID =			'find',
 	kReplaceComboboxID =	 	'repl',
 	kInSelectionCheckboxID = 	'insl',
@@ -73,19 +73,19 @@ enum {
 	
 	// --- multi
 	
-	kMultiFileExpanderID	 =	201,
-	kMethodPopupID = 			202,
-	kRecursiveCheckboxID =		203,
-	kStartDirComboboxID =		204,
-	kTextFilesOnlyCheckboxID =	205,
-	kEnableFilterCheckboxID =	206,
-	kNameFilterEditboxID =		207,
-	kBrowseStartDirButtonID =	208,
+	kMultiFileExpanderID	 =	'exp1',
+	kMethodPopupID = 			'meth',
+	kRecursiveCheckboxID =		'recu',
+	kStartDirComboboxID =		'sdir',
+	kTextFilesOnlyCheckboxID =	'txto',
+	kEnableFilterCheckboxID =	'ffnm',
+	kNameFilterEditboxID =		'filt',
+	kBrowseStartDirButtonID =	'chdr',
 	
 	// --- status
 	
 	kChasingArrowsID =			301,
-	kStatusPanelID =			302
+	kStatusPanelID =			'curf'
 };
 
 enum {
@@ -103,73 +103,21 @@ const int16
 MFindDialog& MFindDialog::Instance()
 {
 	static std::auto_ptr<MFindDialog> sInstance;
+
 	if (sInstance.get() == nil)
-	{
-		sInstance.reset(new MFindDialog());
-		sInstance->Initialize();
-	}
+		sInstance.reset(MDialog2::Create<MFindDialog>("find-dialog"));
+
 	return *sInstance;
 }
 
-MFindDialog::MFindDialog()
-	: eIdle(this, &MFindDialog::Idle)
-//	, mFindAllThread(nil)
+MFindDialog::MFindDialog(
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog2(inGlade, inRoot)
+	, eIdle(this, &MFindDialog::Idle)
+	, mFindAllThread(nil)
 	, mFindAllResult(nil)
-//	, mScrap(kScrapFindScrap)
 {
-	SetTitle("Find");
-	
-	AddTable('tbl1', 2, 2);
-	AddStaticText('lbl1', "Find", 'tbl1');
-	AddComboBoxEntry(kFindComboboxID, 'tbl1');
-	AddStaticText('lbl2', "Replace", 'tbl1');
-	AddComboBoxEntry(kReplaceComboboxID, 'tbl1');
-
-//	AddHSeparator('sep1');
-
-	AddAlignment('ali2', 0.5, 0, 0.0, 0.0);
-	
-	AddTable('tbl2', 3, 2, 'ali2');
-	AddCheckBox(kIgnoreCaseCheckboxID, "Ignore Case", 'tbl2');
-	AddCheckBox(kInSelectionCheckboxID, "In Selection", 'tbl2');
-	AddCheckBox(kRegexCheckboxID, "Regular Expression", 'tbl2');
-	AddCheckBox(kWrapCheckboxID, "Wrap Around", 'tbl2');
-	AddCheckBox(kEntireWordCheckboxID, "Entire Word", 'tbl2');
-	AddCheckBox(kBatchCheckboxID, "Batch", 'tbl2');
-
-	AddHSeparator('sep2');
-	
-	AddExpander(kMultiFileExpanderID, "Multi File Search");
-	
-	AddVBox('vbx1', false, 0, kMultiFileExpanderID);
-
-	AddTable('tbl3', 3, 2, 'vbx1');
-	AddStaticText('lbl3', "Method", 'tbl3');
-	vector<string> methods;
-	methods.push_back("Directory Search");
-	methods.push_back("Open Windows");
-	methods.push_back("Include Files");
-	AddComboBox(kMethodPopupID, methods, 'tbl3');
-	AddCheckBox(kRecursiveCheckboxID, "Recursive", 'tbl3');
-
-	AddStaticText('lbl4', "Starting Directory", 'tbl3');
-	AddComboBoxEntry(kStartDirComboboxID, 'tbl3');
-	AddButton('xxxx', "...", 'tbl3');
-	
-	AddHBox('hbx1', false, 0, 'vbx1');
-	AddCheckBox(kTextFilesOnlyCheckboxID, "Text Files Only", 'hbx1');
-	AddCheckBox(kEnableFilterCheckboxID, "Filter File Name", 'hbx1');
-	AddEditField(kNameFilterEditboxID, "", 'hbx1');
-	
-	AddStaticText(kStatusPanelID, "", 'vbx1');
-	SetVisible(kStatusPanelID, false);
-	
-	// sep3
-	
-	AddButton(kReplaceAllButtonID, "Replace All");
-	AddButton(kReplaceButtonID, "Replace");
-	AddButton(kReplaceAndFindButtonID, "Replace & Find");
-	AddOKButton("Find");
 }
 
 bool MFindDialog::DoClose()
@@ -201,13 +149,8 @@ bool MFindDialog::DoClose()
 	return false;
 }
 
-void MFindDialog::Initialize()
-{//
-//	MDialog::Initialize(CFSTR("Find"));
-//
-//	Install(kEventClassWindow, kEventWindowHandleActivate,
-//		this, &MFindDialog::DoWindowActivate);
-
+void MFindDialog::Init()
+{
 	RestorePosition("find dialog position");
 	
 	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
@@ -215,7 +158,6 @@ void MFindDialog::Initialize()
 	SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
 	SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
 	SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
-//	SetChecked(kBatchCheckboxID, Preferences::GetInteger("find batch", 0));
 	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
 	SetChecked(kTextFilesOnlyCheckboxID, Preferences::GetInteger("find only TEXT", 1));
 	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
@@ -228,7 +170,6 @@ void MFindDialog::Initialize()
 	// never set multi-mode automatically
 	mMultiMode = false;
 	SetExpanded(kMultiFileExpanderID, mMultiMode);
-//	SetExpanded(mMultiMode);
 
 	Preferences::GetArray("find find strings", mFindStrings);
 	SetValues(kFindComboboxID, mFindStrings);
@@ -280,6 +221,10 @@ void MFindDialog::DoFindCommand(
 	GetText(kReplaceComboboxID, with);
 	StoreComboText(kReplaceComboboxID, with, mReplaceStrings);
 
+	string where;
+	GetText(kStartDirComboboxID, where);
+	StoreComboText(kStartDirComboboxID, where, mStartDirectories);
+
 	MDocument* doc = MDocument::GetFirstDocument();
 
 	if (IsExpanded(kMultiFileExpanderID))
@@ -299,12 +244,7 @@ void MFindDialog::DoFindCommand(
 		{
 			case kMethodDirectory:
 			{
-				string dirStr;
-				GetText(kStartDirComboboxID, dirStr);
-
-				StoreComboText(kStartDirComboboxID, dirStr, mStartDirectories);
-				
-				dir = dirStr;
+				dir = where;
 
 				if (not exists(dir) or not is_directory(dir))
 					THROW(("Start directory does not exist or is not a directory"));
@@ -382,9 +322,6 @@ MFindDialog::SetFindString(
 
 		mMultiMode = false;
 		SetExpanded(kMultiFileExpanderID, mMultiMode);
-//		ShowHideMultiPanel(mMultiMode);
-		
-//		mScrap.PutScrap(inString);
 	}
 }
 
@@ -428,7 +365,7 @@ string MFindDialog::GetReplaceString()
 	return result;
 }
 
-void MFindDialog::ButtonClicked(
+void MFindDialog::ValueChanged(
 	uint32		inButonID)
 {
 	switch (inButonID)
@@ -449,9 +386,9 @@ void MFindDialog::ButtonClicked(
 			DoFindCommand(cmd_ReplaceAll);
 			break;
 		
-//		case kMultiFileExpanderID:
-//			ShowHideMultiPanel(GetValue(kMultiFileExpanderID) == 1);
-//			break;
+		default:
+			MDialog2::ValueChanged(inButonID);
+			break;
 	}
 }
 

@@ -209,7 +209,8 @@ bool MJapieApp::ProcessCommand(
 		
 		case 'test':
 //			DisplayAlert("Resources/Dutch/unknown-host-alert.xml");
-			MDialog2::Create<MDialog2>("find-dialog");
+//			MDialog2* dlog = MDialog2::Create<MDialog2>("find-dialog");
+//			dlog->Show(nil);
 			break;
 		
 		default:

@@ -208,6 +208,8 @@ GetArray(
 	const char*		inName,
 	vector<string>&	outArray)
 {
+	outArray.clear();
+	
 	GError* err = nil;
 	gsize length;
 	char** data = g_key_file_get_string_list(IniFile::Instance(), "Settings", inName, &length, &err);
@@ -232,6 +234,8 @@ SetArray(
 	const char** data = new const char*[inArray.size()];
 	
 	transform(inArray.begin(), inArray.end(), data, boost::bind(&string::c_str, _1));
+
+PRINT(("SetArray %s with %d elements", inName, inArray.size()));
 	
 	g_key_file_set_string_list(IniFile::Instance(), "Settings", inName, data, inArray.size());
 	
