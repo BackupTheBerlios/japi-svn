@@ -29,6 +29,17 @@
 		<path>/usr/pkg/include/libpng12</path>
 		<path>/usr/pkg/include/libglade-2.0</path>
 		<path>/usr/X11R6/include</path>
+		<path>/usr/local/include/libglade-2.0</path>
+		<path>/usr/local/include/gtk-2.0</path>
+		<path>/usr/local/include/libxml2</path>
+		<path>/usr/local/include</path>
+		<path>/usr/local/lib/gtk-2.0/include</path>
+		<path>/usr/local/include/atk-1.0</path>
+		<path>/usr/local/include/cairo</path>
+		<path>/usr/local/include/pango-1.0</path>
+		<path>/usr/local/include/glib-2.0</path>
+		<path>/usr/local/lib/glib-2.0/include</path>
+		<path>/usr/local/include/freetype2</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -38,6 +49,7 @@
 		<path>/usr/lib</path>
 		<path>/usr/lib64</path>
 		<path>/usr/local/lib64</path>
+		<path>/usr/local/lib</path>
 		<path>/usr/pkg/lib</path>
 	</libpaths>
 	<frameworks/>
@@ -128,14 +140,24 @@
 			<link>cairo</link>
 			<link>gobject-2.0</link>
 			<link>gmodule-2.0</link>
-			<link>dl</link>
 			<link>glib-2.0</link>
-			<file>libboost_filesystem-mt.a</file>
-			<file>libboost_thread-mt.a</file>
+			<file>libboost_filesystem.a</file>
+			<file>libboost_thread.a</file>
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 			<link>glade-2.0</link>
+			<link>Xext</link>
+			<link>Xrender</link>
+			<link>Xinerama</link>
+			<link>Xi</link>
+			<link>Xrandr</link>
+			<link>Xcursor</link>
+			<link>Xcomposite</link>
+			<link>Xdamage</link>
+			<link>X11</link>
+			<link>Xfixes</link>
+
 		</group>
 	</files>
 	<package resource_dir="Resources">
@@ -164,11 +186,15 @@
 			</cflags>
 			<ldflags>
 				<ldflag>-pthread</ldflag>
+				<ldflag>-Wl,--rpath</ldflag>
+				<ldflag>-Wl,/usr/local/lib</ldflag>
 			</ldflags>
 			<defines>
 				<define>DEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>_THREAD_SAFE</define>
+				<define>HAVE_SYS_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -187,11 +213,15 @@
 			</cflags>
 			<ldflags>
 				<ldflag>-pthread</ldflag>
+				<ldflag>-Wl,--rpath</ldflag>
+				<ldflag>-Wl,/usr/local/lib</ldflag>
 			</ldflags>
 			<defines>
 				<define>NDEBUG</define>
 				<define>XTHREADS</define>
 				<define>PNG_NO_MMX_CODE</define>
+				<define>_THREAD_SAFE</define>
+				<define>HAVE_SYS_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

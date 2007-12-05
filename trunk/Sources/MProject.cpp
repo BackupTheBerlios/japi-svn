@@ -1078,12 +1078,17 @@ void MProject::RevertDocument()
 //	MProject::DoSaveAs
 
 bool MProject::DoSaveAs(
-	const MPath&			inPath)
+	const MUrl&				inURL)
 {
+	if (not inURL.IsLocal())
+		THROW(("Only local projects are supported for now"));
+	
+	MPath path = inURL.GetPath();
+	
 	bool result = false;
 	
-	mProjectFile = inPath;
-	mProjectDir = fs::system_complete(inPath.branch_path());
+	mProjectFile = path;
+	mProjectDir = fs::system_complete(path.branch_path());
 
 	if (SaveDocument())
 	{

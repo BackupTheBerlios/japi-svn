@@ -45,6 +45,7 @@
 #endif
 #include <sys/wait.h>
 #include <cerrno>
+#include <signal.h>
 
 #include <iostream>
 #include <sstream>

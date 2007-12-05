@@ -82,7 +82,7 @@ class MController : public MHandler, public MSaverMixin
 	void				RevertDocument();
 
 	bool				DoSaveAs(
-							const MPath&		inPath);
+							const MUrl&		inURL);
 
 	void				CloseAfterNavigationDialog();
 

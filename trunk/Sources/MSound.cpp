@@ -88,7 +88,7 @@ MAudioSocket::MAudioSocket()
 	
 		mFunc = reinterpret_cast<esd_play_file>(dlsym(mHandle, "esd_play_file"));
 		
-		char* err;
+		const char* err;
 		if ((err = dlerror()) != NULL)
 		{
 			cerr << "Could not find esd_play_file: " << err << endl;

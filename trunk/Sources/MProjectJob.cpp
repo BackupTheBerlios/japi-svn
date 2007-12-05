@@ -38,6 +38,8 @@
 #include <signal.h>
 #if HAVE_WAIT_H
 #include <wait.h>
+#elif HAVE_SYS_WAIT_H
+#include <sys/wait.h>
 #endif
 #include "MResources.h"
 

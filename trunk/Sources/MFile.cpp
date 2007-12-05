@@ -33,7 +33,9 @@
 #include "MJapieG.h"
 
 #include <unistd.h>
+#ifdef HAVE_XATTR_H
 #include <sys/xattr.h>
+#endif
 //#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -54,7 +56,9 @@ using namespace std;
 
 ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
 {
-#if defined(XATTR_FINDERINFO_NAME)
+#ifndef HAVE_XATTR_H
+	return -1;
+#elif defined(XATTR_FINDERINFO_NAME)
 	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize, 0, 0);
 #else
 	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize);
@@ -63,7 +67,9 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 
 void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
-#if defined(XATTR_FINDERINFO_NAME)
+#ifndef HAVE_XATTR_H
+	return;
+#elif defined(XATTR_FINDERINFO_NAME)
 	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0, 0);
 #else
 	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0);

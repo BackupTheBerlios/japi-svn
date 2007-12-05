@@ -1022,7 +1022,8 @@ bool MDocument::DoSave()
 	return result;
 }
 
-bool MDocument::DoSaveAs(const MUrl& inFile)
+bool MDocument::DoSaveAs(
+	const MUrl&		inFile)
 {
 	bool result = false;
 	

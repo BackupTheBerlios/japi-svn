@@ -12,9 +12,9 @@ SYSINCPATHS	=
 WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8
 #CFLAGS		+= -fmessage-length=200 -fdiagnostics-show-location=every-line
-CFLAGS		+= $(shell pkg-config --cflags gtk+-2.0)
+CFLAGS		+= $(shell pkg-config --cflags libglade-2.0)
 LDFLAGS		= -fdata-sections -g
-LDFLAGS		+= $(shell pkg-config --libs gtk+-2.0)
+LDFLAGS		+= $(shell pkg-config --libs libglade-2.0)
 CC			= c++
 OPT			+= -O3
 

@@ -184,10 +184,13 @@ void MSaverMixin::SaveDocumentAs(
 	
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
-		char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		MPath url(filename);
+		char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
+		
+		THROW_IF_NIL((uri));
+		
+		MUrl url(uri);
 		DoSaveAs(url);
-		g_free(filename);
+		g_free(uri);
 		
 		gApp->SetCurrentFolder(gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog)));
 	}

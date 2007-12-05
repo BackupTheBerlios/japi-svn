@@ -608,9 +608,9 @@ void MController::RevertDocument()
 }
 
 bool MController::DoSaveAs(
-	const MPath&			inPath)
+	const MUrl&				inPath)
 {
-	return mDocument->DoSaveAs(MUrl(inPath));
+	return mDocument->DoSaveAs(inPath);
 }
 
 void MController::CloseAfterNavigationDialog()

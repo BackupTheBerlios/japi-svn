@@ -33,7 +33,7 @@
 #ifndef MSAVERMIXIN_H
 #define MSAVERMIXIN_H
 
-#include "MFile.h"
+#include "MUrl.h"
 #include "MCallbacks.h"
 
 class MWindow;
@@ -68,7 +68,7 @@ class MSaverMixin
 	virtual bool		SaveDocument() = 0;
 	virtual void		RevertDocument() = 0;
 	virtual bool		DoSaveAs(
-							const MPath&			inPath) = 0;
+							const MUrl&			inPath) = 0;
 	virtual void		CloseAfterNavigationDialog() = 0;
 
 //	static pascal void	NavEvent(

@@ -1,7 +1,7 @@
 #ifndef MURL_H
 #define MURL_H
 
-#include <boost/filesystem/path.hpp>
+#include "MFile.h"
 
 class MUrl
 {

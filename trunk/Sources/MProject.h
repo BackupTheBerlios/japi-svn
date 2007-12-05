@@ -145,7 +145,7 @@ class MProject : public MWindow, public MSaverMixin
 	virtual bool		SaveDocument();
 	virtual void		RevertDocument();
 	virtual bool		DoSaveAs(
-							const MPath&		inPath);
+							const MUrl&			inPath);
 	virtual void		CloseAfterNavigationDialog();
 
 	virtual bool		DoClose();
