@@ -175,7 +175,7 @@
 		</mkdir>
 	</package>
 	<targets>
-		<target kind="Executable" arch="i386" name="Japie Debug" linkTarget="jg" debug="true">
+		<target kind="Executable" arch="amd64" name="Japie Debug" linkTarget="jg" debug="true">
 			<bundle>
 				<name>jg</name>
 				<type>    </type>
@@ -202,7 +202,7 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="i386" name="Japie Release" linkTarget="jg" debug="false">
+		<target kind="Executable" arch="amd64" name="Japie Release" linkTarget="jg" debug="false">
 			<bundle>
 				<name>jg</name>
 				<type>    </type>

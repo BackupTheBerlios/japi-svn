@@ -204,16 +204,12 @@ void MView::Scroll(
 		
 		MRect b;
 		GetBounds(b);
-cout << "Bounds: " << b
-	 << " scrolling " << inRect << " by " << inX << " and " << inY << endl;
 
 		GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
 
 		GdkRegion* rgn = gdk_region_rectangle(&gr);
 		gdk_window_move_region(mGtkWidget->window, rgn, inX, inY);
 		gdk_region_destroy(rgn);
-		
-		
 	}
 }
 
