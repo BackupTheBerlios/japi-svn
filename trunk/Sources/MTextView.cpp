@@ -167,29 +167,6 @@ void MTextView::SetController(MController* inController)
 	SetDocument(mController->GetDocument());
 }
 
-//OSStatus MTextView::DoControlClick(EventRef ioEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	
-//	if (mLastClickTime + ::TicksToEventTime(::GetDblTime()) > ::GetEventTime(ioEvent))
-//		mClickCount = mClickCount % 3 + 1;
-//	else
-//		mClickCount = 1;
-//	mLastClickTime = ::GetEventTime(ioEvent);
-//	
-//	err = ::CallNextEventHandler(GetHandlerCallRef(), ioEvent);
-//	
-//	return err;
-//}
-//
-//OSStatus MTextView::DoControlHitTest(EventRef ioEvent)
-//{
-//	ControlPartCode partCode = 1;
-//	::SetEventParameter(ioEvent, kEventParamControlPart,
-//		typeControlPartCode, sizeof(partCode), &partCode);
-//	return noErr;
-//}
-
 bool MTextView::OnButtonPressEvent(
 	GdkEventButton*		inEvent)
 {
@@ -1167,6 +1144,13 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 		not mNeedsDisplay)
 	{
 		Scroll(r, 0, dy);
+		
+		if (dy < 0)
+		{
+			r.y += r.height + dy;
+			r.height = bounds.height - r.y;
+			InvalidateRect(r);
+		}
 	}
 	else
 		Invalidate();
