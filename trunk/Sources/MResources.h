@@ -2,6 +2,7 @@
 #define MRESOURCES_H
 
 #include <istream>
+#include "MObjectFile.h"
 
 /*
 	Resources are data sources for the application.
@@ -24,7 +25,8 @@ bool LoadResource(
 class MResourceFile
 {
   public:
-						MResourceFile();
+						MResourceFile(
+							MTargetCPU			inTarget);
 						
 						~MResourceFile();
 	

@@ -39,9 +39,6 @@ struct MNativeOjectFileImp : public MMachoObjectFileImp {};
 
 #else
 #	include "MObjectFileImp_elf.h"
-
-struct MNativeOjectFileImp : public MELFObjectFileImp {};
-
 #endif
 
 #include <boost/filesystem/fstream.hpp>
@@ -52,17 +49,32 @@ using namespace std;
 
 namespace fs = boost::filesystem;
 
-MObjectFile::MObjectFile()
-	: mImpl(new MNativeOjectFileImp)
+MObjectFile::MObjectFile(
+	MTargetCPU			inTarget)
+	: mImpl(nil)
 {
+#if defined(__APPLE__) and defined(__MACH__)
+	mImpl = new MNativeOjectFileImp();
+#else
+	mImpl = CreateELFObjectFileImp(inTarget);
+#endif
 }
 
 MObjectFile::MObjectFile(
 	const MPath&		inFile)
-	: mImpl(new MNativeOjectFileImp)
+	: mImpl(nil)
 {
 	try
 	{
+#if defined(__APPLE__) and defined(__MACH__)
+		mImpl = new MNativeOjectFileImp();
+#else
+		mImpl = CreateELFObjectFileImp(inFile);
+#endif
+		
+		mImpl->mTextSize = 0;
+		mImpl->mDataSize = 0;
+
 		mImpl->Read(inFile);
 	}
 	catch (std::exception& e)

@@ -36,6 +36,14 @@
 // ---------------------------------------------------------------------------
 //	MProjectTarget
 
+enum MTargetCPU {
+	eCPU_Unknown,
+	eCPU_386,
+	eCPU_x86_64,
+	eCPU_PowerPC_32,
+	eCPU_PowerPC_64
+};
+
 enum MTargetKind
 {
 	eTargetNone,
@@ -47,14 +55,6 @@ enum MTargetKind
 	eTargetStaticLibrary
 };
 
-enum MTargetArch
-{
-	eTargetArchPPC_32,
-	eTargetArchx86_32,
-	eTargetArchPPC_64,
-	eTargetArchx86_64
-};
-
 class MProjectTarget
 {
   public:
@@ -62,12 +62,12 @@ class MProjectTarget
 							const char*		inLinkTarget,
 							const char*		inName,
 							MTargetKind		inKind,
-							MTargetArch		inArch)
+							MTargetCPU		inTargetCPU)
 							: mLinkTarget(inLinkTarget)
 							, mBundleName(inLinkTarget)
 							, mName(inName)
 							, mKind(inKind)
-							, mArch(inArch)
+							, mTargetCPU(inTargetCPU)
 							, mAnsiStrict(false)
 							, mPedantic(false)
 							, mDebug(false) {}
@@ -133,17 +133,17 @@ class MProjectTarget
 							mKind = inKind;
 						}
 	
-	void				SetArch(
-							MTargetArch			inArch)
+	void				SetTargetCPU(
+							MTargetCPU			inTargetCPU)
 						{
-							mArch = inArch;
+							mTargetCPU = inTargetCPU;
 						}
 	
 	std::string			GetLinkTarget() const	{ return mLinkTarget; }
 	std::string			GetBundleName() const	{ return mBundleName; }
 	std::string			GetName() const			{ return mName; }
 	MTargetKind			GetKind() const			{ return mKind; }
-	MTargetArch			GetArch() const			{ return mArch; }
+	MTargetCPU			GetTargetCPU() const	{ return mTargetCPU; }
 	
 	const std::vector<std::string>&
 						GetCFlags() const		{ return mCFlags; }
@@ -181,7 +181,7 @@ class MProjectTarget
 	std::string			mCreator;
 	std::string			mType;
 	MTargetKind			mKind;
-	MTargetArch			mArch;
+	MTargetCPU			mTargetCPU;
 	std::vector<std::string>
 						mCFlags;
 	std::vector<std::string>

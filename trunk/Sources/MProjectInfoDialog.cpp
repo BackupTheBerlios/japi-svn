@@ -145,14 +145,14 @@ void MProjectInfoDialog::Initialize(
 	SetText(kCreatorControlID, mTarget->GetCreator());
 	SetText(kTypeControlID, mTarget->GetType());
 
-	if (mTarget->GetArch() == eTargetArchPPC_32)
-	{
-		SetValue(kArchitectureControlID, 1);
-	}
-	else if (mTarget->GetArch() == eTargetArchx86_32)
-	{
-		SetValue(kArchitectureControlID, 2);
-	}
+//	if (mTarget->GetTargetCPU() == eTargetArchPPC_32)
+//	{
+//		SetValue(kArchitectureControlID, 1);
+//	}
+//	else if (mTarget->GetTargetCPU() == eTargetArchx86_32)
+//	{
+//		SetValue(kArchitectureControlID, 2);
+//	}
 	
 //	kCPUControlID
 
@@ -295,11 +295,11 @@ bool MProjectInfoDialog::OKClicked()
 	GetText(kLinkerOutputControlID, s);
 	mTarget->SetLinkTarget(s);
 
-	switch (GetValue(kArchitectureControlID))
-	{
-		case 1:	mTarget->SetArch(eTargetArchPPC_32); break;
-		case 2:	mTarget->SetArch(eTargetArchx86_32); break;
-	}
+//	switch (GetValue(kArchitectureControlID))
+//	{
+//		case 1:	mTarget->SetArch(eTargetArchPPC_32); break;
+//		case 2:	mTarget->SetArch(eTargetArchx86_32); break;
+//	}
 	
 	GetText(kCreatorControlID, s);
 	while (s.length() < 4)

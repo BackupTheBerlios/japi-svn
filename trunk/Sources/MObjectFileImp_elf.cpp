@@ -41,29 +41,47 @@
 
 using namespace std;
 
+//template
+//<
+//	class		SWAPPER,
+//	typename	Elf_Ehdr,
+//	typename	Elf_Shdr
+//>
+//void MELFObjectFileImp::Read(
+//	Elf_Ehdr&		eh,
+//	istream&		inData)
+//{
+//}
+
 template
 <
-	class		SWAPPER,
-	typename	Elf_Ehdr,
-	typename	Elf_Shdr
+	MTargetCPU	CPU,
+	typename	traits
 >
-void MELFObjectFileImp::Read(
-	Elf_Ehdr&		eh,
-	istream&		inData)
+void MELFObjectFileImp<CPU,traits>::Read(
+	const MPath&		inFile)
 {
-	SWAPPER	swap;
+	fs::ifstream file(inFile, ios::binary);
+	if (not file.is_open())
+		THROW(("Failed to open object file"));
+
+	swapper	swap;
 
 	char* stringtable = nil;
 	uint32 stringtablesize = 0;
 
 	try
 	{
-		inData.seekg(eh.e_shoff, ios::beg);
+		Elf_Ehdr eh;
+		
+		file.read((char*)&eh, sizeof(eh));
+		
+		file.seekg(swap(eh.e_shoff), ios::beg);
 		
 		for (uint32 section = 0; section < swap(eh.e_shnum); ++section)
 		{
 			Elf_Shdr sh;
-			inData.read((char*)&sh, sizeof(sh));
+			file.read((char*)&sh, sizeof(sh));
 			
 			if (swap(sh.sh_type) == SHT_STRTAB)
 			{
@@ -71,20 +89,20 @@ void MELFObjectFileImp::Read(
 				
 				stringtable = new char[stringtablesize];
 				
-				inData.seekg(swap(sh.sh_offset), ios::beg);
-				inData.read(stringtable, stringtablesize);
+				file.seekg(swap(sh.sh_offset), ios::beg);
+				file.read(stringtable, stringtablesize);
 				break;
 			}
 		}
 		
 		if (stringtable != nil)
 		{
-			inData.seekg(eh.e_shoff, ios::beg);
+			file.seekg(swap(eh.e_shoff), ios::beg);
 			
 			for (uint32 section = 0; section < swap(eh.e_shnum); ++section)
 			{
 				Elf_Shdr sh;
-				inData.read((char*)&sh, sizeof(sh));
+				file.read((char*)&sh, sizeof(sh));
 				
 				if (strcmp(stringtable + swap(sh.sh_name), ".text") == 0)
 					mTextSize += swap(sh.sh_size);
@@ -97,54 +115,6 @@ void MELFObjectFileImp::Read(
 
 	if (stringtable != nil)
 		delete[] stringtable;
-}
-
-void MELFObjectFileImp::Read(
-	const MPath&		inFile)
-{
-	mFile = inFile;
-	
-	mTextSize = 0;
-	mDataSize = 0;
-	
-	fs::ifstream file(mFile, ios::binary);
-	if (not file.is_open())
-		THROW(("Could not open object file"));
-	
-	char ident[EI_NIDENT];
-	file.read(ident, EI_NIDENT);
-	
-	if (strncmp(ident, ELFMAG, SELFMAG) != 0)
-		THROW(("File is not an object file"));
-	
-	if (ident[EI_CLASS] == ELFCLASS32)
-	{
-		Elf32_Ehdr hdr;
-		file.seekg(0);
-		file.read(reinterpret_cast<char*>(&hdr), sizeof(hdr));
-		
-		if (ident[EI_DATA] == ELFDATA2LSB)
-			Read<lsb_swapper, Elf32_Ehdr, Elf32_Shdr>(hdr, file);
-		else if (ident[EI_DATA] == ELFDATA2MSB)
-			Read<msb_swapper, Elf32_Ehdr, Elf32_Shdr>(hdr, file);
-		else
-			THROW(("File is not an object file"));		
-	}
-	else if (ident[EI_CLASS] == ELFCLASS64)
-	{
-		Elf64_Ehdr hdr;
-		file.seekg(0);
-		file.read(reinterpret_cast<char*>(&hdr), sizeof(hdr));
-		
-		if (ident[EI_DATA] == ELFDATA2LSB)
-			Read<lsb_swapper, Elf64_Ehdr, Elf64_Shdr>(hdr, file);
-		else if (ident[EI_DATA] == ELFDATA2MSB)
-			Read<msb_swapper, Elf64_Ehdr, Elf64_Shdr>(hdr, file);
-		else
-			THROW(("File is not an object file"));		
-	}
-	else
-		THROW(("File is not an object file"));
 }
 
 uint32 WriteDataAligned(
@@ -186,16 +156,10 @@ enum {
 	kSymbolCount
 };
 
-template<MTargetCPU CPU>
-void MELFObjectFileImp::WriteForCPU(
+template<MTargetCPU CPU, typename traits>
+void MELFObjectFileImp<CPU, traits>::Write(
 	const MPath&		inFile)
 {
-	typedef MCPUTraits<CPU>	traits;
-	
-	typedef typename traits::Elf_Ehdr	Elf_Ehdr;
-	typedef typename traits::Elf_Shdr	Elf_Shdr;
-	typedef typename traits::Elf_Sym	Elf_Sym;
-	
 	fs::ofstream f(inFile, ios::binary | ios::trunc);
 	if (not f.is_open())
 		THROW(("Failed to open object file for writing"));
@@ -376,10 +340,71 @@ void MELFObjectFileImp::WriteForCPU(
 	WriteDataAligned(f, &eh, sizeof(eh));
 }
 
-void MELFObjectFileImp::Write(
+MObjectFileImp* CreateELFObjectFileImp(
+	MTargetCPU		inTarget)
+{
+	MObjectFileImp* result = nil;
+
+	switch (inTarget)
+	{
+		case eCPU_386:
+			result = new MELFObjectFileImp<eCPU_386>();
+			break;
+		
+		case eCPU_x86_64:
+			result = new MELFObjectFileImp<eCPU_x86_64>();
+			break;
+		
+		case eCPU_PowerPC_32:
+			result = new MELFObjectFileImp<eCPU_PowerPC_32>();
+			break;
+		
+		case eCPU_PowerPC_64:
+			result = new MELFObjectFileImp<eCPU_PowerPC_64>();
+			break;
+		
+		default:
+			THROW(("Unsupported object file"));	
+	}
+	
+	return result;
+}
+
+MObjectFileImp* CreateELFObjectFileImp(
 	const MPath&	inFile)
 {
-	WriteForCPU<eCPU_x86_64>(inFile);
+	MTargetCPU target = eCPU_Unknown;
+	
+	fs::ifstream file(inFile, ios::binary);
+	if (not file.is_open())
+		THROW(("Could not open object file"));
+	
+	char ident[EI_NIDENT];
+	file.read(ident, EI_NIDENT);
+	
+	if (strncmp(ident, ELFMAG, SELFMAG) != 0 or
+		(ident[EI_DATA] != ELFDATA2LSB and ident[EI_DATA] != ELFDATA2MSB) or
+		(ident[EI_CLASS] != ELFCLASS32 and ident[EI_CLASS] != ELFCLASS64))
+	{
+		THROW(("File is not a supported object file"));
+	}
+	
+	if (ident[EI_DATA] == ELFDATA2LSB)
+	{
+		if (ident[EI_CLASS] == ELFCLASS64)
+			target = eCPU_x86_64;
+		else
+			target = eCPU_386;
+	}
+	else
+	{
+		if (ident[EI_CLASS] == ELFCLASS32)
+			target = eCPU_PowerPC_32;
+		else
+			target = eCPU_PowerPC_64;
+	}
+	
+	return CreateELFObjectFileImp(target);
 }
 
 #endif

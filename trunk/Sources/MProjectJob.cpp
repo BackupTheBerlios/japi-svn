@@ -439,7 +439,7 @@ void MProjectCopyFileJob::Execute()
 
 void MProjectCreateResourceJob::Execute()
 {
-	MResourceFile rsrcFile;
+	MResourceFile rsrcFile(mTargetCPU);
 	
 	for (vector<MPath>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
 	{

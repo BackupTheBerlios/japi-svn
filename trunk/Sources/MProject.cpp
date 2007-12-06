@@ -1517,9 +1517,6 @@ void MProject::ReadPackageAction(
 			try
 			{
 				MPath filePath = inDir / fileName;
-				
-				if (not fs::exists(mResourcesDir / filePath))
-					cout << "File does not exist: " << fileName << endl;
 
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
@@ -1735,22 +1732,28 @@ void MProject::Read(
 //			if (kind == eTargetExecutable or kind == eTargetStaticLibrary or kind == eTargetSharedLibrary)
 //				::DisableControl(mPackagePanelRef);
 			
-			MTargetArch arch;
-#if defined(__i386__)
-			arch = eTargetArchx86_32;
+			MTargetCPU arch;
+#if defined(__amd64)
+			arch = eCPU_x86_64;
+#elif defined(__i386__)
+			arch = eCPU_386;
 #elif defined(__ppc__)
-			arch = eTargetArchPPC_32;
+			arch = eCPU_PowerPC_32;
 #else
-			arch = eTargetArchx86_32;
+			arch = eCPU_PowerPC_64;
 //#	error
 #endif				
 
 			if ((p = (const char*)xmlGetProp(targetNode, BAD_CAST "arch")) != nil)
 			{
 				if (strcmp(p, "ppc") == 0)
-					arch = eTargetArchPPC_32;
+					arch = eCPU_PowerPC_32;
+				else if (strcmp(p, "ppc64") == 0)
+					arch = eCPU_PowerPC_64;
 				else if (strcmp(p, "i386") == 0)
-					arch = eTargetArchx86_32;
+					arch = eCPU_386;
+				else if (strcmp(p, "amd64") == 0)
+					arch = eCPU_x86_64;
 				else
 					THROW(("Unsupported target arch"));
 			}
@@ -1928,21 +1931,21 @@ void MProject::WriteTarget(
 			break;
 	}
 		
-	switch (inTarget.GetArch())
+	switch (inTarget.GetTargetCPU())
 	{
-		case eTargetArchPPC_32:
+		case eCPU_PowerPC_32:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "ppc"));
 			break;
 		
-		case eTargetArchx86_32:
+		case eCPU_386:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "i386"));
 			break;
 		
-		case eTargetArchPPC_64:
+		case eCPU_PowerPC_64:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "ppc64"));
 			break;
 		
-		case eTargetArchx86_64:
+		case eCPU_x86_64:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "x86_64"));
 			break;
 	}
@@ -2432,9 +2435,12 @@ MProjectJob* MProject::CreateCompileAllJob()
 	
 	if (rsrcFiles.size() > 0)
 	{
+		
 		job->AddJob(new MProjectCreateResourceJob(
 			"Creating resources",
-			this, mResourcesDir, rsrcFiles, mObjectDir / "__rsrc__.o"));
+			this, mResourcesDir, rsrcFiles,
+			mObjectDir / "__rsrc__.o",
+			mCurrentTarget->GetTargetCPU()));
 	}
 
 	return job.release();

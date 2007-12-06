@@ -74,6 +74,7 @@ void MSftpPutDialog::ChannelEvent(
 			eConnected();
 			fChannel->WriteFile(fUrl.GetPath().string(),
 				Preferences::GetInteger("text transfer", true));
+			SetText('lbl2', "Connected");
 //			SetNodeText('stat',
 //				HStrings::GetFormattedIndString(4007, 1, fUrl.GetFileName()));
 			break;
@@ -84,7 +85,8 @@ void MSftpPutDialog::ChannelEvent(
 				uint32 k = fSize - fOffset;
 				if (k > kBufferSize)
 					k = kBufferSize;
-				
+
+				SetText('lbl2', "Sending data");
 				fChannel->SendData(fText.substr(fOffset, k));
 				
 				fOffset += k;
@@ -93,6 +95,7 @@ void MSftpPutDialog::ChannelEvent(
 			}
 			else
 			{
+				SetText('lbl2', "Closing file");
 				fChannel->CloseFile();
 				fComplete = true;
 

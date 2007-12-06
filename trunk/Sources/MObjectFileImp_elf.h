@@ -36,12 +36,7 @@
 #include <elf.h>
 
 #include "MObjectFile.h"
-
-enum MTargetCPU {
-	eCPU_386,
-	eCPU_x86_64,
-	eCPU_PowerPC
-};
+#include "MUtils.h"
 
 template<MTargetCPU CPU>
 struct MCPUTraits
@@ -49,9 +44,35 @@ struct MCPUTraits
 };
 
 template<>
-struct MCPUTraits<eCPU_PowerPC>
+struct MCPUTraits<eCPU_PowerPC_32>
 {
+	typedef Elf32_Ehdr	Elf_Ehdr;
+	typedef Elf32_Shdr	Elf_Shdr;
+	typedef Elf32_Sym	Elf_Sym;
 	
+	typedef msb_swapper	swapper;
+	
+	enum {
+		ElfClass	= ELFCLASS32,
+		ElfData		= ELFDATA2MSB,
+		ElfMachine	= EM_PPC
+	};
+};
+
+template<>
+struct MCPUTraits<eCPU_PowerPC_64>
+{
+	typedef Elf64_Ehdr	Elf_Ehdr;
+	typedef Elf64_Shdr	Elf_Shdr;
+	typedef Elf64_Sym	Elf_Sym;
+	
+	typedef msb_swapper	swapper;
+	
+	enum {
+		ElfClass	= ELFCLASS64,
+		ElfData		= ELFDATA2MSB,
+		ElfMachine	= EM_PPC64
+	};
 };
 
 template<>
@@ -60,6 +81,8 @@ struct MCPUTraits<eCPU_x86_64>
 	typedef Elf64_Ehdr	Elf_Ehdr;
 	typedef Elf64_Shdr	Elf_Shdr;
 	typedef Elf64_Sym	Elf_Sym;
+
+	typedef lsb_swapper	swapper;
 	
 	enum {
 		ElfClass	= ELFCLASS64,
@@ -68,27 +91,44 @@ struct MCPUTraits<eCPU_x86_64>
 	};
 };
 
+template<>
+struct MCPUTraits<eCPU_386>
+{
+	typedef Elf32_Ehdr	Elf_Ehdr;
+	typedef Elf32_Shdr	Elf_Shdr;
+	typedef Elf32_Sym	Elf_Sym;
+	
+	typedef lsb_swapper	swapper;
+	
+	enum {
+		ElfClass	= ELFCLASS32,
+		ElfData		= ELFDATA2LSB,
+		ElfMachine	= EM_386
+	};
+};
+
+template<
+	MTargetCPU CPU,
+	typename traits = MCPUTraits<CPU>
+>
 struct MELFObjectFileImp : public MObjectFileImp
 {
-	template
-	<
-		class		SWAPPER,
-		typename	Elf_Ehdr,
-		typename	Elf_Shdr
-	>
-	void			Read(
-						Elf_Ehdr&		eh,
-						std::istream&	inData);
+	typedef typename traits::swapper	swapper;
+	typedef typename traits::Elf_Ehdr	Elf_Ehdr;
+	typedef typename traits::Elf_Shdr	Elf_Shdr;
+	typedef typename traits::Elf_Sym	Elf_Sym;
 
 	virtual void	Read(
 						const MPath&	inFile);
 
 	void			Write(
 						const MPath&	inFile);
-
-	template<MTargetCPU CPU>
-	void			WriteForCPU(
-						const MPath&	inFile);
 };
+
+MObjectFileImp* CreateELFObjectFileImp(
+	MTargetCPU		inTarget);
+
+MObjectFileImp* CreateELFObjectFileImp(
+	const MPath&	inFile);
 
 #endif

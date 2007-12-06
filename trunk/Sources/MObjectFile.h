@@ -35,6 +35,7 @@
 
 #include <vector>
 
+#include "MProjectTarget.h"
 #include "MFile.h"
 
 struct MObjectFileImp
@@ -69,7 +70,8 @@ struct MObjectFileImp
 class MObjectFile
 {
   public:
-				MObjectFile();
+				MObjectFile(
+					MTargetCPU			inTarget);
 
 				MObjectFile(
 					const MPath&		inFile);

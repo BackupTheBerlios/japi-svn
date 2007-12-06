@@ -324,11 +324,13 @@ bool LoadResource(
 
 struct MResourceFileImp
 {
+	MTargetCPU			mTarget;
 	MRSRCDirectory		mIndex;
 	stringstream		mData;
 };
 
-MResourceFile::MResourceFile()
+MResourceFile::MResourceFile(
+	MTargetCPU			inTarget)
 	: mImpl(new MResourceFileImp)
 {
 }
@@ -378,7 +380,7 @@ void MResourceFile::Add(
 void MResourceFile::Write(
 	const MPath&		inFile)
 {
-	MObjectFile obj;
+	MObjectFile obj(mImpl->mTarget);
 
 	stringstream s;
 	mImpl->mIndex.Flatten(s);
