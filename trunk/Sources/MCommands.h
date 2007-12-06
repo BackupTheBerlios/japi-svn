@@ -106,6 +106,7 @@ const uint32
 	cmd_Make =					'Pmak',
 	cmd_MakeClean =				'Pcln',
 	cmd_Run =					'Prun',
+	cmd_RecheckFiles =			'Rchk',
 	cmd_NewGroup =				'Pnwg',
 	cmd_OpenIncludeFromMenu =	'OMic',
 	cmd_SelectFunctionFromMenu ='OMfu',

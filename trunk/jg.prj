@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <project>
+	<pkg-config>
+		<pkg>libglade-2.0</pkg>
+	</pkg-config>
 	<syspaths>
 		<path>/usr/include</path>
 		<path>/usr/include/libxml2</path>
@@ -147,17 +150,6 @@
 			<link>cryptopp</link>
 			<link>z</link>
 			<link>glade-2.0</link>
-			<link>Xext</link>
-			<link>Xrender</link>
-			<link>Xinerama</link>
-			<link>Xi</link>
-			<link>Xrandr</link>
-			<link>Xcursor</link>
-			<link>Xcomposite</link>
-			<link>Xdamage</link>
-			<link>X11</link>
-			<link>Xfixes</link>
-
 		</group>
 	</files>
 	<package resource_dir="Resources">
@@ -175,12 +167,37 @@
 		</mkdir>
 	</package>
 	<targets>
-		<target kind="Executable" arch="amd64" name="Japie Debug" linkTarget="jg" debug="true">
-			<bundle>
-				<name>jg</name>
-				<type>    </type>
-				<creator>    </creator>
-			</bundle>
+		<target kind="Executable" arch="ppc" name="Japie PPC Mac Debug" linkTarget="jg" debug="true">
+			<cflags>
+				<cflag>-O0</cflag>
+			</cflags>
+			<defines>
+				<define>DEBUG</define>
+				<define>XTHREADS</define>
+				<define>HAVE_SYS_WAIT_H</define>
+			</defines>
+			<warnings>
+				<warning>all</warning>
+				<warning>no-multichar</warning>
+				<warning>no-unknown-pragmas</warning>
+			</warnings>
+		</target>
+		<target kind="Executable" arch="ppc" name="Japie PPC Mac Release" linkTarget="jg" debug="false">
+			<cflags>
+				<cflag>-O3</cflag>
+			</cflags>
+			<defines>
+				<define>NDEBUG</define>
+				<define>XTHREADS</define>
+				<define>HAVE_SYS_WAIT_H</define>
+			</defines>
+			<warnings>
+				<warning>all</warning>
+				<warning>no-multichar</warning>
+				<warning>no-unknown-pragmas</warning>
+			</warnings>
+		</target>
+		<target kind="Executable" arch="amd64" name="Japie ELF amd64 Debug" linkTarget="jg" debug="true">
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
@@ -202,12 +219,7 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="amd64" name="Japie Release" linkTarget="jg" debug="false">
-			<bundle>
-				<name>jg</name>
-				<type>    </type>
-				<creator>    </creator>
-			</bundle>
+		<target kind="Executable" arch="amd64" name="Japie ELF amd64 Release" linkTarget="jg" debug="false">
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>

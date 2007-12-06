@@ -152,6 +152,7 @@ MProject* MProject::Instance()
 MProject::MProject(const MPath& inPath)
 	: eProjectFileStatusChanged(this, &MProject::ProjectFileStatusChanged)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
+	, ePkgConfigData(this, &MProject::PkgConfigData)
 	, mTargetSelected(this, &MProject::TargetSelected)
 	, ePoll(this, &MProject::Poll)
 	, mModified(false)
@@ -212,6 +213,7 @@ MProject::MProject(const MPath& inPath)
 	projectMenu->AppendItem("Compile", cmd_Compile);
 	projectMenu->AppendItem("Dissassemble", cmd_Disassemble);
 	projectMenu->AppendSeparator();
+	projectMenu->AppendItem("Recheck Files", cmd_RecheckFiles);
 	projectMenu->AppendItem("Bring Up To Date", cmd_BringUpToDate);
 	projectMenu->AppendItem("Make", cmd_Make);
 	projectMenu->AppendItem("Make Clean", cmd_MakeClean);
@@ -492,6 +494,14 @@ bool MProject::ReadState()
 		state.Swap();
 		
 		mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
+		
+		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50)
+		{
+			SetWindowPosition(MRect(
+				state.mWindowPosition[0], state.mWindowPosition[1],
+				state.mWindowSize[0], state.mWindowSize[1]));
+		}
+		
 //		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
 //		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
 		
@@ -552,13 +562,13 @@ bool MProject::DoClose()
 //			state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
 			
 			state.mSelectedPanel = mPanel;
-	
-//			Rect r;
-//			::GetWindowBounds(GetSysWindow(), kWindowContentRgn, &r);
-//			state.mWindowPosition[0] = r.left;
-//			state.mWindowPosition[1] = r.top;
-//			state.mWindowSize[0] = r.right - r.left;
-//			state.mWindowSize[1] = r.bottom - r.top;
+
+			MRect r;
+			GetWindowPosition(r);
+			state.mWindowPosition[0] = r.x;
+			state.mWindowPosition[1] = r.y;
+			state.mWindowSize[0] = r.width;
+			state.mWindowSize[1] = r.height;
 	
 			state.Swap();
 			
@@ -1171,6 +1181,10 @@ bool MProject::ProcessCommand(
 			break;
 		}
 		
+		case cmd_RecheckFiles:
+			CheckIsOutOfDate();
+			break;
+		
 		case cmd_BringUpToDate:
 			BringUpToDate();
 			break;
@@ -1307,6 +1321,7 @@ bool MProject::UpdateCommandStatus(
 			outEnabled = isCompilable;
 			break;
 
+		case cmd_RecheckFiles:
 		case cmd_BringUpToDate:
 		case cmd_MakeClean:
 		case cmd_Make:
@@ -1616,7 +1631,34 @@ void MProject::Read(
 {
 	xmlXPathObjectPtr data;
 	
-	// first read the system search paths
+	// read the pkg-config data
+	
+	data = xmlXPathEvalExpression(BAD_CAST "/project/pkg-config/pkg", inContext);
+	
+	if (data != nil)
+	{
+		if (data->nodesetval != nil)
+		{
+			for (int i = 0; i < data->nodesetval->nodeNr; ++i)
+			{
+				xmlNodePtr node = data->nodesetval->nodeTab[i];
+				
+				if (node->children == nil)
+					continue;
+				
+				const xmlChar* text = XML_GET_CONTENT(node->children);
+				if (text == nil)
+					THROW(("Invalid project file, missing pkg"));
+				
+				string pkg((const char*)text);
+				mPkgConfigPkgs.push_back(pkg);
+			}
+		}
+			
+		xmlXPathFreeObject(data);
+	}
+	
+	// read the system search paths
 	
 	data = xmlXPathEvalExpression(BAD_CAST "/project/syspaths/path", inContext);
 	
@@ -1948,6 +1990,9 @@ void MProject::WriteTarget(
 		case eCPU_x86_64:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "amd64"));
 			break;
+		
+		default:
+			break;
 	}
 	
 	THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "name",
@@ -2045,6 +2090,17 @@ bool MProject::Write(
 		
 		// <project>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "project"));
+		
+		// pkg-config
+		if (mPkgConfigPkgs.size() > 0)
+		{
+			THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "pkg-config"));
+			
+			for (vector<string>::iterator p = mPkgConfigPkgs.begin(); p != mPkgConfigPkgs.end(); ++p)
+				THROW_IF_XML_ERR(xmlTextWriterWriteElement(writer, BAD_CAST "pkg", BAD_CAST p->c_str()));
+			
+			THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
+		}
 		
 		WritePaths(writer, "syspaths", mSysSearchPaths, true);
 		WritePaths(writer, "userpaths", mUserSearchPaths, false);
@@ -2295,6 +2351,16 @@ void MProject::GetIncludePaths(
 	}
 
 	copy(mUserSearchPaths.begin(), mUserSearchPaths.end(), back_inserter(outPaths));
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::PkgConfigData
+
+void MProject::PkgConfigData(
+	const char*		inText,
+	uint32			inSize)
+{
+	mPkgConfigData.append(inText, inSize);
 }
 
 // ---------------------------------------------------------------------------

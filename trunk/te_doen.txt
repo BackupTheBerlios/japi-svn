@@ -1,13 +1,13 @@
 ﻿Te doen
 
+- pkg-config support
+
 - afronden nieuwe dialog class
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 	- Replace in selectie
 
 - Redesign framework, terug naar HNode/HHandler achtige opzet.
-
-- shift lines gaat nog een beetje mis, soms. Werkt InvalidateLine wel?
 
 - toetsenbord navigatie in lijsten, typeahead
 	lijsten vervangen door GtkTreeView dingen

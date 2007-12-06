@@ -324,11 +324,19 @@ class MProject : public MWindow, public MSaverMixin
 
 	void				TargetSelected();
 
+	void				PkgConfigData(
+							const char*			inText,
+							uint32				inSize);
+
+	MEventIn<void(const char* inText, uint32 inSize)>
+							ePkgConfigData;
+
 	MSlot<void()>			mTargetSelected;
 	MEventIn<void(double)>	ePoll;
 
 	bool				mModified;
 	std::string			mName;
+	std::string			mPkgConfigData;
 	MProjectTarget*		mCurrentTarget;
 	MPath				mProjectFile;
 	MPath				mProjectDir;
@@ -341,6 +349,8 @@ class MProject : public MWindow, public MSaverMixin
 	MProjectListPanel	mPanel;
 	std::vector<MProjectTarget*>
 						mTargets;
+	std::vector<std::string>
+						mPkgConfigPkgs;
 	std::vector<MPath>	mSysSearchPaths;
 	std::vector<MPath>	mUserSearchPaths;
 	std::vector<MPath>	mLibSearchPaths;
