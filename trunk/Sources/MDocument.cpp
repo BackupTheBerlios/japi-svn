@@ -471,6 +471,19 @@ void MDocument::ReInit()
 }
 
 // ---------------------------------------------------------------------------
+//	SetCharsPerTab
+
+void MDocument::SetCharsPerTab(
+	uint32				inCharsPerTab)
+{
+	mCharsPerTab = inCharsPerTab;
+	
+	ReInit();
+	Rewrap();
+	UpdateDirtyLines();
+}
+
+// ---------------------------------------------------------------------------
 //	SetDocInfo
 
 void MDocument::SetDocInfo(

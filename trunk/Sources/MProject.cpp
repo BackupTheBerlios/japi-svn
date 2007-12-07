@@ -190,7 +190,7 @@ MProject::MProject(const MPath& inPath)
 	fileMenu->AppendItem("New", cmd_New);
 	fileMenu->AppendItem("Open…", cmd_Open);
 	
-	fileMenu->AppendRecentMenu("Open Recent…");
+//	fileMenu->AppendRecentMenu("Open Recent…");
 	
 	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile);
 	
@@ -227,7 +227,7 @@ MProject::MProject(const MPath& inPath)
 	windowMenu->AppendItem("Worksheet", cmd_Worksheet);	
 	windowMenu->AppendSeparator();
 	
-	mMenubar.AddMenu(windowMenu, true);
+	mMenubar.AddMenu(windowMenu);
 	
 	// status
 	
@@ -1728,7 +1728,7 @@ void MProject::Read(
 			const char* rd;
 	
 			if ((rd = (const char*)xmlGetProp(data->nodesetval->nodeTab[i], BAD_CAST "resource_dir")) != nil)
-				mResourcesDir = rd;
+				mResourcesDir = mProjectDir / rd;
 	
 			ReadPackageAction(data->nodesetval->nodeTab[i], dir, &mPackageItems);
 		}
@@ -2163,15 +2163,23 @@ void MProject::Poll(
 {
 	if (mCurrentJob.get() != nil)
 	{
-		if (mCurrentJob->IsDone())
+		try
 		{
-			if (mCurrentJob->mStatus == 0)
-				PlaySound("success");
-			else
-				PlaySound("failure");
-
-			mCurrentJob.reset(nil);
-			SetStatus("", false);
+			if (mCurrentJob->IsDone())
+			{
+				if (mCurrentJob->mStatus == 0)
+					PlaySound("success");
+				else
+					PlaySound("failure");
+	
+				mCurrentJob.reset(nil);
+				SetStatus("", false);
+			}
+		}
+		catch (exception& e)
+		{
+			MError::DisplayError(e);
+			StopBuilding();
 		}
 	}
 }

@@ -75,6 +75,9 @@ class MJapieApp : public MHandler
 	void				UpdateWindowMenu(
 							MMenu*				inMenu);
 
+	void				UpdateTemplateMenu(
+							MMenu*				inMenu);
+
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
 							MPath&				outFile);
@@ -116,7 +119,7 @@ class MJapieApp : public MHandler
 							MCloseReason		inReason);
 
 	void				DoOpenTemplate(
-							uint32				inCommand);
+							const std::string&	inTemplate);
 	
 	void				DoSelectWindowFromWindowMenu(
 							uint32				inIndex);

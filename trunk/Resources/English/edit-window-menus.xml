@@ -39,6 +39,12 @@
 		<item label="-" />
 		<item label="Entab" cmd='Enta'/>
 		<item label="Detab" cmd='Deta'/>
+		<menu id='tabs' label="Tab Width">
+			<item label="2" cmd="Tw_2" check="radio" />
+			<item label="4" cmd="Tw_4" check="radio" />
+			<item label="8" cmd="Tw_8" check="radio" />
+			<item label="16" cmd="Tw16" check="radio" />
+		</menu>
 		<item label="-" />
 		<item label="File Info…" cmd='DocI'/>
 	</menu>

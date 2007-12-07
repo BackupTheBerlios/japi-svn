@@ -1,9 +1,13 @@
 <?xml version="1.0" standalone="yes"?>
 <menubar>
 	<menu id='filemenu' label="Bestand">
-		<item label="Nieuw" cmd='new '/>
+		<menu id='newmenu' label="New" special="template">
+			<item label="Nieuw" cmd='new '/>
+			<item label="-"/>
+			<!-- template items -->
+		</menu>
 		<item label="Open…" cmd='open'/>
-		<menu id='recentmenu' label="Open Recente" recent_menu="true" />
+		<menu id='recentmenu' label="Open Recente" special="recent" />
 		<item label="Zoek en open…" cmd='OInc'/>
 		<item label="Open Source/Header" cmd='SHdS'/>
 		<item label="-" />
@@ -41,6 +45,12 @@
 		<item label="-" />
 		<item label="Spaties naar tabs" cmd='Enta'/>
 		<item label="Tabs naar spaties" cmd='Deta'/>
+		<menu id='tabs' label="Tabbreedte">
+			<item label="2" cmd="Tw_2" check="radio" />
+			<item label="4" cmd="Tw_4" check="radio" />
+			<item label="8" cmd="Tw_8" check="radio" />
+			<item label="16" cmd="Tw16" check="radio" />
+		</menu>
 		<item label="-" />
 		<item label="Bestandsinfo…" cmd='DocI'/>
 	</menu>
@@ -85,7 +95,7 @@
 		<item label="Compileer" cmd='Pcmp'/>
 		<item label="Dissassemble" cmd='Pdis'/>
 	</menu>
-	<menu id='' label="Venster" window_menu="true">
+	<menu id='' label="Venster" special="window">
 		<item label="Werkblad" cmd='Wrks'/>	
 		<item label="-" />
 	</menu>

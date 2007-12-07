@@ -117,7 +117,12 @@ const uint32
 	cmd_OpenTemplate =			'Tmpd',
 	cmd_ClearRecent =			'ClrR',
 	cmd_Worksheet =				'Wrks',
-	cmd_SelectWindowFromMenu =	'WSel';
+	cmd_SelectWindowFromMenu =	'WSel',
+	
+	cmd_2CharsPerTab =			'Tw_2',
+	cmd_4CharsPerTab =			'Tw_4',
+	cmd_8CharsPerTab =			'Tw_8',
+	cmd_16CharsPerTab =			'Tw16';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

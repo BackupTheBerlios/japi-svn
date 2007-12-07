@@ -41,7 +41,19 @@ struct MMenuItem
 						const string&	inLabel,
 						uint32			inCommand);
 
+					// plain, simple item
+	void			CreateWidget();
+	
+					// radio menu item
+	void			CreateWidget(
+						GSList*&		ioRadioGroup);
+
+	void			SetChecked(
+						bool			inChecked);
+
 	void			ItemCallback();
+	
+	void			ItemToggled();
 	
 	void			RecentItemActivated();
 
@@ -49,13 +61,15 @@ struct MMenuItem
 	MSlot<void()>	mRecentItemActivated;
 
 	GtkWidget*		mGtkMenuItem;
-	std::string		mLabel;
+	string			mLabel;
 	uint32			mCommand;
 	uint32			mIndex;
 	MMenu*			mMenu;
 	MMenu*			mSubMenu;
 	bool			mEnabled;
+	bool			mCanCheck;
 	bool			mChecked;
+	bool			mInhibitCallBack;
 };
 
 MMenuItem::MMenuItem(
@@ -71,27 +85,54 @@ MMenuItem::MMenuItem(
 	, mMenu(inMenu)
 	, mSubMenu(nil)
 	, mEnabled(true)
+	, mCanCheck(false)
 	, mChecked(false)
+	, mInhibitCallBack(false)
 {
-	if (inLabel == "-")
+}
+
+void MMenuItem::CreateWidget()
+{
+	if (mLabel == "-")
 		mGtkMenuItem = gtk_separator_menu_item_new();
 	else
 	{
 		mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
-		if (inCommand != 0)	
+		if (mCommand != 0)	
 			mCallback.Connect(mGtkMenuItem, "activate");
 	}
+}
 
-	gtk_widget_show(mGtkMenuItem);
+void MMenuItem::CreateWidget(
+	GSList*&		ioRadioGroup)
+{
+	mGtkMenuItem = gtk_radio_menu_item_new_with_label(ioRadioGroup, mLabel.c_str());
+
+	ioRadioGroup = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(mGtkMenuItem));
+
+	if (mCommand != 0)
+		mCallback.Connect(mGtkMenuItem, "toggled");
+
+	mCanCheck = true;
 }
 
 void MMenuItem::ItemCallback()
 {
 	try
 	{
-		if (mMenu != nil and mMenu->GetTarget() != nil)
+		if (mMenu != nil and
+			mMenu->GetTarget() != nil and
+			not mInhibitCallBack)
 		{
-			if (not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
+			bool process = true;
+			
+			if (mCanCheck)
+			{
+				mChecked = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mGtkMenuItem));
+				process = mChecked;
+			}
+
+			if (process and not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
 				cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
 		}
 	}
@@ -100,6 +141,18 @@ void MMenuItem::ItemCallback()
 		MError::DisplayError(e);
 	}
 	catch (...) {}
+}
+
+void MMenuItem::SetChecked(
+	bool			inChecked)
+{
+	if (inChecked != mChecked)
+	{
+		mInhibitCallBack = true;
+		mChecked = inChecked;
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mGtkMenuItem), mChecked);
+		mInhibitCallBack = false;
+	}
 }
 
 void MMenuItem::RecentItemActivated()
@@ -137,6 +190,7 @@ MMenu::MMenu(
 	, mGtkMenu(inMenuWidget)
 	, mLabel(inLabel)
 	, mTarget(nil)
+	, mRadioGroup(nil)
 	, mPopupX(-1)
 	, mPopupY(-1)
 {
@@ -152,11 +206,25 @@ MMenu::~MMenu()
 		delete *mi;
 }
 
+bool MMenu::IsRecentMenu() const
+{
+	return GTK_IS_RECENT_CHOOSER_MENU(mGtkMenu);
+}
+
 MMenuItem* MMenu::CreateNewItem(
 	const string&	inLabel,
-	uint32			inCommand)
+	uint32			inCommand,
+	GSList**		ioRadioGroup)
 {
 	MMenuItem* item = new MMenuItem(this, inLabel, inCommand);
+
+	if (ioRadioGroup != nil)
+		item->CreateWidget(*ioRadioGroup);
+	else
+	{
+		item->CreateWidget();
+		mRadioGroup = nil;
+	}
 
 	item->mIndex = mItems.size();
 	mItems.push_back(item);
@@ -169,34 +237,45 @@ void MMenu::AppendItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
-	CreateNewItem(inLabel, inCommand);
+	CreateNewItem(inLabel, inCommand, nil);
+}
+
+void MMenu::AppendCheckItem(
+	const string&	inLabel,
+	uint32			inCommand)
+{
+	CreateNewItem(inLabel, inCommand, &mRadioGroup);
 }
 
 void MMenu::AppendSeparator()
 {
-	CreateNewItem("-", 0);
+	CreateNewItem("-", 0, nil);
 }
 
 void MMenu::AppendMenu(
 	MMenu*			inMenu)
 {
-	MMenuItem* item = CreateNewItem(inMenu->GetLabel(), 0);
+	MMenuItem* item = CreateNewItem(inMenu->GetLabel(), 0, nil);
 	item->mSubMenu = inMenu;
+
+	if (inMenu->IsRecentMenu())
+		item->mRecentItemActivated.Connect(inMenu->GetGtkMenu(), "item-activated");
+
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), inMenu->mGtkMenu);
 }
 
-void MMenu::AppendRecentMenu(
-	const string&	inLabel)
-{
-	MMenuItem* item = CreateNewItem(inLabel, 0);
-	
-	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr());
-	item->mSubMenu = new MMenu(inLabel, recMenu);;
-
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
-	item->mRecentItemActivated.Connect(recMenu, "item-activated");
-}
-
+//void MMenu::AppendRecentMenu(
+//	const string&	inLabel)
+//{
+//	MMenuItem* item = CreateNewItem(inLabel, 0, nil);
+//	
+//	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr());
+//	item->mSubMenu = new MMenu(inLabel, recMenu);;
+//
+//	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
+//	item->mRecentItemActivated.Connect(recMenu, "item-activated");
+//}
+//
 uint32 MMenu::CountItems()
 {
 	return mItems.size();
@@ -222,10 +301,20 @@ void MMenu::RemoveItems(
 	}
 }
 
+string MMenu::GetItemLabel(
+	uint32				inIndex) const
+{
+	if (inIndex >= mItems.size())
+		THROW(("Item index out of range"));
+	
+	return mItems[inIndex]->mLabel;
+}
+
 void MMenu::SetTarget(
 	MHandler*		inTarget)
 {
 	mTarget = inTarget;
+	
 	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
 	{
 		if ((*mi)->mSubMenu != nil)
@@ -254,12 +343,10 @@ void MMenu::UpdateCommandStatus()
 					gtk_widget_set_sensitive(item->mGtkMenuItem, enabled);
 					item->mEnabled = enabled;
 				}
-			
-//				if (enabled != item->mEnabled)
-//				{
-//					gtk_widget_set_sensitive(item->mGtkMenuItem, enabled);
-//					item->mEnabled = enabled;
-//				}
+				
+				
+				if (item->mCanCheck)
+					item->SetChecked(checked);
 			}
 		}
 		
@@ -351,6 +438,7 @@ MMenubar::MMenubar(
 	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
 	, mTarget(inTarget)
 	, mWindowMenu(nil)
+	, mTemplateMenu(nil)
 {
 	mGtkMenubar = gtk_menu_bar_new();
 	mGtkAccel = gtk_accel_group_new();
@@ -394,9 +482,7 @@ void MMenubar::BuildFromResource(
 					continue;
 			
 				MMenu* obj = CreateMenu(menu);
-
-				const char* wm = (const char*)xmlGetProp(menu, BAD_CAST "window_menu");
-				AddMenu(obj, wm != nil and strcmp(wm, "true") == 0);
+				AddMenu(obj);
 			}
 		}
 
@@ -421,7 +507,14 @@ MMenu* MMenubar::CreateMenu(
 	if (label == nil)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	MMenu* menu = new MMenu(label);
+	const char* special = (const char*)xmlGetProp(inXMLNode, BAD_CAST "special");
+
+	MMenu* menu;
+
+	if (special != nil and strcmp(special, "recent") == 0)
+		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
+	else
+		menu = new MMenu(label);
 	
 	for (xmlNodePtr item = inXMLNode->children; item != nil; item = item->next)
 	{
@@ -447,33 +540,34 @@ MMenu* MMenubar::CreateMenu(
 				for (int i = 0; i < 4; ++i)
 					cmd |= cs[i] << ((3 - i) * 8);
 				
-//				cout << "command for " << label << " is " << MCommandToString(cmd) << endl; 
-				
-				menu->AppendItem(label, cmd);
+				const char* cc = (const char*)xmlGetProp(item, BAD_CAST "check");
+				if (cc != nil)
+				{
+					if (strcmp(cc, "radio") != 0)
+						THROW(("Check style menu item not supported yet"));
+					menu->AppendCheckItem(label, cmd);
+				}
+				else
+					menu->AppendItem(label, cmd);
 			}
 		}
 		else if (strcmp((const char*)item->name, "menu") == 0)
-		{
-			const char* rm = (const char*)xmlGetProp(item, BAD_CAST "recent_menu");
-			if (rm != nil and strcmp(rm, "true") == 0)
-			{
-				label = (const char*)xmlGetProp(item, BAD_CAST "label");
-				if (label == nil)
-					THROW(("Invalid menu item specification, label is missing"));
-
-				menu->AppendRecentMenu(label);
-			}
-			else
-				menu->AppendMenu(CreateMenu(item));
-		}
+			menu->AppendMenu(CreateMenu(item));
+	}
+	
+	if (special != nil)
+	{
+		if (strcmp(special, "window") == 0)
+			mWindowMenu = menu;
+		else if (strcmp(special, "template") == 0)
+			mTemplateMenu = menu;
 	}
 	
 	return menu;
 }
 
 void MMenubar::AddMenu(
-	MMenu*				inMenu,
-	bool				isWindowMenu)
+	MMenu*				inMenu)
 {
 	GtkWidget* menuItem = gtk_menu_item_new_with_label(inMenu->GetLabel().c_str());
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), inMenu->GetGtkMenu());
@@ -481,9 +575,6 @@ void MMenubar::AddMenu(
 	inMenu->SetTarget(mTarget);
 	inMenu->SetAcceleratorGroup(mGtkAccel);
 	mMenus.push_back(inMenu);
-	
-	if (isWindowMenu)
-		mWindowMenu = inMenu;
 }
 
 bool MMenubar::OnButtonPress(
@@ -491,9 +582,14 @@ bool MMenubar::OnButtonPress(
 {
 	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
 		(*m)->UpdateCommandStatus();
-	
+
 	if (mWindowMenu != nil)
-		gApp->UpdateWindowMenu(mWindowMenu);	
+		gApp->UpdateWindowMenu(mWindowMenu);
 	
+	if (mTemplateMenu != nil)
+		gApp->UpdateTemplateMenu(mTemplateMenu);
+
+	gtk_widget_show_all(mGtkMenubar);
+
 	return false;
 }

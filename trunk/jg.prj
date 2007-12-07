@@ -146,6 +146,7 @@
 			<link>glib-2.0</link>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread.a</file>
+			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
 			<link>z</link>

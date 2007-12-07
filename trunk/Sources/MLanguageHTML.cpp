@@ -947,7 +947,7 @@ MLanguageHTML::MatchLanguage(
 	MTextBuffer&		inText)
 {
 	uint32 result = 0;
-	if (FileNameMatches("*.html;*.htm;*.shtml", inFile))
+	if (FileNameMatches("*.html;*.htm;*.shtml;*.xhtml", inFile))
 	{
 		result += 90;
 	}

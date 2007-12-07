@@ -393,6 +393,26 @@ bool MController::ProcessCommand(
 					project->Disassemble(mDocument->GetURL().GetPath());
 				break;
 	
+			case cmd_2CharsPerTab:
+				if (mDocument != nil)
+					mDocument->SetCharsPerTab(2);
+				break;
+	
+			case cmd_4CharsPerTab:
+				if (mDocument != nil)
+					mDocument->SetCharsPerTab(4);
+				break;
+	
+			case cmd_8CharsPerTab:
+				if (mDocument != nil)
+					mDocument->SetCharsPerTab(8);
+				break;
+	
+			case cmd_16CharsPerTab:
+				if (mDocument != nil)
+					mDocument->SetCharsPerTab(16);
+				break;
+	
 			default:
 				result = false;
 				break;
@@ -504,6 +524,26 @@ bool MController::UpdateCommandStatus(
 				project != nil and
 				mDocument->GetURL().IsLocal() and
 				project->IsFileInProject(mDocument->GetURL().GetPath());
+			break;
+		
+		case cmd_2CharsPerTab:
+			outEnabled = true;
+			outChecked = mDocument->GetCharsPerTab() == 2;
+			break;
+		
+		case cmd_4CharsPerTab:
+			outEnabled = true;
+			outChecked = mDocument->GetCharsPerTab() == 4;
+			break;
+		
+		case cmd_8CharsPerTab:
+			outEnabled = true;
+			outChecked = mDocument->GetCharsPerTab() == 8;
+			break;
+		
+		case cmd_16CharsPerTab:
+			outEnabled = true;
+			outChecked = mDocument->GetCharsPerTab() == 16;
 			break;
 		
 		default:

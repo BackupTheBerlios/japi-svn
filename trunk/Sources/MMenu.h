@@ -23,19 +23,23 @@ class MMenu
 						const std::string&	inLabel,
 						uint32				inCommand);
 	
+	void			AppendCheckItem(
+						const std::string&	inLabel,
+						uint32				inCommand);
+	
 	void			AppendSeparator();
 
 	virtual void	AppendMenu(
 						MMenu*				inMenu);
-
-	void			AppendRecentMenu(
-						const std::string&	inLabel);
 
 	uint32			CountItems();
 	
 	void			RemoveItems(
 						uint32				inFromIndex,
 						uint32				inCount);
+
+	std::string		GetItemLabel(
+						uint32				inIndex) const;
 
 	void			SetTarget(
 						MHandler*			inHandler);
@@ -56,6 +60,8 @@ class MMenu
 						int32				inY,
 						bool				inBottomMenu);
 	
+	bool			IsRecentMenu() const;
+	
   protected:
 
 	static void		MenuPosition(
@@ -67,7 +73,8 @@ class MMenu
 
 	MMenuItem*		CreateNewItem(
 						const std::string&	inLabel,
-						uint32				inCommand);
+						uint32				inCommand,
+						GSList**			ioRadioGroup);
 
 	virtual bool	OnDestroy();
 	virtual void	OnSelectionDone();
@@ -79,6 +86,7 @@ class MMenu
 	std::string		mLabel;
 	MMenuItemList	mItems;
 	MHandler*		mTarget;
+	GSList*			mRadioGroup;
 	int32			mPopupX, mPopupY;
 };
 
@@ -91,8 +99,7 @@ class MMenubar
 						GtkWidget*			inWindow);
 
 	void			AddMenu(
-						MMenu*				inMenu,
-						bool				isWindowMenu = false);
+						MMenu*				inMenu);
 
 	void			BuildFromResource(
 						const char*			inResourceName);
@@ -113,6 +120,7 @@ class MMenubar
 	std::list<MMenu*>
 					mMenus;
 	MMenu*			mWindowMenu;
+	MMenu*			mTemplateMenu;
 };
 
 #endif

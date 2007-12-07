@@ -202,7 +202,10 @@ class MDocument
 	MLanguage*			GetLanguage() const					{ return mLanguage; }
 	EOLNKind			GetEOLNKind() const					{ return mText.GetEOLNKind(); }
 	MEncoding			GetEncoding() const					{ return mText.GetEncoding(); }
+
 	uint32				GetCharsPerTab() const				{ return mCharsPerTab; }
+	void				SetCharsPerTab(
+							uint32				inCharsPerTab);
 
 	void				SetDocInfo(
 							const std::string&	inLanguage,

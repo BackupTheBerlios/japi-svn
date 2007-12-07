@@ -37,6 +37,8 @@
 #include <cerrno>
 #include <signal.h>
 
+#include <boost/filesystem/fstream.hpp>
+
 #include "MDocument.h"
 #include "MEditWindow.h"
 #include "MPreferences.h"
@@ -162,7 +164,7 @@ bool MJapieApp::ProcessCommand(
 //			break;
 		
 		case cmd_OpenTemplate:
-			DoOpenTemplate(inCommand);
+			DoOpenTemplate(inMenu->GetItemLabel(inItemIndex));
 			break;
 		
 		case cmd_Find:
@@ -293,6 +295,22 @@ void MJapieApp::UpdateWindowMenu(
 		
 		doc = doc->GetNextDocument();
 	}	
+}
+
+void MJapieApp::UpdateTemplateMenu(
+	MMenu*				inMenu)
+{
+	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
+
+	MPath templatesDir = gPrefsDir / "Templates";
+	if (fs::exists(templatesDir) and fs::is_directory(templatesDir))
+	{
+		MFileIterator iter(templatesDir, 0);
+		
+		MPath file;
+		while (iter.Next(file))
+			inMenu->AppendItem(file.leaf(), cmd_OpenTemplate);
+	}
 }
 
 void MJapieApp::DoSelectWindowFromWindowMenu(
@@ -635,43 +653,38 @@ void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 }
 
 void MJapieApp::DoOpenTemplate(
-	uint32			inCommand)
-{//
-//	CFStringRef s;
-//	if (::CopyMenuItemTextAsCFString(inCommand.menu.menuRef,
-//		inCommand.menu.menuItemIndex, &s) == noErr)
-//	{
-//		MCFString sr(s, false);
-//		
-//		string n;
-//		sr.GetString(n);
-//		
-//		MFile file(gTemplatesDir / n);
-//		file.Open(O_RDONLY);
-//		
-//		uint64 len = file.GetSize();
-//		auto_array<char> buf(new char[len]);
-//		
-//		file.Read(buf.get(), len);
-//		
-//		string text(buf.get(), len);
-//		string::size_type offset = 0;
-//		
-//		while ((offset = text.find("$date$", offset)) != string::npos)
-//			text.replace(offset, 6, GetDateTime());
-//
-//		while ((offset = text.find("$name$", offset)) != string::npos)
-//			text.replace(offset, 6, GetUserName(false));
-//		
-//		while ((offset = text.find("$shortname$", offset)) != string::npos)
-//			text.replace(offset, 11, GetUserName(true));
-//		
-//		ustring utext;
-//		Convert(text, utext);
-//		
-//		MDocument* doc = new MDocument(utext, n);
-//		MDocWindow::DisplayDocument(doc);
-//	}
+	const string&		inTemplate)
+{
+	fs::ifstream file(gPrefsDir / "Templates" / inTemplate);
+	
+	if (not file.is_open())
+		THROW(("Could not open resource file"));
+
+	filebuf* b = file.rdbuf();
+	
+	uint32 size = b->pubseekoff(0, ios::end, ios::in);
+	b->pubseekoff(0, ios::beg, ios::in);
+	
+	string text(size, '\0');
+	
+	b->sgetn(&text[0], size);
+	file.close();
+	
+	string::size_type offset = 0;
+	
+	while ((offset = text.find("$date$", offset)) != string::npos)
+		text.replace(offset, 6, GetDateTime());
+
+	offset = 0;
+	while ((offset = text.find("$name$", offset)) != string::npos)
+		text.replace(offset, 6, GetUserName(false));
+	
+	offset = 0;
+	while ((offset = text.find("$shortname$", offset)) != string::npos)
+		text.replace(offset, 11, GetUserName(true));
+	
+	MDocument* doc = new MDocument(text, inTemplate);
+	MDocWindow::DisplayDocument(doc);
 }
 
 void MJapieApp::ShowWorksheet()
