@@ -471,18 +471,16 @@ void MMenubar::BuildFromResource(
 		
 		// build a menu
 		
-		for (xmlNodePtr node = xmlDoc->children; node != nil; node = node->next)
+		XMLNode node(xmlDoc->children);
+		if (node.name() == "menubar")
 		{
-			if (xmlNodeIsText(node) or strcmp((const char*)node->name, "menubar"))
-				continue;
-			
-			for (xmlNodePtr menu = node->children; menu != nil; menu = menu->next)
+			for (XMLNode::iterator menu = node.begin(); menu != node.end(); ++menu)
 			{
-				if (xmlNodeIsText(menu) or strcmp((const char*)menu->name, "menu"))
-					continue;
-			
-				MMenu* obj = CreateMenu(menu);
-				AddMenu(obj);
+				if (menu->name() == "menu")
+				{
+					MMenu* obj = CreateMenu(*menu);
+					AddMenu(obj);
+				}
 			}
 		}
 
@@ -501,67 +499,56 @@ void MMenubar::BuildFromResource(
 }
 
 MMenu* MMenubar::CreateMenu(
-	xmlNodePtr		inXMLNode)
+	XMLNode&		inXMLNode)
 {
-	const char* label = (const char*)xmlGetProp(inXMLNode, BAD_CAST "label");
-	if (label == nil)
+	string label = inXMLNode.property("label");
+	if (label.length() == 0)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	const char* special = (const char*)xmlGetProp(inXMLNode, BAD_CAST "special");
+	string special = inXMLNode.property("special");
 
 	MMenu* menu;
 
-	if (special != nil and strcmp(special, "recent") == 0)
+	if (special == "recent")
 		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
 	else
+	{
 		menu = new MMenu(label);
-	
-	for (xmlNodePtr item = inXMLNode->children; item != nil; item = item->next)
-	{
-		if (xmlNodeIsText(item))
-			continue;
-
-		if (strcmp((const char*)item->name, "item") == 0)
+		
+		for (XMLNode::iterator item = inXMLNode.begin(); item != inXMLNode.end(); ++item)
 		{
-			label = (const char*)xmlGetProp(item, BAD_CAST "label");
-			if (label == nil)
-				THROW(("Invalid menu item specification, label is missing"));
-			
-			if (strcmp(label, "-") == 0)
-				menu->AppendSeparator();
-			else
+			if (item->name() == "item")
 			{
-				uint32 cmd = 0;
-
-				const char* cs = (const char*)xmlGetProp(item, BAD_CAST "cmd");
-				if (cs == nil or strlen(cs) != 4)
-					THROW(("Invalid menu item specification, cmd is not correct"));
+				label = item->property("label");
 				
-				for (int i = 0; i < 4; ++i)
-					cmd |= cs[i] << ((3 - i) * 8);
-				
-				const char* cc = (const char*)xmlGetProp(item, BAD_CAST "check");
-				if (cc != nil)
-				{
-					if (strcmp(cc, "radio") != 0)
-						THROW(("Check style menu item not supported yet"));
-					menu->AppendCheckItem(label, cmd);
-				}
+				if (label == "-")
+					menu->AppendSeparator();
 				else
-					menu->AppendItem(label, cmd);
+				{
+					string cs = item->property("cmd").c_str();
+	
+					if (cs.length() != 4)
+						THROW(("Invalid menu item specification, cmd is not correct"));
+					
+					uint32 cmd = 0;
+					for (int i = 0; i < 4; ++i)
+						cmd |= cs[i] << ((3 - i) * 8);
+					
+					if (item->property("check") == "radio")
+						menu->AppendCheckItem(label, cmd);
+					else
+						menu->AppendItem(label, cmd);
+				}
 			}
+			else if (item->name() == "menu")
+				menu->AppendMenu(CreateMenu(*item));
 		}
-		else if (strcmp((const char*)item->name, "menu") == 0)
-			menu->AppendMenu(CreateMenu(item));
 	}
 	
-	if (special != nil)
-	{
-		if (strcmp(special, "window") == 0)
-			mWindowMenu = menu;
-		else if (strcmp(special, "template") == 0)
-			mTemplateMenu = menu;
-	}
+	if (special == "window")
+		mWindowMenu = menu;
+	else if (special == "template")
+		mTemplateMenu = menu;
 	
 	return menu;
 }

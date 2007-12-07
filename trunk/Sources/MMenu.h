@@ -10,6 +10,8 @@
 struct MMenuItem;
 typedef std::vector<MMenuItem*>	MMenuItemList;
 
+class XMLNode;
+
 class MMenu
 {
   public:
@@ -110,7 +112,7 @@ class MMenubar
 						GdkEventButton*		inEvent);
 
 	MMenu*			CreateMenu(
-						xmlNodePtr			inXMLNode);
+						XMLNode&			inXMLNode);
 	
 	MSlot<bool(GdkEventButton*)>
 					mOnButtonPressEvent;
