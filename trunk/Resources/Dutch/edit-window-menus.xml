@@ -52,7 +52,16 @@
 			<item label="16" cmd="Tw16" check="radio" />
 		</menu>
 		<item label="-" />
-		<item label="Bestandsinfo…" cmd='DocI'/>
+		<menu id='syntaxmenu' label="Syntax kleuring">
+			<item label="Geen" cmd='St_N' check='radio' />
+			<item label="-" />
+			<item label="C++" cmd='St_L' check='radio' />
+			<item label="HTML" cmd='St_L' check='radio' />
+			<item label="Perl" cmd='St_L' check='radio' />
+			<item label="TeX" cmd='St_L' check='radio' />
+			<item label="XML" cmd='St_L' check='radio' />
+		</menu>
+		<!--item label="Bestandsinfo…" cmd='DocI'/-->
 	</menu>
 	<menu id='' label="Zoek">
 		<item label="Snel zoeken" cmd='FFnd'/>

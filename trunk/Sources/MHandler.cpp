@@ -17,13 +17,18 @@ MHandler::~MHandler()
 
 bool MHandler::UpdateCommandStatus(
 	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
 	bool&			outEnabled,
 	bool&			outChecked)
 {
 	bool result = false;
 	
 	if (mSuper != nil)
-		result = mSuper->UpdateCommandStatus(inCommand, outEnabled, outChecked);
+	{
+		result = mSuper->UpdateCommandStatus(
+			inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	}
 	
 	return result;
 }

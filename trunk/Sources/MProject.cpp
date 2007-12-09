@@ -152,7 +152,6 @@ MProject* MProject::Instance()
 MProject::MProject(const MPath& inPath)
 	: eProjectFileStatusChanged(this, &MProject::ProjectFileStatusChanged)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
-	, ePkgConfigData(this, &MProject::PkgConfigData)
 	, mTargetSelected(this, &MProject::TargetSelected)
 	, ePoll(this, &MProject::Poll)
 	, mModified(false)
@@ -1274,6 +1273,8 @@ bool MProject::ProcessCommand(
 
 bool MProject::UpdateCommandStatus(
 	uint32				inCommand,
+	MMenu*				inMenu,
+	uint32				inItemIndex,
 	bool&				outEnabled,
 	bool&				outChecked)
 {
@@ -1333,7 +1334,8 @@ bool MProject::UpdateCommandStatus(
 			break;		
 		
 		default:
-			result = MWindow::UpdateCommandStatus(inCommand, outEnabled, outChecked);
+			result = MWindow::UpdateCommandStatus(
+				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 			break;
 	}
 	
@@ -2359,16 +2361,6 @@ void MProject::GetIncludePaths(
 	}
 
 	copy(mUserSearchPaths.begin(), mUserSearchPaths.end(), back_inserter(outPaths));
-}
-
-// ---------------------------------------------------------------------------
-//	MProject::PkgConfigData
-
-void MProject::PkgConfigData(
-	const char*		inText,
-	uint32			inSize)
-{
-	mPkgConfigData.append(inText, inSize);
 }
 
 // ---------------------------------------------------------------------------

@@ -223,7 +223,9 @@ MMenuItem* MMenu::CreateNewItem(
 	else
 	{
 		item->CreateWidget();
-		mRadioGroup = nil;
+		
+		if (inLabel != "-")
+			mRadioGroup = nil;
 	}
 
 	item->mIndex = mItems.size();
@@ -336,7 +338,8 @@ void MMenu::UpdateCommandStatus()
 			bool enabled = item->mEnabled;
 			bool checked = item->mChecked;
 			
-			if (mTarget->UpdateCommandStatus(item->mCommand, enabled, checked))
+			if (mTarget->UpdateCommandStatus(item->mCommand, this,
+				mi - mItems.begin(), enabled, checked))
 			{
 				if (enabled != item->mEnabled)
 				{

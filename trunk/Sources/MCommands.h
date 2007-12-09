@@ -122,7 +122,10 @@ const uint32
 	cmd_2CharsPerTab =			'Tw_2',
 	cmd_4CharsPerTab =			'Tw_4',
 	cmd_8CharsPerTab =			'Tw_8',
-	cmd_16CharsPerTab =			'Tw16';
+	cmd_16CharsPerTab =			'Tw16',
+	
+	cmd_SyntaxNone =			'St_N',
+	cmd_SyntaxLanguage =		'St_L';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

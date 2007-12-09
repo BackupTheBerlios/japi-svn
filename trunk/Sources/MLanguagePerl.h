@@ -45,6 +45,9 @@ class MLanguagePerl : public MLanguage
   public:
 					MLanguagePerl();
 	
+	virtual std::string
+					GetName() const			{ return "Perl"; }
+
 	virtual void	Init();
 
 	virtual void	StyleLine(

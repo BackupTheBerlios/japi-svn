@@ -107,10 +107,13 @@ bool MWindow::OnDelete(
 
 bool MWindow::UpdateCommandStatus(
 	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	return MHandler::UpdateCommandStatus(inCommand, outEnabled, outChecked);
+	return MHandler::UpdateCommandStatus(
+		inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 }
 
 bool MWindow::ProcessCommand(

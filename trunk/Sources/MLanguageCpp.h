@@ -47,6 +47,9 @@ class MLanguageCpp : public MLanguage
   public:
 					MLanguageCpp();
 	
+	virtual std::string
+					GetName() const			{ return "C++"; }
+
 	virtual void	Init();
 
 	virtual void	StyleLine(

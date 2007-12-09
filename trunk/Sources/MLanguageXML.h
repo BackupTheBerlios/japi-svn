@@ -45,6 +45,9 @@ class MLanguageXML : public MLanguage
   public:
 					MLanguageXML();
 	
+	virtual std::string
+					GetName() const			{ return "XML"; }
+
 	virtual void	Init();
 
 	virtual void	StyleLine(

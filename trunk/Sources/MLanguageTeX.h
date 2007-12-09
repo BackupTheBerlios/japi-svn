@@ -45,6 +45,9 @@ class MLanguageTeX : public MLanguage
   public:
 					MLanguageTeX();
 	
+	virtual std::string
+					GetName() const			{ return "TeX"; }
+
 	virtual void	Init();
 
 	virtual void	StyleLine(

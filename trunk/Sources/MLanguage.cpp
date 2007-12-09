@@ -350,25 +350,6 @@ MLanguage::~MLanguage()
 	delete mRecognizer;
 }
 
-template<class T>
-T* MatchLanguage(
-	const string&	inFile,
-	MTextBuffer&	inText)
-{
-	T* result = nil;
-	if (T::MatchLanguage(inFile, inText) > 50)
-	{
-		static T* sLanguage = nil;
-		if (sLanguage == nil)
-		{
-			sLanguage = new T;
-			sLanguage->Init();
-		}
-		result = sLanguage;
-	}
-	return result;
-}
-
 MLanguage*
 MLanguage::GetLanguageForDocument(
 	const string&	inFile,
@@ -376,15 +357,35 @@ MLanguage::GetLanguageForDocument(
 {
 	MLanguage* result = nil;
 
-	result = MatchLanguage<MLanguageCpp>(inFile, inText);
-	if (result == nil)
-		result = MatchLanguage<MLanguagePerl>(inFile, inText);
-	if (result == nil)
-		result = MatchLanguage<MLanguageHTML>(inFile, inText);
-	if (result == nil)
-		result = MatchLanguage<MLanguageTeX>(inFile, inText);
-	if (result == nil)
-		result = MatchLanguage<MLanguageXML>(inFile, inText);
+	if (MLanguageCpp::MatchLanguage(inFile, inText))
+		result = Instance<MLanguageCpp>();
+	else if (MLanguageHTML::MatchLanguage(inFile, inText))
+		result = Instance<MLanguageHTML>();
+	else if (MLanguagePerl::MatchLanguage(inFile, inText))
+		result = Instance<MLanguagePerl>();
+	else if (MLanguageTeX::MatchLanguage(inFile, inText))
+		result = Instance<MLanguageTeX>();
+	else if (MLanguageXML::MatchLanguage(inFile, inText))
+		result = Instance<MLanguageXML>();
+	
+	return result;
+}
+
+MLanguage*
+MLanguage::GetLanguage(
+	const string&		inName)
+{
+	MLanguage* result = Instance<MLanguageCpp>();
+	if (inName != result->GetName())
+		result = Instance<MLanguagePerl>();
+	if (inName != result->GetName())
+		result = Instance<MLanguageHTML>();
+	if (inName != result->GetName())
+		result = Instance<MLanguageTeX>();
+	if (inName != result->GetName())
+		result = Instance<MLanguageXML>();
+	if (inName != result->GetName())
+		result = nil;
 	
 	return result;
 }

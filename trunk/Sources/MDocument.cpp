@@ -471,6 +471,19 @@ void MDocument::ReInit()
 }
 
 // ---------------------------------------------------------------------------
+//	SetLanguage
+
+void MDocument::SetLanguage(
+	const string&		inLanguage)
+{
+	mLanguage = MLanguage::GetLanguage(inLanguage);
+
+	ReInit();
+	Rewrap();
+	UpdateDirtyLines();
+}
+
+// ---------------------------------------------------------------------------
 //	SetCharsPerTab
 
 void MDocument::SetCharsPerTab(

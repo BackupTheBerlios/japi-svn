@@ -88,6 +88,12 @@ class MLanguage
 	static MLanguage* GetLanguageForDocument(
 						const std::string&	inFile,
 						MTextBuffer&		inText);
+
+	static MLanguage* GetLanguage(
+						const std::string&	inName);
+		
+	virtual std::string
+					GetName() const = 0;
 			
 	virtual void	StyleLine(
 						const MTextBuffer&	inText,
@@ -154,6 +160,18 @@ class MLanguage
   protected:
 					MLanguage();
 	virtual			~MLanguage();
+
+	template<class L>
+	static L*		Instance()
+					{
+						static std::auto_ptr<L> sInstance;
+						if (sInstance.get() == nil)
+						{
+							sInstance.reset(new L);
+							sInstance->Init();
+						}
+						return sInstance.get();
+					}
 
 	void			SetStyle(
 						uint32				inOffset,

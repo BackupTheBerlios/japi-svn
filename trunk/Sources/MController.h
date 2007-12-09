@@ -98,6 +98,8 @@ class MController : public MHandler, public MSaverMixin
 
 	virtual bool		UpdateCommandStatus(
 							uint32			inCommand,
+							MMenu*			inMenu,
+							uint32			inItemIndex,
 							bool&			outEnabled,
 							bool&			outChecked);
 

@@ -45,6 +45,9 @@ class MLanguageHTML : public MLanguage
   public:
 					MLanguageHTML();
 	
+	virtual std::string
+					GetName() const			{ return "HTML"; }
+
 	virtual void	Init();
 
 	virtual void	StyleLine(

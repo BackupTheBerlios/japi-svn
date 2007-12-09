@@ -276,10 +276,13 @@ string MDocWindow::GetUntitledTitle()
 
 bool MDocWindow::UpdateCommandStatus(
 	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	bool result = mController.UpdateCommandStatus(inCommand, outEnabled, outChecked);
+	bool result = mController.UpdateCommandStatus(
+		inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 
 	if (result == false)
 	{
@@ -288,7 +291,8 @@ bool MDocWindow::UpdateCommandStatus(
 		switch (inCommand)
 		{
 			default:
-				result = MWindow::UpdateCommandStatus(inCommand, outEnabled, outChecked);
+				result = MWindow::UpdateCommandStatus(
+					inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 				break;
 		}
 	}

@@ -200,6 +200,10 @@ class MDocument
 	uint32				GetIndent(uint32 inOffset) const;
 	
 	MLanguage*			GetLanguage() const					{ return mLanguage; }
+
+	void				SetLanguage(
+							const std::string&	inLanguage);
+
 	EOLNKind			GetEOLNKind() const					{ return mText.GetEOLNKind(); }
 	MEncoding			GetEncoding() const					{ return mText.GetEncoding(); }
 

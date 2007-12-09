@@ -30,6 +30,8 @@ class MWindow : public MView, public MHandler
 
 	virtual bool			UpdateCommandStatus(
 								uint32			inCommand,
+								MMenu*			inMenu,
+								uint32			inItemIndex,
 								bool&			outEnabled,
 								bool&			outChecked);
 

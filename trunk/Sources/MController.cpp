@@ -47,6 +47,7 @@
 #include "MUnicode.h"
 #include "MGlobals.h"
 #include "MProject.h"
+#include "MLanguage.h"
 //#include "MDocInfoDialog.h"
 #include "MUtils.h"
 
@@ -412,6 +413,14 @@ bool MController::ProcessCommand(
 				if (mDocument != nil)
 					mDocument->SetCharsPerTab(16);
 				break;
+			
+			case cmd_SyntaxNone:
+				mDocument->SetLanguage("");
+				break;
+			
+			case cmd_SyntaxLanguage:
+				mDocument->SetLanguage(inMenu->GetItemLabel(inItemIndex));
+				break;
 	
 			default:
 				result = false;
@@ -425,6 +434,8 @@ bool MController::ProcessCommand(
 
 bool MController::UpdateCommandStatus(
 	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
 	bool&			outEnabled,
 	bool&			outChecked)
 {
@@ -433,6 +444,7 @@ bool MController::UpdateCommandStatus(
 //		return noErr;
 
 	MProject* project = MProject::Instance();
+	MLanguage* lang = mDocument->GetLanguage();
 
 	string title;
 		
@@ -544,6 +556,16 @@ bool MController::UpdateCommandStatus(
 		case cmd_16CharsPerTab:
 			outEnabled = true;
 			outChecked = mDocument->GetCharsPerTab() == 16;
+			break;
+		
+		case cmd_SyntaxNone:
+			outEnabled = true;
+			outChecked = (lang == nil);
+			break;
+		
+		case cmd_SyntaxLanguage:
+			outEnabled = true;
+			outChecked = (lang != nil and lang->GetName() == inMenu->GetItemLabel(inItemIndex));
 			break;
 		
 		default:

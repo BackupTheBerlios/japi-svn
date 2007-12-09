@@ -225,6 +225,8 @@ bool MJapieApp::ProcessCommand(
 
 bool MJapieApp::UpdateCommandStatus(
 	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
 	bool&			outEnabled,
 	bool&			outChecked)
 {
@@ -386,7 +388,7 @@ gint MJapieApp::Snooper(
 				handler = gApp;
 			
 			bool enabled, checked;
-			if (handler->UpdateCommandStatus(cmd, enabled, checked) and enabled)
+			if (handler->UpdateCommandStatus(cmd, nil, 0, enabled, checked) and enabled)
 				result = handler->ProcessCommand(cmd, nil, 0);
 		}
 	}

@@ -87,6 +87,8 @@ class MProject : public MWindow, public MSaverMixin
 
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
+							MMenu*				inMenu,
+							uint32				inItemIndex	,
 							bool&				outEnabled,
 							bool&				outChecked);
 
@@ -323,13 +325,6 @@ class MProject : public MWindow, public MSaverMixin
 							int32				inItemNr);
 
 	void				TargetSelected();
-
-	void				PkgConfigData(
-							const char*			inText,
-							uint32				inSize);
-
-	MEventIn<void(const char* inText, uint32 inSize)>
-							ePkgConfigData;
 
 	MSlot<void()>			mTargetSelected;
 	MEventIn<void(double)>	ePoll;
