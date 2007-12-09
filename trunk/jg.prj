@@ -120,6 +120,7 @@
 			<file>MClipboard.cpp</file>
 			<file>MSaverMixin.cpp</file>
 			<file>MShell.cpp</file>
+			<file>MPkgConfig.cpp</file>
 			<file>MSelection.cpp</file>
 			<group name="SFTP">
 				<file>MAuthDialog.cpp</file>

@@ -59,6 +59,7 @@
 #include "MProjectInfoDialog.h"
 #include "MProjectPathsDialog.h"
 #include "MFindAndOpenDialog.h"
+#include "MPkgConfig.h"
 
 //#define foreach BOOST_FOREACH
 
@@ -3019,6 +3020,12 @@ void MProject::SelectTarget(
 	mPackageItems.UpdatePaths(mObjectDir);
 	mPackageItems.CheckCompilationResult();
 	mPackageItems.CheckIsOutOfDate(modDateCache);
+	
+	for (vector<string>::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
+	{
+		vector<string> cflags, incdirs;
+		PkgConfigGetCFlags(*pkg, cflags, incdirs);
+	}
 
 	SetStatus("", false);
 }
