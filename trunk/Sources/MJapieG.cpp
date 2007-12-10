@@ -52,7 +52,6 @@
 #include "MSftpGetDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
-#include "MDialog2.h"
 
 #include <iostream>
 
@@ -177,7 +176,7 @@ bool MJapieApp::ProcessCommand(
 		
 		case cmd_OpenIncludeFile:
 		{
-			std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
+			std::auto_ptr<MFindAndOpenDialog> dlog(MDialog::Create<MFindAndOpenDialog>());
 			dlog->Initialize(nil, nil);
 			dlog.release();
 			break;
@@ -210,9 +209,6 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
-//			DisplayAlert("Resources/Dutch/unknown-host-alert.xml");
-//			MDialog2* dlog = MDialog2::Create<MDialog2>("find-dialog");
-//			dlog->Show(nil);
 			break;
 		
 		default:

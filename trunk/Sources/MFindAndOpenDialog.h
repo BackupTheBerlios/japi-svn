@@ -45,7 +45,14 @@ class MController;
 class MFindAndOpenDialog : public MDialog
 {
   public:
-					MFindAndOpenDialog();
+					MFindAndOpenDialog(
+						GladeXML*		inGlade,
+						GtkWidget*		inRoot);
+
+	static const char*
+					GetResourceName()		{ return "find-and-open-dialog"; }
+
+	virtual void	Init();
 
 	void			Initialize(
 						MController*	inController,

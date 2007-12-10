@@ -57,7 +57,7 @@
 #include "MProjectJob.h"
 #include "MNewGroupDialog.h"
 #include "MProjectInfoDialog.h"
-#include "MProjectPathsDialog.h"
+//#include "MProjectPathsDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MPkgConfig.h"
 
@@ -1175,7 +1175,8 @@ bool MProject::ProcessCommand(
 		
 		case cmd_OpenIncludeFile:
 		{
-			std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
+			std::auto_ptr<MFindAndOpenDialog> dlog(	
+				MDialog::Create<MFindAndOpenDialog>());
 			dlog->Initialize(nil, this);
 			dlog.release();
 			break;
@@ -1233,14 +1234,14 @@ bool MProject::ProcessCommand(
 			break;
 		}
 		
-		case cmd_EditProjectPaths:
-		{
-			auto_ptr<MProjectPathsDialog> dlog(new MProjectPathsDialog);
-			dlog->Initialize(this, mUserSearchPaths, mSysSearchPaths,
-				mLibSearchPaths, mFrameworkPaths);
-			dlog.release();
-			break;
-		}
+//		case cmd_EditProjectPaths:
+//		{
+//			auto_ptr<MProjectPathsDialog> dlog(new MProjectPathsDialog);
+//			dlog->Initialize(this, mUserSearchPaths, mSysSearchPaths,
+//				mLibSearchPaths, mFrameworkPaths);
+//			dlog.release();
+//			break;
+//		}
 		
 //		case cmd_ChangePanel:
 //			switch (::GetControl32BitValue(mPanelSegmentRef))

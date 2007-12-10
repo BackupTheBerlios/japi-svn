@@ -2,15 +2,15 @@
 
 #include <sstream>
 
-#include "MDialog2.h"
+#include "MDialog.h"
 #include "MResources.h"
 #include "MPreferences.h"
 
 using namespace std;
 
-MDialog2* MDialog2::sFirst;
+MDialog* MDialog::sFirst;
 
-void MDialog2::CreateGladeAndWidgets(
+void MDialog::CreateGladeAndWidgets(
 	const char*		inResource,
 	GladeXML*&		outGlade,
 	GtkWidget*&		outWidget)
@@ -30,11 +30,11 @@ void MDialog2::CreateGladeAndWidgets(
 		THROW(("Failed to extract root widget from glade ('dialog')"));
 }
 
-MDialog2::MDialog2(
+MDialog::MDialog(
 	GladeXML*		inGlade,
 	GtkWidget*		inRoot)
 	: MWindow(inRoot)
-	, mChildFocus(this, &MDialog2::ChildFocus)
+	, mChildFocus(this, &MDialog::ChildFocus)
 	, mGlade(inGlade)
 	, mParentWindow(nil)
 	, mNext(nil)
@@ -44,19 +44,22 @@ MDialog2::MDialog2(
 	sFirst = this;
 
 	glade_xml_signal_connect_data(mGlade, "on_changed", 
-		G_CALLBACK(&MDialog2::ChangedCallBack), this);
+		G_CALLBACK(&MDialog::ChangedCallBack), this);
+
+	glade_xml_signal_connect_data(mGlade, "on_std_btn_click", 
+		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
 
 	gtk_container_foreach(GTK_CONTAINER(inRoot),
-		&MDialog2::DoForEachCallBack, this);
+		&MDialog::DoForEachCallBack, this);
 }
 
-MDialog2::~MDialog2()
+MDialog::~MDialog()
 {
 	if (sFirst == this)
 		sFirst = mNext;
 	else
 	{
-		MDialog2* dlog = sFirst;
+		MDialog* dlog = sFirst;
 		while (dlog->mNext != nil)
 		{
 			if (dlog->mNext == this)
@@ -71,14 +74,12 @@ MDialog2::~MDialog2()
 	g_object_unref(mGlade);
 }
 
-void MDialog2::Init()
+void MDialog::Init()
 {
 	gtk_widget_show_all(GetGtkWidget());
-
-	SetChecked('wrap', true);
 }
 
-void MDialog2::Show(
+void MDialog::Show(
 	MWindow*		inParent)
 {
 	if (inParent != nil)
@@ -91,7 +92,7 @@ void MDialog2::Show(
 	MWindow::Show();
 }
 
-const char* MDialog2::IDToName(
+const char* MDialog::IDToName(
 	uint32			inID,
 	char			inName[5]) const
 {
@@ -104,7 +105,7 @@ const char* MDialog2::IDToName(
 	return inName;
 }
 
-GtkWidget* MDialog2::GetWidget(
+GtkWidget* MDialog::GetWidget(
 	uint32				inID) const
 {
 	char name[5];
@@ -114,13 +115,13 @@ GtkWidget* MDialog2::GetWidget(
 	return wdgt;
 }
 
-void MDialog2::SetFocus(
+void MDialog::SetFocus(
 	uint32				inID)
 {
 	gtk_widget_grab_focus(GetWidget(inID));
 }
 
-void MDialog2::GetText(
+void MDialog::GetText(
 	uint32				inID,
 	std::string&		outText) const
 {
@@ -133,7 +134,7 @@ void MDialog2::GetText(
 		THROW(("item is not an entry"));
 }
 
-void MDialog2::SetText(
+void MDialog::SetText(
 	uint32				inID,
 	const std::string&	inText)
 {
@@ -154,7 +155,7 @@ assert(false);//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(wdgt), inText.c_st
 		THROW(("item is not an entry"));
 }
 
-int32 MDialog2::GetValue(
+int32 MDialog::GetValue(
 	uint32				inID) const
 {
 	int32 result = 0;
@@ -168,7 +169,7 @@ int32 MDialog2::GetValue(
 	return result;
 }
 
-void MDialog2::SetValue(
+void MDialog::SetValue(
 	uint32				inID,
 	int32				inValue)
 {
@@ -181,14 +182,14 @@ void MDialog2::SetValue(
 }
 
 // for comboboxes
-void MDialog2::GetValues(
+void MDialog::GetValues(
 	uint32				inID,
 	vector<string>& 	outValues) const
 {
 	assert(false);
 }
 
-void MDialog2::SetValues(
+void MDialog::SetValues(
 	uint32				inID,
 	const vector<string>&
 						inValues)
@@ -211,7 +212,7 @@ void MDialog2::SetValues(
 	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), 0);
 }
 
-bool MDialog2::IsChecked(
+bool MDialog::IsChecked(
 	uint32				inID) const
 {
 	GtkWidget* wdgt = GetWidget(inID);
@@ -220,7 +221,7 @@ bool MDialog2::IsChecked(
 	return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wdgt));
 }
 
-void MDialog2::SetChecked(
+void MDialog::SetChecked(
 	uint32				inID,
 	bool				inOn)
 {
@@ -230,14 +231,14 @@ void MDialog2::SetChecked(
 	return gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wdgt), inOn);
 }	
 
-bool MDialog2::IsVisible(
+bool MDialog::IsVisible(
 	uint32				inID) const
 {
 	GtkWidget* wdgt = GetWidget(inID);
 	return GTK_WIDGET_VISIBLE(wdgt);
 }
 
-void MDialog2::SetVisible(
+void MDialog::SetVisible(
 	uint32				inID,
 	bool				inVisible)
 {
@@ -248,14 +249,14 @@ void MDialog2::SetVisible(
 		gtk_widget_hide(wdgt);
 }
 
-bool MDialog2::IsEnabled(
+bool MDialog::IsEnabled(
 	uint32				inID) const
 {
 	GtkWidget* wdgt = GetWidget(inID);
 	return GTK_WIDGET_IS_SENSITIVE(wdgt);
 }
 
-void MDialog2::SetEnabled(
+void MDialog::SetEnabled(
 	uint32				inID,
 	bool				inEnabled)
 {
@@ -263,7 +264,7 @@ void MDialog2::SetEnabled(
 	gtk_widget_set_sensitive(wdgt, inEnabled);
 }
 
-bool MDialog2::IsExpanded(
+bool MDialog::IsExpanded(
 	uint32				inID) const
 {
 	GtkWidget* wdgt = GetWidget(inID);
@@ -271,7 +272,7 @@ bool MDialog2::IsExpanded(
 	return gtk_expander_get_expanded(GTK_EXPANDER(wdgt));
 }
 
-void MDialog2::SetExpanded(
+void MDialog::SetExpanded(
 	uint32				inID,
 	bool				inExpanded)
 {
@@ -280,18 +281,28 @@ void MDialog2::SetExpanded(
 	gtk_expander_set_expanded(GTK_EXPANDER(wdgt), inExpanded);
 }
 
-void MDialog2::ValueChanged(
+void MDialog::ValueChanged(
 	uint32				inID)
 {
 //	char name[5];
 //	cout << "Value Changed for " << IDToName(inID, name) << endl;
 }
 
-void MDialog2::ChangedCallBack(
+bool MDialog::OKClicked()
+{
+	return true;
+}
+
+bool MDialog::CancelClicked()
+{
+	return true;
+}
+
+void MDialog::ChangedCallBack(
 	GtkWidget*			inWidget,
 	gpointer			inUserData)
 {
-	MDialog2* self = reinterpret_cast<MDialog2*>(inUserData);
+	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
 	
 	const char* name = glade_get_widget_name(inWidget);
 	if (name != nil)
@@ -312,7 +323,47 @@ void MDialog2::ChangedCallBack(
 	}
 }
 
-void MDialog2::SavePosition(const char* inName)
+void MDialog::StdBtnClickedCallBack(
+	GtkWidget*			inWidget,
+	gpointer			inUserData)
+{
+	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
+	
+	const char* name = glade_get_widget_name(inWidget);
+	if (name != nil)
+	{
+		uint32 id = 0;
+		for (uint32 i = 0; i < 4 and name[i]; ++i)
+			id = (id << 8) | name[i];
+		
+		try
+		{
+			switch (id)
+			{
+				case 'okok':
+					if (self->OKClicked())
+						self->Close();
+					break;
+				
+				case 'cncl':
+					if (self->CancelClicked())
+						self->Close();
+					break;
+				
+				default:
+					self->ValueChanged(id);
+					break;
+			}
+		}
+		catch (exception& e)
+		{
+			MError::DisplayError(e);
+		}
+		catch (...) {}
+	}
+}
+
+void MDialog::SavePosition(const char* inName)
 {
 	int x, y;
 	gtk_window_get_position(GTK_WINDOW(GetGtkWidget()), &x, &y);
@@ -323,7 +374,7 @@ void MDialog2::SavePosition(const char* inName)
 	Preferences::SetString(inName, s.str());
 }
 
-void MDialog2::RestorePosition(const char* inName)
+void MDialog::RestorePosition(const char* inName)
 {
 	string s = Preferences::GetString(inName, "");
 	if (s.length() > 0)
@@ -337,46 +388,42 @@ void MDialog2::RestorePosition(const char* inName)
 	}
 }
 
-void MDialog2::SetCloseImmediatelyFlag(
+void MDialog::SetCloseImmediatelyFlag(
 	bool inCloseImmediately)
 {
 	mCloseImmediatelyOnOK = inCloseImmediately;
 }
 
-void MDialog2::DoForEachCallBack(
+void MDialog::DoForEachCallBack(
 	GtkWidget*			inWidget,
 	gpointer			inUserData)
 {
-	MDialog2* self = reinterpret_cast<MDialog2*>(inUserData);
+	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
 	self->DoForEach(inWidget);
 }
 
-void MDialog2::DoForEach(
+void MDialog::DoForEach(
 	GtkWidget*			inWidget)
 {
-	const char* name = gtk_widget_get_name(inWidget);
-	const char* gladeName = glade_get_widget_name(inWidget);
-
-	if (name == nil)
-		name = "undefined";
-	
-	if (gladeName == nil)
-		gladeName = "undefined";
-	
-	cout << "name: " << name << " glade: " << gladeName << endl;
-	
 	gboolean canFocus = false;
+
 	g_object_get(G_OBJECT(inWidget), "can-focus", &canFocus, NULL);
+
 	if (canFocus)
 		mChildFocus.Connect(inWidget, "focus-in-event");
 	
 	if (GTK_IS_CONTAINER(inWidget))
-		gtk_container_foreach(GTK_CONTAINER(inWidget), &MDialog2::DoForEachCallBack, this);
+		gtk_container_foreach(GTK_CONTAINER(inWidget), &MDialog::DoForEachCallBack, this);
 }
 
-bool MDialog2::ChildFocus(
+bool MDialog::ChildFocus(
 	GdkEventFocus*		inEvent)
 {
-	TakeFocus();
+	try
+	{
+		TakeFocus();
+	}
+	catch (...) {}
 	return false;
 }
+

@@ -42,7 +42,7 @@
 
 #include <boost/thread.hpp>
 
-#include "MDialog2.h"
+#include "MDialog.h"
 #include "MFile.h"
 #include "MP2PEvents.h"
 //#include "MScrap.h"
@@ -60,7 +60,7 @@ enum MMultiMethod
 	eMMIncludes
 };	
 
-class MFindDialog : public MDialog2
+class MFindDialog : public MDialog
 {
   public:
 
@@ -69,6 +69,9 @@ class MFindDialog : public MDialog2
 					MFindDialog(
 						GladeXML*		inGlade,
 						GtkWidget*		inRoot);
+
+	static const char*
+					GetResourceName()		{ return "find-dialog"; }
 
 	virtual void	Init();
 	

@@ -35,6 +35,8 @@
 #include <unistd.h>
 #ifdef HAVE_XATTR_H
 #include <sys/xattr.h>
+#elif HAVE_EXTATTR_H
+#include <sys/extattr.h>
 #endif
 //#include <sys/syslimits.h>
 #include <sys/stat.h>

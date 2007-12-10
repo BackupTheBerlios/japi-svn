@@ -12,6 +12,12 @@ class MAuthDialog : public MDialog
 {
   public:
 						MAuthDialog(
+							GladeXML*		inGlade,
+							GtkWidget*		inRoot);
+
+	const char*			GetResourceName()	{ return "auth-dialog"; }
+	
+	void				Initialize(
 							std::string		inTitle,
 							std::string		inInstruction,
 							int32			inFields,

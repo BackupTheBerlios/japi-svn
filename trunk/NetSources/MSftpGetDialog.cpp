@@ -14,22 +14,21 @@
 using namespace std;
 
 MSftpGetDialog::MSftpGetDialog(
-	const MUrlList&	inUrls)
-	: eChannelEvent(this, &MSftpGetDialog::ChannelEvent)
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
+	, eChannelEvent(this, &MSftpGetDialog::ChannelEvent)
 	, eChannelMessage(this, &MSftpGetDialog::ChannelMessage)
 	, fChannel(nil)
-	, fUrls(inUrls)
 {
-	SetTitle("Fetching file");
-	
-	ResizeTo(400, -1);
-	
-	AddStaticText('lbl1', "Filename");
-	AddProgressBar('prog');
-	AddStaticText('lbl2', "no message");
-	
+}
+
+void MSftpGetDialog::Initialize(
+	const MUrlList&	inUrls)
+{
 	RestorePosition("fetchdialog");
 
+	fUrls = inUrls;
 	fUrl = fUrls.front();
 	
 	fChannel.reset(
@@ -38,18 +37,8 @@ MSftpGetDialog::MSftpGetDialog(
 	AddRoute(fChannel->eChannelEvent, eChannelEvent);
 	AddRoute(fChannel->eChannelMessage, eChannelMessage);
 
-	AddCancelButton("Cancel");
-
 	Show(nil);
 }
-
-//void MSftpGetDialog::InitSelf()
-//{
-//	FindNode<HControlNode>('prog')->SetMaxValue(1000);
-//
-//	Show();
-//}
-//
 
 void MSftpGetDialog::Close()
 {

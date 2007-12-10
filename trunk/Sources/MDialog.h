@@ -38,218 +38,161 @@
 #ifndef MDIALOG_H
 #define MDIALOG_H
 
+#include <glade/glade-xml.h>
 #include <vector>
 
-#include "MTypes.h"
 #include "MWindow.h"
-
-class MView;
-
-enum {
-	kMDialogOKButtonID	= 		'okok',
-	kMDialogCancelButtonID = 	'cncl'
-};
 
 class MDialog : public MWindow
 {
   public:
-						MDialog();
-	virtual				~MDialog();
-	
-						// pass NULL for a regular dialog
-	void				Show(
-							MWindow*			inParent);
+					~MDialog();
 
-//	virtual void		Close();
-	
-	static void			CloseAllDialogs();
+	virtual bool	OKClicked();
 
-	virtual bool		OKClicked();
-	
-	virtual bool		CancelClicked();
-	
-	void				SetFocus(
-							uint32				inID);
-	
-	void				GetText(
-							uint32				inID,
-							std::string&		outText) const;
+	virtual bool	CancelClicked();
 
-	void				SetText(
-							uint32				inID,
-							const std::string&	inText);
+	void			Show(
+						MWindow*			inParent);
 
-	int32				GetValue(
-							uint32				inID) const;
+	template<class DLG>
+	static DLG*		Create();
 
-	void				SetValue(
-							uint32				inID,
-							int32				inValue);
+	void			SavePosition(
+						const char*			inName);
+
+	void			RestorePosition(
+						const char*			inName);
+
+	MWindow*		GetParentWindow() const				{ return mParentWindow; }
+	
+	void			SetCloseImmediatelyFlag(
+						bool				inCloseImmediately);
+
+	void			SetFocus(
+						uint32				inID);
+	
+	void			GetText(
+						uint32				inID,
+						std::string&		outText) const;
+
+	void			SetText(
+						uint32				inID,
+						const std::string&	inText);
+
+	int32			GetValue(
+						uint32				inID) const;
+
+	void			SetValue(
+						uint32				inID,
+						int32				inValue);
 
 	// for comboboxes
-	void				GetValues(
-							uint32				inID,
-							std::vector<std::string>& 
-												outValues) const;
+	void			GetValues(
+						uint32				inID,
+						std::vector<std::string>& 
+											outValues) const;
 
-	void				SetValues(
-							uint32				inID,
-							const std::vector<std::string>&
-												inValues);
+	void			SetValues(
+						uint32				inID,
+						const std::vector<std::string>&
+											inValues);
 
-	bool				IsChecked(
-							uint32				inID) const;
+	bool			IsChecked(
+						uint32				inID) const;
 
-	void				SetChecked(
-							uint32				inID,
-							bool				inOn);
+	void			SetChecked(
+						uint32				inID,
+						bool				inOn);
+
+	bool			IsVisible(
+						uint32				inID) const;
+
+	void			SetVisible(
+						uint32				inID,
+						bool				inVisible);
+
+	bool			IsEnabled(
+						uint32				inID) const;
 	
-	bool				IsVisible(
-							uint32				inID) const;
+	void			SetEnabled(
+						uint32				inID,
+						bool				inEnabled);
 
-	void				SetVisible(
-							uint32				inID,
-							bool				inVisible);
-
-	bool				IsEnabled(
-							uint32				inID) const;
+	bool			IsExpanded(
+						uint32				inID) const;
 	
-	void				SetEnabled(
-							uint32				inID,
-							bool				inEnabled);
+	void			SetExpanded(
+						uint32				inID,
+						bool				inExpanded);
 
-	bool				IsExpanded(
-							uint32				inID) const;
-	
-	void				SetExpanded(
-							uint32				inID,
-							bool				inExpanded);
+	void			SetProgressFraction(
+						uint32				inID,
+						float				inFraction);
 
-	virtual void		ButtonClicked(
-							uint32				inID);
+	virtual void	ValueChanged(
+						uint32				inID);
 
   protected:
 
-	void				AddOKButton(
-							const char*			inLabel,
-							uint32				inButtonID = kMDialogOKButtonID);
+					MDialog(
+						GladeXML*			inGlade,
+						GtkWidget*			inRoot);
 
-	void				AddCancelButton(
-							const char*			inLabel);
+	virtual void	Init();
 
-	void				AddVBox(
-							uint32				inID,
-							bool				inHomogenous,
-							int32				inSpacing,
-							uint32				inParentID = 0);
-
-	void				AddVButtonBox(
-							uint32				inID,
-							uint32				inParentID = 0);
-
-	void				AddHBox(
-							uint32				inID,
-							bool				inHomogenous,
-							int32				inSpacing,
-							uint32				inParentID = 0);
-
-	void				AddHButtonBox(
-							uint32				inID,
-							uint32				inParentID = 0);
-
-	void				AddTable(
-							uint32				inID,
-							uint32				inColumnCount,
-							uint32				inRowCount,
-							uint32				inParentID = 0);
-
-	void				AddAlignment(
-							uint32				inID,
-							float				inXAlign,
-							float				inYAlign,
-							float				inXScale,
-							float				inYScale,
-							uint32				inParentID = 0);
-
-	void				AddExpander(
-							uint32				inID,
-							const char*			inLabel,
-							uint32				inParentID = 0);
-
-	void				AddButton(
-							uint32				inID,
-							const std::string&	inLabel,
-							uint32				inParentID = 0);
-							
-	void				AddStaticText(
-							uint32				inID,
-							const std::string&	inLabel,
-							uint32				inParentID = 0);
-						
-	void				AddEditField(
-							uint32				inID,
-							const std::string&	inText,
-							uint32				inParentID = 0);
-
-	void				SetPasswordField(
-							uint32				inID);
-
-	void				AddComboBox(
-							uint32				inID,
-							const std::vector<std::string>&
-												inOptions,
-							uint32				inParentID = 0);
-							
-	void				AddComboBoxEntry(
-							uint32				inID,
-							uint32				inParentID = 0);
-							
-	void				AddHSeparator(
-							uint32				inID,
-							uint32				inParentID = 0);
-
-	void				AddCheckBox(
-							uint32				inID,
-							const std::string&	inLabel,
-							uint32				inParentID = 0);
-
-	void				AddProgressBar(
-							uint32				inID,
-							uint32				inParentID = 0);
-
-	void				SetProgressFraction(
-							uint32				inID,
-							float				inFraction);
-
-//	virtual OSStatus	DoControlHit(EventRef inEvent);
-//	virtual OSStatus	DoWindowClose(EventRef inEvent);
-
-//	ControlRef			FindControl(uint32 inID) const;
-
-	void				SavePosition(
-							const char*			inName);
-
-	void				RestorePosition(
-							const char*			inName);
-	
-	MWindow*			GetParentWindow() const		{ return mParentWindow; }
-	
-	void				SetCloseImmediatelyFlag(
-							bool				inCloseImmediately);
+	GtkWidget*		GetWidget(
+						uint32				inID) const;
 
   private:
 
-	bool				OnOKClickedEvent();
-	bool				OnCancelClickedEvent();
+	static void		CreateGladeAndWidgets(
+						const char*			inResource,
+						GladeXML*&			outGlade,
+						GtkWidget*&			outWidget);
 
-	MSlot<bool()>		mOKClicked;
-	MSlot<bool()>		mCancelClicked;
+	const char*		IDToName(
+						uint32				inID,
+						char				inName[5]) const;
 
-	MWindow*			mParentWindow;
-	MDialog*			mNext;						// for the close all
-	struct MDialogImp*	mImpl;
-	static MDialog*		sFirst;
-	bool				mCloseImmediatelyOnOK;
+	static void		ChangedCallBack(
+						GtkWidget*			inWidget,
+						gpointer			inUserData);
+
+	static void		StdBtnClickedCallBack(
+						GtkWidget*			inWidget,
+						gpointer			inUserData);
+
+	static void		DoForEachCallBack(
+						GtkWidget*			inWidget,
+						gpointer			inUserData);
+
+	void			DoForEach(
+						GtkWidget*			inWidget);
+
+	bool			ChildFocus(
+						GdkEventFocus*		inEvent);
+	
+	MSlot<bool(GdkEventFocus*)>				mChildFocus;
+
+	GladeXML*		mGlade;
+	MWindow*		mParentWindow;
+	MDialog*		mNext;						// for the close all
+	static MDialog*	sFirst;
+	bool			mCloseImmediatelyOnOK;
 };
+
+template<class DLG>
+DLG* MDialog::Create()
+{
+	GladeXML* glade;
+	GtkWidget* widget;
+
+	CreateGladeAndWidgets(DLG::GetResourceName(), glade, widget);
+	
+	std::auto_ptr<DLG> dialog(new DLG(glade, widget));
+	dialog->Init();
+	return dialog.release();
+}
 
 #endif // MDIALOG_H

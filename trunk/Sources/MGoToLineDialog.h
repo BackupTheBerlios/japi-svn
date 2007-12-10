@@ -45,7 +45,12 @@ class MDocument;
 class MGoToLineDialog : public MDialog
 {
   public:
-					MGoToLineDialog();
+					MGoToLineDialog(
+						GladeXML*		inGlade,
+						GtkWidget*		inRoot);
+
+	static const char*
+					GetResourceName()	{ return "go-to-line-dialog"; }
 
 	void			Initialize(
 						MDocument*		inDocument,

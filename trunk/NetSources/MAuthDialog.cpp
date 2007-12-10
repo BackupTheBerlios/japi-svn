@@ -12,40 +12,43 @@
 using namespace std;
 
 MAuthDialog::MAuthDialog(
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
+	, ePulse(this, &MAuthDialog::Pulse)
+{
+}
+
+void MAuthDialog::Initialize(
 	std::string		inTitle,
 	std::string		inInstruction,
 	int32			inFields,
 	std::string		inPrompts[],
 	bool			inEcho[])
-	: ePulse(this, &MAuthDialog::Pulse)
-	, mFields(inFields)
 {
+	mFields = inFields;
+
 	SetTitle(inTitle);
-	
-	AddStaticText('inst', inInstruction);
-	
-	AddTable('tbl1', 2, inFields);
 	
 	uint32 lblID = 'lbl1';
 	uint32 edtID = 'edt1';
 	
 	for (int32 i = 0; i < mFields; ++i)
 	{
-		AddStaticText(lblID, inPrompts[i], 'tbl1');
-		AddEditField(edtID, "", 'tbl1');
+		SetText(lblID, inPrompts[i]);
 		
-		if (inEcho[i] == false)
-			SetPasswordField(edtID);
+//		if (inEcho[i] == false)
+//			SetPasswordField(edtID);
 		
 		++lblID;
 		++edtID;
 	}
-	
-	AddOKButton("OK");
-	AddCancelButton("Cancel");
 
-//	SetNodeVisible('caps', false);
-//	AddRoute(gApp->ePulse, ePulse);
+	for (int32 i = mFields; i < 5; ++i)
+	{
+		SetVisible(lblID++, false);
+		SetVisible(edtID++, false);
+	}
 }
 
 bool MAuthDialog::OKClicked()

@@ -730,7 +730,7 @@ void MController::DoGoToLine()
 	if (mDocument == nil)
 		return;
 	
-	std::auto_ptr<MGoToLineDialog> dlog(new MGoToLineDialog);
+	std::auto_ptr<MGoToLineDialog> dlog(MDialog::Create<MGoToLineDialog>());
 	dlog->Initialize(mDocument, mWindow);
 	dlog.release();
 }
@@ -768,7 +768,8 @@ void MController::DoOpenIncludeFile()
 	
 	if (selection.IsEmpty())
 	{
-		std::auto_ptr<MFindAndOpenDialog> dlog(new MFindAndOpenDialog);
+		std::auto_ptr<MFindAndOpenDialog> dlog(
+			MDialog::Create<MFindAndOpenDialog>());
 		dlog->Initialize(this, mWindow);
 		dlog.release();
 		result = true;
@@ -925,7 +926,7 @@ void MController::DoMarkMatching()
 	if (mDocument == nil)
 		return;
 	
-	std::auto_ptr<MMarkMatchingDialog> dlog(new MMarkMatchingDialog);
+	std::auto_ptr<MMarkMatchingDialog> dlog(MDialog::Create<MMarkMatchingDialog>());
 	dlog->Initialize(mDocument, mWindow);
 	dlog.release();
 }

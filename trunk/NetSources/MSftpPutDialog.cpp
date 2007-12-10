@@ -13,16 +13,22 @@
 using namespace std;
 
 MSftpPutDialog::MSftpPutDialog(
-	MDocument*		inDocument)
-	: eChannelMessage(this, &MSftpPutDialog::ChannelMessage)
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
+	, eChannelMessage(this, &MSftpPutDialog::ChannelMessage)
 	, eChannelEvent(this, &MSftpPutDialog::ChannelEvent)
 	, fChannel(nil)
 	, fDoc(nil)
 	, fOffset(0)
-	, fUrl(inDocument->GetURL())
 	, fComplete(false)
 {
-	SetTitle("Storing file");
+}
+
+void MSftpPutDialog::Initialize(
+	MDocument*		inDocument)
+{
+	fUrl = inDocument->GetURL();
 	
 	MTextBuffer& text = inDocument->GetTextBuffer();
 
@@ -31,11 +37,8 @@ MSftpPutDialog::MSftpPutDialog(
 	fOffset = 0;
 	fSize = text.GetSize();
 
-	ResizeTo(400, -1);
-
-	AddStaticText('lbl1', string("Storing ") + fUrl.GetFileName());
-	AddProgressBar('prog');
-	AddStaticText('lbl2', "connecting");
+	SetText('lbl1', string("Storing ") + fUrl.GetFileName());
+	SetText('lbl2', "connecting");
 
 	RestorePosition("putdialog");
 	
@@ -46,8 +49,6 @@ MSftpPutDialog::MSftpPutDialog(
 	AddRoute(fChannel->eChannelMessage, eChannelMessage);
 	
 	eNotifyPut(true);
-	
-	AddCancelButton("Cancel");
 
 	Show(MDocWindow::DisplayDocument(inDocument));
 }

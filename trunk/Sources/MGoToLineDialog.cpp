@@ -54,17 +54,11 @@ enum
 
 }
 
-MGoToLineDialog::MGoToLineDialog()
-	: mDocument(nil)
+MGoToLineDialog::MGoToLineDialog(
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
 {
-	SetTitle("Go To Line");
-	
-	AddHBox('hbox', false, 12);
-	AddStaticText('lbl1', "Go To Line:", 'hbox');
-	AddEditField('edit', "", 'hbox');
-
-	AddCancelButton("Cancel");
-	AddOKButton("OK");
 }
 
 void MGoToLineDialog::Initialize(

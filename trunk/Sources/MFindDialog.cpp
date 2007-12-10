@@ -105,7 +105,7 @@ MFindDialog& MFindDialog::Instance()
 	static std::auto_ptr<MFindDialog> sInstance;
 
 	if (sInstance.get() == nil)
-		sInstance.reset(MDialog2::Create<MFindDialog>("find-dialog"));
+		sInstance.reset(MDialog::Create<MFindDialog>());
 
 	return *sInstance;
 }
@@ -113,7 +113,7 @@ MFindDialog& MFindDialog::Instance()
 MFindDialog::MFindDialog(
 	GladeXML*		inGlade,
 	GtkWidget*		inRoot)
-	: MDialog2(inGlade, inRoot)
+	: MDialog(inGlade, inRoot)
 	, eIdle(this, &MFindDialog::Idle)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
@@ -395,7 +395,7 @@ void MFindDialog::ValueChanged(
 			break;
 		
 		default:
-			MDialog2::ValueChanged(inButonID);
+			MDialog::ValueChanged(inButonID);
 			break;
 	}
 }

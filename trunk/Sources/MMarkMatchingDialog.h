@@ -45,7 +45,12 @@ class MDocument;
 class MMarkMatchingDialog : public MDialog
 {
   public:
-					MMarkMatchingDialog();
+					MMarkMatchingDialog(
+						GladeXML*		inGlade,
+						GtkWidget*		inRoot);
+
+	static const char*
+					GetResourceName() { return "mark-matching-dialog"; }
 
 	void			Initialize(
 						MDocument*	inDocument,

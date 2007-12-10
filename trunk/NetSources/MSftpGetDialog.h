@@ -18,7 +18,13 @@ class MSftpGetDialog : public MDialog
 {
   public:
 						MSftpGetDialog(
+							GladeXML*		inGlade,
+							GtkWidget*		inRoot);
+	
+	void				Initialize(
 							const MUrlList&	inUrls);
+
+	static const char*	GetResourceName()	{ return "sftp-dialog"; }
 
 	virtual void		Close();
 

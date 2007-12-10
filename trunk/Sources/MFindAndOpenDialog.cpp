@@ -56,17 +56,15 @@ enum {
 
 }
 
-MFindAndOpenDialog::MFindAndOpenDialog()
-	: mController(nil)
+MFindAndOpenDialog::MFindAndOpenDialog(
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
 {
-	SetTitle("Find and Open File");
-	
-	AddHBox('hbox', false, 12);
-	AddStaticText('lbl1', "Filename:", 'hbox');
-	AddEditField('edit', "", 'hbox');
+}
 
-	AddCancelButton("Cancel");
-	AddOKButton("OK");
+void MFindAndOpenDialog::Init()
+{
 }
 
 void MFindAndOpenDialog::Initialize(

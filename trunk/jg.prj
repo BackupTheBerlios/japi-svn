@@ -43,7 +43,6 @@
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MDialog.cpp</file>
-				<file>MDialog2.cpp</file>
 				<file>MFindDialog.cpp</file>
 				<file>MGoToLineDialog.cpp</file>
 				<file>MFindAndOpenDialog.cpp</file>
@@ -58,14 +57,14 @@
 			<file>MSound.cpp</file>
 			<group name="Project">
 				<file>MProject.cpp</file>
-				<file>MProjectInfoDialog.cpp</file>
+				<!--file>MProjectInfoDialog.cpp</file-->
 				<file>MProjectItem.cpp</file>
 				<file>MProjectJob.cpp</file>
-				<file>MProjectPathsDialog.cpp</file>
+				<!--file>MProjectPathsDialog.cpp</file-->
 				<file>MObjectFile.cpp</file>
 				<file>MObjectFileImp_elf.cpp</file>
 				<file>MObjectFileImp_macho.cpp</file>
-				<file>MNewGroupDialog.cpp</file>
+				<!--file>MNewGroupDialog.cpp</file-->
 			</group>
 			<group name="Language">
 				<file>MLanguage.cpp</file>
@@ -114,6 +113,11 @@
 			<copy>unknown-host-alert.xml</copy>
 			<copy>host-key-changed-alert.xml</copy>
 			<copy>find-dialog.xml</copy>
+			<copy>find-and-open-dialog.xml</copy>
+			<copy>mark-matching-dialog.xml</copy>
+			<copy>go-to-line-dialog.xml</copy>
+			<copy>auth-dialog.xml</copy>
+			<copy>sftp-dialog.xml</copy>
 		</mkdir>
 	</package>
 	<targets>

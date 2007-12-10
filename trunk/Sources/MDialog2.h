@@ -6,17 +6,20 @@
 
 #include "MWindow.h"
 
-class MDialog2 : public MWindow
+class MDialog : public MWindow
 {
   public:
-					~MDialog2();
+					~MDialog();
+
+	virtual bool	OKClicked();
+
+	virtual bool	CancelClicked();
 
 	void			Show(
 						MWindow*			inParent);
 
 	template<class DLG>
-	static DLG*		Create(
-						const char*			inResource);
+	static DLG*		Create();
 
 	void			SavePosition(
 						const char*			inName);
@@ -91,7 +94,7 @@ class MDialog2 : public MWindow
 
   protected:
 
-					MDialog2(
+					MDialog(
 						GladeXML*			inGlade,
 						GtkWidget*			inRoot);
 
@@ -115,6 +118,10 @@ class MDialog2 : public MWindow
 						GtkWidget*			inWidget,
 						gpointer			inUserData);
 
+	static void		StdBtnClickedCallBack(
+						GtkWidget*			inWidget,
+						gpointer			inUserData);
+
 	static void		DoForEachCallBack(
 						GtkWidget*			inWidget,
 						gpointer			inUserData);
@@ -129,18 +136,18 @@ class MDialog2 : public MWindow
 
 	GladeXML*		mGlade;
 	MWindow*		mParentWindow;
-	MDialog2*		mNext;						// for the close all
-	static MDialog2*	sFirst;
+	MDialog*		mNext;						// for the close all
+	static MDialog*	sFirst;
 	bool			mCloseImmediatelyOnOK;
 };
 
 template<class DLG>
-DLG* MDialog2::Create(
-	const char* inResource)
+DLG* MDialog::Create()
 {
 	GladeXML* glade;
 	GtkWidget* widget;
-	CreateGladeAndWidgets(inResource, glade, widget);
+
+	CreateGladeAndWidgets(DLG::GetResourceName(), glade, widget);
 	
 	std::auto_ptr<DLG> dialog(new DLG(glade, widget));
 	dialog->Init();

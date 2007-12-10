@@ -56,23 +56,11 @@ enum
 
 }
 
-MMarkMatchingDialog::MMarkMatchingDialog()
-	: mDocument(nil)
+MMarkMatchingDialog::MMarkMatchingDialog(
+	GladeXML*		inGlade,
+	GtkWidget*		inRoot)
+	: MDialog(inGlade, inRoot)
 {
-	SetTitle("Mark Lines Matching");
-	
-	AddVButtonBox('boxv');
-	
-	AddHBox('boxh', false, 0, 'boxv');
-	
-	AddStaticText('lbl1', "Mark lines matching", 'boxh');
-	AddEditField(kTextBoxControlID, "", 'boxh');
-
-	AddCheckBox(kIgnoreCaseControlID, "Ignore Case", 'boxv');
-	AddCheckBox(kRegularExpressionControlID, "Regular Expression", 'boxv');
-
-	AddCancelButton("Cancel");
-	AddOKButton("OK");
 }
 
 void MMarkMatchingDialog::Initialize(
