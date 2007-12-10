@@ -15,6 +15,7 @@
 	<libpaths>
 		<path>/usr/lib</path>
 		<path>/usr/local/lib</path>
+		<path>/usr/pkg/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -99,6 +100,7 @@
 			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
+			<link>z</link>
 		</group>
 	</files>
 	<package resource_dir="Resources">
@@ -110,6 +112,7 @@
 		</mkdir>
 		<mkdir name="Dutch">
 			<copy>edit-window-menus.xml</copy>
+			<copy>project-window-menus.xml</copy>
 			<copy>unknown-host-alert.xml</copy>
 			<copy>host-key-changed-alert.xml</copy>
 			<copy>find-dialog.xml</copy>
@@ -121,7 +124,7 @@
 		</mkdir>
 	</package>
 	<targets>
-		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">
+		<target kind="Executable" arch="ppc" name="Japie Debug" linkTarget="jg" debug="true">
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
@@ -134,7 +137,7 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="native" name="Japie Release" linkTarget="jg" debug="false">
+		<target kind="Executable" arch="ppc" name="Japie Release" linkTarget="jg" debug="false">
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>

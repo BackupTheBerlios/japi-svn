@@ -134,7 +134,7 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 		sInstance->RegisterAcceleratorKey(cmd_BringUpToDate, GDK_U, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_Compile, GDK_K, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_CheckSyntax, GDK_semicolon, GDK_CONTROL_MASK);
-		sInstance->RegisterAcceleratorKey(cmd_Make, GDK_M, GDK_CONTROL_MASK | GDK_MOD1_MASK);
+		sInstance->RegisterAcceleratorKey(cmd_Make, GDK_M, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	
 		sInstance->RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
 	}

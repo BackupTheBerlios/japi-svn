@@ -184,50 +184,7 @@ MProject::MProject(const MPath& inPath)
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 	
-	// 
-	
-	MMenu* fileMenu = new MMenu("File");
-	fileMenu->AppendItem("New", cmd_New);
-	fileMenu->AppendItem("Open…", cmd_Open);
-	
-//	fileMenu->AppendRecentMenu("Open Recent…");
-	
-	fileMenu->AppendItem("Find and open…", cmd_OpenIncludeFile);
-	
-	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Close", cmd_Close);
-	fileMenu->AppendItem("Save", cmd_Save);
-	fileMenu->AppendItem("Save As…", cmd_SaveAs);
-	fileMenu->AppendItem("Revert", cmd_Revert);
-	fileMenu->AppendSeparator();
-	fileMenu->AppendItem("Quit", cmd_Quit);
-	
-	mMenubar.AddMenu(fileMenu);
-	
-	MMenu* projectMenu = new MMenu("Project");
-	projectMenu->AppendItem("Add File", cmd_AddFileToProject);
-	projectMenu->AppendItem("New Group", cmd_NewGroup);
-	projectMenu->AppendSeparator();
-	projectMenu->AppendItem("Check Syntax", cmd_CheckSyntax);
-	projectMenu->AppendItem("Preprocess", cmd_Preprocess);
-	projectMenu->AppendItem("Compile", cmd_Compile);
-	projectMenu->AppendItem("Dissassemble", cmd_Disassemble);
-	projectMenu->AppendSeparator();
-	projectMenu->AppendItem("Recheck Files", cmd_RecheckFiles);
-	projectMenu->AppendItem("Bring Up To Date", cmd_BringUpToDate);
-	projectMenu->AppendItem("Make", cmd_Make);
-	projectMenu->AppendItem("Make Clean", cmd_MakeClean);
-	projectMenu->AppendSeparator();
-	projectMenu->AppendItem("Run", cmd_Run);
-	
-	mMenubar.AddMenu(projectMenu);
-	
-	MMenu* windowMenu = new MMenu("Window");
-	
-	windowMenu->AppendItem("Worksheet", cmd_Worksheet);	
-	windowMenu->AppendSeparator();
-	
-	mMenubar.AddMenu(windowMenu);
+	mMenubar.BuildFromResource("project-window-menus");
 	
 	// status
 	
@@ -1218,21 +1175,21 @@ bool MProject::ProcessCommand(
 			Make();
 			break;
 		
-		case cmd_NewGroup:
-		{
-			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
-			dlog->Initialize(this);
-			dlog.release();
-			break;
-		}
-		
-		case cmd_EditProjectInfo:
-		{
-			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
-			dlog->Initialize(this, mCurrentTarget);
-			dlog.release();
-			break;
-		}
+//		case cmd_NewGroup:
+//		{
+//			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
+//			dlog->Initialize(this);
+//			dlog.release();
+//			break;
+//		}
+//		
+//		case cmd_EditProjectInfo:
+//		{
+//			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
+//			dlog->Initialize(this, mCurrentTarget);
+//			dlog.release();
+//			break;
+//		}
 		
 //		case cmd_EditProjectPaths:
 //		{

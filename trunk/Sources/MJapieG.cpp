@@ -573,7 +573,10 @@ void MJapieApp::DoOpen()
 		}
 
 		if (urls.size() > 0)
-			new MSftpGetDialog(urls);
+		{
+			MSftpGetDialog* dlog = MDialog::Create<MSftpGetDialog>();
+			dlog->Initialize(urls);
+		}
 		
 		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 		if (cwd != nil)
@@ -621,8 +624,9 @@ MDocument* MJapieApp::OpenOneDocument(
 	{
 		vector<MUrl> urls;
 		urls.push_back(inFileRef);
-		/*MSftpGetDialog* dlog = */new MSftpGetDialog(urls);
-//		dlog->Show(nil);
+		
+		MSftpGetDialog* dlog = MDialog::Create<MSftpGetDialog>();
+		dlog->Initialize(urls);
 	}
 	
 	return doc;

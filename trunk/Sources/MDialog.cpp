@@ -113,7 +113,6 @@ MDialog::~MDialog()
 
 void MDialog::Init()
 {
-	gtk_widget_show_all(GetGtkWidget());
 }
 
 void MDialog::Show(
@@ -323,7 +322,7 @@ void MDialog::SetProgressFraction(
 	float				inFraction)
 {
 	GtkWidget* wdgt = GetWidget(inID);
-	assert(GTK_IS_EXPANDER(wdgt));
+	assert(GTK_IS_PROGRESS_BAR(wdgt));
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(wdgt), inFraction);
 }
 

@@ -33,7 +33,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
 Sources = $(wildcard Sources/*.cpp NetSources/*.cpp)
 
-Sources := $(filter-out Sources/MStyles.cpp Sources/MPrefsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
+Sources := $(filter-out Sources/MStyles.cpp Sources/MNewGroupDialog.cpp Sources/MProjectInfoDialog.cpp Sources/MProjectPathsDialog.cpp Sources/MPrefsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)
@@ -84,9 +84,9 @@ $(TARGET)::
 	@ echo Compiler flags used: $(CFLAGS)
 	@ echo Include paths: $(INCLUDES)
 
-$(TARGET):: $(OBJDIR) $(OBJS)
+$(TARGET):: $(OBJDIR) $(OBJS) 
 	@ echo "Linking "$(@F)
-	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS) $(OBJDIR)/__rsrc__.o
 	@ chmod a+rx $(TARGET)
 	@ echo "Done"
 
