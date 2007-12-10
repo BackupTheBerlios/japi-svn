@@ -34,6 +34,7 @@ MDialog2::MDialog2(
 	GladeXML*		inGlade,
 	GtkWidget*		inRoot)
 	: MWindow(inRoot)
+	, mChildFocus(this, &MDialog2::ChildFocus)
 	, mGlade(inGlade)
 	, mParentWindow(nil)
 	, mNext(nil)
@@ -44,6 +45,9 @@ MDialog2::MDialog2(
 
 	glade_xml_signal_connect_data(mGlade, "on_changed", 
 		G_CALLBACK(&MDialog2::ChangedCallBack), this);
+
+	gtk_container_foreach(GTK_CONTAINER(inRoot),
+		&MDialog2::DoForEachCallBack, this);
 }
 
 MDialog2::~MDialog2()
@@ -337,4 +341,42 @@ void MDialog2::SetCloseImmediatelyFlag(
 	bool inCloseImmediately)
 {
 	mCloseImmediatelyOnOK = inCloseImmediately;
+}
+
+void MDialog2::DoForEachCallBack(
+	GtkWidget*			inWidget,
+	gpointer			inUserData)
+{
+	MDialog2* self = reinterpret_cast<MDialog2*>(inUserData);
+	self->DoForEach(inWidget);
+}
+
+void MDialog2::DoForEach(
+	GtkWidget*			inWidget)
+{
+	const char* name = gtk_widget_get_name(inWidget);
+	const char* gladeName = glade_get_widget_name(inWidget);
+
+	if (name == nil)
+		name = "undefined";
+	
+	if (gladeName == nil)
+		gladeName = "undefined";
+	
+	cout << "name: " << name << " glade: " << gladeName << endl;
+	
+	gboolean canFocus = false;
+	g_object_get(G_OBJECT(inWidget), "can-focus", &canFocus, NULL);
+	if (canFocus)
+		mChildFocus.Connect(inWidget, "focus-in-event");
+	
+	if (GTK_IS_CONTAINER(inWidget))
+		gtk_container_foreach(GTK_CONTAINER(inWidget), &MDialog2::DoForEachCallBack, this);
+}
+
+bool MDialog2::ChildFocus(
+	GdkEventFocus*		inEvent)
+{
+	TakeFocus();
+	return false;
 }

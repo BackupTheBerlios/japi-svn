@@ -1,7 +1,5 @@
 ﻿Te doen
 
-- pkg-config support
-
 - afronden nieuwe dialog class
 - Afronden Find Dialog:
 	- Replace All in Multi mode

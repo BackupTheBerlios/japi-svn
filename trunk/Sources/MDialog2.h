@@ -115,6 +115,18 @@ class MDialog2 : public MWindow
 						GtkWidget*			inWidget,
 						gpointer			inUserData);
 
+	static void		DoForEachCallBack(
+						GtkWidget*			inWidget,
+						gpointer			inUserData);
+
+	void			DoForEach(
+						GtkWidget*			inWidget);
+
+	bool			ChildFocus(
+						GdkEventFocus*		inEvent);
+	
+	MSlot<bool(GdkEventFocus*)>				mChildFocus;
+
 	GladeXML*		mGlade;
 	MWindow*		mParentWindow;
 	MDialog2*		mNext;						// for the close all
