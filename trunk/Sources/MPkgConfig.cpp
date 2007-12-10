@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include "MPkgConfig.h"
 #include "MPreferences.h"
@@ -10,41 +11,10 @@ using namespace std;
 
 extern char** environ;
 
-namespace
-{
-	
-string NextPath(string& ioPathVar, string inName)
-{
-	string result = inName;
-	
-	if (ioPathVar.length())
-	{
-		if (ioPathVar[0] == ':')
-			ioPathVar.erase(0, 1);
-	
-		string::size_type n = ioPathVar.find(':');
-		if (n != string::npos)
-		{
-			result = ioPathVar.substr(0, n) + '/' + inName;
-			ioPathVar.erase(0, n + 1);
-		}
-		else if (ioPathVar.length() > 0)
-		{
-			result = ioPathVar + '/' + inName;
-			ioPathVar.clear();
-		}
-	}
-	
-	return result;
-}
-	
-}
-
-
-void PkgConfigGetCFlags(
+void GetPkgConfigResult(
 	const string&		inPackage,
-	vector<string>&		outCFlags,
-	vector<string>&		outIncludeDirs)
+	const char*			inInfo,
+	vector<string>&		outFlags)
 {
 	// Try to locate the pkg-config executable first
 	
@@ -52,20 +22,26 @@ void PkgConfigGetCFlags(
 	bool found = true;
 	
 	// If the path contains slashes we don't bother
-	if (path.find('/') == string::npos)
+	const char* PATH = getenv("PATH");
+	
+	if (path.find('/') == string::npos and PATH != nil)
 	{
 		found = false;
 		
-		struct stat statb;
+		string b(PATH);
+		char* last;
+		char* d;
 		
-		string PATH = getenv("PATH");
-		
-		while ((path = NextPath(PATH, path)) != path)
+		for (d = strtok_r(const_cast<char*>(b.c_str()), ":", &last);
+			 d != nil and found == false;
+			 d = strtok_r(nil, ":", &last))
 		{
-			if (stat(path.c_str(), &statb) >= 0 and S_ISREG(statb.st_mode))
+			fs::path p(d);
+			
+			if (fs::exists(p / path))
 			{
+				path = fs::system_complete(p / path).string();
 				found = true;
-				break;
 			}
 		}
 	}
@@ -102,7 +78,7 @@ void PkgConfigGetCFlags(
 		
 		const char* argv[] = {
 			"pkg-config",
-			"--cflags",
+			inInfo,
 			"libglade-2.0",
 			NULL
 		};
@@ -144,8 +120,9 @@ void PkgConfigGetCFlags(
 	
 	vector<char*> argv;
 	bool esc = false, squot = false, dquot = false;
+	char* ss = const_cast<char*>(s.c_str());
 	
-	for (char* c = const_cast<char*>(s.c_str()); *c != 0; ++c)
+	for (char* c = ss; *c != 0; ++c)
 	{
 		if (esc)
 			esc = false;
@@ -165,31 +142,19 @@ void PkgConfigGetCFlags(
 			squot = true;
 		else if (*c == '"')
 			dquot = true;
-		else if (*c == ' ')
+		else if (isspace(*c))
 		{
 			*c = 0;
-			argv.push_back(c + 1);
-		}
-	}
-	
-	optind = 0;
-	optreset = 1;
-	int c;
-	while ((c = getopt(argv.size(), &argv[0], "I:D:")) != -1)
-	{
-		switch (c)
-		{
-			case 'I':
-				outIncludeDirs.push_back(optarg);
-				break;
 			
-			default:
-				break;
+			while (isspace(*(c + 1)))
+				++c;
+			
+			if (c > ss and *(c + 1) != 0)
+				argv.push_back(c + 1);
+
+			ss = c + 1;
 		}
 	}
 	
-	cout << "Include dirs according to pkg-dir: " << endl;
-	copy(outIncludeDirs.begin(), outIncludeDirs.end(),
-		ostream_iterator<string>(cout, "\n"));
-	
+	copy(argv.begin(), argv.end(), back_inserter(outFlags));
 }

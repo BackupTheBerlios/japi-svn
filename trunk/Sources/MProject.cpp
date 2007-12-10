@@ -1799,7 +1799,7 @@ void MProject::Read(
 					arch = eCPU_386;
 				else if (strcmp(p, "amd64") == 0)
 					arch = eCPU_x86_64;
-				else
+				else if (strcmp(p, "native") != 0)
 					THROW(("Unsupported target arch"));
 			}
 			
@@ -2267,6 +2267,17 @@ bool MProject::LocateFile(
 			found = exists(outPath);
 		}
 		
+		for (vector<string>::const_iterator f = mPkgConfigCFlags.begin();
+			 not found and f != mPkgConfigCFlags.end();
+			 ++f)
+		{
+			if (f->length() > 2 and f->substr(0, 2) == "-I")
+			{
+				outPath = fs::path(f->substr(2)) / inFile;
+				found = exists(outPath);
+			}
+		}
+		
 		string::size_type s;
 		if (not found and (s = inFile.find('/')) != string::npos)
 		{
@@ -2436,6 +2447,9 @@ MProjectJob* MProject::CreateCompileJob(
 	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-W"));
 
+	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
+		back_inserter(argv));
+
 	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
 
 	argv.push_back("-pipe");
@@ -2564,6 +2578,8 @@ MProjectJob* MProject::CreateLinkJob(
 		argv.push_back("-framework");
 		argv.push_back(*f);
 	}
+
+	copy(mPkgConfigLibs.begin(), mPkgConfigLibs.end(), back_inserter(argv));
 
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
@@ -3021,10 +3037,13 @@ void MProject::SelectTarget(
 	mPackageItems.CheckCompilationResult();
 	mPackageItems.CheckIsOutOfDate(modDateCache);
 	
+	mPkgConfigCFlags.clear();
+	mPkgConfigLibs.clear();
+	
 	for (vector<string>::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
 	{
-		vector<string> cflags, incdirs;
-		PkgConfigGetCFlags(*pkg, cflags, incdirs);
+		GetPkgConfigResult(*pkg, "--cflags", mPkgConfigCFlags);
+		GetPkgConfigResult(*pkg, "--libs", mPkgConfigLibs);
 	}
 
 	SetStatus("", false);

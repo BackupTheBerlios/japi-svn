@@ -7,42 +7,6 @@
 		<path>/usr/include</path>
 		<path>/usr/include/libxml2</path>
 		<path>/usr/include/c++/4.0.0</path>
-		<path>/usr/X11R6/include</path>
-		<path>/usr/include/gtk-2.0</path>
-		<path>/usr/lib/gtk-2.0/include</path>
-		<path>/usr/lib64/gtk-2.0/include</path>
-		<path>/usr/include/atk-1.0</path>
-		<path>/usr/include/cairo</path>
-		<path>/usr/include/pango-1.0</path>
-		<path>/usr/include/glib-2.0</path>
-		<path>/usr/lib/glib-2.0/include</path>
-		<path>/usr/lib64/glib-2.0/include</path>
-		<path>/usr/include/freetype2</path>
-		<path>/usr/include/libpng12</path>
-		<path>/usr/include/libglade-2.0</path>
-		<path>/usr/pkg/include/gtk-2.0</path>
-		<path>/usr/pkg/lib/gtk-2.0/include</path>
-		<path>/usr/pkg/include/atk-1.0</path>
-		<path>/usr/pkg/include/cairo</path>
-		<path>/usr/pkg/include/pango-1.0</path>
-		<path>/usr/pkg/include/glib/glib-2.0</path>
-		<path>/usr/pkg/lib/glib-2.0/include</path>
-		<path>/usr/pkg/include/freetype2</path>
-		<path>/usr/pkg/include</path>
-		<path>/usr/pkg/include/libpng12</path>
-		<path>/usr/pkg/include/libglade-2.0</path>
-		<path>/usr/X11R6/include</path>
-		<path>/usr/local/include/libglade-2.0</path>
-		<path>/usr/local/include/gtk-2.0</path>
-		<path>/usr/local/include/libxml2</path>
-		<path>/usr/local/include</path>
-		<path>/usr/local/lib/gtk-2.0/include</path>
-		<path>/usr/local/include/atk-1.0</path>
-		<path>/usr/local/include/cairo</path>
-		<path>/usr/local/include/pango-1.0</path>
-		<path>/usr/local/include/glib-2.0</path>
-		<path>/usr/local/lib/glib-2.0/include</path>
-		<path>/usr/local/include/freetype2</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -50,10 +14,7 @@
 	</userpaths>
 	<libpaths>
 		<path>/usr/lib</path>
-		<path>/usr/lib64</path>
-		<path>/usr/local/lib64</path>
 		<path>/usr/local/lib</path>
-		<path>/usr/pkg/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -134,24 +95,11 @@
 			</group>
 		</group>
 		<group name="Libraries">
-			<link>xml2</link>
-			<link>gtk-x11-2.0</link>
-			<link>gdk-x11-2.0</link>
-			<link>atk-1.0</link>
-			<link>gdk_pixbuf-2.0</link>
-			<link>pangocairo-1.0</link>
-			<link>pango-1.0</link>
-			<link>cairo</link>
-			<link>gobject-2.0</link>
-			<link>gmodule-2.0</link>
-			<link>glib-2.0</link>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread.a</file>
 			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
 			<link>cryptopp</link>
-			<link>z</link>
-			<link>glade-2.0</link>
 		</group>
 	</files>
 	<package resource_dir="Resources">
@@ -169,14 +117,12 @@
 		</mkdir>
 	</package>
 	<targets>
-		<target kind="Executable" arch="ppc" name="Japie PPC Mac Debug" linkTarget="jg" debug="true">
+		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
 			<defines>
 				<define>DEBUG</define>
-				<define>XTHREADS</define>
-				<define>HAVE_SYS_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>
@@ -184,58 +130,12 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="ppc" name="Japie PPC Mac Release" linkTarget="jg" debug="false">
+		<target kind="Executable" arch="native" name="Japie Release" linkTarget="jg" debug="false">
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>
 			<defines>
 				<define>NDEBUG</define>
-				<define>XTHREADS</define>
-				<define>HAVE_SYS_WAIT_H</define>
-			</defines>
-			<warnings>
-				<warning>all</warning>
-				<warning>no-multichar</warning>
-				<warning>no-unknown-pragmas</warning>
-			</warnings>
-		</target>
-		<target kind="Executable" arch="amd64" name="Japie ELF amd64 Debug" linkTarget="jg" debug="true">
-			<cflags>
-				<cflag>-O0</cflag>
-			</cflags>
-			<ldflags>
-				<ldflag>-pthread</ldflag>
-				<ldflag>-Wl,--rpath</ldflag>
-				<ldflag>-Wl,/usr/local/lib</ldflag>
-			</ldflags>
-			<defines>
-				<define>DEBUG</define>
-				<define>XTHREADS</define>
-				<define>PNG_NO_MMX_CODE</define>
-				<define>_THREAD_SAFE</define>
-				<define>HAVE_SYS_WAIT_H</define>
-			</defines>
-			<warnings>
-				<warning>all</warning>
-				<warning>no-multichar</warning>
-				<warning>no-unknown-pragmas</warning>
-			</warnings>
-		</target>
-		<target kind="Executable" arch="amd64" name="Japie ELF amd64 Release" linkTarget="jg" debug="false">
-			<cflags>
-				<cflag>-O3</cflag>
-			</cflags>
-			<ldflags>
-				<ldflag>-pthread</ldflag>
-				<ldflag>-Wl,--rpath</ldflag>
-				<ldflag>-Wl,/usr/local/lib</ldflag>
-			</ldflags>
-			<defines>
-				<define>NDEBUG</define>
-				<define>XTHREADS</define>
-				<define>PNG_NO_MMX_CODE</define>
-				<define>_THREAD_SAFE</define>
-				<define>HAVE_SYS_WAIT_H</define>
 			</defines>
 			<warnings>
 				<warning>all</warning>

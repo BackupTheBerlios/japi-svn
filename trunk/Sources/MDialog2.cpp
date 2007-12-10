@@ -292,7 +292,7 @@ void MDialog2::ChangedCallBack(
 	const char* name = glade_get_widget_name(inWidget);
 	if (name != nil)
 	{
-		uint32 id;
+		uint32 id = 0;
 		for (uint32 i = 0; i < 4 and name[i]; ++i)
 			id = (id << 8) | name[i];
 		

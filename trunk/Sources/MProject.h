@@ -331,7 +331,6 @@ class MProject : public MWindow, public MSaverMixin
 
 	bool				mModified;
 	std::string			mName;
-	std::string			mPkgConfigData;
 	MProjectTarget*		mCurrentTarget;
 	MPath				mProjectFile;
 	MPath				mProjectDir;
@@ -346,6 +345,10 @@ class MProject : public MWindow, public MSaverMixin
 						mTargets;
 	std::vector<std::string>
 						mPkgConfigPkgs;
+	std::vector<std::string>
+						mPkgConfigCFlags;
+	std::vector<std::string>
+						mPkgConfigLibs;
 	std::vector<MPath>	mSysSearchPaths;
 	std::vector<MPath>	mUserSearchPaths;
 	std::vector<MPath>	mLibSearchPaths;

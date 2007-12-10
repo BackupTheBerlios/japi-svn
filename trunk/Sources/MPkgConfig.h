@@ -4,9 +4,9 @@
 #include <vector>
 #include "MFile.h"
 
-void PkgConfigGetCFlags(
+void GetPkgConfigResult(
 	const std::string&			inPackage,
-	std::vector<std::string>&	outCFlags,
-	std::vector<std::string>&	outIncludeDirs);
+	const char*					inInfo,
+	std::vector<std::string>&	outFlags);
 
 #endif

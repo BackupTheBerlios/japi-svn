@@ -36,11 +36,7 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
-#if HAVE_WAIT_H
-#include <wait.h>
-#elif HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
 #include "MResources.h"
 
 #undef check
@@ -69,9 +65,9 @@ using namespace std;
 void MProjectExecJob::Execute()
 {
 //cout << "About to execute:" << endl;
-//copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, " "));
+//copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, "\n"));
 //cout << endl;
-//
+
 	int ifd[2], ofd[2], efd[2];
 	
 	pipe(ifd);
