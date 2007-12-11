@@ -657,20 +657,12 @@ void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 void MJapieApp::DoOpenTemplate(
 	const string&		inTemplate)
 {
-	fs::ifstream file(gPrefsDir / "Templates" / inTemplate);
-	
-	if (not file.is_open())
-		THROW(("Could not open resource file"));
+	MFile file(gPrefsDir / "Templates" / inTemplate);
+	MTextBuffer buffer;
+	buffer.ReadFromFile(file);
 
-	filebuf* b = file.rdbuf();
-	
-	uint32 size = b->pubseekoff(0, ios::end, ios::in);
-	b->pubseekoff(0, ios::beg, ios::in);
-	
-	string text(size, '\0');
-	
-	b->sgetn(&text[0], size);
-	file.close();
+	string text;
+	buffer.GetText(0, buffer.GetSize(), text);
 	
 	string::size_type offset = 0;
 	

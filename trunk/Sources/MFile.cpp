@@ -33,9 +33,12 @@
 #include "MJapieG.h"
 
 #include <unistd.h>
-#ifdef HAVE_XATTR_H
-#include <sys/xattr.h>
-#elif HAVE_EXTATTR_H
+
+#ifdef HAVE_ATTRIBUTES_H
+#include <attr/attributes.h>
+#endif
+
+#if HAVE_EXTATTR_H
 #include <sys/extattr.h>
 #endif
 //#include <sys/syslimits.h>
@@ -64,13 +67,26 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 	return extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER,
 		inName, outData, inDataSize);
 #endif
+
+#if defined(HAVE_ATTRIBUTES_H)
+	int length = inDataSize;
+	int err = ::attr_get(path.c_str(), inName,
+		reinterpret_cast<char*>(outData), &length, 0);
 	
-#ifndef HAVE_XATTR_H
-	return -1;
-#elif defined(XATTR_FINDERINFO_NAME)
-	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
-#else
+	if (err != 0)
+		length = 0;
+	
+	PRINT(("attr_get returned: %d (%s)", err, strerror(errno)));
+	
+	return length;
+#endif
+
+#if defined(HAVE_XATTR_H)
 	return ::getxattr(path.c_str(), inName, outData, inDataSize);
+#endif
+
+#if defined(XATTR_FINDERINFO_NAME)
+	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
 #endif
 }
 
@@ -87,12 +103,21 @@ void write_attribute(const MPath& inPath, const char* inName, const void* inData
 	last_write_time(inPath, t);
 #endif
 
-#ifndef HAVE_XATTR_H
-	return;
-#elif defined(XATTR_FINDERINFO_NAME)
+#if defined(HAVE_ATTRIBUTES_H)
+	int r = ::attr_set(path.c_str(), inName,
+		reinterpret_cast<const char*>(inData), inDataSize, 0);
+	
+	PRINT(("attr_set returned: %d (%s)", r, strerror(errno)));
+#endif
+
+#if defined(HAVE_XATTR_H)
+	int r = ::setxattr(path.c_str(), inName, inData, inDataSize, XATTR_REPLACE);
+	
+	PRINT(("setxattr returned: %d (%s)", r, strerror(errno)));
+#endif
+
+#if defined(XATTR_FINDERINFO_NAME)
 	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
-#else
-	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0);
 #endif
 }
 

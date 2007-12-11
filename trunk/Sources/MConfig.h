@@ -5,4 +5,8 @@
 #	define HAVE_EXTATTR_H	1
 #endif
 
+#if defined(__linux__)
+#	define HAVE_ATTRIBUTES_H		1
+#endif
+
 #endif
