@@ -3068,9 +3068,16 @@ void MProject::SetModified(
 
 void MProject::CheckIsOutOfDate()
 {
-	MModDateCache modDateCache;
-	mProjectItems.CheckIsOutOfDate(modDateCache);
-	mPackageItems.CheckIsOutOfDate(modDateCache);
+	try
+	{
+		MModDateCache modDateCache;
+		mProjectItems.CheckIsOutOfDate(modDateCache);
+		mPackageItems.CheckIsOutOfDate(modDateCache);
+	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
+	}
 }
 
 // ---------------------------------------------------------------------------

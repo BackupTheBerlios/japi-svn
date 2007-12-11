@@ -1,11 +1,11 @@
 ﻿Te doen
 
-- afronden nieuwe dialog class
+- meescrollen met selecteren
+- localisatie afronden (engels)
+
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 	- Replace in selectie
-
-- Redesign framework, terug naar HNode/HHandler achtige opzet.
 
 - toetsenbord navigatie in lijsten, typeahead
 	lijsten vervangen door GtkTreeView dingen
@@ -18,7 +18,6 @@
 - diff
 - preferences dialog
 - project afronden (refactor?), bugs fixen
-- state informatie in project area opslaan? Ergens anders?
 - onzichtbare tekens tekenen
 - drag&drop
 - upper/lower case

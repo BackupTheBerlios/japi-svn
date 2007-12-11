@@ -124,7 +124,7 @@
 		</mkdir>
 	</package>
 	<targets>
-		<target kind="Executable" arch="ppc" name="Japie Debug" linkTarget="jg" debug="true">
+		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
@@ -137,7 +137,7 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="ppc" name="Japie Release" linkTarget="jg" debug="false">
+		<target kind="Executable" arch="native" name="Japie Release" linkTarget="jg" debug="false">
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>

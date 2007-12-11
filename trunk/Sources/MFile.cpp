@@ -58,23 +58,41 @@ using namespace std;
 
 ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
 {
+	string path = inPath.string();
+	
+#if defined(HAVE_EXTATTR_H)
+	return extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER,
+		inName, outData, inDataSize);
+#endif
+	
 #ifndef HAVE_XATTR_H
 	return -1;
 #elif defined(XATTR_FINDERINFO_NAME)
-	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize, 0, 0);
+	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
 #else
-	return ::getxattr(inPath.string().c_str(), inName, outData, inDataSize);
+	return ::getxattr(path.c_str(), inName, outData, inDataSize);
 #endif
 }
 
 void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
+	string path = inPath.string();
+	
+#if defined(HAVE_EXTATTR_H)
+	time_t t = last_write_time(inPath);
+
+	int r = extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER,
+		inName, inData, inDataSize);
+	
+	last_write_time(inPath, t);
+#endif
+
 #ifndef HAVE_XATTR_H
 	return;
 #elif defined(XATTR_FINDERINFO_NAME)
-	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0, 0);
+	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
 #else
-	(void)::setxattr(inPath.string().c_str(), inName, inData, inDataSize, 0);
+	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0);
 #endif
 }
 
