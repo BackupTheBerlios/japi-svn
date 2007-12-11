@@ -333,6 +333,7 @@ MResourceFile::MResourceFile(
 	MTargetCPU			inTarget)
 	: mImpl(new MResourceFileImp)
 {
+	mImpl->mTarget = inTarget;
 }
 
 MResourceFile::~MResourceFile()

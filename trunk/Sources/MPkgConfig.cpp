@@ -122,6 +122,8 @@ void GetPkgConfigResult(
 	bool esc = false, squot = false, dquot = false;
 	char* ss = const_cast<char*>(s.c_str());
 	
+	argv.push_back(ss);
+	
 	for (char* c = ss; *c != 0; ++c)
 	{
 		if (esc)
@@ -157,4 +159,10 @@ void GetPkgConfigResult(
 	}
 	
 	copy(argv.begin(), argv.end(), back_inserter(outFlags));
+
+//cout << "pkg-config: " << path << endl
+//	 << "pkg: " << inPackage << endl
+//	 << "info: " << inInfo << endl
+//	 << "flags:" << endl;
+//	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
 }

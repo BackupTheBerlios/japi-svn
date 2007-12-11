@@ -184,7 +184,11 @@ MProject::MProject(const MPath& inPath)
 
 	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mVBox);
 	
-	mMenubar.BuildFromResource("project-window-menus");
+	try
+	{
+		mMenubar.BuildFromResource("project-window-menus");
+	}
+	catch (...) {}
 	
 	// status
 	
@@ -2541,6 +2545,8 @@ MProjectJob* MProject::CreateLinkJob(
 
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
+
+	argv.push_back("-pthread");
 
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");
