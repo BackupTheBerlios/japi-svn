@@ -1981,7 +1981,9 @@ void MDocument::PositionToOffset(
 	int32			inLocationY,
 	uint32&			outOffset) const
 {
-	uint32 line = static_cast<uint32>(inLocationY / mLineHeight);
+	uint32 line = 0;
+	if (inLocationY > 0)
+		line = static_cast<uint32>(inLocationY / mLineHeight);
 	
 	if (line >= mLineInfo.size())
 		outOffset = mText.GetSize();
@@ -1995,10 +1997,14 @@ void MDocument::PositionToOffset(
 		if (GetSoftwrap())
 			inLocationX -= GetLineIndentWidth(line);
 		
-		bool trailing;
-		/*bool hit = */device.PositionToIndex(inLocationX, outOffset, trailing);
-		
-		outOffset += mLineInfo[line].start;
+		if (inLocationX > 0)
+		{
+			bool trailing;
+			/*bool hit = */device.PositionToIndex(inLocationX, outOffset, trailing);
+			outOffset += mLineInfo[line].start;
+		}
+		else
+			outOffset = mLineInfo[line].start;
 	}
 }
 

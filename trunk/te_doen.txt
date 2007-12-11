@@ -1,6 +1,5 @@
 ﻿Te doen
 
-- meescrollen met selecteren
 - localisatie afronden (engels)
 
 - Afronden Find Dialog:

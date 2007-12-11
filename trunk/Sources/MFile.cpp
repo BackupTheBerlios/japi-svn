@@ -76,8 +76,6 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 	if (err != 0)
 		length = 0;
 	
-	PRINT(("attr_get returned: %d (%s)", err, strerror(errno)));
-	
 	return length;
 #endif
 
@@ -106,14 +104,10 @@ void write_attribute(const MPath& inPath, const char* inName, const void* inData
 #if defined(HAVE_ATTRIBUTES_H)
 	int r = ::attr_set(path.c_str(), inName,
 		reinterpret_cast<const char*>(inData), inDataSize, 0);
-	
-	PRINT(("attr_set returned: %d (%s)", r, strerror(errno)));
 #endif
 
 #if defined(HAVE_XATTR_H)
 	int r = ::setxattr(path.c_str(), inName, inData, inDataSize, XATTR_REPLACE);
-	
-	PRINT(("setxattr returned: %d (%s)", r, strerror(errno)));
 #endif
 
 #if defined(XATTR_FINDERINFO_NAME)

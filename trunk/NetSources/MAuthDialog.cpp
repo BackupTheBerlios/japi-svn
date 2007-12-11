@@ -30,11 +30,16 @@ void MAuthDialog::Initialize(
 
 	SetTitle(inTitle);
 	
+	SetText('inst', inInstruction);
+	
 	uint32 lblID = 'lbl1';
 	uint32 edtID = 'edt1';
 	
 	for (int32 i = 0; i < mFields; ++i)
 	{
+		SetVisible(lblID, true);
+		SetVisible(edtID, true);
+
 		SetText(lblID, inPrompts[i]);
 		
 //		if (inEcho[i] == false)
