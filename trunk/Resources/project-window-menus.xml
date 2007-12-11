@@ -1,0 +1,40 @@
+<?xml version="1.0" standalone="yes"?>
+<menubar>
+	<menu id='filemenu' label="Bestand">
+		<menu id='newmenu' label="New" special="template">
+			<item label="Nieuw" cmd='new '/>
+			<item label="-"/>
+			<!-- template items -->
+		</menu>
+		<item label="Open…" cmd='open'/>
+		<menu id='recentmenu' label="Open Recente" special="recent" />
+		<item label="Zoek en open…" cmd='OInc'/>
+		<item label="-" />
+		<item label="Sluit" cmd='clos'/>
+		<item label="Bewaar" cmd='save'/>
+		<item label="Bewaar als…" cmd='sava'/>
+		<item label="Vorige versie" cmd='reve'/>
+		<item label="-" />
+		<item label="Afsluiten" cmd='quit'/>
+	</menu>
+	<menu id='' label="Project">
+		<item label="Voeg bestand toe" cmd='Padd'/>
+		<item label="Nieuwe groep" cmd='Pngw'/>
+		<item label="-" />
+		<item label="Preprocess" cmd='Ppre'/>
+		<item label="Controleer syntax" cmd='Psyn'/>
+		<item label="Compileer" cmd='Pcmp'/>
+		<item label="Dissassemble" cmd='Pdis'/>
+		<item label="-" />
+		<item label="Check bestanden" cmd='Rchk'/>
+		<item label="Breng up-to-date" cmd='Pupd'/>
+		<item label="Maken" cmd='Pmak'/>
+		<item label="Schoon maken" cmd='Pcln'/>
+		<item label="-"/>
+		<item label="Uitvoeren" cmd='Prun'/>
+	</menu>
+	<menu id='' label="Venster" special="window">
+		<item label="Werkblad" cmd='Wrks'/>	
+		<item label="-" />
+	</menu>
+</menubar>

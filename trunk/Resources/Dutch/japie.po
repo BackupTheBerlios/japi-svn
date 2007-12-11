@@ -1,0 +1,325 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <maarten@hekkelman.com>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Japie 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-12-11 19:54+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Maarten L. Hekkelman <maarten@hekkelman.com>\n"
+"Language-Team: Dutch <nl@japie.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: auth-dialog.xml.h:1 find-and-open-dialog.xml.h:1 go-to-line-dialog.xml.h:1
+#: mark-matching-dialog.xml.h:1
+msgid "Cancel"
+msgstr "Annuleer"
+
+#: auth-dialog.xml.h:2 find-and-open-dialog.xml.h:4 go-to-line-dialog.xml.h:4
+#: mark-matching-dialog.xml.h:4
+msgid "OK"
+msgstr "OK"
+
+#: auth-dialog.xml.h:3
+msgid "instruction"
+msgstr "instructie"
+
+#: auth-dialog.xml.h:4 sftp-dialog.xml.h:3
+msgid "label"
+msgstr "label"
+
+#: find-and-open-dialog.xml.h:2
+msgid "File:"
+msgstr "Bestand:"
+
+#: find-and-open-dialog.xml.h:3
+msgid "Find and Open File"
+msgstr "Zoek en open bestand"
+
+#: find-dialog.xml.h:2
+msgid "Batch"
+msgstr "Verzamel"
+
+#: find-dialog.xml.h:3
+msgid "Entire Word"
+msgstr "Geheel woord"
+
+#: find-dialog.xml.h:4
+msgid "Filter Filename"
+msgstr "Filter bestandsnamen"
+
+#: find-dialog.xml.h:5
+msgid "Find"
+msgstr "Zoek"
+
+#: find-dialog.xml.h:6
+msgid "Find in Files"
+msgstr "Zoek in meerdere bestanden"
+
+#: find-dialog.xml.h:7
+msgid ""
+"Find in Folders\n"
+"Find in Open Windows\n"
+"Find in Include Files"
+msgstr ""
+"Zoek in mappen\n"
+"Zoek in open vensters\n"
+"Zoek in include bestanden"
+
+#: find-dialog.xml.h:10 mark-matching-dialog.xml.h:3
+msgid "Ignore Case"
+msgstr "Negeer hfd/klein"
+
+#: find-dialog.xml.h:11
+msgid "In Selection"
+msgstr "In selectie"
+
+#: find-dialog.xml.h:12
+msgid "Method"
+msgstr "Methode"
+
+#: find-dialog.xml.h:13
+msgid "Recursive"
+msgstr "Recursief"
+
+#: find-dialog.xml.h:14 mark-matching-dialog.xml.h:5
+msgid "Regular Expression"
+msgstr "Reguliere expressie"
+
+#: find-dialog.xml.h:15
+msgid "Replace"
+msgstr "Vervang"
+
+#: find-dialog.xml.h:16
+msgid "Replace & Find"
+msgstr "Vervang & zoek"
+
+#: find-dialog.xml.h:17
+msgid "Replace All"
+msgstr "Vervang alles"
+
+#: find-dialog.xml.h:18
+msgid "Starting Folder"
+msgstr "Start map"
+
+#: find-dialog.xml.h:19
+msgid "Text Files Only"
+msgstr "Tekst bestanden"
+
+#: find-dialog.xml.h:20
+msgid "Wrap"
+msgstr "Omlopen"
+
+#: go-to-line-dialog.xml.h:2
+msgid "Go to Line"
+msgstr "Ga naar regel"
+
+#: go-to-line-dialog.xml.h:3
+msgid "Line Number:"
+msgstr "Regel nummer:"
+
+#: mark-matching-dialog.xml.h:2
+msgid "Find:"
+msgstr "Zoek:"
+
+#: mark-matching-dialog.xml.h:6
+msgid "Find and Mark Lines"
+msgstr "Zoek en markeer regels"
+
+#: sftp-dialog.xml.h:2
+msgid "SFTP Transfer Progress"
+msgstr "SFTP overdracht voortgang"
+
+# menus
+msgid "File"
+msgstr "Bestand"
+
+msgid "New"
+msgstr "Nieuw"
+
+msgid "Open…"
+msgstr "Open…"
+
+msgid "Open Recent"
+msgstr "Open recente"
+
+msgid "Find and Open…"
+msgstr "Zoek en open…"
+
+msgid "Open Source/Header"
+msgstr "Open Source/Header"
+
+msgid "Close"
+msgstr "Sluit"
+
+msgid "Save"
+msgstr "Bewaar"
+
+msgid "Save As…"
+msgstr "Bewaar als…"
+
+msgid "Revert"
+msgstr "Vorige versie"
+
+msgid "Quit"
+msgstr "Afsluiten"
+
+msgid "Edit"
+msgstr "Bewerken"
+
+msgid "Undo"
+msgstr "Herstel"
+
+msgid "Redo"
+msgstr "Herhaal"
+
+msgid "Cut"
+msgstr "Knip"
+
+msgid "Cut and Append"
+msgstr "Knip en voeg toe"
+
+msgid "Copy"
+msgstr "Kopieer"
+
+msgid "Copy and Append"
+msgstr "Kopieer en voeg toe"
+
+msgid "Paste"
+msgstr "Plak"
+
+msgid "Paste Next"
+msgstr "Plak volgende"
+
+msgid "Clear"
+msgstr "Wis"
+
+msgid "Select All"
+msgstr "Alles selecteren"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Balance"
+msgstr "Balanceer"
+
+msgid "Wrap Text"
+msgstr "Omlopen"
+
+msgid "Shift Left"
+msgstr "Schuif naar links"
+
+msgid "Shift Right"
+msgstr "Schuif naar rechts"
+
+msgid "Comment"
+msgstr "Maak commentaar"
+
+msgid "Uncomment"
+msgstr "Verwijder commentaar"
+
+msgid "Entab"
+msgstr "Spaties naar tabs"
+
+msgid "Detab"
+msgstr "Tabs naar spaties"
+
+msgid "Tab Width"
+msgstr "Tabbreedte"
+
+msgid "Syntax colour"
+msgstr "Syntax kleuring"
+
+msgid "None"
+msgstr "Geen"
+
+msgid "Fast Find"
+msgstr "Snel zoeken"
+
+msgid "Fast Find Backward"
+msgstr "Snel zoeken achteruit"
+
+msgid "Find Next"
+msgstr "Zoek volgende"
+
+msgid "Find Previous"
+msgstr "Zoek vorige"
+
+msgid "Find in Next File"
+msgstr "Zoek in volgend bestand"
+
+msgid "Enter Search String"
+msgstr "Gebruik als zoek tekst"
+
+msgid "Enter Replace String"
+msgstr "Gebruik als vervang tekst"
+
+msgid "Replace and Find Next"
+msgstr "Vervang en zoek volgende"
+
+msgid "Replace and Find Previous"
+msgstr "Vervang en zoek vorige"
+
+msgid "Complete"
+msgstr "Completeer"
+
+msgid "Complete Looking Forward"
+msgstr "Completeer vooruit zoekend"
+
+msgid "Mark"
+msgstr "Markeer"
+
+msgid "Next Mark"
+msgstr "Volgende markering"
+
+msgid "Previous Mark"
+msgstr "Vorige markering"
+
+msgid "Clear All Marks"
+msgstr "Wis alle markeringen"
+
+msgid "Mark Line"
+msgstr "Markeer regel"
+
+msgid "Find and Mark…"
+msgstr "Zoek en markeer…"
+
+msgid "Copy Marked Lines"
+msgstr "Kopieer gemarkeerde regels"
+
+msgid "Cut Marked Lines"
+msgstr "Knip gemarkeerde regels"
+
+msgid "Clear Marked Lines"
+msgstr "Wis gemarkeerde regels"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Add to Project"
+msgstr "Voeg toe aan project"
+
+msgid "Preprocess"
+msgstr "Preprocess"
+
+msgid "Check Syntax"
+msgstr "Controleer syntax"
+
+msgid "Compile"
+msgstr "Compileer"
+
+msgid "Dissassemble"
+msgstr "Dissassemble"
+
+msgid "Window"
+msgstr "Venster"
+
+msgid "Worksheet"
+msgstr "Werkblad"
+
