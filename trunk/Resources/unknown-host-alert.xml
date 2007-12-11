@@ -1,9 +1,9 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>De sleutel voor server ^0 (handtekening: ^1) is niet bekend. Druk op Toevoegen als u deze server vertrouwt, druk op Eenmalig om te verbinden zonder de sleutel op te slaan.</message>
+	<message>The host key for server ^0 (signature: ^1) is not known. Click Add Key if you trust this host and want to cache the key, click Once to connect without storing the key.</message>
 	<buttons>
-		<button title="Voeg toe" cmd="1"/>
-		<button title="Annuleer" cmd="2"/>
-		<button title="Eenmalig" cmd="3" default="true"/>
+		<button title="Add" cmd="1"/>
+		<button title="Cancel" cmd="2"/>
+		<button title="Once" cmd="3"/>
 	</buttons>
 </alert>

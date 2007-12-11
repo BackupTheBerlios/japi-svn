@@ -1,9 +1,0 @@
-<?xml version="1.0" standalone="yes" ?>
-<alert type="warning">
-	<message>The host key for server ^0 (signature: ^1) is not known. Click Add Key if you trust this host and want to cache the key, click Once to connect without storing the key.</message>
-	<buttons>
-		<button title="Add" cmd="1"/>
-		<button title="Cancel" cmd="2"/>
-		<button title="Once" cmd="3"/>
-	</buttons>
-</alert>

@@ -1,8 +1,8 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>De sleutel voor server ^0 (handtekening: ^1) is gewijzigd!!! Als u ABSOLUUT zeker bent dat dit juist is kunt u de sleutel vervangen.</message>
+	<message>The host key for server ^0 (signature: ^1) has changed!!! If you are ABSOLUTELY sure this is correct you can replace the key otherwise click Cancel.</message>
 	<buttons>
- 		<button title="Vervang sleutel" cmd="2"/>
-		<button title="Annuleer" cmd="1" default="true"/>
+ 		<button title="Replace Key" cmd="2"/>
+		<button title="Cancel" cmd="1" default="true"/>
 	</buttons>
 </alert>
