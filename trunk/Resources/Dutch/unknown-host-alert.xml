@@ -1,9 +1,0 @@
-<?xml version="1.0" standalone="yes" ?>
-<alert type="warning">
-	<message>De sleutel voor server ^0 (handtekening: ^1) is niet bekend. Druk op Toevoegen als u deze server vertrouwt, druk op Eenmalig om te verbinden zonder de sleutel op te slaan.</message>
-	<buttons>
-		<button title="Voeg toe" cmd="1"/>
-		<button title="Annuleer" cmd="2"/>
-		<button title="Eenmalig" cmd="3" default="true"/>
-	</buttons>
-</alert>

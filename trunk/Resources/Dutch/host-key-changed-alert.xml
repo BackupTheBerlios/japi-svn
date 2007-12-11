@@ -1,8 +1,0 @@
-<?xml version="1.0" standalone="yes" ?>
-<alert type="warning">
-	<message>De sleutel voor server ^0 (handtekening: ^1) is gewijzigd!!! Als u ABSOLUUT zeker bent dat dit juist is kunt u de sleutel vervangen.</message>
-	<buttons>
- 		<button title="Vervang sleutel" cmd="2"/>
-		<button title="Annuleer" cmd="1" default="true"/>
-	</buttons>
-</alert>
