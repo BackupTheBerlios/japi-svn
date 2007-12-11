@@ -349,7 +349,7 @@ msgid "Check File Dates"
 msgstr "Check bestanden"
 
 msgid "Update"
-mststr "Breng up-to-date"
+msgstr "Breng up-to-date"
 
 msgid "Make"
 msgstr "Maken"
