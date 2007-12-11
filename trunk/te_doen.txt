@@ -1,7 +1,5 @@
 ﻿Te doen
 
-- localisatie afronden (engels)
-
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 	- Replace in selectie

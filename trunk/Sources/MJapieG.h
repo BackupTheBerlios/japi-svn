@@ -37,7 +37,6 @@
 #include <list>
 #include <deque>
 
-#include "MConfig.h"
 #include "MTypes.h"
 #include "MHandler.h"
 #include "MP2PEvents.h"

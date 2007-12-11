@@ -235,8 +235,6 @@ SetArray(
 	
 	transform(inArray.begin(), inArray.end(), data, boost::bind(&string::c_str, _1));
 
-PRINT(("SetArray %s with %d elements", inName, inArray.size()));
-	
 	g_key_file_set_string_list(IniFile::Instance(), "Settings", inName, data, inArray.size());
 	
 	delete[] data;

@@ -9,6 +9,7 @@
 #include "MResources.h"
 #include "MAlerts.h"
 #include "MUtils.h"
+#include "MStrings.h"
 
 using namespace std;
 
@@ -50,14 +51,14 @@ int32 DisplayAlertWithArgs(
 			for (XMLNode::iterator item = node.begin(); item != node.end(); ++item)
 			{
 				if (item->name() == "message")
-					text = item->text();
+					text = _(item->text());
 				else if (item->name() == "buttons")
 				{
 					for (XMLNode::iterator button = item->begin(); button != item->end(); ++button)
 					{
 						if (button->name() == "button")
 						{
-							string label = button->property("title");
+							string label = _(button->property("title"));
 							uint32 cmd = atoi(button->property("cmd").c_str());
 							if (button->property("default") == "true")
 								defaultButton = cmd;
@@ -84,10 +85,7 @@ int32 DisplayAlertWithArgs(
 			type, GTK_BUTTONS_NONE, text.c_str());
 		
 		for (vector<pair<string,uint32> >::iterator b = btns.begin(); b != btns.end(); ++b)
-		{
-			gtk_dialog_add_button(GTK_DIALOG(dlg),
-				b->first.c_str(), b->second);
-		}
+			gtk_dialog_add_button(GTK_DIALOG(dlg), b->first.c_str(), b->second);
 
 		if (defaultButton >= 0)
 			gtk_dialog_set_default_response(GTK_DIALOG(dlg), defaultButton);

@@ -2432,13 +2432,22 @@ MProjectJob* MProject::CreateCompileJob(
 	argv.push_back("-fmessage-length=132");
 	
 	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
-		argv.push_back(kIQuote + p->string());
+	{
+		if (fs::exists(*p) and fs::is_directory(*p))
+			argv.push_back(kIQuote + p->string());
+	}
 
 	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
-		argv.push_back(kI + p->string());
+	{
+		if (fs::exists(*p) and fs::is_directory(*p))
+			argv.push_back(kI + p->string());
+	}
 	
 	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-		argv.push_back(kF + p->string());
+	{
+		if (fs::exists(*p) and fs::is_directory(*p))
+			argv.push_back(kF + p->string());
+	}
 	
 	argv.push_back(inFile.string());
 
@@ -2546,13 +2555,18 @@ MProjectJob* MProject::CreateLinkJob(
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
 
+#if not defined(__APPLE__)
 	argv.push_back("-pthread");
+#endif
 
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");
 
 	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
-		argv.push_back(kL + p->string());
+	{
+		if (fs::exists(*p) and fs::is_directory(*p))
+			argv.push_back(kL + p->string());
+	}
 	
 	vector<MProjectItem*> files;
 	mProjectItems.Flatten(files);

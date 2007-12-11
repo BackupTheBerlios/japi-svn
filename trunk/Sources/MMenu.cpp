@@ -97,7 +97,7 @@ void MMenuItem::CreateWidget()
 		mGtkMenuItem = gtk_separator_menu_item_new();
 	else
 	{
-		mGtkMenuItem = gtk_menu_item_new_with_label(mLabel.c_str());
+		mGtkMenuItem = gtk_menu_item_new_with_label(_(mLabel.c_str()));
 		if (mCommand != 0)	
 			mCallback.Connect(mGtkMenuItem, "activate");
 	}
@@ -106,7 +106,7 @@ void MMenuItem::CreateWidget()
 void MMenuItem::CreateWidget(
 	GSList*&		ioRadioGroup)
 {
-	mGtkMenuItem = gtk_radio_menu_item_new_with_label(ioRadioGroup, mLabel.c_str());
+	mGtkMenuItem = gtk_radio_menu_item_new_with_label(ioRadioGroup, _(mLabel.c_str()));
 
 	ioRadioGroup = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(mGtkMenuItem));
 
@@ -133,7 +133,7 @@ void MMenuItem::ItemCallback()
 			}
 
 			if (process and not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
-				cout << "Unhandled command: " << MCommandToString(mCommand) << endl;
+				PRINT(("Unhandled command: %s", (const char*)MCommandToString(mCommand)));
 		}
 	}
 	catch (exception& e)
@@ -559,7 +559,7 @@ MMenu* MMenubar::CreateMenu(
 void MMenubar::AddMenu(
 	MMenu*				inMenu)
 {
-	GtkWidget* menuItem = gtk_menu_item_new_with_label(inMenu->GetLabel().c_str());
+	GtkWidget* menuItem = gtk_menu_item_new_with_label(_(inMenu->GetLabel().c_str()));
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), inMenu->GetGtkMenu());
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), menuItem);
 	inMenu->SetTarget(mTarget);

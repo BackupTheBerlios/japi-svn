@@ -59,7 +59,7 @@ msgid "Find"
 msgstr "Zoek"
 
 #: find-dialog.xml.h:6
-msgid "Find in Files"
+msgid "Find in Multiple Files"
 msgstr "Zoek in meerdere bestanden"
 
 #: find-dialog.xml.h:7
@@ -339,3 +339,23 @@ msgstr "De sleutel voor server ^0 (handtekening: ^1) is gewijzigd!!! Als u ABSOL
 msgid "Replace Key"
 msgstr "Vervang sleutel"
 
+msgid "Add File"
+msgstr "Voeg bestand toe"
+
+msgid "New Group"
+msgstr "Nieuwe groep"
+
+msgid "Check File Dates"
+msgstr "Check bestanden"
+
+msgid "Update"
+mststr "Breng up-to-date"
+
+msgid "Make"
+msgstr "Maken"
+
+msgid "Make Clean"
+msgstr "Schoon maken"
+
+msgid "Run"
+msgstr "Uitvoeren"

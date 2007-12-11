@@ -100,30 +100,22 @@
 			<file>libboost_thread.a</file>
 			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
-			<file>libattr.a</file>
+			<!--file>libattr.a</file-->
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>
 	</files>
 	<package resource_dir="Resources">
-		<mkdir name="English">
-			<copy>edit-window-menus.xml</copy>
-			<copy>unknown-host-alert.xml</copy>
-			<copy>host-key-changed-alert.xml</copy>
-			<copy>find-dialog.xml</copy>
-		</mkdir>
-		<mkdir name="Dutch">
-			<copy>edit-window-menus.xml</copy>
-			<copy>project-window-menus.xml</copy>
-			<copy>unknown-host-alert.xml</copy>
-			<copy>host-key-changed-alert.xml</copy>
-			<copy>find-dialog.xml</copy>
-			<copy>find-and-open-dialog.xml</copy>
-			<copy>mark-matching-dialog.xml</copy>
-			<copy>go-to-line-dialog.xml</copy>
-			<copy>auth-dialog.xml</copy>
-			<copy>sftp-dialog.xml</copy>
-		</mkdir>
+		<copy>unknown-host-alert.xml</copy>
+		<copy>host-key-changed-alert.xml</copy>
+		<copy>edit-window-menus.xml</copy>
+		<copy>project-window-menus.xml</copy>
+		<copy>find-dialog.xml</copy>
+		<copy>find-and-open-dialog.xml</copy>
+		<copy>mark-matching-dialog.xml</copy>
+		<copy>go-to-line-dialog.xml</copy>
+		<copy>auth-dialog.xml</copy>
+		<copy>sftp-dialog.xml</copy>
 	</package>
 	<targets>
 		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">

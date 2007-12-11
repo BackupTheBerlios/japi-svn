@@ -34,13 +34,6 @@
 
 #include <unistd.h>
 
-#ifdef HAVE_ATTRIBUTES_H
-#include <attr/attributes.h>
-#endif
-
-#if HAVE_EXTATTR_H
-#include <sys/extattr.h>
-#endif
 //#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -59,16 +52,51 @@
 
 using namespace std;
 
+// ------------------------------------------------------------------
+//
+//  Three different implementations of extended attributes...
+//
+
+// ------------------------------------------------------------------
+//  FreeBSD
+
+#if defined(__FreeBSD__) and (__FreeBSD__ > 0)
+
+#include <sys/extattr.h>
+
 ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
-#if defined(HAVE_EXTATTR_H)
 	return extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER,
 		inName, outData, inDataSize);
+}
+
+void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
+{
+	string path = inPath.string();
+	
+	time_t t = last_write_time(inPath);
+
+	int r = extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER,
+		inName, inData, inDataSize);
+	
+	last_write_time(inPath, t);
+}
+
 #endif
 
-#if defined(HAVE_ATTRIBUTES_H)
+// ------------------------------------------------------------------
+//  Linux
+
+#if defined(__linux__)
+
+#include <attr/attributes.h>
+
+ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
+{
+	string path = inPath.string();
+
 	int length = inDataSize;
 	int err = ::attr_get(path.c_str(), inName,
 		reinterpret_cast<char*>(outData), &length, 0);
@@ -77,66 +105,40 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 		length = 0;
 	
 	return length;
-#endif
-
-#if defined(HAVE_XATTR_H)
-	return ::getxattr(path.c_str(), inName, outData, inDataSize);
-#endif
-
-#if defined(XATTR_FINDERINFO_NAME)
-	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
-#endif
 }
 
 void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
-#if defined(HAVE_EXTATTR_H)
-	time_t t = last_write_time(inPath);
-
-	int r = extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER,
-		inName, inData, inDataSize);
-	
-	last_write_time(inPath, t);
-#endif
-
-#if defined(HAVE_ATTRIBUTES_H)
-	int r = ::attr_set(path.c_str(), inName,
+	(void)::attr_set(path.c_str(), inName,
 		reinterpret_cast<const char*>(inData), inDataSize, 0);
-#endif
-
-#if defined(HAVE_XATTR_H)
-	int r = ::setxattr(path.c_str(), inName, inData, inDataSize, XATTR_REPLACE);
-#endif
-
-#if defined(XATTR_FINDERINFO_NAME)
-	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
-#endif
 }
+
+#endif
 
 // ------------------------------------------------------------------
-//
-//  MFileSystem
-//
+//  MacOS X
 
-namespace MFileSystem
-{
+#if defined(__APPLE__)
 
-double GetModificationDate(
-	const MPath&		inURL)
+#include <sys/xattr.h>
+
+ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
 {
-	return 0;
+	string path = inPath.string();
+
+	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
 }
 
-bool Exists(
-	const MPath&		inURL)
+void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
-	struct stat st;
-	return stat(inURL.string().c_str(), &st) >= 0;
+	string path = inPath.string();
+
+	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
 }
 
-}
+#endif
 
 // ------------------------------------------------------------------
 //

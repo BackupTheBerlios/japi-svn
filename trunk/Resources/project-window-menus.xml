@@ -1,40 +1,40 @@
 <?xml version="1.0" standalone="yes"?>
 <menubar>
-	<menu id='filemenu' label="Bestand">
+	<menu id='filemenu' label="File">
 		<menu id='newmenu' label="New" special="template">
-			<item label="Nieuw" cmd='new '/>
+			<item label="New" cmd='new '/>
 			<item label="-"/>
 			<!-- template items -->
 		</menu>
 		<item label="Open…" cmd='open'/>
-		<menu id='recentmenu' label="Open Recente" special="recent" />
-		<item label="Zoek en open…" cmd='OInc'/>
+		<menu id='recentmenu' label="Open Recent" special="recent" />
+		<item label="Find and Open…" cmd='OInc'/>
 		<item label="-" />
-		<item label="Sluit" cmd='clos'/>
-		<item label="Bewaar" cmd='save'/>
-		<item label="Bewaar als…" cmd='sava'/>
-		<item label="Vorige versie" cmd='reve'/>
+		<item label="Close" cmd='clos'/>
+		<item label="Save" cmd='save'/>
+		<item label="Save As…" cmd='sava'/>
+		<item label="Revert" cmd='reve'/>
 		<item label="-" />
-		<item label="Afsluiten" cmd='quit'/>
+		<item label="Quit" cmd='quit'/>
 	</menu>
 	<menu id='' label="Project">
-		<item label="Voeg bestand toe" cmd='Padd'/>
-		<item label="Nieuwe groep" cmd='Pngw'/>
+		<item label="Add File" cmd='Padd'/>
+		<item label="New Group" cmd='Pngw'/>
 		<item label="-" />
 		<item label="Preprocess" cmd='Ppre'/>
-		<item label="Controleer syntax" cmd='Psyn'/>
-		<item label="Compileer" cmd='Pcmp'/>
+		<item label="Check Syntax" cmd='Psyn'/>
+		<item label="Compile" cmd='Pcmp'/>
 		<item label="Dissassemble" cmd='Pdis'/>
 		<item label="-" />
-		<item label="Check bestanden" cmd='Rchk'/>
-		<item label="Breng up-to-date" cmd='Pupd'/>
-		<item label="Maken" cmd='Pmak'/>
-		<item label="Schoon maken" cmd='Pcln'/>
+		<item label="Check File Dates" cmd='Rchk'/>
+		<item label="Update" cmd='Pupd'/>
+		<item label="Make" cmd='Pmak'/>
+		<item label="Make Clean" cmd='Pcln'/>
 		<item label="-"/>
-		<item label="Uitvoeren" cmd='Prun'/>
+		<item label="Run" cmd='Prun'/>
 	</menu>
-	<menu id='' label="Venster" special="window">
-		<item label="Werkblad" cmd='Wrks'/>	
+	<menu id='' label="Window" special="window">
+		<item label="Worksheet" cmd='Wrks'/>	
 		<item label="-" />
 	</menu>
 </menubar>

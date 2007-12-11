@@ -58,7 +58,7 @@ void MDialog::CreateGladeAndWidgets(
 	if (not LoadResource(inResource, xml, size))
 		THROW(("Could not load dialog resource %s", inResource));
 	
-	outGlade = glade_xml_new_from_buffer(xml, size, nil, nil);
+	outGlade = glade_xml_new_from_buffer(xml, size, nil, "japie");
 	if (outGlade == nil)
 		THROW(("Failed to create glade from resource"));
 	
