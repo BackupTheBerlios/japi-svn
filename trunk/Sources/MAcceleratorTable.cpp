@@ -115,7 +115,7 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 		sInstance->RegisterAcceleratorKey(cmd_ShiftLeft, GDK_bracketleft, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_ShiftRight, GDK_bracketright, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_Comment, GDK_apostrophe, GDK_CONTROL_MASK);
-		sInstance->RegisterAcceleratorKey(cmd_Uncomment, GDK_quotedbl, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+		sInstance->RegisterAcceleratorKey(cmd_Uncomment, GDK_apostrophe, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_FastFind, GDK_I, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_FastFindBW, GDK_i, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_Find, GDK_F, GDK_CONTROL_MASK);

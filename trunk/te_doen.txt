@@ -15,23 +15,33 @@
 - context menu's
 - vierkante selectie
 
+- read-only files ondersteunen
+
+- window icons
+
+- stdin lezen
+
+- about dialog
+
 - softwrap fixen, als je typt in een gewrapte regel
 - upper/lower case menu maken
+- een 'normalize unicode' menu item
 
 - diff
 - preferences dialog
 - project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen
-- drag&drop
 - Lange foutmeldingen wrappen in meldingen lijsten
 
-- printen
+- focus in message windows (reageren niet op Ctrl-W)
 
-- dynamische menus?
+- printen
+- accelerator-achtig iets
 
 - clean up code na leaks test
 
 - split windows?
+- dynamische menus?
 
 - xml parser: pad in popup?
 
