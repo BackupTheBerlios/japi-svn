@@ -198,20 +198,9 @@ class MTextView : public MView, public MHandler
 							int32			inX,
 							int32			inY);
 	
-//	void				DoDragSendData(FlavorType theType,
-//							DragItemRef theItemRef, DragRef theDrag);
+	void				DrawDragHilite(
+							MDevice&		inDevice);
 	
-	bool				InitiateDrag(
-							GdkEventButton*	inEvent);
-
-//	void				DrawDragHilite(CGContextRef inContext);
-//	
-//	static pascal OSErr	DoDragSendDataCallback(FlavorType theType, void *dragSendRefCon,
-//							DragItemRef theItemRef, DragRef theDrag);
-//	static DragSendDataUPP
-//						sDragSendDataUPP;
-//	static MTextView*	sDraggingView;
-
 	void				AdjustScrollBars();
 
 	virtual bool		OnKeyPressEvent(
@@ -250,6 +239,26 @@ class MTextView : public MView, public MHandler
 							GdkEvent*		inEvent);
 	
 	MSlot<bool(GdkEvent*)>					slOnEvent;
+
+	virtual void		DragEnter();
+	
+	virtual void		DragWithin(
+							int32			inX,
+							int32			inY);
+	
+	virtual void		DragLeave();
+
+	virtual bool		DragAccept(
+							int32			inX,
+							int32			inY,
+							const char*		inData,
+							uint32			inLength,
+							uint32			inType);
+	
+	virtual void		DragSendData(
+							std::string&	outData);
+
+	virtual void		DragDeleteData();
 	
 	MController*		mController;
 	MDocument*			mDocument;
@@ -283,8 +292,12 @@ class MTextView : public MView, public MHandler
 //	HIViewTrackingAreaRef
 //						mTrackingLeftRef, mTrackingMainRef;
 //	EventLoopTimerRef	mTimerRef;
-//	DragRef				mDragRef;
-//	uint32				mDragCaret;
+
+	uint32				mDragCaret;
+	int32				mClickStartX, mClickStartY;
+	uint32				mClickStartTime;
+	static MTextView*	sDraggingView;
+
 	static MColor		sCurrentLineColor, sMarkedLineColor, sPCLineColor, sBreakpointColor;
 
 //	// tick support for caret blinking

@@ -575,6 +575,30 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2)>
 				}
 };
 
+template<class CallBackIn, typename T1, typename T2>
+struct MCallBackOutHandler<CallBackIn, void(T1, T2)>
+{
+	std::auto_ptr<CallBackIn>		mHandler;
+
+	void		operator() (T1 a1, T2 a2)
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallBack(a1, a2);
+				}
+
+	static void	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					T2				inArg2,
+					gpointer		inData)
+				{
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						handler.mHandler->DoCallBack(inArg1, inArg2);
+				}
+};
+
 template<class CallBackIn, typename R, typename T1, typename T2, typename T3>
 struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3)>
 {
@@ -598,6 +622,50 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
 					if (mHandler.get() != nil)
 						return mHandler->DoCallBack(a1, a2, a3, a4);
 					return R();
+				}
+
+	static R	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					T2				inArg2,
+					T3				inArg3,
+					T4				inArg4,
+					gpointer		inData)
+				{
+					R result = R();
+					
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						result = handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
+					
+					return result;
+				}
+};
+
+template<class CallBackIn, typename T1, typename T2, typename T3, typename T4>
+struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
+{
+	std::auto_ptr<CallBackIn>		mHandler;
+
+	void		operator() (T1 a1, T2 a2, T3 a3, T4 a4)
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallBack(a1, a2, a3, a4);
+				}
+
+	static void	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					T2				inArg2,
+					T3				inArg3,
+					T4				inArg4,
+					gpointer		inData)
+				{
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
 				}
 };
 
@@ -636,6 +704,22 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
 				{
 					if (mHandler.get() != nil)
 						mHandler->DoCallBack(a1, a2, a3, a4, a5, a6);
+				}
+
+	static void	GCallback(
+					GObject*		inWidget,
+					T1				inArg1,
+					T2				inArg2,
+					T3				inArg3,
+					T4				inArg4,
+					T5				inArg5,
+					T6				inArg6,
+					gpointer		inData)
+				{
+					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4, inArg5, inArg6);
 				}
 };
 

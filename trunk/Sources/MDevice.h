@@ -48,6 +48,10 @@ class MDevice
 	void			FillRect(
 						MRect				inRect);
 
+	void			StrokeRect(
+						MRect				inRect,
+						uint32				inLineWidth = 1);
+
 	void			FillEllipse(
 						MRect				inRect);
 	

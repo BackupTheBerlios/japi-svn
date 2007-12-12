@@ -311,6 +311,14 @@ void MDevice::FillRect(
 	cairo_fill(mImpl->mContext);
 }
 
+void MDevice::StrokeRect(
+	MRect		inRect,
+	uint32		inLineWidth)
+{
+	cairo_rectangle(mImpl->mContext, inRect.x, inRect.y, inRect.width, inRect.height);
+	cairo_stroke(mImpl->mContext);
+}
+
 void MDevice::FillEllipse(
 	MRect		inRect)
 {

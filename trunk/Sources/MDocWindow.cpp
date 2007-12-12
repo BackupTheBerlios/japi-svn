@@ -48,6 +48,7 @@
 #include "MView.h"
 #include "MScrollBar.h"
 #include "MDevice.h"
+#include "MStrings.h"
 
 using namespace std;
 
@@ -266,7 +267,7 @@ string MDocWindow::GetUntitledTitle()
 	static int sDocNr = 0;
 	stringstream result;
 	
-	result << "Naamloos";
+	result << _("Untitled");
 	
 	if (++sDocNr > 1)
 		result << ' ' << sDocNr;

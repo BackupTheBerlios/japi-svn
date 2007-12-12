@@ -119,6 +119,70 @@ class MView
 	virtual bool	OnExposeEvent(
 						GdkEventExpose*	inEvent);
 
+	// Drag and Drop support
+
+	void			SetupDragAndDrop(
+						const GtkTargetEntry
+										inTargets[],
+						uint32			inTargetCount);
+
+	void			DragBegin(
+						const GtkTargetEntry
+										inTargets[],
+						uint32			inTargetCount,
+						GdkEventMotion*	inEvent);
+
+	virtual void	DragEnter();
+	
+	virtual void	DragWithin(
+						int32			inX,
+						int32			inY);
+	
+	virtual void	DragLeave();
+	
+	virtual bool	DragAccept(
+						int32			inX,
+						int32			inY,
+						const char*		inData,
+						uint32			inLength,
+						uint32			inType);
+	
+	virtual void	DragSendData(
+						std::string&	outData);
+	
+	virtual void	DragDeleteData();
+	
+	virtual void	OnDragDataReceived(
+						GdkDragContext*	inDragContext,
+						gint			inX,
+						gint			inY,
+						GtkSelectionData*
+										inData,
+						guint			inInfo,
+						guint			inTime);
+
+	virtual bool	OnDragMotion(
+						GdkDragContext*	inDragContext,
+						gint			inX,
+						gint			inY,
+						guint			inTime);
+
+	virtual void	OnDragLeave(
+						GdkDragContext*	inDragContext,
+						guint			inTime);
+
+	virtual void	OnDragDataDelete(
+						GdkDragContext*	inDragContext);
+
+	virtual void	OnDragDataGet(
+						GdkDragContext*	inDragContext,
+						GtkSelectionData*
+										inData,
+						guint			inInfo,
+						guint			inTime);
+
+	bool			IsWithinDrag() const	{ return mDragWithin; }
+
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
 	MSlot<bool(GdkEventFocus*)>			mFocusOutEvent;
 	MSlot<bool(GdkEventButton*)>		mButtonPressEvent;
@@ -129,11 +193,33 @@ class MView
 	MSlot<bool(GdkEventScroll*)>		mScrollEvent;
 	MSlot<bool()>						mRealize;
 	MSlot<bool(GdkEventExpose*)>		mExposeEvent;
+	
+	MSlot<void(GdkDragContext*,
+               gint,
+               gint,
+               GtkSelectionData*,
+               guint,
+               guint)>					mDragDataReceived;
 
+	MSlot<bool(GdkDragContext*,
+               gint,
+               gint,
+               guint)>					mDragMotion;
+
+	MSlot<void(GdkDragContext*,
+               guint)>					mDragLeave;
+
+	MSlot<void(GdkDragContext*)>		mDragDataDelete;
+	
+	MSlot<void(GdkDragContext*,
+			   GtkSelectionData*,
+			   guint,
+			   guint)>					mDragDataGet;
+	
   private:
 	GtkWidget*		mGtkWidget;
 	PangoContext*	mPangoContext;
+	bool			mDragWithin;
 };
-
 
 #endif // MVIEW_H

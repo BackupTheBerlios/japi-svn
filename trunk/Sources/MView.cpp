@@ -32,6 +32,11 @@ MView::MView(
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mDragDataReceived(this, &MView::OnDragDataReceived)
+	, mDragMotion(this, &MView::OnDragMotion)
+	, mDragLeave(this, &MView::OnDragLeave)
+	, mDragDataDelete(this, &MView::OnDragDataDelete)
+	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
 	, mPangoContext(nil)
 {
@@ -51,6 +56,11 @@ MView::MView(
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mDragDataReceived(this, &MView::OnDragDataReceived)
+	, mDragMotion(this, &MView::OnDragMotion)
+	, mDragLeave(this, &MView::OnDragLeave)
+	, mDragDataDelete(this, &MView::OnDragDataDelete)
+	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
 	, mPangoContext(nil)
 {
@@ -71,6 +81,11 @@ MView::MView()
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mDragDataReceived(this, &MView::OnDragDataReceived)
+	, mDragMotion(this, &MView::OnDragMotion)
+	, mDragLeave(this, &MView::OnDragLeave)
+	, mDragDataDelete(this, &MView::OnDragDataDelete)
+	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
 	, mPangoContext(nil)
 {
@@ -364,3 +379,151 @@ bool MView::OnExposeEvent(
 	return false;
 }
 
+// Drag and Drop support
+
+void MView::SetupDragAndDrop(
+	const GtkTargetEntry	inTargets[],
+	uint32					inTargetCount)
+{
+	gtk_drag_dest_set(mGtkWidget, GTK_DEST_DEFAULT_ALL,
+		inTargets, inTargetCount,
+		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	
+	mDragDataReceived.Connect(mGtkWidget, "drag-data-received");
+	mDragMotion.Connect(mGtkWidget, "drag-motion");
+	mDragLeave.Connect(mGtkWidget, "drag-leave");
+	
+	mDragDataGet.Connect(mGtkWidget, "drag-data-get");
+	mDragDataDelete.Connect(mGtkWidget, "drag-data-delete");
+	
+	mDragWithin = false;
+}
+
+void MView::OnDragDataReceived(
+	GdkDragContext*		inDragContext,
+	gint				inX,
+	gint				inY,
+	GtkSelectionData*	inData,
+	guint				inInfo,
+	guint				inTime)
+{
+	bool ok = false;
+	bool del = false;
+	
+	if (inData->length >= 0)
+	{
+		ok = DragAccept(
+			inX, inY,
+			reinterpret_cast<const char*>(inData->data), inData->length,
+			inInfo);
+		
+		del = inDragContext->action == GDK_ACTION_MOVE;
+	}
+
+	gtk_drag_finish(inDragContext, ok, del, inTime);
+}
+
+bool MView::OnDragMotion(
+	GdkDragContext*	inDragContext,
+	gint			inX,
+	gint			inY,
+	guint			inTime)
+{
+	if (not mDragWithin)
+	{
+		DragEnter();
+		mDragWithin = true;
+	}
+	
+	bool copy =
+		inDragContext->suggested_action & GDK_ACTION_COPY or
+		mGtkWidget != gtk_drag_get_source_widget(inDragContext);
+	
+	DragWithin(inX, inY);
+	
+	gdk_drag_status(inDragContext, copy ? GDK_ACTION_COPY : GDK_ACTION_MOVE, inTime);
+
+	return false;
+}
+
+void MView::OnDragLeave(
+	GdkDragContext*	inDragContext,
+	guint			inTime)
+{
+	mDragWithin = false;
+	DragLeave();
+}
+
+void MView::OnDragDataDelete(
+	GdkDragContext*	inDragContext)
+{
+	DragDeleteData();
+}
+
+void MView::OnDragDataGet(
+	GdkDragContext*		inDragContext,
+	GtkSelectionData*	inData,
+	guint				inInfo,
+	guint				inTime)
+{
+	string data;
+	
+	DragSendData(data);
+	
+	gtk_selection_data_set_text(inData, data.c_str(), data.length());
+}
+
+void MView::DragEnter()
+{
+}
+	
+void MView::DragWithin(
+	int32			inX,
+	int32			inY)
+{
+}
+
+void MView::DragLeave()
+{
+}
+
+bool MView::DragAccept(
+	int32			inX,
+	int32			inY,
+	const char*		inData,
+	uint32			inLength,
+	uint32			inType)
+{
+	return false;
+}
+
+void MView::DragBegin(
+	const GtkTargetEntry	inTargets[],
+	uint32					inTargetCount,
+	GdkEventMotion*			inEvent)
+{
+	int button = 1;
+	
+	GtkTargetList* lst = gtk_target_list_new(inTargets, inTargetCount);
+	
+//	GdkDragAction action = GDK_ACTION_MOVE;
+//	if (inEvent->state & GDK_SHIFT_MASK)
+//		action = GDK_ACTION_COPY;
+//	
+	GdkDragContext* context = gtk_drag_begin(
+		mGtkWidget, lst, GdkDragAction(GDK_ACTION_MOVE|GDK_ACTION_COPY|GDK_ACTION_DEFAULT),
+		button, (GdkEvent*)inEvent);
+
+	gtk_drag_set_icon_default(context);
+
+	gtk_target_list_unref(lst);
+}
+
+void MView::DragSendData(
+	string&		outData)
+{
+}
+
+void MView::DragDeleteData()
+{
+}

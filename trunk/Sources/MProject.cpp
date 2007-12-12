@@ -113,6 +113,7 @@ struct MProjectState
 	uint8			mSelectedPanel;
 	uint8			mFillers[2];
 	int32			mScrollPosition[ePanelCount];
+	uint32			mSelectedFile;
 	
 	void			Swap();
 };
@@ -121,7 +122,7 @@ const char
 	kJapieProjectState[] = "com.hekkelman.japie.PState";
 
 const uint32
-	kMProjectStateSize = 6 * sizeof(uint32); // sizeof(MProjectState);
+	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);
 
 void MProjectState::Swap()
 {
@@ -486,7 +487,7 @@ bool MProject::ReadState()
 //			NULL, NULL);
 
 		SelectTarget(state.mSelectedTarget);
-		mFileList->SelectItem(state.mSelectedTarget);
+		mFileList->SelectItem(state.mSelectedFile);
 		
 		result = true;
 	}
@@ -513,7 +514,9 @@ bool MProject::DoClose()
 			
 			state.Swap();
 
-			state.mSelectedTarget = mFileList->GetSelected();
+			state.mSelectedFile = mFileList->GetSelected();
+			state.mSelectedTarget =
+				find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
 
 			int32 x;
 			mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
@@ -2998,6 +3001,9 @@ void MProject::SelectTarget(
 
 	if (mCurrentTarget == mTargets[inTarget])
 		return;
+	
+	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != inTarget)
+		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
 	mCurrentTarget = mTargets[inTarget];
 	

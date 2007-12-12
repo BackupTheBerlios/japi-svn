@@ -33,6 +33,9 @@
 #include "MJapieG.h"
 
 #include <cmath>
+#include <sstream>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include "MTypes.h"
 #include "MTextView.h"
@@ -57,6 +60,12 @@ namespace
 
 //const uint32	kMTextViewKind = 'MTxt';
 
+enum {
+	DND_TARGET_TYPE_URI_LIST = 1,
+	DND_TARGET_TYPE_UTF8_STRING,
+	DND_TARGET_TYPE_STRING,
+};
+
 const int32
 	kLeftMargin = 10;
 
@@ -74,7 +83,7 @@ MColor		MTextView::sCurrentLineColor,
 			MTextView::sPCLineColor,
 			MTextView::sBreakpointColor;
 
-//MTextView* MTextView::sDraggingView = nil;
+MTextView* MTextView::sDraggingView = nil;
 
 // ---------------------------------------------------------------------------
 //	Default constructor
@@ -110,7 +119,6 @@ MTextView::MTextView(
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
 	, mClickMode(eSelectNone)
-//	, mDragRef(nil)
 {
 	AddRoute(eIdle, gApp->eIdle);
 	
@@ -136,6 +144,17 @@ MTextView::MTextView(
 	mImageOriginX = mImageOriginY = 0;
 	
 	StylesChanged();
+	
+	const GtkTargetEntry targets[] =
+	{
+	    { "text/uri-list", 0, DND_TARGET_TYPE_URI_LIST },
+	    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
+	    { "STRING", 0, DND_TARGET_TYPE_STRING },
+//	    { "text/plain", 0, DND_TARGET_TYPE_TEXT_PLAIN }
+	};
+
+	SetupDragAndDrop(
+		targets, sizeof(targets) / sizeof(GtkTargetEntry));
 }
 
 // Destructor
@@ -193,9 +212,11 @@ bool MTextView::OnButtonPressEvent(
 	int32 x, y;
 	x = static_cast<int32>(inEvent->x) + mImageOriginX - kLeftMargin;
 	y = static_cast<int32>(inEvent->y) + mImageOriginY;
-
-	if (InitiateDrag(inEvent))
-		return false;
+	
+	mClickStartX = x;
+	mClickStartY = y;
+	mClickStartTime = 0;
+	sDraggingView = nil;
 
 	uint32 keyModifiers = inEvent->state;
 	
@@ -212,7 +233,12 @@ bool MTextView::OnButtonPressEvent(
 	mCaretVisible = true;
 	
 	if (mClickMode == eSelectRegular)
-		mDocument->Select(mClickAnchor, mClickCaret);
+	{
+		if (IsPointInSelection(x, y) and IsActive())
+			mClickStartTime = inEvent->time;
+		else
+			mDocument->Select(mClickAnchor, mClickCaret);
+	}
 	else if (mClickMode == eSelectWords)
 	{
 		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
@@ -248,52 +274,81 @@ bool MTextView::OnMotionNotifyEvent(
 
 	x += mImageOriginX - kLeftMargin;
 	y += mImageOriginY;
-
-	if (x >= 0)
-		SetCursor(eIBeamCursor);
-	else
-		SetCursor(eRightCursor);
-
-	if (mClickMode != eSelectNone and IsActive())
-	{
-		mDocument->PositionToOffset(x, y, mClickCaret);
 	
-		if (mClickMode == eSelectRegular)
+	if (mClickStartTime > 0 and mClickMode == eSelectRegular)
+	{
+		if (inEvent->time < mClickStartTime + 500)
+		{
+			if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
+			{
+				const GtkTargetEntry sources[] =
+				{
+				    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
+				};
+				
+				sDraggingView = this;
+				
+				DragBegin(sources, 1, inEvent);
+				mClickMode = eSelectNone;
+				mClickStartTime = 0;
+			}
+		}
+		else
 		{
 			mDocument->Select(mClickAnchor, mClickCaret);
-			ScrollToCaret();
+			mClickStartTime = 0;
 		}
-		else if (mClickMode == eSelectWords)
+	}
+	else
+	{
+		if (IsPointInSelection(x, y))
+			SetCursor(eNormalCursor);
+		else if (x >= 0)
+			SetCursor(eIBeamCursor);
+		else
+			SetCursor(eRightCursor);
+	
+		if (mClickMode != eSelectNone and IsActive())
 		{
-			uint32 c1, c2;
-			mDocument->FindWord(mClickCaret, c1, c2);
-			if (c1 != c2)
+			mDocument->PositionToOffset(x, y, mClickCaret);
+		
+			if (mClickMode == eSelectRegular)
 			{
-				if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
-					mClickCaret = c1;
-				else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
-					mClickCaret = c2;
+				mDocument->Select(mClickAnchor, mClickCaret);
+				ScrollToCaret();
 			}
+			else if (mClickMode == eSelectWords)
+			{
+				uint32 c1, c2;
+				mDocument->FindWord(mClickCaret, c1, c2);
+				if (c1 != c2)
+				{
+					if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
+						mClickCaret = c1;
+					else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
+						mClickCaret = c2;
+				}
+		
+				if (mClickCaret < mMinClickAnchor)
+					mDocument->Select(mMaxClickAnchor, mClickCaret);
+				else if (mClickCaret > mMaxClickAnchor)
+					mDocument->Select(mMinClickAnchor, mClickCaret);
+				else
+					mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
 	
-			if (mClickCaret < mMinClickAnchor)
-				mDocument->Select(mMaxClickAnchor, mClickCaret);
-			else if (mClickCaret > mMaxClickAnchor)
-				mDocument->Select(mMinClickAnchor, mClickCaret);
-			else
-				mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-
-			ScrollToCaret();
-		}
-		else if (mClickMode == eSelectLines)
-		{
-			mClickCaret = mDocument->OffsetToLine(mClickCaret);
-	
-			if (mClickCaret < mClickAnchor)
-				mDocument->Select(
-					mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
-			else
-				mDocument->Select(
-					mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+				ScrollToCaret();
+			}
+			else if (mClickMode == eSelectLines)
+			{
+				mClickCaret = mDocument->OffsetToLine(mClickCaret);
+		
+				if (mClickCaret < mClickAnchor)
+					mDocument->Select(
+						mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+				else
+					mDocument->Select(
+						mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+			}
 		}
 	}
 	
@@ -342,8 +397,8 @@ bool MTextView::OnExposeEvent(
 			DrawLine(line, dev);
 	}
 
-//	if (mDragRef != nil)
-//		DrawDragHilite(context);
+	if (IsWithinDrag())
+		DrawDragHilite(dev);
 	
 	return true;
 }
@@ -537,14 +592,14 @@ void MTextView::DrawLine(
 		inDevice.DrawText(x, y);
 	}
 	
-//	if (mDragRef != nil)
-//	{
-//		caretLine = mDocument->OffsetToLine(mDragCaret);
-//		caretColumn = mDragCaret - mDocument->LineStart(caretLine);
-//		
-//		if (caretLine == inLineNr and mCaretVisible)
-//			drawCaret = true;
-//	}
+	if (IsWithinDrag())
+	{
+		caretLine = mDocument->OffsetToLine(mDragCaret);
+		caretColumn = mDragCaret - mDocument->LineStart(caretLine);
+		
+		if (caretLine == inLineNr and mCaretVisible)
+			drawCaret = true;
+	}
 
 	if (drawCaret)
 	{
@@ -664,13 +719,13 @@ void MTextView::Tick(
 	
 	MSelection sel = mDocument->GetSelection();
 
-//	if (mDragRef != nil)
-//	{
-//		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//		mCaretVisible = not mCaretVisible;
-//	}
-//	else
-//	{
+	if (IsWithinDrag())
+	{
+		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+		mCaretVisible = not mCaretVisible;
+	}
+	else
+	{
 		uint32 caret = sel.GetCaret();
 		
 		if (mCaret != caret)
@@ -689,7 +744,7 @@ void MTextView::Tick(
 	
 			InvalidateLine(mDocument->OffsetToLine(mCaret));
 		}
-//	}
+	}
 }
 
 void MTextView::SelectionChanged(
@@ -896,13 +951,13 @@ bool MTextView::ScrollToCaret()
 	
 	uint32 caret;
 	
-//	if (mDragRef)
-//	{
-//		caret = mDragCaret;
-//		top += mLineHeight;
-//		bottom -= mLineHeight;
-//	}
-//	else
+	if (IsWithinDrag())
+	{
+		caret = mDragCaret;
+		top += mLineHeight;
+		bottom -= mLineHeight;
+	}
+	else
 		caret = selection.GetCaret();
 	
 	uint32 line;
@@ -926,14 +981,14 @@ bool MTextView::ScrollToCaret()
 	if (y < top)
 	{
 		newY = line * mLineHeight;
-//		if (mDragRef)
-//			newY -= mLineHeight;
+		if (IsWithinDrag())
+			newY -= mLineHeight;
 	}
 	else if (y + mLineHeight > bottom)
 	{
 		newY = (line + 1) * mLineHeight - (bottom - top) + 2;
-//		if (mDragRef)
-//			newY += mLineHeight;
+		if (IsWithinDrag())
+			newY += mLineHeight;
 	}
 	
 	if (x < 3 or mDocument != nil and mDocument->GetSoftwrap())
@@ -1211,300 +1266,137 @@ bool MTextView::OnFocusOutEvent(
 	return true;
 }
 
-//OSStatus MTextView::DoBoundsChanged(EventRef ioEvent)
-//{
-//	MRect r;
-//	GetBounds(r);
-//	r.width = kLeftMargin;
-//	
-//	MCFRef<HIShapeRef> shape(::HIShapeCreateWithRect(&r), false);
-//	::HIViewChangeTrackingArea(mTrackingLeftRef, shape);
-//	
-//	GetBounds(r);
-//	r.x += kLeftMargin;
-//	r.width -= kLeftMargin;
-//
-//	shape = MCFRef<HIShapeRef>(::HIShapeCreateWithRect(&r), false);
-//
-////	if (mDocument and not mDocument->GetSelection().IsEmpty())
-////	{
-////		MRegion rgn(SelectionToRegion());
-////		MCFRef<HIShapeRef> selectionShape(::HIShapeCreateWithQDRgn(rgn), false);
-////		shape = ::HIShapeCreateDifference(shape, selectionShape);
-////	}
-//
-//	::HIViewChangeTrackingArea(mTrackingMainRef, shape);
-//	
-//	eBoundsChanged();
-//	
-//	return noErr;
-//}
+void MTextView::DragEnter()
+{
+	MRect bounds;
+	GetBounds(bounds);
+	
+	MDevice dev(this, bounds);
+	DrawDragHilite(dev);
+}
 
-//OSStatus MTextView::DoDragEnter(EventRef ioEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	
-//	try
-//	{
-//		DragRef dragRef;
-//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
-//			sizeof(dragRef), nil, &dragRef));
-//		
-//		UInt16 itemCount;
-//		THROW_IF_OSERROR(::CountDragItems(dragRef, &itemCount));
-//		
-//		Boolean accept = false;
-//		
-//		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
+void MTextView::DragWithin(
+	int32			inX,
+	int32			inY)
+{
+	uint32 caret;
+	mDocument->PositionToOffset(inX + mImageOriginX, inY + mImageOriginY, caret);
+	
+	MRect bounds;
+	GetBounds(bounds);
+	
+	if (mDragCaret != caret)
+	{
+		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+		mDragCaret = caret;
+		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+
+//		while (ScrollToCaret())
 //		{
-//			ItemReference itemRef;
-//			THROW_IF_OSERROR(::GetDragItemReferenceNumber(dragRef, ix, &itemRef));
+//			MouseTrackingResult flags;
+//			OSStatus err = ::TrackMouseLocationWithOptions(
+//				::GetWindowPort(GetSysWindow()), 0, timeOut, &where, nil, &flags);
 //			
-//			UInt16 flavorCount;
-//			if (::CountDragItemFlavors(dragRef, itemRef, &flavorCount) != noErr)
-//				return false;
-//		
-//			for (UInt16 index = 1; index <= flavorCount and accept == false; ++index)
-//			{
-//				FlavorType type;
-//				if (::GetFlavorType(dragRef, itemRef, index, &type) != noErr)
-//					continue;
-//		
-//				accept =
-//					type == kScrapFlavorTypeText or
-//					type == kScrapFlavorTypeUnicode or
-//					type == kScrapFlavorTypeUTF16External;
-//		
-////				if (type == flavorTypeHFS)
-////				{
-////					HFSFlavor hfs;
-////					long size = sizeof(hfs);
-////					
-////					if (::GetFlavorData(fDragRef, itemRef, flavorTypeHFS, &hfs, &size, 0) != noErr)
-////						return false;
-////					
-////					FInfo info;
-////					if (::FSpGetFInfo(&hfs.fileSpec, &info) != noErr)
-////						return false;
-////					
-////					return info.fdType == 'TEXT';
-////				}
-////				else if (type == inDataType)
-////					return true;
-//			}
-//		}
-//		
-//		if (accept and mDocument != nil)
-//		{
-//			err = noErr;
-//			THROW_IF_OSERROR(::SetEventParameter(ioEvent, kEventParamControlWouldAcceptDrop,
-//				typeBoolean, sizeof(accept), &accept));
-//		}
-//	}
-//	catch (...)
-//	{
-//		err = eventNotHandledErr;
-//	}
-//	
-//	return err;
-//}
-//
-//OSStatus MTextView::DoDragWithin(EventRef ioEvent)
-//{
-//	try
-//	{
-//		DragRef dragRef;
-//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamDragRef, typeDragRef, nil,
-//			sizeof(dragRef), nil, &dragRef));
-//		
-//		Point where, dummy;
-//		THROW_IF_OSERROR(::GetDragMouse(dragRef, &where, &dummy));
-//		
-//		HIPoint pt = { where.h, where.v };
-//		ConvertFromGlobal(pt);
-//
-//		pt.x += bounds.x - kLeftMargin;
-//		pt.y += bounds.y;
-//		
-//		uint32 caret;
-//		mDocument->PositionToOffset(pt, caret);
-//		
-//		MRect bounds;
-//		GetBounds(bounds);
-//		
-//		if (mDragCaret != caret)
-//		{
-//			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//			mDragCaret = caret;
-//			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//
-//			double timeOut = 0.01;
+//			if (err != noErr and err != kMouseTrackingTimedOut)
+//				THROW_IF_OSERROR(err);
 //			
-//			while (ScrollToCaret())
-//			{
-//				MouseTrackingResult flags;
-//				OSStatus err = ::TrackMouseLocationWithOptions(
-//					::GetWindowPort(GetSysWindow()), 0, timeOut, &where, nil, &flags);
-//				
-//				if (err != noErr and err != kMouseTrackingTimedOut)
-//					THROW_IF_OSERROR(err);
-//				
-//				pt.x = where.h;
-//				pt.y = where.v;
-//				ConvertFromRoot(pt);
-//				
-//				if (not ::CGRectContainsPoint(bounds, pt))
-//					break;
-//				
-//				pt.x += bounds.x - kLeftMargin;
-//				pt.y += bounds.y;
-//	
-//				mDocument->PositionToOffset(pt, caret);
-//
-//				if (mDragCaret != caret)
-//				{
-//					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//					mDragCaret = caret;
-//					InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//				}
-//		
-//				if (flags == kMouseTrackingMouseUp)
-//					break;
-//			}
-//		}
-//		
-//		if (mDragRef == nil)
-//		{
-//			mDragRef = dragRef;
-//			InvalidateAll();
-//		}
-//	}
-//	catch (...) {}
-//	return noErr;
-//}
-//
-//OSStatus MTextView::DoDragLeave(EventRef ioEvent)
-//{
-//	mDocument->TouchLine(mDocument->OffsetToLine(mDragCaret));
-//	InvalidateDirtyLines();
-//	
-////	if (mDragRef != nil)
-////		::HideDragHilite(mDragRef);
-//
-//	InvalidateAll();
-//	
-//	mDragRef = nil;
-//	return noErr;
-//}
-//
-//OSStatus MTextView::DoDragReceive(EventRef ioEvent)
-//{
-//	// short cut, make sure we accept the drag
-//	MSelection selection = mDocument->GetSelection();
-//
-//	// use brute force... sigh
-//	InvalidateAll();
-//
-//	if (sDraggingView == this and
-//		mDragCaret >= selection.GetMinOffset(*mDocument) and
-//		mDragCaret <= selection.GetMaxOffset(*mDocument))
-//	{
-//		return dragNotAcceptedErr;
-//	}
-//	
-//	OSStatus err = noErr;
-//	
-//	try
-//	{
-//		UInt16 itemCount;
-//		THROW_IF_OSERROR(::CountDragItems(mDragRef, &itemCount));
-//		
-//		bool accept = false;
-//		
-//		SInt16 modifiers, downModifiers, upModifiers;
-//		::GetDragModifiers(mDragRef, &modifiers, &downModifiers, &upModifiers);
-//		
-//		bool move = (sDraggingView == this) and (modifiers & optionKey) == 0;
-//		
-//		for (UInt16 ix = 1; ix <= itemCount and accept == false; ++ix)
-//		{
-//			ItemReference itemRef;
-//			THROW_IF_OSERROR(::GetDragItemReferenceNumber(mDragRef, ix, &itemRef));
+//			pt.x = where.h;
+//			pt.y = where.v;
+//			ConvertFromRoot(pt);
 //			
-//			Size size;
-//			if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUnicode, &size) == noErr)
-//			{
-//				auto_array<UniChar> txt(new UniChar[size / 2]);
-//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUnicode,
-//					txt.get(), &size, 0));
-//				
-//				replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
-//				mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
+//			if (not ::CGRectContainsPoint(bounds, pt))
+//				break;
+//			
+//			pt.x += bounds.x - kLeftMargin;
+//			pt.y += bounds.y;
 //
-//				accept = true;
-//			}
-//			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeUTF16External, &size) == noErr)
-//			{
-//				auto_array<UniChar> txt(new UniChar[size / 2]);
-//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeUTF16External,
-//					txt.get(), &size, 0));
-//				
-//				UniChar kBOM = 0xfeff;
-//				
-//				if (txt[0] != kBOM)
-//				{
-//					auto_ptr<MDecoder> decoder;
-//					const char* b = reinterpret_cast<const char*>(txt.get());
-//					
-//					if (kEncodingNative == kEncodingUTF16BE)
-//						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16LE, b, size));
-//					else
-//						decoder.reset(MDecoder::GetDecoder(kEncodingUTF16BE, b, size));
-//					
-//					ustring s;
-//					decoder->GetText(s);
-//					replace(s.begin(), s.end(), '\r', '\n');
-//					mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
-//				}
-//				else
-//				{
-//					replace(txt.get(), txt.get() + (size / 2), '\r', '\n');
-//					mDocument->Drop(mDragCaret, txt.get(), size / 2, move);
-//				}
+//			mDocument->PositionToOffset(pt, caret);
 //
-//				accept = true;
-//			}
-//			else if (::GetFlavorDataSize(mDragRef, itemRef, kScrapFlavorTypeText, &size) == noErr)
+//			if (mDragCaret != caret)
 //			{
-//				auto_array<char> txt(new char[size]);
-//				THROW_IF_OSERROR(::GetFlavorData(mDragRef, itemRef, kScrapFlavorTypeText,
-//					txt.get(), &size, 0));
-//				
-//				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, txt.get(), size));
-//				
-//				ustring s;
-//				decoder->GetText(s);
-//				
-//				replace(s.begin(), s.end(), '\r', '\n');
-//				mDocument->Drop(mDragCaret, s.c_str(), s.length(), move);
-//
-//				accept = true;
+//				InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+//				mDragCaret = caret;
+//				InvalidateLine(mDocument->OffsetToLine(mDragCaret));
 //			}
+//	
+//			if (flags == kMouseTrackingMouseUp)
+//				break;
 //		}
-//		
-//		if (not accept)
-//			err = dragNotAcceptedErr;
-//	}
-//	catch (exception& e)
+	}
+	
+//	if (mDragRef == nil)
 //	{
-//		MError::DisplayError(e);
-//		err = dragNotAcceptedErr;
+//		mDragRef = dragRef;
+//		InvalidateAll();
 //	}
-//
-//	mDragRef = nil;
-//	return err;
-//}
-//
+}
+	
+void MTextView::DragLeave()
+{
+	Invalidate();
+}
+
+bool MTextView::DragAccept(
+	int32			inX,
+	int32			inY,
+	const char*		inData,
+	uint32			inLength,
+	uint32			inType)
+{
+	bool result = not IsPointInSelection(inX, inY);
+	bool move = true;
+	
+	switch (inType)
+	{
+		case DND_TARGET_TYPE_UTF8_STRING:
+			if (result)
+				mDocument->Drop(mDragCaret, inData, inLength, move);
+			break;
+	
+		case DND_TARGET_TYPE_STRING:
+			if (result)
+			{
+				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, inData, inLength));
+				string text;
+				decoder->GetText(text);
+				mDocument->Drop(mDragCaret, text.c_str(), text.length(), move);
+			}
+			break;
+		
+		case DND_TARGET_TYPE_URI_LIST:
+		{
+			vector<string> files;
+			string text(inData, inLength);
+			boost::split(files, text, boost::is_any_of("\n\r"));
+			
+			for (vector<string>::iterator file = files.begin(); file != files.end(); ++file)
+			{
+				if (file->length() == 0)
+					continue;
+				
+				MUrl url(*file);
+				gApp->OpenOneDocument(url);
+			}
+			
+			result = true;
+			break;
+		}
+	}
+	
+	return result;
+}
+
+void MTextView::DragSendData(
+	string&		outData)
+{
+	mDocument->GetSelectedText(outData);
+}
+
+void MTextView::DragDeleteData()
+{
+	mDocument->DeleteSelectedText();
+}
+
 //OSStatus MTextView::DoGetClickActivation(EventRef ioEvent)
 //{
 //	HIPoint where;
@@ -1535,7 +1427,7 @@ bool MTextView::IsPointInSelection(
 		if (not selection.IsEmpty())
 		{
 			uint32 caret;
-			inX -= kLeftMargin;
+//			inX -= kLeftMargin;
 //			inWhere.y += bounds.y;
 			
 			mDocument->PositionToOffset(inX, inY, caret);
@@ -1625,100 +1517,22 @@ bool MTextView::IsPointInSelection(
 //	return err;
 //}
 
-bool MTextView::InitiateDrag(
-	GdkEventButton*		inEvent)
+void MTextView::DrawDragHilite(
+	MDevice&		inDevice)
 {
-	bool result = false;
+	inDevice.Save();
 	
-//	if (IsPointInSelection(inWhere))
-//	{
-//		ConvertToGlobal(inWhere);
-//
-//		Point pt;
-//		pt.h = static_cast<int16>(inWhere.x);
-//		pt.v = static_cast<int16>(inWhere.y);
-//	
-//		if (::WaitMouseMoved(pt))
-//		{
-//			CGImageRef imageRef;
-//			CGRect bounds;
-//			
-//			mDrawForDragImage = true;
-//			::HIViewCreateOffscreenImage(GetSysView(), 0, &bounds, &imageRef);
-//			mDrawForDragImage = false;
-//
-//			MCFRef<CGImageRef> image(imageRef, false);
-//			
-//			MSelection selection = mDocument->GetSelection();
-//			
-//			MRect minLine = GetLineRect(selection.GetMinLine(*mDocument));
-//			MRect maxLine = GetLineRect(selection.GetMaxLine(*mDocument));
-//			
-//			CGRect r = ::CGRectUnion(minLine, maxLine);
-//			MCFRef<CGImageRef> subImage(::CGImageCreateWithImageInRect(image, r), false);
-//			
-//			HIPoint offset;
-//			offset.x = -inWhere.x;
-//			offset.y = -inWhere.y + minLine.y;
-//			ConvertToGlobal(offset);
-//
-//			try
-//			{
-//				DragRef dragRef;
-//				::NewDrag(&dragRef);
-//				
-//				EventRecord er;
-//				::ConvertEventRefToEventRecord(inEvent, &er);
-//				
-//				THROW_IF_OSERROR(::SetDragSendProc(dragRef, sDragSendDataUPP, this));
-//				THROW_IF_OSERROR(::SetDragImageWithCGImage(dragRef,
-//					subImage, &offset, 0));
-//				
-//				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 1, kScrapFlavorTypeUnicode,
-//					nil, 0, 0));
-//				THROW_IF_OSERROR(::AddDragItemFlavor(dragRef, 2, kScrapFlavorTypeText,
-//					nil, 0, 0));
-//				
-//				sDraggingView = this;
-//				result = true;
-//				
-//				RgnHandle rgn = ::NewRgn();
-//				(void)::TrackDrag(dragRef, &er, rgn);
-//				::DisposeRgn(rgn);
-//			}
-//			catch (exception& e)
-//			{
-//				MError::DisplayError(e);
-//			}
-//			
-//			sDraggingView = nil;
-//		}
-//	}
+	MRect bounds;
+	GetBounds(bounds);
+
+	bounds.InsetBy(1, 1);
+
+	inDevice.SetForeColor(gHiliteColor);
+	inDevice.StrokeRect(bounds);
 	
-	return result;
+	inDevice.Restore();
 }
 
-//void MTextView::DrawDragHilite(CGContextRef inContext)
-//{
-//	MCGContextSaver save(inContext);
-//	
-//	RGBColor c;
-//	if (::GetDragHiliteColor(GetSysWindow(), &c) == noErr)
-//	{
-//		::CGContextSetRGBStrokeColor(inContext, c.red / 65536.f,
-//			c.green / 65536.f, c.blue / 65536.f, 1.0f);
-//		::CGContextSetLineWidth(inContext, 2.f);
-//		
-//		MRect bounds;
-//		GetBounds(bounds);
-//
-//		::CGContextClipToRect(inContext, bounds);
-//
-//		bounds = ::CGRectInset(bounds, 1.f, 1.f);
-//		::CGContextStrokeRect(inContext, bounds);
-//	}
-//}
-//
 //OSStatus MTextView::DoContextualMenuClick(EventRef inEvent)
 //{
 //	return noErr;
