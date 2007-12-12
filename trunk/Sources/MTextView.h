@@ -249,6 +249,7 @@ class MTextView : public MView, public MHandler
 	virtual void		DragLeave();
 
 	virtual bool		DragAccept(
+							bool			inMove,
 							int32			inX,
 							int32			inY,
 							const char*		inData,
@@ -279,6 +280,7 @@ class MTextView : public MView, public MHandler
 	enum
 	{
 		eSelectNone,
+		eSelectStartDrag,
 		eSelectRegular,
 		eSelectWords,
 		eSelectLines
@@ -295,8 +297,6 @@ class MTextView : public MView, public MHandler
 
 	uint32				mDragCaret;
 	int32				mClickStartX, mClickStartY;
-	uint32				mClickStartTime;
-	static MTextView*	sDraggingView;
 
 	static MColor		sCurrentLineColor, sMarkedLineColor, sPCLineColor, sBreakpointColor;
 

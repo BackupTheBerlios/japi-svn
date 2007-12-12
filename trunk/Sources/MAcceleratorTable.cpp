@@ -32,7 +32,7 @@
 
 #include "MJapieG.h"
 
-#include <map>
+#include <set>
 #include <gdk/gdkkeysyms.h>
 
 #include "MCommands.h"
@@ -43,7 +43,9 @@ using namespace std;
 namespace {
 
 const uint32
-	kValidModifiersMask = GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK;
+//	kValidModifiersMask = GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK;
+	kValidModifiersMask = gtk_accelerator_get_default_mod_mask();
+
 
 struct MCommandToString
 {
@@ -64,20 +66,22 @@ struct MCommandToString
 
 }
 
-struct MAcceleratorTableImp
+struct MAccelCombo
 {
-	map<int64,uint32>		mTable;
-	map<int64,MKeyCommand>	mNavTable;
+	int64		key;
+	uint32		keyval;
+	uint32		modifiers;
+	uint32		command;
+	
+	bool		operator<(const MAccelCombo& rhs) const
+					{ return key < rhs.key; }
 };
 
-inline
-int64
-MakeKey(
-	uint32	inKeyValue,
-	uint32	inModifiers)
+
+struct MAcceleratorTableImp
 {
-	return (static_cast<int64>(inKeyValue) << 32) | (inModifiers);
-}	
+	set<MAccelCombo>	mTable;
+};
 
 // -------------------------------------
 
@@ -125,7 +129,7 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 		sInstance->RegisterAcceleratorKey(cmd_ReplaceFindNext, GDK_T, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_ReplaceFindPrev, GDK_t, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_CompleteLookingBack, GDK_Tab, GDK_CONTROL_MASK);
-		sInstance->RegisterAcceleratorKey(cmd_CompleteLookingFwd, GDK_ISO_Left_Tab, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
+		sInstance->RegisterAcceleratorKey(cmd_CompleteLookingFwd, GDK_Tab, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_GoToLine, GDK_comma, GDK_CONTROL_MASK);
 		sInstance->RegisterAcceleratorKey(cmd_JumpToNextMark, GDK_F2, 0);
 		sInstance->RegisterAcceleratorKey(cmd_JumpToPrevMark, GDK_F2, GDK_SHIFT_MASK);
@@ -205,28 +209,6 @@ MAcceleratorTable::EditKeysInstance()
 MAcceleratorTable::MAcceleratorTable()
 	: mImpl(new MAcceleratorTableImp)
 {
-//	// debug code, dump the current table
-//	for (map<int64,uint32>::iterator a = mImpl->mTable.begin(); a != mImpl->mTable.end(); ++a)
-//	{
-//		uint32 key = static_cast<uint32>(a->first >> 32);
-//		uint32 mod = static_cast<uint32>(a->first) & kValidModifiersMask;
-//		
-//		cout << gdk_keyval_name(key);
-//
-//		if (mod & GDK_CONTROL_MASK)
-//			cout << " CTRL";
-//		
-//		if (mod & GDK_SHIFT_MASK)
-//			cout << " SHIFT";
-//		
-//		if (mod & GDK_MOD1_MASK)
-//			cout << " ALT";
-//		
-//		if (mod & GDK_MOD2_MASK)
-//			cout << " MOD2";
-//
-//		cout << " mapped to " << MCommandToString(a->second) << endl;
-//	}
 }
 
 void MAcceleratorTable::RegisterAcceleratorKey(
@@ -234,10 +216,36 @@ void MAcceleratorTable::RegisterAcceleratorKey(
 	uint32			inKeyValue,
 	uint32			inModifiers)
 {
-	int64 key = (int64(gdk_keyval_to_upper(inKeyValue)) << 32) | (inModifiers & kValidModifiersMask);
-//	int64 key = int64(inKeyValue) << 32 | (inModifiers & kValidModifiersMask);
+	gint nkeys;
+	GdkKeymapKey* keys;
 	
-	mImpl->mTable[key] = inCommand;
+	if (gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
+		inKeyValue, &keys, &nkeys))
+	{
+		for (uint32 k = 0; k < nkeys; ++k)
+		{
+			guint keyval;
+			GdkModifierType consumed;
+			
+			if (gdk_keymap_translate_keyboard_state(nil,
+				keys[k].keycode, GdkModifierType(inModifiers), 0, &keyval, nil, nil, &consumed))
+			{
+				uint32 modifiers = inModifiers & ~consumed;
+				if (inModifiers & GDK_SHIFT_MASK)
+					modifiers |= GDK_SHIFT_MASK;				
+				
+				int64 key = (int64(keyval) << 32) | modifiers;
+				
+				MAccelCombo kc = {
+					key, inKeyValue, inModifiers, inCommand
+				};
+				
+				mImpl->mTable.insert(kc);
+			}
+		}
+
+		g_free(keys);
+	}
 }
 
 bool MAcceleratorTable::GetAcceleratorKeyForCommand(
@@ -247,12 +255,12 @@ bool MAcceleratorTable::GetAcceleratorKeyForCommand(
 {
 	bool result = false;
 	
-	for (map<int64,uint32>::iterator a = mImpl->mTable.begin(); a != mImpl->mTable.end(); ++a)
+	for (set<MAccelCombo>::iterator a = mImpl->mTable.begin(); a != mImpl->mTable.end(); ++a)
 	{
-		if (a->second == inCommand)
+		if (a->command == inCommand)
 		{
-			outKeyValue = static_cast<uint32>(a->first >> 32);
-			outModifiers = static_cast<uint32>(a->first) & kValidModifiersMask;
+			outKeyValue = a->keyval;
+			outModifiers = a->modifiers;
 			result = true;
 			break;
 		}
@@ -267,34 +275,25 @@ bool MAcceleratorTable::IsAcceleratorKey(
 {
 	bool result = false;
 
-//cout << "IsAcceleratorKey for " << gdk_keyval_name(inEvent->keyval);
-//
-//if (inEvent->state & GDK_CONTROL_MASK)
-//	cout << " CTRL";
-//
-//if (inEvent->state & GDK_SHIFT_MASK)
-//	cout << " SHIFT";
-//
-//if (inEvent->state & GDK_MOD1_MASK)
-//	cout << " ALT";
-//
-//if (inEvent->state & GDK_MOD2_MASK)
-//	cout << " MOD2";
+//	PRINT(("IsAcceleratorKey for %s %c-%c-%c-%c",
+//		gdk_keyval_name(inEvent->keyval),
+//		inEvent->state & GDK_CONTROL_MASK ? 'C' : '_',
+//		inEvent->state & GDK_SHIFT_MASK ? 'S' : '_',
+//		inEvent->state & GDK_MOD1_MASK ? '1' : '_',
+//		inEvent->state & GDK_MOD2_MASK ? '2' : '_'));
 
-	int keyval = gdk_keyval_to_upper(inEvent->keyval);
-//	int keyval = inEvent->keyval;
+	int keyval = inEvent->keyval;
 	int64 key = (int64(keyval) << 32) | (inEvent->state & kValidModifiersMask);
 
-	map<int64,uint32>::iterator a = mImpl->mTable.find(key);	
+	MAccelCombo kc;
+	kc.key = key;
+
+	set<MAccelCombo>::iterator a = mImpl->mTable.find(kc);	
 	if (a != mImpl->mTable.end())
 	{
-		outCommand = a->second;
+		outCommand = a->command;
 		result = true;
-		
-//cout << " mapped to " << MCommandToString(outCommand);
 	}
-
-//cout << endl;
 	
 	return result;
 }
@@ -306,13 +305,13 @@ bool MAcceleratorTable::IsNavigationKey(
 {
 	bool result = false;
 
-	int keyval = gdk_keyval_to_upper(inKeyValue);
-	int64 key = (int64(keyval) << 32) | (inModifiers & kValidModifiersMask);
+	MAccelCombo kc;
+	kc.key = (int64(inKeyValue) << 32) | (inModifiers & kValidModifiersMask);
 
-	map<int64,uint32>::iterator a = mImpl->mTable.find(key);	
+	set<MAccelCombo>::iterator a = mImpl->mTable.find(kc);	
 	if (a != mImpl->mTable.end())
 	{
-		outCommand = MKeyCommand(a->second);
+		outCommand = MKeyCommand(a->command);
 		result = true;
 	}
 	

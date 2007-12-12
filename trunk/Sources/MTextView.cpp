@@ -83,8 +83,6 @@ MColor		MTextView::sCurrentLineColor,
 			MTextView::sPCLineColor,
 			MTextView::sBreakpointColor;
 
-MTextView* MTextView::sDraggingView = nil;
-
 // ---------------------------------------------------------------------------
 //	Default constructor
 
@@ -215,8 +213,6 @@ bool MTextView::OnButtonPressEvent(
 	
 	mClickStartX = x;
 	mClickStartY = y;
-	mClickStartTime = 0;
-	sDraggingView = nil;
 
 	uint32 keyModifiers = inEvent->state;
 	
@@ -235,7 +231,7 @@ bool MTextView::OnButtonPressEvent(
 	if (mClickMode == eSelectRegular)
 	{
 		if (IsPointInSelection(x, y) and IsActive())
-			mClickStartTime = inEvent->time;
+			mClickMode = eSelectStartDrag;
 		else
 			mDocument->Select(mClickAnchor, mClickCaret);
 	}
@@ -275,28 +271,18 @@ bool MTextView::OnMotionNotifyEvent(
 	x += mImageOriginX - kLeftMargin;
 	y += mImageOriginY;
 	
-	if (mClickStartTime > 0 and mClickMode == eSelectRegular)
+	if (mClickMode == eSelectStartDrag)
 	{
-		if (inEvent->time < mClickStartTime + 500)
+		if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
 		{
-			if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
+			const GtkTargetEntry sources[] =
 			{
-				const GtkTargetEntry sources[] =
-				{
-				    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
-				};
-				
-				sDraggingView = this;
-				
-				DragBegin(sources, 1, inEvent);
-				mClickMode = eSelectNone;
-				mClickStartTime = 0;
-			}
-		}
-		else
-		{
-			mDocument->Select(mClickAnchor, mClickCaret);
-			mClickStartTime = 0;
+			    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
+			};
+			
+			DragBegin(sources, 1, inEvent);
+
+			mClickMode = eSelectNone;
 		}
 	}
 	else
@@ -359,6 +345,9 @@ bool MTextView::OnButtonReleaseEvent(
 	GdkEventButton*	inEvent)
 {
 	gtk_grab_remove(GetGtkWidget());	
+
+	if (mClickMode == eSelectStartDrag)
+		mDocument->Select(mClickAnchor, mClickCaret);
 	
 	mClickMode = eSelectNone;
 	return true;
@@ -662,8 +651,8 @@ void MTextView::DoScrollTo(
 	mImageOriginY = inY;
 	
 	mVScrollBar->SetValue(inY);
-	
-	UpdateNow();
+//	
+//	UpdateNow();
 }
 
 void MTextView::ScrollToPosition(
@@ -1209,8 +1198,8 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	}
 	else
 		Invalidate();
-
-	UpdateNow();
+//
+//	UpdateNow();
 }
 
 void MTextView::GetVisibleLineSpan(
@@ -1337,6 +1326,7 @@ void MTextView::DragLeave()
 }
 
 bool MTextView::DragAccept(
+	bool			inMove,
 	int32			inX,
 	int32			inY,
 	const char*		inData,
@@ -1344,13 +1334,12 @@ bool MTextView::DragAccept(
 	uint32			inType)
 {
 	bool result = not IsPointInSelection(inX, inY);
-	bool move = true;
 	
 	switch (inType)
 	{
 		case DND_TARGET_TYPE_UTF8_STRING:
 			if (result)
-				mDocument->Drop(mDragCaret, inData, inLength, move);
+				mDocument->Drop(mDragCaret, inData, inLength, inMove);
 			break;
 	
 		case DND_TARGET_TYPE_STRING:
@@ -1359,7 +1348,7 @@ bool MTextView::DragAccept(
 				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, inData, inLength));
 				string text;
 				decoder->GetText(text);
-				mDocument->Drop(mDragCaret, text.c_str(), text.length(), move);
+				mDocument->Drop(mDragCaret, text.c_str(), text.length(), inMove);
 			}
 			break;
 		
@@ -1394,7 +1383,7 @@ void MTextView::DragSendData(
 
 void MTextView::DragDeleteData()
 {
-	mDocument->DeleteSelectedText();
+//	mDocument->DeleteSelectedText();
 }
 
 //OSStatus MTextView::DoGetClickActivation(EventRef ioEvent)

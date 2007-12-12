@@ -142,9 +142,12 @@ void MEditWindow::Initialize(
 			{
 				mTextView->ScrollToPosition(state.mScrollPosition[0], state.mScrollPosition[1]);
 				
-				SetWindowPosition(MRect(
-					state.mWindowPosition[0], state.mWindowPosition[1],
-					state.mWindowSize[0], state.mWindowSize[1]));
+				if (state.mWindowSize[0] > 100 and state.mWindowSize[1] > 100)
+				{
+					SetWindowPosition(MRect(
+						state.mWindowPosition[0], state.mWindowPosition[1],
+						state.mWindowSize[0], state.mWindowSize[1]));
+				}
 			}
 		}
 		catch (...) {

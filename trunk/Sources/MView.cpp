@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "MView.h"
+#include "MUtils.h"
 
 using namespace std;
 
@@ -202,7 +203,7 @@ void MView::Scroll(
 {
 	if (GDK_IS_WINDOW(mGtkWidget->window))
 	{
-		UpdateNow();
+//		UpdateNow();
 	
 		gdk_window_scroll(mGtkWidget->window, inX, inY);
 	}
@@ -215,7 +216,7 @@ void MView::Scroll(
 {
 	if (GDK_IS_WINDOW(mGtkWidget->window))
 	{
-		UpdateNow();
+//		UpdateNow();
 		
 		MRect b;
 		GetBounds(b);
@@ -409,15 +410,16 @@ void MView::OnDragDataReceived(
 {
 	bool ok = false;
 	bool del = false;
+	bool move = inDragContext->action == GDK_ACTION_MOVE;
 	
 	if (inData->length >= 0)
 	{
 		ok = DragAccept(
+			move,
 			inX, inY,
 			reinterpret_cast<const char*>(inData->data), inData->length,
 			inInfo);
-		
-		del = inDragContext->action == GDK_ACTION_MOVE;
+		del = ok and move and gtk_drag_get_source_widget(inDragContext) != mGtkWidget;
 	}
 
 	gtk_drag_finish(inDragContext, ok, del, inTime);
@@ -436,7 +438,7 @@ bool MView::OnDragMotion(
 	}
 	
 	bool copy =
-		inDragContext->suggested_action & GDK_ACTION_COPY or
+		IsModifierDown(GDK_SHIFT_MASK) or
 		mGtkWidget != gtk_drag_get_source_widget(inDragContext);
 	
 	DragWithin(inX, inY);
@@ -488,6 +490,7 @@ void MView::DragLeave()
 }
 
 bool MView::DragAccept(
+	bool			inMove,
 	int32			inX,
 	int32			inY,
 	const char*		inData,
@@ -511,7 +514,7 @@ void MView::DragBegin(
 //		action = GDK_ACTION_COPY;
 //	
 	GdkDragContext* context = gtk_drag_begin(
-		mGtkWidget, lst, GdkDragAction(GDK_ACTION_MOVE|GDK_ACTION_COPY|GDK_ACTION_DEFAULT),
+		mGtkWidget, lst, GdkDragAction(GDK_ACTION_MOVE|GDK_ACTION_COPY),
 		button, (GdkEvent*)inEvent);
 
 	gtk_drag_set_icon_default(context);

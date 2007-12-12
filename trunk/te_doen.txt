@@ -9,17 +9,25 @@
 
 - SSH/SFTP afronden
 	- fetch/store status dialogs verplaatsen naar doc window?
+	- progress dialog clean up, labels kloppen niet
+	- authenticatie dialog splitsen of zo.
 
+- context menu's
 - vierkante selectie
+
+- softwrap fixen, als je typt in een gewrapte regel
+- upper/lower case menu maken
 
 - diff
 - preferences dialog
 - project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen
 - drag&drop
-- upper/lower case
 - Lange foutmeldingen wrappen in meldingen lijsten
-- context menu's
+
+- printen
+
+- dynamische menus?
 
 - clean up code na leaks test
 

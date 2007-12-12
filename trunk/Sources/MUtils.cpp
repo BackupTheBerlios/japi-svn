@@ -387,3 +387,71 @@ XMLNode::iterator XMLNode::end() const
 {
 	return iterator(nil);
 }
+
+bool IsModifierDown(
+	int		inModifierMask)
+{
+	bool result = false;
+	
+	GdkModifierType state;
+
+	if (gtk_get_current_event_state(&state))
+		result = (state & inModifierMask) != 0;
+	
+	return result;
+}
+
+//bool ModifierKeyDown(int inModifiers)
+//{
+//	bool result = false;
+//
+//	 XModifierKeymap* km = ::XGetModifierMapping(gDisplay);
+//	 if (km == nil)
+//	 	return false;
+//	
+//	 char keyMap[32];
+//	 ::XQueryKeymap(gDisplay, keyMap);
+//	 
+//	 int key = 0;
+//
+//	 if (inModifiers & GDK_SHIFT_MASK)
+//	 	key = ShiftMask;
+//	 else if (inModifiers & GDK_C)
+//	 	key = gPrefs->GetPrefInt("cmd-mod", Mod1Mask);
+//	 else if (inModifiers & kOptionKey)
+//	 	key = gPrefs->GetPrefInt("opt-mod", Mod4Mask);
+//	 else if (inModifiers & kControlKey)
+//	 	key = gPrefs->GetPrefInt("cntrl-mod", ControlMask);
+//	
+//	if (key != 0)
+//	{
+//		int ix = 0;
+//		
+//		switch (key)
+//		{
+//			case ShiftMask:		ix = ShiftMapIndex;		break;
+//			case LockMask:		ix = LockMapIndex;		break;
+//			case ControlMask:	ix = ControlMapIndex;	break;
+//			case Mod1Mask:		ix = Mod1MapIndex;		break;
+//			case Mod2Mask:		ix = Mod2MapIndex;		break;
+//			case Mod3Mask:		ix = Mod3MapIndex;		break;
+//			case Mod4Mask:		ix = Mod4MapIndex;		break;
+//			case Mod5Mask:		ix = Mod5MapIndex;		break;
+//		}
+//		
+//		if (ix != 0)
+//		{
+//			for (int i = 0; result == false && i < km->max_keypermod; ++i)
+//			{
+//				int code = km->modifiermap[ix * km->max_keypermod + i];
+//				if (code <= 0 || code > 255)
+//					continue;
+//				result = (keyMap[code >> 3] & (1 << (code & 0x07))) != 0;
+//			}
+//		}
+//	}
+//	
+//	::XFreeModifiermap(km);
+//	
+//	return result;
+//}

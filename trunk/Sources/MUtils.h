@@ -265,6 +265,9 @@ uint32 AddNameToNameTable(
 double GetLocalTime();
 double GetDoubleClickTime();
 
+bool IsModifierDown(
+		int						inModifierMask);
+
 void Beep();
 
 #endif

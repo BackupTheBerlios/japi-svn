@@ -141,6 +141,7 @@ class MView
 	virtual void	DragLeave();
 	
 	virtual bool	DragAccept(
+						bool			inMove,
 						int32			inX,
 						int32			inY,
 						const char*		inData,
