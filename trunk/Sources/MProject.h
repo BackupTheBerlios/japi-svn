@@ -150,8 +150,6 @@ class MProject : public MWindow, public MSaverMixin
 							const MUrl&			inPath);
 	virtual void		CloseAfterNavigationDialog();
 
-	virtual void		Close();
-
 	virtual bool		DoClose();
 
 	void				DrawProjectItem(

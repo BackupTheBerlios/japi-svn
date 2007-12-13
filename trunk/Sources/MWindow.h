@@ -19,7 +19,10 @@ class MWindow : public MView, public MHandler
 	void					Hide();
 	virtual void			Select();
 	
-	virtual void			Close();
+	void					Close();
+	
+	static MWindow*			GetFirstWindow()				{ return sFirst; }
+	MWindow*				GetNextWindow() const			{ return mNext; }
 		
 	void					SetTitle(
 								const std::string&	inTitle);
@@ -66,6 +69,9 @@ class MWindow : public MView, public MHandler
 
 	std::string				mTitle;
 	bool					mModified;
+	
+	static MWindow*			sFirst;
+	MWindow*				mNext;
 };
 
 

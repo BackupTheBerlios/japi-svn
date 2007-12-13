@@ -719,7 +719,7 @@ void MJapieApp::Pulse()
 		ProcessSocketMessages();
 	
 	if (gQuit or
-		MDocWindow::GetFirstDocWindow() == nil and
+		MWindow::GetFirstWindow() == nil and
 		mReceivedFirstMsg and
 		MProject::Instance() == nil)
 	{

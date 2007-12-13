@@ -51,13 +51,8 @@ using namespace std;
 // ------------------------------------------------------------------
 //
 
-MEditWindow* MEditWindow::sHead = nil;
-
 MEditWindow::MEditWindow()
 {
-	mNext = sHead;
-	sHead = this;
-
 	mMenubar.BuildFromResource("edit-window-menus");
 
 	// content
@@ -80,22 +75,23 @@ MEditWindow::MEditWindow()
 
 MEditWindow::~MEditWindow()
 {
-	MEditWindow* w = sHead;
-	while (w != nil)
-	{
-		assert(w != this);
-		w = w->mNext;
-	}
 }
 
 MEditWindow* MEditWindow::FindWindowForDocument(MDocument* inDocument)
 {
-	MEditWindow* w = sHead;
+	MWindow* w = MWindow::GetFirstWindow();
 
-	while (w != nil and w->GetDocument() != inDocument)
-		w = w->mNext;
+	while (w != nil)
+	{
+		MEditWindow* d = dynamic_cast<MEditWindow*>(w);
 
-	return w;
+		if (d != nil and d->GetDocument() == inDocument)
+			break;
+
+		w = w->GetNextWindow();
+	}
+
+	return static_cast<MEditWindow*>(w);
 }
 
 MEditWindow* MEditWindow::DisplayDocument(MDocument* inDocument)
@@ -143,28 +139,6 @@ void MEditWindow::Initialize(
 		catch (...) {
 		}
 	}
-}
-
-void MEditWindow::Close()
-{
-	if (this == sHead)
-		sHead = mNext;
-	else if (sHead != nil)
-	{
-		MEditWindow* w = sHead;
-		while (w != nil)
-		{
-			MEditWindow* next = w->mNext;
-			if (next == this)
-			{
-				w->mNext = mNext;
-				break;
-			}
-			w = next;
-		}
-	}
-	
-	MDocWindow::Close();
 }
 
 bool MEditWindow::DoClose()

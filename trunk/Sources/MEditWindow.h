@@ -58,8 +58,6 @@ class MEditWindow : public MDocWindow
 
   protected:
 
-	virtual void		Close();
-
 	virtual bool		DoClose();
 
 	virtual void		ModifiedChanged(
@@ -67,11 +65,6 @@ class MEditWindow : public MDocWindow
 
 	virtual void		FileSpecChanged(
 							const MUrl&		inFile);
-
-  private:
-
-	static MEditWindow*	sHead;
-	MEditWindow*		mNext;
 };
 
 #endif

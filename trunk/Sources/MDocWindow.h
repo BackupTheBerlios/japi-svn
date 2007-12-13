@@ -52,8 +52,6 @@ class MDocWindow : public MWindow
 	static MDocWindow*	FindWindowForDocument(
 							MDocument*		inDocument);
 	
-	static MDocWindow*	GetFirstDocWindow()	{ return sFirst; }
-
 	MEventIn<void(bool)>					eModifiedChanged;
 	MEventIn<void(const MUrl&)>				eFileSpecChanged;
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
@@ -78,8 +76,6 @@ class MDocWindow : public MWindow
 
 	virtual void		DocumentChanged(
 							MDocument*		inDocument);
-
-	virtual void		Close();
 
 	virtual bool		DoClose();
 
@@ -113,11 +109,6 @@ class MDocWindow : public MWindow
 	MParsePopup*		mIncludePopup;
 
 	virtual				~MDocWindow();
-
-  private:
-
-	static MDocWindow*	sFirst;
-	MDocWindow*			mNext;
 };
 
 #endif

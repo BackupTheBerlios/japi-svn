@@ -7,6 +7,8 @@
 
 using namespace std;
 
+MWindow* MWindow::sFirst = nil;
+
 MWindow::MWindow()
 	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
 	, MHandler(gApp)
@@ -16,6 +18,9 @@ MWindow::MWindow()
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
+
+	mNext = sFirst;
+	sFirst = this;
 }
 
 MWindow::MWindow(
@@ -28,10 +33,19 @@ MWindow::MWindow(
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
+
+	mNext = sFirst;
+	sFirst = this;
 }
 
 MWindow::~MWindow()
 {
+	MWindow* w = sFirst;
+	while (w != nil)
+	{
+		assert(w != this);
+		w = w->mNext;
+	}
 }
 	
 void MWindow::Show()
@@ -88,7 +102,24 @@ void MWindow::SetModifiedMarkInTitle(
 
 bool MWindow::OnDestroy()
 {
-	eWindowClosed(this);	
+	if (this == sFirst)
+		sFirst = mNext;
+	else if (sFirst != nil)
+	{
+		MWindow* w = sFirst;
+		while (w != nil)
+		{
+			MWindow* next = w->mNext;
+			if (next == this)
+			{
+				w->mNext = mNext;
+				break;
+			}
+			w = next;
+		}
+	}
+
+	eWindowClosed(this);
 	
 	gApp->RecycleWindow(this);
 	return true;

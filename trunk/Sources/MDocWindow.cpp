@@ -140,8 +140,6 @@ bool MParsePopup::OnButtonPressEvent(
 // ------------------------------------------------------------------
 //
 
-MDocWindow* MDocWindow::sFirst;
-
 MDocWindow::MDocWindow()
 	: eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
@@ -201,30 +199,10 @@ MDocWindow::MDocWindow()
 	gtk_box_pack_start(GTK_BOX(mStatusbar), frame, true, true, 0);
 	gtk_box_reorder_child(GTK_BOX(mStatusbar), frame, 2);	
 	mParsePopup->SetController(&mController, true);
-	
-	mNext = sFirst;
-	sFirst = this;
 }
 
 MDocWindow::~MDocWindow()
 {
-}
-
-void MDocWindow::Close()
-{
-	if (sFirst == this)
-		sFirst = mNext;
-	else
-	{
-		MDocWindow* w = sFirst;
-		while (w != nil and w->mNext != this)
-			w = w->mNext;
-		assert(w != nil);
-		if (w != nil)
-			w->mNext = mNext;
-	}
-	
-	MWindow::Close();
 }
 
 void MDocWindow::Initialize(
@@ -241,12 +219,19 @@ bool MDocWindow::DoClose()
 
 MDocWindow* MDocWindow::FindWindowForDocument(MDocument* inDocument)
 {
-	MDocWindow* w = sFirst;
+	MWindow* w = MWindow::GetFirstWindow();
 
-	while (w != nil and w->GetDocument() != inDocument)
-		w = w->mNext;
+	while (w != nil)
+	{
+		MDocWindow* d = dynamic_cast<MDocWindow*>(w);
 
-	return w;
+		if (d != nil and d->GetDocument() == inDocument)
+			break;
+
+		w = w->GetNextWindow();
+	}
+
+	return static_cast<MDocWindow*>(w);
 }
 
 MDocWindow* MDocWindow::DisplayDocument(

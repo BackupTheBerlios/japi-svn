@@ -30,6 +30,8 @@
 - upper/lower case menu maken
 - een 'normalize unicode' menu item
 
+- fixen van shell implementatie
+
 - diff
 - preferences dialog
 - project afronden (refactor?), bugs fixen

@@ -484,29 +484,6 @@ bool MProject::ReadState()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::Close
-
-void MProject::Close()
-{
-	StopBuilding();
-	
-	if (sInstance == this)
-		sInstance = mNext;
-	else
-	{
-		MProject* p = sInstance;
-
-		while (p != nil and p->mNext != this)
-			p = p->mNext;
-		
-		if (p != nil)
-			p->mNext = mNext;
-	}
-	
-	MWindow::Close();
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::DoClose
 
 bool MProject::DoClose()
@@ -552,6 +529,24 @@ bool MProject::DoClose()
 		catch (...) {}
 		
 		result = MWindow::DoClose();
+	}
+	
+	if (result)
+	{
+		StopBuilding();
+		
+		if (sInstance == this)
+			sInstance = mNext;
+		else
+		{
+			MProject* p = sInstance;
+	
+			while (p != nil and p->mNext != this)
+				p = p->mNext;
+			
+			if (p != nil)
+				p->mNext = mNext;
+		}
 	}
 		
 	return result;
