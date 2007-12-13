@@ -69,6 +69,9 @@ class MWindow : public MView, public MHandler
 
 	std::string				mTitle;
 	bool					mModified;
+
+	static void				RemoveWindowFromList(
+								MWindow*		inWindow);
 	
 	static MWindow*			sFirst;
 	MWindow*				mNext;

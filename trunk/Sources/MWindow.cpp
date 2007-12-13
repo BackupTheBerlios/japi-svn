@@ -40,11 +40,44 @@ MWindow::MWindow(
 
 MWindow::~MWindow()
 {
+#if DEBUG
 	MWindow* w = sFirst;
 	while (w != nil)
 	{
-		assert(w != this);
+		if (w == this)
+		{
+			if (GTK_IS_WINDOW(GetGtkWidget()))
+				PRINT(("Window was not removed from list: %s", gtk_window_get_title(GTK_WINDOW(GetGtkWidget()))));
+			else
+				PRINT(("Window was not removed from list: [deleted]"));
+
+			RemoveWindowFromList(this);
+
+			break;
+		}
 		w = w->mNext;
+	}
+#endif
+}
+
+void MWindow::RemoveWindowFromList(
+	MWindow*		inWindow)
+{
+	if (inWindow == sFirst)
+		sFirst = inWindow->mNext;
+	else if (sFirst != nil)
+	{
+		MWindow* w = sFirst;
+		while (w != nil)
+		{
+			MWindow* next = w->mNext;
+			if (next == inWindow)
+			{
+				w->mNext = inWindow->mNext;
+				break;
+			}
+			w = next;
+		}
 	}
 }
 	
@@ -102,22 +135,7 @@ void MWindow::SetModifiedMarkInTitle(
 
 bool MWindow::OnDestroy()
 {
-	if (this == sFirst)
-		sFirst = mNext;
-	else if (sFirst != nil)
-	{
-		MWindow* w = sFirst;
-		while (w != nil)
-		{
-			MWindow* next = w->mNext;
-			if (next == this)
-			{
-				w->mNext = mNext;
-				break;
-			}
-			w = next;
-		}
-	}
+	RemoveWindowFromList(this);
 
 	eWindowClosed(this);
 	

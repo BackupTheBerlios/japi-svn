@@ -977,7 +977,7 @@ int main(int argc, char* argv[])
 			gApp->RunEventLoop();
 	
 			// we're done, clean up
-			MFindDialog::Instance().DoClose();
+			MFindDialog::Instance().Close();
 			
 			SaveGlobals();
 			
