@@ -1,11 +1,16 @@
 ﻿Te doen
 
-- bevestig make clean
-- 'save all/show all' dialog voor het afsluiten
-
 - Afronden Find Dialog:
 	- Replace All in Multi mode
-	- Replace in selectie
+
+- softwrap fixen, als je typt in een gewrapte regel
+- read-only files ondersteunen
+- fixen van shell implementatie
+- preferences dialog
+- about dialog
+
+- bevestig make clean
+- 'save all/show all' dialog voor het afsluiten
 
 - toetsenbord navigatie in lijsten, typeahead
 	lijsten vervangen door GtkTreeView dingen
@@ -18,22 +23,16 @@
 - context menu's
 - vierkante selectie
 
-- read-only files ondersteunen
-
 - window icons
 
 - stdin lezen
 
 - about dialog
 
-- softwrap fixen, als je typt in een gewrapte regel
 - upper/lower case menu maken
 - een 'normalize unicode' menu item
 
-- fixen van shell implementatie
-
 - diff
-- preferences dialog
 - project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten

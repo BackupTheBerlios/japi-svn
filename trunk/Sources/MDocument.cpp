@@ -2811,15 +2811,22 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 
 void MDocument::DoReplaceAll()
 {
-	uint32 offset = 0, lastMatch = 0;
+	uint32 offset = 0, lastMatch = 0, lastOffset = mText.GetSize();
 	string what = MFindDialog::Instance().GetFindString();
 	string replace;
 	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
 	bool replacedAny = false;
 	bool regex = MFindDialog::Instance().GetRegex();
 	MSelection found;
+
+	if (MFindDialog::Instance().GetInSelection())
+	{
+		offset = mSelection.GetMinOffset();
+		lastOffset = mSelection.GetMaxOffset();
+	}
 	
-	while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found))
+	while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found)
+		and found.GetMaxOffset() <= lastOffset)
 	{
 		if (not replacedAny)
 		{

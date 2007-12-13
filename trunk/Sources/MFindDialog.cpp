@@ -461,8 +461,15 @@ void MFindDialog::FindNext()
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
+					MSelection s = newDoc->GetSelection();
+					
 					doc = newDoc.release();
 					MEditWindow::DisplayDocument(doc);
+					
+					// center the found and selected text
+					doc->Select(s.GetAnchor(), s.GetCaret(),
+						kScrollCenterSelection);
+					
 					found = true;
 				}
 			}
