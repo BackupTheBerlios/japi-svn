@@ -97,13 +97,13 @@ class MFindDialog : public MDialog
 	void			SetReplaceString(
 						const std::string&	inString);
 
+	virtual bool	DoClose();
+
   private:
 
 
 	typedef std::vector<std::string>		StringArray;
 	typedef std::deque<MPath>				FileArray;
-
-	virtual bool	DoClose();
 
 	virtual bool	OKClicked();
 

@@ -87,7 +87,7 @@ const char
 	kJapieCWD[] = "com.hekkelman.japie.CWD";
 
 const uint32
-	kMDocStateSize = 44;	// sizeof(MDocState)
+	kMDocStateSize = 36;	// sizeof(MDocState)
 
 }
 
@@ -98,19 +98,19 @@ MDocument* MDocument::sFirst;
 
 void MDocState::Swap()
 {
-//#if __LITTLE_ENDIAN__
-//	mSelection[0] = Endian32_Swap(mSelection[0]);
-//	mSelection[1] = Endian32_Swap(mSelection[1]);
-//	mSelection[2] = Endian32_Swap(mSelection[2]);
-//	mSelection[3] = Endian32_Swap(mSelection[3]);
-//	mScrollPosition[0] = Endian32_Swap(mScrollPosition[0]);
-//	mScrollPosition[1] = Endian32_Swap(mScrollPosition[1]);
-//	mWindowPosition[0] = Endian16_Swap(mWindowPosition[0]);
-//	mWindowPosition[1] = Endian16_Swap(mWindowPosition[1]);
-//	mWindowSize[0] = Endian16_Swap(mWindowSize[0]);
-//	mWindowSize[1] = Endian16_Swap(mWindowSize[1]);
-//	mSwapHelper = Endian32_Swap(mSwapHelper);
-//#endif
+	net_swapper swap;
+	
+	mSelection[0] = swap(mSelection[0]);
+	mSelection[1] = swap(mSelection[1]);
+	mSelection[2] = swap(mSelection[2]);
+	mSelection[3] = swap(mSelection[3]);
+	mScrollPosition[0] = swap(mScrollPosition[0]);
+	mScrollPosition[1] = swap(mScrollPosition[1]);
+	mWindowPosition[0] = swap(mWindowPosition[0]);
+	mWindowPosition[1] = swap(mWindowPosition[1]);
+	mWindowSize[0] = swap(mWindowSize[0]);
+	mWindowSize[1] = swap(mWindowSize[1]);
+	mSwapHelper = swap(mSwapHelper);
 }
 
 // ---------------------------------------------------------------------------
@@ -457,8 +457,6 @@ void MDocument::MakeFirstDocument()
 
 void MDocument::ReInit()
 {
-#pragma message("zet mLayout opties hier")
-	
 	mFont = Preferences::GetString("font", "monospace 9");
 	
 	MDevice device;
@@ -2634,14 +2632,10 @@ void MDocument::FastFindType(const char* inText, uint32 inTextLength)
 		mFastFindWhat.append(inText, inTextLength);
 	else
 	{
-#pragma warning("fix me!")
-//		uint32 offset = mFastFindWhat.length();
-//		OSStatus err = ::UCFindTextBreak(
-//			MBreakLocator::Instance(),
-//			kUCTextBreakClusterMask,
-//			kUCTextBreakGoBackwardsMask,
-//			mFastFindWhat.c_str(), offset, offset, &offset);
-		uint32 offset = mFastFindWhat.length() - 1;
+		uint32 l = MEncodingTraits<kEncodingUTF8>::GetPrevCharLength(
+						mFastFindWhat.end());
+		
+		uint32 offset = mFastFindWhat.length() - l;
 		
 		mFastFindWhat.erase(offset, mFastFindWhat.length() - offset);
 	}
@@ -3336,9 +3330,8 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 		case kcmd_DeleteCharacterLeft:
 			if (mFastFindMode)
 			{
-#pragma warning("fix me")
 				if (mFastFindWhat.length())
-					FastFindType(nil, 0);		// lame
+					FastFindType(nil, 0);
 				else
 					Beep();
 			}

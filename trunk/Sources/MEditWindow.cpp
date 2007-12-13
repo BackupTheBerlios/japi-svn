@@ -80,21 +80,11 @@ MEditWindow::MEditWindow()
 
 MEditWindow::~MEditWindow()
 {
-	if (this == sHead)
-		sHead = mNext;
-	else if (sHead != nil)
+	MEditWindow* w = sHead;
+	while (w != nil)
 	{
-		MEditWindow* w = sHead;
-		while (w != nil)
-		{
-			MEditWindow* next = w->mNext;
-			if (next == this)
-			{
-				w->mNext = mNext;
-				break;
-			}
-			w = next;
-		}
+		assert(w != this);
+		w = w->mNext;
 	}
 }
 
@@ -153,6 +143,28 @@ void MEditWindow::Initialize(
 		catch (...) {
 		}
 	}
+}
+
+void MEditWindow::Close()
+{
+	if (this == sHead)
+		sHead = mNext;
+	else if (sHead != nil)
+	{
+		MEditWindow* w = sHead;
+		while (w != nil)
+		{
+			MEditWindow* next = w->mNext;
+			if (next == this)
+			{
+				w->mNext = mNext;
+				break;
+			}
+			w = next;
+		}
+	}
+	
+	MDocWindow::Close();
 }
 
 bool MEditWindow::DoClose()

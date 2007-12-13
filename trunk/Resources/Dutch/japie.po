@@ -362,3 +362,13 @@ msgstr "Uitvoeren"
 
 msgid "Untitled"
 msgstr "Naamloos"
+
+msgid "Do you want to save the changes made to document %s?"
+msgstr "Wilt u de wijzigingen aan %s bewaren?"
+
+msgid "Don't save"
+msgstr "Bewaar niet"
+
+msgid "Save File"
+msgstr "Bewaar document"
+

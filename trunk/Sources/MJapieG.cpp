@@ -57,6 +57,8 @@
 
 using namespace std;
 
+static bool gQuit = false;
+
 const char
 	kAppName[] = "japie",
 	kVersionString[] = "0.1";
@@ -439,10 +441,10 @@ void MJapieApp::DoSaveAll()
 void MJapieApp::DoCloseAll(
 	MCloseReason		inAction)
 {
-	MDocument* doc = MDocument::GetFirstDocument();
-	
 	// first close all that can be closed
 
+	MDocument* doc = MDocument::GetFirstDocument();
+	
 	while (doc != nil)
 	{
 		MDocument* next = doc->GetNextDocument();
@@ -488,14 +490,17 @@ void MJapieApp::DoQuit()
 {
 	DoCloseAll(kSaveChangesQuittingApplication);
 //	MDialog::CloseAllDialogs();
-	
-	if (MProject::Instance() != nil)
+
+	if (MDocument::GetFirstDocument() == nil)
 	{
-		string p = MProject::Instance()->GetPath().string();
-		Preferences::SetString("last project", p);
+		if (MProject::Instance() != nil)
+		{
+			string p = MProject::Instance()->GetPath().string();
+			Preferences::SetString("last project", p);
+		}
+		
+		MProject::CloseAllProjects(kSaveChangesQuittingApplication);
 	}
-	
-	MProject::CloseAllProjects(kSaveChangesQuittingApplication);
 	
 	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
 		gtk_main_quit();
@@ -713,11 +718,13 @@ void MJapieApp::Pulse()
 	if (mSocketFD >= 0)
 		ProcessSocketMessages();
 	
-	if (MDocWindow::GetFirstDocWindow() == nil and
+	if (gQuit or
+		MDocWindow::GetFirstDocWindow() == nil and
 		mReceivedFirstMsg and
 		MProject::Instance() == nil)
 	{
 		DoQuit();
+		gQuit = false;	// in case user cancelled the quit
 	}
 	else
 		eIdle(GetLocalTime());
@@ -728,7 +735,22 @@ void MJapieApp::Pulse()
 
 void my_signal_handler(int inSignal)
 {
-	cout << "process " << getpid() << " received signal " << inSignal << endl;
+	switch (inSignal)
+	{
+		case SIGPIPE:
+			break;
+		
+		case SIGUSR1:
+			break;
+		
+		case SIGINT:
+			gQuit = true;
+			break;
+		
+		case SIGTERM:
+			gQuit = true;
+			break;
+	}
 }
 
 void error(const char* msg, ...)
@@ -899,6 +921,7 @@ int main(int argc, char* argv[])
 	::sigaction(SIGTERM, &act, &oact);
 	::sigaction(SIGUSR1, &act, &oact);
 	::sigaction(SIGPIPE, &act, &oact);
+	::sigaction(SIGINT, &act, &oact);
 
 	try
 	{
@@ -954,6 +977,8 @@ int main(int argc, char* argv[])
 			gApp->RunEventLoop();
 	
 			// we're done, clean up
+			MFindDialog::Instance().DoClose();
+			
 			SaveGlobals();
 			
 			delete gApp;

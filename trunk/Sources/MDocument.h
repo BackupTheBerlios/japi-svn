@@ -85,8 +85,6 @@ struct MDocState
 		}			mFlags;
 		uint32		mSwapHelper;
 	};
-	uint32			mReserved3;
-	uint32			mReserved4;
 	
 	void			Swap();
 };

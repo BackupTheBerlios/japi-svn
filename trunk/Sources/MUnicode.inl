@@ -60,6 +60,35 @@ MEncodingTraits<kEncodingUTF8>::GetNextCharLength(
 
 template<>
 template<class ByteIterator>
+uint32
+MEncodingTraits<kEncodingUTF8>::GetPrevCharLength(
+	ByteIterator		inText)
+{
+	int32 result = 1;
+	
+	if ((inText[-1] & 0x0080) != 0)
+	{
+		result = 2;
+
+		while ((inText[-result] & 0x00C0) == 0x0080 and result < 6)
+			result++;
+	
+		switch (result)
+		{
+			case 2:	if ((inText[-result] & 0x00E0) != 0x00C0) result = 1; break;
+			case 3:	if ((inText[-result] & 0x00F0) != 0x00E0) result = 1; break;
+			case 4:	if ((inText[-result] & 0x00F8) != 0x00F0) result = 1; break;
+			case 5:	if ((inText[-result] & 0x00FC) != 0x00F8) result = 1; break;
+			case 6:	if ((inText[-result] & 0x00FE) != 0x00FC) result = 1; break;
+			default:										  result = 1; break;
+		}
+	}
+	
+	return result;
+}
+
+template<>
+template<class ByteIterator>
 void
 MEncodingTraits<kEncodingUTF8>::ReadUnicode(
 	ByteIterator		inText,

@@ -36,6 +36,8 @@
 
 #include "MWindow.h"
 #include "MSaverMixin.h"
+#include "MStrings.h"
+#include "MCommands.h"
 
 using namespace std;
 
@@ -56,6 +58,7 @@ MSaverMixin::MSaverMixin()
 	, mNext(nil)
 	, mCloseOnNavTerminate(true)
 	, mClosePending(false)
+	, mQuitPending(false)
 	, mDialog(nil)
 {
 	mNext = sFirst;
@@ -105,9 +108,11 @@ void MSaverMixin::TryCloseDocument(
 	if (mDialog != nil)
 		return;
 	
+	mQuitPending = (inAction == kSaveChangesQuittingApplication);
+	
 	mDialog = gtk_message_dialog_new(GTK_WINDOW(inParentWindow->GetGtkWidget()),
 		GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-		"Do you want to save the changes made to document %s?",
+		_("Do you want to save the changes made to document %s?"),
 		inParentWindow->GetTitle().c_str());
 	
 //	if (inAction == kSaveChangesClosingDocument)
@@ -115,9 +120,9 @@ void MSaverMixin::TryCloseDocument(
 //		
 //	}
 
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Don't save", kAskSaveChanges_DontSave);
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Cancel", kAskSaveChanges_Cancel);
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), "Save", kAskSaveChanges_Save);
+	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Don't save"), kAskSaveChanges_DontSave);
+	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Cancel"), kAskSaveChanges_Cancel);
+	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Save"), kAskSaveChanges_Save);
 	gtk_dialog_set_default_response(GTK_DIALOG(mDialog), kAskSaveChanges_Save);
 	
 	slClose.Connect(mDialog, "close");
@@ -141,7 +146,10 @@ void MSaverMixin::TryCloseDocument(
 void MSaverMixin::TryDiscardChanges(
 	const string&	inDocumentName,
 	MWindow*		inParentWindow)
-{//
+{
+#warning("unimplemented")
+
+
 //	inParentWindow->Select();
 //
 //	if (mDialog != nil)
@@ -170,7 +178,7 @@ void MSaverMixin::SaveDocumentAs(
 {
 	GtkWidget *dialog;
 	
-	dialog = gtk_file_chooser_dialog_new("Save File",
+	dialog = gtk_file_chooser_dialog_new(_("Save File"),
 					      GTK_WINDOW(inParentWindow->GetGtkWidget()),
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -195,86 +203,13 @@ void MSaverMixin::SaveDocumentAs(
 		gApp->SetCurrentFolder(gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog)));
 	}
 	
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
+	
+	mDialog = nil;
 	
 	if (mClosePending)
 		CloseAfterNavigationDialog();
 }
-
-//pascal void	MSaverMixin::NavEvent(
-//	NavEventCallbackMessage	inMessage,
-//	NavCBRecPtr				inParams,
-//	void*					inUserData)
-//{
-//	MSaverMixin* obj = static_cast<MSaverMixin*>(inUserData);
-//							
-//	try
-//	{
-//		if (inMessage == kNavCBUserAction)
-//			obj->DoNavUserAction(inParams);
-//		else if (inMessage == kNavCBTerminate)
-//		{
-//			obj->DoNavTerminate(inParams);
-//			::NavDialogDispose(inParams->context);
-//		}
-////		else
-////			obj->DoNavEventCallback(inMessage, inParams);
-//	}
-//	catch (...) { }
-//}
-//
-//void MSaverMixin::DoNavUserAction(
-//	NavCBRecPtr				inParams)
-//{
-//	switch (inParams->userAction)
-//	{
-//		case kNavUserActionCancel:			// User cancelled a dialog
-//			mClosePending = false;			//   which always aborts any
-//			mCloseOnNavTerminate = false;
-//			break;							//   pending close
-//	
-//		case kNavUserActionSaveAs:
-//		{
-//			NavReplyRecord navReply;
-//			::NavDialogGetReply(inParams->context, &navReply);
-//			
-//			FSRef parentFSRef;
-//			THROW_IF_OSERROR(::AEGetNthPtr(&navReply.selection,
-//				1, typeFSRef, nil, nil, &parentFSRef, sizeof(parentFSRef), nil));
-//			
-//			string name;
-//			MCFString(navReply.saveFileName, true).GetString(name);	
-//		
-//			::NavDisposeReply(&navReply);
-//			
-//			MPath parentPath;
-//			THROW_IF_OSERROR(::FSRefMakePath(parentFSRef, parentPath));
-//			
-//			if (DoSaveAs(parentPath / name))
-//				mCloseOnNavTerminate = mClosePending;
-//			break;
-//		}
-//	
-//		case kNavUserActionSaveChanges:				// Save before closing
-//			mCloseOnNavTerminate = SaveDocument();	// Save was successful
-//			mClosePending = true;			// Save operation is waiting
-//											//   for user to specify the
-//											//   file. We will close the
-//											//   document if the save
-//											//   completes.
-//			break;
-//			
-//		case kNavUserActionDontSaveChanges:	// Close document without saving
-//			mCloseOnNavTerminate = true;
-//			break;
-//			
-//		case kNavUserActionDiscardChanges:	// User confirmed revert operation
-//			RevertDocument();
-//			mCloseOnNavTerminate = false;
-//			mClosePending = false;
-//			break;
-//	}
-//}
 
 bool MSaverMixin::OnClose()
 {
@@ -297,10 +232,14 @@ bool MSaverMixin::OnResponse(
 			break;
 		
 		case kAskSaveChanges_Cancel:
+			mQuitPending = false;
+			mClosePending = false;
 			break;
 		
 		case kAskSaveChanges_DontSave:
 			CloseAfterNavigationDialog();
+			if (mQuitPending)
+				gApp->ProcessCommand(cmd_Quit, nil, 0);
 			break;
 	}
 	

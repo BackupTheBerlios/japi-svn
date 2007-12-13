@@ -119,22 +119,23 @@ struct MProjectState
 };
 
 const char
-	kJapieProjectState[] = "com.hekkelman.japie.PState";
+	kJapieProjectState[] = "com.hekkelman.japie.ProjectState";
 
 const uint32
 	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);
 
 void MProjectState::Swap()
 {
-//#if __LITTLE_ENDIAN__
-//	mWindowPosition[0] = Endian16_Swap(mWindowPosition[0]);
-//	mWindowPosition[1] = Endian16_Swap(mWindowPosition[1]);
-//	mWindowSize[0] = Endian16_Swap(mWindowSize[0]);
-//	mWindowSize[1] = Endian16_Swap(mWindowSize[1]);
-//	mScrollPosition[ePanelFiles] = Endian32_Swap(mScrollPosition[ePanelFiles]);
-//	mScrollPosition[ePanelLinkOrder] = Endian32_Swap(mScrollPosition[ePanelLinkOrder]);
-//	mScrollPosition[ePanelPackage] = Endian32_Swap(mScrollPosition[ePanelPackage]);
-//#endif
+	net_swapper swap;
+	
+	mWindowPosition[0] = swap(mWindowPosition[0]);
+	mWindowPosition[1] = swap(mWindowPosition[1]);
+	mWindowSize[0] = swap(mWindowSize[0]);
+	mWindowSize[1] = swap(mWindowSize[1]);
+	mScrollPosition[ePanelFiles] = swap(mScrollPosition[ePanelFiles]);
+	mScrollPosition[ePanelLinkOrder] = swap(mScrollPosition[ePanelLinkOrder]);
+	mScrollPosition[ePanelPackage] = swap(mScrollPosition[ePanelPackage]);
+	mSelectedFile = swap(mSelectedFile);
 }
 
 }
@@ -276,20 +277,6 @@ MProject::MProject(const MPath& inPath)
 
 MProject::~MProject()
 {
-	StopBuilding();
-	
-	if (sInstance == this)
-		sInstance = mNext;
-	else
-	{
-		MProject* p = sInstance;
-
-		while (p != nil and p->mNext != this)
-			p = p->mNext;
-		
-		if (p != nil)
-			p->mNext = mNext;
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -457,7 +444,8 @@ bool MProject::ReadState()
 		
 		mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
 		
-		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50)
+		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
 		{
 			SetWindowPosition(MRect(
 				state.mWindowPosition[0], state.mWindowPosition[1],
@@ -497,6 +485,29 @@ bool MProject::ReadState()
 
 // ---------------------------------------------------------------------------
 //	MProject::Close
+
+void MProject::Close()
+{
+	StopBuilding();
+	
+	if (sInstance == this)
+		sInstance = mNext;
+	else
+	{
+		MProject* p = sInstance;
+
+		while (p != nil and p->mNext != this)
+			p = p->mNext;
+		
+		if (p != nil)
+			p->mNext = mNext;
+	}
+	
+	MWindow::Close();
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::DoClose
 
 bool MProject::DoClose()
 {
@@ -1082,7 +1093,7 @@ bool MProject::DoSaveAs(
 
 void MProject::CloseAfterNavigationDialog()
 {
-	MWindow::Close();
+	Close();
 }
 
 // ---------------------------------------------------------------------------
@@ -3002,7 +3013,7 @@ void MProject::SelectTarget(
 	if (mCurrentTarget == mTargets[inTarget])
 		return;
 	
-	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != inTarget)
+	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != int32(inTarget))
 		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
 	mCurrentTarget = mTargets[inTarget];

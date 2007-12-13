@@ -11,7 +11,7 @@ using namespace std;
 
 namespace {
 
-#pragma message("GdkPixmap gaan gebruiken")
+#warning("GdkPixmap gaan gebruiken")
 
 class MDummyWindow : public MWindow
 {

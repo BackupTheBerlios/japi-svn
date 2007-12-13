@@ -19,7 +19,7 @@ class MWindow : public MView, public MHandler
 	void					Hide();
 	virtual void			Select();
 	
-	void					Close();
+	virtual void			Close();
 		
 	void					SetTitle(
 								const std::string&	inTitle);

@@ -58,6 +58,8 @@ class MEditWindow : public MDocWindow
 
   protected:
 
+	virtual void		Close();
+
 	virtual bool		DoClose();
 
 	virtual void		ModifiedChanged(

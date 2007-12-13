@@ -1,5 +1,8 @@
 ﻿Te doen
 
+- bevestig make clean
+- 'save all/show all' dialog voor het afsluiten
+
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 	- Replace in selectie

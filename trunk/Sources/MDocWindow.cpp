@@ -208,6 +208,10 @@ MDocWindow::MDocWindow()
 
 MDocWindow::~MDocWindow()
 {
+}
+
+void MDocWindow::Close()
+{
 	if (sFirst == this)
 		sFirst = mNext;
 	else
@@ -219,6 +223,8 @@ MDocWindow::~MDocWindow()
 		if (w != nil)
 			w->mNext = mNext;
 	}
+	
+	MWindow::Close();
 }
 
 void MDocWindow::Initialize(

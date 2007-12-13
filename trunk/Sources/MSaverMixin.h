@@ -94,6 +94,7 @@ class MSaverMixin
 	MSaverMixin*		mNext;
 	bool				mCloseOnNavTerminate;
 	bool				mClosePending;
+	bool				mQuitPending;
 	GtkWidget*			mDialog;
 };
 
