@@ -538,3 +538,9 @@ void MView::GetMouse(
 	gtk_widget_get_pointer(mGtkWidget, &outX, &outY);
 }
 
+uint32 MView::GetModifiers() const
+{
+	GdkModifierType modifiers;
+	gdk_window_get_pointer(mGtkWidget->window, nil, nil, &modifiers);
+	return modifiers & gtk_accelerator_get_default_mod_mask();
+}

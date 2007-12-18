@@ -78,6 +78,8 @@ class MView
 						int32&			outX,
 						int32&			outY) const;
 
+	uint32			GetModifiers() const;
+
   protected:
 
 					MView(

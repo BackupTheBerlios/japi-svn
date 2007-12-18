@@ -158,146 +158,6 @@ bool MDiffWindow::UpdateCommandStatus(
 	return result;
 }
 
-//void MDiffWindow::DrawItem(CGContextRef inContext, HIRect inFrame, uint32 inRow,
-//	bool inSelected, const void* inData, uint32 inDataLength)
-//{
-//	MDiffInfo diff = mScript[inRow];
-//	
-//	string s;
-//	int n0 = 0, n1 = 0, n2 = 0, n3 = 0;
-//	
-//	if (diff.mA1 == diff.mA2)
-//	{
-//		if (diff.mB1 < diff.mB2 - 1)
-//		{
-//			s = "Extra lines in file ^0: ^1-^2";
-//			n0 = 2;
-//			n1 = diff.mB1 + 1;
-//			n2 = diff.mB2;
-//		}
-//		else
-//		{
-//			s = "Extra line in file ^0: ^1";
-//			n0 = 2;
-//			n1 = diff.mB1 + 1;
-//		}
-//	}
-//	else if (diff.mB1 == diff.mB2)
-//	{
-//		if (diff.mA1 < diff.mA2 - 1)
-//		{
-//			s = "Extra lines in file ^0: ^1-^2";
-//			n0 = 1;
-//			n1 = diff.mA1 + 1;
-//			n2 = diff.mA2;
-//		}
-//		else
-//		{
-//			s = "Extra line in file ^0: ^1";
-//			n0 = 1;
-//			n1 = diff.mA1 + 1;
-//		}
-//	}
-//	else
-//	{
-//		if (diff.mA1 < diff.mA2 - 1 && diff.mB1 < diff.mB2 - 1)
-//		{
-//			s = "Nonmatching lines. File 1: ^0-^1, File 2: ^2-^3";
-//			n0 = diff.mA1 + 1;
-//			n1 = diff.mA2;
-//			n2 = diff.mB1 + 1;
-//			n3 = diff.mB2;
-//		}
-//		else if (diff.mB1 < diff.mB2 - 1)
-//		{
-//			s = "Nonmatching lines. File 1: ^0, File 2: ^1-^2";
-//			n0 = diff.mA1 + 1;
-//			n1 = diff.mB1 + 1;
-//			n2 = diff.mB2;
-//		}
-//		else if (diff.mA1 < diff.mA2 - 1)
-//		{
-//			s = "Nonmatching lines. File 1: ^0-^1, File 2: ^2";
-//			n0 = diff.mA1 + 1;
-//			n1 = diff.mA2;
-//			n2 = diff.mB1 + 1;
-//		}
-//		else
-//		{
-//			s = "Nonmatching lines. File 1: ^0, File 2: ^1";
-//			n0 = diff.mA1 + 1;
-//			n1 = diff.mB1 + 1;
-//		}
-//	}
-//	
-//	string::size_type p;
-//	
-//	s = GetLocalisedString(s.c_str());
-//	
-//	if ((p = s.find("^0")) != string::npos)
-//		s.replace(p, 2, NumToString(n0));
-//	if ((p = s.find("^1")) != string::npos)
-//		s.replace(p, 2, NumToString(n1));
-//	if ((p = s.find("^2")) != string::npos)
-//		s.replace(p, 2, NumToString(n2));
-//	if ((p = s.find("^3")) != string::npos)
-//		s.replace(p, 2, NumToString(n3));
-//	
-//	MDevice dev(inContext, inFrame);
-//
-//	if (inSelected)
-//		dev.SetBackColor(gHiliteColor);
-//	else if ((inRow % 2) == 0)
-//		dev.SetBackColor(gOddRowColor);
-//	else
-//		dev.SetBackColor(kWhite);
-//	
-//	dev.EraseRect(inFrame);
-//	
-//	float x, y;
-//	x = inFrame.origin.x + 4;
-//	y = inFrame.origin.y + dev.GetAscent() + 1;
-//
-//	dev.DrawString(s, x, y);
-//}
-//
-//// ----------------------------------------------------------------------------
-//// MDiffWindow::DrawDirItem
-//
-//void MDiffWindow::DrawDirItem(CGContextRef inContext, HIRect inFrame, uint32 inRow,
-//	bool inSelected, const void* inData, uint32 inDataLength)
-//{
-//	MDirDiffItem diff = mDScript[inRow];
-//	
-//	string s;
-//	
-//	if (diff.status == 0)
-//		s = diff.name;
-//	else
-//	{
-//		s = GetLocalisedString("File '^0' only in dir ^1");
-//		s.replace(s.find("^0"), 2, diff.name);
-//		s.replace(s.find("^1"), 2, NumToString(diff.status));
-//	}
-//	
-//	MDevice dev(inContext, inFrame);
-//
-//	if (inSelected)
-//		dev.SetBackColor(gHiliteColor);
-//	else if ((inRow % 2) == 0)
-//		dev.SetBackColor(gOddRowColor);
-//	else
-//		dev.SetBackColor(kWhite);
-//	
-//	dev.EraseRect(inFrame);
-//	
-//	float x, y;
-//	x = inFrame.origin.x + 4;
-//	y = inFrame.origin.y + dev.GetAscent() + 1;
-//
-//	dev.DrawString(s, x, y);
-//}
-
 // ----------------------------------------------------------------------------
 // MDiffWindow::ChooseFile
 
@@ -320,17 +180,19 @@ void MDiffWindow::ChooseFile(int inFileNr)
 			url = MUrl(mDir2);
 	}
 	
-	if (ChooseOneFile(url))
+	if (GetModifiers() != 0)
 	{
-		if (url.IsLocal() and is_directory(url.GetPath()))
-			SetDirectory(inFileNr, url.GetPath());
-		else
-		{
-			MDocument* doc = gApp->OpenOneDocument(url);
-			
-			if (doc != nil)
-				SetDocument(inFileNr, doc);
-		}
+		MPath dir;
+
+		if (ChooseDirectory(dir) and is_directory(dir))
+			SetDirectory(inFileNr, dir);
+	}
+	else if (ChooseOneFile(url))
+	{
+		MDocument* doc = gApp->OpenOneDocument(url);
+		
+		if (doc != nil)
+			SetDocument(inFileNr, doc);
 	}
 }
 
@@ -399,33 +261,34 @@ void MDiffWindow::SetDocument(int inDocNr, MDocument* inDocument)
 // ----------------------------------------------------------------------------
 // SetDirectory
 
-void MDiffWindow::SetDirectory(int inDirNr, const MPath& inDir)
+void MDiffWindow::SetDirectory(
+	int				inDirNr,
+	const MPath&	inDir)
 {
-//	if (mDoc1 != nil)
-//		SetDocument(1, nil);
-//	
-//	if (mDoc2 != nil)
-//		SetDocument(2, nil);
-//	
-//	mListView->RemoveAll();
-//	
-//	if (inDirNr == 1)
-//	{
-//		mDir1 = inDir;
-//		SetButtonTitle(1, mDir1.leaf());
-//	}
-//	else
-//	{
-//		mDir2 = inDir;
-//		SetButtonTitle(2, mDir2.leaf());
-//	}
-//
-//	mListView->RemoveAll();
-//	mScript.clear();
-//	mDScript.clear();
-//	
-//	if (is_directory(mDir1) and is_directory(mDir2))
-//		RecalculateDiffsForDirs();
+	if (mDoc1 != nil)
+		SetDocument(1, nil);
+	
+	if (mDoc2 != nil)
+		SetDocument(2, nil);
+	
+	ClearList();
+	
+	if (inDirNr == 1)
+	{
+		mDir1 = inDir;
+		SetButtonTitle(1, mDir1.leaf());
+	}
+	else
+	{
+		mDir2 = inDir;
+		SetButtonTitle(2, mDir2.leaf());
+	}
+	
+	if (fs::exists(mDir1) and is_directory(mDir1) and
+		fs::exists(mDir2) and is_directory(mDir2))
+	{
+		RecalculateDiffsForDirs();
+	}
 
 	Select();
 }
@@ -546,82 +409,101 @@ void MDiffWindow::RecalculateDiffs()
 
 void MDiffWindow::RecalculateDiffsForDirs()
 {
-//	mDScript.clear();
-//	mListView->RemoveAll();
-//	
-//	vector<MPath> a, b;
-//	MPath p;
-//	
-//	MFileIterator iter_a(mDir1, 0);
-//	while (iter_a.Next(p))
-//		a.push_back(p);
-//	
-//	MFileIterator iter_b(mDir2, 0);
-//	while (iter_b.Next(p))
-//		b.push_back(p);
-//	
-//	sort(a.begin(), a.end());
-//	sort(b.begin(), b.end());
-//	
-//	vector<MPath>::iterator ai, bi;
-//	ai = a.begin();
-//	bi = b.begin();
-//	
-//	while (ai != a.end() and bi != b.end())
-//	{
-//		if (ai->leaf() == bi->leaf())
-//		{
-//			if (FilesDiffer(*ai, *bi))
-//				AddDirDiff(ai->leaf(), 0);
-//
-//			++ai;
-//			++bi;
-//		}
-//		else
-//		{
-//			if (ai->leaf() < bi->leaf())
-//			{
-//				AddDirDiff(ai->leaf(), 1);
-//				++ai;
-//			}
-//			else
-//			{
-//				AddDirDiff(bi->leaf(), 2);
-//				++bi;
-//			}
-//		}
-//	}
-//	
-//	while (ai != a.end())
-//	{
-//		AddDirDiff(ai->leaf(), 1);
-//		++ai;
-//	}
-//	
-//	while (bi != b.end())
-//	{
-//		AddDirDiff(bi->leaf(), 2);
-//		++bi;
-//	}
-//
-//	SetCallBack(mListView->cbDrawItem, this, &MDiffWindow::DrawDirItem);
-//	SetCallBack(mListView->cbRowSelected, this, &MDiffWindow::FileSelected);
+	mDScript.clear();
+
+	ClearList();
+
+	vector<MPath> a, b;
+	MPath p;
+	
+	MFileIterator iter_a(mDir1, 0);
+	while (iter_a.Next(p))
+		a.push_back(p);
+	
+	MFileIterator iter_b(mDir2, 0);
+	while (iter_b.Next(p))
+		b.push_back(p);
+	
+	sort(a.begin(), a.end());
+	sort(b.begin(), b.end());
+	
+	vector<MPath>::iterator ai, bi;
+	ai = a.begin();
+	bi = b.begin();
+	
+	while (ai != a.end() and bi != b.end())
+	{
+		if (ai->leaf() == bi->leaf())
+		{
+			if (FilesDiffer(MUrl(*ai), MUrl(*bi)))
+				AddDirDiff(ai->leaf(), 0);
+
+			++ai;
+			++bi;
+		}
+		else
+		{
+			if (ai->leaf() < bi->leaf())
+			{
+				AddDirDiff(ai->leaf(), 1);
+				++ai;
+			}
+			else
+			{
+				AddDirDiff(bi->leaf(), 2);
+				++bi;
+			}
+		}
+	}
+	
+	while (ai != a.end())
+	{
+		AddDirDiff(ai->leaf(), 1);
+		++ai;
+	}
+	
+	while (bi != b.end())
+	{
+		AddDirDiff(bi->leaf(), 2);
+		++bi;
+	}
 }
 
 // ----------------------------------------------------------------------------
 // MDiffWindow::AddDirDiff
 
-void MDiffWindow::AddDirDiff(const std::string& inName, uint32 inStatus)
+void MDiffWindow::AddDirDiff(
+	const string&	inName,
+	uint32			inStatus)
 {
-//	MDirDiffItem dItem = { inName, inStatus };
-//	mDScript.push_back(dItem);
-//	mListView->InsertItem(0, "", 0);
+	MDirDiffItem dItem = { inName, inStatus };
+	mDScript.push_back(dItem);
+
+	string s;
+	
+	if (inStatus == 0)
+		s = inName;
+	else
+	{
+		s = _("File '^0' only in dir ^1");
+		s.replace(s.find("^0"), 2, inName);
+		s.replace(s.find("^1"), 2, NumToString(inStatus));
+	}
+	
+	GtkWidget* treeView = GetWidget(kListViewID);
+	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
+	
+	GtkTreeIter iter;
+	gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
+	gtk_list_store_set(GTK_LIST_STORE(store), &iter, 0, s.c_str(), -1);
 }
 
 // ----------------------------------------------------------------------------
 //	MDiffWindow::FilesDiffer
 
-bool MDiffWindow::FilesDiffer(const MUrl& inA, const MUrl& inB) const
+bool MDiffWindow::FilesDiffer(
+	const MUrl&		inA,
+	const MUrl&		inB) const
 {
 	vector<uint32> a, b;
 	
@@ -677,39 +559,34 @@ void MDiffWindow::DiffSelected()
 		mDoc1->Select(mDoc1->LineStart(diff.mA1), mDoc1->LineStart(diff.mA2), kScrollForDiff);
 		mDoc2->Select(mDoc2->LineStart(diff.mB1), mDoc2->LineStart(diff.mB2), kScrollForDiff);
 	}
-}
-
-// ----------------------------------------------------------------------------
-// MDiffWindow::FileSelected
-
-void MDiffWindow::FileSelected(uint32 inDiffNr)
-{
-//	MDirDiffItem diff = mDScript[inDiffNr];
-//	
-//	switch (diff.status)
-//	{
-//		case 0:
-//		{
-//			auto_ptr<MDiffWindow> w(new MDiffWindow);
-//			
-//			w->Initialize();
-//			w->Show();
-//			
-//			w->SetDocument(1, MApplication::Instance().OpenOneDocument(mDir1 / diff.name));
-//			w->SetDocument(2, MApplication::Instance().OpenOneDocument(mDir2 / diff.name));
-//			
-//			w.release();
-//			break;
-//		}
-//		
-//		case 1:
-//			MApplication::Instance().OpenOneDocument(mDir1 / diff.name);
-//			break;
-//		
-//		case 2:
-//			MApplication::Instance().OpenOneDocument(mDir2 / diff.name);
-//			break;
-//	}
+	else if (selected >= 0 and selected < (int32)mDScript.size())
+	{
+		MDirDiffItem diff = mDScript[selected];
+		
+		switch (diff.status)
+		{
+			case 0:
+			{
+				auto_ptr<MDiffWindow> w(MDialog::Create<MDiffWindow>());
+				
+				w->SetDocument(1, gApp->OpenOneDocument(MUrl(mDir1 / diff.name)));
+				w->SetDocument(2, gApp->OpenOneDocument(MUrl(mDir2 / diff.name)));
+				
+				w->Select();
+				
+				w.release();
+				break;
+			}
+			
+			case 1:
+				gApp->OpenOneDocument(MUrl(mDir1 / diff.name));
+				break;
+			
+			case 2:
+				gApp->OpenOneDocument(MUrl(mDir2 / diff.name));
+				break;
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -785,10 +662,9 @@ void MDiffWindow::ArrangeWindows()
 	THROW_IF_NIL(mDoc1);
 
 	MDocWindow* w;
-
 	MRect wRect;
-	w = MDocWindow::DisplayDocument(mDoc1);
-	w->GetMaxPosition(wRect);
+
+	GetMaxPosition(wRect);
 
 	// gebruik normale afmetingen
 	
@@ -808,10 +684,10 @@ void MDiffWindow::ArrangeWindows()
 //		int32 dy = (wRect.height - kMaxHeight) / 2;
 //		wRect.InsetBy(0, dy);
 //	}
+
+	wRect.InsetBy(kGapWidth, 2 * kGapWidth);
 	
-	wRect.InsetBy(20 + kGapWidth, 20 + kGapWidth);
-	
-	MRect diffWindowBounds, targetWindow1Bounds, targetWindow2Bounds, temp;
+	MRect diffWindowBounds, targetWindow1Bounds, targetWindow2Bounds;
 
 	diffWindowBounds = wRect;
 	diffWindowBounds.height = kDiffWindowHeight;
@@ -850,6 +726,7 @@ void MDiffWindow::ClearList()
 	gtk_list_store_clear(store);
 
 	mScript.clear();
+	mDScript.clear();
 }
 
 // ----------------------------------------------------------------------------
