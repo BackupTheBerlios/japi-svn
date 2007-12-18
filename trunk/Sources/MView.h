@@ -74,6 +74,10 @@ class MView
 
 	void			ObscureCursor();
 
+	void			GetMouse(
+						int32&			outX,
+						int32&			outY) const;
+
   protected:
 
 					MView(

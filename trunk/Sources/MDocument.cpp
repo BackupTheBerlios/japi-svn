@@ -3651,7 +3651,7 @@ bool MDocument::HandleRawKeydown(
 			case GDK_Return:
 				if (mFastFindMode)
 					mFastFindMode = false;
-				else if (inModifiers & GDK_MOD2_MASK or inModifiers & GDK_CONTROL_MASK)
+				else if (inModifiers & GDK_CONTROL_MASK)
 				{
 					Reset();
 					Execute();

@@ -530,3 +530,11 @@ void MView::DragSendData(
 void MView::DragDeleteData()
 {
 }
+
+void MView::GetMouse(
+	int32&			outX,
+	int32&			outY) const
+{
+	gtk_widget_get_pointer(mGtkWidget, &outX, &outY);
+}
+

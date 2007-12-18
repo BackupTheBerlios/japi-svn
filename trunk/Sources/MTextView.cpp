@@ -296,45 +296,61 @@ bool MTextView::OnMotionNotifyEvent(
 	
 		if (mClickMode != eSelectNone and IsActive())
 		{
-			mDocument->PositionToOffset(x, y, mClickCaret);
-		
-			if (mClickMode == eSelectRegular)
+			bool scrolled = false;
+
+			do
 			{
-				mDocument->Select(mClickAnchor, mClickCaret);
-				ScrollToCaret();
-			}
-			else if (mClickMode == eSelectWords)
-			{
-				uint32 c1, c2;
-				mDocument->FindWord(mClickCaret, c1, c2);
-				if (c1 != c2)
+				if (scrolled)
 				{
-					if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
-						mClickCaret = c1;
-					else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
-						mClickCaret = c2;
+					UpdateNow();
+					GetMouse(x, y);
+					x += mImageOriginX - kLeftMargin;
+					y += mImageOriginY;
 				}
+
+				mDocument->PositionToOffset(x, y, mClickCaret);
+			
+				if (mClickMode == eSelectRegular)
+				{
+					mDocument->Select(mClickAnchor, mClickCaret);
+					scrolled = ScrollToCaret();
+				}
+				else if (mClickMode == eSelectWords)
+				{
+					uint32 c1, c2;
+					mDocument->FindWord(mClickCaret, c1, c2);
+					if (c1 != c2)
+					{
+						if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
+							mClickCaret = c1;
+						else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
+							mClickCaret = c2;
+					}
+			
+					if (mClickCaret < mMinClickAnchor)
+						mDocument->Select(mMaxClickAnchor, mClickCaret);
+					else if (mClickCaret > mMaxClickAnchor)
+						mDocument->Select(mMinClickAnchor, mClickCaret);
+					else
+						mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
 		
-				if (mClickCaret < mMinClickAnchor)
-					mDocument->Select(mMaxClickAnchor, mClickCaret);
-				else if (mClickCaret > mMaxClickAnchor)
-					mDocument->Select(mMinClickAnchor, mClickCaret);
-				else
-					mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-	
-				ScrollToCaret();
+					scrolled = ScrollToCaret();
+				}
+				else if (mClickMode == eSelectLines)
+				{
+					mClickCaret = mDocument->OffsetToLine(mClickCaret);
+			
+					if (mClickCaret < mClickAnchor)
+						mDocument->Select(
+							mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+					else
+						mDocument->Select(
+							mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+
+					scrolled = ScrollToCaret();
+				}
 			}
-			else if (mClickMode == eSelectLines)
-			{
-				mClickCaret = mDocument->OffsetToLine(mClickCaret);
-		
-				if (mClickCaret < mClickAnchor)
-					mDocument->Select(
-						mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
-				else
-					mDocument->Select(
-						mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
-			}
+			while (scrolled);
 		}
 	}
 	
@@ -1126,7 +1142,7 @@ void MTextView::ScrollForDiff()
 	MRect bounds;
 	GetBounds(bounds);
 	
-	int32 center = static_cast<int32>(bounds.height / (4 * mLineHeight));
+	int32 center = bounds.height / (4 * mLineHeight);
 
 	uint32 offset = mDocument->GetSelection().GetMinOffset();
 	
@@ -1135,11 +1151,11 @@ void MTextView::ScrollForDiff()
 	
 	mDocument->OffsetToPosition(offset, line, x);
 
-	int32 y = (static_cast<int32>(line) - center) * mLineHeight;
+	int32 y = (line - center) * mLineHeight;
 	if (y < 0)
 		y = 0;
 	
-	if (y != bounds.y)
+	if (y != mImageOriginY)
 		DoScrollTo(mImageOriginX, y);
 }
 

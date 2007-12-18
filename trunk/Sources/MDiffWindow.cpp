@@ -794,7 +794,7 @@ void MDiffWindow::ArrangeWindows()
 	
 	const int32
 //		kMaxWidth = 1024, kMaxHeight = 768,
-		kDiffWindowHeight = 175,
+		kDiffWindowHeight = (175 * wRect.height) / 1024,
 		kGapWidth = 10;
 	
 //	if (wRect.width > kMaxWidth)
