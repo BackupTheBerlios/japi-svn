@@ -51,6 +51,9 @@ class MWindow : public MView, public MHandler
 	void					SetWindowPosition(
 								const MRect&	outPosition);
 
+	void					GetMaxPosition(
+								MRect&			outRect) const;
+
   protected:
 
 							MWindow(

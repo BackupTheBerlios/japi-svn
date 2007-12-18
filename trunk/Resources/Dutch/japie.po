@@ -372,3 +372,35 @@ msgstr "Bewaar niet"
 msgid "Save File"
 msgstr "Bewaar document"
 
+msgid "Find Differences…"
+msgstr "Vergelijk documenten…"
+
+msgid "Find Differences"
+msgstr "Vergelijk documenten"
+
+msgid "File 1"
+msgstr "Bestand 1"
+
+msgid "File 2"
+msgstr "Bestand 2"
+
+msgid "Extra lines in file ^0: ^1-^2"
+msgstr "Extra regels in bestand ^0: ^1-^2"
+
+msgid "Extra line in file ^0: ^1"
+msgstr "Extra regel in bestand ^0: ^1"
+
+msgid "Nonmatching lines. File 1: ^0-^1, File 2: ^2-^3"
+msgstr "Verschillende regels. Bestand 1: ^0-^1, bestand 2: ^2-^3"
+
+msgid "Nonmatching lines. File 1: ^0, File 2: ^1-^2"
+msgstr "Verschillende regels. Bestand 1: ^0, bestand 2: ^1-^2"
+
+msgid "Nonmatching lines. File 1: ^0-^1, File 2: ^2"
+msgstr "Verschillende regels. Bestand 1: ^0-^1, bestand 2: ^2"
+
+msgid "Nonmatching lines. File 1: ^0, File 2: ^1"
+msgstr "Verschillende regels. Bestand 1: ^0, bestand 2: ^1"
+
+msgid "Difference"
+msgstr "Verschillen"

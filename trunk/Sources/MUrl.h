@@ -30,6 +30,8 @@ class MUrl
 						const MUrl&			inUrl) const;
 	
 	bool			IsLocal() const;
+	
+	bool			IsValid() const;
 
 	std::string		str() const;
 

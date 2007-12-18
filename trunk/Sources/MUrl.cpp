@@ -193,6 +193,13 @@ MUrl& MUrl::operator=(
 	return *this;
 }
 
+MUrl& MUrl::operator=(
+	const string&		inRHS)
+{
+	mImpl->Parse(inRHS.c_str());
+	return *this;
+}
+
 bool MUrl::operator==(
 	const MUrl&			inUrl) const
 {
@@ -237,6 +244,13 @@ bool MUrl::operator==(
 bool MUrl::IsLocal() const
 {
 	return mImpl->mScheme == "file";
+}
+
+bool MUrl::IsValid() const
+{
+	return
+		(mImpl->mScheme == "file" or mImpl->mScheme == "sftp" or mImpl->mScheme == "ssh") and
+		mImpl->mPath.is_complete();
 }
 
 string MUrl::str() const

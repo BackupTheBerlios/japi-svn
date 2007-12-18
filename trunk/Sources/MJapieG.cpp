@@ -52,6 +52,7 @@
 #include "MSftpGetDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
+#include "MDiffWindow.h"
 
 #include <iostream>
 
@@ -211,6 +212,10 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
+			break;
+		
+		case cmd_ShowDiffWindow:
+			MDialog::Create<MDiffWindow>();
 			break;
 		
 		default:
@@ -555,11 +560,12 @@ void MJapieApp::DoOpen()
 			while (file != nil)
 			{
 				MUrl url(reinterpret_cast<char*>(file->data));
+
 				g_free(file->data);
+				file->data = nil;
 
 				urls.push_back(url);
 
-				file->data = nil;
 				file = file->next;
 			}
 			
@@ -929,6 +935,8 @@ int main(int argc, char* argv[])
 
 		fs::path::default_name_check(fs::no_check);
 		gtk_init(&argc, &argv);
+
+		gtk_window_set_default_icon_name ("accessories-text-editor");
 
 //		gdk_set_show_events(true);
 

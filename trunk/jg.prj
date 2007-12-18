@@ -50,9 +50,11 @@
 				<file>MFindAndOpenDialog.cpp</file>
 				<file>MMarkMatchingDialog.cpp</file>
 				<!--file>MPrefsDialog.cpp</file-->
+				<file>MDiffWindow.cpp</file>
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
+			<file>MDiff.cpp</file>
 			<file>MAlerts.cpp</file>
 			<file>MStrings.cpp</file>
 			<file>MResources.cpp</file>
@@ -116,6 +118,7 @@
 		<copy>go-to-line-dialog.xml</copy>
 		<copy>auth-dialog.xml</copy>
 		<copy>sftp-dialog.xml</copy>
+		<copy>diff-window.xml</copy>
 	</package>
 	<targets>
 		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">

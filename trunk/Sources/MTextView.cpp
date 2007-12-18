@@ -1120,36 +1120,27 @@ void MTextView::ScrollToSelection(
 //	ScrollForDiff
 
 void MTextView::ScrollForDiff()
-{//
-//	assert(mDocument);
-//	
-//	MRect bounds;
-//	GetBounds(bounds);
-//	
-//	int32 center = static_cast<int32>(bounds.height / (4 * mLineHeight));
-//
-//	uint32 offset = mDocument->GetSelection().GetMinOffset();
-//	
-//	uint32 line;
-//	int32 x;
-//	
-//	mDocument->OffsetToPosition(offset, line, x);
-//
-//	HIPoint newOrigin = bounds;
-//	newOrigin.y = (static_cast<int32>(line) - center) * mLineHeight;
-//	if (newOrigin.y < 0)
-//		newOrigin.y = 0;
-//	
-//	if (newOrigin.y != bounds.y)
-//	{
-//		MCarbonEvent er;
-//		DoScrollTo(newOrigin);
-//
-//		MCarbonEvent event;
-//		event.MakeEvent(kEventClassScrollable, kEventScrollableInfoChanged);
-//		HIViewRef superView = ::HIViewGetSuperview(GetSysView());
-//		event.SendTo(::HIViewGetEventTarget(superView), kEventTargetDontPropagate);
-//	}
+{
+	assert(mDocument);
+	
+	MRect bounds;
+	GetBounds(bounds);
+	
+	int32 center = static_cast<int32>(bounds.height / (4 * mLineHeight));
+
+	uint32 offset = mDocument->GetSelection().GetMinOffset();
+	
+	uint32 line;
+	int32 x;
+	
+	mDocument->OffsetToPosition(offset, line, x);
+
+	int32 y = (static_cast<int32>(line) - center) * mLineHeight;
+	if (y < 0)
+		y = 0;
+	
+	if (y != bounds.y)
+		DoScrollTo(mImageOriginX, y);
 }
 
 // -----------------------------------------------------------------------------

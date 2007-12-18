@@ -83,6 +83,8 @@
 		<item label="Complete Looking Forward" cmd='ComF'/>
 		<item label="-" />
 		<item label="Go to Line" cmd='GoTo'/>
+		<item label="-"/>
+		<item label="Find Differences…" cmd='diff' />
 	</menu>
 	<menu id='' label="Mark">
 		<item label="Next Mark" cmd='NxtM'/>

@@ -144,6 +144,9 @@ class MDialog : public MWindow
 	GtkWidget*		GetWidget(
 						uint32				inID) const;
 
+	virtual void	FocusChanged(
+						uint32				inFocussedID);
+
   private:
 
 	static void		CreateGladeAndWidgets(

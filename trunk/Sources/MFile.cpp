@@ -706,3 +706,52 @@ bool ChooseDirectory(
 
 	return result;
 }
+
+bool ChooseOneFile(
+	MUrl&	ioFile)
+{
+	GtkWidget* dialog = nil;
+	bool result = false;
+	
+	try
+	{
+		dialog = 
+			gtk_file_chooser_dialog_new(_("Open"), nil,
+				GTK_FILE_CHOOSER_ACTION_OPEN,
+				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+				NULL);
+		
+		THROW_IF_NIL(dialog);
+	
+		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), false);
+		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
+		
+		if (ioFile.IsValid())
+		{
+			gtk_file_chooser_set_uri(
+				GTK_FILE_CHOOSER(dialog), ioFile.str().c_str());
+		}
+		
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));	
+			
+			ioFile = uri;
+			result = true;
+
+			g_free(uri);
+		}
+	}
+	catch (exception& e)
+	{
+		if (dialog)
+			gtk_widget_destroy(dialog);
+		
+		throw;
+	}
+	
+	gtk_widget_destroy(dialog);
+	
+	return result;
+}

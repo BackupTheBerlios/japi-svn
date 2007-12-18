@@ -422,7 +422,7 @@ MLanguage::SetStyle(
 	uint32				inOffset,
 	uint32				inStyle)
 {
-	if (mStyles and mOffsets)
+	if (mStyles != nil and mOffsets != nil)
 	{
 		if (inStyle != mStyles[mLastStyleIndex])
 		{

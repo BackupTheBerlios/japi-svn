@@ -8,9 +8,18 @@
 - fixen van shell implementatie
 - preferences dialog
 - about dialog
+- context menu's
+- vierkante selectie
+- window icons
+
+- stdin lezen
+
 
 - bevestig make clean
 - 'save all/show all' dialog voor het afsluiten
+
+- veralgemeniseren van pkg-config
+- configuratie van compiler, koppelen aan extensie(s)
 
 - toetsenbord navigatie in lijsten, typeahead
 	lijsten vervangen door GtkTreeView dingen
@@ -19,15 +28,6 @@
 	- fetch/store status dialogs verplaatsen naar doc window?
 	- progress dialog clean up, labels kloppen niet
 	- authenticatie dialog splitsen of zo.
-
-- context menu's
-- vierkante selectie
-
-- window icons
-
-- stdin lezen
-
-- about dialog
 
 - upper/lower case menu maken
 - een 'normalize unicode' menu item

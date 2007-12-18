@@ -181,6 +181,8 @@ assert(false);//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(wdgt), inText.c_st
 		gtk_entry_set_text(GTK_ENTRY(wdgt), inText.c_str());
 	else if (GTK_IS_LABEL(wdgt))
 		gtk_label_set_text(GTK_LABEL(wdgt), inText.c_str());
+	else if (GTK_IS_BUTTON(wdgt))
+		gtk_button_set_label(GTK_BUTTON(wdgt), inText.c_str());
 	else if (GTK_IS_PROGRESS_BAR(wdgt))
 	{
 		gtk_progress_bar_set_text(GTK_PROGRESS_BAR(wdgt), inText.c_str());
@@ -467,8 +469,13 @@ bool MDialog::ChildFocus(
 	try
 	{
 		TakeFocus();
+		FocusChanged(0);
 	}
 	catch (...) {}
 	return false;
 }
 
+void MDialog::FocusChanged(
+	uint32				inFocussedID)
+{
+}

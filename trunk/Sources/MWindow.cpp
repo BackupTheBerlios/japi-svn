@@ -208,3 +208,16 @@ void MWindow::SetWindowPosition(
 		inPosition.width, inPosition.height);
 }
 
+// try to be nice to those with multiple monitors:
+
+void MWindow::GetMaxPosition(
+	MRect&			outRect) const
+{
+	GdkScreen* screen = gtk_widget_get_screen(GetGtkWidget());
+	
+	uint32 monitor = gdk_screen_get_monitor_at_window(screen, GetGtkWidget()->window);
+	
+	GdkRectangle r;
+	gdk_screen_get_monitor_geometry(screen, monitor, &r);
+	outRect = r;
+}
