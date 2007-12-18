@@ -3,6 +3,11 @@
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 
+- OpenOneDocument moet anders werken:
+	MDocument met een remote URL moet aangemaakt en dan zelf data binnen trekken.
+
+- Dialogs laten reageren op Cntrl-W
+
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
 - fixen van shell implementatie
@@ -10,10 +15,8 @@
 - about dialog
 - context menu's
 - vierkante selectie
-- window icons
 
 - stdin lezen
-
 
 - bevestig make clean
 - 'save all/show all' dialog voor het afsluiten
@@ -32,7 +35,6 @@
 - upper/lower case menu maken
 - een 'normalize unicode' menu item
 
-- diff
 - project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten
