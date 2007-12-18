@@ -9,6 +9,10 @@
 #include "MView.h"
 #include "MCallbacks.h"
 
+namespace boost {
+class thread;
+}
+
 class MWindow : public MView, public MHandler
 {
   public:
@@ -49,7 +53,8 @@ class MWindow : public MView, public MHandler
 								MRect&			outPosition);
 
 	void					SetWindowPosition(
-								const MRect&	outPosition);
+								const MRect&	outPosition,
+								bool			inTransition = false);
 
 	void					GetMaxPosition(
 								MRect&			outRect) const;
@@ -72,6 +77,10 @@ class MWindow : public MView, public MHandler
 
 	std::string				mTitle;
 	bool					mModified;
+	boost::thread*			mTransitionThread;
+
+	void					TransitionTo(
+								MRect			inPosition);
 
 	static void				RemoveWindowFromList(
 								MWindow*		inWindow);

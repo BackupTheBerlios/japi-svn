@@ -2,6 +2,7 @@
 <project>
 	<pkg-config>
 		<pkg>libglade-2.0</pkg>
+		<pkg>gthread-2.0</pkg>
 	</pkg-config>
 	<syspaths>
 		<path>/usr/include</path>

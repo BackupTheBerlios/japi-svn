@@ -367,7 +367,9 @@ void MJapieApp::RunEventLoop()
 	/*uint32 timer = */g_timeout_add(250, &MJapieApp::Timeout, nil);
 	
 //	gdk_event_handler_set(&MJapieApp::EventHandler, nil, nil);
+	gdk_threads_enter();
 	gtk_main();
+	gdk_threads_leave();
 	
 	gtk_key_snooper_remove(snooper);
 }
@@ -934,6 +936,11 @@ int main(int argc, char* argv[])
 		bool fork = true;
 
 		fs::path::default_name_check(fs::no_check);
+
+		/* init threads */	
+		g_thread_init(nil);
+		gdk_threads_init();
+
 		gtk_init(&argc, &argv);
 
 		gtk_window_set_default_icon_name ("accessories-text-editor");

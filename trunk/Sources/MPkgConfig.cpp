@@ -79,7 +79,7 @@ void GetPkgConfigResult(
 		const char* argv[] = {
 			"pkg-config",
 			inInfo,
-			"libglade-2.0",
+			inPackage.c_str(),
 			NULL
 		};
 

@@ -783,11 +783,11 @@ void MDiffWindow::FocusChanged(
 void MDiffWindow::ArrangeWindows()
 {
 	THROW_IF_NIL(mDoc1);
-	
-	MDocWindow* w = MDocWindow::DisplayDocument(mDoc1);
-	THROW_IF_NIL(w);
-	
+
+	MDocWindow* w;
+
 	MRect wRect;
+	w = MDocWindow::DisplayDocument(mDoc1);
 	w->GetMaxPosition(wRect);
 
 	// gebruik normale afmetingen
@@ -830,35 +830,14 @@ void MDiffWindow::ArrangeWindows()
 	targetWindow2Bounds.InsetBy(kGapWidth, kGapWidth);
 	
 	w = MDocWindow::DisplayDocument(mDoc1);
-	w->SetWindowPosition(targetWindow1Bounds);
+	THROW_IF_NIL(w);
+	w->SetWindowPosition(targetWindow1Bounds, true);
 	
 	w = MDocWindow::DisplayDocument(mDoc2);
-	w->SetWindowPosition(targetWindow2Bounds);
+	THROW_IF_NIL(w);
+	w->SetWindowPosition(targetWindow2Bounds, true);
 	
-	SetWindowPosition(diffWindowBounds);
-
-//	::CGRectDivide(wRect, &diffWindowBounds, &temp, kDiffWindowHeight, CGRectMaxYEdge);
-//	::CGRectDivide(temp, &targetWindow1Bounds, &targetWindow2Bounds, wRect.size.width / 2, CGRectMinXEdge);
-//	
-//	diffWindowBounds = ::CGRectInset(diffWindowBounds, kGapWidth / 2, kGapWidth / 2);
-//	targetWindow1Bounds = ::CGRectInset(targetWindow1Bounds, kGapWidth / 2, kGapWidth / 2);
-//	targetWindow2Bounds = ::CGRectInset(targetWindow2Bounds, kGapWidth / 2, kGapWidth / 2);
-//	
-//	THROW_IF_OSERROR(::TransitionWindowWithOptions(
-//		GetSysWindow(), kWindowSlideTransitionEffect, kWindowResizeTransitionAction,
-//		&diffWindowBounds, true, nil));
-//	
-//	w = MDocWindow::DisplayDocument(mDoc1);
-//	
-//	THROW_IF_OSERROR(::TransitionWindowWithOptions(
-//		w->GetSysWindow(), kWindowSlideTransitionEffect, kWindowResizeTransitionAction,
-//		&targetWindow1Bounds, true, nil));
-//	
-//	w = MDocWindow::DisplayDocument(mDoc2);
-//	
-//	THROW_IF_OSERROR(::TransitionWindowWithOptions(
-//		w->GetSysWindow(), kWindowSlideTransitionEffect, kWindowResizeTransitionAction,
-//		&targetWindow2Bounds, true, nil));
+	SetWindowPosition(diffWindowBounds, true);
 }
 
 // ----------------------------------------------------------------------------
