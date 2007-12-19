@@ -47,32 +47,10 @@ using namespace std;
 
 MDialog* MDialog::sFirst;
 
-void MDialog::CreateGladeAndWidgets(
-	const char*		inResource,
-	GladeXML*&		outGlade,
-	GtkWidget*&		outWidget)
-{
-	const char* xml;
-	uint32 size;
-	
-	if (not LoadResource(inResource, xml, size))
-		THROW(("Could not load dialog resource %s", inResource));
-	
-	outGlade = glade_xml_new_from_buffer(xml, size, nil, "japie");
-	if (outGlade == nil)
-		THROW(("Failed to create glade from resource"));
-	
-	outWidget = glade_xml_get_widget(outGlade, "dialog");
-	if (outWidget == nil)
-		THROW(("Failed to extract root widget from glade ('dialog')"));
-}
-
 MDialog::MDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MWindow(inRoot)
+	const char*		inDialogResource)
+	: MWindow(inDialogResource, "dialog")
 	, mChildFocus(this, &MDialog::ChildFocus)
-	, mGlade(inGlade)
 	, mParentWindow(nil)
 	, mNext(nil)
 	, mCloseImmediatelyOnOK(true)
@@ -80,13 +58,13 @@ MDialog::MDialog(
 	mNext = sFirst;
 	sFirst = this;
 
-	glade_xml_signal_connect_data(mGlade, "on_changed", 
+	glade_xml_signal_connect_data(GetGladeXML(), "on_changed", 
 		G_CALLBACK(&MDialog::ChangedCallBack), this);
 
-	glade_xml_signal_connect_data(mGlade, "on_std_btn_click", 
+	glade_xml_signal_connect_data(GetGladeXML(), "on_std_btn_click", 
 		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
 
-	gtk_container_foreach(GTK_CONTAINER(inRoot),
+	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()),
 		&MDialog::DoForEachCallBack, this);
 }
 
@@ -107,12 +85,6 @@ MDialog::~MDialog()
 			dlog = dlog->mNext;
 		}
 	}
-
-	g_object_unref(mGlade);
-}
-
-void MDialog::Init()
-{
 }
 
 void MDialog::Show(
@@ -145,7 +117,7 @@ GtkWidget* MDialog::GetWidget(
 	uint32				inID) const
 {
 	char name[5];
-	GtkWidget* wdgt = glade_xml_get_widget(mGlade, IDToName(inID, name));
+	GtkWidget* wdgt = glade_xml_get_widget(GetGladeXML(), IDToName(inID, name));
 	if (wdgt == nil)
 		THROW(("Widget '%s' does not exist", name));
 	return wdgt;

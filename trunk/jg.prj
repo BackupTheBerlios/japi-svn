@@ -103,7 +103,7 @@
 			<file>libboost_thread.a</file>
 			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
-			<!--file>libattr.a</file-->
+			<file>libattr.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>

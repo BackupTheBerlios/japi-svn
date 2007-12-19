@@ -57,24 +57,11 @@ enum {
 }
 
 MFindAndOpenDialog::MFindAndOpenDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
-{
-}
-
-void MFindAndOpenDialog::Init()
-{
-}
-
-void MFindAndOpenDialog::Initialize(
 	MController*	inController,
 	MWindow*		inWindow)
+	: MDialog("find-and-open-dialog")
+	, mController(inController)
 {
-	mController = inController;
-	
-//	MDialog::Initialize(CFSTR("Include"), inWindow);
-	
 	SetText(kTextBoxControlID,
 		Preferences::GetString("last open include", ""));
 

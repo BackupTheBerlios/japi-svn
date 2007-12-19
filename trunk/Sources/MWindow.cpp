@@ -6,6 +6,7 @@
 
 #include "MCommands.h"
 #include "MWindow.h"
+#include "MResources.h"
 
 using namespace std;
 
@@ -18,6 +19,7 @@ MWindow::MWindow()
 	, mOnDelete(this, &MWindow::OnDelete)
 	, mModified(false)
 	, mTransitionThread(nil)
+	, mGladeXML(nil)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
@@ -34,7 +36,41 @@ MWindow::MWindow(
 	, mOnDelete(this, &MWindow::OnDelete)
 	, mModified(false)
 	, mTransitionThread(nil)
+	, mGladeXML(nil)
 {
+	mOnDestroy.Connect(GetGtkWidget(), "destroy");
+	mOnDelete.Connect(GetGtkWidget(), "delete_event");
+
+	mNext = sFirst;
+	sFirst = this;
+}
+
+MWindow::MWindow(
+	const char*		inWindowResourceName,
+	const char*		inRootWidgetName)
+	: MHandler(gApp)
+	, mOnDestroy(this, &MWindow::OnDestroy)
+	, mOnDelete(this, &MWindow::OnDelete)
+	, mModified(false)
+	, mTransitionThread(nil)
+	, mGladeXML(nil)
+{
+	const char* xml;
+	uint32 size;
+	
+	if (not LoadResource(inWindowResourceName, xml, size))
+		THROW(("Could not load dialog resource %s", inWindowResourceName));
+	
+	mGladeXML = glade_xml_new_from_buffer(xml, size, nil, "japie");
+	if (mGladeXML == nil)
+		THROW(("Failed to create glade from resource"));
+	
+	GtkWidget* w = glade_xml_get_widget(mGladeXML, inRootWidgetName);
+	if (w == nil)
+		THROW(("Failed to extract root widget from glade (%s)", inRootWidgetName));
+	
+	SetWidget(w, false, false);
+	
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
 
@@ -44,6 +80,9 @@ MWindow::MWindow(
 
 MWindow::~MWindow()
 {
+	if (mGladeXML != nil)
+		g_object_unref(mGladeXML);
+
 #if DEBUG
 	MWindow* w = sFirst;
 	while (w != nil)

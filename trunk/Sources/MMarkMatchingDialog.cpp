@@ -57,18 +57,11 @@ enum
 }
 
 MMarkMatchingDialog::MMarkMatchingDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
-{
-}
-
-void MMarkMatchingDialog::Initialize(
 	MDocument*	inDocument,
 	MWindow*	inWindow)
+	: MDialog("mark-matching-dialog")
+	, mDocument(inDocument)
 {
-	mDocument = inDocument;
-	
 	Show(inWindow);
 	SetFocus(kTextBoxControlID);
 }

@@ -46,13 +46,6 @@ class MMarkMatchingDialog : public MDialog
 {
   public:
 					MMarkMatchingDialog(
-						GladeXML*		inGlade,
-						GtkWidget*		inRoot);
-
-	static const char*
-					GetResourceName() { return "mark-matching-dialog"; }
-
-	void			Initialize(
 						MDocument*	inDocument,
 						MWindow*	inWindow);
 

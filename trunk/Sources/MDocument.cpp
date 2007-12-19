@@ -1023,9 +1023,9 @@ bool MDocument::DoSave()
 		}
 		else
 		{
-			MSftpPutDialog* dlog = MDialog::Create<MSftpPutDialog>();
-			dlog->Initialize(this);
+			auto_ptr<MSftpPutDialog> dlog(new MSftpPutDialog(this));
 			AddRoute(eNotifyPut, dlog->eNotifyPut);
+			dlog.release();
 		}
 		
 		SetModified(false);

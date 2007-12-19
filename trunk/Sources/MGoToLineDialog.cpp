@@ -55,18 +55,11 @@ enum
 }
 
 MGoToLineDialog::MGoToLineDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
-{
-}
-
-void MGoToLineDialog::Initialize(
 	MDocument*		inDocument,
 	MWindow*		inWindow)
+	: MDialog("go-to-line-dialog")
+	, mDocument(inDocument)
 {
-	mDocument = inDocument;
-	
 	Show(inWindow);
 	SetFocus(kTextBoxControlID);
 }

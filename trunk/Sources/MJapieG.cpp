@@ -178,12 +178,8 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case cmd_OpenIncludeFile:
-		{
-			std::auto_ptr<MFindAndOpenDialog> dlog(MDialog::Create<MFindAndOpenDialog>());
-			dlog->Initialize(nil, nil);
-			dlog.release();
+			new MFindAndOpenDialog(nil, nil);
 			break;
-		}
 		
 		case cmd_Worksheet:
 			ShowWorksheet();
@@ -215,7 +211,7 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case cmd_ShowDiffWindow:
-			MDialog::Create<MDiffWindow>();
+			new MDiffWindow;
 			break;
 		
 		default:
@@ -586,10 +582,7 @@ void MJapieApp::DoOpen()
 		}
 
 		if (urls.size() > 0)
-		{
-			MSftpGetDialog* dlog = MDialog::Create<MSftpGetDialog>();
-			dlog->Initialize(urls);
-		}
+			new MSftpGetDialog(urls);
 		
 		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 		if (cwd != nil)
@@ -638,8 +631,7 @@ MDocument* MJapieApp::OpenOneDocument(
 		vector<MUrl> urls;
 		urls.push_back(inFileRef);
 		
-		MSftpGetDialog* dlog = MDialog::Create<MSftpGetDialog>();
-		dlog->Initialize(urls);
+		new MSftpGetDialog(urls);
 	}
 	
 	return doc;

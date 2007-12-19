@@ -14,17 +14,11 @@
 using namespace std;
 
 MSftpGetDialog::MSftpGetDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
+	const MUrlList&	inUrls)
+	: MDialog("sftp-dialog")
 	, eChannelEvent(this, &MSftpGetDialog::ChannelEvent)
 	, eChannelMessage(this, &MSftpGetDialog::ChannelMessage)
 	, fChannel(nil)
-{
-}
-
-void MSftpGetDialog::Initialize(
-	const MUrlList&	inUrls)
 {
 	RestorePosition("fetchdialog");
 

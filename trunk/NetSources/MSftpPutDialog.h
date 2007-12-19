@@ -16,13 +16,7 @@ class MSftpPutDialog : public MDialog
 {
   public:
 						MSftpPutDialog(
-							GladeXML*		inGlade,
-							GtkWidget*		inRoot);
-	
-	void				Initialize(
 							MDocument*		inDocument);
-
-	static const char*	GetResourceName()	{ return "sftp-dialog"; }
 
 	virtual void		Close();
 

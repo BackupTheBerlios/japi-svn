@@ -12,19 +12,13 @@
 using namespace std;
 
 MAuthDialog::MAuthDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
-	, ePulse(this, &MAuthDialog::Pulse)
-{
-}
-
-void MAuthDialog::Initialize(
 	std::string		inTitle,
 	std::string		inInstruction,
 	int32			inFields,
 	std::string		inPrompts[],
 	bool			inEcho[])
+	: MDialog("auth-dialog")
+	, ePulse(this, &MAuthDialog::Pulse)
 {
 	mFields = inFields;
 

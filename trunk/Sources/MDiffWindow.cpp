@@ -64,23 +64,13 @@ enum {
 // ------------------------------------------------------------------
 //
 
-MDiffWindow::MDiffWindow(
-	GladeXML*			inGlade,
-	GtkWidget*			inRoot)
-	: MDialog(inGlade, inRoot)
+MDiffWindow::MDiffWindow()
+	: MDialog("diff-window")
 	, eDocument1Closed(this, &MDiffWindow::Document1Closed)
 	, eDocument2Closed(this, &MDiffWindow::Document2Closed)
 	, mSelected(this, &MDiffWindow::DiffSelected)
 	, mDoc1(nil)
 	, mDoc2(nil)
-{
-}
-
-MDiffWindow::~MDiffWindow()
-{
-}
-
-void MDiffWindow::Init()
 {
 	GtkWidget* treeView = GetWidget(kListViewID);
 	THROW_IF_NIL((treeView));
@@ -97,6 +87,10 @@ void MDiffWindow::Init()
 	
 	GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeView));
 	mSelected.Connect(G_OBJECT(selection), "changed");
+}
+
+MDiffWindow::~MDiffWindow()
+{
 }
 
 void MDiffWindow::ValueChanged(
@@ -567,7 +561,7 @@ void MDiffWindow::DiffSelected()
 		{
 			case 0:
 			{
-				auto_ptr<MDiffWindow> w(MDialog::Create<MDiffWindow>());
+				auto_ptr<MDiffWindow> w(new MDiffWindow);
 				
 				w->SetDocument(1, gApp->OpenOneDocument(MUrl(mDir1 / diff.name)));
 				w->SetDocument(2, gApp->OpenOneDocument(MUrl(mDir2 / diff.name)));
@@ -666,26 +660,12 @@ void MDiffWindow::ArrangeWindows()
 
 	GetMaxPosition(wRect);
 
-	// gebruik normale afmetingen
-	
 	const int32
-//		kMaxWidth = 1024, kMaxHeight = 768,
 		kDiffWindowHeight = (175 * wRect.height) / 1024,
 		kGapWidth = 10;
 	
-//	if (wRect.width > kMaxWidth)
-//	{
-//		int32 dx = (wRect.width - kMaxWidth) / 2;
-//		wRect.InsetBy(dx, 0);
-//	}
-//	
-//	if (wRect.height > kMaxHeight)
-//	{
-//		int32 dy = (wRect.height - kMaxHeight) / 2;
-//		wRect.InsetBy(0, dy);
-//	}
-
-	wRect.InsetBy(kGapWidth, 2 * kGapWidth);
+	wRect.InsetBy(kGapWidth, kGapWidth);
+	wRect.height -= 2 * kGapWidth;
 	
 	MRect diffWindowBounds, targetWindow1Bounds, targetWindow2Bounds;
 

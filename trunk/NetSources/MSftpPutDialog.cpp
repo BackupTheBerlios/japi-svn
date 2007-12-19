@@ -13,20 +13,14 @@
 using namespace std;
 
 MSftpPutDialog::MSftpPutDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
+	MDocument*		inDocument)
+	: MDialog("sftp-dialog")
 	, eChannelMessage(this, &MSftpPutDialog::ChannelMessage)
 	, eChannelEvent(this, &MSftpPutDialog::ChannelEvent)
 	, fChannel(nil)
 	, fDoc(nil)
 	, fOffset(0)
 	, fComplete(false)
-{
-}
-
-void MSftpPutDialog::Initialize(
-	MDocument*		inDocument)
 {
 	fUrl = inDocument->GetURL();
 	

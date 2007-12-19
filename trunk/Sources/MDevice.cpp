@@ -24,17 +24,12 @@ class MDummyWindow : public MWindow
 	
 	MView*			GetDrawingArea()	{ return mDrawingArea; }
 	
-	GtkWidget*		GetLabel()			{ return mLabel; }
-	
 	GtkWidget*		GetTreeView()		{ return mTreeView; }
-	
-	PangoLayout*	GetLabelLayout()	{ return gtk_label_get_layout(GTK_LABEL(mLabel)); }
 	
   private:
 	
 	GtkWidget*		mVBox;
 	MView*			mDrawingArea;
-	GtkWidget*		mLabel;
 	GtkWidget*		mTreeView;
 };
 
@@ -51,9 +46,6 @@ MDummyWindow::MDummyWindow()
 	
 	GtkWidget* sb = gtk_statusbar_new();
 	gtk_container_add(GTK_CONTAINER(mVBox), sb);
-
-	mLabel = gtk_label_new("xxyx");
-	gtk_container_add(GTK_CONTAINER(sb), mLabel);
 		
 //	gtk_widget_realize(GetGtkWidget());
 	Show();

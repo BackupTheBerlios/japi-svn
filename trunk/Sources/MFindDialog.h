@@ -66,15 +66,8 @@ class MFindDialog : public MDialog
 
 	static MFindDialog&	Instance();
 
-					MFindDialog(
-						GladeXML*		inGlade,
-						GtkWidget*		inRoot);
+					MFindDialog();
 
-	static const char*
-					GetResourceName()		{ return "find-dialog"; }
-
-	virtual void	Init();
-	
 	void			Select();
 
 	void			FindNext();

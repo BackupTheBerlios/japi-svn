@@ -43,16 +43,9 @@ class MListView;
 class MDiffWindow : public MDialog
 {
   public:
-						MDiffWindow(
-							GladeXML*			inGlade,
-							GtkWidget*			inRoot);
+						MDiffWindow();
 	virtual				~MDiffWindow();
 
-	static const char*
-					GetResourceName() { return "diff-window"; }
-
-	void				Init();
-	
 	MEventIn<void()>	eDocument1Closed;
 	MEventIn<void()>	eDocument2Closed;
 	

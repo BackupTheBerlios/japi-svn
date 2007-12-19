@@ -55,9 +55,6 @@ class MDialog : public MWindow
 	void			Show(
 						MWindow*			inParent);
 
-	template<class DLG>
-	static DLG*		Create();
-
 	void			SavePosition(
 						const char*			inName);
 
@@ -136,10 +133,7 @@ class MDialog : public MWindow
   protected:
 
 					MDialog(
-						GladeXML*			inGlade,
-						GtkWidget*			inRoot);
-
-	virtual void	Init();
+						const char*			inDialogResource);
 
 	GtkWidget*		GetWidget(
 						uint32				inID) const;
@@ -148,11 +142,6 @@ class MDialog : public MWindow
 						uint32				inFocussedID);
 
   private:
-
-	static void		CreateGladeAndWidgets(
-						const char*			inResource,
-						GladeXML*&			outGlade,
-						GtkWidget*&			outWidget);
 
 	const char*		IDToName(
 						uint32				inID,
@@ -178,24 +167,10 @@ class MDialog : public MWindow
 	
 	MSlot<bool(GdkEventFocus*)>				mChildFocus;
 
-	GladeXML*		mGlade;
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all
 	static MDialog*	sFirst;
 	bool			mCloseImmediatelyOnOK;
 };
-
-template<class DLG>
-DLG* MDialog::Create()
-{
-	GladeXML* glade;
-	GtkWidget* widget;
-
-	CreateGladeAndWidgets(DLG::GetResourceName(), glade, widget);
-	
-	std::auto_ptr<DLG> dialog(new DLG(glade, widget));
-	dialog->Init();
-	return dialog.release();
-}
 
 #endif // MDIALOG_H

@@ -1144,13 +1144,8 @@ bool MProject::ProcessCommand(
 			break;
 		
 		case cmd_OpenIncludeFile:
-		{
-			std::auto_ptr<MFindAndOpenDialog> dlog(	
-				MDialog::Create<MFindAndOpenDialog>());
-			dlog->Initialize(nil, this);
-			dlog.release();
+			new MFindAndOpenDialog(nil, this);
 			break;
-		}
 		
 		case cmd_RecheckFiles:
 			CheckIsOutOfDate();

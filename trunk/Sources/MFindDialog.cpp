@@ -105,51 +105,16 @@ MFindDialog& MFindDialog::Instance()
 	static std::auto_ptr<MFindDialog> sInstance;
 
 	if (sInstance.get() == nil)
-		sInstance.reset(MDialog::Create<MFindDialog>());
+		sInstance.reset(new MFindDialog);
 
 	return *sInstance;
 }
 
-MFindDialog::MFindDialog(
-	GladeXML*		inGlade,
-	GtkWidget*		inRoot)
-	: MDialog(inGlade, inRoot)
+MFindDialog::MFindDialog()
+	: MDialog("find-dialog")
 	, eIdle(this, &MFindDialog::Idle)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
-{
-}
-
-bool MFindDialog::DoClose()
-{
-	Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
-	Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
-	Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
-	Preferences::SetInteger("find regular expression", IsChecked(kRegexCheckboxID));
-	
-	SavePosition("find dialog position");
-	
-	Preferences::SetArray("find find strings", mFindStrings);
-	Preferences::SetArray("find replace strings", mReplaceStrings);
-	Preferences::SetArray("find directories", mStartDirectories);
-
-//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
-	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
-	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
-	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
-
-	Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
-	
-	string s;
-	GetText(kNameFilterEditboxID, s);
-	Preferences::SetString("find name filter", s);
-
-	Hide();
-	
-	return false;
-}
-
-void MFindDialog::Init()
 {
 	RestorePosition("find dialog position");
 	
@@ -184,6 +149,35 @@ void MFindDialog::Init()
 	
 //	SetVisible(kChasingArrowsID, false);
 	SetText(kStatusPanelID, "");
+}
+
+bool MFindDialog::DoClose()
+{
+	Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
+	Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
+	Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
+	Preferences::SetInteger("find regular expression", IsChecked(kRegexCheckboxID));
+	
+	SavePosition("find dialog position");
+	
+	Preferences::SetArray("find find strings", mFindStrings);
+	Preferences::SetArray("find replace strings", mReplaceStrings);
+	Preferences::SetArray("find directories", mStartDirectories);
+
+//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
+	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
+	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
+	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
+
+	Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
+	
+	string s;
+	GetText(kNameFilterEditboxID, s);
+	Preferences::SetString("find name filter", s);
+
+	Hide();
+	
+	return false;
 }
 
 void MFindDialog::Select()

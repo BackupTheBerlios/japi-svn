@@ -8,6 +8,7 @@
 
 #include "MView.h"
 #include "MCallbacks.h"
+#include <glade/glade-xml.h>
 
 namespace boost {
 class thread;
@@ -17,6 +18,7 @@ class MWindow : public MView, public MHandler
 {
   public:
 							MWindow();
+
 	virtual					~MWindow();
 	
 	void					Show();
@@ -63,6 +65,10 @@ class MWindow : public MView, public MHandler
 
 							MWindow(
 								GtkWidget*		inWindow);
+	
+							MWindow(
+								const char*		inWindowResourceName,
+								const char*		inRootWidgetName = "window");
 
 	virtual bool			DoClose();
 
@@ -71,6 +77,8 @@ class MWindow : public MView, public MHandler
 	virtual bool			OnDelete(
 								GdkEvent*		inEvent);
 
+	GladeXML*				GetGladeXML() const				{ return mGladeXML; }
+
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
@@ -78,6 +86,7 @@ class MWindow : public MView, public MHandler
 	std::string				mTitle;
 	bool					mModified;
 	boost::thread*			mTransitionThread;
+	GladeXML*				mGladeXML;
 
 	void					TransitionTo(
 								MRect			inPosition);
