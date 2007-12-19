@@ -2440,7 +2440,7 @@ MProjectJob* MProject::CreateCompileJob(
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");
 	
-	argv.push_back("-fmessage-length=132");
+//	argv.push_back("-fmessage-length=132");
 	
 	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
 	{
