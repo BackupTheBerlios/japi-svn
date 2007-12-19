@@ -29,7 +29,7 @@ string GetFormattedLocalisedStringWithArguments(
 {
 	string result = GetLocalisedString(inString.c_str());
 	
-	char s[] = "^1";
+	char s[] = "^0";
 	
 	for (vector<string>::const_iterator a = inArgs.begin(); a != inArgs.end(); ++a)
 	{

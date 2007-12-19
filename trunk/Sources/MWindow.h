@@ -27,6 +27,8 @@ class MWindow : public MView, public MHandler
 	
 	void					Close();
 	
+	void					Beep();
+	
 	static MWindow*			GetFirstWindow()				{ return sFirst; }
 	MWindow*				GetNextWindow() const			{ return mNext; }
 		
@@ -83,8 +85,8 @@ class MWindow : public MView, public MHandler
 								uint32			inID) const;
 
 	static const char*		IDToName(
-								uint32				inID,
-								char				inName[5]);
+								uint32			inID,
+								char			inName[5]);
 
   private:
 	MSlot<bool()>			mOnDestroy;
@@ -101,6 +103,21 @@ class MWindow : public MView, public MHandler
 	static void				RemoveWindowFromList(
 								MWindow*		inWindow);
 	
+	void					DoForEach(
+								GtkWidget*		inWidget);
+
+	static void				DoForEachCallBack(
+								GtkWidget*		inWidget,
+								gpointer		inUserData);
+
+	bool					ChildFocus(
+								GdkEventFocus*	inEvent);
+	
+	MSlot<bool(GdkEventFocus*)>					mChildFocus;
+
+	virtual void			FocusChanged(
+								uint32			inFocussedID);
+
 	static MWindow*			sFirst;
 	MWindow*				mNext;
 };

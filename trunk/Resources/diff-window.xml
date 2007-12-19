@@ -20,7 +20,6 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">File 1</property>
                 <property name="use_underline">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -35,7 +34,6 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">File 2</property>
                 <property name="use_underline">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -51,7 +49,6 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">&lt;&lt;</property>
                 <property name="use_underline">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -66,7 +63,6 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">&gt;&gt;</property>
                 <property name="use_underline">True</property>
-                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -85,7 +81,6 @@
           <widget class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="border_width">4</property>
             <property name="hscrollbar_policy">GTK_POLICY_NEVER</property>
             <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
             <property name="shadow_type">GTK_SHADOW_IN</property>

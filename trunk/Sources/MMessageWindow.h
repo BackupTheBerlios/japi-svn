@@ -37,8 +37,6 @@
 #include "MFile.h"
 #include "MCallbacks.h"
 
-class MListView;
-
 enum MMessageKind
 {
 	kMsgKindNone,
@@ -87,7 +85,10 @@ class MMessageList
 class MMessageWindow : public MWindow
 {
   public:
-					MMessageWindow();
+					MMessageWindow(
+						const std::string&	inTitle);
+	
+	void			ClearList();
 	
 	void			AddStdErr(
 						const char*			inText,
@@ -99,25 +100,10 @@ class MMessageWindow : public MWindow
 	void			SetBaseDirectory(
 						const MPath&			inDir);
 
-	void			AddMessage(
-						MMessageKind		inKind,
-						const MPath&		inFile,
-						uint32				inLine,
-						uint32				inMinOffset,
-						uint32				inMaxOffset,
-						const std::string&	inMessage);
-
-	void			AddMessages(
+	void			SetMessages(
+						const std::string&	inDescription,
 						MMessageList&		inMessages);
 						
-	void			ClearList();
-	
-	void			SelectItem(
-						uint32				inItemNr);
-
-	void			InvokeItem(
-						uint32				inItemNr);
-
   protected:
 
 	virtual void	DocumentChanged(
@@ -126,6 +112,21 @@ class MMessageWindow : public MWindow
 	virtual bool	DoClose();
 
   private:
+
+	void			AddMessage(
+						MMessageKind		inKind,
+						const MPath&		inFile,
+						uint32				inLine,
+						uint32				inMinOffset,
+						uint32				inMaxOffset,
+						const std::string&	inMessage);
+
+
+	void			SelectItem(
+						uint32				inItemNr);
+
+	void			InvokeItem(
+						uint32				inItemNr);
 
 	void			InvokeRow(
 						GtkTreePath*		inPath,
@@ -136,7 +137,6 @@ class MMessageWindow : public MWindow
 
 	MPath			mBaseDirectory;
 	MMessageList	mList;
-//	MListView*		mList;
 	std::string		mText;
 	double			mLastAddition;
 };

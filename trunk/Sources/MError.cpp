@@ -38,6 +38,7 @@
 #include "MError.h"
 #include "MTypes.h"
 #include "MUtils.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -78,7 +79,7 @@ void DisplayError(
 		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
 		inErr.what());
 	
-	Beep();
+	PlaySound("error");
 	(void)gtk_dialog_run(GTK_DIALOG(dlg));
 	
 	gtk_widget_destroy(dlg);
@@ -117,7 +118,7 @@ void __signal_throw(
 		"Exception thrown in file '%s', line %d, function: '%s'\n\n"
 		"code: %s", inFile, inLine, inFunction, inCode);
 	
-	Beep();
+	PlaySound("error");
 	(void)gtk_dialog_run(GTK_DIALOG(dlg));
 	
 	gtk_widget_destroy(dlg);

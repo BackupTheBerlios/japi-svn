@@ -67,6 +67,7 @@
 #include "MSftpPutDialog.h"
 #include "MStrings.h"
 #include "MAcceleratorTable.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -2216,13 +2217,13 @@ void MDocument::DoBalance()
 			if (mLanguage->Balance(mText, newOffset, newLength))
 				Select(newOffset, newOffset + newLength);
 			else
-				Beep();
+				PlaySound("warning");
 		}
 		else
 			Select(newOffset, newOffset + newLength);
 	}
 	else
-		Beep();
+		PlaySound("warning");
 }
 								
 void MDocument::DoShiftLeft()
@@ -2665,7 +2666,7 @@ bool MDocument::FastFind(MDirection inDirection)
 		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
 	}
 	else
-		Beep();
+		PlaySound("warning");
 	
 	return result;
 }
@@ -2693,7 +2694,7 @@ void MDocument::HandleFindDialogCommand(uint32 inCommand)
 	{
 		case cmd_FindNext:
 			if (not DoFindNext(kDirectionForward))
-				Beep();
+				PlaySound("warning");
 			break;
 
 		case cmd_Replace:
@@ -2800,7 +2801,7 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 			else
 			{
 				ChangeSelection(offset, offset + replace.length());
-				Beep();
+				PlaySound("warning");
 			}
 	
 			eScroll(kScrollToSelection);
@@ -2808,7 +2809,7 @@ void MDocument::DoReplace(bool inFindNext, MDirection inDirection)
 		}
 	}
 	else
-		Beep();
+		PlaySound("warning");
 }
 
 void MDocument::DoReplaceAll()
@@ -2855,7 +2856,7 @@ void MDocument::DoReplaceAll()
 	if (replacedAny)
 		Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
 	else
-		Beep();
+		PlaySound("warning");
 }
 
 void MDocument::DoComplete(MDirection inDirection)
@@ -2876,7 +2877,7 @@ void MDocument::DoComplete(MDirection inDirection)
 		
 		if (length == 0 or OffsetToLine(mCompletionStartOffset) != OffsetToLine(startOffset))
 		{
-			Beep();
+			PlaySound("warning");
 			return;
 		}
 		
@@ -2914,7 +2915,7 @@ void MDocument::DoComplete(MDirection inDirection)
 	if (mCompletionIndex < 0 or mCompletionIndex >= static_cast<int32>(mCompletionStrings.size()))
 	{
 		mCompletionIndex = -1;
-		Beep();
+		PlaySound("warning");
 	}
 	else
 	{
@@ -3342,7 +3343,7 @@ bool MDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				if (mFastFindWhat.length())
 					FastFindType(nil, 0);
 				else
-					Beep();
+					PlaySound("warning");
 			}
 			else
 				HandleDeleteKey(kDirectionBackward);
@@ -3912,13 +3913,11 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 {
 	if (mStdErrWindow == nil)
 	{
-		mStdErrWindow = new MMessageWindow;
+		mStdErrWindow = new MMessageWindow(_("Output from stderr"));
 		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 
 	mStdErrWindow->SetBaseDirectory(MPath(mShell->GetCWD()));
-	
-//	StdOut(inText, inSize);
 
 	mStdErrWindow->AddStdErr(inText, inSize);
 }

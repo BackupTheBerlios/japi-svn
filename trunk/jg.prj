@@ -3,6 +3,7 @@
 	<pkg-config>
 		<pkg>libglade-2.0</pkg>
 		<pkg>gthread-2.0</pkg>
+		<pkg>boost</pkg>
 	</pkg-config>
 	<syspaths>
 		<path>/usr/include</path>
@@ -99,9 +100,6 @@
 			</group>
 		</group>
 		<group name="Libraries">
-			<file>libboost_filesystem.a</file>
-			<file>libboost_thread.a</file>
-			<file>libboost_date_time.a</file>
 			<file>libpcre.a</file>
 			<file>libattr.a</file>
 			<link>cryptopp</link>

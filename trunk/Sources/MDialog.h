@@ -135,9 +135,6 @@ class MDialog : public MWindow
 					MDialog(
 						const char*			inDialogResource);
 
-	virtual void	FocusChanged(
-						uint32				inFocussedID);
-
   private:
 
 	static void		ChangedCallBack(
@@ -147,18 +144,6 @@ class MDialog : public MWindow
 	static void		StdBtnClickedCallBack(
 						GtkWidget*			inWidget,
 						gpointer			inUserData);
-
-	static void		DoForEachCallBack(
-						GtkWidget*			inWidget,
-						gpointer			inUserData);
-
-	void			DoForEach(
-						GtkWidget*			inWidget);
-
-	bool			ChildFocus(
-						GdkEventFocus*		inEvent);
-	
-	MSlot<bool(GdkEventFocus*)>				mChildFocus;
 
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all

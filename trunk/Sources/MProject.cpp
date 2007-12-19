@@ -42,7 +42,6 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/filesystem/fstream.hpp>
-//#include <boost/foreach.hpp>
 
 #include "MProject.h"
 #include "MListView.h"
@@ -57,9 +56,9 @@
 #include "MProjectJob.h"
 #include "MNewGroupDialog.h"
 #include "MProjectInfoDialog.h"
-//#include "MProjectPathsDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MPkgConfig.h"
+#include "MStrings.h"
 
 //#define foreach BOOST_FOREACH
 
@@ -707,7 +706,7 @@ void MProject::InvokeProjectItem(
 				
 				if (FileNameMatches("*.nib;*.rsrc;*.png", file))
 				{
-					Beep();
+					PlaySound("warning");
 //					FSRef ref;
 //					FSPathMakeRef(file, ref);
 //					THROW_IF_OSERROR(::LSOpenFSRef(&ref, nil));
@@ -2338,6 +2337,14 @@ void MProject::GetIncludePaths(
 		}
 	}
 
+	for (vector<string>::const_iterator f = mPkgConfigCFlags.begin();
+		 f != mPkgConfigCFlags.end();
+		 ++f)
+	{
+		if (f->length() > 2 and f->substr(0, 2) == "-I")
+			outPaths.push_back(MPath(f->substr(2)));
+	}
+
 	copy(mUserSearchPaths.begin(), mUserSearchPaths.end(), back_inserter(outPaths));
 }
 
@@ -2924,7 +2931,7 @@ MMessageWindow* MProject::GetMessageWindow()
 {
 	if (mStdErrWindow.get() == nil)
 	{
-		mStdErrWindow.reset(new MMessageWindow);
+		mStdErrWindow.reset(new MMessageWindow(FormatString("Build messages for ^0", mName)));
 		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 				

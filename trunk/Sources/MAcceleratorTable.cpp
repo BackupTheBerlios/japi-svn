@@ -222,13 +222,29 @@ void MAcceleratorTable::RegisterAcceleratorKey(
 	if (gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
 		inKeyValue, &keys, &nkeys))
 	{
-		for (uint32 k = 0; k < nkeys; ++k)
+		for (int32 k = 0; k < nkeys; ++k)
 		{
 			guint keyval;
 			GdkModifierType consumed;
 			
 			if (gdk_keymap_translate_keyboard_state(nil,
 				keys[k].keycode, GdkModifierType(inModifiers), 0, &keyval, nil, nil, &consumed))
+			{
+				uint32 modifiers = inModifiers & ~consumed;
+				if (inModifiers & GDK_SHIFT_MASK)
+					modifiers |= GDK_SHIFT_MASK;				
+				
+				int64 key = (int64(keyval) << 32) | modifiers;
+				
+				MAccelCombo kc = {
+					key, inKeyValue, inModifiers, inCommand
+				};
+				
+				mImpl->mTable.insert(kc);
+			}
+
+			if (gdk_keymap_translate_keyboard_state(nil,
+				keys[k].keycode, GdkModifierType(inModifiers | GDK_LOCK_MASK), 0, &keyval, nil, nil, &consumed))
 			{
 				uint32 modifiers = inModifiers & ~consumed;
 				if (inModifiers & GDK_SHIFT_MASK)
@@ -283,7 +299,9 @@ bool MAcceleratorTable::IsAcceleratorKey(
 //		inEvent->state & GDK_MOD2_MASK ? '2' : '_'));
 
 	int keyval = inEvent->keyval;
-	int64 key = (int64(keyval) << 32) | (inEvent->state & kValidModifiersMask);
+	int modifiers = inEvent->state & kValidModifiersMask;
+
+	int64 key = (int64(keyval) << 32) | modifiers;
 
 	MAccelCombo kc;
 	kc.key = key;
@@ -304,9 +322,11 @@ bool MAcceleratorTable::IsNavigationKey(
 	MKeyCommand&	outCommand)
 {
 	bool result = false;
+	
+	inModifiers &= kValidModifiersMask;
 
 	MAccelCombo kc;
-	kc.key = (int64(inKeyValue) << 32) | (inModifiers & kValidModifiersMask);
+	kc.key = (int64(inKeyValue) << 32) | inModifiers;
 
 	set<MAccelCombo>::iterator a = mImpl->mTable.find(kc);	
 	if (a != mImpl->mTable.end())

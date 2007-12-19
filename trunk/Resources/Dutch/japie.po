@@ -404,3 +404,19 @@ msgstr "Verschillende regels. Bestand 1: ^0, bestand 2: ^1"
 
 msgid "Difference"
 msgstr "Verschillen"
+
+msgid "Line"
+msgstr "Regel"
+
+msgid "Message"
+msgstr "Tekst"
+
+msgid "Output from stderr"
+msgstr "Uitvoer van stderr"
+
+msgid "Found ^0 hits for ^1"
+msgstr "^0 resultaten voor ^1 gevonden"
+
+msgid "Build messages for ^0"
+msgstr "Meldingen voor maken van ^0"
+

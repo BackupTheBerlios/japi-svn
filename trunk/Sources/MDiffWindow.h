@@ -36,9 +36,6 @@
 #include "MDialog.h"
 #include "MDiff.h"
 #include "MFile.h"
-#include "MCallbacks.h"
-
-class MListView;
 
 class MDiffWindow : public MDialog
 {
@@ -66,22 +63,11 @@ class MDiffWindow : public MDialog
 	virtual void		ValueChanged(
 							uint32				inID);
 
-//	void				DrawItem(CGContextRef inContext, HIRect inFrame, uint32 inRow,
-//							bool inSelected, const void* inData, uint32 inDataLength);
-//
-//	void				DrawDirItem(CGContextRef inContext, HIRect inFrame, uint32 inRow,
-//							bool inSelected, const void* inData, uint32 inDataLength);
-
 	void				Document1Closed();
 	void				Document2Closed();
 
 	void				ChooseFile(int inFileNr);
 	void				MergeToFile(int inFileNr);
-
-//	static pascal void	NavEvent(NavEventCallbackMessage inMessage,
-//								NavCBRecPtr inParams, void* inUserData);
-//
-//	void				DoNavUserAction(NavCBRecPtr inParams);
 
 	void				SetDocument(int inDocNr, MDocument* inDocument);
 	void				SetDirectory(int inDirNr, const MPath& inPath);

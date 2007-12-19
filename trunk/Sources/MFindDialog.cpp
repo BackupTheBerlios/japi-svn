@@ -47,8 +47,9 @@
 #include "MMessageWindow.h"
 #include "MCommands.h"
 #include "MGlobals.h"
-//#include "MApplication.h"
+#include "MStrings.h"
 #include "MProject.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -201,7 +202,7 @@ void MFindDialog::DoFindCommand(
 	
 	if (mMultiMode and IsChecked(kBatchCheckboxID) and mFindAllThread != nil)
 	{
-		::Beep();
+		PlaySound("warning");
 		return;
 	}
 	
@@ -268,8 +269,12 @@ void MFindDialog::DoFindCommand(
 		{
 			mMultiFiles.clear();
 			
+			FileSet files;
+			
 			GetFilesForFindAll(method, dir,
-				recursive, textFilesOnly, filter, mMultiFiles);
+				recursive, textFilesOnly, filter, files);
+				
+			copy(files.begin(), files.end(), back_inserter(mMultiFiles));
 
 			FindNext();
 		}
@@ -285,8 +290,11 @@ void MFindDialog::DoFindCommand(
 
 			if (list.GetCount())
 			{
-				MMessageWindow* w = new MMessageWindow;
-				w->AddMessages(list);
+				MMessageWindow* w = new MMessageWindow("");
+				w->SetMessages(
+					FormatString("Found ^0 hits for ^1",
+						list.GetCount(), mFindStrings.front()),
+					list);
 			}
 		}
 	}
@@ -432,7 +440,7 @@ void MFindDialog::FindNext()
 {
 	if (mMultiFiles.size() == 0)
 	{
-		::Beep();
+		PlaySound("warning");
 		return;
 	}
 	
@@ -487,31 +495,44 @@ void MFindDialog::FindAll(
 {
 	try
 	{
-		FileArray files;
+		FileSet files;
 		auto_ptr<MMessageList> list(new MMessageList);
 		
 		GetFilesForFindAll(inMethod, inDirectory,
 			inRecursive, inTextFilesOnly, inFileNameFilter, files);
 		
-		while (files.size() > 0)
+		for (FileSet::iterator file = files.begin(); file != files.end(); ++file)
 		{
-			SetStatusString(files.front().string());
+			SetStatusString(file->string());
+			MUrl url(*file);
 			
-//			MDocument* doc = MDocument::GetDocForFile(files.front());
-//			
-//			if (doc != nil)
-//				doc->FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
-//			else
-//			{
-				MDocument newDoc(MUrl(files.front()));
-				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
-//			}
+			bool searched = false;
+			
+			gdk_threads_enter();
+			MDocument* doc = MDocument::GetDocumentForURL(url, false);
 
-			files.pop_front();
+			if (doc != nil)
+			{
+				doc->FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
+				searched = true;
+			}
+			gdk_threads_leave();
+			
+			if (not searched)
+			{
+				MDocument newDoc(url);
+				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
+			}
 		}
 		
 		mFindAllResult = list.release();
 	}
+	catch (exception& e)
+	{
+		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
+		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
+		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, e.what());
+	}	
 	catch (...)
 	{
 		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
@@ -521,12 +542,13 @@ void MFindDialog::FindAll(
 
 void MFindDialog::GetFilesForFindAll(
 	MMultiMethod	inMethod,
-	const MPath&		inDirectory,
+	const MPath&	inDirectory,
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter,
-	FileArray&		outFiles)
+	FileSet&		outFiles)
 {
+	PRINT(("Search in %s", inDirectory.string().c_str()));
 	SetStatusString(inDirectory.string());
 	
 	switch (inMethod)
@@ -548,7 +570,7 @@ void MFindDialog::GetFilesForFindAll(
 		
 			MPath file;
 			while (iter.Next(file))
-				outFiles.push_back(file);
+				outFiles.insert(file);
 			break;
 		}
 		
@@ -559,7 +581,7 @@ void MFindDialog::GetFilesForFindAll(
 			{
 				MPath file = doc->GetURL().GetPath();
 				if (exists(file))
-					outFiles.push_back(file);
+					outFiles.insert(file);
 				doc = doc->GetNextDocument();
 			}
 			break;
@@ -571,9 +593,14 @@ void MFindDialog::GetFilesForFindAll(
 			if (project != nil)
 			{
 				vector<MPath> includePaths;
+
 				project->GetIncludePaths(includePaths);
+
+				sort(includePaths.begin(), includePaths.end());
+				includePaths.erase(unique(includePaths.begin(), includePaths.end()), includePaths.end());
+
 				for (vector<MPath>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
-					GetFilesForFindAll(eMMDirectory, *p, false, false, "", outFiles);
+					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inTextFilesOnly, inFileNameFilter, outFiles);
 			}
 			break;
 		}
@@ -621,11 +648,14 @@ void MFindDialog::Idle(
 			
 			if (list->GetCount() > 0)
 			{
-				MMessageWindow* w = new MMessageWindow;
-				w->AddMessages(*list.get());
+				MMessageWindow* w = new MMessageWindow("");
+				w->SetMessages(
+					FormatString("Found ^0 hits for ^1",
+						list->GetCount(), mFindStrings.front()),
+					*list.get());
 			}
 			else
-				Beep();
+				PlaySound("warning");
 		}
 		else
 		{

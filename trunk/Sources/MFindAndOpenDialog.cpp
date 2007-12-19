@@ -45,6 +45,7 @@
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MUrl.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -80,7 +81,7 @@ bool MFindAndOpenDialog::OKClicked()
 	if (mController != nil)
 	{
 		if (not mController->OpenInclude(s))
-			Beep();
+			PlaySound("warning");
 	}
 	else
 	{

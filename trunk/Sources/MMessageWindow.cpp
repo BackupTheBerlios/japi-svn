@@ -33,15 +33,14 @@
 #include "MJapieG.h"
 
 #include <pcre.h>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "MMessageWindow.h"
-#include "MListView.h"
 #include "MDevice.h"
 #include "MGlobals.h"
 #include "MUtils.h"
 #include "MUnicode.h"
 #include "MDocument.h"
-//#include "MTextViewContainer.h"
 #include "MEditWindow.h"
 #include "MStrings.h"
 
@@ -202,13 +201,16 @@ uint32 MMessageList::GetCount() const
 	return mImpl->mArray.size();
 }
 
-MMessageWindow::MMessageWindow()
+MMessageWindow::MMessageWindow(
+	const string& 	inTitle)
 	: MWindow("message-list-window", "window")
 	, eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
 	, mInvokeRow(this, &MMessageWindow::InvokeRow)
 	, mBaseDirectory("/")
 	, mLastAddition(0)
 {
+	SetTitle(inTitle);
+	
 	GtkWidget* treeView = GetWidget(kListViewID);
 	THROW_IF_NIL((treeView));
 
@@ -235,8 +237,6 @@ MMessageWindow::MMessageWindow()
 	column = gtk_tree_view_column_new_with_attributes (
 		_("Message"), renderer, "text", kTextColumn, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(treeView), true);
 	
 	mInvokeRow.Connect(treeView, "row-activated");
 
@@ -269,9 +269,12 @@ void MMessageWindow::AddMessage(
 		-1);
 }
 
-void MMessageWindow::AddMessages(
+void MMessageWindow::SetMessages(
+	const string&		inDescription,
 	MMessageList&		inItems)
 {
+	SetTitle(inDescription);
+	
 	mList = inItems;
 
 	GtkWidget* treeView = GetWidget(kListViewID);
@@ -288,6 +291,7 @@ void MMessageWindow::AddMessages(
 			file = mList.GetFile(item.mFileNr - 1).leaf();
 		
 		string msg(item.mMessage, item.mMessageLength);
+		boost::trim_right(msg);
 		
 		string line;
 		if (item.mLineNr > 0)
@@ -425,6 +429,7 @@ void MMessageWindow::AddStdErr(
 				
 				if (m[12] >= 0 and m[13] > m[12])
 					mesg = line.substr(m[12], m[13] - m[12]);
+				boost::trim_right(mesg);
 				
 				spec = mBaseDirectory / file;
 //	

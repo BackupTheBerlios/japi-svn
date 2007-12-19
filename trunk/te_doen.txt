@@ -1,14 +1,10 @@
 ﻿Te doen
 
-- accelerators werken niet als Caps-Lock aan staat...
-
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 
 - OpenOneDocument moet anders werken:
 	MDocument met een remote URL moet aangemaakt en dan zelf data binnen trekken.
-
-- Dialogs laten reageren op Cntrl-W
 
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
@@ -25,9 +21,6 @@
 
 - veralgemeniseren van pkg-config
 - configuratie van compiler, koppelen aan extensie(s)
-
-- toetsenbord navigatie in lijsten, typeahead
-	lijsten vervangen door GtkTreeView dingen
 
 - SSH/SFTP afronden
 	- fetch/store status dialogs verplaatsen naar doc window?

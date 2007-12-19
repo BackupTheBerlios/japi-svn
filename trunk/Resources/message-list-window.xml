@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Wed Dec 19 11:54:21 2007 by maarten@zuinig-->
+<!--Generated with glade3 3.1.5 on Wed Dec 19 12:25:23 2007 by maarten@zuinig-->
 <glade-interface>
   <widget class="GtkWindow" id="window">
     <property name="default_width">600</property>
@@ -13,6 +13,7 @@
         <child>
           <widget class="GtkTreeView" id="tree">
             <property name="visible">True</property>
+            <property name="rules_hint">True</property>
           </widget>
         </child>
       </widget>

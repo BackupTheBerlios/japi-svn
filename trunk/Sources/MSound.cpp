@@ -40,6 +40,7 @@
 #include "MSound.h"
 #include "MPreferences.h"
 #include "MGlobals.h"
+#include "MWindow.h"
 
 //#if defined(G_MODULE_SUFFIX)
 //#	define SO_EXT	"." G_MODULE_SUFFIX
@@ -114,6 +115,8 @@ void MAudioSocket::Play(
 {
 	if (mFunc != nil)
 		(*mFunc)("Japie", inFile.c_str(), 1);
+	else if (MWindow::GetFirstWindow() != nil)
+		MWindow::GetFirstWindow()->Beep();
 	else
 		gdk_beep();
 }
@@ -123,27 +126,31 @@ void MAudioSocket::Play(
 void PlaySound(
 	const string&		inSoundName)
 {
-	static const MPath
-		kSoundDirectory = gPrefsDir / "Sounds";
-
 	try
 	{
 		string filename;
 		
 		if (inSoundName == "success")
-			filename = Preferences::GetString("success sound", "Ping.aiff");
+			filename = Preferences::GetString("success sound", "/usr/share/sounds/info.wav");
 		else if (inSoundName == "failure")
-			filename = Preferences::GetString("failure sound", "Basso.aiff");
+			filename = Preferences::GetString("failure sound", "/usr/share/sounds/error.wav");
+		else if (inSoundName == "warning")
+			filename = Preferences::GetString("warning sound", "/usr/share/sounds/warning.wav");
+		else if (inSoundName == "question")
+			filename = Preferences::GetString("question sound", "/usr/share/sounds/question.wav");
 		else
 			THROW(("Unknown sound name"));;
 		
-		MPath path = kSoundDirectory / filename;
+		MPath path = filename;
 		if (fs::exists(path))
 			MAudioSocket::Instance().Play(path.string());
 		else
 		{
 			cerr << "Sound does not exist: " << path.string() << endl;
-			gdk_beep();
+			if (MWindow::GetFirstWindow() != nil)
+				MWindow::GetFirstWindow()->Beep();
+			else
+				gdk_beep();
 		}
 	}
 	catch (...) {}

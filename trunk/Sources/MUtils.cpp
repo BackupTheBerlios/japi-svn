@@ -297,11 +297,6 @@ string GetDateTime()
 	return s.str();
 }
 
-void Beep()
-{
-	gdk_beep();
-}
-
 uint32 AddNameToNameTable(
 	string&			ioNameTable,
 	const string&	inName)

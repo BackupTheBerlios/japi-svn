@@ -50,6 +50,7 @@
 #include "MLanguage.h"
 //#include "MDocInfoDialog.h"
 #include "MUtils.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -258,12 +259,12 @@ bool MController::ProcessCommand(
 	
 			case cmd_FindNext:
 				if (not mDocument->DoFindNext(kDirectionForward))
-					Beep();
+					PlaySound("warning");
 				break;
 	
 			case cmd_FindPrev:
 				if (not mDocument->DoFindNext(kDirectionBackward))
-					Beep();
+					PlaySound("warning");
 				break;
 			
 			case cmd_EnterSearchString:
@@ -803,7 +804,7 @@ void MController::DoOpenIncludeFile()
 	}
 	
 	if (not result)
-		Beep();
+		PlaySound("warning");
 }
 
 void MController::DoOpenCounterpart()
@@ -856,7 +857,7 @@ void MController::DoOpenCounterpart()
 	}
 	
 	if (not result)
-		Beep();
+		PlaySound("warning");
 }
 
 //// ---------------------------------------------------------------------------

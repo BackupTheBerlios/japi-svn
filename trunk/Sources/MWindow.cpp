@@ -20,6 +20,7 @@ MWindow::MWindow()
 	, mModified(false)
 	, mTransitionThread(nil)
 	, mGladeXML(nil)
+	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
@@ -37,6 +38,7 @@ MWindow::MWindow(
 	, mModified(false)
 	, mTransitionThread(nil)
 	, mGladeXML(nil)
+	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
@@ -54,6 +56,7 @@ MWindow::MWindow(
 	, mModified(false)
 	, mTransitionThread(nil)
 	, mGladeXML(nil)
+	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	const char* xml;
 	uint32 size;
@@ -70,6 +73,8 @@ MWindow::MWindow(
 		THROW(("Failed to extract root widget from glade (%s)", inRootWidgetName));
 	
 	SetWidget(w, false, false);
+
+	gtk_container_foreach(GTK_CONTAINER(w), &MWindow::DoForEachCallBack, this);
 	
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
@@ -204,8 +209,20 @@ bool MWindow::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	return MHandler::UpdateCommandStatus(
-		inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	bool result = true;	
+	
+	switch (inCommand)
+	{
+		case cmd_Close:
+			outEnabled = true;
+			break;
+		
+		default:
+			result = MHandler::UpdateCommandStatus(
+				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	}
+	
+	return result;
 }
 
 bool MWindow::ProcessCommand(
@@ -337,4 +354,46 @@ GtkWidget* MWindow::GetWidget(
 	return wdgt;
 }
 
+void MWindow::Beep()
+{
+	gdk_window_beep(GetGtkWidget()->window);
+}
 
+void MWindow::DoForEachCallBack(
+	GtkWidget*			inWidget,
+	gpointer			inUserData)
+{
+	MWindow* w = reinterpret_cast<MWindow*>(inUserData);
+	w->DoForEach(inWidget);
+}
+
+void MWindow::DoForEach(
+	GtkWidget*			inWidget)
+{
+	gboolean canFocus = false;
+
+	g_object_get(G_OBJECT(inWidget), "can-focus", &canFocus, NULL);
+
+	if (canFocus)
+		mChildFocus.Connect(inWidget, "focus-in-event");
+	
+	if (GTK_IS_CONTAINER(inWidget))
+		gtk_container_foreach(GTK_CONTAINER(inWidget), &MWindow::DoForEachCallBack, this);
+}
+
+bool MWindow::ChildFocus(
+	GdkEventFocus*		inEvent)
+{
+	try
+	{
+		TakeFocus();
+		FocusChanged(0);
+	}
+	catch (...) {}
+	return false;
+}
+
+void MWindow::FocusChanged(
+	uint32				inFocussedID)
+{
+}

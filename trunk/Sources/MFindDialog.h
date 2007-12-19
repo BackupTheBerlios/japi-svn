@@ -38,6 +38,7 @@
 #define MFINDDIALOG_H
 
 #include <deque>
+#include <set>
 #include <vector>
 
 #include <boost/thread.hpp>
@@ -97,6 +98,7 @@ class MFindDialog : public MDialog
 
 	typedef std::vector<std::string>		StringArray;
 	typedef std::deque<MPath>				FileArray;
+	typedef std::set<MPath>					FileSet;
 
 	virtual bool	OKClicked();
 
@@ -130,7 +132,7 @@ class MFindDialog : public MDialog
 						bool				inRecursive,
 						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter,
-						FileArray&			outFiles);
+						FileSet&			outFiles);
 	
 	void			SetStatusString(
 						const std::string&	inMessage);

@@ -554,7 +554,11 @@ bool MDeepFileIteratorImp::Next(
 		{
 			outFile = top.mParent / e->d_name;
 			
-			if (exists(outFile) and is_directory(outFile))
+			struct stat st;
+			if (stat(outFile.string().c_str(), &st) < 0 or S_ISLNK(st.st_mode))
+				continue;
+			
+			if (S_ISDIR(st.st_mode))
 			{
 				if (strcmp(e->d_name, ".") and strcmp(e->d_name, ".."))
 				{

@@ -50,7 +50,6 @@ MDialog* MDialog::sFirst;
 MDialog::MDialog(
 	const char*		inDialogResource)
 	: MWindow(inDialogResource, "dialog")
-	, mChildFocus(this, &MDialog::ChildFocus)
 	, mParentWindow(nil)
 	, mNext(nil)
 	, mCloseImmediatelyOnOK(true)
@@ -63,9 +62,6 @@ MDialog::MDialog(
 
 	glade_xml_signal_connect_data(GetGladeXML(), "on_std_btn_click", 
 		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
-
-	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()),
-		&MDialog::DoForEachCallBack, this);
 }
 
 MDialog::~MDialog()
@@ -388,43 +384,4 @@ void MDialog::SetCloseImmediatelyFlag(
 	bool inCloseImmediately)
 {
 	mCloseImmediatelyOnOK = inCloseImmediately;
-}
-
-void MDialog::DoForEachCallBack(
-	GtkWidget*			inWidget,
-	gpointer			inUserData)
-{
-	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
-	self->DoForEach(inWidget);
-}
-
-void MDialog::DoForEach(
-	GtkWidget*			inWidget)
-{
-	gboolean canFocus = false;
-
-	g_object_get(G_OBJECT(inWidget), "can-focus", &canFocus, NULL);
-
-	if (canFocus)
-		mChildFocus.Connect(inWidget, "focus-in-event");
-	
-	if (GTK_IS_CONTAINER(inWidget))
-		gtk_container_foreach(GTK_CONTAINER(inWidget), &MDialog::DoForEachCallBack, this);
-}
-
-bool MDialog::ChildFocus(
-	GdkEventFocus*		inEvent)
-{
-	try
-	{
-		TakeFocus();
-		FocusChanged(0);
-	}
-	catch (...) {}
-	return false;
-}
-
-void MDialog::FocusChanged(
-	uint32				inFocussedID)
-{
 }
