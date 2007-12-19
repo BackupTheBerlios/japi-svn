@@ -40,12 +40,11 @@
 
 using namespace std;
 
-namespace {
-
 const uint32
 //	kValidModifiersMask = GDK_CONTROL_MASK | GDK_SHIFT_MASK | GDK_MOD1_MASK;
 	kValidModifiersMask = gtk_accelerator_get_default_mod_mask();
 
+namespace {
 
 struct MCommandToString
 {
@@ -291,15 +290,16 @@ bool MAcceleratorTable::IsAcceleratorKey(
 {
 	bool result = false;
 
-//	PRINT(("IsAcceleratorKey for %s %c-%c-%c-%c",
-//		gdk_keyval_name(inEvent->keyval),
+	int keyval = inEvent->keyval;
+	int modifiers = inEvent->state & kValidModifiersMask;
+
+//	PRINT(("IsAcceleratorKey for %10.10s %c-%c-%c-%c (%x - %x)",
+//		gdk_keyval_name(keyval),
 //		inEvent->state & GDK_CONTROL_MASK ? 'C' : '_',
 //		inEvent->state & GDK_SHIFT_MASK ? 'S' : '_',
 //		inEvent->state & GDK_MOD1_MASK ? '1' : '_',
-//		inEvent->state & GDK_MOD2_MASK ? '2' : '_'));
-
-	int keyval = inEvent->keyval;
-	int modifiers = inEvent->state & kValidModifiersMask;
+//		inEvent->state & GDK_MOD2_MASK ? '2' : '_',
+//		inEvent->state, modifiers));
 
 	int64 key = (int64(keyval) << 32) | modifiers;
 
@@ -323,6 +323,14 @@ bool MAcceleratorTable::IsNavigationKey(
 {
 	bool result = false;
 	
+//	PRINT(("IsNavigationKey for %10.10s %c-%c-%c-%c (%x - %x)",
+//		gdk_keyval_name(inKeyValue),
+//		inModifiers & GDK_CONTROL_MASK ? 'C' : '_',
+//		inModifiers & GDK_SHIFT_MASK ? 'S' : '_',
+//		inModifiers & GDK_MOD1_MASK ? '1' : '_',
+//		inModifiers & GDK_MOD2_MASK ? '2' : '_',
+//		inModifiers, inModifiers & kValidModifiersMask));
+
 	inModifiers &= kValidModifiersMask;
 
 	MAccelCombo kc;

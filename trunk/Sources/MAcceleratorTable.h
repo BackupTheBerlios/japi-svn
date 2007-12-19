@@ -1,6 +1,8 @@
 #ifndef MACCELERATOR_H
 #define MACCELERATOR_H
 
+extern const uint32 kValidModifiersMask;
+
 class MAcceleratorTable
 {
   public:

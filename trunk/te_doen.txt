@@ -1,5 +1,9 @@
 ﻿Te doen
 
+- geluid werkt niet overal? (Ubuntu)
+
+- default Templates wegschrijven?
+
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 

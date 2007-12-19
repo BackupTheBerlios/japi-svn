@@ -5,7 +5,9 @@ TARGET		= jg
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= pcre z cryptopp
+LIBS		= pcre z cryptopp boost_regex boost_thread \
+		  boost_filesystem boost_date_time attr \
+		  gthread-2.0
 LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 

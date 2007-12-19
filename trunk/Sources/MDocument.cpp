@@ -3056,7 +3056,7 @@ void MDocument::OnKeyPressEvent(
 {
 	bool handled = false;
 
-    uint32 modifiers = inEvent->state;
+    uint32 modifiers = inEvent->state & kValidModifiersMask;
 	uint32 keyValue = inEvent->keyval;
 	
 	handled = HandleRawKeydown(keyValue, modifiers);

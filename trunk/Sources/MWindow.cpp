@@ -305,7 +305,7 @@ void MWindow::TransitionTo(
 	
 	uint32
 		kSleep = 10000,
-		kSteps = 10;
+		kSteps = 6;
 	
 	for (uint32 step = 0; step < kSteps; ++step)
 	{

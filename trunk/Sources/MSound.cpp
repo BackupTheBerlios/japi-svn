@@ -82,6 +82,9 @@ MAudioSocket::MAudioSocket()
 	mHandle = dlopen("libesd" SO_EXT, RTLD_LAZY);
 	
 	if (mHandle == nil)
+		mHandle = dlopen("libesd.so.0", RTLD_LAZY);
+	
+	if (mHandle == nil)
 		cerr << "Failed to locate esd library, sounds are disabled" << endl;
 	else
 	{
