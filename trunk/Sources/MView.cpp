@@ -240,17 +240,6 @@ void MView::UpdateNow()
 	gdk_window_process_all_updates();
 }
 
-PangoContext* MView::GetPangoContext()
-{
-	if (mPangoContext == nil)
-	{
-		mPangoContext = pango_cairo_font_map_create_context(
-			PANGO_CAIRO_FONT_MAP(pango_cairo_font_map_get_default()));
-	}
-	
-	return mPangoContext;
-}
-
 void MView::SetCursor(
 	MCursor			inCursor)
 {

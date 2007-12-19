@@ -1,5 +1,7 @@
 ﻿Te doen
 
+- accelerators werken niet als Caps-Lock aan staat...
+
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 

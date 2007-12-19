@@ -313,3 +313,28 @@ void MWindow::TransitionTo(
 	
 	mTransitionThread = nil;
 }
+
+const char* MWindow::IDToName(
+	uint32			inID,
+	char			inName[5])
+{
+	inName[4] = 0;
+	inName[3] = inID & 0x000000ff; inID >>= 8;
+	inName[2] = inID & 0x000000ff; inID >>= 8;
+	inName[1] = inID & 0x000000ff; inID >>= 8;
+	inName[0] = inID & 0x000000ff;
+	
+	return inName;
+}
+
+GtkWidget* MWindow::GetWidget(
+	uint32			inID) const
+{
+	char name[5];
+	GtkWidget* wdgt = glade_xml_get_widget(GetGladeXML(), IDToName(inID, name));
+	if (wdgt == nil)
+		THROW(("Widget '%s' does not exist", name));
+	return wdgt;
+}
+
+

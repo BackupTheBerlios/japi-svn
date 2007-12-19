@@ -40,10 +40,10 @@
 #include "MGlobals.h"
 #include "MUtils.h"
 #include "MUnicode.h"
-//#include "MApplication.h"
 #include "MDocument.h"
 //#include "MTextViewContainer.h"
 #include "MEditWindow.h"
+#include "MStrings.h"
 
 using namespace std;
 
@@ -51,8 +51,14 @@ namespace
 {
 	
 const uint32
-	kListViewID = 200;
+	kListViewID = 'tree';
 	
+enum {
+	kFileColumn,
+	kLineColumn,
+	kTextColumn
+};
+
 //static const Rect
 //	sRect = { 0, 0, 150, 400 };
 
@@ -107,24 +113,54 @@ struct MMessageListImp
 {
 	MMessageItemArray	mArray;
 	MFileTable			mFileTable;
+	int32				mRefCount;
 };
 
 MMessageList::MMessageList()
 	: mImpl(new MMessageListImp)
 {
+	mImpl->mRefCount = 1;
+}
+
+MMessageList::MMessageList(
+	const MMessageList&	rhs)
+	: mImpl(rhs.mImpl)
+{
+	++mImpl->mRefCount;
+}
+
+MMessageList& MMessageList::operator=(
+	const MMessageList&	rhs)
+{
+	if (--mImpl->mRefCount <= 0)
+	{
+		for (uint32 i = 0; i < mImpl->mArray.size(); ++i)
+			delete mImpl->mArray[i];
+		
+		delete mImpl;
+	}
+	
+	mImpl = rhs.mImpl;
+
+	++mImpl->mRefCount;
+	
+	return *this;
 }
 
 MMessageList::~MMessageList()
 {
-	for (uint32 i = 0; i < mImpl->mArray.size(); ++i)
-		delete mImpl->mArray[i];
-	
-	delete mImpl;
+	if (--mImpl->mRefCount <= 0)
+	{
+		for (uint32 i = 0; i < mImpl->mArray.size(); ++i)
+			delete mImpl->mArray[i];
+		
+		delete mImpl;
+	}
 }
 
 void MMessageList::AddMessage(
 	MMessageKind	inKind,
-	const MPath&		inFile,
+	const MPath&	inFile,
 	uint32			inLine,
 	uint32			inMinOffset,
 	uint32			inMaxOffset,
@@ -145,55 +181,125 @@ void MMessageList::AddMessage(
 		inMinOffset, inMaxOffset, inMessage));
 }
 
+MMessageItem& MMessageList::GetItem(
+	uint32				inIndex) const
+{
+	if (inIndex >= mImpl->mArray.size())
+		THROW(("Message index out of range"));
+	return *mImpl->mArray[inIndex];
+}
+
+MPath MMessageList::GetFile(
+	uint32				inFileNr) const
+{
+	if (inFileNr >= mImpl->mFileTable.size())
+		THROW(("File table index out of range"));
+	return mImpl->mFileTable[inFileNr];
+}
+
 uint32 MMessageList::GetCount() const
 {
 	return mImpl->mArray.size();
 }
 
 MMessageWindow::MMessageWindow()
-	: eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
+	: MWindow("message-list-window", "window")
+	, eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
+	, mInvokeRow(this, &MMessageWindow::InvokeRow)
 	, mBaseDirectory("/")
 	, mLastAddition(0)
 {
-    gtk_widget_set_size_request(GTK_WIDGET(GetGtkWidget()), 600, 200);
-	
-	mList = new MListView(this);
-	gtk_container_add(GTK_CONTAINER(GetGtkWidget()), mList->GetGtkWidget());
+	GtkWidget* treeView = GetWidget(kListViewID);
+	THROW_IF_NIL((treeView));
 
-	SetCallBack(mList->cbDrawItem, this, &MMessageWindow::DrawItem);
-	SetCallBack(mList->cbRowSelected, this, &MMessageWindow::SelectItem);
-	SetCallBack(mList->cbRowInvoked, this, &MMessageWindow::InvokeItem);
+	GtkListStore* store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+
+	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), (GTK_TREE_MODEL(store)));
 	
-	gtk_widget_show_all(GetGtkWidget());
+	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
+		_("File"), renderer, "text", kFileColumn, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
+
+	renderer = gtk_cell_renderer_text_new();
+
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Line"), renderer, "text", kLineColumn, NULL);
+
+	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, NULL);
+	gtk_tree_view_column_set_alignment(column, 1.0f);
+
+	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Message"), renderer, "text", kTextColumn, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
+
+	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(treeView), true);
+	
+	mInvokeRow.Connect(treeView, "row-activated");
 
 	Show();
 }
 	
 void MMessageWindow::AddMessage(
 	MMessageKind		inKind,
-	const MPath&			inFile,
+	const MPath&		inFile,
 	uint32				inLine,
 	uint32				inMinOffset,
 	uint32				inMaxOffset,
 	const string&		inMessage)
 {
-	auto_ptr<MMessageItem> item(
-		MMessageItem::Create(inKind, AddFileToTable(inFile),
-			inLine, inMinOffset, inMaxOffset, inMessage));
-	
-	mList->InsertItem(mList->GetCount(), item.get(), item->Size());
+	mList.AddMessage(inKind, inFile, inLine, inMinOffset, inMaxOffset, inMessage);
+
+	GtkWidget* treeView = GetWidget(kListViewID);
+	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
+
+	string line;
+	if (inLine > 0)
+		line = NumToString(inLine);
+
+	GtkTreeIter iter;
+	gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
+	gtk_list_store_set(GTK_LIST_STORE(store), &iter,
+		kFileColumn, inFile.leaf().c_str(),
+		kLineColumn, line.c_str(),
+		kTextColumn, inMessage.c_str(),
+		-1);
 }
 
 void MMessageWindow::AddMessages(
 	MMessageList&		inItems)
 {
-	MMessageListImp* imp = inItems.mImpl;
-	
-	mFileTable = imp->mFileTable;
-	
-	mList->RemoveAll();
-	for (MMessageItemArray::iterator i = imp->mArray.begin(); i != imp->mArray.end(); ++i)
-		mList->InsertItem(mList->GetCount(), (*i), (*i)->Size());
+	mList = inItems;
+
+	GtkWidget* treeView = GetWidget(kListViewID);
+	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
+
+	GtkTreeIter iter;
+
+	for (uint32 ix = 0; ix < mList.GetCount(); ++ix)
+	{
+		MMessageItem& item = mList.GetItem(ix);
+		
+		string file;
+		if (item.mFileNr > 0)
+			file = mList.GetFile(item.mFileNr - 1).leaf();
+		
+		string msg(item.mMessage, item.mMessageLength);
+		
+		string line;
+		if (item.mLineNr > 0)
+			line = NumToString(item.mLineNr);
+
+		gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
+		gtk_list_store_set(GTK_LIST_STORE(store), &iter,
+			kFileColumn, file.c_str(), 
+			kLineColumn, line.c_str(),
+			kTextColumn, msg.c_str(),
+			-1);
+	}
 }
 
 void MMessageWindow::SetBaseDirectory(
@@ -205,12 +311,11 @@ void MMessageWindow::SetBaseDirectory(
 void MMessageWindow::SelectItem(
 	uint32				inItemNr)
 {
-	MMessageItem item;
-	mList->GetItem(inItemNr, &item, sizeof(item));
+	MMessageItem& item = mList.GetItem(inItemNr);
 	
 	if (item.mFileNr > 0)
 	{
-		MUrl url(mFileTable[item.mFileNr - 1]);
+		MUrl url(mList.GetFile(item.mFileNr - 1));
 		
 		MDocument* doc = MDocument::GetDocumentForURL(url, false);
 		if (doc == nil)
@@ -234,12 +339,12 @@ void MMessageWindow::SelectItem(
 void MMessageWindow::InvokeItem(
 	uint32				inItemNr)
 {
-	MMessageItem item;
-	mList->GetItem(inItemNr, &item, sizeof(item));
+	MMessageItem& item = mList.GetItem(inItemNr);
 	
 	if (item.mFileNr > 0)
 	{
-		MDocument* doc = gApp->OpenOneDocument(MUrl(mFileTable[item.mFileNr - 1]));
+		MPath file = mList.GetFile(item.mFileNr - 1);
+		MDocument* doc = gApp->OpenOneDocument(MUrl(file));
 		
 		if (doc != nil)
 		{
@@ -360,70 +465,7 @@ void MMessageWindow::AddStdErr(
 
 void MMessageWindow::ClearList()
 {
-	mList->RemoveAll();
-	mFileTable.clear();
-}
-
-void MMessageWindow::DrawItem(
-	MDevice&			inDevice,
-	MRect				inFrame,
-	uint32				inRow,
-	bool				inSelected,
-	const void*			inData,
-	uint32				inDataLength)
-{
-	const MMessageItem* item = static_cast<const MMessageItem*>(inData);
-	assert(item->Size() == inDataLength);
-	
-	int32 x, y;
-	x = inFrame.x;
-	y = inFrame.y + 1;
-
-	switch (item->mKind)
-	{
-		case kMsgKindNone:		inDevice.SetForeColor(kMarkedLineColor); break;
-		case kMsgKindNote:		inDevice.SetForeColor(kNoteColor); break;
-		case kMsgKindWarning:	inDevice.SetForeColor(kWarningColor); break;
-		case kMsgKindError:		inDevice.SetForeColor(kErrorColor); break;
-	}
-	
-	int32 ny = inFrame.y + (inFrame.height - kDotWidth) / 2;
-	
-	inDevice.FillEllipse(MRect(x + kIconColumnOffset, ny, kDotWidth, kDotWidth));
-	inDevice.SetForeColor(kBlack);
-	
-	if (item->mFileNr > 0)
-	{
-		inDevice.DrawString(
-			mFileTable[item->mFileNr - 1].leaf(),
-			x + kFileColumnOffset, y,
-			kLineColumnOffset - kFileColumnOffset);
-	}
-
-	if (item->mLineNr > 0)
-	{
-		inDevice.DrawString(
-			NumToString(item->mLineNr),
-			x + kLineColumnOffset, y,
-			kMessageColumnOffset - kLineColumnOffset,
-			eAlignRight);
-	}
-
-	inDevice.DrawString(string(item->mMessage, item->mMessage + item->mMessageLength), 
-		x + kMessageColumnOffset, y);
-}
-
-uint32 MMessageWindow::AddFileToTable(
-	const MPath&			inFile)
-{
-	if (not exists(inFile))
-		return 0;
-	
-	MFileTable::iterator f = find(mFileTable.begin(), mFileTable.end(), inFile);
-	if (f == mFileTable.end())
-		f = mFileTable.insert(f, inFile);
-
-	return f - mFileTable.begin() + 1;
+	mList = MMessageList();
 }
 
 void MMessageWindow::DocumentChanged(
@@ -437,3 +479,25 @@ bool MMessageWindow::DoClose()
 	return MWindow::DoClose();
 }
 
+void MMessageWindow::InvokeRow(
+	GtkTreePath*		inPath,
+	GtkTreeViewColumn*	inColumn)
+{
+	int32 item = -1;
+
+	char* path = gtk_tree_path_to_string(inPath);
+	if (path != nil)
+	{
+		item = atoi(path);
+		g_free(path);
+	}
+	
+	if (item >= 0 and item < int32(mList.GetCount()))
+	{
+		try
+		{
+			InvokeItem(item);
+		}
+		catch (...) {}
+	}
+}

@@ -135,17 +135,10 @@ class MDialog : public MWindow
 					MDialog(
 						const char*			inDialogResource);
 
-	GtkWidget*		GetWidget(
-						uint32				inID) const;
-
 	virtual void	FocusChanged(
 						uint32				inFocussedID);
 
   private:
-
-	const char*		IDToName(
-						uint32				inID,
-						char				inName[5]) const;
 
 	static void		ChangedCallBack(
 						GtkWidget*			inWidget,

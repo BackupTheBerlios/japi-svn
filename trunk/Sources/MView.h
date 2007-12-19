@@ -67,8 +67,6 @@ class MView
 	virtual void	Add(
 						MView*			inSubView);
 
-	PangoContext*	GetPangoContext();
-	
 	void			SetCursor(
 						MCursor			inCursor);
 

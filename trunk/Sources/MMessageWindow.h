@@ -54,6 +54,11 @@ class MMessageList
 {
   public:
 					MMessageList();
+
+					MMessageList(const MMessageList&);
+
+	MMessageList&	operator=(const MMessageList&);
+
 					~MMessageList();
 
 	void			AddMessage(
@@ -64,13 +69,16 @@ class MMessageList
 						uint32				inMaxOffset,
 						const std::string&	inMessage);
 
+	MMessageItem&	GetItem(
+						uint32				inIndex) const;
+	
+	MPath			GetFile(
+						uint32				inFileNr) const;
+
 	uint32			GetCount() const;
 
   private:
 	friend class MMessageWindow;
-
-					MMessageList(const MMessageList&);
-	MMessageList&	operator=(const MMessageList&);
 
 	struct MMessageListImp*
 					mImpl;
@@ -85,9 +93,6 @@ class MMessageWindow : public MWindow
 						const char*			inText,
 						uint32				inSize);
 	
-//	MEventIn<void(MMessageKind, const MPath&, uint32, const std::string&)>
-//					eAddMessage;
-
 	MEventIn<void(const MPath&)>
 					eBaseDirChanged;
 	
@@ -122,20 +127,16 @@ class MMessageWindow : public MWindow
 
   private:
 
-	uint32			AddFileToTable(
-						const MPath&			inFile);
+	void			InvokeRow(
+						GtkTreePath*		inPath,
+						GtkTreeViewColumn*	inColumn);
 
-	void			DrawItem(
-						MDevice&			inDevice,
-						MRect				inFrame,
-						uint32				inRow,
-						bool				inSelected,
-						const void*			inData,
-						uint32				inDataLength);
+	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+					mInvokeRow;
 
 	MPath			mBaseDirectory;
-	MFileTable		mFileTable;
-	MListView*		mList;
+	MMessageList	mList;
+//	MListView*		mList;
 	std::string		mText;
 	double			mLastAddition;
 };

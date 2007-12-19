@@ -79,6 +79,13 @@ class MWindow : public MView, public MHandler
 
 	GladeXML*				GetGladeXML() const				{ return mGladeXML; }
 
+	GtkWidget*				GetWidget(
+								uint32			inID) const;
+
+	static const char*		IDToName(
+								uint32				inID,
+								char				inName[5]);
+
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;

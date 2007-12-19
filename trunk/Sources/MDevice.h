@@ -132,7 +132,7 @@ class MDevice
 					MDevice(const MDevice&);
 	MDevice&		operator=(const MDevice&);
 
-	struct MDeviceImp*	mImpl;
+	class MDeviceImp*	mImpl;
 };
 
 class MDeviceContextSaver

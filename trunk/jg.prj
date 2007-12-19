@@ -120,6 +120,7 @@
 		<copy>auth-dialog.xml</copy>
 		<copy>sftp-dialog.xml</copy>
 		<copy>diff-window.xml</copy>
+		<copy>message-list-window.xml</copy>
 	</package>
 	<targets>
 		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="jg" debug="true">

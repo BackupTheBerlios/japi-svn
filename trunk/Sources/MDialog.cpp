@@ -100,29 +100,6 @@ void MDialog::Show(
 	MWindow::Show();
 }
 
-const char* MDialog::IDToName(
-	uint32			inID,
-	char			inName[5]) const
-{
-	inName[4] = 0;
-	inName[3] = inID & 0x000000ff; inID >>= 8;
-	inName[2] = inID & 0x000000ff; inID >>= 8;
-	inName[1] = inID & 0x000000ff; inID >>= 8;
-	inName[0] = inID & 0x000000ff;
-	
-	return inName;
-}
-
-GtkWidget* MDialog::GetWidget(
-	uint32				inID) const
-{
-	char name[5];
-	GtkWidget* wdgt = glade_xml_get_widget(GetGladeXML(), IDToName(inID, name));
-	if (wdgt == nil)
-		THROW(("Widget '%s' does not exist", name));
-	return wdgt;
-}
-
 void MDialog::SetFocus(
 	uint32				inID)
 {

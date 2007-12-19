@@ -39,6 +39,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "MDocument.h"
 #include "MTextView.h"
@@ -2753,6 +2754,7 @@ void MDocument::FindAll(string inWhat, bool inIgnoreCase,
 		
 		string s;
 		GetLine(lineNr, s);
+		boost::trim_right(s);
 		
 		outHits.AddMessage(kMsgKindNone, mURL.GetPath(), lineNr + 1,
 			sel.GetMinOffset(*this), sel.GetMaxOffset(*this), s);
