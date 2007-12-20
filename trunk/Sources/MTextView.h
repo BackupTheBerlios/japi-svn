@@ -298,8 +298,6 @@ class MTextView : public MView, public MHandler
 	uint32				mDragCaret;
 	int32				mClickStartX, mClickStartY;
 
-	static MColor		sCurrentLineColor, sMarkedLineColor, sPCLineColor, sBreakpointColor;
-
 //	// tick support for caret blinking
 //	
 //	static pascal void	EventLoopTimerProc(EventLoopTimerRef inTimer, void *inUserData);

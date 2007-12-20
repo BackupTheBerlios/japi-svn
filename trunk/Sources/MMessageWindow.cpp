@@ -34,6 +34,7 @@
 
 #include <pcre.h>
 #include <boost/algorithm/string/trim.hpp>
+#include <cmath>
 
 #include "MMessageWindow.h"
 #include "MDevice.h"
@@ -53,6 +54,7 @@ const uint32
 	kListViewID = 'tree';
 	
 enum {
+	kBadgeColumn,
 	kFileColumn,
 	kLineColumn,
 	kTextColumn
@@ -70,6 +72,83 @@ const uint32
 	kFileColumnOffset		= kIconColumnOffset + kDotWidth + 2 * kIconColumnOffset,
 	kLineColumnOffset		= kFileColumnOffset + 175,
 	kMessageColumnOffset	= kLineColumnOffset + 35;
+
+
+// --------------------------------------------------------------------
+// code to create a GdkPixbuf containing a single dot.
+
+GdkPixbuf* CreateDot(
+	MColor			inColor,
+	uint32			inSize)
+{
+	// first draw in a buffer with cairo
+	cairo_surface_t* cs = cairo_image_surface_create(
+		CAIRO_FORMAT_ARGB32, inSize, inSize);
+	
+	cairo_t* c = cairo_create(cs);
+
+	cairo_set_source_rgba(c,
+		inColor.red / 255.0,
+		inColor.green / 255.0,
+		inColor.blue / 255.0,
+		1.f);
+
+	cairo_translate(c, inSize + inSize / 2., inSize + inSize / 2.);
+	cairo_scale(c, inSize / 2., inSize / 2.);
+	cairo_arc(c, 0., 0., 1., 0., 2 * M_PI);
+	cairo_fill(c);
+	
+	cairo_surface_flush(cs);
+	
+	cairo_destroy(c);
+	
+	// then copy the data over to a pixbuf;
+
+	GdkPixbuf* result = gdk_pixbuf_new(GDK_COLORSPACE_RGB, true, 8, inSize, inSize);
+	THROW_IF_NIL(result);
+	
+	unsigned char* dst = gdk_pixbuf_get_pixels(result);
+	unsigned char* src = cairo_image_surface_get_data(cs);
+	
+	uint32 dst_rowstride = gdk_pixbuf_get_rowstride(result);
+	uint32 src_rowstride = cairo_image_surface_get_stride(cs);
+	uint32 n_channels = gdk_pixbuf_get_n_channels(result);
+
+	for (uint32 x = 0; x < inSize; ++x)
+	{
+		for (uint32 y = 0; y < inSize; ++y)
+		{
+			unsigned char* p = dst + y * dst_rowstride + x * n_channels;
+
+			uint32 pixel = *reinterpret_cast<uint32*>(src + y * src_rowstride + x * 4);
+
+			p[0] = (pixel >> 16) & 0xFF;
+			p[1] = (pixel >>  8) & 0xFF;
+			p[2] = (pixel >>  0) & 0xFF;
+//			p[3] = (pixel >> 24) & 0xFF;
+			p[3] = 255;
+		}
+	}
+	
+	cairo_surface_destroy(cs);
+	
+	return result;
+}
+
+GdkPixbuf* GetBadge(
+	MMessageKind		inKind)
+{
+	static GdkPixbuf* sBadges[] = {
+		CreateDot(kWhite, 10),
+		CreateDot(kNoteColor, 10),
+		CreateDot(kWarningColor, 10),
+		CreateDot(kErrorColor, 10)
+	};
+
+	return sBadges[inKind];
+}
+
+// --------------------------------------------------------------------
 
 }
 
@@ -214,13 +293,26 @@ MMessageWindow::MMessageWindow(
 	GtkWidget* treeView = GetWidget(kListViewID);
 	THROW_IF_NIL((treeView));
 
-	GtkListStore* store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+	GtkListStore* store = gtk_list_store_new(4,
+		GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), (GTK_TREE_MODEL(store)));
 	
-	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-		_("File"), renderer, "text", kFileColumn, NULL);
+//	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
+//		_("File"), renderer, "text", kFileColumn, NULL);
+
+	GtkTreeViewColumn* column = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_title(column, _("File"));
+//	gtk_tree_view_column_set_spacing(column, 2);
+
+	GtkCellRenderer* renderer = gtk_cell_renderer_pixbuf_new();
+	gtk_tree_view_column_pack_start(column, renderer, false);
+	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", kBadgeColumn, nil);
+
+	renderer = gtk_cell_renderer_text_new();
+	gtk_tree_view_column_pack_start(column, renderer, true);
+	gtk_tree_view_column_set_attributes(column, renderer, "text", kFileColumn, nil);
+
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
 
 	renderer = gtk_cell_renderer_text_new();
@@ -263,6 +355,7 @@ void MMessageWindow::AddMessage(
 	GtkTreeIter iter;
 	gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
 	gtk_list_store_set(GTK_LIST_STORE(store), &iter,
+		kBadgeColumn, GetBadge(inKind),
 		kFileColumn, inFile.leaf().c_str(),
 		kLineColumn, line.c_str(),
 		kTextColumn, inMessage.c_str(),
@@ -299,6 +392,7 @@ void MMessageWindow::SetMessages(
 
 		gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
 		gtk_list_store_set(GTK_LIST_STORE(store), &iter,
+			kBadgeColumn, GetBadge(item.mKind),
 			kFileColumn, file.c_str(), 
 			kLineColumn, line.c_str(),
 			kTextColumn, msg.c_str(),

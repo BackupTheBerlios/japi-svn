@@ -420,3 +420,12 @@ msgstr "^0 resultaten voor ^1 gevonden"
 msgid "Build messages for ^0"
 msgstr "Meldingen voor maken van ^0"
 
+msgid "Do you want to make clean the current target or all targets?"
+msgstr "Wilt u alle doelen schoonmaken of alleen het huidige doel?"
+
+msgid "Current Target"
+msgstr "Huidig doel"
+
+msgid "All Targets"
+msgstr "Alle doelen"
+

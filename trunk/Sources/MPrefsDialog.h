@@ -34,16 +34,15 @@
 #define MPREFSDIALOG_H
 
 #include "MDialog.h"
-#include "MCarbonEvents.h"
 #include "MP2PEvents.h"
 
 class MPrefsDialog : public MDialog
 {
   public:
-	static void			Create();
+	static void		Create();
 	
 	static MEventOut<void()>
-						ePrefsChanged;
+					ePrefsChanged;
 	
   private:
 	
@@ -60,21 +59,22 @@ class MPrefsDialog : public MDialog
 	};
 
 
-						MPrefsDialog();
+					MPrefsDialog();
 
-	void				Initialize();
+	virtual bool	DoClose();
 	
-	void				SelectPage(
-							uint32			inPageID);
+	void			SelectPage(
+						uint32			inPageID);
 	
-	virtual bool		OKClicked();
+	virtual bool	OKClicked();
 
-	virtual bool		CancelClicked();
+	virtual void	ValueChanged(
+						uint32				inID);
 
-	virtual void		ButtonClicked(
-							uint32			inButtonID);
+	uint32			mCurrentPage;
 
-	uint32				mCurrentPage;
+	static MPrefsDialog*
+					sInstance;
 };
 
 #endif

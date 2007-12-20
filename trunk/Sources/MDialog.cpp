@@ -109,6 +109,8 @@ void MDialog::GetText(
 	GtkWidget* wdgt = GetWidget(inID);
 	if (GTK_IS_COMBO_BOX(wdgt))
 		outText = gtk_combo_box_get_active_text(GTK_COMBO_BOX(wdgt));
+	else if (GTK_IS_FONT_BUTTON(wdgt))
+		outText = gtk_font_button_get_font_name(GTK_FONT_BUTTON(wdgt));
 	else if (GTK_IS_ENTRY(wdgt))
 		outText = gtk_entry_get_text(GTK_ENTRY(wdgt));
 	else
@@ -122,6 +124,8 @@ void MDialog::SetText(
 	GtkWidget* wdgt = GetWidget(inID);
 	if (GTK_IS_COMBO_BOX(wdgt))
 assert(false);//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(wdgt), inText.c_str());
+	else if (GTK_IS_FONT_BUTTON(wdgt))
+		gtk_font_button_set_font_name(GTK_FONT_BUTTON(wdgt), inText.c_str());
 	else if (GTK_IS_ENTRY(wdgt))
 		gtk_entry_set_text(GTK_ENTRY(wdgt), inText.c_str());
 	else if (GTK_IS_LABEL(wdgt))
@@ -193,6 +197,30 @@ void MDialog::SetValues(
 		gtk_combo_box_append_text(GTK_COMBO_BOX(wdgt), s->c_str());
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), 0);
+}
+
+void MDialog::SetColor(
+	uint32				inID,
+	MColor				inColor)
+{
+	GtkWidget* wdgt = GetWidget(inID);
+	if (not GTK_IS_COLOR_BUTTON(wdgt))
+		THROW(("Widget '%d' is not of the correct type", inID));
+	
+	GdkColor c = inColor;
+	gtk_color_button_set_color(GTK_COLOR_BUTTON(wdgt), &c);
+}
+
+MColor MDialog::GetColor(
+	uint32				inID) const
+{
+	GtkWidget* wdgt = GetWidget(inID);
+	if (not GTK_IS_COLOR_BUTTON(wdgt))
+		THROW(("Widget '%d' is not of the correct type", inID));
+		
+	GdkColor c;
+	gtk_color_button_get_color(GTK_COLOR_BUTTON(wdgt), &c);
+	return MColor(c);
 }
 
 bool MDialog::IsChecked(

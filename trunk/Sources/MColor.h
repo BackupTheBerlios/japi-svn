@@ -49,6 +49,9 @@ struct MColor
 					const MColor&		inOther);
 
 				MColor(
+					const GdkColor&		inColor);
+
+				MColor(
 					const char*			inHex);
 
 				MColor(
@@ -59,6 +62,8 @@ struct MColor
 	MColor&		operator=(
 					const MColor&		inOther);
 
+				operator GdkColor() const;
+
 	std::string	hex() const;
 	void		hex(
 					const std::string&	inHex);
@@ -67,8 +72,6 @@ struct MColor
 extern const MColor
 	kWhite,
 	kBlack,
-	kCurrentLineColor,
-	kMarkedLineColor,
 	kNoteColor,
 	kWarningColor,
 	kErrorColor,

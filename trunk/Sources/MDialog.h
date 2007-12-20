@@ -42,6 +42,7 @@
 #include <vector>
 
 #include "MWindow.h"
+#include "MColor.h"
 
 class MDialog : public MWindow
 {
@@ -94,6 +95,13 @@ class MDialog : public MWindow
 						uint32				inID,
 						const std::vector<std::string>&
 											inValues);
+
+	void			SetColor(
+						uint32				inID,
+						MColor				inColor);
+
+	MColor			GetColor(
+						uint32				inID) const;
 
 	bool			IsChecked(
 						uint32				inID) const;

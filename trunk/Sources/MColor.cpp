@@ -42,8 +42,6 @@ using namespace std;
 const MColor
 	kBlack(0, 0, 0),
 	kWhite("#ffffff"),
-	kCurrentLineColor("#ffffcc"),
-	kMarkedLineColor("#efff7f"),
 	kNoteColor("#206cff"),
 	kWarningColor("#ffeb17"),
 	kErrorColor("#ff4811"),
@@ -63,6 +61,14 @@ MColor::MColor(
 	red = inOther.red;
 	green = inOther.green;
 	blue = inOther.blue;
+}
+
+MColor::MColor(
+	const GdkColor&	inOther)
+{
+	red = inOther.red >> 8;
+	green = inOther.green >> 8;
+	blue = inOther.blue >> 8;
 }
 
 MColor::MColor(
@@ -88,6 +94,15 @@ MColor& MColor::operator=(
 	green = inOther.green;
 	blue = inOther.blue;
 	return *this;
+}
+
+MColor::operator GdkColor() const
+{
+	GdkColor result = {};
+	result.red = red << 8 | red;
+	result.green = green << 8 | green;
+	result.blue = blue << 8 | blue;
+	return result;
 }
 
 string MColor::hex() const

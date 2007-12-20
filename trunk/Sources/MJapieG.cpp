@@ -50,6 +50,7 @@
 #include "MFindDialog.h"
 #include "MProject.h"
 #include "MSftpGetDialog.h"
+#include "MPrefsDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
 #include "MDiffWindow.h"
@@ -133,7 +134,7 @@ bool MJapieApp::ProcessCommand(
 	switch (inCommand)
 	{
 		case cmd_Preferences:
-//			MPrefsDialog::Create();
+			MPrefsDialog::Create();
 			break;
 		
 		case cmd_Quit:
@@ -334,21 +335,8 @@ void MJapieApp::RecycleWindow(
 
 void MJapieApp::RunEventLoop()
 {
-//	switch (Preferences::GetInteger("at launch", 1))
-//	{
-//		case 1:
-//			if (MDocument::GetFirstDocument() == nil)
-//				DoNew();
-//			break;
-//		
-//		case 2:
-//			if (MDocument::GetFirstDocument() == nil)
-//				DoOpen();
-//			break;
-//		
-//		default:
-//			break;
-//	}
+	if (Preferences::GetInteger("open worksheet", 0))
+		ShowWorksheet();
 	
 	if (Preferences::GetInteger("reopen project", 1))
 	{

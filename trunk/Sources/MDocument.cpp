@@ -53,7 +53,7 @@
 #include "MController.h"
 #include "MStyles.h"
 #include "MPreferences.h"
-//#include "MPrefsDialog.h"
+#include "MPrefsDialog.h"
 #include "MShell.h"
 #include "MMessageWindow.h"
 #include "MDevice.h"
@@ -144,7 +144,7 @@ MDocument::MDocument(
 	}
 
 //	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
-//	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
@@ -177,7 +177,7 @@ MDocument::MDocument(
 	Init();
 	
 //	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
-//	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
@@ -560,7 +560,7 @@ bool MDocument::ReadDocState(MDocState& ioDocState)
 {
 	bool result = false;
 	
-	if (IsSpecified())
+	if (IsSpecified() and Preferences::GetInteger("save state", 1))
 	{
 		ssize_t r = read_attribute(mURL.GetPath(), kJapieDocState, &ioDocState, kMDocStateSize);
 		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
@@ -915,7 +915,7 @@ void MDocument::CloseDocument()
 {
 	try
 	{
-		if (mSpecified)
+		if (mSpecified and Preferences::GetInteger("save state", 1))
 		{
 			MDocState state = { };
 

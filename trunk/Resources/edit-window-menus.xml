@@ -31,6 +31,7 @@
 		<item label="Clear" cmd='clea'/>
 		<item label="Select All" cmd='sall'/>
 		<item label="-"/>
+		<item label="Preferences" cmd='pref' />
 		<item label="Test" cmd='test'/>
 	</menu>
 	<menu id='textmenu' label="Text">

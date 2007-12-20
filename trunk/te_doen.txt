@@ -2,7 +2,11 @@
 
 - geluid werkt niet overal? (Ubuntu)
 
+- ISO-8859-1 tabellen maken
+
 - default Templates wegschrijven?
+- toch een rpm/installer?
+- bullet bij messages
 
 - Afronden Find Dialog:
 	- Replace All in Multi mode
@@ -13,14 +17,16 @@
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
 - fixen van shell implementatie
-- preferences dialog
 - about dialog
 - context menu's
 - vierkante selectie
+- autoscroll vertragen
+- regelnummer vlak
 
 - stdin lezen
 
-- bevestig make clean
+- subversion support
+
 - 'save all/show all' dialog voor het afsluiten
 
 - veralgemeniseren van pkg-config
@@ -30,6 +36,7 @@
 	- fetch/store status dialogs verplaatsen naar doc window?
 	- progress dialog clean up, labels kloppen niet
 	- authenticatie dialog splitsen of zo.
+	- libp11 support?
 
 - upper/lower case menu maken
 - een 'normalize unicode' menu item

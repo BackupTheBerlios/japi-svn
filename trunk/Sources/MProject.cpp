@@ -59,6 +59,8 @@
 #include "MFindAndOpenDialog.h"
 #include "MPkgConfig.h"
 #include "MStrings.h"
+#include "MAlerts.h"
+#include "MPreferences.h"
 
 //#define foreach BOOST_FOREACH
 
@@ -435,48 +437,51 @@ bool MProject::ReadState()
 {
 	bool result = false;
 	
-	MProjectState state = {};
-	ssize_t r = read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-	if (r > 0 and static_cast<uint32>(r) == kMProjectStateSize)
+	if (Preferences::GetInteger("save state", 1))
 	{
-		state.Swap();
-		
-		mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
-		
-		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
-			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+		MProjectState state = {};
+		ssize_t r = read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
+		if (r > 0 and static_cast<uint32>(r) == kMProjectStateSize)
 		{
-			SetWindowPosition(MRect(
-				state.mWindowPosition[0], state.mWindowPosition[1],
-				state.mWindowSize[0], state.mWindowSize[1]));
+			state.Swap();
+			
+			mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
+			
+			if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+				state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+			{
+				SetWindowPosition(MRect(
+					state.mWindowPosition[0], state.mWindowPosition[1],
+					state.mWindowSize[0], state.mWindowSize[1]));
+			}
+			
+	//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
+	//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
+			
+	//		if (state.mSelectedPanel < ePanelCount)
+	//		{
+	//			mPanel = static_cast<MProjectListPanel>(state.mSelectedPanel);
+	//			::SetControl32BitValue(mPanelSegmentRef, uint32(mPanel) + 1);
+	//			SelectPanel(mPanel);
+	//		}
+	//		else
+	//			mPanel = ePanelFiles;
+	//		
+	//		::MoveWindow(GetSysWindow(),
+	//			state.mWindowPosition[0], state.mWindowPosition[1], true);
+	//
+	//		::SizeWindow(GetSysWindow(),
+	//			state.mWindowSize[0], state.mWindowSize[1], true);
+	//
+	//		::ConstrainWindowToScreen(GetSysWindow(),
+	//			kWindowStructureRgn, kWindowConstrainStandardOptions,
+	//			NULL, NULL);
+	
+			SelectTarget(state.mSelectedTarget);
+			mFileList->SelectItem(state.mSelectedFile);
+			
+			result = true;
 		}
-		
-//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
-//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
-		
-//		if (state.mSelectedPanel < ePanelCount)
-//		{
-//			mPanel = static_cast<MProjectListPanel>(state.mSelectedPanel);
-//			::SetControl32BitValue(mPanelSegmentRef, uint32(mPanel) + 1);
-//			SelectPanel(mPanel);
-//		}
-//		else
-//			mPanel = ePanelFiles;
-//		
-//		::MoveWindow(GetSysWindow(),
-//			state.mWindowPosition[0], state.mWindowPosition[1], true);
-//
-//		::SizeWindow(GetSysWindow(),
-//			state.mWindowSize[0], state.mWindowSize[1], true);
-//
-//		::ConstrainWindowToScreen(GetSysWindow(),
-//			kWindowStructureRgn, kWindowConstrainStandardOptions,
-//			NULL, NULL);
-
-		SelectTarget(state.mSelectedTarget);
-		mFileList->SelectItem(state.mSelectedFile);
-		
-		result = true;
 	}
 	
 	return result;
@@ -493,39 +498,42 @@ bool MProject::DoClose()
 		TryCloseDocument(kSaveChangesClosingDocument, this);
 	else
 	{
-		try
+		if (Preferences::GetInteger("save state", 1))
 		{
-			MProjectState state = { };
+			try
+			{
+				MProjectState state = { };
+		
+				(void)read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
+				
+				state.Swap();
 	
-			(void)read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-			
-			state.Swap();
-
-			state.mSelectedFile = mFileList->GetSelected();
-			state.mSelectedTarget =
-				find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
-
-			int32 x;
-			mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
-//			mLinkOrderList->GetScrollPosition(pt);
-//			state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
-//			mPackageList->GetScrollPosition(pt);
-//			state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
-			
-			state.mSelectedPanel = mPanel;
-
-			MRect r;
-			GetWindowPosition(r);
-			state.mWindowPosition[0] = r.x;
-			state.mWindowPosition[1] = r.y;
-			state.mWindowSize[0] = r.width;
-			state.mWindowSize[1] = r.height;
+				state.mSelectedFile = mFileList->GetSelected();
+				state.mSelectedTarget =
+					find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
 	
-			state.Swap();
-			
-			write_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
+				int32 x;
+				mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
+//				mLinkOrderList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
+//				mPackageList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
+				
+				state.mSelectedPanel = mPanel;
+	
+				MRect r;
+				GetWindowPosition(r);
+				state.mWindowPosition[0] = r.x;
+				state.mWindowPosition[1] = r.y;
+				state.mWindowSize[0] = r.width;
+				state.mWindowSize[1] = r.height;
+		
+				state.Swap();
+				
+				write_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
+			}
+			catch (...) {}
 		}
-		catch (...) {}
 		
 		result = MWindow::DoClose();
 	}
@@ -2819,8 +2827,23 @@ void MProject::Compile(
 
 void MProject::MakeClean()
 {
-	mProjectItems.SetOutOfDate(true);
-	fs::remove_all(mObjectDir);
+	switch (DisplayAlert("make-clean-alert"))
+	{
+		case 1:
+			break;
+		
+		case 2:
+			mProjectItems.SetOutOfDate(true);
+			fs::remove_all(mProjectDataDir);
+			break;
+		
+		case 3:
+			mProjectItems.SetOutOfDate(true);
+			fs::remove_all(mObjectDir);
+			break;
+	}
+	
+	CheckDataDir();
 }
 
 // ---------------------------------------------------------------------------

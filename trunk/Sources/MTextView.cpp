@@ -69,19 +69,10 @@ enum {
 const int32
 	kLeftMargin = 10;
 
-const MColor
-	kPCLineColor = MColor("#cce5ff"),
-	kBreakpointColor = MColor("#5ea50c");
-
 const double
 	kCaretBlinkTime = 0.6;
 
 }
-
-MColor		MTextView::sCurrentLineColor,
-			MTextView::sMarkedLineColor,
-			MTextView::sPCLineColor,
-			MTextView::sBreakpointColor;
 
 // ---------------------------------------------------------------------------
 //	Default constructor
@@ -132,12 +123,6 @@ MTextView::MTextView(
 	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
 
 	slOnEvent.Connect(GetGtkWidget(), "event");
-
-	sCurrentLineColor = Preferences::GetColor("current line color", kCurrentLineColor);
-	sMarkedLineColor = Preferences::GetColor("marked line color", kMarkedLineColor);
-
-	sPCLineColor = kPCLineColor;
-	sBreakpointColor = kBreakpointColor;
 
 	mImageOriginX = mImageOriginY = 0;
 	
@@ -442,13 +427,13 @@ void MTextView::DrawLine(
 		bool fill = true;
 		
 		if (mDocument->GetPCLine() == inLineNr)
-			inDevice.SetForeColor(sPCLineColor);
+			inDevice.SetForeColor(gPCLineColor);
 		else if (marked and current)
-			inDevice.CreateAndUsePattern(sMarkedLineColor, sCurrentLineColor);
+			inDevice.CreateAndUsePattern(gMarkedLineColor, gCurrentLineColor);
 		else if (marked)
-			inDevice.SetForeColor(sMarkedLineColor);
+			inDevice.SetForeColor(gMarkedLineColor);
 		else if (current)
-			inDevice.SetForeColor(sCurrentLineColor);
+			inDevice.SetForeColor(gCurrentLineColor);
 		else
 			fill = false;
 		

@@ -59,7 +59,9 @@ extern std::string		gFontName;
 extern MPath			gTemplatesDir, gPrefsDir;
 
 extern MColor			gLanguageColors[];
-extern MColor			gHiliteColor, gInactiveHiliteColor, gOddRowColor;
+extern MColor			gHiliteColor, gInactiveHiliteColor;
+extern MColor			gCurrentLineColor, gMarkedLineColor;
+extern MColor			gPCLineColor, gBreakpointColor;
 
 void InitGlobals();
 void SaveGlobals();

@@ -61,7 +61,11 @@ const MColor
 	kTagColor("#008484"),
 	kAttribColor("#1e843b"),
 	kInvisiblesColor("#aaaaaa"),
-	kHiliteColor("#ffd281");
+	kHiliteColor("#ffd281"),
+	kCurrentLineColor("#ffffcc"),
+	kMarkedLineColor("#efff7f"),
+	kPCLineColor = MColor("#cce5ff"),
+	kBreakpointColor = MColor("#5ea50c");
 
 const MColor
 	kInactiveHighlightColor("#e5e5e5"),
@@ -78,7 +82,9 @@ uint32			gSpacesPerTab = 4;
 uint32			gFontSize = 10;
 std::string		gFontName = "Monaco";
 MColor			gLanguageColors[kLStyleCount];
-MColor			gHiliteColor, gInactiveHiliteColor, gOddRowColor;
+MColor			gHiliteColor, gInactiveHiliteColor;
+MColor			gCurrentLineColor, gMarkedLineColor;
+MColor			gPCLineColor, gBreakpointColor;
 
 MPath			gTemplatesDir, gPrefsDir;
 
@@ -87,7 +93,11 @@ void InitGlobals()
 	gPrefsDir = g_get_user_config_dir();
 	gPrefsDir /= "japie";
 	
-	gTemplatesDir = gPrefsDir / "Templates";
+	const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
+	if (templatesDir == nil)
+		gTemplatesDir = gPrefsDir / "Templates";
+	else
+		gTemplatesDir = fs::system_complete(templatesDir);
 
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
@@ -110,13 +120,14 @@ void InitGlobals()
 	gLanguageColors[kLAttribColor] =		Preferences::GetColor("attribute color", kAttribColor);
 	gLanguageColors[kLInvisiblesColor] =	Preferences::GetColor("invisibles color", kInvisiblesColor);
 
-//	RGBColor c;
-//	::LMGetHiliteRGB(&c);
-//	gHiliteColor = c;
-
-	gHiliteColor = kHiliteColor;
-	gInactiveHiliteColor = kInactiveHighlightColor;
-	gOddRowColor = kOddRowBackColor;
+	gHiliteColor = Preferences::GetColor("hilite color", kHiliteColor);
+	gInactiveHiliteColor = Preferences::GetColor("inactive hilite color", kInactiveHighlightColor);
+//	gOddRowColor = kOddRowBackColor;
+	gCurrentLineColor = Preferences::GetColor("current line color", kCurrentLineColor);
+	gMarkedLineColor = Preferences::GetColor("marked line color", kMarkedLineColor);
+	gPCLineColor = Preferences::GetColor("pc line color", kPCLineColor);
+	gBreakpointColor = Preferences::GetColor("breakpoint color", kBreakpointColor);
+	
 }
 
 void SaveGlobals()
