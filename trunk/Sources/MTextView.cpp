@@ -1337,7 +1337,7 @@ bool MTextView::DragAccept(
 		case DND_TARGET_TYPE_STRING:
 			if (result)
 			{
-				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingMacOSRoman, inData, inLength));
+				auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(kEncodingISO88591, inData, inLength));
 				string text;
 				decoder->GetText(text);
 				mDocument->Drop(mDragCaret, text.c_str(), text.length(), inMove);

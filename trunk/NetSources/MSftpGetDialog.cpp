@@ -127,7 +127,8 @@ void MSftpGetDialog::GotFile()
 	
 	fUrl.SetPassword("");
 	
-	MDocument* doc = new MDocument(fUrl, fText);
+	MDocument* doc = new MDocument(&fUrl);
+	doc->Type(fText.c_str(), fText.length());
 	
 	gApp->AddToRecentMenu(fUrl);
 	

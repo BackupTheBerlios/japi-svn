@@ -420,3 +420,38 @@ MEncodingTraits<kEncodingMacOSRoman>::WriteUnicode(
 	*inText++ = ch;
 	return 1;
 }
+
+// ISO-8859-1
+// wow, this one is simple...
+
+template<>
+template<class ByteIterator>
+uint32
+MEncodingTraits<kEncodingISO88591>::GetNextCharLength(
+	ByteIterator		inText)
+{
+	return 1;
+}
+
+template<>
+template<class ByteIterator>
+void
+MEncodingTraits<kEncodingISO88591>::ReadUnicode(
+	ByteIterator		inText,
+	uint32&				outLength,
+	wchar_t&			outUnicode)
+{
+	outUnicode = *inText;
+	outLength = 1;
+}
+
+template<>
+template<class ByteIterator>
+uint32
+MEncodingTraits<kEncodingISO88591>::WriteUnicode(
+	ByteIterator&		inText,
+	wchar_t				inUnicode)
+{
+	*inText++ = static_cast<char>(inUnicode);
+	return 1;
+}

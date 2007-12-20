@@ -349,6 +349,10 @@ MEncoder* MEncoder::GetEncoder(MEncoding inEncoding)
 			encoder = new MEncoderImpl<kEncodingMacOSRoman>();
 			break;
 		
+		case kEncodingISO88591:
+			encoder = new MEncoderImpl<kEncodingISO88591>();
+			break;
+		
 		default:
 			assert(false);
 			THROW(("Unknown encoding"));
@@ -413,6 +417,10 @@ MDecoder* MDecoder::GetDecoder(MEncoding inEncoding, const void* inBuffer, uint3
 		
 		case kEncodingMacOSRoman:
 			decoder = new MDecoderImpl<kEncodingMacOSRoman>(inBuffer, inLength);
+			break;
+		
+		case kEncodingISO88591:
+			decoder = new MDecoderImpl<kEncodingISO88591>(inBuffer, inLength);
 			break;
 		
 		default:

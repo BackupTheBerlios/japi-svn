@@ -133,13 +133,17 @@ GdkPixbuf* CreateDot(
 GdkPixbuf* GetBadge(
 	MMessageKind		inKind)
 {
-	const MColor kMsgNoneColor("#efff7f");
+	const MColor
+		kMsgNoneColor("#efff7f");
+	
+	const uint32
+		kDotSize = 9;
 	
 	static GdkPixbuf* sBadges[] = {
-		CreateDot(kMsgNoneColor, 10),
-		CreateDot(kNoteColor, 10),
-		CreateDot(kWarningColor, 10),
-		CreateDot(kErrorColor, 10)
+		CreateDot(kMsgNoneColor, kDotSize),
+		CreateDot(kNoteColor, kDotSize),
+		CreateDot(kWarningColor, kDotSize),
+		CreateDot(kErrorColor, kDotSize)
 	};
 
 	return sBadges[inKind];

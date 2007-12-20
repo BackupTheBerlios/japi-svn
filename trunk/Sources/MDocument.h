@@ -95,13 +95,6 @@ class MDocument
 	explicit			MDocument(
 							const MUrl*				inURL);
 
-	explicit			MDocument(
-							const MUrl&				inURL);
-
-						MDocument(
-							const MUrl&				inURL,
-							const std::string&		inText);
-
 						MDocument(
 							const std::string&		inText,
 							const std::string&		inFileNameHint);
@@ -219,8 +212,18 @@ class MDocument
 	bool				GetSoftwrap() const;
 
 	void				HandleFindDialogCommand(uint32 inCommand);
+
 	void				FindAll(std::string inWhat, bool inIgnoreCase, 
 							bool inRegex, bool inSelection, MMessageList&outHits);
+
+						// this one is for the MFindDialog
+	static void			FindAll(
+							const MPath&		inPath,
+							const std::string&	inWhat,
+							bool				inIgnoreCase, 
+							bool				inRegex,
+							bool				inSelection,
+							MMessageList&		outHits);
 
 	void				FindWord(uint32 inOffset, uint32& outMinAnchor, uint32& outMaxAnchor);
 
@@ -339,6 +342,8 @@ class MDocument
 	void				SelectIncludePopupItem(uint32 inItem);
 
   private:
+
+						MDocument();
 
 	void				Init();
 	void				ReInit();

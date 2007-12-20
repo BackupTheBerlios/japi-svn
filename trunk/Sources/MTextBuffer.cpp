@@ -528,6 +528,8 @@ MTextBuffer::MTextBuffer()
 		mEncoding = kEncodingUTF16LE;
 	else if (s == "mac os roman")
 		mEncoding = kEncodingMacOSRoman;
+	else if (s == "iso-8859-1")
+		mEncoding = kEncodingISO88591;
 	else
 		mEncoding = kEncodingUTF8;
 	
@@ -703,7 +705,7 @@ void MTextBuffer::ReadFromFile(
 		if (validUtf8)
 			mEncoding = kEncodingUTF8;
 		else
-			mEncoding = kEncodingMacOSRoman;
+			mEncoding = kEncodingISO88591;
 	}
 	
 	if (mEncoding == kEncodingUTF8)

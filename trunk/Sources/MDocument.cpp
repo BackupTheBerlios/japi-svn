@@ -196,8 +196,7 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(
-	const MUrl&		inFile)
+MDocument::MDocument()
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eShellStatusIn(this, &MDocument::ShellStatusIn)
@@ -206,57 +205,8 @@ MDocument::MDocument(
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 	, eNotifyPut(this, &MDocument::NotifyPut)
-
-	, mURL(inFile)
 {
 	Init();
-
-	mSpecified = true;
-
-//	ReInit();
-
-	if (mURL.IsLocal() and fs::exists(mURL.GetPath()))
-	{
-		ReadFile();
-		Rewrap();
-	}
-
-//	boost::mutex::scoped_lock lock(sDocListMutex);
-	mNext = sFirst;
-	sFirst = this;
-}
-
-MDocument::MDocument(
-	const MUrl&		inFile,
-	const string&	inText)
-	: eBoundsChanged(this, &MDocument::BoundsChanged)
-	, ePrefsChanged(this, &MDocument::PrefsChanged)
-	, eShellStatusIn(this, &MDocument::ShellStatusIn)
-	, eStdOut(this, &MDocument::StdOut)
-	, eStdErr(this, &MDocument::StdErr)
-	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
-	, eIdle(this, &MDocument::Idle)
-	, eNotifyPut(this, &MDocument::NotifyPut)
-	, mURL(inFile)
-	, mText(inText)
-{
-	Init();
-
-	mSpecified = true;
-
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
-	if (mLanguage != nil)
-	{
-		mNamedRange = new MNamedRange;
-		mIncludeFiles = new MIncludeFileList;
-	}
-
-	ReInit();
-	Rewrap();
-
-//	boost::mutex::scoped_lock lock(sDocListMutex);
-	mNext = sFirst;
-	sFirst = this;
 }
 
 void MDocument::Init()
@@ -286,16 +236,10 @@ void MDocument::Init()
 
 	for (int i = kActiveInputArea; i <= kSelectedText; ++i)
 		mTextInputAreaInfo.fOffset[i] = -1;
-	
-//	PRINT(("Document created %x", this));
 }
 
 MDocument::~MDocument()
 {
-//	PRINT(("Deleting document %x (%s)", this,
-//		IsSpecified() ? mURL.str().c_str() : "unspecified"));
-//	boost::mutex::scoped_lock lock(sDocListMutex);
-
 	if (sFirst == this)
 		sFirst = mNext;
 	else
@@ -2735,7 +2679,7 @@ bool MDocument::DoFindNext(MDirection inDirection)
 void MDocument::FindAll(string inWhat, bool inIgnoreCase, 
 	bool inRegex, bool inSelection, MMessageList&outHits)
 {
-	if (mSelection.IsBlock())
+	if (inSelection and mSelection.IsBlock())
 		THROW(("block selection not supported in Find All"));
 
 	uint32 minOffset = 0;
@@ -2762,6 +2706,23 @@ void MDocument::FindAll(string inWhat, bool inIgnoreCase,
 		
 		minOffset = sel.GetMaxOffset();
 	}
+}
+
+void MDocument::FindAll(
+	const MPath&		inPath,
+	const std::string&	inWhat,
+	bool				inIgnoreCase, 
+	bool				inRegex,
+	bool				inSelection,
+	MMessageList&		outHits)
+{
+	MDocument doc;
+	MFile file(inPath);
+
+	doc.mURL = MUrl(inPath);
+	doc.mText.ReadFromFile(file);
+	doc.Rewrap();
+	doc.FindAll(inWhat, inIgnoreCase, inRegex, inSelection, outHits);
 }
 
 void MDocument::DoReplace(bool inFindNext, MDirection inDirection)

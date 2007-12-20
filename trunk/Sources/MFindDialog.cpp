@@ -519,10 +519,7 @@ void MFindDialog::FindAll(
 			gdk_threads_leave();
 			
 			if (not searched)
-			{
-				MDocument newDoc(url);
-				newDoc.FindAll(inWhat, inIgnoreCase, inRegex, false, *list.get());
-			}
+				MDocument::FindAll(*file, inWhat, inIgnoreCase, inRegex, false, *list.get());
 		}
 		
 		mFindAllResult = list.release();
@@ -548,7 +545,6 @@ void MFindDialog::GetFilesForFindAll(
 	const string&	inFileNameFilter,
 	FileSet&		outFiles)
 {
-	PRINT(("Search in %s", inDirectory.string().c_str()));
 	SetStatusString(inDirectory.string());
 	
 	switch (inMethod)

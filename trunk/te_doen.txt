@@ -2,7 +2,8 @@
 
 Moet af:
 
-- ISO-8859-1 tabellen maken
+- crash in Close All?
+- clean up code na leaks test
 
 - Afronden Find Dialog:
 	- Replace All in Multi mode
@@ -20,6 +21,9 @@ Leuk om te hebben:
 
 - default Templates wegschrijven?
 - toch een rpm/installer?
+
+- python language plugin
+- fortran language plugin
 
 - context menu's
 - vierkante selectie
@@ -50,8 +54,6 @@ Leuk om te hebben:
 
 - printen
 - accelerator-achtig iets
-
-- clean up code na leaks test
 
 - split windows?
 - dynamische menus?
