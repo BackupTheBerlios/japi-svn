@@ -396,57 +396,54 @@ bool IsModifierDown(
 	return result;
 }
 
-//bool ModifierKeyDown(int inModifiers)
-//{
-//	bool result = false;
-//
-//	 XModifierKeymap* km = ::XGetModifierMapping(gDisplay);
-//	 if (km == nil)
-//	 	return false;
-//	
-//	 char keyMap[32];
-//	 ::XQueryKeymap(gDisplay, keyMap);
-//	 
-//	 int key = 0;
-//
-//	 if (inModifiers & GDK_SHIFT_MASK)
-//	 	key = ShiftMask;
-//	 else if (inModifiers & GDK_C)
-//	 	key = gPrefs->GetPrefInt("cmd-mod", Mod1Mask);
-//	 else if (inModifiers & kOptionKey)
-//	 	key = gPrefs->GetPrefInt("opt-mod", Mod4Mask);
-//	 else if (inModifiers & kControlKey)
-//	 	key = gPrefs->GetPrefInt("cntrl-mod", ControlMask);
-//	
-//	if (key != 0)
-//	{
-//		int ix = 0;
-//		
-//		switch (key)
-//		{
-//			case ShiftMask:		ix = ShiftMapIndex;		break;
-//			case LockMask:		ix = LockMapIndex;		break;
-//			case ControlMask:	ix = ControlMapIndex;	break;
-//			case Mod1Mask:		ix = Mod1MapIndex;		break;
-//			case Mod2Mask:		ix = Mod2MapIndex;		break;
-//			case Mod3Mask:		ix = Mod3MapIndex;		break;
-//			case Mod4Mask:		ix = Mod4MapIndex;		break;
-//			case Mod5Mask:		ix = Mod5MapIndex;		break;
-//		}
-//		
-//		if (ix != 0)
-//		{
-//			for (int i = 0; result == false && i < km->max_keypermod; ++i)
-//			{
-//				int code = km->modifiermap[ix * km->max_keypermod + i];
-//				if (code <= 0 || code > 255)
-//					continue;
-//				result = (keyMap[code >> 3] & (1 << (code & 0x07))) != 0;
-//			}
-//		}
-//	}
-//	
-//	::XFreeModifiermap(km);
-//	
-//	return result;
-//}
+void HexDump(
+	const void*		inBuffer,
+	uint32			inLength,
+	ostream&		outStream)
+{
+	const char kHex[] = "0123456789abcdef";
+	char s[] = "xxxxxxxx  cccc cccc cccc cccc  cccc cccc cccc cccc  |................|";
+	const int kHexOffset[] = { 10, 12, 15, 17, 20, 22, 25, 27, 31, 33, 36, 38, 41, 43, 46, 48 };
+	const int kAsciiOffset = 53;
+	
+	const unsigned char* data = reinterpret_cast<const unsigned char*>(inBuffer);
+	uint32 offset = 0;
+	
+	while (offset < inLength)
+	{
+		int rr = inLength - offset;
+		if (rr > 16)
+			rr = 16;
+		
+		char* t = s + 7;
+		long o = offset;
+		
+		while (t >= s)
+		{
+			*t-- = kHex[o % 16];
+			o /= 16;
+		}
+		
+		for (int i = 0; i < rr; ++i)
+		{
+			s[kHexOffset[i] + 0] = kHex[data[i] >> 4];
+			s[kHexOffset[i] + 1] = kHex[data[i] & 0x0f];
+			if (data[i] < 128 and isprint(data[i]))
+				s[kAsciiOffset + i] = data[i];
+			else
+				s[kAsciiOffset + i] = '.';
+		}
+		
+		for (int i = rr; i < 16; ++i)
+		{
+			s[kHexOffset[i] + 0] = ' ';
+			s[kHexOffset[i] + 1] = ' ';
+			s[kAsciiOffset + i] = ' ';
+		}
+		
+		outStream << s << endl;
+		
+		offset += rr;
+		data += rr;
+	}
+}

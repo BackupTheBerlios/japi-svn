@@ -134,17 +134,26 @@ void PlaySound(
 		string filename;
 		
 		if (inSoundName == "success")
-			filename = Preferences::GetString("success sound", "/usr/share/sounds/info.wav");
+			filename = Preferences::GetString("success sound", "info.wav");
 		else if (inSoundName == "failure")
-			filename = Preferences::GetString("failure sound", "/usr/share/sounds/error.wav");
+			filename = Preferences::GetString("failure sound", "error.wav");
 		else if (inSoundName == "warning")
-			filename = Preferences::GetString("warning sound", "/usr/share/sounds/warning.wav");
+			filename = Preferences::GetString("warning sound", "warning.wav");
 		else if (inSoundName == "question")
-			filename = Preferences::GetString("question sound", "/usr/share/sounds/question.wav");
+			filename = Preferences::GetString("question sound", "question.wav");
 		else
-			THROW(("Unknown sound name"));;
-		
+			THROW(("Unknown sound name"));
+
 		MPath path = filename;
+
+		const char* const* config_dirs = g_get_system_data_dirs();
+		for (const char* const* dir = config_dirs; *dir != nil; ++dir)
+		{
+			path = MPath(*dir) / "sounds" / filename;
+			if (fs::exists(path))
+				break;
+		}
+		
 		if (fs::exists(path))
 			MAudioSocket::Instance().Play(path.string());
 		else

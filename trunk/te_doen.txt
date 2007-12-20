@@ -1,12 +1,8 @@
 ﻿Te doen
 
-- geluid werkt niet overal? (Ubuntu)
+Moet af:
 
 - ISO-8859-1 tabellen maken
-
-- default Templates wegschrijven?
-- toch een rpm/installer?
-- bullet bij messages
 
 - Afronden Find Dialog:
 	- Replace All in Multi mode
@@ -18,12 +14,17 @@
 - read-only files ondersteunen
 - fixen van shell implementatie
 - about dialog
+- stdin lezen
+
+Leuk om te hebben:
+
+- default Templates wegschrijven?
+- toch een rpm/installer?
+
 - context menu's
 - vierkante selectie
 - autoscroll vertragen
 - regelnummer vlak
-
-- stdin lezen
 
 - subversion support
 

@@ -356,7 +356,9 @@ GtkWidget* MWindow::GetWidget(
 
 void MWindow::Beep()
 {
-	gdk_window_beep(GetGtkWidget()->window);
+//	gdk_window_beep(GetGtkWidget()->window);
+	cout << "beep!" << endl;
+	gdk_beep();
 }
 
 void MWindow::DoForEachCallBack(

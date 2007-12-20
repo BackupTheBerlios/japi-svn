@@ -268,4 +268,9 @@ double GetDoubleClickTime();
 bool IsModifierDown(
 		int						inModifierMask);
 
+void HexDump(
+	const void*		inBuffer,
+	uint32			inLength,
+	std::ostream&	outStream);
+
 #endif

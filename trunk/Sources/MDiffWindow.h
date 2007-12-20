@@ -76,7 +76,9 @@ class MDiffWindow : public MDialog
 	void				RecalculateDiffsForDirs();
 	
 	void				DiffSelected();
-	void				FileSelected(uint32 inDiffNr);
+
+	void				DiffInvoked(
+							int32				inDiffNr);
 	
 	MSlot<void()>		mSelected;
 
@@ -96,6 +98,10 @@ class MDiffWindow : public MDialog
 	
 	void				SelectRow(
 							int32			inRow);
+
+	void				InvokeRow(
+							GtkTreePath*		inPath,
+							GtkTreeViewColumn*	inColumn);
 
 	void				RemoveRow(
 							int32			inRow);
@@ -117,6 +123,9 @@ class MDiffWindow : public MDialog
 	typedef std::vector<MDirDiffItem>	MDirDiffScript;
 	
 	MDirDiffScript		mDScript;
+
+	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+						mInvokeRow;
 };
 
 #endif

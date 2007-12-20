@@ -100,11 +100,14 @@
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<file>libattr.a</file>
+			<!--file>libattr.a</file-->
+			<file>libboost_thread-mt.a</file>
+			<file>libboost_filesystem.a</file>
+			<file>libboost_date_time.a</file>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_date_time.a</file>
-			<file>libattr.a</file>
+			<!--file>libattr.a</file-->
 			<file>libgthread-2.0.a</file>
 			<link>cryptopp</link>
 			<link>z</link>

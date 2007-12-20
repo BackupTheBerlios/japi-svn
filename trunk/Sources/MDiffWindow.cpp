@@ -71,6 +71,7 @@ MDiffWindow::MDiffWindow()
 	, mSelected(this, &MDiffWindow::DiffSelected)
 	, mDoc1(nil)
 	, mDoc2(nil)
+	, mInvokeRow(this, &MDiffWindow::InvokeRow)
 {
 	GtkWidget* treeView = GetWidget(kListViewID);
 	THROW_IF_NIL((treeView));
@@ -553,9 +554,17 @@ void MDiffWindow::DiffSelected()
 		mDoc1->Select(mDoc1->LineStart(diff.mA1), mDoc1->LineStart(diff.mA2), kScrollForDiff);
 		mDoc2->Select(mDoc2->LineStart(diff.mB1), mDoc2->LineStart(diff.mB2), kScrollForDiff);
 	}
-	else if (selected >= 0 and selected < (int32)mDScript.size())
+}
+
+// ----------------------------------------------------------------------------
+// MDiffWindow::DiffInvoked
+
+void MDiffWindow::DiffInvoked(
+	int32		inRow)
+{
+	if (inRow >= 0 and inRow < (int32)mDScript.size())
 	{
-		MDirDiffItem diff = mDScript[selected];
+		MDirDiffItem diff = mDScript[inRow];
 		
 		switch (diff.status)
 		{
@@ -581,6 +590,7 @@ void MDiffWindow::DiffSelected()
 				break;
 		}
 	}
+	
 }
 
 // ----------------------------------------------------------------------------
@@ -745,6 +755,29 @@ void MDiffWindow::SelectRow(
 	
 	gtk_tree_selection_select_path(selection, path);
 	gtk_tree_path_free(path);
+}
+
+// ----------------------------------------------------------------------------
+// MDiffWindow::InvokeRow
+
+void MDiffWindow::InvokeRow(
+	GtkTreePath*		inPath,
+	GtkTreeViewColumn*	inColumn)
+{
+	int32 item = -1;
+
+	char* path = gtk_tree_path_to_string(inPath);
+	if (path != nil)
+	{
+		item = atoi(path);
+		g_free(path);
+	}
+	
+	try
+	{
+		DiffInvoked(item);
+	}
+	catch (...) {}
 }
 
 // ----------------------------------------------------------------------------

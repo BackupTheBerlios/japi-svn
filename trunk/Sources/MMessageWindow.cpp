@@ -76,6 +76,9 @@ const uint32
 
 // --------------------------------------------------------------------
 // code to create a GdkPixbuf containing a single dot.
+//
+// use cairo to create an alpha mask, then set the colour
+// into the pixbuf.
 
 GdkPixbuf* CreateDot(
 	MColor			inColor,
@@ -87,24 +90,17 @@ GdkPixbuf* CreateDot(
 	
 	cairo_t* c = cairo_create(cs);
 
-	cairo_set_source_rgba(c,
-		inColor.red / 255.0,
-		inColor.green / 255.0,
-		inColor.blue / 255.0,
-		1.f);
-
-	cairo_translate(c, inSize + inSize / 2., inSize + inSize / 2.);
+	cairo_translate(c, inSize / 2., inSize / 2.);
 	cairo_scale(c, inSize / 2., inSize / 2.);
 	cairo_arc(c, 0., 0., 1., 0., 2 * M_PI);
 	cairo_fill(c);
-	
-	cairo_surface_flush(cs);
-	
+
 	cairo_destroy(c);
 	
 	// then copy the data over to a pixbuf;
 
-	GdkPixbuf* result = gdk_pixbuf_new(GDK_COLORSPACE_RGB, true, 8, inSize, inSize);
+	GdkPixbuf* result = gdk_pixbuf_new(
+		GDK_COLORSPACE_RGB, true, 8, inSize, inSize);
 	THROW_IF_NIL(result);
 	
 	unsigned char* dst = gdk_pixbuf_get_pixels(result);
@@ -119,27 +115,28 @@ GdkPixbuf* CreateDot(
 		for (uint32 y = 0; y < inSize; ++y)
 		{
 			unsigned char* p = dst + y * dst_rowstride + x * n_channels;
+			uint32 cp = *reinterpret_cast<uint32*>(src + y * src_rowstride + x * 4);
 
-			uint32 pixel = *reinterpret_cast<uint32*>(src + y * src_rowstride + x * 4);
+			p[0] = inColor.red;
+			p[1] = inColor.green;
+			p[2] = inColor.blue;
 
-			p[0] = (pixel >> 16) & 0xFF;
-			p[1] = (pixel >>  8) & 0xFF;
-			p[2] = (pixel >>  0) & 0xFF;
-//			p[3] = (pixel >> 24) & 0xFF;
-			p[3] = 255;
+			p[3] = (cp >> 24) & 0xFF;
 		}
 	}
 	
 	cairo_surface_destroy(cs);
-	
+
 	return result;
 }
 
 GdkPixbuf* GetBadge(
 	MMessageKind		inKind)
 {
+	const MColor kMsgNoneColor("#efff7f");
+	
 	static GdkPixbuf* sBadges[] = {
-		CreateDot(kWhite, 10),
+		CreateDot(kMsgNoneColor, 10),
 		CreateDot(kNoteColor, 10),
 		CreateDot(kWarningColor, 10),
 		CreateDot(kErrorColor, 10)
@@ -298,12 +295,8 @@ MMessageWindow::MMessageWindow(
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), (GTK_TREE_MODEL(store)));
 	
-//	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-//		_("File"), renderer, "text", kFileColumn, NULL);
-
 	GtkTreeViewColumn* column = gtk_tree_view_column_new();
 	gtk_tree_view_column_set_title(column, _("File"));
-//	gtk_tree_view_column_set_spacing(column, 2);
 
 	GtkCellRenderer* renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_column_pack_start(column, renderer, false);
