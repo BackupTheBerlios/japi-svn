@@ -324,7 +324,7 @@ void MDocument::SFTPChannelEvent(
 			if (mSFTPExpectedSize > 0)
 			{
 				eSSHProgress(
-					float(mSFTPData.size()) / mSFTPExpectedSize,
+					float(mSFTPData.length()) / mSFTPExpectedSize,
 					_("Receiving data"));
 			}
 			break;
@@ -340,12 +340,12 @@ void MDocument::SFTPChannelEvent(
 		
 		case SFTP_FILE_CLOSED:
 			eSSHProgress(-1.f, _("done"));
-			mSFTPChannel.reset();
+//			mSFTPChannel.reset();
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
 			eSSHProgress(0, _("Timeout"));
-			mSFTPChannel.reset();
+//			mSFTPChannel.reset();
 			break;
 	}
 }

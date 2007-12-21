@@ -144,28 +144,49 @@ class MSSHProgress
 {
   public:
 					MSSHProgress(
-						MDocWindow*		inDocWindow);
+						GtkWidget*		inWindowVBox);
+
 	virtual			~MSSHProgress();
 
 	void			Progress(
 						float			inFraction,
 						const string&	inMessage);
+
+  private:
+	GtkWidget*		mProgressBin;
+	GtkWidget*		mProgressBar;
+	GtkWidget*		mProgressLabel;
 };
 
 MSSHProgress::MSSHProgress(
-	MDocWindow*		inDocWindow)
+	GtkWidget*		inWindowVBox)
 {
+	mProgressBin = gtk_vbox_new(false, 4);
+	gtk_box_pack_start(GTK_BOX(inWindowVBox), mProgressBin, false, false, 10);
+	gtk_box_reorder_child(GTK_BOX(inWindowVBox), mProgressBin, 1);
+	
+	mProgressBar = gtk_progress_bar_new();
+	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressBar, false, false, 4);
+	
+	mProgressLabel = gtk_label_new("");
+	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressLabel, false, false, 4);
+	
+	gtk_widget_show_all(mProgressBin);
 }
 
 MSSHProgress::~MSSHProgress()
 {
+	gtk_widget_hide(mProgressBin);
 }
 
 void MSSHProgress::Progress(
 	float			inFraction,
 	const string&	inMessage)
 {
-	cout << "*** Progress: " << inFraction << " message: " << inMessage << endl;
+	gtk_label_set_text(GTK_LABEL(mProgressLabel), inMessage.c_str());
+	gtk_label_set_ellipsize(GTK_LABEL(mProgressLabel), PANGO_ELLIPSIZE_MIDDLE);
+
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(mProgressBar), inFraction);
 }
 
 // ------------------------------------------------------------------
@@ -181,6 +202,7 @@ MDocWindow::MDocWindow()
 	, mTextView(nil)
 	, mVBox(gtk_vbox_new(false, 0))
 	, mStatusbar(nil)
+	, mSelectionPanel(nil)
 	, mMenubar(this, mVBox, GetGtkWidget())
 	, mParsePopup(nil)
 	, mIncludePopup(nil)
@@ -409,7 +431,7 @@ void MDocWindow::SSHProgress(
 	else
 	{
 		if (mSSHProgress == nil)
-			mSSHProgress = new MSSHProgress(this);
+			mSSHProgress = new MSSHProgress(mVBox);
 		
 		mSSHProgress->Progress(inFraction, inMessage);
 	}
