@@ -8,8 +8,9 @@ Moet af:
 - Afronden Find Dialog:
 	- Replace All in Multi mode
 
-- OpenOneDocument moet anders werken:
-	MDocument met een remote URL moet aangemaakt en dan zelf data binnen trekken.
+- SSH/SFTP afronden
+	- vertalen strings
+	- authenticatie dialog splitsen of zo.
 
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
@@ -37,14 +38,10 @@ Leuk om te hebben:
 - veralgemeniseren van pkg-config
 - configuratie van compiler, koppelen aan extensie(s)
 
-- SSH/SFTP afronden
-	- fetch/store status dialogs verplaatsen naar doc window?
-	- progress dialog clean up, labels kloppen niet
-	- authenticatie dialog splitsen of zo.
-	- libp11 support?
-
 - upper/lower case menu maken
 - een 'normalize unicode' menu item
+
+- libp11 support?
 
 - project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen

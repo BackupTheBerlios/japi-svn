@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
+#include <boost/bind.hpp>
 
 #include <cryptopp/rng.h>
 #include <cryptopp/aes.h>
@@ -37,6 +38,7 @@
 #include "MPreferences.h"
 #include "MUtils.h"
 #include "MKnownHosts.h"
+#include "MStrings.h"
 
 using namespace std;
 using namespace CryptoPP;
@@ -79,8 +81,6 @@ const char
 	kUseCompressionAlgorithms[] = "zlib,none",
 	kDontUseCompressionAlgorithms[] = "none,zlib";
 
-#if DEBUG
-
 const char* LookupToken(
 	const TokenNames	inTokens[],
 	int					inValue)
@@ -90,8 +90,6 @@ const char* LookupToken(
 		++t;
 	return t->token;
 }
-
-#endif
 	
 // implement as globals to keep things simple
 Integer				p, q, g;
@@ -194,7 +192,6 @@ MSshConnection::MSshConnection()
 	, fInSequenceNr(0)
 	, fAuthenticated(false)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
-	, fOpeningChannel(nil)
 	, fRefCount(1)
 	, fOpenedAt(GetLocalTime())
 {
@@ -320,16 +317,9 @@ MSshConnection* MSshConnection::Get(
 void MSshConnection::Error(
 	int			inReason)
 {
-//	string msg = MStrings::GetIndString(4008, inReason);
-//	if (msg.length() == 0)
-//		msg = MStrings::GetIndString(4008, 0);
+	eConnectionMessage(FormatString("Error in SSH connection: ^0", LookupToken(kErrors, inReason)));
 	
-	stringstream s;
-	s << "Error in ssh connection: " << inReason;
-	
-	eConnectionMessage(s.str());
-	
-	PRINT(("Error: %s (%s)", LookupToken(kErrors, inReason), s.str().c_str()));
+	PRINT(("Error: %s", LookupToken(kErrors, inReason)));
 	Disconnect();
 	
 	fErrCode = inReason;
@@ -352,7 +342,7 @@ bool MSshConnection::Connect(
 		return false;
 	}
 	
-	eConnectionMessage("Looking up address");
+	eConnectionMessage(_("Looking up address"));
 
 	/* First do some ip address configuration */
 	sockaddr_in lAddr = {};
@@ -377,7 +367,7 @@ bool MSshConnection::Connect(
 	unsigned long lValue = 1;
 	ioctl(fSocket, FIONBIO, &lValue);
 
-	eConnectionMessage("Connecting…");
+	eConnectionMessage(_("Connecting…"));
 
 	/* Connect the control port. */
 	int lResult = connect(fSocket, (sockaddr*) &lAddr, sizeof(lAddr));
@@ -406,10 +396,12 @@ void MSshConnection::Disconnect()
 	
 		fBusy = false;
 		
-		eConnectionMessage("Connection closed");
+		eConnectionMessage(_("Connection closed"));
 		eConnectionEvent(SSH_CHANNEL_CLOSED);
 	}
 
+	for_each(fChannels.begin(), fChannels.end(),
+		boost::bind(&MSshChannel::SetChannelOpen, _1, false));
 	fChannels.clear();
 }
 
@@ -529,14 +521,10 @@ void MSshConnection::Idle(
 	
 		for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
 		{
-			if (ch->fPending.size() > 0 and
-				ch->fPending.front().length() < ch->fHostWindowSize)
-			{
-				MSshPacket p;
-				p.data = ch->fPending.front();
-				ch->fPending.pop_front();
+			MSshPacket p;
+
+			if ((*ch)->PopPending(p.data))
 				Send(p);
-			}
 		}
 
 		// if there's a time out, let the user decide what to do		
@@ -771,9 +759,9 @@ void MSshConnection::ProcessPacket()
 			ProcessChannelRequest(message, in, out);
 			break;
 		
-		case SSH_MSG_CHANNEL_OPEN:
-			ProcessChannelOpen(message, in, out);
-			break;
+//		case SSH_MSG_CHANNEL_OPEN:
+//			ProcessChannelOpen(message, in, out);
+//			break;
 		
 		default:
 			if (fHandler != nil)
@@ -855,7 +843,7 @@ void MSshConnection::ProcessConnect()
 	if (fInPacket.substr(0, 4) != "SSH-")
 		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
 
-	eConnectionMessage("Exchanging keys");
+	eConnectionMessage(_("Exchanging keys"));
 	
 	fHostVersion = fInPacket;
 
@@ -1163,7 +1151,7 @@ void MSshConnection::ProcessUserAuthInit(
 		Error(SSH_DISCONNECT_SERVICE_NOT_AVAILABLE);
 	else
 	{
-		eConnectionMessage("Starting authentication");
+		eConnectionMessage(_("Starting authentication"));
 
 		out << uint8(SSH_MSG_USERAUTH_REQUEST)
 			<< fUserName << "ssh-connection" << "none";
@@ -1282,7 +1270,7 @@ void MSshConnection::ProcessUserAuthPublicKey(
 
 		case SSH_MSG_USERAUTH_PK_OK:
 		{
-			eConnectionMessage("Public key authentication");
+			eConnectionMessage(_("Public key authentication"));
 
 			string alg, blob;
 			
@@ -1426,7 +1414,7 @@ void MSshConnection::RecvAuthInfo(
 
 void MSshConnection::TryPassword()
 {
-	eConnectionMessage("Password authentication");
+	eConnectionMessage(_("Password authentication"));
 
 	string p[1];
 	bool e[1];
@@ -1512,14 +1500,15 @@ void MSshConnection::UserAuthSuccess()
 	fAuthenticated = true;
 	fSshAgent.release();
 
-	eConnectionMessage("Authenticated");
+	eConnectionMessage(_("Authenticated"));
 	
-	assert(fOpeningChannel != nil);
-	if (fOpeningChannel != nil)
-	{
-		OpenChannel(fOpeningChannel);
-//		fOpeningChannel->eChannelBanner.RemoveProto(&eConnectionBanner);
-	}
+	assert(fOpeningChannels.size() > 0);
+	
+	for_each(fOpeningChannels.begin(), fOpeningChannels.end(),
+		boost::bind(&MSshConnection::OpenChannel, this, _1));
+	
+	fOpeningChannels.clear();
+
 	fHandler = nil;
 }
 
@@ -1530,48 +1519,48 @@ void MSshConnection::UserAuthFailed()
 	Disconnect();
 
 	eConnectionMessage(
-//		MStrings::GetFormattedIndString(1011, 3, fUserName, fIPAddress));
-		string("Authentication to ") + fIPAddress + " with user name " + fUserName + " failed");
+		FormatString("Authentication to ^0 with user name ^1 failed",
+			fIPAddress, fUserName));
 	fHandler = nil;
 }
 
-void MSshConnection::ProcessChannelOpen(
-	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
-{
-	string type;
-	uint32 channelId, windowSize, maxPacketSize;
-	
-	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
-	
-	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
-	{
-//		fAgentChannel.reset(new MSshAgentChannel(*this));
-		
-		ChannelInfo info = {};
-		
-//		info.fChannel = fAgentChannel.get();
-		info.fMyChannel = sNextChannelId++;
-		info.fHostChannel = channelId;
-		info.fMaxSendPacketSize = maxPacketSize;
-		info.fMyWindowSize = kWindowSize;
-		info.fHostWindowSize = windowSize;
-		info.fChannelOpen = true;
-		
-		fChannels.push_back(info);
-
-		out << uint8(SSH_MSG_CHANNEL_OPEN_CONFIRMATION) << channelId
-			<< info.fMyChannel << info.fMyWindowSize << kMaxPacketSize;
-	}
-	else
-	{
-		PRINT(("Wrong type of channel requested"));
-		
-		out << uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << channelId
-			<< uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << "unsupported" << "en";
-	}
-}
+//void MSshConnection::ProcessChannelOpen(
+//	uint8		inMessage,
+//	MSshPacket&	in,
+//	MSshPacket&	out)
+//{
+//	string type;
+//	uint32 channelId, windowSize, maxPacketSize;
+//	
+//	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
+//	
+//	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
+//	{
+////		fAgentChannel.reset(new MSshAgentChannel(*this));
+//		
+//		ChannelInfo info = {};
+//		
+////		info.fChannel = fAgentChannel.get();
+//		info.fMyChannel = sNextChannelId++;
+//		info.fHostChannel = channelId;
+//		info.fMaxSendPacketSize = maxPacketSize;
+//		info.fMyWindowSize = kWindowSize;
+//		info.fHostWindowSize = windowSize;
+//		info.fChannelOpen = true;
+//		
+//		fChannels.push_back(info);
+//
+//		out << uint8(SSH_MSG_CHANNEL_OPEN_CONFIRMATION) << channelId
+//			<< info.fMyChannel << info.fMyWindowSize << kMaxPacketSize;
+//	}
+//	else
+//	{
+//		PRINT(("Wrong type of channel requested"));
+//		
+//		out << uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << channelId
+//			<< uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << "unsupported" << "en";
+//	}
+//}
 
 void MSshConnection::OpenChannel(
 	MSshChannel*	inChannel)
@@ -1584,37 +1573,31 @@ void MSshConnection::OpenChannel(
 			Connect(fUserName, fIPAddress, fPortNumber);
 			ResetTimer();
 		}
+
+		AddRoute(eConnectionEvent, inChannel->eConnectionEvent);
+		AddRoute(eConnectionMessage, inChannel->eConnectionMessage);
 		
-//		assert(fOpeningChannel == nil);
-		
-//		if (fOpeningChannel != nil)
-//			throw MError(pErrCouldNotOpenConnection);
-		
-		fOpeningChannel = inChannel;
+		fOpeningChannels.push_back(inChannel);
 //		fOpeningChannel->eChannelBanner.AddProto(&eConnectionBanner);
 	}
 	else
 	{
-		ChannelInfo info;
-		
-		info.fChannel = inChannel;
-		info.fMyChannel = sNextChannelId++;
-		info.fHostChannel = 0;
-		info.fMaxSendPacketSize = 0;
-		info.fMyWindowSize = kWindowSize;
-		info.fHostWindowSize = 0;
-		info.fChannelOpen = false;
+		// might be an opening channel
+		RemoveRoute(eConnectionEvent, inChannel->eConnectionEvent);
+		RemoveRoute(eConnectionMessage, inChannel->eConnectionMessage);
 
-		assert(find(fChannels.begin(), fChannels.end(), info) == fChannels.end());
+		inChannel->SetMyChannelID(sNextChannelId++);
+
+		assert(find(fChannels.begin(), fChannels.end(), inChannel) == fChannels.end());
 		
 		if (fAuthenticated and fIsConnected)
 		{
 			MSshPacket out;
 			out << uint8(SSH_MSG_CHANNEL_OPEN) << "session"
-				<< info.fMyChannel << info.fMyWindowSize << kMaxPacketSize;
+				<< inChannel->GetMyChannelID() << inChannel->GetMyWindowSize() << kMaxPacketSize;
 			Send(out);
 
-			fChannels.push_back(info);
+			fChannels.push_back(inChannel);
 		}
 	}
 }
@@ -1622,22 +1605,18 @@ void MSshConnection::OpenChannel(
 void MSshConnection::CloseChannel(
 	MSshChannel*	inChannel)
 {
-	ChannelInfo info;
-	info.fChannel = inChannel;
-	
-	ChannelList::iterator i = find(fChannels.begin(), fChannels.end(), info);
-	if (i != fChannels.end())
+	ChannelList::iterator ch = find(fChannels.begin(), fChannels.end(), inChannel);
+
+	if (ch != fChannels.end())
 	{
-		info = *i;
-		
-		fChannels.erase(i);
-		
 		if (fIsConnected)
 		{
 			MSshPacket p;
-			p << uint8(SSH_MSG_CHANNEL_CLOSE) << info.fHostChannel;
+			p << uint8(SSH_MSG_CHANNEL_CLOSE) << inChannel->GetHostChannelID();
 			Send(p);
 		}
+
+		fChannels.erase(ch);
 		
 		if (not fAuthenticated)
 			Disconnect();
@@ -1646,32 +1625,20 @@ void MSshConnection::CloseChannel(
 
 void MSshConnection::SendChannelData(MSshChannel* inChannel, uint32 inType, string inData)
 {
-	ChannelList::iterator ch;
-	
-	for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
-	{
-		if (ch->fChannel == inChannel)
-			break;
-	}
+	ChannelList::iterator ch = find(fChannels.begin(), fChannels.end(), inChannel);
 	
 	if (ch != fChannels.end())
 	{
-		assert(inData.length() < ch->fMaxSendPacketSize);
+		assert(inData.length() < inChannel->GetMaxSendPacketSize());
 
 		MSshPacket p;
 		if (inType == 0)
-			p << uint8(SSH_MSG_CHANNEL_DATA) << ch->fHostChannel << inData;
+			p << uint8(SSH_MSG_CHANNEL_DATA) << inChannel->GetHostChannelID() << inData;
 		else
-			p << uint8(SSH_MSG_CHANNEL_EXTENDED_DATA) << ch->fHostChannel
+			p << uint8(SSH_MSG_CHANNEL_EXTENDED_DATA) << inChannel->GetHostChannelID()
 				<< inType << inData;
 		
-		if (inData.length() < ch->fHostWindowSize)
-		{
-			Send(p);
-			ch->fHostWindowSize -= inData.length();
-		}
-		else
-			ch->fPending.push_back(p.data);
+		inChannel->PushPending(p.data);
 	}
 	else
 		assert(false);
@@ -1679,19 +1646,13 @@ void MSshConnection::SendChannelData(MSshChannel* inChannel, uint32 inType, stri
 
 void MSshConnection::SendWindowResize(MSshChannel* inChannel, uint32 inColumns, uint32 inRows)
 {
-	ChannelList::iterator ch;
-	
-	for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
-	{
-		if (ch->fChannel == inChannel)
-			break;
-	}
+	ChannelList::iterator ch = find(fChannels.begin(), fChannels.end(), inChannel);
 	
 	if (ch != fChannels.end())
 	{
 		MSshPacket p;
 		
-		p << uint8(SSH_MSG_CHANNEL_REQUEST) << ch->fHostChannel
+		p << uint8(SSH_MSG_CHANNEL_REQUEST) << inChannel->GetHostChannelID()
 			<< "window-change" << false
 			<< inColumns << inRows
 			<< uint32(0) << uint32(0);
@@ -1714,60 +1675,49 @@ void MSshConnection::ProcessConfirmChannel(
 		
 		in >> msg >> my_channel >> host_channel >> window_size >> max_packet_size;
 
-		ChannelList::iterator ch;
-		for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
-		{
-			if (ch->fMyChannel == my_channel)
-			{
-				ch->fHostChannel = host_channel;
-				ch->fHostWindowSize = window_size;
-				ch->fMaxSendPacketSize = max_packet_size;
-				ch->fChannelOpen = true;
-				
-				ch->fChannel->HandleChannelEvent(SSH_CHANNEL_OPENED);
-				eConnectionMessage("Connecting…");
-				
-				if (ch->fChannel->WantPTY())
-				{
-//					if (fAgentChannel.get() == nil and
-//						Preferences::GetInteger("advertise_agent", 1))
-//					{
-//						MSshPacket p;
-//						p << uint8(SSH_MSG_CHANNEL_REQUEST) << host_channel
-//							<< "auth-agent-req@openssh.com" << false;
-//						Send(p);
-//					}
-	
-					MSshPacket p;
-					
-					p << uint8(SSH_MSG_CHANNEL_REQUEST)
-						<< ch->fHostChannel
-						<< "pty-req"
-						<< true
-						<< "vt100"
-						<< uint32(80) << uint32(24)
-						<< uint32(0) << uint32(0)
-						<< "";
-					
-					Send(p);
-					
-					fHandler = &MSshConnection::ProcessConfirmPTY;
-				}
+		ChannelList::iterator ch = find_if(fChannels.begin(), fChannels.end(),
+			boost::bind(&MSshChannel::GetMyChannelID, _1) == my_channel);
 
-				out << uint8(SSH_MSG_CHANNEL_REQUEST)
-					<< ch->fHostChannel
-					<< ch->fChannel->GetRequest()
-					<< true;
-				
-				if (strlen(ch->fChannel->GetCommand()) > 0)
-					out << ch->fChannel->GetCommand();
-
-				break;
-			}
-		}
-		
 		if (ch == fChannels.end())
 			Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+		else
+		{
+			MSshChannel* channel = *ch;
+		
+			channel->SetHostChannelID(host_channel);
+			channel->SetHostWindowSize(window_size);
+			channel->SetMaxSendPacketSize(max_packet_size);
+			channel->SetChannelOpen(true);
+			
+			channel->HandleChannelEvent(SSH_CHANNEL_OPENED);
+			eConnectionMessage(_("Connecting…"));
+			
+			if (channel->WantPTY())
+			{
+				MSshPacket p;
+				
+				p << uint8(SSH_MSG_CHANNEL_REQUEST)
+					<< channel->GetHostChannelID()
+					<< "pty-req"
+					<< true
+					<< "vt100"
+					<< uint32(80) << uint32(24)
+					<< uint32(0) << uint32(0)
+					<< "";
+				
+				Send(p);
+				
+				fHandler = &MSshConnection::ProcessConfirmPTY;
+			}
+
+			out << uint8(SSH_MSG_CHANNEL_REQUEST)
+				<< channel->GetHostChannelID()
+				<< channel->GetRequest()
+				<< true;
+			
+			if (strlen(channel->GetCommand()) > 0)
+				out << channel->GetCommand();
+		}
 	}
 	else if (inMessage == SSH_MSG_CHANNEL_OPEN_FAILURE)
 	{
@@ -1778,16 +1728,15 @@ void MSshConnection::ProcessConfirmChannel(
 		
 		PRINT(("Channel open failed: %s", fErrString.c_str()));
 
-		ChannelList::iterator ch;
-		for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
+		ChannelList::iterator ch = find_if(
+			fChannels.begin(), fChannels.end(),
+			boost::bind(&MSshChannel::GetMyChannelID, _1) == my_channel);
+		
+		if (ch != fChannels.end())
 		{
-			if (ch->fMyChannel == my_channel)
-			{
-				ch->fChannel->HandleChannelEvent(SSH_CHANNEL_ERROR);
-				
-				fChannels.erase(ch);
-				break;
-			}
+			(*ch)->HandleChannelEvent(SSH_CHANNEL_ERROR);
+			(*ch)->SetChannelOpen(false);
+			fChannels.erase(ch);
 		}
 		
 		Disconnect();
@@ -1823,24 +1772,15 @@ void MSshConnection::ProcessChannel(
 	
 	PRINT(("%s for channel %d", LookupToken(kTokens, msg), channelId));
 	
-	MSshChannel* channel = nil;
-	ChannelList::iterator ch;
-	for (ch = fChannels.begin(); ch != fChannels.end(); ++ch)
-	{
-		if (ch->fMyChannel == channelId)
-		{
-			channel = ch->fChannel;
-			break;
-		}
-	}
+	ChannelList::iterator ch = find_if(fChannels.begin(), fChannels.end(),
+		boost::bind(&MSshChannel::GetMyChannelID, _1) == channelId);
 	
-	if (channel == nil)
-	{
+	if (ch == fChannels.end())
 		PRINT(("Received msg %d for closed channel %d", msg, channelId));
-	}
 	else
 	{
-		assert(ch != fChannels.end() or msg == SSH_MSG_CHANNEL_CLOSE);
+//		assert(ch != fChannels.end() or msg == SSH_MSG_CHANNEL_CLOSE);
+		MSshChannel* channel = *ch;
 		
 		uint32 type;
 		string data;
@@ -1851,27 +1791,29 @@ void MSshConnection::ProcessChannel(
 			case SSH_MSG_CHANNEL_WINDOW_ADJUST: {
 				int32 extra;
 				in >> extra;
-				ch->fHostWindowSize += extra;
+				channel->SetHostWindowSize(
+					channel->GetHostWindowSize() + extra);
 				break;
 			}
 			
 			case SSH_MSG_CHANNEL_DATA:
 				in >> data;
-				ch->fMyWindowSize -= data.length();
+				channel->SetMyWindowSize(
+					channel->GetMyWindowSize() - data.length());
 				channel->HandleData(data);
 				break;
 
 			case SSH_MSG_CHANNEL_EXTENDED_DATA:
 				in >> type >> data;
-				ch->fMyWindowSize -= data.length();
+				channel->SetMyWindowSize(
+					channel->GetMyWindowSize() - data.length());
 				channel->HandleExtraData(type, data);
 				break;
 			
 			case SSH_MSG_CHANNEL_CLOSE:
-				if (ch != fChannels.end())
-					fChannels.erase(ch);
-				if (channel != nil)
-					channel->HandleChannelEvent(SSH_CHANNEL_CLOSED);
+				fChannels.erase(ch);
+				channel->HandleChannelEvent(SSH_CHANNEL_CLOSED);
+				channel->SetChannelOpen(false);
 				break;
 			
 			case SSH_MSG_CHANNEL_SUCCESS:
@@ -1883,12 +1825,12 @@ void MSshConnection::ProcessChannel(
 				break;
 		}
 
-		if (ch->fMyWindowSize < kWindowSize - 2 * kMaxPacketSize)
+		if (channel->GetMyWindowSize() < kWindowSize - 2 * kMaxPacketSize)
 		{
-			uint32 adjust = kWindowSize - ch->fMyWindowSize;
+			uint32 adjust = kWindowSize - channel->GetMyWindowSize();
 			out << uint8(SSH_MSG_CHANNEL_WINDOW_ADJUST) <<
-				ch->fHostChannel << adjust;
-			ch->fMyWindowSize += adjust;
+				channel->GetHostChannelID() << adjust;
+			channel->SetMyWindowSize(channel->GetMyWindowSize() + adjust);
 		}
 	}
 }
@@ -2026,18 +1968,6 @@ void MSshConnection::DeriveKey(
 	
 	outKey = new byte[result.length()];
 	copy(result.begin(), result.end(), outKey);
-}
-
-uint32 MSshConnection::GetMaxPacketSize(const MSshChannel* inChannel) const
-{
-	uint32 result = 1024;
-	
-	ChannelInfo info;
-	info.fChannel = const_cast<MSshChannel*>(inChannel);
-	ChannelList::const_iterator i = find(fChannels.begin(), fChannels.end(), info);
-	if (i != fChannels.end())
-		result = (*i).fMaxSendPacketSize;
-	return result;
 }
 
 string MSshConnection::GetEncryptionParams() const

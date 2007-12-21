@@ -33,7 +33,7 @@ class MSftpChannel : public MSshChannel
 								const MUrl&		inURL);
 
 	virtual					~MSftpChannel();
-	
+
 	virtual void			Send(
 								std::string		inData);
 

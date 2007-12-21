@@ -119,7 +119,10 @@ class MDocument
 	
 	MEventOut<void(float,std::string)>		eSSHProgress;
 	
-	void				SFTPChannelEvent(
+	void				SFTPGetChannelEvent(
+							int				inMessage);
+
+	void				SFTPPutChannelEvent(
 							int				inMessage);
 
 	void				SFTPChannelMessage(
@@ -448,8 +451,8 @@ class MDocument
 	int32						mPutCount;
 	
 	std::auto_ptr<MSftpChannel>	mSFTPChannel;
-	uint32						mSFTPExpectedSize;
 	std::string					mSFTPData;
+	uint32						mSFTPSize, mSFTPOffset;
 };
 
 inline

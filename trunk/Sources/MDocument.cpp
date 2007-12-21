@@ -63,10 +63,10 @@
 #include "MProject.h"
 #include "MDevice.h"
 #include "MDocClosedNotifier.h"
-#include "MSftpPutDialog.h"
 #include "MStrings.h"
 #include "MAcceleratorTable.h"
 #include "MSound.h"
+#include "MSftpChannel.h"
 
 using namespace std;
 
@@ -139,12 +139,15 @@ MDocument::MDocument(
 		if (not mURL.IsLocal())
 		{
 			mSFTPChannel.reset(new MSftpChannel(mURL));
+
 			SetCallBack(mSFTPChannel->eChannelEvent,
-				this, &MDocument::SFTPChannelEvent);
+				this, &MDocument::SFTPGetChannelEvent);
 			SetCallBack(mSFTPChannel->eChannelMessage,
 				this, &MDocument::SFTPChannelMessage);
 			
-			mSFTPExpectedSize = 0;
+			mSFTPSize = 0;
+			mSFTPOffset = 0;
+			mSFTPData.clear();
 		}
 		else if (fs::exists(mURL.GetPath()))
 			mFileModDate = fs::last_write_time(mURL.GetPath());
@@ -303,7 +306,7 @@ void MDocument::SetTargetTextView(MTextView* inTextView)
 
 // --------------------------------------------------------------------
 
-void MDocument::SFTPChannelEvent(
+void MDocument::SFTPGetChannelEvent(
 	int				inMessage)
 {
 	switch (inMessage)
@@ -316,15 +319,15 @@ void MDocument::SFTPChannelEvent(
 		
 		case SFTP_FILE_SIZE_KNOWN:
 			eSSHProgress(0.f, _("File size known"));
-			mSFTPExpectedSize = mSFTPChannel->GetFileSize();
+			mSFTPSize = mSFTPChannel->GetFileSize();
 			break;
 		
 		case SFTP_DATA_AVAILABLE:
 			mSFTPData += mSFTPChannel->GetData();
-			if (mSFTPExpectedSize > 0)
+			if (mSFTPSize > 0)
 			{
 				eSSHProgress(
-					float(mSFTPData.length()) / mSFTPExpectedSize,
+					float(mSFTPData.length()) / mSFTPSize,
 					_("Receiving data"));
 			}
 			break;
@@ -333,6 +336,14 @@ void MDocument::SFTPChannelEvent(
 			eSSHProgress(1.0f, _("Data received"));
 			mText.SetText(mSFTPData.c_str(), mSFTPData.length());
 			mSFTPData.clear();
+
+			mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+			if (mLanguage != nil)
+			{
+				mNamedRange = new MNamedRange;
+				mIncludeFiles = new MIncludeFileList;
+			}
+
 			Rewrap();
 			UpdateDirtyLines();
 			mSFTPChannel->CloseFile();
@@ -340,24 +351,79 @@ void MDocument::SFTPChannelEvent(
 		
 		case SFTP_FILE_CLOSED:
 			eSSHProgress(-1.f, _("done"));
-//			mSFTPChannel.reset();
+			mSFTPChannel->Close();
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
 			eSSHProgress(0, _("Timeout"));
-//			mSFTPChannel.reset();
 			break;
 	}
 }
+
+// --------------------------------------------------------------------
+
+void MDocument::SFTPPutChannelEvent(
+	int				inMessage)
+{
+	const uint32 kBufferSize = 1024;
+	
+	switch (inMessage)
+	{
+		case SFTP_INIT_DONE:
+			eSSHProgress(0.f, _("Connected"));
+			mSFTPChannel->WriteFile(mURL.GetPath().string(),
+				Preferences::GetInteger("text transfer", true));
+			break;
+		
+		case SFTP_CAN_SEND_DATA:
+			if (mSFTPOffset < mSFTPSize)
+			{
+				uint32 k = mSFTPSize - mSFTPOffset;
+				if (k > kBufferSize)
+					k = kBufferSize;
+
+				eSSHProgress(
+					float(mSFTPData.length()) / mSFTPSize,
+					_("Sending data"));
+
+				mSFTPChannel->SendData(mSFTPData.substr(mSFTPOffset, k));
+				mSFTPOffset += k;
+			}
+			else
+			{
+				eSSHProgress(1.0f, _("Closing file"));
+
+				mSFTPChannel->CloseFile();
+				SetModified(false);
+//
+//				if (Preferences::GetInteger("loguploads", false) != 0)
+//					LogUpload();
+			}
+			break;
+
+		case SFTP_FILE_CLOSED:
+			eSSHProgress(-1.f, _("done"));
+			mSFTPChannel->Close();
+			break;
+
+		case SSH_CHANNEL_TIMEOUT:
+			eSSHProgress(0, _("Timeout"));
+			break;
+	}
+}
+
+// --------------------------------------------------------------------
 
 void MDocument::SFTPChannelMessage(
 	std::string 	inMessage)
 {
 	float fraction = 0;
-	if (mSFTPExpectedSize > 0)
-		fraction = float(mSFTPData.size()) / mSFTPExpectedSize;
+	if (mSFTPSize > 0)
+		fraction = float(mSFTPData.size()) / mSFTPSize;
 	eSSHProgress(fraction, inMessage);
 }
+
+// --------------------------------------------------------------------
 
 void MDocument::SetWorksheet(bool inIsWorksheet)
 {
@@ -379,6 +445,8 @@ void MDocument::SetWorksheet(bool inIsWorksheet)
 		}
 	}		
 }
+
+// --------------------------------------------------------------------
 
 const char* MDocument::GetCWD() const
 {
@@ -1019,21 +1087,25 @@ bool MDocument::DoSave()
 			MFile file(mURL.GetPath());
 			file.Open(O_RDWR | O_TRUNC | O_CREAT);
 			mText.WriteToFile(file);
-
-//		MSafeSaver safe(mURL.GetPath());
-//		mText.WriteToFile(*safe.GetTempFile());
-//		safe.Commit(mURL.GetPath());
+			SetModified(false);
 
 			MProject::RecheckFiles();
 		}
 		else
 		{
-			auto_ptr<MSftpPutDialog> dlog(new MSftpPutDialog(this));
-			AddRoute(eNotifyPut, dlog->eNotifyPut);
-			dlog.release();
+			mSFTPChannel.reset(new MSftpChannel(mURL));
+
+			SetCallBack(mSFTPChannel->eChannelEvent,
+				this, &MDocument::SFTPPutChannelEvent);
+			SetCallBack(mSFTPChannel->eChannelMessage,
+				this, &MDocument::SFTPChannelMessage);
+
+			mSFTPOffset = 0;
+			mSFTPSize = mText.GetSize();
+#warning("This is not converted yet!");
+			mText.GetText(0, mSFTPSize, mSFTPData);
 		}
 		
-		SetModified(false);
 		gApp->AddToRecentMenu(mURL);
 		
 		eFileSpecChanged(mURL);

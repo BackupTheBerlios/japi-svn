@@ -560,7 +560,7 @@ void MJapieApp::DoOpen()
 			g_slist_free(uris);
 		}
 		
-		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end();)
+		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end(); ++url)
 			doc = OpenOneDocument(*url);
 		
 		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));

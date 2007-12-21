@@ -774,7 +774,7 @@ void MSftpChannel::HandleData(
 			{
 					// we now know what version of the server we're talking to
 				fImpl = MSftpChannelImp::CreateImpl(in, out, *this);
-				fImpl->fPacketSize = GetMaxPacketSize();
+				fImpl->fPacketSize = GetMaxSendPacketSize();
 				
 				fImpl->Init(out);
 			}

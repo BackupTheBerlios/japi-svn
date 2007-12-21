@@ -162,14 +162,16 @@ MSSHProgress::MSSHProgress(
 	GtkWidget*		inWindowVBox)
 {
 	mProgressBin = gtk_vbox_new(false, 4);
-	gtk_box_pack_start(GTK_BOX(inWindowVBox), mProgressBin, false, false, 10);
+	gtk_container_set_border_width(GTK_CONTAINER(mProgressBin), 10);
+	gtk_box_pack_start(GTK_BOX(inWindowVBox), mProgressBin, false, false, 0);
 	gtk_box_reorder_child(GTK_BOX(inWindowVBox), mProgressBin, 1);
 	
 	mProgressBar = gtk_progress_bar_new();
-	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressBar, false, false, 4);
+	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressBar, false, false, 0);
 	
 	mProgressLabel = gtk_label_new("");
-	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressLabel, false, false, 4);
+	gtk_misc_set_alignment(GTK_MISC(mProgressLabel), 0, 0.5);
+	gtk_box_pack_start(GTK_BOX(mProgressBin), mProgressLabel, false, false, 0);
 	
 	gtk_widget_show_all(mProgressBin);
 }

@@ -94,20 +94,17 @@
 				<file>MSshAgent.cpp</file>
 				<file>MSshChannel.cpp</file>
 				<file>MSshConnection.cpp</file>
-				<file>MSftpGetDialog.cpp</file>
-				<file>MSftpPutDialog.cpp</file>
 			</group>
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<!--file>libattr.a</file-->
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_date_time.a</file>
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_date_time.a</file>
-			<!--file>libattr.a</file-->
+			<file>libattr.a</file>
 			<file>libgthread-2.0.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
@@ -123,7 +120,6 @@
 		<copy>mark-matching-dialog.xml</copy>
 		<copy>go-to-line-dialog.xml</copy>
 		<copy>auth-dialog.xml</copy>
-		<copy>sftp-dialog.xml</copy>
 		<copy>prefs-dialog.xml</copy>
 		<copy>diff-window.xml</copy>
 		<copy>message-list-window.xml</copy>

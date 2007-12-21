@@ -37,13 +37,53 @@ enum MSshChannelEvent {
 class MSshChannel
 {
   public:
-	virtual					~MSshChannel();
+	uint32					GetMyChannelID() const		{ return fMyChannelID; }
+	
+	void					SetMyChannelID(
+								uint32	inChannelID)	{ fMyChannelID = inChannelID; }
+
+	uint32					GetHostChannelID() const	{ return fHostChannelID; }
+	
+	void					SetHostChannelID(
+								uint32	inChannelID)	{ fHostChannelID = inChannelID; }
+
+	uint32					GetMaxSendPacketSize() const{ return fMaxSendPacketSize; }
+	
+	void					SetMaxSendPacketSize(
+								uint32	inSize)			{ fMaxSendPacketSize = inSize; }
+
+	uint32					GetMyWindowSize() const		{ return fMyWindowSize; }
+	
+	void					SetMyWindowSize(
+								uint32	inSize)			{ fMyWindowSize = inSize; }
+
+	uint32					GetHostWindowSize() const	{ return fHostWindowSize; }
+	
+	void					SetHostWindowSize(
+								uint32	inSize)			{ fHostWindowSize = inSize; }
+
+	bool					IsChannelOpen() const		{ return fChannelOpen; }
+	
+	void					SetChannelOpen(
+								bool	inChannelOpen);
+
+	bool					PopPending(
+								std::string&	outData);
+	
+	void					PushPending(
+								const std::string&	inData);
+
+	void					Close();
 
 	MCallBack<void(int)>	eChannelEvent;		// events in the enum range above
 	MCallBack<void(std::string)>
 							eChannelMessage;	// for error strings and such
 	MCallBack<void(std::string)>
 							eChannelBanner;		// sent by the authentication protocol
+
+	MEventIn<void(int)>		eConnectionEvent;
+	MEventIn<void(std::string)>
+							eConnectionMessage;
 
 	// these are called by the connection class:
 	virtual void			HandleData(
@@ -79,9 +119,7 @@ class MSshChannel
 								std::string		inUserName,
 								uint16			inPort);
 
-	MEventIn<void(int)>		eConnectionEvent;
-	MEventIn<void(std::string)>
-							eConnectionMessage;
+	virtual					~MSshChannel();
 
 	void					ConnectionEvent(
 								int				inEvent);
@@ -89,9 +127,16 @@ class MSshChannel
 	void					ConnectionMessage(
 								std::string		inMessage);
 	
-	uint32					GetMaxPacketSize() const;
+  private:
 
 	MSshConnection*			fConnection;
+	uint32					fMyChannelID;
+	uint32					fHostChannelID;
+	uint32					fMaxSendPacketSize;
+	uint32					fMyWindowSize;
+	uint32					fHostWindowSize;
+	bool					fChannelOpen;
+	std::deque<std::string>	fPending;
 };
 
 #endif // MSSHCHANNEL_H

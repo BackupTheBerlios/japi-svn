@@ -17,14 +17,17 @@ MSshChannel::MSshChannel(
 	uint16		inPort)
 	: eConnectionEvent(this, &MSshChannel::ConnectionEvent)
 	, eConnectionMessage(this, &MSshChannel::ConnectionMessage)
+	, fMyChannelID(0)
+	, fHostChannelID(0)
+	, fMaxSendPacketSize(0)
+	, fMyWindowSize(kWindowSize)
+	, fHostWindowSize(0)
+	, fChannelOpen(false)
 {
 	fConnection = MSshConnection::Get(inIPAddress, inUserName, inPort);
 	
 	if (fConnection == nil)
 		THROW(("Could not open connection"));
-
-	AddRoute(eConnectionEvent, fConnection->eConnectionEvent);
-	AddRoute(eConnectionMessage, fConnection->eConnectionMessage);
 
 	fConnection->OpenChannel(this);
 }
@@ -33,13 +36,33 @@ MSshChannel::~MSshChannel()
 {
 	try
 	{
-		if (fConnection != nil)
-		{
-			fConnection->CloseChannel(this);
-			fConnection->Release();
-		}
+		Close();
 	}
 	catch (...) {}
+}
+
+void MSshChannel::Close()
+{
+	if (fConnection != nil)
+	{
+		fConnection->CloseChannel(this);
+		fConnection->Release();
+		fConnection = nil;
+	}
+
+	fChannelOpen = false;
+}
+
+void MSshChannel::SetChannelOpen(
+	bool	inChannelOpen)
+{
+	fChannelOpen = inChannelOpen;
+	
+	if (not fChannelOpen)
+	{
+		fConnection->Release();
+		fConnection = nil;
+	}
 }
 
 void MSshChannel::Send(
@@ -59,18 +82,6 @@ void MSshChannel::SendExtra(
 
 	if (fConnection != nil)
 		fConnection->SendChannelData(this, inType, inData);
-}
-
-uint32 MSshChannel::GetMaxPacketSize() const
-{
-	uint32 result = 1024;
-
-	assert(fConnection);
-
-	if (fConnection != nil)
-		result = fConnection->GetMaxPacketSize(this);
-
-	return result;
 }
 
 void MSshChannel::ResetTimer()
@@ -117,4 +128,24 @@ void MSshChannel::HandleChannelEvent(
 	eChannelEvent(inEvent);
 }
 
+bool MSshChannel::PopPending(
+	string&	outData)
+{
+	bool result = false;
 
+	if (fPending.size() > 0 and fPending.front().length() < fHostWindowSize)
+	{
+		result = true;
+		outData = fPending.front();
+		fPending.pop_front();
+		fHostWindowSize -= outData.length();
+	}
+	
+	return result;
+}
+	
+void MSshChannel::PushPending(
+	const string&	inData)
+{
+	fPending.push_back(inData);
+}

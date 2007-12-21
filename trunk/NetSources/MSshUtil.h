@@ -75,8 +75,6 @@ enum eSshDisconnect {
 	SSH_DISCONNECT_ILLEGAL_USER_NAME
 };
 
-#if DEBUG
-
 struct TokenNames {
 	int			value;
 	const char*	token;
@@ -134,8 +132,6 @@ const TokenNames kErrors[] = {
 	{ SSH_DISCONNECT_ILLEGAL_USER_NAME, "SSH_DISCONNECT_ILLEGAL_USER_NAME" },
 	{ 0 }
 };
-
-#endif
 
 struct MSshPacket
 {

@@ -24,22 +24,7 @@ struct ZLibHelper;
 
 class MSshConnection
 {
-	struct ChannelInfo
-	{
-		MSshChannel*			fChannel;
-		uint32					fMyChannel;
-		uint32					fHostChannel;
-		uint32					fMaxSendPacketSize;
-		uint32					fMyWindowSize;
-		uint32					fHostWindowSize;
-		bool					fChannelOpen;
-		std::deque<std::string>	fPending;
-		
-		bool operator==(const ChannelInfo& inOther) const
-			{ return fChannel == inOther.fChannel; }
-	};
-	
-	typedef std::vector<ChannelInfo>	ChannelList;
+	typedef std::vector<MSshChannel*>		ChannelList;
 	
   public:
 	
@@ -81,9 +66,6 @@ class MSshConnection
 						MSshChannel*		inChannel,
 						uint32				inColumns,
 						uint32				inRows);
-
-	uint32			GetMaxPacketSize(
-						const MSshChannel*	inChannel) const;
 
 	std::string		GetErrorString() const	{ return fErrString; }
 	uint32			GetErrorCode() const	{ return fErrCode; }
@@ -251,10 +233,10 @@ class MSshConnection
 						MSshPacket&			in,
 						MSshPacket&			out);
 	
-	void			ProcessChannelOpen(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+//	void			ProcessChannelOpen(
+//						uint8				inMessage,
+//						MSshPacket&			in,
+//						MSshPacket&			out);
 
 	MEventIn<void(std::vector<std::string>)>	eRecvAuthInfo;
 
@@ -329,9 +311,9 @@ class MSshConnection
 	void						CertificateDeleted(
 									MCertificate*	inCertificate);
 	
-	MSshChannel*				fOpeningChannel;
 	int32						fRefCount;
 	ChannelList					fChannels;
+	ChannelList					fOpeningChannels;
 	std::string					fErrString;
 	uint32						fErrCode;
 	double						fOpenedAt;
