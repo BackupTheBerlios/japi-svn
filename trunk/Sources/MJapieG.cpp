@@ -49,7 +49,6 @@
 #include "MFindAndOpenDialog.h"
 #include "MFindDialog.h"
 #include "MProject.h"
-#include "MSftpGetDialog.h"
 #include "MPrefsDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
