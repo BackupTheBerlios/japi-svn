@@ -21,6 +21,8 @@ int32 DisplayAlertWithArgs(
 	xmlDocPtr xmlDoc = nil;
 	
 	xmlInitParser();
+
+	gdk_threads_enter();
 	
 	try
 	{
@@ -103,6 +105,8 @@ int32 DisplayAlertWithArgs(
 		xmlFreeDoc(xmlDoc);
 	
 	xmlCleanupParser();
+	
+	gdk_threads_leave();
 
 	return result;
 }
