@@ -404,7 +404,7 @@ void MTextView::DrawLine(
 	mDocument->GetStyledText(inLineNr, inDevice, text);
 	
 	bool trailingNL = false;
-	if (inLineNr < mDocument->CountLines() and mDocument->LineEnd(inLineNr) < mDocument->GetTextBuffer().GetSize())
+	if (inLineNr < mDocument->CountLines() and mDocument->LineEnd(inLineNr) < mDocument->GetTextSize())
 		trailingNL = mDocument->GetTextBuffer().GetChar(mDocument->LineEnd(inLineNr)) == '\n';
 	
 	MRect lineRect = GetLineRect(inLineNr);

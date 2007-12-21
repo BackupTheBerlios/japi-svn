@@ -78,7 +78,7 @@ struct MSftpChannelImp
 	virtual void			Init(
 								MSshPacket&		out) = 0;
 
-	virtual void			MandlePacket(
+	virtual void			HandlePacket(
 								uint8			inMessage,
 								MSshPacket&		in,
 								MSshPacket&		out) = 0;
@@ -137,7 +137,7 @@ struct MSftpChannelImp3 : public MSftpChannelImp
 							MSftpChannelImp3(MSftpChannel& inChannel);
 
 	virtual void			Init(MSshPacket& out);
-	virtual void			MandlePacket(
+	virtual void			HandlePacket(
 								uint8		inMessage,
 								MSshPacket&	in,
 								MSshPacket&	out);
@@ -213,7 +213,7 @@ struct MSftpChannelImp4 : public MSftpChannelImp3
 
 	virtual void			Init(MSshPacket& out);
 
-	virtual void			MandlePacket(
+	virtual void			HandlePacket(
 								uint8		inMessage,
 								MSshPacket&	in,
 								MSshPacket&	out);
@@ -268,7 +268,7 @@ void MSftpChannelImp3::Init(MSshPacket& out)
 	fChannel.eChannelEvent(SFTP_INIT_DONE);
 }
 
-void MSftpChannelImp3::MandlePacket(
+void MSftpChannelImp3::HandlePacket(
 	uint8		inMessage,
 	MSshPacket&	in,
 	MSshPacket&	out)
@@ -278,7 +278,7 @@ void MSftpChannelImp3::MandlePacket(
 	if (fHandler != nil)
 		(this->*fHandler)(inMessage, in, out);
 	else
-		PRINT(("Mandler was nil, packet %d dropped", inMessage));
+		PRINT(("Handler was nil, packet %d dropped", inMessage));
 }
 
 void MSftpChannelImp3::SetCWD(string inPath)
@@ -633,7 +633,7 @@ void MSftpChannelImp4::Init(MSshPacket& out)
 	assert(false);
 }
 
-void MSftpChannelImp4::MandlePacket(
+void MSftpChannelImp4::HandlePacket(
 	uint8		inMessage,
 	MSshPacket&	in,
 	MSshPacket&	out)
@@ -645,16 +645,22 @@ void MSftpChannelImp4::MandlePacket(
 	The interface implementation
 */
 
+MSftpChannel::MSftpChannel(
+	const MUrl&		inURL)
+	: MSshChannel(inURL.GetHost(), inURL.GetUser(), inURL.GetPort())
+	, fImpl(nil)
+	, fPacketLength(0)
+	, fStatusCode(0)
+{
+}
+
 MSftpChannel::MSftpChannel(string inIPAddress,
 		string inUserName, uint16 inPort)
 	: MSshChannel(inIPAddress, inUserName, inPort)
-	, eChannelEventIn(this, &MSftpChannel::ChannelEvent)
 	, fImpl(nil)		// we don't know yet what implementation to use
 	, fPacketLength(0)
 	, fStatusCode(0)
-
 {
-	AddRoute(eChannelEventIn, eChannelEvent);
 }
 
 MSftpChannel::~MSftpChannel()
@@ -674,7 +680,7 @@ void MSftpChannel::Send(string inData)
 	MSshChannel::Send(inData);
 }
 
-void MSftpChannel::ChannelEvent(
+void MSftpChannel::HandleChannelEvent(
 	int		inEvent)
 {
 	switch (inEvent)
@@ -686,16 +692,19 @@ void MSftpChannel::ChannelEvent(
 		case SSH_CHANNEL_SUCCESS:
 			if (fImpl == nil)
 			{
-#pragma message("Move to version 4 protocol someday")
+#warning("Move to version 4 protocol someday")
 				MSshPacket p;
 				p << uint8(SSH_FXP_INIT) << uint32(3);
 				Send(p.data);
 			}
 			break;
 	}
+	
+	MSshChannel::HandleChannelEvent(inEvent);
 }
 
-void MSftpChannel::MandleData(string inData)
+void MSftpChannel::HandleData(
+	string		inData)
 {
 	if (fLeftOver.length() > 0)
 	{
@@ -757,7 +766,7 @@ void MSftpChannel::MandleData(string inData)
 			in >> msg;
 			
 			if (msg == SSH_FXP_STATUS)
-				MandleStatus(in);
+				HandleStatus(in);
 			else
 				fStatusCode = SSH_FX_OK;
 			
@@ -773,7 +782,7 @@ void MSftpChannel::MandleData(string inData)
 			{
 				assert(fImpl != nil);
 				if (fImpl != nil)
-					fImpl->MandlePacket(msg, in, out);
+					fImpl->HandlePacket(msg, in, out);
 			}
 			
 			if (out.data.length() > 0)
@@ -785,11 +794,11 @@ void MSftpChannel::MandleData(string inData)
 	}
 }
 	
-void MSftpChannel::MandleExtraData(int inType, string inData)
+void MSftpChannel::HandleExtraData(int inType, string inData)
 {
 }
 
-void MSftpChannel::MandleStatus(MSshPacket in)
+void MSftpChannel::HandleStatus(MSshPacket in)
 {
 	uint32 id;
 	string msg, lang;

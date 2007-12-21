@@ -16,8 +16,6 @@ using namespace std;
 MSftpGetDialog::MSftpGetDialog(
 	const MUrlList&	inUrls)
 	: MDialog("sftp-dialog")
-	, eChannelEvent(this, &MSftpGetDialog::ChannelEvent)
-	, eChannelMessage(this, &MSftpGetDialog::ChannelMessage)
 	, fChannel(nil)
 {
 	RestorePosition("fetchdialog");
@@ -27,9 +25,9 @@ MSftpGetDialog::MSftpGetDialog(
 	
 	fChannel.reset(
 		new MSftpChannel(fUrl.GetHost(), fUrl.GetUser(), fUrl.GetPort()));
-
-	AddRoute(fChannel->eChannelEvent, eChannelEvent);
-	AddRoute(fChannel->eChannelMessage, eChannelMessage);
+	
+	SetCallBack(fChannel->eChannelEvent, this, &MSftpGetDialog::ChannelEvent);
+	SetCallBack(fChannel->eChannelMessage, this, &MSftpGetDialog::ChannelMessage);
 
 	Show(nil);
 }

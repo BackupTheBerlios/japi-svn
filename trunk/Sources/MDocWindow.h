@@ -40,6 +40,7 @@
 #include "MMenu.h"
 
 class MParsePopup;
+class MSSHProgress;
 
 class MDocWindow : public MWindow
 {
@@ -57,6 +58,7 @@ class MDocWindow : public MWindow
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
 	MEventIn<void(bool)>					eShellStatus;
 	MEventIn<void(MDocument*)>				eDocumentChanged;
+	MEventIn<void(float,std::string)>		eSSHProgress;
 
 	MDocument*			GetDocument();
 
@@ -96,6 +98,10 @@ class MDocWindow : public MWindow
 
 	void				ShellStatus(
 							bool			inActive);
+
+	void				SSHProgress(
+							float			inFraction,
+							std::string		inMessage);
 	
   protected:
 
@@ -107,6 +113,7 @@ class MDocWindow : public MWindow
 	MMenubar			mMenubar;
 	MParsePopup*		mParsePopup;
 	MParsePopup*		mIncludePopup;
+	MSSHProgress*		mSSHProgress;
 
 	virtual				~MDocWindow();
 };

@@ -60,6 +60,7 @@ class MMessageList;
 class MMenu;
 class MDevice;
 class MDocClosedNotifier;
+class MSftpChannel;
 
 struct MTextInputAreaInfo
 {
@@ -113,6 +114,17 @@ class MDocument
 							MDocClosedNotifier&		inNotifier);
 	
 	void				SetTargetTextView(MTextView* inTextView);
+	
+	// SFTP support
+	
+	MEventOut<void(float,std::string)>		eSSHProgress;
+	
+	void				SFTPChannelEvent(
+							int				inMessage);
+
+	void				SFTPChannelMessage(
+							std::string 	inMessage);
+
 	
 	MTextBuffer&		GetTextBuffer()						{ return mText; }
 
@@ -259,11 +271,6 @@ class MDocument
 	const MTextInputAreaInfo&
 						GetTextInputAreaInfo() const		{ return mTextInputAreaInfo; }
 
-//	OSStatus			DoTextInputUpdateActiveInputArea(EventRef inEvent);
-//	OSStatus			DoTextInputUnicodeForKeyEvent(EventRef inEvent);
-//	OSStatus			DoTextInputOffsetToPos(EventRef inEvent);
-////	OSStatus			DoTextInputPosToOffset(EventRef inEvent);
-
 	void				OnKeyPressEvent(
 							GdkEventKey*		inEvent);
 	
@@ -400,7 +407,6 @@ class MDocument
 	
 	MDocument*					mNext;
 	static MDocument*			sFirst;
-//	static boost::mutex			sDocListMutex;
 	MControllerList				mControllers;
 	std::vector<MDocClosedNotifier>
 								mNotifiers;
@@ -408,7 +414,6 @@ class MDocument
 	MUrl						mURL;
 	double						mFileModDate;
 	MTextBuffer					mText;
-//	boost::mutex				mMutex;
 	MTextView*					mTargetTextView;
 	MLineInfoArray				mLineInfo;
 	std::string					mFont;
@@ -441,6 +446,10 @@ class MDocument
 	bool						mIsWorksheet;
 	uint32						mPCLine;
 	int32						mPutCount;
+	
+	std::auto_ptr<MSftpChannel>	mSFTPChannel;
+	uint32						mSFTPExpectedSize;
+	std::string					mSFTPData;
 };
 
 inline

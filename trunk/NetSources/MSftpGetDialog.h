@@ -34,9 +34,6 @@ class MSftpGetDialog : public MDialog
 	void 				GotData();
 	void				GotFile();
 
-	MEventIn<void(int)>			eChannelEvent;
-	MEventIn<void(std::string)>	eChannelMessage;
-
 	void				ChannelEvent(
 							int				inMessage);
 

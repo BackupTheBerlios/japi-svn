@@ -26,9 +26,6 @@ class MSftpPutDialog : public MDialog
 
   private:
 
-	MEventIn<void(std::string)>	eChannelMessage;
-	MEventIn<void(int)>			eChannelEvent;
-
 	void				ChannelMessage(
 							std::string		inData);
 

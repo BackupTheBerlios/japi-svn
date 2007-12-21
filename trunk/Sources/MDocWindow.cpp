@@ -140,18 +140,51 @@ bool MParsePopup::OnButtonPressEvent(
 // ------------------------------------------------------------------
 //
 
+class MSSHProgress
+{
+  public:
+					MSSHProgress(
+						MDocWindow*		inDocWindow);
+	virtual			~MSSHProgress();
+
+	void			Progress(
+						float			inFraction,
+						const string&	inMessage);
+};
+
+MSSHProgress::MSSHProgress(
+	MDocWindow*		inDocWindow)
+{
+}
+
+MSSHProgress::~MSSHProgress()
+{
+}
+
+void MSSHProgress::Progress(
+	float			inFraction,
+	const string&	inMessage)
+{
+	cout << "*** Progress: " << inFraction << " message: " << inMessage << endl;
+}
+
+// ------------------------------------------------------------------
+//
+
 MDocWindow::MDocWindow()
 	: eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eSelectionChanged(this, &MDocWindow::SelectionChanged)
 	, eShellStatus(this, &MDocWindow::ShellStatus)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
+	, eSSHProgress(this, &MDocWindow::SSHProgress)
 	, mTextView(nil)
 	, mVBox(gtk_vbox_new(false, 0))
 	, mStatusbar(nil)
 	, mMenubar(this, mVBox, GetGtkWidget())
 	, mParsePopup(nil)
 	, mIncludePopup(nil)
+	, mSSHProgress(nil)
 {
 	GdkGeometry geom = {};
 	geom.min_width = 300;
@@ -203,6 +236,9 @@ MDocWindow::MDocWindow()
 
 MDocWindow::~MDocWindow()
 {
+	delete mParsePopup;
+	delete mIncludePopup;
+	delete mSSHProgress;
 }
 
 void MDocWindow::Initialize(
@@ -361,3 +397,20 @@ void MDocWindow::ShellStatus(
 //	::HIViewSetVisible(viewRef, inActive);
 }
 
+void MDocWindow::SSHProgress(
+	float			inFraction,
+	std::string		inMessage)
+{
+	if (inFraction < 0)
+	{
+		delete mSSHProgress;
+		mSSHProgress = nil;
+	}
+	else
+	{
+		if (mSSHProgress == nil)
+			mSSHProgress = new MSSHProgress(this);
+		
+		mSSHProgress->Progress(inFraction, inMessage);
+	}
+}

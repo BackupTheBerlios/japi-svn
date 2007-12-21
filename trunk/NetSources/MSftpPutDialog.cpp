@@ -15,8 +15,6 @@ using namespace std;
 MSftpPutDialog::MSftpPutDialog(
 	MDocument*		inDocument)
 	: MDialog("sftp-dialog")
-	, eChannelMessage(this, &MSftpPutDialog::ChannelMessage)
-	, eChannelEvent(this, &MSftpPutDialog::ChannelEvent)
 	, fChannel(nil)
 	, fDoc(nil)
 	, fOffset(0)
@@ -39,8 +37,8 @@ MSftpPutDialog::MSftpPutDialog(
 	fChannel =
 		new MSftpChannel(fUrl.GetHost(), fUrl.GetUser(), fUrl.GetPort());
 
-	AddRoute(fChannel->eChannelEvent, eChannelEvent);
-	AddRoute(fChannel->eChannelMessage, eChannelMessage);
+	SetCallBack(fChannel->eChannelEvent, this, &MSftpPutDialog::ChannelEvent);
+	SetCallBack(fChannel->eChannelMessage, this, &MSftpPutDialog::ChannelMessage);
 	
 	eNotifyPut(true);
 

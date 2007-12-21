@@ -83,6 +83,10 @@ class MTextBuffer
 	void		WriteToFile(
 					MFile&			inFile);
 	
+	void		SetText(
+					const char*		inText,
+					uint32			inLength);
+	
 	EOLNKind	GetEOLNKind() const									{ return mEOLNKind; }
 
 	void		SetEOLNKind(
@@ -304,6 +308,12 @@ class MTextBuffer
 	friend class ref;
 	friend class Action;
 	friend class MicroAction;
+	
+	bool			GuessEncodingAndCopyData(
+						const char*	inText,
+						uint32		inLength);
+	
+	void			GuessLineEndCharacter();
 	
 	void			InsertSelf(
 						uint32		inPosition,

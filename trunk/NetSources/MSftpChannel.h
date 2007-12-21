@@ -29,6 +29,9 @@ class MSftpChannel : public MSshChannel
 								std::string		inUserName,
 								uint16 inPort);
 
+							MSftpChannel(
+								const MUrl&		inURL);
+
 	virtual					~MSftpChannel();
 	
 	virtual void			Send(
@@ -78,22 +81,20 @@ class MSftpChannel : public MSshChannel
 	
 	friend struct MSftpChannelImp;
 
-	virtual void			MandleData(
+	virtual void			HandleData(
 								std::string		inData);
 
-	virtual void			MandleExtraData(
+	virtual void			HandleExtraData(
 								int				inType,
 								std::string		inData);
 
-	void					MandleStatus(
+	void					HandleStatus(
 								MSshPacket		in);
 	
 //	virtual void			Send(std::string inData)	{ MSshChannel::Send(inData); }
 
-	void					ChannelEvent(
+	virtual void			HandleChannelEvent(
 								int			 inEvent);
-
-	MEventIn<void(int)>		eChannelEventIn;
 
 	struct MSftpChannelImp*	fImpl;
 	std::string				fPacket;

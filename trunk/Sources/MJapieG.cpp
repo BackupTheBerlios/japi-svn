@@ -348,7 +348,9 @@ void MJapieApp::RunEventLoop()
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
-	/*uint32 timer = */g_timeout_add(250, &MJapieApp::Timeout, nil);
+	/*uint32 timer = */
+		//g_timeout_add(250, &MJapieApp::Timeout, nil);
+		g_timeout_add(50, &MJapieApp::Timeout, nil);
 	
 //	gdk_event_handler_set(&MJapieApp::EventHandler, nil, nil);
 	gdk_threads_enter();
@@ -559,18 +561,7 @@ void MJapieApp::DoOpen()
 		}
 		
 		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end();)
-		{
-			if (url->IsLocal())
-			{
-				doc = OpenOneDocument(*url);
-				url = urls.erase(url);
-			}
-			else
-				++url;
-		}
-
-		if (urls.size() > 0)
-			new MSftpGetDialog(urls);
+			doc = OpenOneDocument(*url);
 		
 		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
 		if (cwd != nil)
@@ -605,7 +596,7 @@ MDocument* MJapieApp::OpenOneDocument(
 	
 	if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
 		OpenProject(inFileRef.GetPath());
-	else if (inFileRef.IsLocal())
+	else
 	{
 		doc = MDocument::GetDocumentForURL(inFileRef, false);
 	
@@ -613,13 +604,6 @@ MDocument* MJapieApp::OpenOneDocument(
 			doc = new MDocument(&inFileRef);
 	
 		MDocWindow::DisplayDocument(doc);
-	}
-	else
-	{
-		vector<MUrl> urls;
-		urls.push_back(inFileRef);
-		
-		new MSftpGetDialog(urls);
 	}
 	
 	return doc;

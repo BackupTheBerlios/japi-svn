@@ -625,12 +625,81 @@ void MTextBuffer::ReadFromFile(
 	mEncoding = kEncodingUnknown;
 	mBOM = false;
 	
+	if (GuessEncodingAndCopyData(data.get(), len))
+	{
+		if (mBOM)
+			len -= 3;
+		
+		mData = data.release();
+
+		mLogicalLength = len;
+		mGapOffset = 0;
+		mPhysicalLength = inFile.GetSize();
+	}
+	
+	GuessLineEndCharacter();
+}
+
+void MTextBuffer::SetText(
+	const char*		inText,
+	uint32			inLength)
+{
+	// first reset the data
+	while (mUndoneActions.size())
+	{
+		delete mUndoneActions.top();
+		mUndoneActions.pop();
+	}
+
+	while (mDoneActions.size())
+	{
+		delete mDoneActions.top();
+		mDoneActions.pop();
+	}
+
+	mLogicalLength = 0;
+	mPhysicalLength = 0;
+	mGapOffset = 0;
+	delete[] mData;
+	mData = nil;
+	
+	// find out what this data contains.
+	
+	mEncoding = kEncodingUnknown;
+	mBOM = false;
+	
+	if (GuessEncodingAndCopyData(inText, inLength))
+	{
+		if (mBOM)
+		{
+			inText += 3;
+			inLength -= 3;
+		}
+		
+		mData = new char[inLength];
+		memcpy(mData, inText, inLength);
+
+		mLogicalLength = inLength;
+		mGapOffset = 0;
+		mPhysicalLength = inLength;
+	}
+	
+	GuessLineEndCharacter();
+}	
+
+bool MTextBuffer::GuessEncodingAndCopyData(
+	const char*		inText,
+	uint32			inLength)
+{
+	bool result = false;	// true means we can simply use the data
+							// i.e. UTF-8 and \n
+	
 	// 1. easy, see if there is a BOM
 	
-	char* txt = data.get();
+	const char* txt = inText;
 	unsigned char c1 = 0, c2 = 0, c3 = 0;
 	
-	if (len >= 2)
+	if (inLength >= 2)
 	{
 		c1 = static_cast<unsigned char>(txt[0]);
 		c2 = static_cast<unsigned char>(txt[1]);
@@ -639,19 +708,19 @@ void MTextBuffer::ReadFromFile(
 		{
 			mEncoding = kEncodingUTF16BE;
 			txt += 2;
-			len -= 2;
+			inLength -= 2;
 			mBOM = true;
 		}
 		else if (c1 == 0x0ff and c2 == 0x0fe)
 		{
 			mEncoding = kEncodingUTF16LE;
 			txt += 2;
-			len -= 2;
+			inLength -= 2;
 			mBOM = true;
 		}
 	}
 	
-	if (mEncoding == kEncodingUnknown and len >= 3)
+	if (mEncoding == kEncodingUnknown and inLength >= 3)
 	{
 		c3 = static_cast<unsigned char>(txt[2]);
 		
@@ -659,7 +728,7 @@ void MTextBuffer::ReadFromFile(
 		{
 			mEncoding = kEncodingUTF8;
 			txt += 3;
-			len -= 3;
+			inLength -= 3;
 			mBOM = true;
 		}
 	}
@@ -670,7 +739,7 @@ void MTextBuffer::ReadFromFile(
 	{
 		bool validUtf8 = true;
 
-		for (uint32 i = 0; i < len and validUtf8; ++i)
+		for (uint32 i = 0; i < inLength and validUtf8; ++i)
 		{
 			unsigned char c = static_cast<unsigned char>(txt[i]);
 
@@ -709,26 +778,20 @@ void MTextBuffer::ReadFromFile(
 	}
 	
 	if (mEncoding == kEncodingUTF8)
-	{
-		mData = data.release();
-
-		mLogicalLength = len;
-		mGapOffset = 0;
-		mPhysicalLength = inFile.GetSize();
-	}
+		result = true;
 	else
 	{
-		auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(mEncoding, txt, len));
+		auto_ptr<MDecoder> decoder(MDecoder::GetDecoder(mEncoding, txt, inLength));
 		
 		// preserve some memory
 		switch (mEncoding)
 		{
 			case kEncodingUTF16LE:
 			case kEncodingUTF16BE:
-				reserve(len / 2 + kBlockSize);
+				reserve(inLength / 2 + kBlockSize);
 				break;
 			default:
-				reserve(len + kBlockSize);
+				reserve(inLength + kBlockSize);
 				break;
 		}	
 	
@@ -737,6 +800,11 @@ void MTextBuffer::ReadFromFile(
 			push_back(uc);
 	}
 	
+	return result;
+}
+
+void MTextBuffer::GuessLineEndCharacter()
+{
 	// now convert the line end character
 	
 	MoveGapTo(mLogicalLength);

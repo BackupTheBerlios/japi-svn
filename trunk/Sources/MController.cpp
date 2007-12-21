@@ -96,6 +96,7 @@ void MController::SetDocument(MDocument* inDocument)
 			RemoveRoute(mDocument->eFileSpecChanged, mWindow->eFileSpecChanged);
 			RemoveRoute(mDocument->eSelectionChanged, mWindow->eSelectionChanged);
 			RemoveRoute(mDocument->eShellStatus, mWindow->eShellStatus);
+			RemoveRoute(mDocument->eSSHProgress, mWindow->eSSHProgress);
 
 			mDocument->RemoveController(this);
 		}
@@ -110,6 +111,7 @@ void MController::SetDocument(MDocument* inDocument)
 			AddRoute(mDocument->eFileSpecChanged, mWindow->eFileSpecChanged);
 			AddRoute(mDocument->eSelectionChanged, mWindow->eSelectionChanged);
 			AddRoute(mDocument->eShellStatus, mWindow->eShellStatus);
+			AddRoute(mDocument->eSSHProgress, mWindow->eSSHProgress);
 		}
 		
 		eDocumentChanged(mDocument);

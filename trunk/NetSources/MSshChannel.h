@@ -39,19 +39,22 @@ class MSshChannel
   public:
 	virtual					~MSshChannel();
 
-	MEventOut<void(int)>	eChannelEvent;		// events in the enum range above
-	MEventOut<void(std::string)>
+	MCallBack<void(int)>	eChannelEvent;		// events in the enum range above
+	MCallBack<void(std::string)>
 							eChannelMessage;	// for error strings and such
-	MEventOut<void(std::string)>
+	MCallBack<void(std::string)>
 							eChannelBanner;		// sent by the authentication protocol
 
 	// these are called by the connection class:
-	virtual void			MandleData(
+	virtual void			HandleData(
 								std::string		inData) = 0;
 
-	virtual void			MandleExtraData(
+	virtual void			HandleExtraData(
 								int				inType,
 								std::string		inData) = 0;
+
+	virtual void			HandleChannelEvent(
+								int				inEventMessage);
 	
 	// Override to finish creating the channel
 	virtual const char*		GetRequest() const = 0;

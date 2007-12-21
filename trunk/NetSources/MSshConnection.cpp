@@ -20,7 +20,6 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/des.h>
 #include <cryptopp/hmac.h>
-//#include <cryptopp/md5.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/dsa.h>
 #include <cryptopp/rsa.h>
@@ -353,7 +352,7 @@ bool MSshConnection::Connect(
 		return false;
 	}
 	
-	eConnectionMessage("Lookink up address");
+	eConnectionMessage("Looking up address");
 
 	/* First do some ip address configuration */
 	sockaddr_in lAddr = {};
@@ -1725,7 +1724,7 @@ void MSshConnection::ProcessConfirmChannel(
 				ch->fMaxSendPacketSize = max_packet_size;
 				ch->fChannelOpen = true;
 				
-				ch->fChannel->eChannelEvent(SSH_CHANNEL_OPENED);
+				ch->fChannel->HandleChannelEvent(SSH_CHANNEL_OPENED);
 				eConnectionMessage("Connecting…");
 				
 				if (ch->fChannel->WantPTY())
@@ -1784,7 +1783,7 @@ void MSshConnection::ProcessConfirmChannel(
 		{
 			if (ch->fMyChannel == my_channel)
 			{
-				ch->fChannel->eChannelEvent(SSH_CHANNEL_ERROR);
+				ch->fChannel->HandleChannelEvent(SSH_CHANNEL_ERROR);
 				
 				fChannels.erase(ch);
 				break;
@@ -1859,28 +1858,28 @@ void MSshConnection::ProcessChannel(
 			case SSH_MSG_CHANNEL_DATA:
 				in >> data;
 				ch->fMyWindowSize -= data.length();
-				channel->MandleData(data);
+				channel->HandleData(data);
 				break;
 
 			case SSH_MSG_CHANNEL_EXTENDED_DATA:
 				in >> type >> data;
 				ch->fMyWindowSize -= data.length();
-				channel->MandleExtraData(type, data);
+				channel->HandleExtraData(type, data);
 				break;
 			
 			case SSH_MSG_CHANNEL_CLOSE:
 				if (ch != fChannels.end())
 					fChannels.erase(ch);
 				if (channel != nil)
-					channel->eChannelEvent(SSH_CHANNEL_CLOSED);
+					channel->HandleChannelEvent(SSH_CHANNEL_CLOSED);
 				break;
 			
 			case SSH_MSG_CHANNEL_SUCCESS:
-				channel->eChannelEvent(SSH_CHANNEL_SUCCESS);
+				channel->HandleChannelEvent(SSH_CHANNEL_SUCCESS);
 				break;
 
 			case SSH_MSG_CHANNEL_FAILURE:
-				channel->eChannelEvent(SSH_CHANNEL_FAILURE);
+				channel->HandleChannelEvent(SSH_CHANNEL_FAILURE);
 				break;
 		}
 

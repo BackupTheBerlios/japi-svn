@@ -47,7 +47,6 @@
 #include "MUnicode.h"
 #include "MGlobals.h"
 #include "MLanguage.h"
-//#include "MApplication.h"
 #include "MFindDialog.h"
 #include "MError.h"
 #include "MController.h"
@@ -134,16 +133,25 @@ MDocument::MDocument(
 	if (inURL != nil)
 	{
 		mURL = *inURL;
+
+		mFileModDate = GetLocalTime();
 		
-		if (mURL.IsLocal() and fs::exists(mURL.GetPath()))
+		if (not mURL.IsLocal())
+		{
+			mSFTPChannel.reset(new MSftpChannel(mURL));
+			SetCallBack(mSFTPChannel->eChannelEvent,
+				this, &MDocument::SFTPChannelEvent);
+			SetCallBack(mSFTPChannel->eChannelMessage,
+				this, &MDocument::SFTPChannelMessage);
+			
+			mSFTPExpectedSize = 0;
+		}
+		else if (fs::exists(mURL.GetPath()))
 			mFileModDate = fs::last_write_time(mURL.GetPath());
-		else
-			mFileModDate = GetLocalTime();
 
 		mSpecified = true;
 	}
 
-//	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
 	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
@@ -155,7 +163,6 @@ MDocument::MDocument(
 		Rewrap();
 	}
 
-//	boost::mutex::scoped_lock lock(sDocListMutex);
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -176,7 +183,6 @@ MDocument::MDocument(
 {
 	Init();
 	
-//	AddRoute(ePrefsChanged, MStyleArray::Instance().eStylesChanged);
 	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
@@ -191,7 +197,6 @@ MDocument::MDocument(
 	
 	Rewrap();
 
-//	boost::mutex::scoped_lock lock(sDocListMutex);
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -296,6 +301,64 @@ void MDocument::SetTargetTextView(MTextView* inTextView)
 	}
 }
 
+// --------------------------------------------------------------------
+
+void MDocument::SFTPChannelEvent(
+	int				inMessage)
+{
+	switch (inMessage)
+	{
+		case SFTP_INIT_DONE:
+			eSSHProgress(0.f, _("Connected"));
+			mSFTPChannel->ReadFile(mURL.GetPath().string(),
+				Preferences::GetInteger("text transfer", true));
+			break;
+		
+		case SFTP_FILE_SIZE_KNOWN:
+			eSSHProgress(0.f, _("File size known"));
+			mSFTPExpectedSize = mSFTPChannel->GetFileSize();
+			break;
+		
+		case SFTP_DATA_AVAILABLE:
+			mSFTPData += mSFTPChannel->GetData();
+			if (mSFTPExpectedSize > 0)
+			{
+				eSSHProgress(
+					float(mSFTPData.size()) / mSFTPExpectedSize,
+					_("Receiving data"));
+			}
+			break;
+		
+		case SFTP_DATA_DONE:
+			eSSHProgress(1.0f, _("Data received"));
+			mText.SetText(mSFTPData.c_str(), mSFTPData.length());
+			mSFTPData.clear();
+			Rewrap();
+			UpdateDirtyLines();
+			mSFTPChannel->CloseFile();
+			break;
+		
+		case SFTP_FILE_CLOSED:
+			eSSHProgress(-1.f, _("done"));
+			mSFTPChannel.reset();
+			break;
+
+		case SSH_CHANNEL_TIMEOUT:
+			eSSHProgress(0, _("Timeout"));
+			mSFTPChannel.reset();
+			break;
+	}
+}
+
+void MDocument::SFTPChannelMessage(
+	std::string 	inMessage)
+{
+	float fraction = 0;
+	if (mSFTPExpectedSize > 0)
+		fraction = float(mSFTPData.size()) / mSFTPExpectedSize;
+	eSSHProgress(fraction, inMessage);
+}
+
 void MDocument::SetWorksheet(bool inIsWorksheet)
 {
 	mIsWorksheet = inIsWorksheet;
@@ -352,8 +415,6 @@ MDocument* MDocument::GetDocumentForURL(
 	const MUrl&		inFile,
 	bool			inCreateIfNeeded)
 {
-//	boost::mutex::scoped_lock lock(sDocListMutex);
-	
 	MDocument* doc = sFirst;
 
 	while (doc != nil and not doc->UsesFile(inFile))
@@ -382,8 +443,6 @@ void MDocument::CheckFile()
 
 void MDocument::MakeFirstDocument()
 {
-//	boost::mutex::scoped_lock lock(sDocListMutex);
-
 	MDocument* d = sFirst;
 	
 	if (d != this)
@@ -2846,8 +2905,6 @@ void MDocument::DoComplete(MDirection inDirection)
 		mText.GetText(startOffset, length, key);
 		mText.CollectWordsBeginningWith(startOffset, inDirection, key, mCompletionStrings);
 	
-//		boost::mutex::scoped_lock lock(sDocListMutex);
-
 		MDocument* doc = sFirst;
 		while (doc != nil)
 		{
@@ -2856,8 +2913,6 @@ void MDocument::DoComplete(MDirection inDirection)
 					0, kDirectionForward, key, mCompletionStrings);
 			doc = doc->mNext;
 		}
-		
-//		lock.unlock();
 		
 		if (inDirection == kDirectionForward)
 			mCompletionIndex = -1;

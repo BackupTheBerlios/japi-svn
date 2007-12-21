@@ -102,7 +102,7 @@ void MSshChannel::ConnectionEvent(
 		fConnection = nil;
 	}
 	
-	eChannelEvent(inEvent);
+	HandleChannelEvent(inEvent);
 }
 
 void MSshChannel::ConnectionMessage(
@@ -110,3 +110,11 @@ void MSshChannel::ConnectionMessage(
 {
 	eChannelMessage(inMessage);
 }
+
+void MSshChannel::HandleChannelEvent(
+	int		inEvent)
+{
+	eChannelEvent(inEvent);
+}
+
+
