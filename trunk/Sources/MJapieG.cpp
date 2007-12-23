@@ -61,8 +61,8 @@ using namespace std;
 static bool gQuit = false;
 
 const char
-	kAppName[] = "japie",
-	kVersionString[] = "0.1";
+	kAppName[] = "Japie",
+	kVersionString[] = "1.0";
 
 MJapieApp* gApp;
 
@@ -132,6 +132,16 @@ bool MJapieApp::ProcessCommand(
 
 	switch (inCommand)
 	{
+		case cmd_About:
+			gtk_show_about_dialog(nil,
+				"program_name", kAppName,
+				"version", kVersionString,
+				"copyright", "Copyright © 2007 Maarten L. Hekkelman",
+				"comments", "A simple development environment",
+				"website", "http://www.hekkelman.com/",
+				nil);
+			break;
+		
 		case cmd_Preferences:
 			MPrefsDialog::Create();
 			break;
@@ -250,6 +260,7 @@ bool MJapieApp::UpdateCommandStatus(
 		case cmd_FindInNextFile:
 		case cmd_OpenIncludeFile:
 		case cmd_Worksheet:
+		case cmd_About:
 			outEnabled = true;
 			break;
 		

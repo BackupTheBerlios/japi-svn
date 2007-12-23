@@ -50,6 +50,8 @@ enum MStdCommand {
 	cmd_Paste =					'past',
 	cmd_Clear =					'clea',
 	
+	cmd_About =					'abou',
+	cmd_Help =					'help',
 };
 
 // private commands

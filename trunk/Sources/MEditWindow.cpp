@@ -66,6 +66,8 @@ MEditWindow::MEditWindow()
 	gtk_box_pack_end(GTK_BOX(hbox), scrollBar->GetGtkWidget(), false, false, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), mTextView->GetGtkWidget(), true, true, 0);
 	
+	gtk_widget_show_all(mVBox);
+	
 	mController.AddTextView(mTextView);
 	
 	mTextView->SetSuper(this);

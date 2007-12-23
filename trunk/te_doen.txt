@@ -2,6 +2,8 @@
 
 Moet af:
 
+- STOP commando inbouwen (zoeken, bouwen)
+
 - crash in Close All?
 - clean up code na leaks test
 
@@ -15,7 +17,6 @@ Moet af:
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
 - fixen van shell implementatie
-- about dialog
 - stdin lezen
 
 Leuk om te hebben:

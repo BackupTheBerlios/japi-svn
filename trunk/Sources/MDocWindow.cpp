@@ -256,6 +256,8 @@ MDocWindow::MDocWindow()
 	gtk_box_pack_start(GTK_BOX(mStatusbar), frame, true, true, 0);
 	gtk_box_reorder_child(GTK_BOX(mStatusbar), frame, 2);	
 	mParsePopup->SetController(&mController, true);
+	
+	gtk_widget_show_all(mVBox);	// show all
 }
 
 MDocWindow::~MDocWindow()

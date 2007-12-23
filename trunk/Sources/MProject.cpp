@@ -271,6 +271,8 @@ MProject::MProject(const MPath& inPath)
 	SetCallBack(mFileList->cbFilesDropped, this, &MProject::FilesDropped);
 	
 	AddRoute(gApp->eIdle, ePoll);
+	
+	gtk_widget_show_all(mVBox);
 }
 
 // ---------------------------------------------------------------------------
