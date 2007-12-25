@@ -81,6 +81,7 @@ MPathIterator::MPathIterator()
 	: mData(nil)
 	, mOffset(0)
 	, mLength(0)
+	, mQuoted(false)
 {
 }
 
@@ -89,6 +90,7 @@ MPathIterator::MPathIterator(
 	: mData(&inData)
 	, mOffset(0)
 	, mLength(0)
+	, mQuoted(false)
 {
 	increment();
 }

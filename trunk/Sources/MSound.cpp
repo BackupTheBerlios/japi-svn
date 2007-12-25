@@ -131,6 +131,7 @@ void PlaySound(
 {
 	try
 	{
+		StOKToThrow ok;
 		string filename;
 		
 		if (inSoundName == "success")
@@ -142,7 +143,10 @@ void PlaySound(
 		else if (inSoundName == "question")
 			filename = Preferences::GetString("question sound", "question.wav");
 		else
-			THROW(("Unknown sound name"));
+		{
+			filename = "warning.wav";
+			cerr << "Unknown sound name " << inSoundName << endl;
+		}
 
 		MPath path = filename;
 
@@ -165,5 +169,8 @@ void PlaySound(
 				gdk_beep();
 		}
 	}
-	catch (...) {}
+	catch (...)
+	{
+		gdk_beep();
+	}
 }

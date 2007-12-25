@@ -161,18 +161,6 @@ class MLanguage
 					MLanguage();
 	virtual			~MLanguage();
 
-	template<class L>
-	static L*		Instance()
-					{
-						static std::auto_ptr<L> sInstance;
-						if (sInstance.get() == nil)
-						{
-							sInstance.reset(new L);
-							sInstance->Init();
-						}
-						return sInstance.get();
-					}
-
 	void			SetStyle(
 						uint32				inOffset,
 						uint32				inStyle);

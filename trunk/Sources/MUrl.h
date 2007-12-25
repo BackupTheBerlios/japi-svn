@@ -61,6 +61,8 @@ class MUrl
 	bool			operator==(
 						const MUrl&			inUrl) const;
 	
+					~MUrl();
+	
 	bool			IsLocal() const;
 	
 	bool			IsValid() const;

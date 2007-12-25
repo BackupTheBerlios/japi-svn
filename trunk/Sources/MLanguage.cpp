@@ -224,7 +224,7 @@ void MRecognizer::CreateAutomaton()
 {
 	unsigned char s0[kMaxStringLength] = "";
 	
-	MTransition larval_state[kMaxStringLength + 1][kMaxChars];
+	MTransition larval_state[kMaxStringLength + 1][kMaxChars] = {};
 	uint32 l_state_len[kMaxStringLength + 1];
 	uint8 is_terminal[kMaxStringLength];
 	
@@ -253,7 +253,7 @@ void MRecognizer::CreateAutomaton()
 		
 		while (i > p)
 		{
-			MTransition new_trans;
+			MTransition new_trans = {};
 
 			new_trans.b.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
 			new_trans.b.term = is_terminal[i];
@@ -275,7 +275,7 @@ void MRecognizer::CreateAutomaton()
 	
 	while (i > 0)
 	{
-		MTransition new_trans;
+		MTransition new_trans = {};
 
 		new_trans.b.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
 		new_trans.b.term = is_terminal[i];
@@ -350,6 +350,25 @@ MLanguage::~MLanguage()
 	delete mRecognizer;
 }
 
+template<class L>
+struct LanguageFactory
+{
+	static L*	Create();
+};
+
+template<class L>
+L* LanguageFactory<L>::Create()
+{
+	static auto_ptr<L> sInstance;
+	
+	if (sInstance.get() == nil)
+	{
+		sInstance.reset(new L);
+		sInstance->Init();
+	}
+	return sInstance.get();
+}
+
 MLanguage*
 MLanguage::GetLanguageForDocument(
 	const string&	inFile,
@@ -358,15 +377,15 @@ MLanguage::GetLanguageForDocument(
 	MLanguage* result = nil;
 
 	if (MLanguageCpp::MatchLanguage(inFile, inText))
-		result = Instance<MLanguageCpp>();
+		result = LanguageFactory<MLanguageCpp>::Create();
 	else if (MLanguageHTML::MatchLanguage(inFile, inText))
-		result = Instance<MLanguageHTML>();
+		result = LanguageFactory<MLanguageHTML>::Create();
 	else if (MLanguagePerl::MatchLanguage(inFile, inText))
-		result = Instance<MLanguagePerl>();
+		result = LanguageFactory<MLanguagePerl>::Create();
 	else if (MLanguageTeX::MatchLanguage(inFile, inText))
-		result = Instance<MLanguageTeX>();
+		result = LanguageFactory<MLanguageTeX>::Create();
 	else if (MLanguageXML::MatchLanguage(inFile, inText))
-		result = Instance<MLanguageXML>();
+		result = LanguageFactory<MLanguageXML>::Create();
 	
 	return result;
 }
@@ -375,15 +394,15 @@ MLanguage*
 MLanguage::GetLanguage(
 	const string&		inName)
 {
-	MLanguage* result = Instance<MLanguageCpp>();
+	MLanguage* result = LanguageFactory<MLanguageCpp>::Create();
 	if (inName != result->GetName())
-		result = Instance<MLanguagePerl>();
+		result = LanguageFactory<MLanguagePerl>::Create();
 	if (inName != result->GetName())
-		result = Instance<MLanguageHTML>();
+		result = LanguageFactory<MLanguageHTML>::Create();
 	if (inName != result->GetName())
-		result = Instance<MLanguageTeX>();
+		result = LanguageFactory<MLanguageTeX>::Create();
 	if (inName != result->GetName())
-		result = Instance<MLanguageXML>();
+		result = LanguageFactory<MLanguageXML>::Create();
 	if (inName != result->GetName())
 		result = nil;
 	

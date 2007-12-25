@@ -349,13 +349,20 @@ string XMLNode::text() const
 string XMLNode::property(
 	const char*	inName) const
 {
-	const char* p = (const char*)xmlGetProp(mNode, BAD_CAST inName);
+	char* p = (char*)xmlGetProp(mNode, BAD_CAST inName);
 	string result;
 	if (p != nil)
+	{
 		result = p;
+		xmlFree(p);
+	}
 	return result;
 }
 
+xmlNodePtr XMLNode::children() const
+{
+	return mNode->children;
+}
 
 void XMLNode::iterator::increment()
 {

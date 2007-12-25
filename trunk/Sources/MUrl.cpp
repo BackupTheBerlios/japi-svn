@@ -277,6 +277,11 @@ bool MUrl::operator==(
 	return result;	
 }
 
+MUrl::~MUrl()
+{
+	delete mImpl;
+}
+
 bool MUrl::IsLocal() const
 {
 	return mImpl->mScheme == "file";

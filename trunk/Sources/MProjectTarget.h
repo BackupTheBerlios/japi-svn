@@ -59,10 +59,10 @@ class MProjectTarget
 {
   public:
 						MProjectTarget(
-							const char*		inLinkTarget,
-							const char*		inName,
-							MTargetKind		inKind,
-							MTargetCPU		inTargetCPU)
+							const std::string&	inLinkTarget,
+							const std::string&	inName,
+							MTargetKind			inKind,
+							MTargetCPU			inTargetCPU)
 							: mLinkTarget(inLinkTarget)
 							, mBundleName(inLinkTarget)
 							, mName(inName)

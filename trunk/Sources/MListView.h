@@ -53,6 +53,8 @@ class MListView : public MView, public MHandler
   public:
 						MListView(
 							MHandler*		inSuperHandler);
+
+	virtual				~MListView();
 	
 	void				SetDrawBox(
 							bool			inDrawBox);
@@ -144,8 +146,6 @@ class MListView : public MView, public MHandler
 							int32&			outY);
 	
   private:
-
-	virtual				~MListView();
 
 	void				SetAcceptDragAndDrop();
 

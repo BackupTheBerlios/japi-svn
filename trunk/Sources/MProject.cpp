@@ -280,6 +280,10 @@ MProject::MProject(const MPath& inPath)
 
 MProject::~MProject()
 {
+	for (vector<MProjectTarget*>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
+		delete *target;
+	
+	delete mFileList;
 }
 
 // ---------------------------------------------------------------------------
@@ -1496,15 +1500,14 @@ void MProject::ReadPackageAction(
 	MPath			inDir,
 	MProjectGroup*	inGroup)
 {
-	for (xmlNodePtr node = inData->children; node != nil; node = node->next)
-	{
-		if (xmlNodeIsText(node))
-			continue;
-		
-		if (strcmp((const char*)node->name, "copy") == 0)
+	XMLNode data(inData);
+	
+	for (XMLNode::iterator node = data.begin(); node != data.end(); ++node)
+	{		
+		if (node->name() == "copy")
 		{
-			const char* fileName = (const char*)XML_GET_CONTENT(node->children);
-			if (fileName == nil)
+			string fileName = node->text();
+			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
 			try
@@ -1523,18 +1526,14 @@ void MProject::ReadPackageAction(
 				MError::DisplayError(e);
 			}
 		}
-		else if (strcmp((const char*)node->name, "mkdir") == 0)
+		else if (node->name() == "mkdir")
 		{
-			const char* name = (const char*)xmlGetProp(node, BAD_CAST "name");
-			if (name == nil)
-				name = "";
+			string name = node->property("name");
 			
 			auto_ptr<MProjectMkDir> group(new MProjectMkDir(name, inGroup));
 			
-			if (node->children != nil)
-			{
-				ReadPackageAction(node, inDir / name, group.get());
-			}
+			if (node->children() != nil)
+				ReadPackageAction(*node, inDir / name, group.get());
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -1547,15 +1546,14 @@ void MProject::ReadFiles(
 	xmlNodePtr		inData,
 	MProjectGroup*	inGroup)
 {
-	for (xmlNodePtr node = inData->children; node != nil; node = node->next)
+	XMLNode data(inData);
+	
+	for (XMLNode::iterator node = data.begin(); node != data.end(); ++node)
 	{
-		if (xmlNodeIsText(node))
-			continue;
-		
-		if (strcmp((const char*)node->name, "file") == 0)
+		if (node->name() == "file")
 		{
-			const char* fileName = (const char*)XML_GET_CONTENT(node->children);
-			if (fileName == nil)
+			string fileName = node->text();
+			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
 			MPath filePath;
@@ -1577,24 +1575,22 @@ void MProject::ReadFiles(
 				MError::DisplayError(e);
 			}
 		}
-		else if (strcmp((const char*)node->name, "link") == 0)
+		else if (node->name() == "link")
 		{
-			const char* linkName = (const char*)XML_GET_CONTENT(node->children);
-			if (linkName == nil)
+			string linkName = node->text();
+			if (linkName.length() == 0)
 				THROW(("Invalid project file"));
 			
 			inGroup->AddProjectItem(new MProjectLib(linkName, inGroup));
 		}
-		else if (strcmp((const char*)node->name, "group") == 0)
+		else if (node->name() == "group")
 		{
-			const char* name = (const char*)xmlGetProp(node, BAD_CAST "name");
-			if (name == nil)
-				name = "";
+			string name = node->property("name");
 			
 			auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
-			if (node->children != nil)
-				ReadFiles(node, group.get());
+			if (node->children() != nil)
+				ReadFiles(*node, group.get());
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -1702,13 +1698,14 @@ void MProject::Read(
 	{
 		for (int i = 0; i < data->nodesetval->nodeNr; ++i)
 		{
-			MPath dir;
-			const char* rd;
-	
-			if ((rd = (const char*)xmlGetProp(data->nodesetval->nodeTab[i], BAD_CAST "resource_dir")) != nil)
+			XMLNode node(data->nodesetval->nodeTab[i]);
+
+			string rd = node.property("resource_dir");
+			if (rd.length() > 0)
 				mResourcesDir = mProjectDir / rd;
 	
-			ReadPackageAction(data->nodesetval->nodeTab[i], dir, &mPackageItems);
+			MPath dir;		// empty
+			ReadPackageAction(node, dir, &mPackageItems);
 		}
 	}
 	
@@ -1723,28 +1720,28 @@ void MProject::Read(
 	{
 		for (int i = 0; i < data->nodesetval->nodeNr; ++i)
 		{
-			xmlNodePtr targetNode = data->nodesetval->nodeTab[i];
+			XMLNode targetNode(data->nodesetval->nodeTab[i]);
 			
-			const char* linkTarget = (const char*)xmlGetProp(targetNode, BAD_CAST "linkTarget");
-			if (linkTarget == nil)
+			string linkTarget = targetNode.property("linkTarget");
+			if (linkTarget.length() == 0)
 				THROW(("Invalid target, missing linkTarget"));
 			
-			const char* name = (const char*)xmlGetProp(targetNode, BAD_CAST "name");
-			if (name == nil)
+			string name = targetNode.property("name");
+			if (name.length() == 0)
 				THROW(("Invalid target, missing name"));
 			
-			const char* p = (const char*)xmlGetProp(targetNode, BAD_CAST "kind");
-			if (name == nil)
+			string p = targetNode.property("kind");
+			if (p.length() == 0)
 				THROW(("Invalid target, missing kind"));
 			
 			MTargetKind kind;
-			if (strcmp(p, "Application Package") == 0)
+			if (p == "Application Package")
 				kind = eTargetApplicationPackage;
-			else if (strcmp(p, "Shared Library") == 0)
+			else if (p == "Shared Library")
 				kind = eTargetSharedLibrary;
-			else if (strcmp(p, "Static Library") == 0)
+			else if (p == "Static Library")
 				kind = eTargetStaticLibrary;
-			else if (strcmp(p, "Executable") == 0)
+			else if (p == "Executable")
 				kind = eTargetExecutable;
 			else
 				THROW(("Unsupported target kind"));
@@ -1757,62 +1754,59 @@ void MProject::Read(
 			arch = eCPU_x86_64;
 #elif defined(__i386__)
 			arch = eCPU_386;
-#elif defined(__ppc__)
+#elif defined(__powerpc64__) or defined(__PPC64__) or defined(__ppc64__)
+			arch = eCPU_PowerPC_64;
+#elif defined(__powerpc__) or defined(__PPC__) or defined(__ppc__)
 			arch = eCPU_PowerPC_32;
 #else
-			arch = eCPU_PowerPC_64;
-//#	error
+#	error("Undefined processor")
 #endif				
 
-			if ((p = (const char*)xmlGetProp(targetNode, BAD_CAST "arch")) != nil)
+			p = targetNode.property("arch");
+			if (p.length() > 0)
 			{
-				if (strcmp(p, "ppc") == 0)
+				if (p == "ppc")
 					arch = eCPU_PowerPC_32;
-				else if (strcmp(p, "ppc64") == 0)
+				else if (p == "ppc64")
 					arch = eCPU_PowerPC_64;
-				else if (strcmp(p, "i386") == 0)
+				else if (p == "i386")
 					arch = eCPU_386;
-				else if (strcmp(p, "amd64") == 0)
+				else if (p == "amd64")
 					arch = eCPU_x86_64;
-				else if (strcmp(p, "native") != 0)
+				else if (p != "native")
 					THROW(("Unsupported target arch"));
 			}
 			
 			auto_ptr<MProjectTarget> target(new MProjectTarget(linkTarget, name, kind, arch));
 			
-			if ((p = (const char*)xmlGetProp(targetNode, BAD_CAST "debug")) != nil and strcmp(p, "true") == 0)
+			p = targetNode.property("debug");
+			if (p == "true")
 				target->SetDebugFlag(true);
 			
-			for (xmlNodePtr node = targetNode->children; node != nil; node = node->next)
+			for (XMLNode::iterator node = targetNode.begin(); node != targetNode.end(); ++node)
 			{
-				if (xmlNodeIsText(node))
-					continue;
-				
-				if (strcmp((const char*)node->name, "bundle") == 0)
+				if (node->name() == "bundle")
 				{
-					for (xmlNodePtr d = node->children; d != nil; d = d->next)
+					for (XMLNode::iterator d = node->begin(); d != node->end(); ++d)
 					{
-						if (xmlNodeIsText(d) or d->children == nil)
-							continue;
-						
-						if (strcmp((const char*)d->name, "name") == 0 and XML_GET_CONTENT(d->children) != nil)
-							target->SetBundleName((const char*) XML_GET_CONTENT(d->children));
-						else if (strcmp((const char*)d->name, "creator") == 0 and XML_GET_CONTENT(d->children) != nil)
-							target->SetCreator((const char*) XML_GET_CONTENT(d->children));
-						else if (strcmp((const char*)d->name, "type") == 0 and XML_GET_CONTENT(d->children) != nil)
-							target->SetType((const char*) XML_GET_CONTENT(d->children));
+						if (d->name() == "name")
+							target->SetBundleName(d->text());
+						else if (d->name() == "creator")
+							target->SetCreator(d->text());
+						else if (d->name() == "type")
+							target->SetType(d->text());
 					}
 				}
-				else if (strcmp((const char*)node->name, "defines") == 0)
-					ReadOptions(node, "define", target.get(), &MProjectTarget::AddDefine);
-				else if (strcmp((const char*)node->name, "cflags") == 0)
-					ReadOptions(node, "cflag", target.get(), &MProjectTarget::AddCFlag);
-				else if (strcmp((const char*)node->name, "ldflags") == 0)
-					ReadOptions(node, "ldflag", target.get(), &MProjectTarget::AddLDFlag);
-				else if (strcmp((const char*)node->name, "frameworks") == 0)
-					ReadOptions(node, "framework", target.get(), &MProjectTarget::AddFramework);
-				else if (strcmp((const char*)node->name, "warnings") == 0)
-					ReadOptions(node, "warning", target.get(), &MProjectTarget::AddWarning);
+				else if (node->name() == "defines")
+					ReadOptions(*node, "define", target.get(), &MProjectTarget::AddDefine);
+				else if (node->name() == "cflags")
+					ReadOptions(*node, "cflag", target.get(), &MProjectTarget::AddCFlag);
+				else if (node->name() == "ldflags")
+					ReadOptions(*node, "ldflag", target.get(), &MProjectTarget::AddLDFlag);
+				else if (node->name() == "frameworks")
+					ReadOptions(*node, "framework", target.get(), &MProjectTarget::AddFramework);
+				else if (node->name() == "warnings")
+					ReadOptions(*node, "warning", target.get(), &MProjectTarget::AddWarning);
 			}
 			
 			mTargets.push_back(target.release());

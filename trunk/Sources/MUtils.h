@@ -211,6 +211,10 @@ class XMLNode
 
 	std::string		property(
 						const char*	inName) const;
+	
+	xmlNodePtr		children() const;
+	
+					operator xmlNodePtr() const		{ return mNode; }
 
 	class iterator : public boost::iterator_facade<iterator,
 		XMLNode, boost::forward_traversal_tag>
