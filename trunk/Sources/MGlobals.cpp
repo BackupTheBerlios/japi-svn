@@ -37,10 +37,12 @@
 
 #include "MJapieG.h"
 
+#include <boost/filesystem/fstream.hpp>
+
 #include "MGlobals.h"
 #include "MPreferences.h"
 #include "MLanguage.h"
-//#include "MApplication.h"
+#include "MResources.h"
 
 using namespace std;
 
@@ -98,7 +100,7 @@ void InitGlobals()
 		gTemplatesDir = gPrefsDir / "Templates";
 	else
 		gTemplatesDir = fs::system_complete(templatesDir);
-
+		
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
 	gKiss = Preferences::GetInteger("kiss", gKiss);
@@ -128,6 +130,29 @@ void InitGlobals()
 	gPCLineColor = Preferences::GetColor("pc line color", kPCLineColor);
 	gBreakpointColor = Preferences::GetColor("breakpoint color", kBreakpointColor);
 	
+	if (not fs::exists(gTemplatesDir))
+		fs::create_directory(gTemplatesDir);
+
+	const char* kBuiltInTemplates[] = {
+		"empty.c",
+		"Strict.xhtml",
+		"Template.html",
+		"Transitional.xhtml",
+		nil
+	};
+
+	for (const char** t = kBuiltInTemplates; *t != nil; ++t)
+	{
+		const char* txt;
+		uint32 length;
+
+		if (not fs::exists(gTemplatesDir / *t) and
+			LoadResource(string("Templates/") + *t, txt, length))
+		{
+			fs::ofstream f(gTemplatesDir / *t);
+			f.write(txt, length);
+		}
+	}
 }
 
 void SaveGlobals()

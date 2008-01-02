@@ -314,7 +314,7 @@ void MJapieApp::UpdateTemplateMenu(
 {
 	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
 
-	MPath templatesDir = gPrefsDir / "Templates";
+	MPath templatesDir = gTemplatesDir;
 	if (fs::exists(templatesDir) and fs::is_directory(templatesDir))
 	{
 		MFileIterator iter(templatesDir, 0);
@@ -644,7 +644,7 @@ void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 void MJapieApp::DoOpenTemplate(
 	const string&		inTemplate)
 {
-	MFile file(gPrefsDir / "Templates" / inTemplate);
+	MFile file(gTemplatesDir / inTemplate);
 	MTextBuffer buffer;
 	buffer.ReadFromFile(file);
 

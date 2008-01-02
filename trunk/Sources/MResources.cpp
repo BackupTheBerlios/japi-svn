@@ -315,27 +315,27 @@ MRSRCDirectory& MRSRCDirectory::Instance()
 // --------------------------------------------------------------------
 
 bool LoadResource(
-		const char*		inName,
+		const string&	inName,
 		const char*&	outData,
 		uint32&			outSize)
 {
 	uint32 offset;
 	MRSRCDirectory& dir = MRSRCDirectory::Instance();
 	
-	bool result = dir.GetData(inName, offset, outSize);
+	bool result = dir.GetData(inName.c_str(), offset, outSize);
 
 	if (result == false)
 	{
 		result =
-			dir.GetData(inName, offset, outSize) or
-			dir.GetData((string(inName) + ".xml").c_str(), offset, outSize);
+			dir.GetData(inName.c_str(), offset, outSize) or
+			dir.GetData((inName + ".xml").c_str(), offset, outSize);
 		
 		if (result == false)
 		{
 			string path;
 			static const char* LANG = getenv("LANG");
 			
-			if (LANG != nil and strncmp(LANG, "nl_", 3) == 0)
+			if (LANG != nil and strncmp(LANG, "nl", 2) == 0)
 				path = "Dutch/";
 			else
 				path = "English/";

@@ -124,6 +124,12 @@
 		<copy>diff-window.xml</copy>
 		<copy>message-list-window.xml</copy>
 		<copy>make-clean-alert.xml</copy>
+		<mkdir name="Templates">
+			<copy>empty.c</copy>
+			<copy>Strict.xhtml</copy>
+			<copy>Template.html</copy>
+			<copy>Transitional.xhtml</copy>
+		</mkdir>
 	</package>
 	<targets>
 		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="japi" debug="true">

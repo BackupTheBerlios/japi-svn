@@ -48,6 +48,7 @@
 #include "MAlerts.h"
 
 #include <cryptopp/base64.h>
+#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/md5.h>
 
 using namespace std;
@@ -129,7 +130,7 @@ void MKnownHosts::CheckHost(
 
 	string fingerprint;
 	
-	CryptoPP::MD5 hash;
+	CryptoPP::Weak::MD5 hash;
 	uint32 dLen = hash.DigestSize();
 	vector<char>	H(dLen);
 	

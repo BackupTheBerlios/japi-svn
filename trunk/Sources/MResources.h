@@ -50,9 +50,9 @@
 // If this resources is not found, an exception is thrown 
 
 bool LoadResource(
-		const char*		inName,
-		const char*&	outData,
-		uint32&			outSize);
+		const std::string&	inName,
+		const char*&		outData,
+		uint32&				outSize);
 
 class MResourceFile
 {
