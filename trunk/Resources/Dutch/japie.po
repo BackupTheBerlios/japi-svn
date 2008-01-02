@@ -11,7 +11,7 @@ msgstr ""
 "POT-Creation-Date: 2007-12-11 19:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Maarten L. Hekkelman <maarten@hekkelman.com>\n"
-"Language-Team: Dutch <nl@japie.org>\n"
+"Language-Team: Dutch <maarten@hekkelman.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -203,6 +203,9 @@ msgstr "Wis"
 msgid "Select All"
 msgstr "Alles selecteren"
 
+msgid "Preferences"
+msgstr "Voorkeuren"
+
 msgid "Text"
 msgstr "Tekst"
 
@@ -323,6 +326,11 @@ msgstr "Venster"
 msgid "Worksheet"
 msgstr "Werkblad"
 
+msgid "About…"
+msgstr "Info…"
+
+
+
 # alerts
 msgid "The host key for server ^0 (signature: ^1) is not known. Click Add Key if you trust this host and want to cache the key, click Once to connect without storing the key."
 msgstr "De sleutel voor server ^0 (handtekening: ^1) is niet bekend. Druk op Toevoegen als u deze server vertrouwt, druk op Eenmalig om te verbinden zonder de sleutel op te slaan."
@@ -428,4 +436,58 @@ msgstr "Huidig doel"
 
 msgid "All Targets"
 msgstr "Alle doelen"
+
+msgid "A simple development environment"
+msgstr "Een simpele ontwikkelomgeving"
+
+msgid "Connected"
+msgstr "Verbonden"
+
+msgid "File size known"
+msgstr "Bestandsgrootte bekend"
+
+msgid "Receiving data"
+msgstr "Gegevens worden ontvangen"
+
+msgid "Data received"
+msgstr "Alle gegevens ontvangen"
+
+msgid "done"
+msgstr "klaar"
+
+msgid "Timeout"
+msgstr "Server reageert niet"
+
+msgid "Sending data"
+msgstr "Gegevens worden verzonden"
+
+msgid "Closing file"
+msgstr "Bestand wordt gesloten"
+
+msgid "Select Folder"
+msgstr "Kies map"
+
+msgid "Select File"
+msgstr "Kies bestand"
+
+msgid "Looking up address"
+msgstr "Adres wordt opgezocht"
+
+msgid "Connection closed"
+msgstr "Verbinding verbroken"
+
+msgid "Exchanging keys"
+msgstr "Sleutels uitwisselen"
+
+msgid "Starting authentication"
+msgstr "Authenticatie starten"
+
+msgid "Public key authentication"
+msgstr "Authenticatie met publieke sleutel"
+
+msgid "Password authentication"
+msgstr "Authenticatie met wachtwoord"
+
+msgid "Authenticated"
+msgstr "Authenticatie voltooid"
 

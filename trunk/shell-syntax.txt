@@ -1,68 +1,70 @@
 /*
 
-2.10.2 Shell Grammar Rules
+http://www.latenighthacking.com/archives/reference/susv2/xcu/chap2.html#tag_001_010
 
-[Command Name]
+ Shell Grammar
+The following grammar defines the Shell Command Language. This formal syntax takes precedence over the preceding text syntax description.
+ Shell Grammar Lexical Conventions
+The input language to the shell must be first recognised at the character level. The resulting tokens will be classified by their immediate context according to the following rules (applied in order). These rules are used to determine what a "token" that is subject to parsing at the token level is. The rules for token recognition in Token Recognition will apply.
 
-When the TOKEN is exactly a reserved word, the token identifier for that reserved word shall result. Otherwise, the token WORD shall be returned. Also, if the parser is in any state where only a reserved word could be the next correct token, proceed as above.
+   1. A newline character will be returned as the token identifier NEWLINE.
 
-Note:
-Because at this point quote marks are retained in the token, quoted strings cannot be recognized as reserved words. This rule also implies that reserved words are not recognized except in certain positions in the input, such as after a <newline> or semicolon; the grammar presumes that if the reserved word is intended, it is properly delimited by the user, and does not attempt to reflect that requirement directly. Also note that line joining is done before tokenization, as described in Escape Character (Backslash) , so escaped <newline>s are already removed at this point.
-Rule 1 is not directly referenced in the grammar, but is referred to by other rules, or applies globally.
+   2. If the token is an operator, the token identifier for that operator will result.
 
-[Redirection to or from filename]
+   3. If the string consists solely of digits and the delimiter character is one of < or >, the token identifier IO_NUMBER will be returned.
 
-The expansions specified in Redirection shall occur. As specified there, exactly one field can result (or the result is unspecified), and there are additional requirements on pathname expansion.
+   4. Otherwise, the token identifier TOKEN will result.
 
-[Redirection from here-document]
+Further distinction on TOKEN is context-dependent. It may be that the same TOKEN yields WORD, a NAME, an ASSIGNMENT, or one of the reserved words below, dependent upon the context. Some of the productions in the grammar below are annotated with a rule number from the following list. When a TOKEN is seen where one of those annotated productions could be used to reduce the symbol, the applicable rule will be applied to convert the token identifier type of the TOKEN to a token identifier acceptable at that point in the grammar. The reduction will then proceed based upon the token identifier type yielded by the rule applied. When more than one rule applies, the highest numbered rule will apply (which in turn may refer to another rule). (Note that except in rule 7, the presence of an = in the token has no effect.)
 
-Quote removal shall be applied to the word to determine the delimiter that is used to find the end of the here-document that begins after the next <newline>.
+The WORD tokens will have the word expansion rules applied to them immediately before the associated command is executed, not at the time the command is parsed.
+ Shell Grammar Rules
 
-[Case statement termination]
+   1. [Command Name]
+      When the TOKEN is exactly a reserved word, the token identifier for that reserved word will result. Otherwise, the token WORD will be returned. Also, if the parser is in any state where only a reserved word could be the next correct token, proceed as above. This rule applies rather narrowly: when a compound list is terminated by some clear delimiter (such as the closing fi of an inner if_clause) then it would apply; where the compound list might continue (as in after a ;), rule 7a (and consequently the first sentence of this rule) would apply. In many instances the two conditions are identical, but this part of this rule does not give licence to treating a WORD as a reserved word unless it is in a place where a reserved word must appear.
 
-When the TOKEN is exactly the reserved word esac, the token identifier for esac shall result. Otherwise, the token WORD shall be returned.
+      Note:
+          Because at this point quote marks are retained in the token, quoted strings cannot be recognised as reserved words. This rule also implies that reserved words will not be recognised except in certain positions in the input, such as after a newline character or semicolon; the grammar presumes that if the reserved word is intended, it will be properly delimited by the user, and does not attempt to reflect that requirement directly. Also note that line joining is done before tokenisation, as described in Escape Character (Backslash) , so escaped newlines are already removed at this point. 
 
-[ NAME in for]
+      Rule 1 is not directly referenced in the grammar, but is referred to by other rules, or applies globally.
 
-When the TOKEN meets the requirements for a name (see the Base Definitions volume of IEEE Std 1003.1-2001, Section 3.230, Name), the token identifier NAME shall result. Otherwise, the token WORD shall be returned.
+   2. [Redirection to or from filename]
+      The expansions specified in Redirection will occur. As specified there, exactly one field can result (or the result is unspecified), and there are additional requirements on pathname expansion.
 
-[Third word of for and case]
+   3. [Redirection from here-document]
+      Quote removal will be applied to the word to determine the delimiter that will be used to find the end of the here-document that begins after the next newline character.
 
-[ case only]
+   4. [Case statement termination]
+      When the TOKEN is exactly the reserved word Esac, the token identifier for Esac will result. Otherwise, the token WORD will be returned.
 
-When the TOKEN is exactly the reserved word in, the token identifier for in shall result. Otherwise, the token WORD shall be returned.
+   5. [NAME in for]
+      When the TOKEN meets the requirements for a name (see name in the XBD specification, Glossary  ), the token identifier NAME will result. Otherwise, the token WORD will be returned.
 
-[ for only]
+   6. [Third word of for and case]
+      When the TOKEN is exactly the reserved word In, the token identifier for In will result. Otherwise, the token WORD will be returned. (As indicated in the grammar, a linebreak precedes the token In. If newline characters are present at the indicated location, it is the token after them that is treated in this fashion.)
 
-When the TOKEN is exactly the reserved word in or do, the token identifier for in or do shall result, respectively. Otherwise, the token WORD shall be returned.
+   7. [Assignment preceding command name]
 
-(For a. and b.: As indicated in the grammar, a linebreak precedes the tokens in and do. If <newline>s are present at the indicated location, it is the token after them that is treated in this fashion.)
+         1. [When the first word]
+            If the TOKEN does not contain the character "=", rule 1 will be applied. Otherwise, 7b will be applied.
 
-[Assignment preceding command name]
+         2. [Not the first word]
+            If the TOKEN contains the equal sign character:
 
-[When the first word]
+                * If it begins with =, the token WORD will be returned.
 
-If the TOKEN does not contain the character '=', rule 1 is applied. Otherwise, 7b shall be applied.
+                * If all the characters preceding = form a valid name (see name in the XSH specification), the token ASSIGNMENT_WORD will be returned. (Quoted characters cannot participate in forming a valid name.)
 
-[Not the first word]
+                * Otherwise, it is unspecified whether it is ASSIGNMENT_WORD or WORD that is returned.
 
-If the TOKEN contains the equal sign character:
+      Assignment to the NAME will occur as specified in Simple Commands .
 
-If it begins with '=', the token WORD shall be returned.
+   8. [NAME in function]
+      When the TOKEN is exactly a reserved word, the token identifier for that reserved word will result. Otherwise, when the TOKEN meets the requirements for a name (see Name), the token identifier NAME will result. Otherwise, rule 7 will apply.
 
-If all the characters preceding '=' form a valid name (see the Base Definitions volume of IEEE Std 1003.1-2001, Section 3.230, Name), the token ASSIGNMENT_WORD shall be returned. (Quoted characters cannot participate in forming a valid name.)
+   9. [Body of function]
+      Word expansion and assignment will never occur, even when required by the rules above, when this rule is being parsed. Each TOKEN that might either be expanded or have assignment applied to it will instead be returned as a single WORD consisting only of characters that are exactly the token described in Token Recognition .
 
-Otherwise, it is unspecified whether it is ASSIGNMENT_WORD or WORD that is returned.
-
-Assignment to the NAME shall occur as specified in Simple Commands.
-
-[ NAME in function]
-
-When the TOKEN is exactly a reserved word, the token identifier for that reserved word shall result. Otherwise, when the TOKEN meets the requirements for a name, the token identifier NAME shall result. Otherwise, rule 7 applies.
-
-[Body of function]
-
-Word expansion and assignment shall never occur, even when required by the rules above, when this rule is being parsed. Each TOKEN that might either be expanded or have assignment applied to it shall instead be returned as a single WORD consisting only of characters that are exactly the token described in Token Recognition.
 
 */
 

@@ -120,7 +120,7 @@ struct MProjectState
 };
 
 const char
-	kJapieProjectState[] = "com.hekkelman.japie.ProjectState";
+	kJapieProjectState[] = "com.hekkelman.japi.ProjectState";
 
 const uint32
 	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);

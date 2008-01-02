@@ -61,13 +61,13 @@ using namespace std;
 static bool gQuit = false;
 
 const char
-	kAppName[] = "Japie",
-	kVersionString[] = "1.0";
+	kAppName[] = "Japi",
+	kVersionString[] = "0.9";
 
 MJapieApp* gApp;
 
 const char
-	kSocketName[] = "/tmp/japie.%d.socket";
+	kSocketName[] = "/tmp/japi.%d.socket";
 
 MJapieApp::MJapieApp()
 	: MHandler(nil)
@@ -885,7 +885,7 @@ bool ForkServer(
 
 void usage()
 {
-	cout << "usage: japie [options] [ - | files ]" << endl
+	cout << "usage: japi [options] [ - | files ]" << endl
 		 << "    available options: " << endl
 		 << "    -h      This help message" << endl
 		 << "    -f      Don't fork into client/server" << endl

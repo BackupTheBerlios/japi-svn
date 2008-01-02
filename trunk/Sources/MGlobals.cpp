@@ -91,7 +91,7 @@ MPath			gTemplatesDir, gPrefsDir;
 void InitGlobals()
 {
 	gPrefsDir = g_get_user_config_dir();
-	gPrefsDir /= "japie";
+	gPrefsDir /= "japi";
 	
 	const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
 	if (templatesDir == nil)

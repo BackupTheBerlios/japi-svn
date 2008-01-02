@@ -41,7 +41,7 @@ using namespace std;
 const char* GetLocalisedString(
 				const char* inString)
 {
-	const char* result = dgettext("japie", inString);
+	const char* result = dgettext("japi", inString);
 
 	if (result == nil)
 		result = inString;

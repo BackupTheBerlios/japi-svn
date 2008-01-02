@@ -84,8 +84,8 @@ const char
 	kCutAction[]		= "Cut";
 
 const char
-	kJapieDocState[] = "com.hekkelman.japie.State",
-	kJapieCWD[] = "com.hekkelman.japie.CWD";
+	kJapieDocState[] = "com.hekkelman.japi.State",
+	kJapieCWD[] = "com.hekkelman.japi.CWD";
 
 const uint32
 	kMDocStateSize = 36;	// sizeof(MDocState)
