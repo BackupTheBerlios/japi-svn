@@ -71,6 +71,8 @@ MEditWindow::MEditWindow()
 	mController.AddTextView(mTextView);
 	
 	mTextView->SetSuper(this);
+	
+	ConnectChildSignals();
 
 	ShellStatus(false);
 }

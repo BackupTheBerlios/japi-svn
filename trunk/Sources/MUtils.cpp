@@ -297,36 +297,6 @@ string GetDateTime()
 	return s.str();
 }
 
-uint32 AddNameToNameTable(
-	string&			ioNameTable,
-	const string&	inName)
-{
-	uint32 result = 0;
-	
-	const char* p = ioNameTable.c_str();
-	const char* e = p + ioNameTable.length();
-	
-	while (p < e)
-	{
-		if (inName == p)
-		{
-			result = p - ioNameTable.c_str();
-			break;
-		}
-
-		p += strlen(p) + 1;
-	}
-	
-	if (p >= e)
-	{
-		result = ioNameTable.length();
-		ioNameTable.append(inName);
-		ioNameTable.append("\0", 1);
-	}
-	
-	return result;
-}
-
 string XMLNode::name() const
 {
 	return string((const char*)mNode->name);

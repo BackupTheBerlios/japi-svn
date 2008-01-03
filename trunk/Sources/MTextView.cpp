@@ -1224,7 +1224,7 @@ bool MTextView::OnFocusInEvent(
 		
 		gtk_im_context_focus_in(mIMContext);
 	
-		TakeFocus();	
+		TakeFocus();
 	}
 	
 	return true;

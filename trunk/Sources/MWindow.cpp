@@ -140,6 +140,11 @@ MWindow::~MWindow()
 #endif
 }
 
+void MWindow::ConnectChildSignals()
+{
+	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()), &MWindow::DoForEachCallBack, this);
+}
+
 void MWindow::RemoveWindowFromList(
 	MWindow*		inWindow)
 {
@@ -431,4 +436,23 @@ bool MWindow::ChildFocus(
 void MWindow::FocusChanged(
 	uint32				inFocussedID)
 {
+}
+
+void MWindow::PutOnDuty(
+	MHandler*		inHandler)
+{
+	MWindow* w = sFirst;
+	while (w != nil)
+	{
+		if (w == this)
+		{
+			RemoveWindowFromList(this);
+
+			mNext = sFirst;
+			sFirst = this;
+
+			break;
+		}
+		w = w->mNext;
+	}
 }

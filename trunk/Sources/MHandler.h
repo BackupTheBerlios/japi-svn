@@ -61,12 +61,51 @@ class MHandler
 	bool				IsFocus() const					{ return sFocus == this; }
 	static MHandler*	GetFocus()						{ return sFocus; }
 	
+	bool				IsInCommandChain() const		{ return mOnCommandChain == eTriStateLatent; }
+	
 	void				TakeFocus();
 	void				ReleaseFocus();
 
   protected:
+
+	static void			SetFocus(
+							MHandler*		inHandler);
+
+	void				AddSubHandler(
+							MHandler*		inHandler);
+	
+	void				RemoveSubHandler(
+							MHandler*		inHandler);
+
+	virtual void		BeFocus();
+	
+	virtual void		DontBeFocus();
+
+	virtual void		PutOnDuty(
+							MHandler*		inNewFocus);
+
+	virtual void		TakeOffDuty();
+	
+  private:
+
+	void				PutChainOnDuty(
+							MHandler*		inNewFocus);
+
+	void				TakeChainOffDuty(
+							MHandler*		inUpToHndlr);
+	
+	typedef std::list<MHandler*>	MHandlerList;
+	
+	enum TriState {
+		eTriStateOn,
+		eTriStateOff,
+		eTriStateLatent	
+	};
 	
 	MHandler*			mSuper;
+	MHandlerList		mSubHandlers;
+	TriState			mOnCommandChain;
+	
 	static MHandler*	sFocus;
 };
 

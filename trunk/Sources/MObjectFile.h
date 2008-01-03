@@ -38,6 +38,10 @@
 #include "MProjectTarget.h"
 #include "MFile.h"
 
+uint32 AddNameToNameTable(
+	std::string&		ioNameTable,
+	const std::string&	inName);
+
 struct MObjectFileImp
 {
 	MPath			mFile;

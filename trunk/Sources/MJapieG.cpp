@@ -133,14 +133,21 @@ bool MJapieApp::ProcessCommand(
 	switch (inCommand)
 	{
 		case cmd_About:
-			gtk_show_about_dialog(nil,
+		{
+			MWindow* w = MWindow::GetFirstWindow();
+			GtkWidget* ww = nil;
+			if (w != nil)
+				ww = w->GetGtkWidget();
+			
+			gtk_show_about_dialog(GTK_WINDOW(ww),
 				"program_name", kAppName,
 				"version", kVersionString,
 				"copyright", "Copyright © 2007 Maarten L. Hekkelman",
-				"comments", "A simple development environment",
+				"comments", _("A simple development environment"),
 				"website", "http://www.hekkelman.com/",
 				nil);
 			break;
+		}
 		
 		case cmd_Preferences:
 			MPrefsDialog::Create();

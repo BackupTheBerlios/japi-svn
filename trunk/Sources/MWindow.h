@@ -120,6 +120,11 @@ class MWindow : public MView, public MHandler
 								uint32			inID,
 								char			inName[5]);
 
+	void					ConnectChildSignals();
+
+	virtual void			PutOnDuty(
+								MHandler*		inHandler);
+
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
