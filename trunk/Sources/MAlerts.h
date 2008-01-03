@@ -36,10 +36,13 @@
 #include <sstream>
 #include <vector>
 
+GtkWidget* CreateAlertWithArgs(
+	const char* 				inResourceName,
+	std::vector<std::string>&	inArgs);
+
 int32 DisplayAlertWithArgs(
-		const char*		inResourceName,
-		std::vector<std::string>&
-						inArgs);
+	const char*					inResourceName,
+	std::vector<std::string>&	inArgs);
 
 template<class T>
 inline 
@@ -94,6 +97,16 @@ int32 DisplayAlert(
 	AddArgument(args, inArg2);
 	AddArgument(args, inArg3);
 	return DisplayAlertWithArgs(inResourceName, args);
+}
+
+template<class T1>
+GtkWidget* CreateAlert(
+	const char*			inResourceName,
+	const T1&			inArg1)
+{
+	std::vector<std::string> args;
+	AddArgument(args, inArg1);
+	return CreateAlertWithArgs(inResourceName, args);
 }
 
 #endif

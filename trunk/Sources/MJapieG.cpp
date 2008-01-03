@@ -686,7 +686,9 @@ void MJapieApp::ShowWorksheet()
 gboolean MJapieApp::Timeout(
 	gpointer		inData)
 {
+	gdk_threads_enter();
 	gApp->Pulse();
+	gdk_threads_leave();
 	return true;
 }
 

@@ -1057,6 +1057,12 @@ void MDocument::CloseDocument()
 void MDocument::RevertDocument()
 {
 	ReadFile();
+
+	MDocState state;
+	if (not ReadDocState(state))
+		Rewrap();
+	
+	SetModified(false);
 }
 
 bool MDocument::DoSave()

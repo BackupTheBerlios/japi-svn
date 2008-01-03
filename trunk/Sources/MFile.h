@@ -46,27 +46,43 @@ namespace fs = boost::filesystem;
 
 typedef fs::path MPath;
 
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize);
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize);
-
 class MFile
 {
   public:
-					MFile(const MPath& inFileSpec, int inFD = -1);
+					MFile(
+						const MPath&	inFileSpec,
+						int				inFD = -1);
+
 	virtual			~MFile();
 
-	void			Open(int inPermissions);
+	void			Open(
+						int				inPermissions);
+
 	void			Close();
+
 	bool			IsOpen()						{ return mIsOpen; }
 	
-	void			GetFileSpec(MPath& outFileSpec) const;
-	const MPath&		GetFileSpec() const				{ return mFileSpec; }
+	void			GetFileSpec(
+						MPath&			outFileSpec) const;
 
-	int32			Read(void* inBuffer, int32 inByteCount);
-	int32			Write(const void* inBuffer, int32 inByteCount);
-	int64			Seek(int64 inOffset, int inMode);
+	const MPath&	GetFileSpec() const				{ return mFileSpec; }
+
+	int32			Read(
+						void*			inBuffer,
+						int32			inByteCount);
+
+	int32			Write(
+						const void*		inBuffer,
+						int32			inByteCount);
+
+	int64			Seek(
+						int64			inOffset,
+						int				inMode);
+
 	int64			GetSize() const;
-	void			SetSize(int64 inSize);
+
+	void			SetSize(
+						int64			inSize);
 	
 	double			GetModificationDate() const;
 	
@@ -76,23 +92,6 @@ class MFile
 	MPath			mFileSpec;
 	int				mFD;
 	bool			mIsOpen;
-};
-
-class MSafeSaver
-{
-  public:
-					MSafeSaver(const MPath& inFile);
-	virtual			~MSafeSaver();
-	
-	void			Commit(MPath& outFileSpec);
-	
-	MFile*			GetTempFile();
-	
-  private:
-	MPath			mTempFileSpec;
-	MPath			mDestFileSpec;
-	std::auto_ptr<MFile>
-					mTempFile;
 };
 
 enum {
@@ -128,13 +127,34 @@ class MFileIterator
 
 class MUrl;
 
-bool ChooseDirectory(MPath&	outDirectory);
+ssize_t read_attribute(
+	const MPath&		inPath,
+	const char*			inName,
+	void*				outData,
+	size_t				inDataSize);
+
+void write_attribute(
+	const MPath&		inPath,
+	const char*			inName,
+	const void*			inData,
+	size_t				inDataSize);
+
+bool ChooseDirectory(
+	MPath&				outDirectory);
+
 bool ChooseOneFile(
-		MUrl&		ioFile);
+	MUrl&				ioFile);
 
-bool FileNameMatches(const char* inPattern, const MPath& inFile);
-bool FileNameMatches(const char* inPattern, const std::string& inFile);
+bool FileNameMatches(
+	const char*			inPattern,
+	const MPath&		inFile);
 
-MPath relative_path(const MPath& inFromDir, const MPath& inFile);
+bool FileNameMatches(
+	const char*			inPattern,
+	const std::string&	inFile);
+
+MPath relative_path(
+	const MPath&		inFromDir,
+	const MPath&		inFile);
 
 #endif

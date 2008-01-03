@@ -45,19 +45,17 @@
 
 using namespace std;
 
-int32 DisplayAlertWithArgs(
-		const char*		inResourceName,
-		vector<string>&	inArgs)
+GtkWidget* CreateAlertWithArgs(
+	const char* 	inResourceName,
+	vector<string>&	inArgs)
 {
-	int32 result = -1;
 	xmlDocPtr xmlDoc = nil;
-	
-	xmlInitParser();
-
-	gdk_threads_enter();
+	GtkWidget* dlg = nil;
 	
 	try
 	{
+		xmlInitParser();
+	
 		const char* xml;
 		uint32 size;
 		
@@ -103,7 +101,7 @@ int32 DisplayAlertWithArgs(
 				}
 			}
 		}
-
+	
 		// replace parameters
 		char s[] = "^0";
 		
@@ -115,14 +113,44 @@ int32 DisplayAlertWithArgs(
 			++s[1];
 		}
 		
-		GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+		dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
 			type, GTK_BUTTONS_NONE, text.c_str());
+		
+		THROW_IF_NIL(dlg);
 		
 		for (vector<pair<string,uint32> >::iterator b = btns.begin(); b != btns.end(); ++b)
 			gtk_dialog_add_button(GTK_DIALOG(dlg), b->first.c_str(), b->second);
-
+	
 		if (defaultButton >= 0)
 			gtk_dialog_set_default_response(GTK_DIALOG(dlg), defaultButton);
+	
+		if (xmlDoc != nil)
+			xmlFreeDoc(xmlDoc);
+		
+		xmlCleanupParser();
+	}
+	catch (...)
+	{
+		if (xmlDoc != nil)
+			xmlFreeDoc(xmlDoc);
+		
+		xmlCleanupParser();
+		
+		throw;
+	}
+	
+	return dlg;
+}
+
+int32 DisplayAlertWithArgs(
+		const char*		inResourceName,
+		vector<string>&	inArgs)
+{
+	int32 result = -1;
+
+	try
+	{
+		GtkWidget* dlg = CreateAlertWithArgs(inResourceName, inArgs);
 
 		result = gtk_dialog_run(GTK_DIALOG(dlg));
 		
@@ -133,12 +161,6 @@ int32 DisplayAlertWithArgs(
 		MError::DisplayError(e);
 	}
 	
-	if (xmlDoc != nil)
-		xmlFreeDoc(xmlDoc);
-	
-	xmlCleanupParser();
-	
-	gdk_threads_leave();
-
 	return result;
 }
+

@@ -41,6 +41,7 @@
 #include <fstream>
 #include <cassert>
 #include <cerrno>
+#include <magic.h>
 
 #include "MFile.h"
 #include "MUrl.h"
@@ -48,9 +49,69 @@
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MStrings.h"
-//#include "MGlobals.h"
 
 using namespace std;
+
+// ------------------------------------------------------------------
+//
+//  libmagic support
+//
+
+class MLibMagic
+{
+  public:
+	static MLibMagic&	Instance();
+	
+	bool		IsText(
+					const MPath&	inPath);
+	
+  private:
+
+				MLibMagic();
+				~MLibMagic();
+
+	magic_t		mCookie;
+};
+
+MLibMagic::MLibMagic()
+{
+	int flags = MAGIC_MIME | MAGIC_SYMLINK;
+	flags |= MAGIC_NO_CHECK_COMPRESS;
+	flags |= MAGIC_NO_CHECK_TAR;
+	flags |= MAGIC_NO_CHECK_SOFT;
+	flags |= MAGIC_NO_CHECK_APPTYPE;
+	flags |= MAGIC_NO_CHECK_ELF;
+	flags |= MAGIC_NO_CHECK_TROFF;
+	flags |= MAGIC_NO_CHECK_TOKENS;
+	
+	mCookie = magic_open(flags);
+	
+	if (mCookie != nil)
+		magic_load(mCookie, nil);
+}
+
+MLibMagic::~MLibMagic()
+{
+	magic_close(mCookie);
+}
+
+MLibMagic& MLibMagic::Instance()
+{
+	static MLibMagic sInstance;
+	return sInstance;
+}
+
+bool MLibMagic::IsText(
+	const MPath&	inPath)
+{
+	bool result = false;
+	const char* t;
+	
+	if (mCookie != nil and (t = magic_file(mCookie, inPath.string().c_str())) != nil)
+		result = strncmp(t, "text/", 5) == 0;
+	
+	return result;
+}
 
 // ------------------------------------------------------------------
 //
@@ -306,66 +367,6 @@ bool FileNameMatches(
 	return result;	
 }
 
-MSafeSaver::MSafeSaver(const MPath& inFile)
-	: mDestFileSpec(inFile)
-{
-	struct stat st;
-	
-	if (stat(mDestFileSpec.string().c_str(), &st) == 0)
-	{
-		string path = mDestFileSpec.string() + "-XXXXXX";
-		
-		int fd = mkstemp(const_cast<char*>(path.c_str()));
-		THROW_IF_POSIX_ERROR(fd);
-		
-		mTempFileSpec = path;
-		mTempFile.reset(new MFile(mTempFileSpec, fd));
-	}
-	else
-	{
-		mTempFile.reset(new MFile(mDestFileSpec));
-		
-		mTempFile->GetFileSpec(mTempFileSpec);
-		mDestFileSpec = mTempFileSpec;
-
-		mTempFile->Open(O_RDWR | O_TRUNC | O_CREAT);
-	}
-}
-
-MSafeSaver::~MSafeSaver()
-{
-	// if commit wasn't called...
-	if (mTempFile.get() != nil and not (mDestFileSpec == mTempFileSpec))
-	{
-		try
-		{
-			mTempFile->Close();
-			remove(mTempFileSpec.string().c_str());
-		}
-		catch (...) {}
-	}
-}
-
-void MSafeSaver::Commit(MPath& outFileSpec)
-{
-	mTempFile->Close();
-	mTempFile.reset(nil);
-
-	if (not (mDestFileSpec == mTempFileSpec))
-	{
-		THROW_IF_POSIX_ERROR(remove(mDestFileSpec.string().c_str()));
-		THROW_IF_POSIX_ERROR(
-			rename(mTempFileSpec.string().c_str(), mDestFileSpec.string().c_str()));
-	}
-
-	outFileSpec = mDestFileSpec;
-}
-
-MFile* MSafeSaver::GetTempFile()
-{
-	return mTempFile.get();
-}
-
 // ------------------------------------------------------------
 
 struct MFileIteratorImp
@@ -393,38 +394,7 @@ struct MFileIteratorImp
 
 bool MFileIteratorImp::IsTEXT(const MPath& inFile)
 {
-	return true;
-//	bool result = false;
-//	
-//	FSRef ref;
-//	LSItemInfoRecord outInfo = { };
-//	
-//	if (FSPathMakeRef(inFile, ref) == noErr and
-//		::LSCopyItemInfoForRef(&ref, kLSRequestExtension | kLSRequestTypeCreator, &outInfo) == noErr)
-//	{
-//		CFStringRef itemUTI = nil;
-//		if (outInfo.extension != nil)
-//		{
-//			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-//				kUTTagClassFilenameExtension, outInfo.extension, nil);
-//			::CFRelease(outInfo.extension);
-//		}
-//		else
-//		{
-//			CFStringRef typeString = ::UTCreateStringForOSType(outInfo.filetype);
-//			itemUTI = ::UTTypeCreatePreferredIdentifierForTag(
-//				kUTTagClassFilenameExtension, typeString, NULL);
-//			::CFRelease(typeString);
-//		}
-//
-//		if (itemUTI != nil)
-//		{
-//			result = ::UTTypeConformsTo(itemUTI, CFSTR("public.text"));
-//			::CFRelease(itemUTI);
-//		}
-//	}
-//
-//	return result;
+	return MLibMagic::Instance().IsText(inFile);
 }
 
 struct MSingleFileIteratorImp : public MFileIteratorImp

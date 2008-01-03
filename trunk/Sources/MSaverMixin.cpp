@@ -38,15 +38,19 @@
 #include "MSaverMixin.h"
 #include "MStrings.h"
 #include "MCommands.h"
+#include "MAlerts.h"
 
 using namespace std;
 
 namespace {
 
 const int32
-	kAskSaveChanges_Save = 'save',
-	kAskSaveChanges_Cancel = 'canc',
-	kAskSaveChanges_DontSave = 'dont';
+	kAskSaveChanges_Save = 3,
+	kAskSaveChanges_Cancel = 2,
+	kAskSaveChanges_DontSave = 1,
+	
+	kDiscardChanges_Discard = 1,
+	kDiscardChanges_Cancel = 2;
 
 }
 
@@ -54,7 +58,8 @@ MSaverMixin* MSaverMixin::sFirst = nil;
 
 MSaverMixin::MSaverMixin()
 	: slClose(this, &MSaverMixin::OnClose)
-	, slResponse(this, &MSaverMixin::OnResponse)
+	, slSaveResponse(this, &MSaverMixin::OnSaveResponse)
+	, slDiscardResponse(this, &MSaverMixin::OnDiscardResponse)
 	, mNext(nil)
 	, mCloseOnNavTerminate(true)
 	, mClosePending(false)
@@ -101,6 +106,7 @@ bool MSaverMixin::IsNavDialogVisible()
 
 void MSaverMixin::TryCloseDocument(
 	MCloseReason	inAction,
+	const string&	inDocumentName,
 	MWindow*		inParentWindow)
 {
 	inParentWindow->Select();
@@ -110,66 +116,37 @@ void MSaverMixin::TryCloseDocument(
 	
 	mQuitPending = (inAction == kSaveChangesQuittingApplication);
 	
-	mDialog = gtk_message_dialog_new(GTK_WINDOW(inParentWindow->GetGtkWidget()),
-		GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
-		_("Do you want to save the changes made to document %s?"),
-		inParentWindow->GetTitle().c_str());
-	
-//	if (inAction == kSaveChangesClosingDocument)
-//	{
-//		
-//	}
-
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Don't save"), kAskSaveChanges_DontSave);
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Cancel"), kAskSaveChanges_Cancel);
-	gtk_dialog_add_button(GTK_DIALOG(mDialog), _("Save"), kAskSaveChanges_Save);
-	gtk_dialog_set_default_response(GTK_DIALOG(mDialog), kAskSaveChanges_Save);
+	mDialog = CreateAlert("save-changes-alert", inDocumentName);
 	
 	slClose.Connect(mDialog, "close");
-	slResponse.Connect(mDialog, "response");
+	slSaveResponse.Connect(mDialog, "response");
+
+	gtk_window_set_transient_for(
+		GTK_WINDOW(mDialog),
+		GTK_WINDOW(inParentWindow->GetGtkWidget()));
 	
 	gtk_widget_show_all(mDialog);
-	
-//	NavDialogCreationOptions creationOptions;
-//	::NavGetDefaultDialogCreationOptions(&creationOptions);
-//	
-//	creationOptions.clientName = MApplication::Instance().GetAppName();
-//	creationOptions.modality = kWindowModalityWindowModal;
-//	creationOptions.parentWindow = inParentWindow->GetSysWindow();
-//	
-//	THROW_IF_OSERROR(::NavCreateAskSaveChangesDialog(&creationOptions,
-//		inAction, sNavEventUPP, this, &mDialog));
-//	
-//	THROW_IF_OSERROR(::NavDialogRun(mDialog));
 }
 
 void MSaverMixin::TryDiscardChanges(
 	const string&	inDocumentName,
 	MWindow*		inParentWindow)
 {
-#warning("unimplemented")
+	inParentWindow->Select();
 
+	if (mDialog != nil)
+		return;
 
-//	inParentWindow->Select();
-//
-//	if (mDialog != nil)
-//		return;
-//	
-//	NavDialogCreationOptions creationOptions;
-//	::NavGetDefaultDialogCreationOptions(&creationOptions);
-//	
-//	creationOptions.clientName = MApplication::Instance().GetAppName();
-//	
-//	creationOptions.modality	 = kWindowModalityWindowModal;
-//	creationOptions.parentWindow = inParentWindow->GetSysWindow();
-//	
-//	MCFString documentName(inDocumentName);
-//	creationOptions.saveFileName = documentName.UseRef();
-//	
-//	THROW_IF_OSERROR(::NavCreateAskDiscardChangesDialog(
-//		&creationOptions, sNavEventUPP, this, &mDialog));
-//	
-//	THROW_IF_OSERROR(::NavDialogRun(mDialog));
+	mDialog = CreateAlert("discard-changes-alert", inDocumentName);
+	
+	slClose.Connect(mDialog, "close");
+	slDiscardResponse.Connect(mDialog, "response");
+	
+	gtk_window_set_transient_for(
+		GTK_WINDOW(mDialog),
+		GTK_WINDOW(inParentWindow->GetGtkWidget()));
+
+	gtk_widget_show_all(mDialog);
 }
 
 void MSaverMixin::SaveDocumentAs(
@@ -184,6 +161,7 @@ void MSaverMixin::SaveDocumentAs(
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					      NULL);
+
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), true);
 	
 //	    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), default_folder_for_saving);
@@ -217,7 +195,7 @@ bool MSaverMixin::OnClose()
 	return false;
 }
 	
-bool MSaverMixin::OnResponse(
+bool MSaverMixin::OnSaveResponse(
 	gint		inArg)
 {
 	gtk_widget_destroy(mDialog);
@@ -242,6 +220,18 @@ bool MSaverMixin::OnResponse(
 				gApp->ProcessCommand(cmd_Quit, nil, 0);
 			break;
 	}
+	
+	return true;	
+}
+
+bool MSaverMixin::OnDiscardResponse(
+	gint		inArg)
+{
+	gtk_widget_destroy(mDialog);
+	mDialog = nil;
+
+	if (inArg == kDiscardChanges_Discard)
+		RevertDocument();
 	
 	return true;	
 }

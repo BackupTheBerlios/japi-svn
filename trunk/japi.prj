@@ -6,6 +6,7 @@
 	</pkg-config>
 	<syspaths>
 		<path>/usr/include</path>
+		<path>/usr/local/include</path>
 		<path>/usr/include/libxml2</path>
 		<path>/usr/include/c++/4.0.0</path>
 	</syspaths>
@@ -106,6 +107,7 @@
 			<file>libboost_date_time.a</file>
 			<file>libattr.a</file>
 			<file>libgthread-2.0.a</file>
+			<file>libmagic.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>
@@ -124,6 +126,8 @@
 		<copy>diff-window.xml</copy>
 		<copy>message-list-window.xml</copy>
 		<copy>make-clean-alert.xml</copy>
+		<copy>save-changes-alert.xml</copy>
+		<copy>discard-changes-alert.xml</copy>
 		<mkdir name="Templates">
 			<copy>empty.c</copy>
 			<copy>Strict.xhtml</copy>

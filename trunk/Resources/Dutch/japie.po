@@ -491,3 +491,9 @@ msgstr "Authenticatie met wachtwoord"
 msgid "Authenticated"
 msgstr "Authenticatie voltooid"
 
+msgid "Are you sure you want to discard the changes made to document ^0?"
+msgstr "Weet u zeker dat u de wijzigingen aan document ^0 ongedaan wilt maken?"
+
+msgid "Discard"
+msgstr "Maak ongedaan"
+

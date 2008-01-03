@@ -382,7 +382,7 @@ void MProject::CloseAllProjects(
 		
 		if (project->mModified)
 		{
-			project->TryCloseDocument(inAction, project);
+			project->TryCloseDocument(inAction, project->mName, project);
 			break;
 		}
 		
@@ -501,7 +501,7 @@ bool MProject::DoClose()
 	bool result = false;
 	
 	if (mModified)
-		TryCloseDocument(kSaveChangesClosingDocument, this);
+		TryCloseDocument(kSaveChangesClosingDocument, mName, this);
 	else
 	{
 		if (Preferences::GetInteger("save state", 1))
@@ -1042,17 +1042,23 @@ void MProject::ProjectFileStatusChanged()
 bool MProject::SaveDocument()
 {
 	bool result = false;
-	
-	MSafeSaver save(mProjectFile);
-		
-	if (Write(save.GetTempFile()))
+
+	try
 	{
-		save.Commit(mProjectFile);
+		MFile file(mProjectFile);
+		file.Open(O_RDWR | O_TRUNC | O_CREAT);
+		
+		if (Write(&file))
+		{
+			gApp->AddToRecentMenu(MUrl(mProjectFile));
 
-		gApp->AddToRecentMenu(MUrl(mProjectFile));
-
-		SetModified(false);
-		result = true;
+			SetModified(false);
+			result = true;
+		}
+	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
 	}
 	
 	return result;

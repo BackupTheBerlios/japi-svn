@@ -594,7 +594,15 @@ bool MController::TryCloseDocument(
 		else
 		{
 			result = false;
-			MSaverMixin::TryCloseDocument(inAction, mWindow);
+
+			string name;	
+			
+			if (mDocument->IsSpecified())
+				name = mDocument->GetURL().GetFileName();
+			else
+				name = mWindow->GetTitle();
+			
+			MSaverMixin::TryCloseDocument(inAction, name, mWindow);
 		}
 	}
 	

@@ -53,6 +53,7 @@ class MSaverMixin
 
 	virtual void		TryCloseDocument(
 							MCloseReason		inAction,
+							const std::string&	inDocument,
 							MWindow*			inParentWindow);
 	
 	virtual void		TryDiscardChanges(
@@ -71,25 +72,18 @@ class MSaverMixin
 							const MUrl&			inPath) = 0;
 	virtual void		CloseAfterNavigationDialog() = 0;
 
-//	static pascal void	NavEvent(
-//							NavEventCallbackMessage	inMessage,
-//							NavCBRecPtr				inParams,
-//							void*					inUserData);
-//
-//	virtual void		DoNavUserAction(
-//							NavCBRecPtr				inParams);
-//
-//	virtual void		DoNavTerminate(
-//							NavCBRecPtr				inParams);
-	
 	virtual bool		OnClose();
-	
-	virtual bool		OnResponse(
+
+	virtual bool		OnSaveResponse(
 							gint				inArg);
 
-	MSlot<bool()>								slClose;
-	MSlot<bool(gint)>							slResponse;
-	
+	virtual bool		OnDiscardResponse(
+							gint				inArg);
+
+	MSlot<bool()>		slClose;
+	MSlot<bool(gint)>	slSaveResponse;
+	MSlot<bool(gint)>	slDiscardResponse;
+
 	static MSaverMixin*	sFirst;
 	MSaverMixin*		mNext;
 	bool				mCloseOnNavTerminate;
