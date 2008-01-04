@@ -371,8 +371,8 @@ msgstr "Uitvoeren"
 msgid "Untitled"
 msgstr "Naamloos"
 
-msgid "Do you want to save the changes made to document %s?"
-msgstr "Wilt u de wijzigingen aan %s bewaren?"
+msgid "Do you want to save the changes made to document ^0?"
+msgstr "Wilt u de wijzigingen aan ^0 bewaren?"
 
 msgid "Don't save"
 msgstr "Bewaar niet"
@@ -497,3 +497,11 @@ msgstr "Weet u zeker dat u de wijzigingen aan document ^0 ongedaan wilt maken?"
 msgid "Discard"
 msgstr "Maak ongedaan"
 
+msgid "Replace all on multiple files is a potentially dangerous operation. You can choose to save changes to disk immediately or to keep the windows open."
+msgstr "Alles vervangen over meerdere bestanden is een potentieel gevaarlijke actie. U kunt kiezen om de wijzigingen direct naar schijf te schrijven of om de documenten na wijziging op te houden."
+
+msgid "Save to Disk"
+msgstr "Bewaar"
+
+msgid "Keep Window Open"
+msgstr "Hou venster open"

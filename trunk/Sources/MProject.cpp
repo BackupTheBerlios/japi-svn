@@ -2698,7 +2698,7 @@ void MProject::Preprocess(
 	MDocument* output = new MDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
 	
-	AddRoute(job->eStdOut, output->eStdOut);
+	SetCallBack(job->eStdOut, output, &MDocument::StdOut);
 	MDocWindow::DisplayDocument(output);
 
 	StartJob(job);
@@ -2767,7 +2767,7 @@ void MProject::Disassemble(
 	MDocument* output = new MDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # disassembled");
 	
-	AddRoute(job->eStdOut, output->eStdOut);
+	SetCallBack(job->eStdOut, output, &MDocument::StdOut);
 	MDocWindow::DisplayDocument(output);
 
 	StartJob(job);

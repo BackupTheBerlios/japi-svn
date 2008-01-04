@@ -45,6 +45,9 @@
 #include "MLanguageXML.h"
 #include "MMenu.h"
 
+#include <boost/bind.hpp>
+
+#include <set>
 #include <map>
 
 using namespace std;
@@ -63,13 +66,30 @@ struct MRecognizer
 						MRecognizer();
 						~MRecognizer();
 
-	void				AddWord(string inWord, uint8 inTag);
+	void				AddWord(
+							string			inWord,
+							uint8			inTag);
+							
 	void				CreateAutomaton();
 	
-	uint32				Move(uint8 inChar, uint32 inState);
-	uint8				IsKeyWord(uint32 inState);
+	uint32				Move(
+							uint8			inChar,
+							uint32			inState);
+
+	uint8				IsKeyWord(
+							uint32			inState);
+
+	void				CollectKeyWordsBeginningWith(
+							string			inPattern,
+							vector<string>&	ioStrings);
 
   private:
+
+	void				CollectKeyWordsStartingFromState(
+							uint32			inState,
+							string			inWord,
+							set<string>&	inKeys,
+							vector<string>&	outWords);
 	
 	union MTransition
 	{
@@ -337,6 +357,79 @@ uint8 MRecognizer::IsKeyWord(uint32 inState)
 		result = mAutomaton[inState - 1].b.term;
 	return result;
 }
+
+void MRecognizer::CollectKeyWordsBeginningWith(
+	string			inPattern,
+	vector<string>&	ioStrings)
+{
+	bool match = true;
+	uint32 state = mAutomaton[mAutomaton.size() - 1].b.dest;
+	
+	for (uint32 i = 0; state != 0 and match and i < inPattern.length(); ++i)
+	{
+		while (mAutomaton[state].b.attr != inPattern[i])
+		{
+			if (mAutomaton[state].b.last)
+			{
+				match = false;
+				break;
+			}
+			
+			++state;
+		}
+		
+		if (match and mAutomaton[state].b.attr == inPattern[i])
+			state = mAutomaton[state].b.dest;
+		else
+			match = false;
+	}
+	
+	if (match and state != 0)
+	{
+		set<string> keys(ioStrings.begin(), ioStrings.end());
+		CollectKeyWordsStartingFromState(state, "", keys, ioStrings);
+	}
+}
+
+void MRecognizer::CollectKeyWordsStartingFromState(
+	uint32			inState,
+	string			inWord,
+	set<string>&	inKeys,
+	vector<string>&	outWords)
+{
+	uint32 state = inState;
+
+	if (state == 0)
+		return;
+
+	for (;;)
+	{
+		char ch = mAutomaton[state].b.attr;
+
+		if (mAutomaton[state].b.term)
+		{
+			string word = inWord + ch;
+			if (inKeys.count(word) == 0)
+			{
+				inKeys.insert(word);
+				outWords.push_back(word);
+			}
+		}
+
+		if (mAutomaton[state].b.dest != 0)
+		{
+			CollectKeyWordsStartingFromState(
+				mAutomaton[state].b.dest, inWord + ch, inKeys, outWords);
+		}
+
+		if (mAutomaton[state].b.last)
+			break;
+
+		++state;
+	}
+}
+
+// --------------------------------------------------------------------
 
 MLanguage::MLanguage()
 	: mRecognizer(nil)
@@ -654,3 +747,11 @@ bool MLanguage::GetSelectionForParseItem(
 	
 	return result;
 }
+
+void MLanguage::CollectKeyWordsBeginningWith(
+	string				inPattern,
+	vector<string>&		ioStrings)
+{
+	mRecognizer->CollectKeyWordsBeginningWith(inPattern, ioStrings);
+}
+

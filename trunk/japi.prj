@@ -105,7 +105,8 @@
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_date_time.a</file>
-			<file>libattr.a</file>
+			<!--file>libattr.a</file-->
+			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
 			<file>libmagic.a</file>
 			<link>cryptopp</link>

@@ -121,9 +121,6 @@ MDocument::MDocument(
 	const MUrl*			inURL)
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
-	, eShellStatusIn(this, &MDocument::ShellStatusIn)
-	, eStdOut(this, &MDocument::StdOut)
-	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 	, eNotifyPut(this, &MDocument::NotifyPut)
@@ -173,9 +170,6 @@ MDocument::MDocument(
 MDocument::MDocument()
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
-	, eShellStatusIn(this, &MDocument::ShellStatusIn)
-	, eStdOut(this, &MDocument::StdOut)
-	, eStdErr(this, &MDocument::StdErr)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
 	, eNotifyPut(this, &MDocument::NotifyPut)
@@ -3009,6 +3003,9 @@ void MDocument::DoComplete(MDirection inDirection)
 		string key;
 		mText.GetText(startOffset, length, key);
 		mText.CollectWordsBeginningWith(startOffset, inDirection, key, mCompletionStrings);
+	
+		if (mLanguage != nil)
+			mLanguage->CollectKeyWordsBeginningWith(key, mCompletionStrings);
 	
 		MDocument* doc = sFirst;
 		while (doc != nil)

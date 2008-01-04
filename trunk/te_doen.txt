@@ -2,6 +2,8 @@
 
 Moet af:
 
+- keyboard shortcuts voor alert dialogs
+
 - clean up code na leaks test
 
 - Afronden Find Dialog:

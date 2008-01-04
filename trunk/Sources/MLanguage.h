@@ -157,6 +157,11 @@ class MLanguage
 						MNamedRange&		outRange,
 						MIncludeFileList&	outIncludeFiles);
 
+	void			CollectKeyWordsBeginningWith(
+						std::string			inPattern,
+						std::vector<std::string>&
+											ioStrings);
+
   protected:
 					MLanguage();
 	virtual			~MLanguage();

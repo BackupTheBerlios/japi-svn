@@ -299,13 +299,6 @@ class MDocument
 	MEventIn<void()>					eBoundsChanged;
 	MEventIn<void()>					ePrefsChanged;
 	
-	MEventIn<void(bool)>				eShellStatusIn;
-	MEventIn<void(
-		const char* inText,
-		uint32 inSize)>					eStdOut;
-	MEventIn<void(
-		const char* inText,
-		uint32		inSize)>			eStdErr;
 	MEventIn<void(MWindow*)>			eMsgWindowClosed;
 	MEventIn<void(double)>				eIdle;
 	MEventIn<void(bool)>				eNotifyPut;

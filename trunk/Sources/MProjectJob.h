@@ -83,7 +83,7 @@ struct MProjectExecJob : public MProjectJob
 	virtual void			Kill();
 	virtual bool			IsDone();
 
-	MEventOut<void(const char* inText, uint32 inSize)>	eStdOut;
+	MCallBack<void(const char* inText, uint32 inSize)>	eStdOut;
 
 	std::vector<std::string>
 							mArgv;
