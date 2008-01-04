@@ -50,6 +50,7 @@
 #include "MStrings.h"
 #include "MProject.h"
 #include "MSound.h"
+#include "MAlerts.h"
 
 using namespace std;
 
@@ -93,6 +94,11 @@ enum {
 	kMethodDirectory = 			1,
 	kMethodOpenWindows = 		2,
 	kMethodIncludeFiles =		3
+};
+
+enum {
+	kReplaceAll_Save =			1,
+	kReplaceAll_LeaveOpen =		2
 };
 
 const int16
@@ -297,7 +303,25 @@ void MFindDialog::DoFindCommand(
 				
 			copy(files.begin(), files.end(), back_inserter(mMultiFiles));
 
-			FindNext();
+			switch (inCommand)
+			{
+				case cmd_FindNext:
+					FindNext();
+					break;
+				
+				case cmd_ReplaceAll:
+					switch (DisplayAlert("replace-all-alert"))
+					{
+						case kReplaceAll_Save:
+							ReplaceAll(true);
+							break;
+						
+						case kReplaceAll_LeaveOpen:
+							ReplaceAll(false);
+							break;
+					}
+					break;
+			}
 		}
 	}
 	else if (IsChecked(kBatchCheckboxID))
@@ -417,6 +441,54 @@ void MFindDialog::ValueChanged(
 			SetVisible(kStatusPanelID, false);
 			break;
 		
+		case kBatchCheckboxID:
+		{
+			bool batch = IsChecked(kBatchCheckboxID);
+		
+			SetEnabled(kReplaceAllButtonID, not batch);
+			SetEnabled(kReplaceButtonID, not batch);
+			SetEnabled(kReplaceAndFindButtonID, not batch);
+			break;
+		}
+		
+		case kMethodPopupID:
+		{
+			switch (GetValue(kMethodPopupID))
+			{
+				case kMethodDirectory:
+					SetEnabled(kStartDirComboboxID, true);
+					SetEnabled(kBrowseStartDirButtonID, true);
+					SetEnabled(kRecursiveCheckboxID, true);
+					SetEnabled(kEnableFilterCheckboxID, true);
+					SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+					SetEnabled(kTextFilesOnlyCheckboxID, true);
+					break;
+				
+				case kMethodIncludeFiles:
+					SetEnabled(kStartDirComboboxID, false);
+					SetEnabled(kBrowseStartDirButtonID, false);
+					SetEnabled(kRecursiveCheckboxID, true);
+					SetEnabled(kEnableFilterCheckboxID, true);
+					SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+					SetEnabled(kTextFilesOnlyCheckboxID, true);
+					break;
+				
+				case kMethodOpenWindows:
+					SetEnabled(kStartDirComboboxID, false);
+					SetEnabled(kBrowseStartDirButtonID, false);
+					SetEnabled(kRecursiveCheckboxID, false);
+					SetEnabled(kEnableFilterCheckboxID, false);
+					SetEnabled(kNameFilterEditboxID, false);
+					SetEnabled(kTextFilesOnlyCheckboxID, false);
+					break;
+			}
+			break;
+		}
+		
+		case kEnableFilterCheckboxID:
+			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+			break;
+		
 		default:
 			MDialog::ValueChanged(inButonID);
 			break;
@@ -508,6 +580,59 @@ void MFindDialog::FindNext()
 	
 	if (not found)
 		PlaySound("warning");
+}
+
+void MFindDialog::ReplaceAll(
+	bool				inSaveToDisk)
+{
+	mStopFindAll = false;
+	
+	try
+	{
+		while (not mStopFindAll and mMultiFiles.size() > 0)
+		{
+			MUrl file(mMultiFiles.front());
+			mMultiFiles.pop_front();
+		
+			SetStatusString(file.str());
+			
+			bool found = false;
+			
+			MDocument* doc = MDocument::GetDocumentForURL(file, false);
+			
+			if (doc != nil)
+				found = doc->DoFindFirst();
+			else
+			{
+				auto_ptr<MDocument> newDoc(new MDocument(&file));
+
+				if (newDoc->DoFindFirst())
+				{
+					doc = newDoc.release();
+					found = true;
+				}
+			}
+			
+			if (found and doc != nil)
+			{
+				doc->DoReplaceAll();
+				if (inSaveToDisk and doc->DoSave())
+				{
+					MController* controller = doc->GetFirstController();
+					if (controller != nil)
+						controller->ProcessCommand(cmd_Close, nil, 0);
+					else
+						delete doc;
+				}
+				else
+					MEditWindow::DisplayDocument(doc);
+			}
+		}
+	}
+	catch (exception& e)
+	{
+		MError::DisplayError(e);
+	}	
 }
 
 void MFindDialog::FindAll(

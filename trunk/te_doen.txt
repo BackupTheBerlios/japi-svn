@@ -5,7 +5,7 @@ Moet af:
 - clean up code na leaks test
 
 - Afronden Find Dialog:
-	- Replace All in Multi mode
+	- Replace All in Multi mode verbeteren (melding aantal?)
 
 - SSH/SFTP afronden
 	- authenticatie dialog splitsen of zo.

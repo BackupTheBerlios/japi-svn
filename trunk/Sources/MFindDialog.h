@@ -121,6 +121,9 @@ class MFindDialog : public MDialog
 	void			DoFindCommand(
 						uint32				inCommand);
 
+	void			ReplaceAll(
+						bool				inSaveToDisk);
+
 	void			FindAll(
 						const std::string&	inWhat,
 						bool				inIgnoreCase,
