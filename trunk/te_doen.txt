@@ -2,9 +2,6 @@
 
 Moet af:
 
-- STOP commando inbouwen (zoeken, bouwen)
-
-- crash in Close All?
 - clean up code na leaks test
 
 - Afronden Find Dialog:
@@ -15,12 +12,10 @@ Moet af:
 
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
-- fixen van shell implementatie
 - stdin lezen
 
 Leuk om te hebben:
 
-- default Templates wegschrijven?
 - toch een rpm/installer?
 
 - python language plugin
@@ -28,7 +23,6 @@ Leuk om te hebben:
 
 - context menu's
 - vierkante selectie
-- autoscroll vertragen
 - regelnummer vlak
 
 - subversion support

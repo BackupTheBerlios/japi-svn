@@ -170,40 +170,6 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
-MDocument::MDocument(
-	const string&	inText,
-	const string&	inFileNameHint)
-	: eBoundsChanged(this, &MDocument::BoundsChanged)
-	, ePrefsChanged(this, &MDocument::PrefsChanged)
-	, eShellStatusIn(this, &MDocument::ShellStatusIn)
-	, eStdOut(this, &MDocument::StdOut)
-	, eStdErr(this, &MDocument::StdErr)
-	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
-	, eIdle(this, &MDocument::Idle)
-	, eNotifyPut(this, &MDocument::NotifyPut)
-	, mURL(MUrl("file:///tmp") / inFileNameHint)
-	, mText(inText)
-{
-	Init();
-	
-	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
-	AddRoute(eIdle, gApp->eIdle);
-	
-	ReInit();
-
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
-	if (mLanguage != nil)
-	{
-		mNamedRange = new MNamedRange;
-		mIncludeFiles = new MIncludeFileList;
-	}
-	
-	Rewrap();
-
-	mNext = sFirst;
-	sFirst = this;
-}
-
 MDocument::MDocument()
 	: eBoundsChanged(this, &MDocument::BoundsChanged)
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
@@ -269,6 +235,39 @@ MDocument::~MDocument()
 	delete mIncludeFiles;
 	
 	eDocumentClosed();
+}
+
+void MDocument::SetText(
+	const char*		inText,
+	uint32			inTextLength)
+{
+	mText.SetText(inText, inTextLength);
+	
+	ReInit();
+	Rewrap();
+}
+
+void MDocument::SetFileNameHint(
+	const string&	inNameHint)
+{
+	mSpecified = false;
+	mURL.SetFileName(inNameHint);
+	eFileSpecChanged(mURL);
+
+	delete mNamedRange;
+	mNamedRange = nil;
+	
+	delete mIncludeFiles;
+	mIncludeFiles = nil;
+
+	mLanguage = MLanguage::GetLanguageForDocument(inNameHint, mText);
+	if (mLanguage != nil)
+	{
+		mNamedRange = new MNamedRange;
+		mIncludeFiles = new MIncludeFileList;
+	}
+	
+	Rewrap();
 }
 
 void MDocument::AddController(MController* inController)
@@ -463,6 +462,19 @@ const char* MDocument::GetCWD() const
 			result = cwd.get();
 		}
 	}
+	return result;
+}
+
+bool MDocument::StopRunningShellCommand()
+{
+	bool result = false;
+
+	if (mShell.get() != nil and mShell->IsRunning())
+	{
+		mShell->Kill();
+		result = true;
+	}
+	
 	return result;
 }
 
@@ -2791,6 +2803,22 @@ void MDocument::HandleFindDialogCommand(uint32 inCommand)
 	}
 }
 
+bool MDocument::DoFindFirst()
+{
+	string what = MFindDialog::Instance().GetFindString();
+	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	bool regex = MFindDialog::Instance().GetRegex();
+	uint32 offset = 0;
+	
+	MSelection found;
+	bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
+	
+	if (result)
+		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
+	
+	return result;
+}
+
 bool MDocument::DoFindNext(MDirection inDirection)
 {
 	string what = MFindDialog::Instance().GetFindString();
@@ -4009,6 +4037,8 @@ void MDocument::StdErr(const char* inText, uint32 inSize)
 		mStdErrWindow = new MMessageWindow(_("Output from stderr"));
 		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
+	else if (not mStdErrWindowSelected)
+		mStdErrWindow->Select();
 
 	mStdErrWindow->SetBaseDirectory(MPath(mShell->GetCWD()));
 
@@ -4024,7 +4054,7 @@ void MDocument::MsgWindowClosed(MWindow* inWindow)
 void MDocument::Execute()
 {
 	FinishAction();
-
+	
 	if (mSelection.IsEmpty())
 	{
 		uint32 line = mSelection.GetMinLine(*this);
@@ -4055,6 +4085,7 @@ void MDocument::Execute()
 	}
 
 	mPreparedForStdOut = false;
+	mStdErrWindowSelected = false;
 	
 	if (mStdErrWindow != nil)
 		mStdErrWindow->ClearList();

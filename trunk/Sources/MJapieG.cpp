@@ -395,7 +395,7 @@ gint MJapieApp::Snooper(
 			if (handler == nil)
 				handler = gApp;
 			
-			bool enabled, checked;
+			bool enabled = true, checked = false;
 			if (handler->UpdateCommandStatus(cmd, nil, 0, enabled, checked) and enabled)
 				result = handler->ProcessCommand(cmd, nil, 0);
 		}
@@ -671,7 +671,9 @@ void MJapieApp::DoOpenTemplate(
 	while ((offset = text.find("$shortname$", offset)) != string::npos)
 		text.replace(offset, 11, GetUserName(true));
 	
-	MDocument* doc = new MDocument(text, inTemplate);
+	MDocument* doc = new MDocument(nil);
+	doc->SetText(text.c_str(), text.length());
+	doc->SetFileNameHint(inTemplate);
 	MDocWindow::DisplayDocument(doc);
 }
 

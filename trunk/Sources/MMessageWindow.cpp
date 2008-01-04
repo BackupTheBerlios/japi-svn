@@ -457,8 +457,6 @@ void MMessageWindow::AddStdErr(
 	const char*			inText,
 	uint32				inSize)
 {
-//cout << "AddStdErr: '" << string(inText, inSize) << "'" << endl;
-
 	static pcre* pattern = nil;
 	static pcre_extra* info = nil;
 	
@@ -489,22 +487,9 @@ void MMessageWindow::AddStdErr(
 			string line = mText.substr(0, n);
 			mText.erase(0, n + 1);
 			
-//			
-//			
-//			boost::regex re("^([^:]+):((\\d+):)?( (note|warning|error):)?([^:].+)$",
-//				boost::regex_constants::normal);
-//		
-//			boost::regex_constants::match_flag_type match_flags =
-//				boost::regex_constants::match_not_dot_newline |
-//				boost::regex_constants::match_not_dot_null |
-//				boost::regex_constants::match_continuous;
-//
-//			boost::match_results<string::iterator> m;
-
 			MPath spec;
 			int m[33] = {};
 
-//			if (boost::regex_search(line.begin(), line.end(), m, re, match_flags) and m[0].matched)
 			if (pcre_exec(pattern, info, line.c_str(), line.length(), 0, PCRE_NOTEMPTY, m, 33) >= 0)
 			{
 				string file, warn, l_nr, mesg;
@@ -523,12 +508,6 @@ void MMessageWindow::AddStdErr(
 				boost::trim_right(mesg);
 				
 				spec = mBaseDirectory / file;
-//	
-//try {
-//	StOKToThrow ok;
-//	cout << "file: " << file << endl;
-//	cout << "spec: " << spec.str() << endl;
-//} catch (...) {}
 				
 				if (fs::exists(spec))
 				{
@@ -562,6 +541,10 @@ void MMessageWindow::AddStdErr(
 void MMessageWindow::ClearList()
 {
 	mList = MMessageList();
+
+	GtkWidget* treeView = GetWidget(kListViewID);
+	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
+	gtk_list_store_clear(store);
 }
 
 void MMessageWindow::DocumentChanged(

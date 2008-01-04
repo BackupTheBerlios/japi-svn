@@ -140,6 +140,8 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 		sInstance->RegisterAcceleratorKey(cmd_Make, GDK_M, GDK_CONTROL_MASK | GDK_SHIFT_MASK);
 	
 		sInstance->RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
+
+		sInstance->RegisterAcceleratorKey(cmd_Stop, GDK_period, GDK_CONTROL_MASK);
 	}
 
 	return *sInstance.get();
@@ -313,6 +315,9 @@ bool MAcceleratorTable::IsAcceleratorKey(
 		result = true;
 	}
 	
+//	if (result)
+//		PRINT(("cmd is %s", (const char*)MCommandToString(outCommand)));
+	
 	return result;
 }
 
@@ -342,7 +347,10 @@ bool MAcceleratorTable::IsNavigationKey(
 		outCommand = MKeyCommand(a->command);
 		result = true;
 	}
-	
+
+//	if (result)
+//		PRINT(("cmd is %s", (const char*)MCommandToString(outCommand)));
+//	
 	return result;
 }
 

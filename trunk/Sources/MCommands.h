@@ -127,7 +127,9 @@ const uint32
 	cmd_16CharsPerTab =			'Tw16',
 	
 	cmd_SyntaxNone =			'St_N',
-	cmd_SyntaxLanguage =		'St_L';
+	cmd_SyntaxLanguage =		'St_L',
+	
+	cmd_Stop =					'stop';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

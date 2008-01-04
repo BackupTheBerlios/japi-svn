@@ -424,6 +424,10 @@ bool MController::ProcessCommand(
 			case cmd_SyntaxLanguage:
 				mDocument->SetLanguage(inMenu->GetItemLabel(inItemIndex));
 				break;
+			
+			case cmd_Stop:
+				result = mDocument->StopRunningShellCommand();
+				break;
 	
 			default:
 				result = false;

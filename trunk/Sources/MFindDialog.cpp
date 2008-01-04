@@ -152,6 +152,27 @@ MFindDialog::MFindDialog()
 	SetText(kStatusPanelID, "");
 }
 
+bool MFindDialog::ProcessCommand(
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
+{
+	bool result = true;
+	
+	switch (inCommand)
+	{
+		case cmd_Stop:
+			result = Stop();
+			break;
+		
+		default:
+			result = MDialog::ProcessCommand(inCommand, inMenu, inItemIndex);
+			break;
+	}
+	
+	return result;
+}
+
 bool MFindDialog::DoClose()
 {
 	Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
@@ -455,25 +476,28 @@ void MFindDialog::FindNext()
 		
 			MDocument* doc = MDocument::GetDocumentForURL(file, false);
 			
-			if (doc != nil and doc->DoFindNext(kDirectionForward))
-				found = true;
+			if (doc != nil)
+				found = doc->DoFindFirst();
 			else
 			{
 				auto_ptr<MDocument> newDoc(new MDocument(&file));
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
-					MSelection s = newDoc->GetSelection();
-					
 					doc = newDoc.release();
-					MEditWindow::DisplayDocument(doc);
-					
-					// center the found and selected text
-					doc->Select(s.GetAnchor(), s.GetCaret(),
-						kScrollCenterSelection);
-					
 					found = true;
 				}
+			}
+			
+			if (found and doc != nil)
+			{
+				MSelection s = doc->GetSelection();
+				
+				MEditWindow::DisplayDocument(doc);
+				
+				// center the found and selected text
+				doc->Select(s.GetAnchor(), s.GetCaret(),
+					kScrollCenterSelection);
 			}
 		}
 		catch (...)
@@ -481,6 +505,9 @@ void MFindDialog::FindNext()
 			found = false;
 		}		
 	}
+	
+	if (not found)
+		PlaySound("warning");
 }
 
 void MFindDialog::FindAll(
@@ -493,6 +520,8 @@ void MFindDialog::FindAll(
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter)
 {
+	mStopFindAll = false;
+	
 	try
 	{
 		FileSet files;
@@ -503,6 +532,9 @@ void MFindDialog::FindAll(
 		
 		for (FileSet::iterator file = files.begin(); file != files.end(); ++file)
 		{
+			if (mStopFindAll)
+				break;
+			
 			SetStatusString(file->string());
 			MUrl url(*file);
 			
@@ -663,3 +695,15 @@ void MFindDialog::Idle(
 	}
 }
 
+bool MFindDialog::Stop()
+{
+	bool result = false;
+	
+	if (mFindAllThread != nil)
+	{
+		mStopFindAll = true;
+		result = true;
+	}
+	
+	return result;
+}

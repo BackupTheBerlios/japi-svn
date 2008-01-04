@@ -71,6 +71,11 @@ class MFindDialog : public MDialog
 
 	void			Select();
 
+	virtual bool	ProcessCommand(
+						uint32				inCommand,
+						const MMenu*		inMenu,
+						uint32				inItemIndex);
+
 	void			FindNext();
 	void			FindAll(
 						const std::string&	inWhat,
@@ -143,8 +148,11 @@ class MFindDialog : public MDialog
 	void			Idle(
 						double				inSystemTime);
 
+	bool			Stop();
+
 	bool			mMultiMode;
 	bool			mInSelection;
+	bool			mStopFindAll;
 	StringArray		mFindStrings;
 	StringArray		mReplaceStrings;
 	StringArray		mStartDirectories;

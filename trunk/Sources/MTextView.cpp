@@ -70,7 +70,8 @@ const int32
 	kLeftMargin = 10;
 
 const double
-	kCaretBlinkTime = 0.6;
+	kCaretBlinkTime = 0.6,
+	kScrollDelay = 0.05;
 
 }
 
@@ -108,6 +109,8 @@ MTextView::MTextView(
 	, mCaretVisible(false)
 	, mDrawForDragImage(false)
 	, mLastClickTime(0)
+	, mLastScrollTime(0)
+	, mInTick(false)
 	, mClickMode(eSelectNone)
 {
 	AddRoute(eIdle, gApp->eIdle);
@@ -235,6 +238,8 @@ bool MTextView::OnButtonPressEvent(
 	}
 
 	gtk_grab_add(GetGtkWidget());
+	
+	mLastScrollTime = 0;
 
 	return true;
 }
@@ -282,65 +287,63 @@ bool MTextView::OnMotionNotifyEvent(
 	
 		if (mClickMode != eSelectNone and IsActive())
 		{
-			bool scrolled = false;
-
-			do
-			{
-				if (scrolled)
-				{
-					UpdateNow();
-					GetMouse(x, y);
-					x += mImageOriginX - kLeftMargin;
-					y += mImageOriginY;
-				}
-
-				mDocument->PositionToOffset(x, y, mClickCaret);
-			
-				if (mClickMode == eSelectRegular)
-				{
-					mDocument->Select(mClickAnchor, mClickCaret);
-					scrolled = ScrollToCaret();
-				}
-				else if (mClickMode == eSelectWords)
-				{
-					uint32 c1, c2;
-					mDocument->FindWord(mClickCaret, c1, c2);
-					if (c1 != c2)
-					{
-						if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
-							mClickCaret = c1;
-						else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
-							mClickCaret = c2;
-					}
-			
-					if (mClickCaret < mMinClickAnchor)
-						mDocument->Select(mMaxClickAnchor, mClickCaret);
-					else if (mClickCaret > mMaxClickAnchor)
-						mDocument->Select(mMinClickAnchor, mClickCaret);
-					else
-						mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-		
-					scrolled = ScrollToCaret();
-				}
-				else if (mClickMode == eSelectLines)
-				{
-					mClickCaret = mDocument->OffsetToLine(mClickCaret);
-			
-					if (mClickCaret < mClickAnchor)
-						mDocument->Select(
-							mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
-					else
-						mDocument->Select(
-							mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
-
-					scrolled = ScrollToCaret();
-				}
-			}
-			while (scrolled);
+			if (ScrollToPointer(x, y))
+				mLastScrollTime = GetLocalTime();
 		}
 	}
 	
 	return true;
+}
+
+bool MTextView::ScrollToPointer(
+	int32		inX,
+	int32		inY)
+{
+	bool scrolled = false;
+
+	mDocument->PositionToOffset(inX, inY, mClickCaret);
+
+	if (mClickMode == eSelectRegular)
+	{
+		mDocument->Select(mClickAnchor, mClickCaret);
+		scrolled = ScrollToCaret();
+	}
+	else if (mClickMode == eSelectWords)
+	{
+		uint32 c1, c2;
+		mDocument->FindWord(mClickCaret, c1, c2);
+		if (c1 != c2)
+		{
+			if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
+				mClickCaret = c1;
+			else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
+				mClickCaret = c2;
+		}
+
+		if (mClickCaret < mMinClickAnchor)
+			mDocument->Select(mMaxClickAnchor, mClickCaret);
+		else if (mClickCaret > mMaxClickAnchor)
+			mDocument->Select(mMinClickAnchor, mClickCaret);
+		else
+			mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+
+		scrolled = ScrollToCaret();
+	}
+	else if (mClickMode == eSelectLines)
+	{
+		mClickCaret = mDocument->OffsetToLine(mClickCaret);
+
+		if (mClickCaret < mClickAnchor)
+			mDocument->Select(
+				mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+		else
+			mDocument->Select(
+				mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+
+		scrolled = ScrollToCaret();
+	}
+	
+	return scrolled;
 }
 	
 bool MTextView::OnButtonReleaseEvent(
@@ -352,6 +355,8 @@ bool MTextView::OnButtonReleaseEvent(
 		mDocument->Select(mClickAnchor, mClickCaret);
 	
 	mClickMode = eSelectNone;
+	mLastScrollTime = 0;
+
 	return true;
 }
 
@@ -703,7 +708,30 @@ void MTextView::LineCountChanged()
 void MTextView::Tick(
 	double		inTime)
 {
-	if (mDocument == nil or inTime < mLastCaretBlinkTime + kCaretBlinkTime)
+	if (mDocument == nil or mInTick)
+		return;
+	
+	MValueChanger<bool> change(mInTick, true);
+
+	if (mLastScrollTime > 0 and
+		mLastScrollTime + kScrollDelay < inTime)
+	{
+		int32 x, y;
+		GdkModifierType state;
+		gdk_window_get_pointer(GetGtkWidget()->window, &x, &y, &state);
+	
+		x += mImageOriginX - kLeftMargin;
+		y += mImageOriginY;
+		
+		if (ScrollToPointer(x, y))
+			mLastScrollTime = inTime;
+		else
+			mLastScrollTime = 0;
+		
+		return;
+	}
+	
+	if (inTime < mLastCaretBlinkTime + kCaretBlinkTime)
 		return;
 	
 	mLastCaretBlinkTime = inTime;

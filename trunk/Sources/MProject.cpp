@@ -1202,6 +1202,10 @@ bool MProject::ProcessCommand(
 			Make();
 			break;
 		
+		case cmd_Stop:
+			StopBuilding();
+			break;
+		
 //		case cmd_NewGroup:
 //		{
 //			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
@@ -1317,7 +1321,11 @@ bool MProject::UpdateCommandStatus(
 			break;
 
 		case cmd_Run:
-			break;		
+			break;
+		
+		case cmd_Stop:
+			outEnabled = mCurrentJob.get() != nil;
+			break;
 		
 		default:
 			result = MWindow::UpdateCommandStatus(
@@ -2658,6 +2666,9 @@ void MProject::Preprocess(
 	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-W"));
 
+	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
+		back_inserter(argv));
+
 	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
 
 	argv.push_back("-E");
@@ -2684,7 +2695,8 @@ void MProject::Preprocess(
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Preprocessing ") + inFile.leaf(), this, argv, file);
 	
-	MDocument* output = new MDocument("", inFile.leaf() + " # preprocessed");
+	MDocument* output = new MDocument(nil);
+	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
 	
 	AddRoute(job->eStdOut, output->eStdOut);
 	MDocWindow::DisplayDocument(output);
@@ -2721,6 +2733,9 @@ void MProject::Disassemble(
 	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-W"));
 
+	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
+		back_inserter(argv));
+
 	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
 
 	argv.push_back("-S");
@@ -2749,7 +2764,8 @@ void MProject::Disassemble(
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Disassembling ") + inFile.leaf(), this, argv, file);
 	
-	MDocument* output = new MDocument("", inFile.leaf() + " # disassembled");
+	MDocument* output = new MDocument(nil);
+	output->SetFileNameHint(inFile.leaf() + " # disassembled");
 	
 	AddRoute(job->eStdOut, output->eStdOut);
 	MDocWindow::DisplayDocument(output);

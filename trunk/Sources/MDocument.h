@@ -96,11 +96,14 @@ class MDocument
 	explicit			MDocument(
 							const MUrl*				inURL);
 
-						MDocument(
-							const std::string&		inText,
-							const std::string&		inFileNameHint);
-
 	virtual				~MDocument();
+
+	void				SetText(
+							const char*				inText,
+							uint32					inTextLength);
+	
+	void				SetFileNameHint(
+							const std::string&		inName);
 
 	// the MVC interface
 
@@ -136,6 +139,7 @@ class MDocument
 	void				SetWorksheet(bool inIsWorksheet);
 	bool				IsWorksheet() const					{ return mIsWorksheet; }
 	const char*			GetCWD() const;
+	bool				StopRunningShellCommand();
 	
 	void				Reset();
 	void				StartAction(const char* inAction);
@@ -327,6 +331,7 @@ class MDocument
 	void				DoReplace(bool inFindNext, MDirection inDirection);
 	void				DoReplaceAll();
 	void				DoComplete(MDirection inDirection);
+	bool				DoFindFirst();
 	bool				DoFindNext(MDirection inDirection);
 	void				DoFastFind(MDirection inDirection);
 	void				DoSoftwrap();
@@ -445,6 +450,7 @@ class MDocument
 	MTextInputAreaInfo			mTextInputAreaInfo;
 	std::auto_ptr<MShell>		mShell;
 	MMessageWindow*				mStdErrWindow;
+	bool						mStdErrWindowSelected;
 	bool						mPreparedForStdOut;
 	bool						mIsWorksheet;
 	uint32						mPCLine;

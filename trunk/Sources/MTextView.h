@@ -163,6 +163,10 @@ class MTextView : public MView, public MHandler
 	void				ScrollMessage(
 							MScrollMessage	inMessage);
 
+	bool				ScrollToPointer(
+							int32			inX,
+							int32			inY);
+
 	void				ShiftLines(
 							uint32			inFromLine,
 							int32			inDelta);
@@ -276,6 +280,8 @@ class MTextView : public MView, public MHandler
 	uint32				mCaret;		// our cache of the current caret position
 	uint32				mClickCount;
 	uint32				mLastClickTime;
+	double				mLastScrollTime;
+	bool				mInTick;
 	
 	enum
 	{

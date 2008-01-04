@@ -235,7 +235,17 @@ void MView::Scroll(
 {
 	if (GDK_IS_WINDOW(mGtkWidget->window))
 	{
-//		UpdateNow();
+//		GdkEvent* event;
+//		while ((event = gdk_event_get_graphics_expose(mGtkWidget->window)) != nil)
+//		{
+//			gtk_widget_send_expose(mGtkWidget, event);
+//			if (event->expose.count == 0)
+//			{
+//				gdk_event_free(event);
+//				break;
+//			}
+//			gdk_event_free(event);
+//		}
 	
 		gdk_window_scroll(mGtkWidget->window, inX, inY);
 	}
@@ -248,7 +258,17 @@ void MView::Scroll(
 {
 	if (GDK_IS_WINDOW(mGtkWidget->window))
 	{
-//		UpdateNow();
+//		GdkEvent* event;
+//		while ((event = gdk_event_get_graphics_expose(mGtkWidget->window)) != nil)
+//		{
+//			gtk_widget_send_expose(mGtkWidget, event);
+//			if (event->expose.count == 0)
+//			{
+//				gdk_event_free(event);
+//				break;
+//			}
+//			gdk_event_free(event);
+//		}
 		
 		MRect b;
 		GetBounds(b);
