@@ -236,7 +236,7 @@ void MHandler::PutChainOnDuty(
 void MHandler::TakeChainOffDuty(
 	MHandler*		inUpToHndlr)
 {
-	assert(mOnCommandChain == eTriStateOn);
+//	assert(mOnCommandChain == eTriStateOn);
 
 	MHandler* handler = this;
 

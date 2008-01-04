@@ -438,10 +438,9 @@ void MDocument::SetWorksheet(bool inIsWorksheet)
 
 			mShell->SetCWD(cwd);
 
-			AddRoute(mShell->eStdOut, eStdOut);
-			AddRoute(mShell->eStdErr, eStdErr);
-			AddRoute(mShell->eShellStatus, eShellStatusIn);
-			
+			SetCallBack(mShell->eStdOut, this, &MDocument::StdOut);
+			SetCallBack(mShell->eStdErr, this, &MDocument::StdErr);
+			SetCallBack(mShell->eShellStatus, this, &MDocument::ShellStatusIn);
 		}
 	}		
 }
@@ -4050,9 +4049,9 @@ void MDocument::Execute()
 			}
 		}
 		
-		AddRoute(mShell->eStdOut, eStdOut);
-		AddRoute(mShell->eStdErr, eStdErr);
-		AddRoute(mShell->eShellStatus, eShellStatusIn);
+		SetCallBack(mShell->eStdOut, this, &MDocument::StdOut);
+		SetCallBack(mShell->eStdErr, this, &MDocument::StdErr);
+		SetCallBack(mShell->eShellStatus, this, &MDocument::ShellStatusIn);
 	}
 
 	mPreparedForStdOut = false;

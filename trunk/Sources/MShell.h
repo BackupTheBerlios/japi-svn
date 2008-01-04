@@ -30,87 +30,37 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*	$Id$
-
-	This file contains my shell implementation.
-	
-	It all started with a extremely simplistic parser...
-	
-	
-
-
-*/
-
-
 #ifndef MSHELL_H
 #define MSHELL_H
 
-#include <map>
-#include <vector>
-#include <string>
-
-#include "MP2PEvents.h"
+#include "MCallbacks.h"
 
 class MShell
 {
   public:
-							MShell(bool inRedirectStdErr = false);
-	virtual					~MShell();					
+							MShell(
+								bool				inRedirectStdErr = false);
+
+	virtual					~MShell();
 	
-	void					Execute(std::string inCommand);
+	void					Execute(
+								const std::string&	inScript);
+
 	void					Kill();
-	bool					IsRunning() const				{ return mPid > 0; }
+
+	bool					IsRunning() const;
 	
-	void					SetCWD(std::string inCWD);
-	std::string				GetCWD() const					{ return mCurDir; }
+	void					SetCWD(
+								const std::string&	inCWD);
 
-	MEventOut<void(const char*, uint32)>	eStdOut;
-	MEventOut<void(const char*, uint32)>	eStdErr;
-	MEventOut<void(bool)>					eShellStatus;
+	std::string				GetCWD() const;
 
-	MEventIn<void(double)>					ePoll;
+	MCallBack<void(const char*, uint32)>	eStdOut;
+	MCallBack<void(const char*, uint32)>	eStdErr;
+	MCallBack<void(bool)>					eShellStatus;
 
   private:
-
-	typedef	std::map<std::string,std::string>	Env;
-	typedef std::vector<std::string>			Args;
-
-	char					GetNextChar();
-	void					Restart(int& ioStart, int& ioState);
-	void					Retract();
-	std::string				ParseSQString();
-	std::string				ParseDQString();
-	std::string				ParseCmd();
-	int						GetNextToken();
-	void					Parse();
-	void					ExecuteSubCommand(Args& inArgs, Env& inEnv);
-
-	void					Poll(
-								double			inSystemTime);
-	
-	std::string				NextPath(std::string& ioPathVar, std::string inName);
-
-	// built-in
-	int						Cd(int argc, char* const argv[], char* const env[]);
-	int						Pwd(int argc, char* const argv[], char* const env[]);
-	int						Echo(int argc, char* const argv[], char* const env[]);
-	int						Exec(int argc, char* const argv[], char* const env[]);
-
-	int						mPid;
-	int						mStdInFD;
-	int						mStdOutFD;
-	int						mStdErrFD;
-	bool					mRedirectStdErr, mOutDone, mErrDone;
-	Env						mEnvironment;
-	std::string				mCurDir, mPrevDir;
-	std::string				mToken;
-	
-	std::string				mCommand;
-	std::string::iterator	mCommandBegin;
-	std::string::iterator	mCommandPtr;
-	std::string::iterator	mCommandEnd;
-	int						mCommandOverflow;
-	
+	struct MShellImp*		mImpl;
 };
 
 #endif
