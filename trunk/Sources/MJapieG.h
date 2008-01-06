@@ -107,7 +107,7 @@ class MJapieApp : public MHandler
 	void				RunEventLoop();
 
   private:
-	typedef std::list<MWindow*>	MWindowList;
+	typedef std::list<MWindow*>		MWindowList;
 
 	void				DoQuit();
 

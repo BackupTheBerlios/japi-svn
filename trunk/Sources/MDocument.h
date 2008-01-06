@@ -114,7 +114,8 @@ class MDocument
 	MController*		GetFirstController() const;
 
 	void				AddNotifier(
-							MDocClosedNotifier&		inNotifier);
+							MDocClosedNotifier&		inNotifier,
+							bool					inRead);
 	
 	void				SetTargetTextView(MTextView* inTextView);
 	
@@ -301,7 +302,6 @@ class MDocument
 	
 	MEventIn<void(MWindow*)>			eMsgWindowClosed;
 	MEventIn<void(double)>				eIdle;
-	MEventIn<void(bool)>				eNotifyPut;
 
 	// the actions MDocument can perform
 
@@ -401,9 +401,6 @@ class MDocument
 	void				Idle(
 							double		inSystemTime);
 	
-	void				NotifyPut(
-							bool		inPutting);
-
 	typedef std::list<MController*>	MControllerList;
 	
 	MDocument*					mNext;
@@ -411,6 +408,7 @@ class MDocument
 	MControllerList				mControllers;
 	std::vector<MDocClosedNotifier>
 								mNotifiers;
+	int							mDataFD;
 	bool						mSpecified;
 	MUrl						mURL;
 	double						mFileModDate;
@@ -447,7 +445,6 @@ class MDocument
 	bool						mPreparedForStdOut;
 	bool						mIsWorksheet;
 	uint32						mPCLine;
-	int32						mPutCount;
 	
 	std::auto_ptr<MSftpChannel>	mSFTPChannel;
 	std::string					mSFTPData;

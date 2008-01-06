@@ -85,3 +85,8 @@ MDocClosedNotifier::~MDocClosedNotifier()
 		delete mImpl;
 	}
 }
+
+int MDocClosedNotifier::GetFD() const
+{
+	return mImpl->mFD;
+}

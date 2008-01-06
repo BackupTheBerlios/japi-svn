@@ -474,7 +474,7 @@ string::iterator next_cursor_position(
 	MEncodingTraits<kEncodingUTF8>::ReadUnicode(inStart, length, ch);
 	CharBreakClass c1 = GetCharBreakClass(ch);
 
-	while (inEnd - inStart >= length)
+	while (inEnd - inStart >= static_cast<int>(length))
     {
 		inStart += length;
 		result = inStart;

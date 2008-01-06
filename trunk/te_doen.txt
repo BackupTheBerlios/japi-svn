@@ -6,17 +6,16 @@ Moet af:
 
 - clean up code na leaks test
 
-- Afronden Find Dialog:
-	- Replace All in Multi mode verbeteren (melding aantal?)
-
 - SSH/SFTP afronden
 	- authenticatie dialog splitsen of zo.
 
 - softwrap fixen, als je typt in een gewrapte regel
 - read-only files ondersteunen
-- stdin lezen
 
 Leuk om te hebben:
+
+- Afronden Find Dialog:
+	- Replace All in Multi mode verbeteren (melding aantal?)
 
 - toch een rpm/installer?
 

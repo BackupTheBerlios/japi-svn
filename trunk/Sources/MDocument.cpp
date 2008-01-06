@@ -123,7 +123,6 @@ MDocument::MDocument(
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
-	, eNotifyPut(this, &MDocument::NotifyPut)
 {
 	Init();
 	
@@ -172,7 +171,6 @@ MDocument::MDocument()
 	, ePrefsChanged(this, &MDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MDocument::MsgWindowClosed)
 	, eIdle(this, &MDocument::Idle)
-	, eNotifyPut(this, &MDocument::NotifyPut)
 {
 	Init();
 }
@@ -196,8 +194,8 @@ void MDocument::Init()
 	mStdErrWindow = nil;
 	mIsWorksheet = false;
 	mPCLine = numeric_limits<uint32>::max();
-	mPutCount = 0;
-
+	mDataFD = -1;
+ 
 	mCharsPerTab = gCharsPerTab;
 
 	mLineInfo.push_back(MLineInfo());
@@ -4104,9 +4102,16 @@ MController* MDocument::GetFirstController() const
 }
 
 void MDocument::AddNotifier(
-	MDocClosedNotifier&		inNotifier)
+	MDocClosedNotifier&		inNotifier,
+	bool					inRead)
 {
 	mNotifiers.push_back(inNotifier);
+	
+	if (inRead)
+	{
+		mPreparedForStdOut = true;
+		mDataFD = inNotifier.GetFD();
+	}
 }
 
 void MDocument::Idle(
@@ -4121,6 +4126,16 @@ void MDocument::Idle(
 		}
 		
 		mNeedReparse = false;
+	}
+	
+	if (mDataFD >= 0)
+	{
+		char buffer[10240];
+		int r = read(mDataFD, buffer, sizeof(buffer));
+		if (r == 0 or (r < 0 and errno != EAGAIN))
+			mDataFD = -1;
+		else if (r > 0)
+			StdOut(buffer, r);
 	}
 }
 
@@ -4205,14 +4220,3 @@ void MDocument::SelectIncludePopupItem(uint32 inItem)
 	}
 }
 
-// ---------------------------------------------------------------------------
-//	MDocument::SelectIncludePopupItem
-
-void MDocument::NotifyPut(
-	bool		inPutting)
-{
-	if (inPutting)
-		++mPutCount;
-	else
-		--mPutCount;
-}

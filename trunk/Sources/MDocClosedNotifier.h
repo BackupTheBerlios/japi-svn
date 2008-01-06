@@ -47,6 +47,8 @@ class MDocClosedNotifier
 
 						~MDocClosedNotifier();
 
+	int					GetFD() const;
+
   private:
 
 	struct MDocClosedNotifierImp*						mImpl;

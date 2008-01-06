@@ -69,6 +69,8 @@ MJapieApp* gApp;
 const char
 	kSocketName[] = "/tmp/japi.%d.socket";
 
+// --------------------------------------------------------------------
+
 MJapieApp::MJapieApp()
 	: MHandler(nil)
 	, mRecentMgr(gtk_recent_manager_get_default())
@@ -772,6 +774,8 @@ void MJapieApp::ProcessSocketMessages()
 		mReceivedFirstMsg = true;	
 		MDocClosedNotifier notify(fd);		// takes care of closing fd
 		
+		bool readStdin = false;
+		
 		for (;;)
 		{
 			MSockMsg msg = {};
@@ -788,7 +792,7 @@ void MJapieApp::ProcessSocketMessages()
 					break;
 				buffer[r] = 0;
 			}
-
+			
 			try
 			{
 				MDocument* doc = nil;
@@ -802,17 +806,23 @@ void MJapieApp::ProcessSocketMessages()
 					case 'new ':
 						doc = new MDocument(nil);
 						break;
+					
+					case 'data':
+						readStdin = true;
+						doc = new MDocument(nil);
+						break;
 				}
 				
 				if (doc != nil)
 				{
 					MDocWindow::DisplayDocument(doc);
-					doc->AddNotifier(notify);
+					doc->AddNotifier(notify, readStdin);
 				}
 			}
 			catch (exception& e)
 			{
 				MError::DisplayError(e);
+				readStdin = false;
 			}
 		}
 	}
@@ -846,7 +856,8 @@ int OpenSocketToServer()
 }
 
 bool ForkServer(
-	const vector<MUrl>&	inDocs)
+	const vector<MUrl>&	inDocs,
+	bool				inReadStdin)
 {
 	int sockfd = OpenSocketToServer();
 	
@@ -865,6 +876,12 @@ bool ForkServer(
 	
 	MSockMsg msg = { };
 
+	if (inReadStdin)
+	{
+		msg.msg = 'data';
+		write(sockfd, &msg, sizeof(msg));
+	}
+	
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
@@ -877,7 +894,8 @@ bool ForkServer(
 			write(sockfd, url.c_str(), url.length());
 		}
 	}
-	else
+	
+	if (not inReadStdin and inDocs.size() == 0)
 	{
 		msg.msg = 'new ';
 		write(sockfd, &msg, sizeof(msg));
@@ -886,6 +904,21 @@ bool ForkServer(
 	msg.msg = 'done';
 	msg.length = 0;
 	write(sockfd, &msg, sizeof(msg));
+	
+	if (inReadStdin)
+	{
+		for (;;)
+		{
+			char buffer[10240];
+			int r = read(STDIN_FILENO, buffer, sizeof(buffer));
+			
+			if (r == 0 or (r < 0 and errno != EAGAIN))
+				break;
+			
+			if (r > 0)
+				r = write(sockfd, buffer, r);
+		}
+	}
 
 	// now block until all windows are closed or server dies
 	char c;
@@ -896,11 +929,13 @@ bool ForkServer(
 
 void usage()
 {
-	cout << "usage: japi [options] [ - | files ]" << endl
+	cout << "usage: japi [options] [ files ]" << endl
 		 << "    available options: " << endl
 		 << "    -h      This help message" << endl
 		 << "    -f      Don't fork into client/server" << endl
-		 << "    -       Read from stdin" << endl;
+		 << endl
+		 << "  One or more files may be specified, use - for reading from stdin" << endl
+		 << endl;
 	
 	exit(1);
 }
@@ -918,7 +953,7 @@ int main(int argc, char* argv[])
 
 	try
 	{
-		bool fork = true;
+		bool fork = true, readStdin = false;
 
 		fs::path::default_name_check(fs::no_check);
 
@@ -948,12 +983,14 @@ int main(int argc, char* argv[])
 					break;
 			}
 		}
-
+		
 		for (int32 i = optind; i < argc; ++i)
 		{
 			string a(argv[i]);
-
-			if (a.substr(0, 7) == "file://" or
+			
+			if (a == "-")
+				readStdin = true;
+			else  if (a.substr(0, 7) == "file://" or
 				a.substr(0, 7) == "sftp://" or
 				a.substr(0, 6) == "ssh://")
 			{
@@ -967,8 +1004,8 @@ int main(int argc, char* argv[])
 			else
 				docs.push_back(MUrl(fs::system_complete(a)));
 		}
-
-		if (fork == false or ForkServer(docs))
+		
+		if (fork == false or ForkServer(docs, readStdin))
 		{
 			InitGlobals();
 	
