@@ -37,8 +37,7 @@
 #include "MEditWindow.h"
 #include "MDocument.h"
 #include "MGlobals.h"
-//#include "MToolbar.h"
-//#include "MTextViewContainer.h"
+#include "MStrings.h"
 #include "MScrollBar.h"
 #include "MTextView.h"
 #include "MUtils.h"
@@ -159,7 +158,16 @@ void MEditWindow::FileSpecChanged(
 	const MUrl&		inFile)
 {
 	if (not inFile.IsLocal() or fs::exists(inFile.GetPath()))
-		SetTitle(inFile.str());
+	{
+		MDocument* doc = mController.GetDocument();
+		
+		string title = inFile.str();
+		
+		if (doc != nil and doc->IsReadOnly())
+			title += _(" [Read Only]");
+		
+		SetTitle(title);
+	}
 	else
 		SetTitle(GetUntitledTitle());
 }

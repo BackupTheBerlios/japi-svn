@@ -409,7 +409,7 @@ void MDocWindow::DocumentChanged(
 	// set title
 	
 	if (inDocument->IsSpecified())
-		SetTitle(inDocument->GetURL().str());
+		FileSpecChanged(inDocument->GetURL());
 	else
 		SetTitle(GetUntitledTitle());
 }

@@ -485,7 +485,8 @@ bool MController::UpdateCommandStatus(
 
 		// dirty
 		case cmd_Save:
-			outEnabled = mDocument->IsModified();
+			outEnabled = mDocument->IsModified() and
+				(not mDocument->IsSpecified() or not mDocument->IsReadOnly());
 			break;
 
 		// has selection
@@ -661,7 +662,7 @@ bool MController::SaveDocument()
 	{
 		if (mDocument != nil)
 		{
-			if (mDocument->IsSpecified())
+			if (mDocument->IsSpecified() and not mDocument->IsReadOnly())
 				result = mDocument->DoSave();
 			else
 			{

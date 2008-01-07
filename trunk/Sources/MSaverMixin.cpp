@@ -182,6 +182,11 @@ void MSaverMixin::SaveDocumentAs(
 		
 		gApp->SetCurrentFolder(gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog)));
 	}
+	else
+	{
+		mClosePending = false;
+		mCloseAllPending = false;
+	}
 	
 	gtk_widget_destroy(dialog);
 	

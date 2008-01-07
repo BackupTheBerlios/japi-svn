@@ -505,3 +505,13 @@ msgstr "Bewaar"
 
 msgid "Keep Window Open"
 msgstr "Hou venster open"
+
+msgid " [Read Only]"
+msgstr " [Alleen lezen]"
+
+msgid "This file is marked Read Only, you will not be able to save the changes you make."
+msgstr "Dit bestand is gemarkeerd als alleen lezen, wijzigingen kunnen niet worden opgeslagen."
+
+msgid "Failed to open file %s for writing"
+msgstr "Kan niet schrijven naar bestand '%s'"
+

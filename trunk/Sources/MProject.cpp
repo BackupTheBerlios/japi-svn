@@ -1046,6 +1046,9 @@ bool MProject::SaveDocument()
 	try
 	{
 		fs::ofstream file(mProjectFile, ios::binary);
+
+		if (not file.is_open())
+			THROW(("Failed to open file ^0 for writing", mProjectFile.string().c_str()));
 		
 		if (Write(&file))
 		{

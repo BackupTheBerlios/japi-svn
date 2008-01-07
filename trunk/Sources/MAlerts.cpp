@@ -42,6 +42,7 @@
 #include "MAlerts.h"
 #include "MUtils.h"
 #include "MStrings.h"
+#include "MWindow.h"
 
 using namespace std;
 
@@ -151,6 +152,13 @@ int32 DisplayAlertWithArgs(
 	try
 	{
 		GtkWidget* dlg = CreateAlertWithArgs(inResourceName, inArgs);
+
+		if (MWindow::GetFirstWindow() != nil)
+		{
+			gtk_window_set_transient_for(
+				GTK_WINDOW(dlg),
+				GTK_WINDOW(MWindow::GetFirstWindow()->GetGtkWidget()));
+		}
 
 		result = gtk_dialog_run(GTK_DIALOG(dlg));
 		

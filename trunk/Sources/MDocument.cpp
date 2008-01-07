@@ -68,6 +68,7 @@
 #include "MAcceleratorTable.h"
 #include "MSound.h"
 #include "MSftpChannel.h"
+#include "MAlerts.h"
 
 using namespace std;
 
@@ -147,7 +148,12 @@ MDocument::MDocument(
 			mSFTPData.clear();
 		}
 		else if (fs::exists(mURL.GetPath()))
-			mFileModDate = fs::last_write_time(mURL.GetPath());
+		{
+			fs::path path = mURL.GetPath();
+			
+			mFileModDate = fs::last_write_time(path);
+			mReadOnly = access(path.string().c_str(), W_OK) != 0;
+		}
 
 		mSpecified = true;
 	}
@@ -180,6 +186,8 @@ void MDocument::Init()
 {
 	mNext = nil;
 	mSpecified = false;
+	mReadOnly = false;
+	mWarnedReadOnly = false;
 	mTargetTextView = nil;
 	mWalkOffset = 0;
 	mLastAction = kNoAction;
@@ -1096,6 +1104,9 @@ bool MDocument::DoSave()
 		{
 			fs::ofstream file(mURL.GetPath(), ios::trunc | ios::binary);
 			
+			if (not file.is_open())
+				THROW(("Failed to open file %s for writing", mURL.GetPath().string().c_str()));
+			
 			mText.WriteToFile(file);
 			SetModified(false);
 
@@ -1145,6 +1156,7 @@ bool MDocument::DoSaveAs(
 	{
 		mSpecified = true;
 		mIsWorksheet = false;
+		mReadOnly = false;
 	
 		eFileSpecChanged(mURL);
 		
@@ -1582,7 +1594,7 @@ uint32 MDocument::FindLineBreak(
 	if (GetSoftwrap() and mTargetTextView != nil and result > inFromOffset + 1)
 	{
 		uint32 width = mTargetTextView->GetWrapWidth();
-		
+
 		width -= inIndent * mCharsPerTab * mCharWidth;
 
 		if (tabCount * mTabWidth > width)
@@ -1640,25 +1652,25 @@ int32 MDocument::RewrapLines(
 	
 	MLineInfoArray::iterator lineInfoStart = mLineInfo.begin() + firstLine;
 
-	if ((*lineInfoStart).nl == false and lineInfoStart != mLineInfo.begin())
+	if (lineInfoStart->nl == false and lineInfoStart != mLineInfo.begin())
 		--lineInfoStart;
 	
 	MLineInfoArray::iterator lineInfoEnd = lineInfoStart + 1;
 
-	while (lineInfoEnd != mLineInfo.end() and (*lineInfoEnd).start < inTo)
+	while (lineInfoEnd != mLineInfo.end() and lineInfoEnd->start < inTo)
 		++lineInfoEnd;
 
-	while (lineInfoEnd != mLineInfo.end() and (*lineInfoEnd).nl == false)
+	while (lineInfoEnd != mLineInfo.end() and lineInfoEnd->nl == false)
 		++lineInfoEnd;
 	
 	if (lineInfoEnd == mLineInfo.end())
 		inTo = mText.GetSize();
 	else
-		inTo = (*lineInfoEnd).start - 1;
+		inTo = lineInfoEnd->start - 1;
 	
 	// start by marking the first line dirty
 	
-	(*lineInfoStart).dirty = true;
+	lineInfoStart->dirty = true;
 	
 	// now if we have more than one line we will erase the old info
 	int32 cnt = lineInfoEnd - lineInfoStart;
@@ -1666,8 +1678,8 @@ int32 MDocument::RewrapLines(
 	{
 		for (MLineInfoArray::iterator i = lineInfoStart; i != lineInfoEnd; ++i)
 		{
-			if ((*i).marked)
-				markOffsets.push_back((*i).start);
+			if (i->marked)
+				markOffsets.push_back(i->start);
 		}
 		
 		mLineInfo.erase(lineInfoStart + 1, lineInfoEnd);
@@ -1677,22 +1689,22 @@ int32 MDocument::RewrapLines(
 	lineInfoEnd = lineInfoStart + 1;
 	
 	if (mLanguage and lineInfoStart == mLineInfo.begin())
-		(*lineInfoStart).state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
+		lineInfoStart->state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
 	
-	uint16 state = (*lineInfoStart).state;
-	uint32 start = (*lineInfoStart).start;
+	uint16 state = lineInfoStart->state;
+	uint32 start = lineInfoStart->start;
 	
 	uint32 indent = 0;
 
+	bool isHardBreak = lineInfoStart->nl or lineInfoStart == mLineInfo.begin();
+	
 	if (GetSoftwrap())
 	{
 		MLineInfoArray::iterator li = lineInfoStart;
-		while (li != mLineInfo.begin() and (*li).nl == false)
+		while (li != mLineInfo.begin() and li->nl == false)
 			--li;
-		indent = GetIndent((*li).start);
+		indent = GetIndent(li->start);
 	}
-	
-	bool isHardBreak = true;
 	
 	// loop over the text until we're done
 	while (start < mText.GetSize())
@@ -1722,7 +1734,7 @@ int32 MDocument::RewrapLines(
 		++lineInfoEnd;
 		
 		if (not isHardBreak and indent > 0)
-			(*lineInfoEnd).indent = true;
+			lineInfoEnd->indent = true;
 
 		if (isHardBreak)
 			indent = GetIndent(nextBreak);
@@ -2087,6 +2099,8 @@ void MDocument::PositionToOffset(
 			bool trailing;
 			/*bool hit = */device.PositionToIndex(inLocationX, outOffset, trailing);
 			outOffset += mLineInfo[line].start;
+			if (outOffset > LineEnd(line))
+				outOffset = LineEnd(line);
 		}
 		else
 			outOffset = mLineInfo[line].start;
@@ -2127,6 +2141,12 @@ void MDocument::Insert(
 	const char*		inText,
 	uint32			inLength)
 {
+	if (mReadOnly and not mWarnedReadOnly)
+	{
+		DisplayAlert("read-only-alert");
+		mWarnedReadOnly = true;
+	}
+	
 	if (inLength > 0)
 	{
 		uint32 lineCount = mLineInfo.size();
@@ -2167,6 +2187,12 @@ void MDocument::Delete(
 	uint32			inOffset,
 	uint32			inLength)
 {
+	if (mReadOnly and not mWarnedReadOnly)
+	{
+		DisplayAlert("read-only-alert");
+		mWarnedReadOnly = true;
+	}
+
 	if (inLength > 0)
 	{
 		assert(inOffset + inLength <= mText.GetSize());

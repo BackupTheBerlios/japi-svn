@@ -9,9 +9,6 @@ Moet af:
 - SSH/SFTP afronden
 	- authenticatie dialog splitsen of zo.
 
-- softwrap fixen, als je typt in een gewrapte regel
-- read-only files ondersteunen
-
 Leuk om te hebben:
 
 - Invoegen... menu item(s)
@@ -28,8 +25,6 @@ Leuk om te hebben:
 - regelnummer vlak
 
 - subversion support
-
-- 'save all/show all' dialog voor het afsluiten
 
 - veralgemeniseren van pkg-config
 - configuratie van compiler, koppelen aan extensie(s)

@@ -131,6 +131,8 @@
 		<copy>discard-changes-alert.xml</copy>
 		<copy>replace-all-alert.xml</copy>
 		<copy>text-view-context-menu.xml</copy>
+		<copy>read-only-alert.xml</copy>
+		<copy>exception-alert.xml</copy>
 		<mkdir name="Templates">
 			<copy>empty.c</copy>
 			<copy>Strict.xhtml</copy>

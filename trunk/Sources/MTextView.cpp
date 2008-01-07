@@ -578,7 +578,7 @@ void MTextView::DrawLine(
 				MRect r = lineRect;
 				
 				if (text.length() > 0)
-					r.x += inDevice.GetTextWidth();
+					r.x += indent + inDevice.GetTextWidth();
 
 				inDevice.Save();
 				inDevice.SetForeColor(selectionColor);

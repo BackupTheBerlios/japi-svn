@@ -136,7 +136,7 @@ void PlaySound(
 		
 		if (inSoundName == "success")
 			filename = Preferences::GetString("success sound", "info.wav");
-		else if (inSoundName == "failure")
+		else if (inSoundName == "failure" or inSoundName == "error")
 			filename = Preferences::GetString("failure sound", "error.wav");
 		else if (inSoundName == "warning")
 			filename = Preferences::GetString("warning sound", "warning.wav");

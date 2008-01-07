@@ -39,6 +39,7 @@
 #include "MTypes.h"
 #include "MUtils.h"
 #include "MSound.h"
+#include "MAlerts.h"
 
 using namespace std;
 
@@ -75,14 +76,8 @@ namespace MError
 void DisplayError(
 	const exception&	inErr)
 {
-	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-		inErr.what());
-	
 	PlaySound("error");
-	(void)gtk_dialog_run(GTK_DIALOG(dlg));
-	
-	gtk_widget_destroy(dlg);
+	DisplayAlert("exception-alert", inErr.what());
 }
 
 }

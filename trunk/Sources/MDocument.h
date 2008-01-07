@@ -148,6 +148,8 @@ class MDocument
 
 	void				CheckFile();
 	
+	bool				IsReadOnly() const					{ return mReadOnly; }
+	
 	bool				ReadDocState(MDocState& ioDocState);
 
 	static MDocument*	GetFirstDocument()					{ return sFirst; }
@@ -410,6 +412,8 @@ class MDocument
 								mNotifiers;
 	int							mDataFD;
 	bool						mSpecified;
+	bool						mReadOnly;
+	bool						mWarnedReadOnly;
 	MUrl						mURL;
 	double						mFileModDate;
 	MTextBuffer					mText;
