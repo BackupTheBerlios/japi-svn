@@ -99,16 +99,12 @@
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<file>libboost_thread-mt.a</file>
-			<file>libboost_filesystem.a</file>
-			<file>libboost_date_time.a</file>
-			<file>libboost_filesystem.a</file>
-			<file>libboost_thread-mt.a</file>
-			<file>libboost_date_time.a</file>
+			<file>libmagic.a</file>
 			<file optional='true'>libattr.a</file>
-			<file>libmagic.a</file>
+			<file>libboost_filesystem.a</file>
+			<file>libboost_thread-mt.a</file>
+			<file>libboost_date_time.a</file>
 			<file>libgthread-2.0.a</file>
-			<file>libmagic.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>
