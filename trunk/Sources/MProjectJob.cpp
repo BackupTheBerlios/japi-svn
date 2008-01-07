@@ -444,7 +444,7 @@ void MProjectCreateResourceJob::Execute()
 		string name = p->string();
 		
 		if (not f.is_open())
-			THROW(("Could not open resource data file %s", p->string().c_str()));
+			THROW(("Could not open resource data file %s", name.c_str()));
 		
 		filebuf* b = f.rdbuf();
 	

@@ -63,11 +63,14 @@
 			<file>MSound.cpp</file>
 			<group name="Project">
 				<file>MProject.cpp</file>
+				<!--file>MProjectInfoDialog.cpp</file-->
 				<file>MProjectItem.cpp</file>
 				<file>MProjectJob.cpp</file>
+				<!--file>MProjectPathsDialog.cpp</file-->
 				<file>MObjectFile.cpp</file>
 				<file>MObjectFileImp_elf.cpp</file>
 				<file>MObjectFileImp_macho.cpp</file>
+				<!--file>MNewGroupDialog.cpp</file-->
 			</group>
 			<group name="Language">
 				<file>MLanguage.cpp</file>
@@ -106,11 +109,11 @@
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
 			<file>libmagic.a</file>
-			<file>cryptopp</file>
-			<file>z</file>
+			<link>cryptopp</link>
+			<link>z</link>
 		</group>
 	</files>
-	<package>
+	<package resource_dir="Resources">
 		<copy>unknown-host-alert.xml</copy>
 		<copy>host-key-changed-alert.xml</copy>
 		<copy>edit-window-menus.xml</copy>
@@ -131,10 +134,10 @@
 		<copy>read-only-alert.xml</copy>
 		<copy>exception-alert.xml</copy>
 		<mkdir name="Templates">
-			<copy>Templates/empty.c</copy>
-			<copy>Templates/Strict.xhtml</copy>
-			<copy>Templates/Template.html</copy>
-			<copy>Templates/Transitional.xhtml</copy>
+			<copy>empty.c</copy>
+			<copy>Strict.xhtml</copy>
+			<copy>Template.html</copy>
+			<copy>Transitional.xhtml</copy>
 		</mkdir>
 	</package>
 	<targets>

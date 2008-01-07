@@ -283,6 +283,7 @@ class MProject : public MWindow, public MSaverMixin
 
 	void				WritePackage(
 							xmlTextWriterPtr	inWriter,
+							const MPath&		inDir,
 							std::vector<MProjectItem*>&
 												inItems);
 

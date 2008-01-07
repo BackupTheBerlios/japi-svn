@@ -2,6 +2,8 @@
 
 Moet af:
 
+- printen
+
 - keyboard shortcuts voor alert dialogs
 
 - clean up code na leaks test
@@ -24,6 +26,8 @@ Leuk om te hebben:
 - vierkante selectie
 - regelnummer vlak
 
+- rewrap, met kolom breedte, quoted en al
+
 - subversion support
 
 - veralgemeniseren van pkg-config
@@ -38,7 +42,6 @@ Leuk om te hebben:
 - onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten
 
-- printen
 - accelerator-achtig iets
 
 - split windows?

@@ -141,6 +141,26 @@ void MProjectState::Swap()
 
 }
 
+// ---------------------------------------------------------------------------
+//	MProjectTarget
+
+MTargetCPU MProjectTarget::GetNativeCPU()
+{
+	MTargetCPU arch;
+#if defined(__amd64)
+	arch = eCPU_x86_64;
+#elif defined(__i386__)
+	arch = eCPU_386;
+#elif defined(__powerpc64__) or defined(__PPC64__) or defined(__ppc64__)
+	arch = eCPU_PowerPC_64;
+#elif defined(__powerpc__) or defined(__PPC__) or defined(__ppc__)
+	arch = eCPU_PowerPC_32;
+#else
+#	error("Undefined processor")
+#endif
+	return arch;
+}
+
 #pragma mark -
 
 // ---------------------------------------------------------------------------
@@ -1768,18 +1788,7 @@ void MProject::Read(
 //			if (kind == eTargetExecutable or kind == eTargetStaticLibrary or kind == eTargetSharedLibrary)
 //				::DisableControl(mPackagePanelRef);
 			
-			MTargetCPU arch;
-#if defined(__amd64)
-			arch = eCPU_x86_64;
-#elif defined(__i386__)
-			arch = eCPU_386;
-#elif defined(__powerpc64__) or defined(__PPC64__) or defined(__ppc64__)
-			arch = eCPU_PowerPC_64;
-#elif defined(__powerpc__) or defined(__PPC__) or defined(__ppc__)
-			arch = eCPU_PowerPC_32;
-#else
-#	error("Undefined processor")
-#endif				
+			MTargetCPU arch = eCPU_native;
 
 			p = targetNode.property("arch");
 			if (p.length() > 0)
@@ -1890,6 +1899,11 @@ void MProject::WriteFiles(
 			
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
 		}
+		else if (dynamic_cast<MProjectLib*>(*item) != nil)
+		{
+			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter,
+				BAD_CAST "link", BAD_CAST (*item)->GetName().c_str()));
+		}
 		else
 		{
 			THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "file"));
@@ -1915,6 +1929,7 @@ void MProject::WriteFiles(
 
 void MProject::WritePackage(
 	xmlTextWriterPtr		inWriter,
+	const MPath&			inDir,
 	vector<MProjectItem*>&	inItems)
 {
 	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
@@ -1928,18 +1943,19 @@ void MProject::WritePackage(
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "name",
 				BAD_CAST group->GetName().c_str()));
 			
-			WritePackage(inWriter, group->GetItems());
+			WritePackage(inWriter, inDir / group->GetName(), group->GetItems());
 			
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
 		}
 		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
-			MPath path = static_cast<MProjectResource*>(*item)->GetPath();
+			MPath path = mResourcesDir / static_cast<MProjectResource*>(*item)->GetPath();
+
+			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
+				BAD_CAST relative_path(inDir, path).string().c_str()));
 
 //			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
-//				BAD_CAST relative_path(mResourcesDir, path).string().c_str()));
-			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
-				BAD_CAST path.string().c_str()));
+//				BAD_CAST path.string().c_str()));
 		}
 	}
 }
@@ -2125,7 +2141,11 @@ bool MProject::Write(
 		// <package>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "package"));
 
-		WritePackage(writer, mPackageItems.GetItems());
+		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
+			BAD_CAST "resource_dir",
+			BAD_CAST relative_path(mProjectDir, mResourcesDir).string().c_str()));
+
+		WritePackage(writer, mResourcesDir, mPackageItems.GetItems());
 		
 		// </package>
 		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
@@ -2537,12 +2557,15 @@ MProjectJob* MProject::CreateCompileAllJob()
 	
 	if (rsrcFiles.size() > 0)
 	{
+		MTargetCPU arch = mCurrentTarget->GetTargetCPU();
+		if (arch == eCPU_native)
+			arch = MProjectTarget::GetNativeCPU();
 		
 		job->AddJob(new MProjectCreateResourceJob(
 			"Creating resources",
 			this, mResourcesDir, rsrcFiles,
 			mObjectDir / "__rsrc__.o",
-			mCurrentTarget->GetTargetCPU()));
+			arch));
 	}
 
 	return job.release();

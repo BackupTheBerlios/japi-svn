@@ -42,6 +42,7 @@
 
 #include "MUtils.h"
 #include "MObjectFileImp_macho.h"
+#include "MError.h"
 
 using namespace std;
 

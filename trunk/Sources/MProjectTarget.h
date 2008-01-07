@@ -38,6 +38,7 @@
 
 enum MTargetCPU {
 	eCPU_Unknown,
+	eCPU_native,
 	eCPU_386,
 	eCPU_x86_64,
 	eCPU_PowerPC_32,
@@ -78,6 +79,7 @@ class MProjectTarget
 //	MProjectTarget&		operator=(
 //							const MProjectTarget& rhs);
 
+	static MTargetCPU	GetNativeCPU();
 
 	void				AddCFlag(
 							const char*		inFlag)
