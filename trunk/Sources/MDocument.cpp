@@ -245,6 +245,14 @@ void MDocument::SetText(
 	mText.SetText(inText, inTextLength);
 	
 	ReInit();
+
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	if (mLanguage != nil)
+	{
+		mNamedRange = new MNamedRange;
+		mIncludeFiles = new MIncludeFileList;
+	}
+
 	Rewrap();
 }
 
@@ -4035,6 +4043,8 @@ void MDocument::ShellStatusIn(bool inActive)
 
 void MDocument::StdOut(const char* inText, uint32 inSize)
 {
+	bool findLanguage = mDirty == false and mLanguage == nil and mText.GetSize() == 0;
+	
 	if (not mPreparedForStdOut)
 	{
 		StartAction(kTypeAction);
@@ -4050,6 +4060,19 @@ void MDocument::StdOut(const char* inText, uint32 inSize)
 	
 	eLineCountChanged();
 	eScroll(kScrollToCaret);
+	
+	if (findLanguage)
+	{
+		mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+		if (mLanguage != nil)
+		{
+			mNamedRange = new MNamedRange;
+			mIncludeFiles = new MIncludeFileList;
+		}
+
+		Rewrap();
+		UpdateDirtyLines();
+	}
 }
 
 void MDocument::StdErr(const char* inText, uint32 inSize)
