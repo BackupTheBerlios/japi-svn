@@ -105,7 +105,7 @@
 			<file>libboost_filesystem.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_date_time.a</file>
-			<!--file>libattr.a</file-->
+			<file>libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
 			<file>libmagic.a</file>
@@ -130,6 +130,7 @@
 		<copy>save-changes-alert.xml</copy>
 		<copy>discard-changes-alert.xml</copy>
 		<copy>replace-all-alert.xml</copy>
+		<copy>text-view-context-menu.xml</copy>
 		<mkdir name="Templates">
 			<copy>empty.c</copy>
 			<copy>Strict.xhtml</copy>

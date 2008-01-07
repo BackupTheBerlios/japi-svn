@@ -169,7 +169,7 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case cmd_CloseAll:
-			DoCloseAll(kSaveChangesClosingDocument);
+			DoCloseAll(kSaveChangesClosingAllDocuments);
 			break;
 		
 		case cmd_SaveAll:
@@ -865,7 +865,13 @@ bool ForkServer(
 	{
 		// no server available, apparently. Create one
 		if (fork() == 0)
+		{
+			// detach from the process group, create new
+			// to avoid being killed by a CNTRL-C in the shell
+			setpgid(0, 0);
+
 			return true;
+		}
 		
 		sleep(1);
 		sockfd = OpenSocketToServer();
@@ -907,6 +913,10 @@ bool ForkServer(
 	
 	if (inReadStdin)
 	{
+		int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+		if (fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK))
+			cerr << _("Failed to set fd non blocking: ") << strerror(errno) << endl;
+
 		for (;;)
 		{
 			char buffer[10240];

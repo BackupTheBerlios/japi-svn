@@ -102,24 +102,17 @@ class MTextView : public MView, public MHandler
 	
   protected:
 
-//	OSStatus			DoControlDraw(EventRef inEvent);
-//	OSStatus			DoControlClick(EventRef inEvent);
-//	OSStatus			DoControlHitTest(EventRef inEvent);
-//	OSStatus			DoControlTrack(EventRef inEvent);
-//	OSStatus			DoScrollableGetInfo(EventRef inEvent);
-//	OSStatus			DoScrollableScrollTo(EventRef inEvent);
-//	OSStatus			DoControlActivate(EventRef inEvent);
-//	OSStatus			DoControlDeactivate(EventRef inEvent);
-//	OSStatus			DoControlTrackingAreaEntered(EventRef inEvent);
-//	OSStatus			DoControlTrackingAreaExited(EventRef inEvent);
-//	OSStatus			DoBoundsChanged(EventRef inEvent);
-//	OSStatus			DoDragEnter(EventRef inEvent);
-//	OSStatus			DoDragWithin(EventRef inEvent);
-//	OSStatus			DoDragLeave(EventRef inEvent);
-//	OSStatus			DoDragReceive(EventRef inEvent);
-//	OSStatus			DoGetClickActivation(EventRef inEvent);
-//	OSStatus			DoContextualMenuClick(EventRef inEvent);
-//	OSStatus			DoSetFocusPart(EventRef inEvent);
+	virtual bool		UpdateCommandStatus(
+							uint32			inCommand,
+							MMenu*			inMenu,
+							uint32			inItemIndex,
+							bool&			outEnabled,
+							bool&			outChecked);
+
+	virtual bool		ProcessCommand(
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
 
 	virtual bool		OnExposeEvent(
 							GdkEventExpose*	inEvent);
@@ -141,6 +134,9 @@ class MTextView : public MView, public MHandler
 
 	virtual bool		OnScrollEvent(
 							GdkEventScroll*	inEvent);
+	
+	virtual void		OnPopupMenu(
+							GdkEventButton*	inEvent);
 	
   private:
 
@@ -193,7 +189,6 @@ class MTextView : public MView, public MHandler
 							uint32			inLineNr,
 							bool			inForceCenter);
 
-//	RgnHandle			SelectionToRegion();
 	bool				IsPointInSelection(
 							int32			inX,
 							int32			inY);
@@ -296,18 +291,8 @@ class MTextView : public MView, public MHandler
 	
 	GtkIMContext*		mIMContext;
 	
-//	TSMDocumentID		mTSMDocument;
-//	HIViewTrackingAreaRef
-//						mTrackingLeftRef, mTrackingMainRef;
-//	EventLoopTimerRef	mTimerRef;
-
 	uint32				mDragCaret;
 	int32				mClickStartX, mClickStartY;
-
-//	// tick support for caret blinking
-//	
-//	static pascal void	EventLoopTimerProc(EventLoopTimerRef inTimer, void *inUserData);
-//
 };
 
 #endif

@@ -63,6 +63,7 @@ MSaverMixin::MSaverMixin()
 	, mNext(nil)
 	, mCloseOnNavTerminate(true)
 	, mClosePending(false)
+	, mCloseAllPending(false)
 	, mQuitPending(false)
 	, mDialog(nil)
 {
@@ -115,6 +116,7 @@ void MSaverMixin::TryCloseDocument(
 		return;
 	
 	mQuitPending = (inAction == kSaveChangesQuittingApplication);
+	mCloseAllPending = (inAction == kSaveChangesClosingAllDocuments);
 	
 	mDialog = CreateAlert("save-changes-alert", inDocumentName);
 	
@@ -212,12 +214,15 @@ bool MSaverMixin::OnSaveResponse(
 		case kAskSaveChanges_Cancel:
 			mQuitPending = false;
 			mClosePending = false;
+			mCloseAllPending = false;
 			break;
 		
 		case kAskSaveChanges_DontSave:
 			CloseAfterNavigationDialog();
 			if (mQuitPending)
 				gApp->ProcessCommand(cmd_Quit, nil, 0);
+			else if (mCloseAllPending)
+				gApp->ProcessCommand(cmd_CloseAll, nil, 0);
 			break;
 	}
 	

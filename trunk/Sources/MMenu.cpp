@@ -238,6 +238,99 @@ MMenu::~MMenu()
 		delete *mi;
 }
 
+MMenu* MMenu::CreateFromResource(
+	const char*			inResourceName)
+{
+	MMenu* result = nil;
+	
+	const char* xml;
+	uint32 size;
+	
+	if (not LoadResource(inResourceName, xml, size))
+		THROW(("Menu resource not found: %s", inResourceName));
+	
+	xmlDocPtr			xmlDoc = nil;
+	
+	xmlInitParser();
+
+	try
+	{
+		xmlDoc = xmlParseMemory(xml, size);
+		if (xmlDoc == nil or xmlDoc->children == nil)
+			THROW(("Failed to parse project file"));
+		
+		// build a menu
+		
+		XMLNode node(xmlDoc->children);
+		if (node.name() == "menu")
+			result = Create(node);
+
+		xmlFreeDoc(xmlDoc);
+	}
+	catch (...)
+	{
+		if (xmlDoc != nil)
+			xmlFreeDoc(xmlDoc);
+		
+		xmlCleanupParser();
+		throw;
+	}
+	
+	xmlCleanupParser();
+
+	return result;
+}
+
+MMenu* MMenu::Create(
+	XMLNode&			inXMLNode)
+{
+	string label = inXMLNode.property("label");
+	if (label.length() == 0)
+		THROW(("Invalid menu specification, label is missing"));
+	
+	string special = inXMLNode.property("special");
+
+	MMenu* menu;
+
+	if (special == "recent")
+		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
+	else
+	{
+		menu = new MMenu(label);
+		
+		for (XMLNode::iterator item = inXMLNode.begin(); item != inXMLNode.end(); ++item)
+		{
+			if (item->name() == "item")
+			{
+				label = item->property("label");
+				
+				if (label == "-")
+					menu->AppendSeparator();
+				else
+				{
+					string cs = item->property("cmd").c_str();
+	
+					if (cs.length() != 4)
+						THROW(("Invalid menu item specification, cmd is not correct"));
+					
+					uint32 cmd = 0;
+					for (int i = 0; i < 4; ++i)
+						cmd |= cs[i] << ((3 - i) * 8);
+					
+					if (item->property("check") == "radio")
+						menu->AppendCheckItem(label, cmd);
+					else
+						menu->AppendItem(label, cmd);
+				}
+			}
+			else if (item->name() == "menu")
+				menu->AppendMenu(Create(*item));
+		}
+	}
+	
+	return menu;
+}
+
 bool MMenu::IsRecentMenu() const
 {
 	return GTK_IS_RECENT_CHOOSER_MENU(mGtkMenu);
@@ -446,8 +539,18 @@ void MMenu::Popup(
 
 	gtk_widget_show_all(mGtkMenu);
 
+	int32 button = 0;
+	uint32 time = 0;
+	if (inEvent != nil)
+	{
+		button = inEvent->button;
+		time = inEvent->time;
+	}
+	
+	UpdateCommandStatus();
+
 	gtk_menu_popup(GTK_MENU(mGtkMenu), nil, nil,
-		&MMenu::MenuPosition, nil, inEvent->button, inEvent->time);
+		&MMenu::MenuPosition, nil, button, time);
 }
 
 bool MMenu::OnDestroy()

@@ -176,8 +176,9 @@ void MTextView::SetController(MController* inController)
 bool MTextView::OnButtonPressEvent(
 	GdkEventButton*		inEvent)
 {
+	// short cut
 	if (mDocument == nil or inEvent->button != 1 or inEvent->type != GDK_BUTTON_PRESS)
-		return true;
+		return MView::OnButtonPressEvent(inEvent);
 
 	if (mLastClickTime + 250 > inEvent->time)
 		mClickCount = mClickCount % 3 + 1;
@@ -1487,46 +1488,6 @@ bool MTextView::IsPointInSelection(
 //	return rgn.Release();
 //}
 
-//void MTextView::DoDragSendData(FlavorType theType,
-//	DragItemRef theItemRef, DragRef theDrag)
-//{
-//	ustring s;
-//
-//	mDocument->GetSelectedText(s);
-//
-//	if (theType == kScrapFlavorTypeUnicode)
-//	{
-//		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
-//			s.c_str(), s.length() * sizeof(UniChar), 0));
-//	}
-//	else if (theType == kScrapFlavorTypeText)
-//	{
-//		MEncoder* encoder = MEncoder::GetEncoder(kEncodingMacOSRoman);
-//		encoder->SetText(s);
-//		THROW_IF_OSERROR(::SetDragItemFlavorData(theDrag, theItemRef, theType,
-//			encoder->Peek(), encoder->GetBufferSize(), 0));
-//	}
-//	else
-//		THROW(("invalid flavor requested"));
-//}
-//	
-//pascal OSErr MTextView::DoDragSendDataCallback(FlavorType theType,
-//	void *dragSendRefCon, DragItemRef theItemRef, DragRef theDrag)
-//{
-//	OSErr err = noErr;
-//	try
-//	{
-//		MTextView* textView = static_cast<MTextView*>(dragSendRefCon);
-//		textView->DoDragSendData(theType, theItemRef, theDrag);
-//	}
-//	catch (exception& inErr)
-//	{
-//		err = cantGetFlavorErr;
-//	}
-//	
-//	return err;
-//}
-
 void MTextView::DrawDragHilite(
 	MDevice&		inDevice)
 {
@@ -1542,28 +1503,6 @@ void MTextView::DrawDragHilite(
 	
 	inDevice.Restore();
 }
-
-//OSStatus MTextView::DoContextualMenuClick(EventRef inEvent)
-//{
-//	return noErr;
-//}
-//
-//OSStatus MTextView::DoSetFocusPart(EventRef ioEvent)
-//{
-//	ControlPartCode part;
-//	
-//	::GetEventParameter(ioEvent, kEventParamMouseLocation,
-//		typeControlPartCode, nil, sizeof(part), nil, &part);
-//	
-////	if ((part != kControlFocusNoPart) != mHasFocus)
-////	{
-////		mHasFocus = not mHasFocus;
-////		
-////		SetNeedsDisplay(true);
-////	}
-//
-//	return noErr;
-//}
 
 uint32 MTextView::GetWrapWidth() const
 {
@@ -1680,3 +1619,67 @@ bool MTextView::OnEvent(
 //	cout << "Event: " << hex << uint32(inEvent->type) << dec << endl;
 	return false;
 }
+
+void MTextView::OnPopupMenu(
+	GdkEventButton*	inEvent)
+{
+	int32 x = 0, y = 0;
+	
+	if (inEvent != nil)
+	{
+		x = static_cast<int32>(inEvent->x);
+		y = static_cast<int32>(inEvent->y);
+	}
+
+	ConvertToGlobal(x, y);
+
+	MMenu* popup = MMenu::CreateFromResource("text-view-context-menu");
+	
+	if (popup != nil)
+		popup->Popup(mController, inEvent, x, y, true);
+}
+
+bool MTextView::UpdateCommandStatus(
+	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
+	bool&			outEnabled,
+	bool&			outChecked)
+{
+	bool result = true;
+	
+	switch (inCommand)
+	{
+		case cmd_Menu:
+			outEnabled = (mDocument != nil);
+			break;
+		
+		default:
+			result = MHandler::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+			break;
+	}
+	
+	return result;
+}
+
+bool MTextView::ProcessCommand(
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
+{
+	bool result = true;
+	
+	switch (inCommand)
+	{
+		case cmd_Menu:
+			OnPopupMenu(nil);
+			break;
+		
+		default:
+			result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex);
+			break;
+	}
+	
+	return result;
+}
+

@@ -52,6 +52,8 @@ enum MStdCommand {
 	
 	cmd_About =					'abou',
 	cmd_Help =					'help',
+	
+	cmd_Menu =					'menu',		// Shift-F10 or Menu key
 };
 
 // private commands

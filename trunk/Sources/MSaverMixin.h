@@ -40,6 +40,7 @@ class MWindow;
 
 enum MCloseReason {
 	kSaveChangesClosingDocument,
+	kSaveChangesClosingAllDocuments,
 	kSaveChangesQuittingApplication
 };
 
@@ -88,6 +89,7 @@ class MSaverMixin
 	MSaverMixin*		mNext;
 	bool				mCloseOnNavTerminate;
 	bool				mClosePending;
+	bool				mCloseAllPending;
 	bool				mQuitPending;
 	GtkWidget*			mDialog;
 };

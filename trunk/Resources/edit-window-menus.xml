@@ -29,10 +29,11 @@
 		<item label="Paste" cmd='past'/>
 		<item label="Paste Next" cmd='PstN'/>
 		<item label="Clear" cmd='clea'/>
+		<item label="-" />
 		<item label="Select All" cmd='sall'/>
 		<item label="-"/>
 		<item label="Preferences" cmd='pref' />
-		<item label="Test" cmd='test'/>
+<!--		<item label="Test" cmd='test'/> -->
 	</menu>
 	<menu id='textmenu' label="Text">
 		<item label="Balance" cmd='Bala'/>

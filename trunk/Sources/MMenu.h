@@ -53,6 +53,9 @@ class MMenu
 
 	virtual			~MMenu();
 
+	static MMenu*	CreateFromResource(
+						const char*			inResourceName);
+
 	void			AppendItem(
 						const std::string&	inLabel,
 						uint32				inCommand);
@@ -98,6 +101,9 @@ class MMenu
 	
   protected:
 
+	static MMenu*	Create(
+						XMLNode&			inXMLNode);
+
 	static void		MenuPosition(
 						GtkMenu*			inMenu,
 						gint*				inX,
@@ -140,12 +146,12 @@ class MMenubar
 
   private:
 	
-	bool			OnButtonPress(
-						GdkEventButton*		inEvent);
-
 	MMenu*			CreateMenu(
 						XMLNode&			inXMLNode);
 	
+	bool			OnButtonPress(
+						GdkEventButton*		inEvent);
+
 	MSlot<bool(GdkEventButton*)>
 					mOnButtonPressEvent;
 	GtkWidget*		mGtkMenubar;

@@ -142,6 +142,9 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 		sInstance->RegisterAcceleratorKey(cmd_Worksheet, GDK_0, GDK_CONTROL_MASK);
 
 		sInstance->RegisterAcceleratorKey(cmd_Stop, GDK_period, GDK_CONTROL_MASK);
+		
+		sInstance->RegisterAcceleratorKey(cmd_Menu, GDK_Menu, 0);
+		sInstance->RegisterAcceleratorKey(cmd_Menu, GDK_F10, GDK_SHIFT_MASK);
 	}
 
 	return *sInstance.get();

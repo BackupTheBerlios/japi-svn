@@ -65,6 +65,7 @@ MView::MView(
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mPopupMenu(this, &MView::OnPopupMenu)
 	, mDragDataReceived(this, &MView::OnDragDataReceived)
 	, mDragMotion(this, &MView::OnDragMotion)
 	, mDragLeave(this, &MView::OnDragLeave)
@@ -89,6 +90,7 @@ MView::MView(
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mPopupMenu(this, &MView::OnPopupMenu)
 	, mDragDataReceived(this, &MView::OnDragDataReceived)
 	, mDragMotion(this, &MView::OnDragMotion)
 	, mDragLeave(this, &MView::OnDragLeave)
@@ -114,6 +116,7 @@ MView::MView()
 	, mScrollEvent(this, &MView::OnScrollEvent)
 	, mRealize(this, &MView::OnRealize)
 	, mExposeEvent(this, &MView::OnExposeEvent)
+	, mPopupMenu(this, &MView::OnPopupMenu)
 	, mDragDataReceived(this, &MView::OnDragDataReceived)
 	, mDragMotion(this, &MView::OnDragMotion)
 	, mDragLeave(this, &MView::OnDragLeave)
@@ -146,6 +149,7 @@ void MView::SetWidget(
 		mConfigureEvent.Connect(mGtkWidget, "configure-event");
 		mScrollEvent.Connect(mGtkWidget, "scroll-event");
 		mRealize.Connect(mGtkWidget, "realize");
+		mPopupMenu.Connect(mGtkWidget, "popup-menu");
 	}
 	
 	if (inCanDraw)
@@ -382,7 +386,15 @@ bool MView::IsActive() const
 bool MView::OnButtonPressEvent(
 	GdkEventButton*	inEvent)
 {
-	return false;
+	bool result = false;
+	
+	if (inEvent->button == 3 and inEvent->type == GDK_BUTTON_PRESS)
+	{
+		OnPopupMenu(inEvent);
+		result = true;
+	}
+	
+	return result;
 }
 
 bool MView::OnMotionNotifyEvent(
@@ -584,4 +596,10 @@ uint32 MView::GetModifiers() const
 	GdkModifierType modifiers;
 	gdk_window_get_pointer(mGtkWidget->window, nil, nil, &modifiers);
 	return modifiers & gtk_accelerator_get_default_mod_mask();
+}
+
+void MView::OnPopupMenu(
+	GdkEventButton*	inEvent)
+{
+	PRINT(("Show Popup Menu"));
 }

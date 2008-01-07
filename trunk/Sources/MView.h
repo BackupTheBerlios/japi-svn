@@ -155,6 +155,9 @@ class MView
 	virtual bool	OnExposeEvent(
 						GdkEventExpose*	inEvent);
 
+	virtual void	OnPopupMenu(
+						GdkEventButton*	inEvent);
+
 	// Drag and Drop support
 
 	void			SetupDragAndDrop(
@@ -230,6 +233,7 @@ class MView
 	MSlot<bool(GdkEventScroll*)>		mScrollEvent;
 	MSlot<bool()>						mRealize;
 	MSlot<bool(GdkEventExpose*)>		mExposeEvent;
+	MSlot<void(GdkEventButton*)>		mPopupMenu;
 	
 	MSlot<void(GdkDragContext*,
                gint,

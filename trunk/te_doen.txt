@@ -14,6 +14,8 @@ Moet af:
 
 Leuk om te hebben:
 
+- Invoegen... menu item(s)
+
 - Afronden Find Dialog:
 	- Replace All in Multi mode verbeteren (melding aantal?)
 
@@ -22,7 +24,6 @@ Leuk om te hebben:
 - python language plugin
 - fortran language plugin
 
-- context menu's
 - vierkante selectie
 - regelnummer vlak
 
