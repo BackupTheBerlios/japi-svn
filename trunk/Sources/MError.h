@@ -107,11 +107,4 @@ void __m_debug_str(const char* inStr, ...);
 
 #define ASSERT(x, m)		if (not (x)) { SIGNAL_THROW(#x " => " #m); throw MException m; }
 
-namespace MError
-{
-
-void DisplayError(const std::exception& inErr);
-
-}
-
 #endif

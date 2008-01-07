@@ -230,6 +230,7 @@ MProjectFile::MProjectFile(
 	, mDataSize(0)
 	, mIsCompiling(false)
 	, mIsOutOfDate(false)
+	, mOptional(false)
 {
 	mIsOutOfDate = IsOutOfDate();
 }

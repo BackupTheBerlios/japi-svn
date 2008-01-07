@@ -980,7 +980,7 @@ void MProject::FilesDropped(
 		}
 		catch (exception& e)
 		{
-			MError::DisplayError(e);
+			DisplayError(e);
 		}
 	}
 
@@ -1004,7 +1004,7 @@ void MProject::PackageFilesDropped(
 //		}
 //		catch (exception& e)
 //		{
-//			MError::DisplayError(e);
+//			DisplayError(e);
 //		}
 //	}
 //
@@ -1060,7 +1060,7 @@ bool MProject::SaveDocument()
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 	
 	return result;
@@ -1539,7 +1539,7 @@ void MProject::ReadPackageAction(
 			}
 			catch (std::exception& e)
 			{
-				MError::DisplayError(e);
+				DisplayError(e);
 			}
 		}
 		else if (node->name() == "mkdir")
@@ -1581,6 +1581,9 @@ void MProject::ReadFiles(
 					projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
 				else
 					projectFile.reset(new MProjectFile(fileName, inGroup, MPath()));
+				
+				if (node->property("optional") == "true")
+					projectFile->SetOptional(true);
 
 				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
 
@@ -1588,7 +1591,7 @@ void MProject::ReadFiles(
 			}
 			catch (std::exception& e)
 			{
-				MError::DisplayError(e);
+				DisplayError(e);
 			}
 		}
 		else if (node->name() == "link")
@@ -1888,8 +1891,22 @@ void MProject::WriteFiles(
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
 		}
 		else
-			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "file",
+		{
+			THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "file"));
+			
+			MProjectFile* file = dynamic_cast<MProjectFile*>(*item);
+		
+			if (file != nil and file->IsOptional())
+			{
+				THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "optional",
+					BAD_CAST "true"));
+			}
+			
+			THROW_IF_XML_ERR(xmlTextWriterWriteString(inWriter,
 				BAD_CAST (*item)->GetName().c_str()));
+			
+			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
+		}
 	}
 }
 
@@ -1918,9 +1935,11 @@ void MProject::WritePackage(
 		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
 			MPath path = static_cast<MProjectResource*>(*item)->GetPath();
-			
+
+//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
+//				BAD_CAST relative_path(mResourcesDir, path).string().c_str()));
 			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
-				BAD_CAST relative_path(mProjectDir, path).string().c_str()));
+				BAD_CAST path.string().c_str()));
 		}
 	}
 }
@@ -2134,7 +2153,7 @@ bool MProject::Write(
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 	
 	if (buf != nil)
@@ -2166,7 +2185,7 @@ void MProject::Poll(
 		}
 		catch (exception& e)
 		{
-			MError::DisplayError(e);
+			DisplayError(e);
 			StopBuilding();
 		}
 	}
@@ -2611,7 +2630,12 @@ MProjectJob* MProject::CreateLinkJob(
 			if (f->IsCompilable())
 				argv.push_back(f->GetObjectPath().string());
 			else if (FileNameMatches("*.a;*.o;*.dylib", f->GetName()))
-				argv.push_back(f->GetPath().string());
+			{
+				if (fs::exists(f->GetPath()) )
+					argv.push_back(f->GetPath().string());
+				else if (not f->IsOptional())
+					THROW(("Missing library file %s", f->GetName().c_str()));
+			}
 			
 			continue;
 		}
@@ -3153,7 +3177,7 @@ void MProject::CheckIsOutOfDate()
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 }
 

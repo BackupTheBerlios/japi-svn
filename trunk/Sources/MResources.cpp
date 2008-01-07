@@ -41,6 +41,7 @@
 #include "MObjectFile.h"
 #include "MResources.h"
 #include "MPatriciaTree.h"
+#include "MError.h"
 
 using namespace std;
 

@@ -136,6 +136,10 @@ class MProjectFile : public MProjectItem
 
 	virtual bool	IsCompilable() const					{ return FileNameMatches("*.cpp;*.c", mName); }
 
+	virtual bool	IsOptional() const						{ return mOptional; }
+	virtual void	SetOptional(
+						bool				inOptional)		{ mOptional = inOptional; }
+
 	virtual bool	IsCompiling() const						{ return mIsCompiling; }
 	void			SetCompiling(
 						bool				inIsCompiling);
@@ -157,6 +161,7 @@ class MProjectFile : public MProjectItem
 	uint32			mDataSize;
 	bool			mIsCompiling;
 	bool			mIsOutOfDate;
+	bool			mOptional;
 };
 
 // ---------------------------------------------------------------------------

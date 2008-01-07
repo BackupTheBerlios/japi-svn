@@ -404,7 +404,7 @@ gint MJapieApp::Snooper(
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 	catch (...) {}
 
@@ -827,7 +827,7 @@ void MJapieApp::ProcessSocketMessages()
 			}
 			catch (exception& e)
 			{
-				MError::DisplayError(e);
+				DisplayError(e);
 				readStdin = false;
 			}
 		}

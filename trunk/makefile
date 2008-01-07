@@ -111,7 +111,7 @@ RSRCFileCreatorObjects = \
 	$(OBJDIR)/MObjectFile.o \
 	$(OBJDIR)/MObjectFileImp_elf.o
 
-RSRCFileCreator: Sources/MRSRCFileCreator.cpp
+RSRCFileCreator: $(RSRCFileCreatorObjects) Sources/MRSRCFileCreator.cpp
 	@ echo "Linking "$(@F)
 	$(CC) -o $@ Sources/MRSRCFileCreator.cpp $(CFLAGS) $(RSRCFileCreatorObjects) $(LDFLAGS)
 	@ chmod a+rx $@

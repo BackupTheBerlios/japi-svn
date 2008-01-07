@@ -39,6 +39,7 @@
 #include "MScrollBar.h"
 #include "MDevice.h"
 #include "MPreferences.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -437,7 +438,7 @@ void MListImp::SetAcceptDragAndDrop()
 ////		}
 ////		catch (std::exception& e)
 ////		{
-////			MError::DisplayError(e);
+////			DisplayError(e);
 ////		}
 ////		
 ////		sDraggingView = nil;

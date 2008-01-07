@@ -120,6 +120,10 @@ class MProject : public MWindow, public MSaverMixin
 							bool				inSearchUserPaths,
 							MPath&				outPath) const;
 
+	bool				LocateLibrary(
+							const std::string&	inFile,
+							MPath&				outPath) const;
+
 	bool				LocateInFramework(
 							const MPath&		inFrameworksPath,
 							const std::string&	inFramework,

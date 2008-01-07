@@ -41,6 +41,7 @@
 #include "MPreferences.h"
 #include "MGlobals.h"
 #include "MWindow.h"
+#include "MError.h"
 
 //#if defined(G_MODULE_SUFFIX)
 //#	define SO_EXT	"." G_MODULE_SUFFIX

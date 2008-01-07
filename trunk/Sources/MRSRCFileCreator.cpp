@@ -17,6 +17,7 @@ pkg-config --cflags --libs 'gtk+-2.0'
 #include <vector>
 
 #include "MResources.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -40,6 +41,12 @@ void usage()
 void PlaySound(
 	const string&		inSoundName)
 {
+}
+
+void DisplayError(
+	const exception& e)
+{
+	cerr << "Exception: " << e.what() << endl;
 }
 
 void CreateRSRSFile(

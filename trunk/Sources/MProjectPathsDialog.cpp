@@ -256,7 +256,7 @@ void MProjectPathsDialog::ChooseDirectory()
 //			}
 //			catch (std::exception& inErr)
 //			{
-//				MError::DisplayError(inErr);
+//				DisplayError(inErr);
 //			}
 //			catch (...) {}
 //			

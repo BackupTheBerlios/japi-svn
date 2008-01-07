@@ -38,6 +38,7 @@
 
 #include "MPkgConfig.h"
 #include "MPreferences.h"
+#include "MError.h"
 
 using namespace std;
 

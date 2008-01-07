@@ -515,7 +515,7 @@ void MFileIterator::SetFilter(
 
 MPath relative_path(const MPath& inFromDir, const MPath& inFile)
 {
-	assert(false);
+//	assert(false);
 
 	fs::path::iterator d = inFromDir.begin();
 	fs::path::iterator f = inFile.begin();

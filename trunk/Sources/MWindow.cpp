@@ -39,6 +39,7 @@
 #include "MCommands.h"
 #include "MWindow.h"
 #include "MResources.h"
+#include "MError.h"
 
 using namespace std;
 

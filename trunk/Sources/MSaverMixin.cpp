@@ -39,6 +39,7 @@
 #include "MStrings.h"
 #include "MCommands.h"
 #include "MAlerts.h"
+#include "MError.h"
 
 using namespace std;
 

@@ -38,6 +38,7 @@
 
 #include "MUtils.h"
 #include "MObjectFileImp_elf.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -156,7 +157,11 @@ enum {
 	kSymbolCount
 };
 
-template<MTargetCPU CPU, typename traits>
+template
+<
+	MTargetCPU	CPU,
+	typename	traits
+>
 void MELFObjectFileImp<CPU, traits>::Write(
 	const MPath&		inFile)
 {
@@ -236,7 +241,7 @@ void MELFObjectFileImp<CPU, traits>::Write(
 	string shstrtab;
 	(void)AddNameToNameTable(shstrtab, "");		// null name
 	(void)AddNameToNameTable(shstrtab, ".text");
-	(void)AddNameToNameTable(shstrtab, ".data");
+	(void)AddNameToNameTable(shstrtab, ".rsrc_data");
 	(void)AddNameToNameTable(shstrtab, ".bss");
 	(void)AddNameToNameTable(shstrtab, ".shstrtab");
 	(void)AddNameToNameTable(shstrtab, ".symtab");
@@ -263,7 +268,7 @@ void MELFObjectFileImp<CPU, traits>::Write(
 		},
 		{			// kDataSection
 							// sh_name
-			AddNameToNameTable(shstrtab, ".data"),
+			AddNameToNameTable(shstrtab, ".rsrc_data"),
 			SHT_PROGBITS,	// sh_type
 							// sh_flags
 			SHF_ALLOC|SHF_WRITE,

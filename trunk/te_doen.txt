@@ -38,8 +38,6 @@ Leuk om te hebben:
 - onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten
 
-- focus in message windows (reageren niet op Ctrl-W)
-
 - printen
 - accelerator-achtig iets
 
@@ -50,5 +48,3 @@ Leuk om te hebben:
 
 - linker schrijven
 - debugger
-
-- resource in ELF in eigen sectie opslaan

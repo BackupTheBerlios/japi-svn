@@ -36,6 +36,9 @@
 #include <sstream>
 #include <vector>
 
+void DisplayError(
+	const std::exception&	inException);
+
 GtkWidget* CreateAlertWithArgs(
 	const char* 				inResourceName,
 	std::vector<std::string>&	inArgs);

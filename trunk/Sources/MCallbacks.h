@@ -44,7 +44,7 @@
 
 #include <memory>
 
-#include "MError.h"
+#include "MAlerts.h"
 
 // shield implementation details in our namespace
 
@@ -131,7 +131,7 @@ struct Handler<Derived, Owner, R()> : public HandlerBase<R()>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -155,7 +155,7 @@ struct Handler<Derived, Owner, void()> : public HandlerBase<void()>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };
@@ -179,7 +179,7 @@ struct Handler<Derived, Owner, R(T1)> : public HandlerBase<R(T1)>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -203,7 +203,7 @@ struct Handler<Derived, Owner, void(T1)> : public HandlerBase<void(T1)>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };
@@ -227,7 +227,7 @@ struct Handler<Derived, Owner, R(T1, T2)> : public HandlerBase<R(T1, T2)>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -251,7 +251,7 @@ struct Handler<Derived, Owner, void(T1, T2)> : public HandlerBase<void(T1, T2)>
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };
@@ -275,7 +275,7 @@ struct Handler<Derived, Owner, R(T1, T2, T3)> : public HandlerBase<R(T1, T2, T3)
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -299,7 +299,7 @@ struct Handler<Derived, Owner, void(T1, T2, T3)> : public HandlerBase<void(T1, T
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };
@@ -323,7 +323,7 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4)> : public HandlerBase<R(T1, T2,
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -347,7 +347,7 @@ struct Handler<Derived, Owner, void(T1, T2, T3, T4)> : public HandlerBase<void(T
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };
@@ -371,7 +371,7 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5)> : public HandlerBase<R(T1,
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -397,7 +397,7 @@ struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5, T6)> : public HandlerBase<R
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 											
 											return result;
@@ -421,7 +421,7 @@ struct Handler<Derived, Owner, void(T1, T2, T3, T4, T5, T6)> : public HandlerBas
 											}
 											catch (const std::exception& e)
 											{
-												MError::DisplayError(e);
+												DisplayError(e);
 											}
 										}
 };

@@ -42,6 +42,7 @@
 #include "MDialog.h"
 #include "MResources.h"
 #include "MPreferences.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -337,7 +338,7 @@ void MDialog::ChangedCallBack(
 		}
 		catch (exception& e)
 		{
-			MError::DisplayError(e);
+			DisplayError(e);
 		}
 		catch (...) {}
 	}
@@ -377,7 +378,7 @@ void MDialog::StdBtnClickedCallBack(
 		}
 		catch (exception& e)
 		{
-			MError::DisplayError(e);
+			DisplayError(e);
 		}
 		catch (...) {}
 	}

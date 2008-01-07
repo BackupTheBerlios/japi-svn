@@ -1248,7 +1248,7 @@ void MSshConnection::ProcessUserAuthNone(
 //			}
 //			catch (exception& e)
 //			{
-//				MError::DisplayError(e);
+//				DisplayError(e);
 //			}
 			
 			s = ChooseProtocol(s, p);

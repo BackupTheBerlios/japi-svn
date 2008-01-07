@@ -631,7 +631,7 @@ void MFindDialog::ReplaceAll(
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}	
 }
 

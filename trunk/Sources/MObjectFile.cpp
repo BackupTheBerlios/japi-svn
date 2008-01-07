@@ -109,7 +109,7 @@ MObjectFile::MObjectFile(
 	}
 	catch (std::exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 		mImpl->mTextSize = 0;
 		mImpl->mDataSize = 0;
 	}

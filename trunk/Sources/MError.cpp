@@ -70,18 +70,6 @@ const char*	MException::what() const throw()
 	return mMessage;
 }
 
-namespace MError
-{
-
-void DisplayError(
-	const exception&	inErr)
-{
-	PlaySound("error");
-	DisplayAlert("exception-alert", inErr.what());
-}
-
-}
-
 #ifndef NDEBUG
 
 void __m_debug_str(const char* inStr, ...)

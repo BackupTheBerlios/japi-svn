@@ -42,6 +42,7 @@
 
 #include "MView.h"
 #include "MUtils.h"
+#include "MError.h"
 
 using namespace std;
 

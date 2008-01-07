@@ -43,6 +43,8 @@
 #include "MUtils.h"
 #include "MStrings.h"
 #include "MWindow.h"
+#include "MError.h"
+#include "MSound.h"
 
 using namespace std;
 
@@ -166,9 +168,30 @@ int32 DisplayAlertWithArgs(
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 	
 	return result;
+}
+
+void DisplayError(
+	const exception&	inErr)
+{
+	{
+		StOKToThrow ok;
+		PlaySound("error");
+	}
+	
+	try
+	{
+		DisplayAlert("exception-alert", inErr.what());
+	}
+	catch (...)
+	{
+		GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+			GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, inErr.what());
+		gtk_dialog_run(GTK_DIALOG(dlg));
+		gtk_widget_destroy(dlg);
+	}
 }
 

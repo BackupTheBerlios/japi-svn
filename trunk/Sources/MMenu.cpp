@@ -44,6 +44,7 @@
 #include "MStrings.h"
 #include "MResources.h"
 #include "MUtils.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -170,7 +171,7 @@ void MMenuItem::ItemCallback()
 	}
 	catch (exception& e)
 	{
-		MError::DisplayError(e);
+		DisplayError(e);
 	}
 	catch (...) {}
 }
@@ -206,7 +207,7 @@ void MMenuItem::RecentItemActivated()
 		}
 		catch (exception& e)
 		{
-			MError::DisplayError(e);
+			DisplayError(e);
 		}
 		catch (...) {}
 	}

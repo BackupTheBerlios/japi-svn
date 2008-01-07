@@ -1135,7 +1135,7 @@ bool MDocument::DoSave()
 	}
 	catch (exception& inErr)
 	{
-		MError::DisplayError(inErr);
+		DisplayError(inErr);
 		
 		mURL = file;
 		mSpecified = specified;
@@ -4015,7 +4015,7 @@ bool MDocument::HandleRawKeydown(
 //	}
 //	catch (exception& e)
 //	{
-//		MError::DisplayError(e);
+//		DisplayError(e);
 //	}
 //
 //	return err;
