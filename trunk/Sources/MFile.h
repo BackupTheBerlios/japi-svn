@@ -46,54 +46,6 @@ namespace fs = boost::filesystem;
 
 typedef fs::path MPath;
 
-class MFile
-{
-  public:
-					MFile(
-						const MPath&	inFileSpec,
-						int				inFD = -1);
-
-	virtual			~MFile();
-
-	void			Open(
-						int				inPermissions);
-
-	void			Close();
-
-	bool			IsOpen()						{ return mIsOpen; }
-	
-	void			GetFileSpec(
-						MPath&			outFileSpec) const;
-
-	const MPath&	GetFileSpec() const				{ return mFileSpec; }
-
-	int32			Read(
-						void*			inBuffer,
-						int32			inByteCount);
-
-	int32			Write(
-						const void*		inBuffer,
-						int32			inByteCount);
-
-	int64			Seek(
-						int64			inOffset,
-						int				inMode);
-
-	int64			GetSize() const;
-
-	void			SetSize(
-						int64			inSize);
-	
-	double			GetModificationDate() const;
-	
-	int				GetFD() const					{ assert(mIsOpen); return mFD; }
-	
-  private:
-	MPath			mFileSpec;
-	int				mFD;
-	bool			mIsOpen;
-};
-
 enum {
 	kFileIter_Deep				= 1 << 0,
 	kFileIter_TEXTFilesOnly		= 1 << 1,

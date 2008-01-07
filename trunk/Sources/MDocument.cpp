@@ -40,6 +40,7 @@
 
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include "MDocument.h"
 #include "MTextView.h"
@@ -1093,8 +1094,8 @@ bool MDocument::DoSave()
 		
 		if (mURL.IsLocal())
 		{
-			MFile file(mURL.GetPath());
-			file.Open(O_RDWR | O_TRUNC | O_CREAT);
+			fs::ofstream file(mURL.GetPath(), ios::trunc | ios::binary);
+			
 			mText.WriteToFile(file);
 			SetModified(false);
 
@@ -1110,9 +1111,9 @@ bool MDocument::DoSave()
 				this, &MDocument::SFTPChannelMessage);
 
 			mSFTPOffset = 0;
-			mSFTPSize = mText.GetSize();
-#warning("This is not converted yet!");
-			mText.GetText(0, mSFTPSize, mSFTPData);
+
+			mSFTPData = mText.GetText();
+			mSFTPSize = mSFTPData.length();
 		}
 		
 		gApp->AddToRecentMenu(mURL);
@@ -1175,7 +1176,7 @@ bool MDocument::DoSaveAs(
 
 void MDocument::ReadFile()
 {
-	auto_ptr<MFile> file(new MFile(mURL.GetPath()));
+	auto_ptr<fs::ifstream> file(new fs::ifstream(mURL.GetPath(), ios::binary));
 	
 	mText.ReadFromFile(*file);
 	
@@ -2873,7 +2874,7 @@ void MDocument::FindAll(
 	MMessageList&		outHits)
 {
 	MDocument doc;
-	MFile file(inPath);
+	fs::ifstream file(inPath, ios::binary);
 
 	doc.mURL = MUrl(inPath);
 	doc.mText.ReadFromFile(file);

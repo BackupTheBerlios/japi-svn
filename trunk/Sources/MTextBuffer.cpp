@@ -39,6 +39,7 @@
 
 #include <list>
 #include <set>
+#include <sstream>
 #include <unistd.h>
 
 // for some weird reason the BOOST_ASSERT's wreak havoc here...
@@ -49,12 +50,9 @@
 #include <pcre.h>
 
 #include "MTextBuffer.h"
-//#include "MUnicode.h"
 #include "MSelection.h"
 #include "MError.h"
-#include "MFile.h"
 #include "MPreferences.h"
-//#include "MMessageWindow.h"
 
 using namespace std;
 
@@ -586,7 +584,7 @@ MTextBuffer::~MTextBuffer()
 }
 
 void MTextBuffer::ReadFromFile(
-	MFile&		inFile)
+	istream&		inFile)
 {
 	// first reset the data
 	while (mUndoneActions.size())
@@ -608,18 +606,17 @@ void MTextBuffer::ReadFromFile(
 	mData = nil;
 	
 	// First read the data into a buffer
+	streambuf* b = inFile.rdbuf();
 	
-	if (not inFile.IsOpen())
-		inFile.Open(O_RDONLY);
-	
-	int64 len = inFile.GetSize();
+	int64 len = b->pubseekoff(0, ios::end);
+	b->pubseekpos(0);
+
 	if (len > numeric_limits<uint32>::max())
 		THROW(("File too large to open"));
+
 	auto_array<char> data(new char[len]);
-	
-	inFile.Read(data.get(), len);
-	inFile.Close();
-	
+	b->sgetn(data.get(), len);
+
 	// Now find out what this data contains.
 	
 	mEncoding = kEncodingUnknown;
@@ -627,14 +624,16 @@ void MTextBuffer::ReadFromFile(
 	
 	if (GuessEncodingAndCopyData(data.get(), len))
 	{
+		mData = data.release();
+		
+		mPhysicalLength = len;
+
 		if (mBOM)
 			len -= 3;
-		
-		mData = data.release();
 
 		mLogicalLength = len;
+
 		mGapOffset = 0;
-		mPhysicalLength = inFile.GetSize();
 	}
 	
 	GuessLineEndCharacter();
@@ -852,12 +851,16 @@ void MTextBuffer::GuessLineEndCharacter()
 	}
 }
 
-void MTextBuffer::WriteToFile(
-	MFile&		inFile)
+string MTextBuffer::GetText()
 {
-	if (not inFile.IsOpen())
-		inFile.Open(O_RDWR | O_TRUNC);
+	stringstream s;
+	WriteToFile(s);
+	return s.str();
+}
 
+void MTextBuffer::WriteToFile(
+	ostream&		inFile)
+{
 	MoveGapTo(mLogicalLength);
 
 	if (mBOM)			// must be a unicode encoding
@@ -867,21 +870,21 @@ void MTextBuffer::WriteToFile(
 			case kEncodingUTF8:
 			{
 				const char kBOM[] = { 0xEF, 0xBB, 0xBF };
-				inFile.Write(kBOM, 3);
+				inFile.write(kBOM, 3);
 				break;
 			}
 			
 			case kEncodingUTF16BE:
 			{
 				const char kBOM[] = { 0xFE, 0xFF };
-				inFile.Write(kBOM, 2);
+				inFile.write(kBOM, 2);
 				break;
 			}
 			
 			case kEncodingUTF16LE:
 			{
 				const char kBOM[] = { 0xFF, 0xFE };
-				inFile.Write(kBOM, 2);
+				inFile.write(kBOM, 2);
 				break;
 			}
 			
@@ -891,7 +894,7 @@ void MTextBuffer::WriteToFile(
 	}
 
 	if (mEncoding == kEncodingUTF8)
-		inFile.Write(mData, mLogicalLength);
+		inFile.write(mData, mLogicalLength);
 	else
 	{
 		wc_iterator txt(this, 0);
@@ -912,7 +915,7 @@ void MTextBuffer::WriteToFile(
 		}
 		
 		if (encoder->GetBufferSize())
-			inFile.Write(encoder->Peek(), encoder->GetBufferSize());
+			inFile.write(static_cast<const char*>(encoder->Peek()), encoder->GetBufferSize());
 	}
 }
 

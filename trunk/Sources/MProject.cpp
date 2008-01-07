@@ -1045,8 +1045,7 @@ bool MProject::SaveDocument()
 
 	try
 	{
-		MFile file(mProjectFile);
-		file.Open(O_RDWR | O_TRUNC | O_CREAT);
+		fs::ofstream file(mProjectFile, ios::binary);
 		
 		if (Write(&file))
 		{
@@ -2054,7 +2053,7 @@ void MProject::WriteOptions(
 //	MProject::Write
 
 bool MProject::Write(
-	MFile*			inFile)
+	ostream*			inFile)
 {
 	bool result = false;
 	xmlBufferPtr buf = nil;
@@ -2125,7 +2124,7 @@ bool MProject::Write(
 		
 		xmlFreeTextWriter(writer);
 		
-		inFile->Write(buf->content, buf->use);
+		inFile->write(reinterpret_cast<const char*>(buf->content), buf->use);
 		
 		mModified = false;
 		result = true;

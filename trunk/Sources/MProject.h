@@ -294,7 +294,7 @@ class MProject : public MWindow, public MSaverMixin
 												inOptions);
 
 	bool				Write(
-							MFile*				inFile);
+							std::ostream*		inFile);
 
 	void				CheckDataDir();
 

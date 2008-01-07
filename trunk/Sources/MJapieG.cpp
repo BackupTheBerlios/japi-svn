@@ -653,7 +653,7 @@ void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
 void MJapieApp::DoOpenTemplate(
 	const string&		inTemplate)
 {
-	MFile file(gTemplatesDir / inTemplate);
+	fs::ifstream file(gTemplatesDir / inTemplate, ios::binary);
 	MTextBuffer buffer;
 	buffer.ReadFromFile(file);
 
@@ -685,8 +685,14 @@ void MJapieApp::ShowWorksheet()
 	
 	if (not fs::exists(worksheet))
 	{
-		MFile file(worksheet);
-		file.Open(O_CREAT | O_RDWR);
+		fs::ofstream file(worksheet);
+		string default_text = _(
+			"This is a worksheet, you can type shell commands here\n"
+			"and execute them by pressing CNTRL-Return or Enter on\n"
+			"the numeric keypad.\n"
+			"This worksheet will be saved automatically when you close it.");
+		
+		file.write(default_text.c_str(), default_text.length());
 	}
 		
 	MDocument* doc = OpenOneDocument(MUrl(worksheet));

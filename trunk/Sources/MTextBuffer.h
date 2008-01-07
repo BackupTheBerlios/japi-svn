@@ -62,7 +62,6 @@ enum EOLNKind
 
 class MSelection;
 class Action;
-class MFile;
 class MMessageList;
 
 typedef std::stack<Action*>	ActionStack;
@@ -78,14 +77,16 @@ class MTextBuffer
 	virtual		~MTextBuffer();
 
 	void		ReadFromFile(
-					MFile&			inFile);
+					std::istream&	inFile);
 
 	void		WriteToFile(
-					MFile&			inFile);
+					std::ostream&	inFile);
 	
 	void		SetText(
 					const char*		inText,
 					uint32			inLength);
+
+	std::string	GetText();
 	
 	EOLNKind	GetEOLNKind() const									{ return mEOLNKind; }
 
