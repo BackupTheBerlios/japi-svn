@@ -886,7 +886,7 @@ MLanguageCpp::ParsePreProcessor(
 			while (isspace(*inText))
 				++inText;
 			
-			MNamedRange ns = {};
+			MNamedRange ns;
 			ns.selectFrom = ns.begin = inText.GetOffset();
 
 			while (*inText != 0 and *inText != '\n')
@@ -911,7 +911,7 @@ MLanguageCpp::ParseIdentifier(
 	MTextPtr start = inText;
 	bool destructor = false;
 
-	MNamedRange ns = {};
+	MNamedRange ns;
 	ns.selectFrom = ns.begin = inText.GetOffset() - 1;
 
 	if (*inText == '~')

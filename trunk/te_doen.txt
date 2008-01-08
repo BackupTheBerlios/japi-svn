@@ -3,16 +3,20 @@
 Moet af:
 
 - printen
+- horizontaal scrollen
+- utf-8 validatie voor het doorsturen naar pango
+- libglade vervangen door gtkbuilder
 
 - keyboard shortcuts voor alert dialogs
 
 - clean up code na leaks test
 
 - SSH/SFTP afronden
-	- authenticatie dialog splitsen of zo.
+	- bug vissen uit 'hangen' van connectie
 
 Leuk om te hebben:
 
+- spelling checker
 - Invoegen... menu item(s)
 
 - Afronden Find Dialog:

@@ -109,7 +109,14 @@ void MDialog::GetText(
 {
 	GtkWidget* wdgt = GetWidget(inID);
 	if (GTK_IS_COMBO_BOX(wdgt))
-		outText = gtk_combo_box_get_active_text(GTK_COMBO_BOX(wdgt));
+	{
+		char* text = gtk_combo_box_get_active_text(GTK_COMBO_BOX(wdgt));
+		if (text != nil)
+		{
+			outText = text;
+			g_free(text);
+		}
+	}
 	else if (GTK_IS_FONT_BUTTON(wdgt))
 		outText = gtk_font_button_get_font_name(GTK_FONT_BUTTON(wdgt));
 	else if (GTK_IS_ENTRY(wdgt))
@@ -139,6 +146,17 @@ assert(false);//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(wdgt), inText.c_st
 		gtk_progress_bar_set_ellipsize(GTK_PROGRESS_BAR(wdgt),
 			PANGO_ELLIPSIZE_MIDDLE);
 	}
+	else
+		THROW(("item is not an entry"));
+}
+
+void MDialog::SetPasswordField(
+	uint32				inID,
+	bool				isVisible)
+{
+	GtkWidget* wdgt = GetWidget(inID);
+	if (GTK_IS_ENTRY(wdgt))
+		g_object_set(G_OBJECT(wdgt), "visibility", isVisible, nil);
 	else
 		THROW(("item is not an entry"));
 }

@@ -809,6 +809,8 @@ void MDocument::HandleDeleteKey(MDirection inDirection)
 	uint32 line;
 	OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
 	SendSelectionChangedEvent();
+
+	UpdateDirtyLines();
 }
 
 // ---------------------------------------------------------------------------

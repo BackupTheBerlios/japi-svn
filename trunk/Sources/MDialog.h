@@ -78,6 +78,10 @@ class MDialog : public MWindow
 						uint32				inID,
 						const std::string&	inText);
 
+	void			SetPasswordField(
+						uint32				inID,
+						bool				isVisible);
+
 	int32			GetValue(
 						uint32				inID) const;
 

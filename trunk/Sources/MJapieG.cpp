@@ -38,6 +38,7 @@
 #include <signal.h>
 
 #include <boost/filesystem/fstream.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "MDocument.h"
 #include "MEditWindow.h"
@@ -660,18 +661,9 @@ void MJapieApp::DoOpenTemplate(
 	string text;
 	buffer.GetText(0, buffer.GetSize(), text);
 	
-	string::size_type offset = 0;
-	
-	while ((offset = text.find("$date$", offset)) != string::npos)
-		text.replace(offset, 6, GetDateTime());
-
-	offset = 0;
-	while ((offset = text.find("$name$", offset)) != string::npos)
-		text.replace(offset, 6, GetUserName(false));
-	
-	offset = 0;
-	while ((offset = text.find("$shortname$", offset)) != string::npos)
-		text.replace(offset, 11, GetUserName(true));
+	boost::algorithm::replace_all(text, "$date$", GetDateTime());
+	boost::algorithm::replace_all(text, "$name$", GetUserName(false));
+	boost::algorithm::replace_all(text, "$shortname$", GetUserName(true));
 	
 	MDocument* doc = new MDocument(nil);
 	doc->SetText(text.c_str(), text.length());
@@ -690,7 +682,7 @@ void MJapieApp::ShowWorksheet()
 			"This is a worksheet, you can type shell commands here\n"
 			"and execute them by pressing CNTRL-Return or Enter on\n"
 			"the numeric keypad.\n"
-			"This worksheet will be saved automatically when you close it.");
+			"This worksheet will be saved automatically when closed.\n");
 		
 		file.write(default_text.c_str(), default_text.length());
 	}

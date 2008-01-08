@@ -108,6 +108,7 @@ MTextView::MTextView(
 	, mLineHeight(10)
 	, mCaretVisible(false)
 	, mDrawForDragImage(false)
+	, mCaret(0)
 	, mLastClickTime(0)
 	, mLastScrollTime(0)
 	, mInTick(false)

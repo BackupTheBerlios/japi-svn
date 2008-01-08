@@ -71,6 +71,8 @@ struct MNamedRange
 	uint32						selectTo;
 	uint32						index;
 	std::vector<MNamedRange>	subrange;
+	
+								MNamedRange();
 };
 
 struct MIncludeFile

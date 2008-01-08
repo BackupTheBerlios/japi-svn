@@ -1400,9 +1400,10 @@ void MSshConnection::ProcessUserAuthKeyboardInteractive(
 				if (n == 0)
 					n = 1;
 				
+				MWindow* docWindow = MWindow::GetFirstWindow();	// I hope...
 				auto_ptr<MAuthDialog> dlog(new MAuthDialog(title, instruction, n, p, e));
 				AddRoute(dlog->eAuthInfo, eRecvAuthInfo);
-				dlog->Show(nil);
+				dlog->Show(docWindow);
 				dlog.release();
 			}
 			break;
@@ -1455,17 +1456,14 @@ void MSshConnection::TryPassword()
 	p[0] = "Password";
 	e[0] = false;
 
-//	MAuthDialog* dlog = new MAuthDialog("Logging in",
-//		string("Please enter password for acount ") + fUserName + " ip address " + fIPAddress,
-//		1, p, e);
-
+	MWindow* docWindow = MWindow::GetFirstWindow();	// I hope...
 	auto_ptr<MAuthDialog> dlog(new MAuthDialog("Logging in",
 		string("Please enter password for acount ") + fUserName + " ip address " + fIPAddress,
 		1, p, e));
 
 	AddRoute(dlog->eAuthInfo, eRecvPassword);
 
-	dlog->Show(nil);
+	dlog->Show(docWindow);
 	dlog.release();	
 }
 

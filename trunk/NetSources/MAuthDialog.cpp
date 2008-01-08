@@ -68,8 +68,7 @@ MAuthDialog::MAuthDialog(
 
 		SetText(lblID, inPrompts[i]);
 		
-//		if (inEcho[i] == false)
-//			SetPasswordField(edtID);
+		SetPasswordField(edtID, inEcho[i]);
 		
 		++lblID;
 		++edtID;
@@ -115,79 +114,3 @@ void MAuthDialog::Pulse(
 //	SetNodeVisible('caps',
 //		ModifierKeyDown(kAlphaLock) && (std::fmod(inTime, 1.0) <= 0.5));
 }
-
-//void MAuthDialog::SetTexts(std::string inTitle, std::string inInstruction,
-//							std::string inPrompts[], bool inEcho[])
-//{
-//}
-//
-//std::string MAuthDialog::GetField(int inFieldNr) const
-//{
-//	return kEmptyString;
-//}
-//
-//uint32 MAuthDialog::GetN() const
-//{
-//	return 0;
-//}
-
-//template<int N>
-//class MAuthDialog : public MAuthDialog
-//{
-//  public:
-//	enum { res_id = 1010 + N };
-//	
-//						MAuthDialog(MRect inFrame, MWindowFlags inFlags,
-//							std::string inTitle, MWindow* inOwner);
-//
-//	virtual void		SetTexts(std::string inTitle, std::string inInstruction,
-//							std::string inPrompts[], bool inEcho[]);
-//	virtual std::string	GetField(int inFieldNr) const;
-//	virtual uint32		GetN() const			{ return N; }
-//	
-//  protected:
-//	virtual void		InitSelf();
-//
-//	std::string			fFields[N];
-//};
-//
-//// implementation
-//
-//template<int N>
-//MAuthDialog<N>::MAuthDialog(MRect inFrame, MWindowFlags inFlags,
-//		std::string inTitle, MWindow* inOwner)
-//	: MAuthDialog(inFrame, inFlags, inTitle, inOwner)
-//{
-//}
-//
-//template<int N>
-//void MAuthDialog<N>::InitSelf()
-//{
-//	MAuthDialog::InitSelf();
-//	SwitchTarget('fld1');
-//}
-//
-//template<int N>
-//void MAuthDialog<N>::SetTexts(std::string inTitle, std::string inInstruction,
-//	std::string inPrompts[], bool inEcho[])
-//{
-//	MNodeID promptID = 'pro1';
-//	MNodeID fieldID = 'fld1';
-//	
-//	SetTitle(inTitle);
-//	SetNodeText('inst', inInstruction);
-//	
-//	for (int i = 0; i < N; ++i, ++promptID, ++fieldID)
-//	{
-//		SetNodeText(promptID, inPrompts[i]);
-//		if (inEcho[i])
-//			FindNode<MEditTextNode>(fieldID)->SetPasswordChar(0);
-//	}
-//}
-//
-//template<int N>
-//std::string MAuthDialog<N>::GetField(int inFieldNr) const
-//{
-//	MNodeID promptID = 'fld1' + inFieldNr;
-//	return GetNodeText(promptID);
-//}

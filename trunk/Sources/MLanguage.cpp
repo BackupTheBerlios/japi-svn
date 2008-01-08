@@ -431,6 +431,17 @@ void MRecognizer::CollectKeyWordsStartingFromState(
 
 // --------------------------------------------------------------------
 
+MNamedRange::MNamedRange()
+	: begin(0)
+	, end(0)
+	, selectFrom(0)
+	, selectTo(0)
+	, index(0)
+{
+}
+
+// --------------------------------------------------------------------
+
 MLanguage::MLanguage()
 	: mRecognizer(nil)
 	, mStyles(nil)

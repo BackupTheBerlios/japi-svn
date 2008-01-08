@@ -50,14 +50,199 @@ using namespace std;
 
 enum State
 {
-	START, IDENT, OTHER, COMMENT, LCOMMENT, STRING1, STRING2,
-	LEAVE, REGEX1, REGEX2, SCOPE,
+	START, IDENT, LCOMMENT, STRING,
+	REGEX1, REGEX2, SCOPE,
 	VAR1, VAR2, VAR3,
 	QUOTE1, QUOTE2, QUOTE3, QUOTE4, QUOTE5,
 	SUB1, SUB2, POD1, POD2,
-	HERE_DOC_0, HERE_DOC_END, HERE_DOC_EOF,
+	HERE_DOC_0, HERE_DOC_1,
+	HERE_DOC_END_0, HERE_DOC_END_1,
 	STATE_COUNT
 };
+
+enum MStateSelector {
+	mSTART,
+	mIDENT,
+	mLCOMMENT,
+	mSTRING,
+	mREGEX,
+	mSCOPE,
+	mVAR,
+	mQUOTE,
+	mSUB,
+	mPOD,
+	mHERE_DOC
+};
+
+//union MState
+//{
+//	uint16				value;
+//	struct {
+//		MStateSelector	selector	: 4;
+//		int 			matchchar	: 7;
+//		int 			count		: 5;
+//	};
+//};
+//
+void ParseMState(
+	uint16&		ioState,
+	bool&		outRegex,
+	uint32&		outCount,
+	char&		outMatchChar)
+{
+	uint32 selector = (ioState >> 12) & 0x000F;
+	uint32 matchchar = (ioState >> 5) & 0x007F;
+	uint32 count = ioState & 0x001F;
+	
+	outRegex = false;
+	outCount = 0;
+	outMatchChar = 0;
+	
+	switch (selector)
+	{
+		case mSTART:
+			ioState = START;
+			break;
+			
+		case mIDENT:
+			ioState = IDENT;
+			break;
+			
+		case mLCOMMENT:
+			ioState = LCOMMENT;
+			break;
+			
+		case mSTRING:
+			ioState = STRING;
+			outMatchChar = matchchar;
+			break;
+			
+		case mREGEX:
+			ioState = REGEX1 + count;
+			outMatchChar = matchchar;
+			break;
+			
+		case mSCOPE:
+			ioState = SCOPE;
+			break;
+			
+		case mVAR:
+			ioState = VAR1 + count;
+			break;
+			
+		case mQUOTE:
+			ioState = QUOTE1 + (count & 0x03);
+			outRegex = (count & 0x04) != 0;
+			outMatchChar = matchchar;
+			break;
+			
+		case mSUB:
+			ioState = SUB1 + count;
+			break;
+			
+		case mPOD:
+			ioState = POD1 + count;
+			break;
+			
+		case mHERE_DOC:
+			ioState = HERE_DOC_END_0;
+			outMatchChar = matchchar;
+			outCount = count;
+			break;
+	}
+}
+
+void StoreMState(
+	uint16&		ioState,
+	bool		inRegex,
+	uint32		inCount,
+	char		inMatchChar)
+{
+	uint32 selector = 0, matchchar = 0, count = 0;
+	
+	switch (ioState)
+	{
+		case START:
+			selector = mSTART;
+			break;
+		
+		case IDENT:
+			selector = mIDENT;
+			break;
+			
+		case LCOMMENT:
+			selector = mLCOMMENT;
+			break;
+			
+		case STRING:
+			selector = mSTRING;
+			matchchar = inMatchChar;
+			break;
+			
+		case REGEX1:
+		case REGEX2:
+			selector = mREGEX;
+			count = ioState - REGEX1;
+			matchchar = inMatchChar & 0x007F;
+			break;
+			
+		case SCOPE:
+			selector = mSCOPE;
+			break;
+			
+		case VAR1:
+		case VAR2:
+		case VAR3:
+			selector = mVAR;
+			count = ioState - VAR1;
+			break;
+			
+		case QUOTE1:
+		case QUOTE2:
+		case QUOTE3:
+		case QUOTE4:
+		case QUOTE5:
+			selector = mQUOTE;
+			count = ioState - QUOTE1;
+			if (inRegex)
+				count |= 0x04;
+			break;
+			
+		case SUB1:
+		case SUB2:
+			selector = mSUB;
+			count = ioState - SUB1;
+			break;
+			
+		case POD1:
+		case POD2:
+			selector = mPOD;
+			count = ioState - POD1;
+			break;
+			
+		case HERE_DOC_END_0:
+		case HERE_DOC_END_1:
+			selector = mHERE_DOC;
+			matchchar = inMatchChar & 0x007F;
+			count = inCount;
+			break;
+	}
+	
+	ioState =
+		((selector  & 0x000F) << 12) |
+		((matchchar & 0x007F) <<  5) |
+		((count     & 0x001F) <<  0);
+}
+
+void MiniCRC(
+	char&	ioCRC,
+	char	inChar)
+{
+	ioCRC <<= 1;
+	if (ioCRC & 0x0080)
+		ioCRC = (ioCRC & 0x007F) & 0x0021;
+	ioCRC ^= inChar;
+}
 
 const char
 	kCommentPrefix[] = "#";
@@ -99,7 +284,7 @@ MLanguagePerl::Init()
 		"localtime", "log", "lstat", "m", "mkdir", "msgctl", "msgget",
 		"msgsnd", "msgrcv", "next", "oct", "open", "opendir",
 		"ord", "pack", "pipe", "pop", "print", "printf", "push", "q",
-		"qq", "qx", "rand", "read", "readdir", "readlink", "recv",
+		"qq", "qr", "qx", "rand", "read", "readdir", "readlink", "recv",
 		"redo", "rename", "require", "reset", "return", "reverse",
 		"rewinddir", "rindex", "rmdir", "s", "scalar", "seek",
 		"seekdir", "select", "semctl", "semget", "semop", "send",
@@ -137,7 +322,7 @@ MLanguagePerl::StyleLine(
 	uint32 i = 0, s = 0, kws = 0, esc = 0;
 	bool leave = false, start_regex = true;
 	
-	if (ioState == COMMENT or ioState == LCOMMENT)
+	if (ioState == LCOMMENT)
 		SetStyle(0, kLCommentColor);
 	else
 		SetStyle(0, kLTextColor);
@@ -147,11 +332,11 @@ MLanguagePerl::StyleLine(
 
 	// save the match char for multiline regex
 	
-	char mc = (ioState >> 9) & 0x7f;
-	int nest = (ioState >> 5) & 0x03;
-	bool interpolate = (ioState & 0x0100) != 0;
-	bool regex = (ioState & 0x0080) != 0;
-	ioState &= 0x001F;
+	char mc, crc = 0;
+	bool regex;
+	uint32 count;
+	
+	ParseMState(ioState, regex, count, mc);
 	
 	uint32 maxOffset = inOffset + inLength;
 	
@@ -180,9 +365,15 @@ MLanguagePerl::StyleLine(
 				else if (c == '!' and text[i] == '~')
 					start_regex = true;
 				else if (c == '"')
-					ioState = STRING1;
+				{
+					ioState = STRING;
+					mc = '"';
+				}
 				else if (c == '\'')
-					ioState = STRING2;
+				{
+					ioState = STRING;
+					mc = '\'';
+				}
 				else if (c == '&')
 					ioState = SCOPE;
 				else if (c == '$')
@@ -248,21 +439,18 @@ MLanguagePerl::StyleLine(
 							case 'm':
 								ioState = QUOTE1;
 								regex = true;
-								interpolate = true;
 								s = --i;
 								break;
 
 							case 's':
 								ioState = QUOTE3;
 								regex = true;
-								interpolate = true;
 								s = --i;
 								break;
 
 							case 'q':
 								ioState = QUOTE1;
 								regex = false;
-								interpolate = true;
 								s = --i;
 								break;
 
@@ -282,28 +470,24 @@ MLanguagePerl::StyleLine(
 						{
 							ioState = QUOTE1;
 							regex = false;
-							interpolate = true;
 							s = --i;
 						}
 						else if (Equal(text + s, end, "qw"))
 						{
 							ioState = QUOTE1;
 							regex = false;
-							interpolate = false;
 							s = --i;
 						}
 						else if (Equal(text + s, end, "qr"))
 						{
 							ioState = QUOTE1;
 							regex = true;
-							interpolate = true;
 							s = --i;
 						}
 						else if (Equal(text + s, end, "tr"))
 						{
 							ioState = QUOTE3;
 							regex = true;
-							interpolate = false;
 							s = --i;
 						}
 						else
@@ -364,28 +548,20 @@ MLanguagePerl::StyleLine(
 					leave = true;
 				else if (not IsSpace(c))
 				{
-					if (c == '#' and s < i)
+					switch (c)
 					{
-						SetStyle(s, kLCommentColor);
-						leave = true;
+						case '(':	mc = ')'; break;
+						case '{':	mc = '}'; break;
+						case '[':	mc = ']'; break;
+						case '<':	mc = '>'; break;
+						case '\'':	mc = '\''; break;
+						default:	mc = c; break;
 					}
-					else
-					{
-						switch (c)
-						{
-							case '(':	mc = ')'; break;
-							case '{':	mc = '}'; break;
-							case '[':	mc = ']'; break;
-							case '<':	mc = '>'; break;
-							case '\'':	mc = '\''; interpolate = false; break;
-							default:	mc = c; break;
-						}
 
-						nest = 0;
-						s = i - 1;
-						
-						ioState += 1;
-					}
+					count = 0;
+					s = i - 1;
+					
+					ioState += 1;
 				}
 				break;
 			
@@ -404,7 +580,7 @@ MLanguagePerl::StyleLine(
 					esc = false;
 				else if (c == mc)
 				{
-					if (nest-- == 0)
+					if (count-- == 0)
 					{
 						if (regex)
 							SetStyle(s, kLCharConstColor);
@@ -420,18 +596,18 @@ MLanguagePerl::StyleLine(
 						else
 						{
 							ioState = QUOTE2;
-							nest = 0;
+							count = 0;
 						}
 					}
 				}
-				else if (c == '{' and mc == '}' and nest < 3)
-					++nest;
-				else if (c == '<' and mc == '>' and nest < 3)
-					++nest;
-				else if (c == '[' and mc == ']' and nest < 3)
-					++nest;
-				else if (c == '(' and mc == ')' and nest < 3)
-					++nest;
+				else if (c == '{' and mc == '}' and count < 3)
+					++count;
+				else if (c == '<' and mc == '>' and count < 3)
+					++count;
+				else if (c == '[' and mc == ']' and count < 3)
+					++count;
+				else if (c == '(' and mc == ')' and count < 3)
+					++count;
 				else 
 					esc = (c == '\\');
 				break;
@@ -442,22 +618,22 @@ MLanguagePerl::StyleLine(
 				else if (c == '{' and mc == '}')
 				{
 					ioState = QUOTE2;
-					nest = 0;
+					count = 0;
 				}
 				else if (c == '<' and mc == '>')
 				{
 					ioState = QUOTE2;
-					nest = 0;
+					count = 0;
 				}
 				else if (c == '[' and mc == ']')
 				{
 					ioState = QUOTE2;
-					nest = 0;
+					count = 0;
 				}
 				else if (c == '(' and mc == ')')
 				{
 					ioState = QUOTE2;
-					nest = 0;
+					count = 0;
 				}
 				else if (c == '\n')
 					leave = true;
@@ -471,27 +647,8 @@ MLanguagePerl::StyleLine(
 				}
 				break;
 			
-			case STRING1:
-				if (c == '"' and not esc)
-				{
-					SetStyle(s, kLStringColor);
-					s = i;
-					ioState = START;
-				}
-				else if (c == '\n' or c == 0)
-				{
-					SetStyle(s, kLStringColor);
-					s = inLength;
-					leave = true;
-				}
-				else if (esc)
-					esc = false;
-				else
-					esc = (c == '\\');
-				break;
-			
-			case STRING2:
-				if (c == '\'' and not esc)
+			case STRING:
+				if (c == mc and not esc)
 				{
 					SetStyle(s, kLStringColor);
 					s = i;
@@ -641,22 +798,6 @@ MLanguagePerl::StyleLine(
 				}
 				break;
 			
-//			case VAR1a:
-//				if (isalnum(c))
-//					ioState = VAR2;
-//				else if (c == '{')
-//				{
-//					mc = 1;
-//					ioState = VAR3;
-//				}
-//				else
-//				{
-//					SetStyle(s, kLTextColor);
-//					s = --i;
-//					ioState = START;
-//				}
-//				break;
-			
 			case VAR2:
 				if (not isalnum(c) and c != '_')
 				{
@@ -725,39 +866,55 @@ MLanguagePerl::StyleLine(
 			}
 			
 			case HERE_DOC_0:
-				SetStyle(s, kLTextColor);
-
-				if (Equal(text + i - 1, end, "END") and
-					not isalnum(text[i + 2]))
+				if (c == 0 or c == '\n')
 				{
-					ioState = HERE_DOC_END;
+					ioState = START;
 					leave = true;
+					SetStyle(s, kLTextColor);
 				}
-				else if (Equal(text + i - 1, end, "EOF") and
-					not isalnum(text[i + 2]))
+				else if (isalnum(c) or c == '_')
 				{
-					ioState = HERE_DOC_EOF;
-					leave = true;
+					SetStyle(s, kLTextColor);
+					mc = c;
+					count = 1;
+					ioState = HERE_DOC_1;
+				}
+				break;
+
+			case HERE_DOC_1:
+				if (isalnum(c) or c == '_')
+				{
+					MiniCRC(mc, c);
+					++count;
 				}
 				else
 				{
-					ioState = START;
-					s = i;
+					ioState = HERE_DOC_END_0;
+					leave = true;
 				}
 				break;
 
-			case HERE_DOC_END:
+			case HERE_DOC_END_0:
 				SetStyle(s, kLTextColor);
-				if (Equal(text, end, "END") and inLength <= 4)
-					ioState = START;
-				leave = true;
+				if (isalnum(c) or c == '_')
+				{
+					crc = c;
+					ioState = HERE_DOC_END_1;
+				}
+				else
+					leave = true;
 				break;
 			
-			case HERE_DOC_EOF:
-				SetStyle(s, kLTextColor);
-				if (Equal(text, end, "EOF") and inLength <= 4)
+			case HERE_DOC_END_1:
+				if (isalnum(c) or c == '_')
+					MiniCRC(crc, c);
+				else if ((c == 0 or c == '\n') and (crc == mc and i - s - 1 == count))
 					ioState = START;
-				leave = true;
+				else
+				{
+					ioState = HERE_DOC_END_0;
+					leave = true;
+				}
 				break;
 			
 			default:	// error condition, gracefully leave the loop
@@ -766,11 +923,7 @@ MLanguagePerl::StyleLine(
 		}
 	}
 	
-	ioState = ioState & 0x001FUL;
-	ioState |= (nest & 0x03UL) << 5;
-	ioState |= (mc & 0x7FUL) << 9;
-	if (regex) ioState |= 0x0080;
-	if (interpolate) ioState |= 0x0100;
+	StoreMState(ioState, regex, count, mc);
 }
 
 static
