@@ -1,0 +1,517 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <maarten@hekkelman.com>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Japie 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-12-11 19:54+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Maarten L. Hekkelman <maarten@hekkelman.com>\n"
+"Language-Team: Dutch <maarten@hekkelman.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: auth-dialog.xml.h:1 find-and-open-dialog.xml.h:1 go-to-line-dialog.xml.h:1
+#: mark-matching-dialog.xml.h:1
+msgid "Cancel"
+msgstr "Annuleer"
+
+#: auth-dialog.xml.h:2 find-and-open-dialog.xml.h:4 go-to-line-dialog.xml.h:4
+#: mark-matching-dialog.xml.h:4
+msgid "OK"
+msgstr "OK"
+
+#: auth-dialog.xml.h:3
+msgid "instruction"
+msgstr "instructie"
+
+#: auth-dialog.xml.h:4 sftp-dialog.xml.h:3
+msgid "label"
+msgstr "label"
+
+#: find-and-open-dialog.xml.h:2
+msgid "File:"
+msgstr "Bestand:"
+
+#: find-and-open-dialog.xml.h:3
+msgid "Find and Open File"
+msgstr "Zoek en open bestand"
+
+#: find-dialog.xml.h:2
+msgid "Batch"
+msgstr "Verzamel"
+
+#: find-dialog.xml.h:3
+msgid "Entire Word"
+msgstr "Geheel woord"
+
+#: find-dialog.xml.h:4
+msgid "Filter Filename"
+msgstr "Filter bestandsnamen"
+
+#: find-dialog.xml.h:5
+msgid "Find"
+msgstr "Zoek"
+
+#: find-dialog.xml.h:6
+msgid "Find in Multiple Files"
+msgstr "Zoek in meerdere bestanden"
+
+#: find-dialog.xml.h:7
+msgid ""
+"Find in Folders\n"
+"Find in Open Windows\n"
+"Find in Include Files"
+msgstr ""
+"Zoek in mappen\n"
+"Zoek in open vensters\n"
+"Zoek in include bestanden"
+
+#: find-dialog.xml.h:10 mark-matching-dialog.xml.h:3
+msgid "Ignore Case"
+msgstr "Negeer hfd/klein"
+
+#: find-dialog.xml.h:11
+msgid "In Selection"
+msgstr "In selectie"
+
+#: find-dialog.xml.h:12
+msgid "Method"
+msgstr "Methode"
+
+#: find-dialog.xml.h:13
+msgid "Recursive"
+msgstr "Recursief"
+
+#: find-dialog.xml.h:14 mark-matching-dialog.xml.h:5
+msgid "Regular Expression"
+msgstr "Reguliere expressie"
+
+#: find-dialog.xml.h:15
+msgid "Replace"
+msgstr "Vervang"
+
+#: find-dialog.xml.h:16
+msgid "Replace & Find"
+msgstr "Vervang & zoek"
+
+#: find-dialog.xml.h:17
+msgid "Replace All"
+msgstr "Vervang alles"
+
+#: find-dialog.xml.h:18
+msgid "Starting Folder"
+msgstr "Start map"
+
+#: find-dialog.xml.h:19
+msgid "Text Files Only"
+msgstr "Tekst bestanden"
+
+#: find-dialog.xml.h:20
+msgid "Wrap"
+msgstr "Omlopen"
+
+#: go-to-line-dialog.xml.h:2
+msgid "Go to Line"
+msgstr "Ga naar regel"
+
+#: go-to-line-dialog.xml.h:3
+msgid "Line Number:"
+msgstr "Regel nummer:"
+
+#: mark-matching-dialog.xml.h:2
+msgid "Find:"
+msgstr "Zoek:"
+
+#: mark-matching-dialog.xml.h:6
+msgid "Find and Mark Lines"
+msgstr "Zoek en markeer regels"
+
+#: sftp-dialog.xml.h:2
+msgid "SFTP Transfer Progress"
+msgstr "SFTP overdracht voortgang"
+
+# menus
+msgid "File"
+msgstr "Bestand"
+
+msgid "New"
+msgstr "Nieuw"
+
+msgid "Open…"
+msgstr "Open…"
+
+msgid "Open Recent"
+msgstr "Open recente"
+
+msgid "Find and Open…"
+msgstr "Zoek en open…"
+
+msgid "Open Source/Header"
+msgstr "Open Source/Header"
+
+msgid "Close"
+msgstr "Sluit"
+
+msgid "Save"
+msgstr "Bewaar"
+
+msgid "Save As…"
+msgstr "Bewaar als…"
+
+msgid "Revert"
+msgstr "Vorige versie"
+
+msgid "Quit"
+msgstr "Afsluiten"
+
+msgid "Edit"
+msgstr "Bewerken"
+
+msgid "Undo"
+msgstr "Herstel"
+
+msgid "Redo"
+msgstr "Herhaal"
+
+msgid "Cut"
+msgstr "Knip"
+
+msgid "Cut and Append"
+msgstr "Knip en voeg toe"
+
+msgid "Copy"
+msgstr "Kopieer"
+
+msgid "Copy and Append"
+msgstr "Kopieer en voeg toe"
+
+msgid "Paste"
+msgstr "Plak"
+
+msgid "Paste Next"
+msgstr "Plak volgende"
+
+msgid "Clear"
+msgstr "Wis"
+
+msgid "Select All"
+msgstr "Alles selecteren"
+
+msgid "Preferences"
+msgstr "Voorkeuren"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Balance"
+msgstr "Balanceer"
+
+msgid "Wrap Text"
+msgstr "Omlopen"
+
+msgid "Shift Left"
+msgstr "Schuif naar links"
+
+msgid "Shift Right"
+msgstr "Schuif naar rechts"
+
+msgid "Comment"
+msgstr "Maak commentaar"
+
+msgid "Uncomment"
+msgstr "Verwijder commentaar"
+
+msgid "Entab"
+msgstr "Spaties naar tabs"
+
+msgid "Detab"
+msgstr "Tabs naar spaties"
+
+msgid "Tab Width"
+msgstr "Tabbreedte"
+
+msgid "Syntax colour"
+msgstr "Syntax kleuring"
+
+msgid "None"
+msgstr "Geen"
+
+msgid "Fast Find"
+msgstr "Snel zoeken"
+
+msgid "Fast Find Backward"
+msgstr "Snel zoeken achteruit"
+
+msgid "Find Next"
+msgstr "Zoek volgende"
+
+msgid "Find Previous"
+msgstr "Zoek vorige"
+
+msgid "Find in Next File"
+msgstr "Zoek in volgend bestand"
+
+msgid "Enter Search String"
+msgstr "Gebruik als zoek tekst"
+
+msgid "Enter Replace String"
+msgstr "Gebruik als vervang tekst"
+
+msgid "Replace and Find Next"
+msgstr "Vervang en zoek volgende"
+
+msgid "Replace and Find Previous"
+msgstr "Vervang en zoek vorige"
+
+msgid "Complete"
+msgstr "Completeer"
+
+msgid "Complete Looking Forward"
+msgstr "Completeer vooruit zoekend"
+
+msgid "Mark"
+msgstr "Markeer"
+
+msgid "Next Mark"
+msgstr "Volgende markering"
+
+msgid "Previous Mark"
+msgstr "Vorige markering"
+
+msgid "Clear All Marks"
+msgstr "Wis alle markeringen"
+
+msgid "Mark Line"
+msgstr "Markeer regel"
+
+msgid "Find and Mark…"
+msgstr "Zoek en markeer…"
+
+msgid "Copy Marked Lines"
+msgstr "Kopieer gemarkeerde regels"
+
+msgid "Cut Marked Lines"
+msgstr "Knip gemarkeerde regels"
+
+msgid "Clear Marked Lines"
+msgstr "Wis gemarkeerde regels"
+
+msgid "Project"
+msgstr "Project"
+
+msgid "Add to Project"
+msgstr "Voeg toe aan project"
+
+msgid "Preprocess"
+msgstr "Preprocess"
+
+msgid "Check Syntax"
+msgstr "Controleer syntax"
+
+msgid "Compile"
+msgstr "Compileer"
+
+msgid "Dissassemble"
+msgstr "Dissassemble"
+
+msgid "Window"
+msgstr "Venster"
+
+msgid "Worksheet"
+msgstr "Werkblad"
+
+msgid "About…"
+msgstr "Info…"
+
+
+
+# alerts
+msgid "The host key for server ^0 (signature: ^1) is not known. Click Add Key if you trust this host and want to cache the key, click Once to connect without storing the key."
+msgstr "De sleutel voor server ^0 (handtekening: ^1) is niet bekend. Druk op Toevoegen als u deze server vertrouwt, druk op Eenmalig om te verbinden zonder de sleutel op te slaan."
+
+msgid "Add"
+msgstr "Voeg toe"
+
+msgid "Once"
+msgstr "Eenmalig"
+
+msgid "The host key for server ^0 (signature: ^1) has changed!!! If you are ABSOLUTELY sure this is correct you can replace the key otherwise click Cancel."
+msgstr "De sleutel voor server ^0 (handtekening: ^1) is gewijzigd!!! Als u ABSOLUUT zeker bent dat dit juist is kunt u de sleutel vervangen."
+
+msgid "Replace Key"
+msgstr "Vervang sleutel"
+
+msgid "Add File"
+msgstr "Voeg bestand toe"
+
+msgid "New Group"
+msgstr "Nieuwe groep"
+
+msgid "Check File Dates"
+msgstr "Check bestanden"
+
+msgid "Update"
+msgstr "Breng up-to-date"
+
+msgid "Make"
+msgstr "Maken"
+
+msgid "Make Clean"
+msgstr "Schoon maken"
+
+msgid "Run"
+msgstr "Uitvoeren"
+
+msgid "Untitled"
+msgstr "Naamloos"
+
+msgid "Do you want to save the changes made to document ^0?"
+msgstr "Wilt u de wijzigingen aan ^0 bewaren?"
+
+msgid "Don't save"
+msgstr "Bewaar niet"
+
+msgid "Save File"
+msgstr "Bewaar document"
+
+msgid "Find Differences…"
+msgstr "Vergelijk documenten…"
+
+msgid "Find Differences"
+msgstr "Vergelijk documenten"
+
+msgid "File 1"
+msgstr "Bestand 1"
+
+msgid "File 2"
+msgstr "Bestand 2"
+
+msgid "Extra lines in file ^0: ^1-^2"
+msgstr "Extra regels in bestand ^0: ^1-^2"
+
+msgid "Extra line in file ^0: ^1"
+msgstr "Extra regel in bestand ^0: ^1"
+
+msgid "Nonmatching lines. File 1: ^0-^1, File 2: ^2-^3"
+msgstr "Verschillende regels. Bestand 1: ^0-^1, bestand 2: ^2-^3"
+
+msgid "Nonmatching lines. File 1: ^0, File 2: ^1-^2"
+msgstr "Verschillende regels. Bestand 1: ^0, bestand 2: ^1-^2"
+
+msgid "Nonmatching lines. File 1: ^0-^1, File 2: ^2"
+msgstr "Verschillende regels. Bestand 1: ^0-^1, bestand 2: ^2"
+
+msgid "Nonmatching lines. File 1: ^0, File 2: ^1"
+msgstr "Verschillende regels. Bestand 1: ^0, bestand 2: ^1"
+
+msgid "Difference"
+msgstr "Verschillen"
+
+msgid "Line"
+msgstr "Regel"
+
+msgid "Message"
+msgstr "Tekst"
+
+msgid "Output from stderr"
+msgstr "Uitvoer van stderr"
+
+msgid "Found ^0 hits for ^1"
+msgstr "^0 resultaten voor ^1 gevonden"
+
+msgid "Build messages for ^0"
+msgstr "Meldingen voor maken van ^0"
+
+msgid "Do you want to make clean the current target or all targets?"
+msgstr "Wilt u alle doelen schoonmaken of alleen het huidige doel?"
+
+msgid "Current Target"
+msgstr "Huidig doel"
+
+msgid "All Targets"
+msgstr "Alle doelen"
+
+msgid "A simple development environment"
+msgstr "Een simpele ontwikkelomgeving"
+
+msgid "Connected"
+msgstr "Verbonden"
+
+msgid "File size known"
+msgstr "Bestandsgrootte bekend"
+
+msgid "Receiving data"
+msgstr "Gegevens worden ontvangen"
+
+msgid "Data received"
+msgstr "Alle gegevens ontvangen"
+
+msgid "done"
+msgstr "klaar"
+
+msgid "Timeout"
+msgstr "Server reageert niet"
+
+msgid "Sending data"
+msgstr "Gegevens worden verzonden"
+
+msgid "Closing file"
+msgstr "Bestand wordt gesloten"
+
+msgid "Select Folder"
+msgstr "Kies map"
+
+msgid "Select File"
+msgstr "Kies bestand"
+
+msgid "Looking up address"
+msgstr "Adres wordt opgezocht"
+
+msgid "Connection closed"
+msgstr "Verbinding verbroken"
+
+msgid "Exchanging keys"
+msgstr "Sleutels uitwisselen"
+
+msgid "Starting authentication"
+msgstr "Authenticatie starten"
+
+msgid "Public key authentication"
+msgstr "Authenticatie met publieke sleutel"
+
+msgid "Password authentication"
+msgstr "Authenticatie met wachtwoord"
+
+msgid "Authenticated"
+msgstr "Authenticatie voltooid"
+
+msgid "Are you sure you want to discard the changes made to document ^0?"
+msgstr "Weet u zeker dat u de wijzigingen aan document ^0 ongedaan wilt maken?"
+
+msgid "Discard"
+msgstr "Maak ongedaan"
+
+msgid "Replace all on multiple files is a potentially dangerous operation. You can choose to save changes to disk immediately or to keep the windows open."
+msgstr "Alles vervangen over meerdere bestanden is een potentieel gevaarlijke actie. U kunt kiezen om de wijzigingen direct naar schijf te schrijven of om de documenten na wijziging op te houden."
+
+msgid "Save to Disk"
+msgstr "Bewaar"
+
+msgid "Keep Window Open"
+msgstr "Hou venster open"
+
+msgid " [Read Only]"
+msgstr " [Alleen lezen]"
+
+msgid "This file is marked Read Only, you will not be able to save the changes you make."
+msgstr "Dit bestand is gemarkeerd als alleen lezen, wijzigingen kunnen niet worden opgeslagen."
+
+msgid "Failed to open file %s for writing"
+msgstr "Kan niet schrijven naar bestand '%s'"
+
