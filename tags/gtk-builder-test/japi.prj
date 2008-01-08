@@ -105,7 +105,6 @@
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
-			<file>libmagic.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>

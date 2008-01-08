@@ -52,7 +52,7 @@ MWindow::MWindow()
 	, mOnDelete(this, &MWindow::OnDelete)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
+	, mGtkBuilder(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
@@ -70,7 +70,7 @@ MWindow::MWindow(
 	, mOnDelete(this, &MWindow::OnDelete)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
+	, mGtkBuilder(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
@@ -88,7 +88,7 @@ MWindow::MWindow(
 	, mOnDelete(this, &MWindow::OnDelete)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
+	, mGtkBuilder(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
 {
 	const char* xml;
@@ -97,13 +97,23 @@ MWindow::MWindow(
 	if (not LoadResource(inWindowResourceName, xml, size))
 		THROW(("Could not load dialog resource %s", inWindowResourceName));
 	
-	mGladeXML = glade_xml_new_from_buffer(xml, size, nil, "japi");
-	if (mGladeXML == nil)
-		THROW(("Failed to create glade from resource"));
+	mGtkBuilder = gtk_builder_new();
+	THROW_IF_NIL(mGtkBuilder);
 	
-	GtkWidget* w = glade_xml_get_widget(mGladeXML, inRootWidgetName);
+	gtk_builder_set_translation_domain(mGtkBuilder, "japi");
+
+	GError* err;	
+	if (not gtk_builder_add_from_string(mGtkBuilder, xml, size, &err))
+	{
+		string error_message = err->message;
+		g_error_free(err);
+		
+		THROW(("Failed to build window from resource: %s", error_message.c_str()));
+	}
+	
+	GtkWidget* w = GTK_WIDGET(gtk_builder_get_object(mGtkBuilder, inRootWidgetName));
 	if (w == nil)
-		THROW(("Failed to extract root widget from glade (%s)", inRootWidgetName));
+		THROW(("Failed to extract root widget from gtk-builder data (%s)", inRootWidgetName));
 	
 	SetWidget(w, false, false);
 
@@ -118,8 +128,8 @@ MWindow::MWindow(
 
 MWindow::~MWindow()
 {
-	if (mGladeXML != nil)
-		g_object_unref(mGladeXML);
+	if (mGtkBuilder != nil)
+		g_object_unref(mGtkBuilder);
 
 #if DEBUG
 	MWindow* w = sFirst;
@@ -387,10 +397,10 @@ GtkWidget* MWindow::GetWidget(
 	uint32			inID) const
 {
 	char name[5];
-	GtkWidget* wdgt = glade_xml_get_widget(GetGladeXML(), IDToName(inID, name));
-	if (wdgt == nil)
+	GObject* wdgt = gtk_builder_get_object(GetGtkBuilder(), IDToName(inID, name));
+	if (wdgt == nil or not GTK_IS_WIDGET(wdgt))
 		THROW(("Widget '%s' does not exist", name));
-	return wdgt;
+	return GTK_WIDGET(wdgt);
 }
 
 void MWindow::Beep()

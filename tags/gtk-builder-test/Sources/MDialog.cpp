@@ -58,11 +58,14 @@ MDialog::MDialog(
 	mNext = sFirst;
 	sFirst = this;
 
-	glade_xml_signal_connect_data(GetGladeXML(), "on_changed", 
-		G_CALLBACK(&MDialog::ChangedCallBack), this);
+	gtk_builder_connect_signals_full(GetGtkBuilder(),
+		&MDialog::GtkBuilderConnectFunc, this);
 
-	glade_xml_signal_connect_data(GetGladeXML(), "on_std_btn_click", 
-		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
+//	glade_xml_signal_connect_data(GetGladeXML(), "on_changed", 
+//		G_CALLBACK(&MDialog::ChangedCallBack), this);
+//
+//	glade_xml_signal_connect_data(GetGladeXML(), "on_std_btn_click", 
+//		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
 }
 
 MDialog::~MDialog()
@@ -337,13 +340,39 @@ bool MDialog::CancelClicked()
 	return true;
 }
 
+void MDialog::GtkBuilderConnectFunc(
+	GtkBuilder*			builder,
+	GObject*			object,
+	const gchar*		signal_name,
+	const gchar*		handler_name,
+	GObject*			connect_object,
+	GConnectFlags		flags,
+	gpointer			user_data)
+{
+	MDialog* self = reinterpret_cast<MDialog*>(user_data);
+
+	PRINT(("GtkBuilderConnectFunc %s", handler_name));
+	
+	if (strcmp(handler_name, "on_changed") == 0)
+	{
+		g_signal_connect(object, signal_name,
+			G_CALLBACK(&MDialog::ChangedCallBack), self);
+	}
+	else if (strcmp(handler_name, "on_std_btn_click") == 0)
+	{
+		g_signal_connect(object, signal_name,
+			G_CALLBACK(&MDialog::StdBtnClickedCallBack), self);
+	}
+}
+
 void MDialog::ChangedCallBack(
 	GtkWidget*			inWidget,
 	gpointer			inUserData)
 {
 	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
 	
-	const char* name = glade_get_widget_name(inWidget);
+	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(inWidget));
+
 	if (name != nil)
 	{
 		uint32 id = 0;
@@ -368,7 +397,8 @@ void MDialog::StdBtnClickedCallBack(
 {
 	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
 	
-	const char* name = glade_get_widget_name(inWidget);
+	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(inWidget));
+
 	if (name != nil)
 	{
 		uint32 id = 0;

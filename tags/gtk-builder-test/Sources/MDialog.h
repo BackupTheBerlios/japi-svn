@@ -38,7 +38,7 @@
 #ifndef MDIALOG_H
 #define MDIALOG_H
 
-#include <glade/glade-xml.h>
+//#include <glade/glade-xml.h>
 #include <vector>
 
 #include "MWindow.h"
@@ -156,6 +156,15 @@ class MDialog : public MWindow
 	static void		StdBtnClickedCallBack(
 						GtkWidget*			inWidget,
 						gpointer			inUserData);
+
+	static void     GtkBuilderConnectFunc(
+						GtkBuilder*			builder,
+						GObject*			object,
+						const gchar*		signal_name,
+						const gchar*		handler_name,
+						GObject*			connect_object,
+						GConnectFlags		flags,
+						gpointer			user_data);
 
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all

@@ -40,7 +40,6 @@
 
 #include "MView.h"
 #include "MCallbacks.h"
-#include <glade/glade-xml.h>
 
 namespace boost {
 class thread;
@@ -111,7 +110,7 @@ class MWindow : public MView, public MHandler
 	virtual bool			OnDelete(
 								GdkEvent*		inEvent);
 
-	GladeXML*				GetGladeXML() const				{ return mGladeXML; }
+	GtkBuilder*				GetGtkBuilder() const			{ return mGtkBuilder; }
 
 	GtkWidget*				GetWidget(
 								uint32			inID) const;
@@ -132,7 +131,7 @@ class MWindow : public MView, public MHandler
 	std::string				mTitle;
 	bool					mModified;
 	boost::thread*			mTransitionThread;
-	GladeXML*				mGladeXML;
+	GtkBuilder*				mGtkBuilder;
 
 	void					TransitionTo(
 								MRect			inPosition);

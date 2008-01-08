@@ -5,9 +5,7 @@ TARGET		= japi
 DEBUG		= 1
 DEFINES		= 
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= pcre z cryptopp boost_regex boost_thread \
-			  boost_filesystem boost_date_time attr \
-			  gthread-2.0 magic
+LIBS		= pcre z cryptopp gthread-2.0 magic
 LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 
@@ -47,11 +45,13 @@ endef
 OBJS = $(SRC_TO_OBJ)
 
 RSRC_DATA = \
+	about-dialog.xml \
 	auth-dialog.xml \
 	clean-target-alert.xml \
 	diff-window.xml \
 	discard-changes-alert.xml \
 	edit-window-menus.xml \
+	exception-alert.xml \
 	find-and-open-dialog.xml \
 	find-dialog.xml \
 	go-to-line-dialog.xml \
@@ -61,9 +61,11 @@ RSRC_DATA = \
 	message-list-window.xml \
 	prefs-dialog.xml \
 	project-window-menus.xml \
+	read-only-alert.xml \
 	replace-all-alert.xml \
 	save-changes-alert.xml \
 	strings.xml \
+	text-view-context-menu.xml \
 	unknown-host-alert.xml \
 	Templates/empty.c \
 	Templates/Strict.xhtml \
@@ -109,7 +111,8 @@ RSRCFileCreatorObjects = \
 	$(OBJDIR)/MResources.o \
 	$(OBJDIR)/MError.o \
 	$(OBJDIR)/MObjectFile.o \
-	$(OBJDIR)/MObjectFileImp_elf.o
+	$(OBJDIR)/MObjectFileImp_elf.o \
+	$(OBJDIR)/MObjectFileImp_macho.o \
 
 RSRCFileCreator: $(RSRCFileCreatorObjects) Sources/MRSRCFileCreator.cpp
 	@ echo "Linking "$(@F)
@@ -132,7 +135,7 @@ clean: FORCE
 $(OBJDIR):
 	@ test -d $(OBJDIR) || mkdir $(OBJDIR)
 
-$(OBJDIR)/__rsrc__.o: RSRCFileCreator $(RSRC_DATA)
+$(OBJDIR)/__rsrc__.o: RSRCFileCreator $(addprefix Resources/, $(RSRC_DATA))
 	./RSRCFileCreator -o $@ -r Resources $(addprefix -d, $(RSRC_DATA))
 
 $(OBJDIR)/%.o: %.cpp
@@ -142,6 +145,9 @@ $(OBJDIR)/%.o: %.cpp
 $(OBJDIR)/%.o: %.c
 	@ echo "=> "$(@F)
 	@ $(CC) -MD -c $< -o $@ $(INCLUDES) $(CFLAGS)
+
+%-dialog.xml: %-dialog.glade
+	gtk-builder-convert $< $@
 
 include $(OBJS:%.o=%.d)
 
