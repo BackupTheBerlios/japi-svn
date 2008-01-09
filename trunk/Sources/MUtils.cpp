@@ -147,6 +147,14 @@ uint32 StringToNum(string inString)
 	return n;
 }
 
+void NormalizePath(
+	MPath&	ioPath)
+{
+	string p = ioPath.string();
+	NormalizePath(p);
+	ioPath = p;
+}
+
 void NormalizePath(string& ioPath)
 {
 	string path(ioPath);	

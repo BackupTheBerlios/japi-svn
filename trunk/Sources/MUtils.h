@@ -261,6 +261,7 @@ std::string	GetUserName(bool inShortName = false);
 std::string	GetDateTime();
 
 void NormalizePath(std::string& ioPath);
+void NormalizePath(MPath& ioPath);
 
 double GetLocalTime();
 double GetDoubleClickTime();

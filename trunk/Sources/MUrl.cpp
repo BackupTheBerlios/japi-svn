@@ -127,7 +127,7 @@ void MUrlImp::Parse(
 			THROW(("Invalid url '%s'", inUrl));
 		
 		string path = url.substr(p, string::npos);
-//		NormalizePath(path);
+		NormalizePath(path);
 		
 		url = url.substr(0, p);
 		
@@ -220,7 +220,7 @@ MUrl::MUrl(
 {
 	mImpl->mScheme = "file";
 	mImpl->mPath = inFile;
-//	NormalizePath(mImpl->mPath);
+	NormalizePath(mImpl->mPath);
 }
 
 MUrl& MUrl::operator=(
@@ -332,7 +332,7 @@ void MUrl::SetPath(
 	const fs::path&		inPath)
 {
 	mImpl->mPath = inPath;
-//	NormalizePath(mImpl->mPath);
+	NormalizePath(mImpl->mPath);
 }
 
 std::string MUrl::GetFileName() const
@@ -344,7 +344,7 @@ void MUrl::SetFileName(
 	const string&		inFileName)
 {
 	mImpl->mPath = mImpl->mPath.branch_path() / inFileName;
-//	NormalizePath(mImpl->mPath);
+	NormalizePath(mImpl->mPath);
 }
 
 string MUrl::GetScheme() const
@@ -422,7 +422,7 @@ void MUrl::operator/=(
 	const string&	inPartialPath)
 {
 	mImpl->mPath /= inPartialPath;
-//	NormalizePath(mImpl->mPath);
+	NormalizePath(mImpl->mPath);
 }
 
 MUrl operator/(const MUrl& lhs, std::string rhs)

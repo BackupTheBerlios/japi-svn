@@ -54,6 +54,7 @@
 #include "MStrings.h"
 #include "MAlerts.h"
 #include "MDiffWindow.h"
+#include "MResources.h"
 
 #include <iostream>
 
@@ -748,12 +749,13 @@ void my_signal_handler(int inSignal)
 
 void error(const char* msg, ...)
 {
-	fprintf(stderr, "Error launching %s\n", g_get_application_name());
+	fprintf(stderr, "%s stopped with an error:\n", g_get_application_name());
 	va_list vl;
 	va_start(vl, msg);
 	vfprintf(stderr, msg, vl);
 	va_end(vl);
-	fprintf(stderr, "\n%s\n", strerror(errno));
+	if (errno != 0)
+		fprintf(stderr, "\n%s\n", strerror(errno));
 	exit(1);
 }
 
@@ -939,13 +941,121 @@ void usage()
 {
 	cout << "usage: japi [options] [ files ]" << endl
 		 << "    available options: " << endl
-		 << "    -h      This help message" << endl
-		 << "    -f      Don't fork into client/server" << endl
+		 << endl
+		 << "    -i path    Install japi at location 'path', e.g. /usr/local/bin/japi" << endl
+		 << "    -l path    Install locale files at location 'path' " << endl
+		 << "                    e.g. /usr/local/share/japi/locale" << endl
+		 << "    -h         This help message" << endl
+		 << "    -f         Don't fork into client/server" << endl
 		 << endl
 		 << "  One or more files may be specified, use - for reading from stdin" << endl
 		 << endl;
 	
 	exit(1);
+}
+
+void install(
+	const char*		inPath)
+{
+	if (getuid() != 0)
+		error("You must be root to be able to install japi");
+	
+	// copy the executable to the appropriate destination
+	
+	if (inPath == nil or strlen(inPath) == 0)
+		inPath = "/usr/bin/japi";
+	
+	fs::path dest(inPath);
+	
+	if (not fs::exists(dest.branch_path()))
+		error("Destination directory %s does not seem to exist", 
+			dest.branch_path().string().c_str());
+	
+	fs::path exe(g_get_prgname());
+	
+	if (not fs::exists(exe))
+		error("I don't seem to exist...[%s]?", exe.string().c_str());
+	
+	cout << "copying " << exe.string() << " to " << dest.string() << endl;
+	
+	if (fs::exists(dest))
+		fs::remove(dest);
+		
+	fs::copy_file(exe, dest);
+	
+	// create desktop file
+	
+	const char* desktop_text;
+	uint32 length;
+	if (not LoadResource("japi.desktop", desktop_text, length))
+		error("japi.desktop file could not be created, missing data");
+
+	string desktop(desktop_text, desktop_text + length);
+	string::size_type p;
+	if ((p = desktop.find("__EXE__")) == string::npos)
+		error("japi.desktop file could not be created, invalid data");
+	
+	desktop.replace(p, 7, dest.string());
+	
+	// locate applications directory
+	
+	MPath desktopFile, applicationsDir;
+	
+	const char* const* config_dirs = g_get_system_data_dirs();
+	for (const char* const* dir = config_dirs; *dir != nil; ++dir)
+	{
+		applicationsDir = MPath(*dir) / "applications";
+		if (fs::exists(applicationsDir) and fs::is_directory(applicationsDir))
+			break;
+	}
+
+	if (not fs::exists(applicationsDir))
+	{
+		cout << "Could not locate the directory to store the .desktop file." << endl
+			 << "Using current directory instead" << endl;
+		
+		desktopFile = "japi.desktop";
+	}
+	else
+		desktopFile = applicationsDir / "japi.desktop";
+
+	cout << "writing desktop file " << desktopFile.string() << endl;
+
+	fs::ofstream df(desktopFile, ios::trunc);
+	df << desktop;
+	df.close();
+	
+	exit(0);
+}
+
+void install_locale(
+	const char*		inPath)
+{
+	// write localized strings (Dutch)
+	
+	fs::ofstream po("/tmp/japi.po", ios::trunc);
+	
+	const char* po_text;
+	uint32 length;
+	if (not LoadResource("Dutch/japi.po", po_text, length))
+		error("Dutch localisation file could not be created, missing data");
+	
+	po.write(po_text, length);
+	po.close();
+	
+	MPath japiLocale(inPath);
+	
+	fs::create_directories(japiLocale / "locale" / "nl");
+	
+	string cmd = "msgfmt -o ";
+	cmd += (japiLocale / "locale" / "nl" / "japi.mo").string();
+	cmd += " /tmp/japi.po";
+
+	cout << "Executing: " << cmd << endl;
+	
+	system(cmd.c_str());
+	
+	exit(0);
 }
 
 int main(int argc, char* argv[])
@@ -978,7 +1088,7 @@ int main(int argc, char* argv[])
 		vector<MUrl> docs;
 		
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?f")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:")) != -1)
 		{
 			switch (c)
 			{
@@ -986,11 +1096,22 @@ int main(int argc, char* argv[])
 					fork = false;
 					break;
 				
+				case 'i':
+					install(optarg);
+					break;
+				
+				case 'l':
+					install_locale(optarg);
+					break;
+				
 				default:
 					usage();
 					break;
 			}
 		}
+		
+		if (fs::exists("/usr/local/share/japi/locale"))
+			bindtextdomain("japi", "/usr/local/share/japi/locale");
 		
 		for (int32 i = optind; i < argc; ++i)
 		{

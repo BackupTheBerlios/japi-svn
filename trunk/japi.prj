@@ -136,6 +136,10 @@
 			<copy>Template.html</copy>
 			<copy>Transitional.xhtml</copy>
 		</mkdir>
+		<mkdir name="Dutch">
+			<copy>japi.po</copy>
+		</mkdir>
+		<copy>japi.desktop</copy>
 	</package>
 	<targets>
 		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="japi" debug="true">
