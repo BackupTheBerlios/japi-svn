@@ -145,7 +145,7 @@ void MShellImp::Execute(
 	string cmd = inCommand;
 	cmd += " ; echo '";
 	cmd += kSetDelimiterStr;
-	cmd += "' ; set ;";
+	cmd += "' ; env ;";
 	
 	vector<char*> argv;
 

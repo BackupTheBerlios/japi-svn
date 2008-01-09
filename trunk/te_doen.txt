@@ -4,6 +4,7 @@ Moet af:
 
 - printen
 - horizontaal scrollen
+- utf-8 problemen bij lopen door tekst
 - utf-8 validatie voor het doorsturen naar pango
 - libglade vervangen door gtkbuilder
 

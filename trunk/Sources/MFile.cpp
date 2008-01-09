@@ -34,7 +34,6 @@
 
 #include <unistd.h>
 
-//#include <sys/syslimits.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stack>
