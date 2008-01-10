@@ -35,8 +35,6 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
-
 #include <string>
 #include <sstream>
 #include <string>
@@ -289,20 +287,37 @@ string GetUserName(bool inShortName)
 
 string GetDateTime()
 {
-	using namespace boost::gregorian;
+	// had to remove this, because it depends on wchar_t in libstdc++...
+//	using namespace boost::gregorian;
+//
+//	date today = day_clock::local_day();
+//
+//	date::ymd_type ymd = today.year_month_day();
+//	greg_weekday wd = today.day_of_week();
+//	
+//	stringstream s;
+//	
+//	s << wd.as_long_string() << " "
+//      << ymd.month.as_long_string() << " "
+//	  << ymd.day << ", " << ymd.year;
+//	
+//	return s.str();
 
-	date today = day_clock::local_day();
+	string result;
 
-	date::ymd_type ymd = today.year_month_day();
-	greg_weekday wd = today.day_of_week();
+	GDate* date = g_date_new();
+	if (date != nil)
+	{
+		g_date_set_time_t(date, time(nil)); 
 	
-	stringstream s;
+		char buffer[1024] = "";
+		uint32 size = g_date_strftime(buffer, sizeof(buffer),
+			"%A %d %B, %Y", date);
+		
+		result.assign(buffer, buffer + size);
+	}
 	
-	s << wd.as_long_string() << " "
-      << ymd.month.as_long_string() << " "
-	  << ymd.day << ", " << ymd.year;
-	
-	return s.str();
+	return result;
 }
 
 string XMLNode::name() const

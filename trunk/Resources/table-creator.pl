@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-my $a = 2 / 3;
-
 $| = 1;
 
 my $kUC_COUNT = 1114112;
@@ -49,7 +47,7 @@ print STDERR "Reading GraphemeBreakProperty.txt...";
 open IN, "<GraphemeBreakProperty.txt" or die "Could not open GraphemeBreakProperty\n";
 while (my $line = <IN>)
 {
-	if ($line =~ $re) { #$
+	if ($line =~ $re) {
 		my $first = hex($1);
 		my $last = $first;
 		$last = hex($3) if defined $3;

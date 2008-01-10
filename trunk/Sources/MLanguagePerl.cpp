@@ -206,6 +206,7 @@ void StoreMState(
 			count = ioState - QUOTE1;
 			if (inRegex)
 				count |= 0x04;
+			matchchar = inMatchChar & 0x007F;
 			break;
 			
 		case SUB1:
@@ -831,14 +832,14 @@ MLanguagePerl::StyleLine(
 				break;
 			
 			case POD1:
-				if (Equal(text + s, end, "pod") or
-					Equal(text + s, end, "head1") or
-					Equal(text + s, end, "head2") or
-					Equal(text + s, end, "begin") or
-					Equal(text + s, end, "for") or
-					Equal(text + s, end, "item") or
-					Equal(text + s, end, "over") or
-					Equal(text + s, end, "back"))
+				if (Equal(text + s, end, "=pod") or
+					Equal(text + s, end, "=head1") or
+					Equal(text + s, end, "=head2") or
+					Equal(text + s, end, "=begin") or
+					Equal(text + s, end, "=for") or
+					Equal(text + s, end, "=item") or
+					Equal(text + s, end, "=over") or
+					Equal(text + s, end, "=back"))
 				{
 					ioState = POD2;
 				}

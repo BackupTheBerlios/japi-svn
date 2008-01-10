@@ -35,7 +35,9 @@
 #include <cerrno>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <boost/algorithm/string.hpp>
 
+#include "MFile.h"
 #include "MPkgConfig.h"
 #include "MPreferences.h"
 #include "MError.h"
@@ -44,20 +46,21 @@ using namespace std;
 
 extern char** environ;
 
-void GetPkgConfigResult(
-	const string&		inPackage,
-	const char*			inInfo,
-	vector<string>&		outFlags)
+namespace {
+
+void LocateCommand(
+	const string&		inCommand,
+	fs::path&			outPath)
 {
-	// Try to locate the pkg-config executable first
+	// Try to locate the executable
 	
-	string path = Preferences::GetString("pkg-config", "pkg-config");
+	outPath = MPath(Preferences::GetString(inCommand.c_str(), inCommand));
 	bool found = true;
 	
 	// If the path contains slashes we don't bother
 	const char* PATH = getenv("PATH");
 	
-	if (path.find('/') == string::npos and PATH != nil)
+	if (outPath.string().find('/') == string::npos and PATH != nil)
 	{
 		found = false;
 		
@@ -71,17 +74,23 @@ void GetPkgConfigResult(
 		{
 			fs::path p(d);
 			
-			if (fs::exists(p / path))
+			if (fs::exists(p / outPath))
 			{
-				path = fs::system_complete(p / path).string();
+				outPath = fs::system_complete(p / outPath);
 				found = true;
 			}
 		}
 	}
 	
 	if (not found)
-		THROW(("pkg-config command not found: %s", path.c_str()));
+		THROW(("command not found: %s", outPath.string().c_str()));
+}
 
+static void RunCommand(
+	const fs::path&		cmd,
+	const char*			argv[],
+	string&				outResult)
+{
 	// OK, now start it.
 
 	int fd[2];
@@ -109,24 +118,16 @@ void GetPkgConfigResult(
 
 		close(STDIN_FILENO);
 		
-		const char* argv[] = {
-			"pkg-config",
-			inInfo,
-			inPackage.c_str(),
-			NULL
-		};
-
-		(void)execve(path.c_str(),
+		(void)execve(cmd.string().c_str(),
 			const_cast<char*const*>(argv), environ);
 
-		cerr << "execution of pkg-config failed: " << strerror(errno) << endl;
+		cerr << "execution of " << argv[0] << " failed: " << strerror(errno) << endl;
 		exit(-1);
 	}
 	
 	close(fd[1]);
 
-	string s;
-	
+	outResult.clear();
 	for (;;)
 	{
 		char b[1024];
@@ -140,14 +141,35 @@ void GetPkgConfigResult(
 			continue;
 		
 		if (r > 0)
-			s.append(b, b + r);
+			outResult.append(b, b + r);
 		else
 			THROW(("error calling read: %s", strerror(errno)));
 	}
 	
 	int status;
 	waitpid(pid, &status, WNOHANG);	// avoid zombies
+}
+
+}
+
+void GetPkgConfigResult(
+	const string&		inPackage,
+	const char*			inInfo,
+	vector<string>&		outFlags)
+{
+	fs::path cmd;
+	LocateCommand("pkg-config", cmd);
 	
+	const char* args[] = {
+		cmd.leaf().c_str(),
+		inInfo,
+		inPackage.c_str(),
+		NULL
+	};
+
+	string s;
+	RunCommand(cmd, args, s);
+
 	// OK, so s now contains the result from the pkg-config command
 	// parse it, and extract the various parts
 	
@@ -198,4 +220,44 @@ void GetPkgConfigResult(
 //	 << "info: " << inInfo << endl
 //	 << "flags:" << endl;
 //	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
+}
+
+void GetCompilerPaths(
+	const string&	inCompiler,
+	string&			outInstallDir,
+	vector<MPath>&	outLibDirs)
+{
+	fs::path cmd;
+	LocateCommand(inCompiler, cmd);
+	
+	const char* args[] = {
+		cmd.leaf().c_str(),
+		"-print-search-dirs",
+		NULL
+	};
+
+	string s;
+	RunCommand(cmd, args, s);
+	
+	stringstream ss(s);
+	
+	for (;;)
+	{
+		string line;
+		getline(ss, line);
+		
+		if (ss.eof())
+			break;
+
+		if (boost::algorithm::starts_with(line, "install: "))
+			outInstallDir = line.substr(9);
+		else if (boost::algorithm::starts_with(line, "libraries: ="))
+		{
+			boost::algorithm::erase_first(line, "libraries: =");
+			
+			vector<string> l;
+			split(l, line, boost::algorithm::is_any_of(":"));
+			copy(l.begin(), l.end(), back_inserter(outLibDirs));
+		}
+	}
 }

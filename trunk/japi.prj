@@ -8,17 +8,13 @@
 		<path>/usr/include</path>
 		<path>/usr/local/include</path>
 		<path>/usr/include/libxml2</path>
-		<path>/usr/include/c++/4.0.0</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
-		<path>/usr/lib</path>
-		<path>/usr/lib64</path>
-		<path>/usr/local/lib</path>
-		<path>/usr/pkg/lib</path>
+		<path>Lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -105,7 +101,6 @@
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
-			<file>libmagic.a</file>
 			<link>cryptopp</link>
 			<link>z</link>
 		</group>
@@ -152,6 +147,9 @@
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
+			<ldflags>
+				<ldflag>-static-libgcc</ldflag>
+			</ldflags>
 			<warnings>
 				<warning>all</warning>
 				<warning>no-multichar</warning>
@@ -168,6 +166,9 @@
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>
+			<ldflags>
+				<ldflag>-static-libgcc</ldflag>
+			</ldflags>
 			<warnings>
 				<warning>all</warning>
 				<warning>no-multichar</warning>

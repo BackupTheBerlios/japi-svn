@@ -17,6 +17,7 @@ Moet af:
 
 Leuk om te hebben:
 
+- functie parser voor HTML/JS/CSS
 - spelling checker
 - Invoegen... menu item(s)
 

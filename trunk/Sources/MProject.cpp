@@ -2269,6 +2269,17 @@ bool MProject::LocateFile(
 			outPath = *p / inFile;
 			found = exists(outPath);
 		}
+		
+		if (not found)
+		{
+			for (vector<MPath>::const_iterator p = mCLibSearchPaths.begin();
+				 not found and p != mCLibSearchPaths.end();
+				 ++p)
+			{
+				outPath = *p / inFile;
+				found = exists(outPath);
+			}
+		}
 	}
 	else
 	{
@@ -2314,6 +2325,12 @@ bool MProject::LocateFile(
 			{
 				found = LocateInFramework(*p, framework, filename, outPath);
 			}
+		}
+		
+		if (not found and fs::exists(MPath(mCInstallDir) / "include"))
+		{
+			outPath = MPath(mCInstallDir) / "include" / inFile;
+			found = fs::exists(outPath);
 		}
 	}
 	
@@ -2459,11 +2476,7 @@ MProjectJob* MProject::CreateCompileJob(
 	
 	vector<string> argv;
 	
-	const char* CC = getenv("CC");
-	if (CC == nil)
-		CC = "/usr/bin/c++";
-	
-	argv.push_back(CC);
+	argv.push_back(Preferences::GetString("c++", "c++"));
 
 //	argv.push_back("-arch");
 //	if (target.GetArch() == eTargetArchPPC_32)
@@ -2584,12 +2597,8 @@ MProjectJob* MProject::CreateLinkJob(
 	
 	vector<string> argv;
 	
-	const char* CC = getenv("CC");
-	if (CC == nil)
-		CC = "/usr/bin/c++";
-	
-	argv.push_back(CC);
-//
+	argv.push_back(Preferences::GetString("c++", "c++"));
+
 //	argv.push_back("-arch");
 //	if (target.GetArch() == eTargetArchPPC_32)
 //		argv.push_back("ppc");
@@ -2622,8 +2631,6 @@ MProjectJob* MProject::CreateLinkJob(
 		argv.push_back("-framework");
 		argv.push_back(*f);
 	}
-
-	copy(mPkgConfigLibs.begin(), mPkgConfigLibs.end(), back_inserter(argv));
 
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
@@ -2682,6 +2689,8 @@ MProjectJob* MProject::CreateLinkJob(
 			break;
 		}
 	}
+
+	copy(mPkgConfigLibs.begin(), mPkgConfigLibs.end(), back_inserter(argv));
 	
 	return new MProjectExecJob("Linking", this, argv);
 }
@@ -2703,11 +2712,7 @@ void MProject::Preprocess(
 	
 	vector<string> argv;
 	
-	const char* CC = getenv("CC");
-	if (CC == nil)
-		CC = "/usr/bin/c++";
-	
-	argv.push_back(CC);
+	argv.push_back(Preferences::GetString("c++", "c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -2770,11 +2775,7 @@ void MProject::Disassemble(
 	
 	vector<string> argv;
 	
-	const char* CC = getenv("CC");
-	if (CC == nil)
-		CC = "/usr/bin/c++";
-	
-	argv.push_back(CC);
+	argv.push_back(Preferences::GetString("c++", "c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -2839,11 +2840,7 @@ void MProject::CheckSyntax(
 	
 	vector<string> argv;
 	
-	const char* CC = getenv("CC");
-	if (CC == nil)
-		CC = "/usr/bin/c++";
-	
-	argv.push_back(CC);
+	argv.push_back(Preferences::GetString("c++", "c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -3104,12 +3101,25 @@ void MProject::SelectTarget(
 		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
 	mCurrentTarget = mTargets[inTarget];
-	
+
 	CheckDataDir();	// set up all directory paths
 	
 	MModDateCache modDateCache;
 	
 	SetStatus("Checking modification dates", true);
+	
+	GetCompilerPaths("c++", mCInstallDir, mCLibSearchPaths);
+
+	mPkgConfigCFlags.clear();
+	mPkgConfigLibs.clear();
+	
+	for (vector<string>::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
+	{
+		GetPkgConfigResult(*pkg, "--cflags", mPkgConfigCFlags);
+		GetPkgConfigResult(*pkg, "--libs", mPkgConfigLibs);
+	}
+	
+	ResearchForFiles();
 	
 	mProjectItems.UpdatePaths(mObjectDir);
 	mProjectItems.CheckCompilationResult();
@@ -3119,15 +3129,6 @@ void MProject::SelectTarget(
 	mPackageItems.CheckCompilationResult();
 	mPackageItems.CheckIsOutOfDate(modDateCache);
 	
-	mPkgConfigCFlags.clear();
-	mPkgConfigLibs.clear();
-	
-	for (vector<string>::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
-	{
-		GetPkgConfigResult(*pkg, "--cflags", mPkgConfigCFlags);
-		GetPkgConfigResult(*pkg, "--libs", mPkgConfigLibs);
-	}
-
 	SetStatus("", false);
 }
 

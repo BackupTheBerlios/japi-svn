@@ -763,6 +763,7 @@ void MLanguage::CollectKeyWordsBeginningWith(
 	string				inPattern,
 	vector<string>&		ioStrings)
 {
-	mRecognizer->CollectKeyWordsBeginningWith(inPattern, ioStrings);
+	if (mRecognizer != nil)
+		mRecognizer->CollectKeyWordsBeginningWith(inPattern, ioStrings);
 }
 
