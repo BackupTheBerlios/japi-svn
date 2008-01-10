@@ -2327,9 +2327,9 @@ bool MProject::LocateFile(
 			}
 		}
 		
-		if (not found and fs::exists(MPath(mCInstallDir) / "include"))
+		if (not found and fs::exists(mCppIncludeDir))
 		{
-			outPath = MPath(mCInstallDir) / "include" / inFile;
+			outPath = MPath(mCppIncludeDir) / inFile;
 			found = fs::exists(outPath);
 		}
 	}
@@ -3108,7 +3108,7 @@ void MProject::SelectTarget(
 	
 	SetStatus("Checking modification dates", true);
 	
-	GetCompilerPaths("c++", mCInstallDir, mCLibSearchPaths);
+	GetCompilerPaths("c++", mCppIncludeDir, mCLibSearchPaths);
 
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();

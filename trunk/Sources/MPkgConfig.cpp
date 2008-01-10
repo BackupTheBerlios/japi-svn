@@ -224,40 +224,82 @@ void GetPkgConfigResult(
 
 void GetCompilerPaths(
 	const string&	inCompiler,
-	string&			outInstallDir,
+	string&			outCppIncludeDir,
 	vector<MPath>&	outLibDirs)
 {
 	fs::path cmd;
 	LocateCommand(inCompiler, cmd);
 	
-	const char* args[] = {
-		cmd.leaf().c_str(),
-		"-print-search-dirs",
-		NULL
-	};
-
-	string s;
-	RunCommand(cmd, args, s);
-	
-	stringstream ss(s);
-	
-	for (;;)
+	// get the list of libraries search dirs
 	{
-		string line;
-		getline(ss, line);
+		const char* args[] = {
+			cmd.leaf().c_str(),
+			"-v",
+			NULL
+		};
+	
+		string s;
+		RunCommand(cmd, args, s);
 		
-		if (ss.eof())
-			break;
-
-		if (boost::algorithm::starts_with(line, "install: "))
-			outInstallDir = line.substr(9);
-		else if (boost::algorithm::starts_with(line, "libraries: ="))
+		stringstream ss(s);
+		
+		for (;;)
 		{
-			boost::algorithm::erase_first(line, "libraries: =");
+			string line;
+			getline(ss, line);
 			
-			vector<string> l;
-			split(l, line, boost::algorithm::is_any_of(":"));
-			copy(l.begin(), l.end(), back_inserter(outLibDirs));
+			if (ss.eof())
+				break;
+	
+			if (boost::algorithm::starts_with(line, "Configured with: "))
+			{
+				string::size_type p = line.find("--with-gxx-include-dir");
+				if (p != string::npos)
+				{
+					p += sizeof("--with-gxx-include-dir"); // - \0 + '='
+					outCppIncludeDir = line.substr(p);
+					p = outCppIncludeDir.find(' ');
+					if (p != string::npos)
+						outCppIncludeDir.erase(p, string::npos);
+				}
+
+				break;
+			}
+		}
+	}
+
+	// get the list of libraries search dirs
+	{
+		const char* args[] = {
+			cmd.leaf().c_str(),
+			"-print-search-dirs",
+			NULL
+		};
+	
+		string s;
+		RunCommand(cmd, args, s);
+		
+		stringstream ss(s);
+		
+		for (;;)
+		{
+			string line;
+			getline(ss, line);
+			
+			if (ss.eof())
+				break;
+	
+	//		if (boost::algorithm::starts_with(line, "install: "))
+	//			outInstallDir = line.substr(9);
+	//		else
+			if (boost::algorithm::starts_with(line, "libraries: ="))
+			{
+				boost::algorithm::erase_first(line, "libraries: =");
+				
+				vector<string> l;
+				split(l, line, boost::algorithm::is_any_of(":"));
+				copy(l.begin(), l.end(), back_inserter(outLibDirs));
+			}
 		}
 	}
 }

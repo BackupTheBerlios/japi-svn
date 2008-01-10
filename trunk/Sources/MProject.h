@@ -354,7 +354,7 @@ class MProject : public MWindow, public MSaverMixin
 						mPkgConfigCFlags;
 	std::vector<std::string>
 						mPkgConfigLibs;
-	std::string			mCInstallDir;		// compiler installation dir
+	std::string			mCppIncludeDir;		// compiler's c++ include dir
 	std::vector<MPath>	mCLibSearchPaths;	// compiler default search dirs
 	std::vector<MPath>	mSysSearchPaths;
 	std::vector<MPath>	mUserSearchPaths;

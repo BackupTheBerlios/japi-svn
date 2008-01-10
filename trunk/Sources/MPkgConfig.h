@@ -43,7 +43,7 @@ void GetPkgConfigResult(
 
 void GetCompilerPaths(
 	const std::string&			inCompiler,
-	std::string&				outInstallDir,
+	std::string&				outCppIncludeDir,
 	std::vector<MPath>&			outLibDirs);
 
 #endif
