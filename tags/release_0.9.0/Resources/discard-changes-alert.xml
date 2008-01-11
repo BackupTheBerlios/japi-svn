@@ -1,0 +1,8 @@
+<?xml version="1.0" standalone="yes" ?>
+<alert type="warning">
+	<message>Are you sure you want to discard the changes made to document ^0?</message>
+	<buttons>
+		<button title="Discard" cmd="1"/>
+		<button title="Cancel" cmd="2" default='true'/>
+	</buttons>
+</alert>
