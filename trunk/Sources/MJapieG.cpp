@@ -64,7 +64,7 @@ static bool gQuit = false;
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9";
+	kVersionString[] = "0.9.1";
 
 MJapieApp* gApp;
 

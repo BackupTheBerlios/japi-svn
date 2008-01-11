@@ -2,11 +2,13 @@
 
 Moet af:
 
+- overnemen muisklik afhandeling van
+	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
+
 - printen
 - horizontaal scrollen
 - utf-8 problemen bij lopen door tekst
 - utf-8 validatie voor het doorsturen naar pango
-- libglade vervangen door gtkbuilder
 
 - keyboard shortcuts voor alert dialogs
 
@@ -16,6 +18,8 @@ Moet af:
 	- bug vissen uit 'hangen' van connectie
 
 Leuk om te hebben:
+
+- libglade vervangen door gtkbuilder (als gtkbuilder werkt)
 
 - functie parser voor HTML/JS/CSS
 - spelling checker
