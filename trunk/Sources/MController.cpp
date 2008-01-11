@@ -51,6 +51,7 @@
 //#include "MDocInfoDialog.h"
 #include "MUtils.h"
 #include "MSound.h"
+#include "MDiffWindow.h"
 
 using namespace std;
 
@@ -71,15 +72,6 @@ void MController::SetWindow(MWindow* inWindow)
 	
 	mWindow = dynamic_cast<MDocWindow*>(inWindow);
 	THROW_IF_NIL(mWindow);
-	
-//	mWindow->Install(kEventClassTextInput, kEventTextInputUpdateActiveInputArea,
-//		this, &MController::DoTextInputUpdateActiveInputArea);
-//	mWindow->Install(kEventClassTextInput, kEventTextInputUnicodeForKeyEvent,
-//		this, &MController::DoTextInputUnicodeForKeyEvent);
-//	mWindow->Install(kEventClassTextInput, kEventTextInputOffsetToPos,
-//		this, &MController::DoTextInputOffsetToPos);
-////	mWindow->Install(kEventClassTextInput, kEventTextInputPosToOffset,
-////		this, &MController::DoTextInputPosToOffset);
 
 	AddRoute(eDocumentChanged, mWindow->eDocumentChanged);
 }
@@ -150,10 +142,6 @@ bool MController::ProcessCommand(
 {
 	bool result = false;
 	
-//	// short cut
-//	if (HIWindowIsDocumentModalTarget(mWindow->GetSysWindow(), nil))
-//		return noErr;
-
 	if (mDocument != nil)
 	{
 		result = true;
@@ -368,15 +356,6 @@ bool MController::ProcessCommand(
 				mDocument->SelectIncludePopupItem(inItemIndex);
 				break;
 		
-	//#ifndef NDEBUG
-	//		case cmd_Test:
-	//		{
-	//			UInt32 offset = 0;
-	//			mText.FindExpression(offset, MFindDialog::Instance().GetFindString(0), kDirectionForward, false);
-	//			break;
-	//		}
-	//#endif
-
 			case cmd_Preprocess:
 				if (project != nil)
 					project->Preprocess(mDocument->GetURL().GetPath());
@@ -428,6 +407,14 @@ bool MController::ProcessCommand(
 			case cmd_Stop:
 				result = mDocument->StopRunningShellCommand();
 				break;
+			
+			case cmd_ShowDiffWindow:
+			{
+				auto_ptr<MDiffWindow> w(new MDiffWindow(mDocument));
+				w->Select();
+				w.release();
+				break;
+			}
 	
 			default:
 				result = false;
@@ -447,8 +434,6 @@ bool MController::UpdateCommandStatus(
 	bool&			outChecked)
 {
 	bool result = true;
-//	if (HIWindowIsDocumentModalTarget(mWindow->GetSysWindow(), nil) or mDocument == nil)
-//		return noErr;
 
 	MProject* project = MProject::Instance();
 	MLanguage* lang = mDocument->GetLanguage();
@@ -480,6 +465,7 @@ bool MController::UpdateCommandStatus(
 		case cmd_ShiftRight:
 		case cmd_OpenIncludeFile:
 		case cmd_ShowDocInfoDialog:
+		case cmd_ShowDiffWindow:
 			outEnabled = true;
 			break;
 
@@ -749,24 +735,37 @@ void MController::DoGoToLine()
 	new MGoToLineDialog(mDocument, mWindow);
 }
 
-bool MController::OpenInclude(std::string inFileName)
+bool MController::OpenInclude(
+	string		inFileName)
 {
 	MProject* project = MProject::Instance();
-	MPath p;
+	MUrl url;
+
+	if (mDocument != nil)
+	{
+		url = mDocument->GetURL();
+		url.SetPath(url.GetPath().branch_path() / inFileName);
+	}
 	
 	bool result = false;
-		
-	if (project != nil and project->LocateFile(inFileName, true, p))
-		result = true;
-	else if (mDocument != nil and mDocument->GetURL().IsLocal())
+	
+	if (url.IsValid())
 	{
-		p = mDocument->GetURL().GetPath();
-		p = p.branch_path() / inFileName;
-		result = exists(p);
+		if (url.IsLocal())
+			result = fs::exists(url.GetPath());
+		else
+			result = true;
+	}
+	
+	MPath p;
+	if (not result and project != nil and project->LocateFile(inFileName, true, p))
+	{
+		result = true;
+		url = MUrl(p);
 	}
 	
 	if (result)
-		gApp->OpenOneDocument(MUrl(p));
+		gApp->OpenOneDocument(url);
 	
 	return result;
 }
@@ -874,51 +873,6 @@ void MController::DoOpenCounterpart()
 	if (not result)
 		PlaySound("warning");
 }
-
-//// ---------------------------------------------------------------------------
-////	DoSaveAll
-//
-//void MController::DoSaveAll()
-//{
-//	MDocument* doc = MDocument::GetFirstDocument();
-//	while (doc != nil)
-//	{
-//		if (doc->IsModified())
-//		{
-////			if (not doc->IsSpecified())
-////				doc->BringToFront();
-//
-//			doc->SaveDocument();
-//
-//			if (not doc->IsSpecified())
-//				break;
-//		}
-//
-//		doc = doc->GetNextDocument();
-//	}
-//}
-//
-//void MController::DoCloseAll(NavAskSaveChangesAction inAction)
-//{
-//	MDocument* doc = MDocument::GetFirstDocument();
-//	while (doc != nil)
-//	{
-//		if (doc->IsModified() and not doc->mIsWorksheet)
-//		{
-////			doc->BringToFront();
-//			if (not doc->mNavDialogVisible)
-//				doc->TryCloseController(inAction);
-//			break;
-//		}
-//		
-//		MDocument* next = doc->GetNextDocument();
-//		
-//		if (inAction != kNavSaveChangesClosingDocument or not doc->IsWorksheet())
-//			doc->TryCloseController(inAction);
-//
-//		doc = next;
-//	}
-//}
 
 MTextView* MController::GetTextView()
 {

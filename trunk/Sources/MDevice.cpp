@@ -516,7 +516,14 @@ bool MDeviceImp::BreakLine(
 	
 	pango_layout_set_width(mPangoLayout, inWidth * PANGO_SCALE);
 	pango_layout_set_wrap(mPangoLayout, PANGO_WRAP_WORD_CHAR);
-	
+
+#if defined(PANGO_VERSION_CHECK)
+#if PANGO_VERSION_CHECK(1,15,2)
+#define PANGO_OK	1
+#endif
+#endif
+
+#if defined(PANGO_OK)
 	if (pango_layout_is_wrapped(mPangoLayout))
 	{
 		PangoLayoutLine* line = pango_layout_get_line_readonly(mPangoLayout, 0);
@@ -527,6 +534,15 @@ bool MDeviceImp::BreakLine(
 			result = true;
 		}
 	}
+#else
+	PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
+	
+	if (line != nil)
+	{
+		outBreak = line->length;
+		result = true;
+	}
+#endif
 	
 	return result;
 }

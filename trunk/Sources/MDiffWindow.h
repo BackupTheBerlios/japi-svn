@@ -40,7 +40,8 @@
 class MDiffWindow : public MDialog
 {
   public:
-						MDiffWindow();
+						MDiffWindow(
+							MDocument*		inDocument = nil);
 	virtual				~MDiffWindow();
 
 	MEventIn<void()>	eDocument1Closed;

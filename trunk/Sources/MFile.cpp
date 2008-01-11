@@ -75,6 +75,7 @@ class MLibMagic
 MLibMagic::MLibMagic()
 {
 	int flags = MAGIC_MIME | MAGIC_SYMLINK;
+#if defined(MAGIC_NO_CHECK_COMPRESS)
 	flags |= MAGIC_NO_CHECK_COMPRESS;
 	flags |= MAGIC_NO_CHECK_TAR;
 	flags |= MAGIC_NO_CHECK_SOFT;
@@ -82,6 +83,7 @@ MLibMagic::MLibMagic()
 	flags |= MAGIC_NO_CHECK_ELF;
 	flags |= MAGIC_NO_CHECK_TROFF;
 	flags |= MAGIC_NO_CHECK_TOKENS;
+#endif
 	
 	mCookie = magic_open(flags);
 	

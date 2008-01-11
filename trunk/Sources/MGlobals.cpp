@@ -95,11 +95,13 @@ void InitGlobals()
 	gPrefsDir = g_get_user_config_dir();
 	gPrefsDir /= "japi";
 	
+#if defined(G_USER_DIRECTORY_TEMPLATES)
 	const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
-	if (templatesDir == nil)
-		gTemplatesDir = gPrefsDir / "Templates";
-	else
+	if (templatesDir != nil)
 		gTemplatesDir = fs::system_complete(templatesDir);
+	else
+#endif
+		gTemplatesDir = gPrefsDir / "Templates";
 		
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
