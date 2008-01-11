@@ -276,6 +276,7 @@ class MTextView : public MView, public MHandler
 	uint32				mClickCount;
 	uint32				mLastClickTime;
 	double				mLastScrollTime;
+	double				mLastFocusTime;
 	bool				mInTick;
 	
 	enum

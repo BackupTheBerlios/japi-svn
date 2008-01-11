@@ -71,7 +71,8 @@ const int32
 
 const double
 	kCaretBlinkTime = 0.6,
-	kScrollDelay = 0.05;
+	kScrollDelay = 0.05,
+	kIsFocusClickDelay = 0.01;
 
 }
 
@@ -111,6 +112,7 @@ MTextView::MTextView(
 	, mCaret(0)
 	, mLastClickTime(0)
 	, mLastScrollTime(0)
+	, mLastFocusTime(0)
 	, mInTick(false)
 	, mClickMode(eSelectNone)
 {
@@ -178,8 +180,14 @@ bool MTextView::OnButtonPressEvent(
 	GdkEventButton*		inEvent)
 {
 	// short cut
-	if (mDocument == nil or inEvent->button != 1 or inEvent->type != GDK_BUTTON_PRESS)
+	if (mDocument == nil or
+		inEvent->button != 1 or
+		inEvent->type != GDK_BUTTON_PRESS or
+		GetLocalTime() < mLastFocusTime + kIsFocusClickDelay)
+	{
+		mLastFocusTime = 0;
 		return MView::OnButtonPressEvent(inEvent);
+	}
 
 	if (mLastClickTime + 250 > inEvent->time)
 		mClickCount = mClickCount % 3 + 1;
@@ -1255,6 +1263,8 @@ bool MTextView::OnFocusInEvent(
 		gtk_im_context_focus_in(mIMContext);
 	
 		TakeFocus();
+		
+		mLastFocusTime = GetLocalTime();
 	}
 	
 	return true;

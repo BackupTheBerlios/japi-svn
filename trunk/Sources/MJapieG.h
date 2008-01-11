@@ -141,6 +141,12 @@ class MJapieApp : public MHandler
 	static void			EventHandler(
 							GdkEvent*			inEvent,
 							gpointer			inData); 
+
+	static GdkFilterReturn
+						ClientMessageFilter(
+							GdkXEvent*			inXEvent,
+							GdkEvent*			inEvent,
+							gpointer			data);
 	
 	void				ProcessSocketMessages();
 	

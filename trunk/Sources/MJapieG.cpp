@@ -365,6 +365,9 @@ void MJapieApp::RunEventLoop()
 		if (fs::exists(pp))
 			OpenProject(pp);
 	}
+	
+//	gdk_add_client_message_filter(gdk_atom_intern_static_string("_NET_RESTACK_WINDOW"),
+//		&MJapieApp::ClientMessageFilter, this);
 
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
@@ -379,6 +382,16 @@ void MJapieApp::RunEventLoop()
 	gdk_threads_leave();
 	
 	gtk_key_snooper_remove(snooper);
+}
+
+GdkFilterReturn MJapieApp::ClientMessageFilter(
+	GdkXEvent*			inXEvent,
+	GdkEvent*			inEvent,
+	gpointer			data)
+{
+	PRINT(("Received ClientMessage: "));
+	
+	return GDK_FILTER_CONTINUE;
 }
 
 gint MJapieApp::Snooper(
