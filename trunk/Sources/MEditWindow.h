@@ -59,6 +59,12 @@ class MEditWindow : public MDocWindow
 	MEventIn<void(bool)>					eShellStatus;
 	MEventIn<void(float,std::string)>		eSSHProgress;
 
+	virtual void		AddRoutes(
+							MDocument*		inDocument);
+	
+	virtual void		RemoveRoutes(
+							MDocument*		inDocument);
+
   protected:
 
 	void				SelectionChanged(

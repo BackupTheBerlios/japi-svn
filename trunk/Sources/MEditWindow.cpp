@@ -369,3 +369,23 @@ void MEditWindow::SSHProgress(
 		mSSHProgress->Progress(inFraction, inMessage);
 	}
 }
+
+void MEditWindow::AddRoutes(
+	MDocument*		inDocument)
+{
+	MDocument::AddRoutes(inDocument);
+	
+	AddRoute(inDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
+	AddRoute(inDocument->eShellStatus, mEditWindow->eShellStatus);
+	AddRoute(inDocument->eSSHProgress, mEditWindow->eSSHProgress);
+}
+
+void MEditWindow::RemoveRoutes(
+	MDocument*		inDocument)
+{
+	MDocWindow::RemoveRoutes(inDocument);
+	
+	RemoveRoute(inDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
+	RemoveRoute(inDocument->eShellStatus, mEditWindow->eShellStatus);
+	RemoveRoute(inDocument->eSSHProgress, mEditWindow->eSSHProgress);
+}

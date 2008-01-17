@@ -14,7 +14,7 @@
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
-		<path>Lib</path>
+		<path>/usr/pkg/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -23,6 +23,7 @@
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
 			<file>MDocument.cpp</file>
+			<file>MTextDocument.cpp</file>
 			<file>MDocClosedNotifier.cpp</file>
 			<file>MTextView.cpp</file>
 			<file>MMenu.cpp</file>

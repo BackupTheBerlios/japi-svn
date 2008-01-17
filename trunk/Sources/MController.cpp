@@ -65,8 +65,6 @@ void MController::SetWindow(
 	mDocWindow = dynamic_cast<MDocWindow*>(inWindow);
 	THROW_IF_NIL(mDocWindow);
 	
-	mEditWindow = dynamic_cast<MEditWindow*>(inWindow);
-
 	AddRoute(eDocumentChanged, mDocWindow->eDocumentChanged);
 }
 
@@ -78,16 +76,7 @@ void MController::SetDocument(MDocument* inDocument)
 	{
 		if (mDocument != nil)
 		{
-			RemoveRoute(mDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
-			RemoveRoute(mDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
-			
-			if (mEditWindow != nil)
-			{
-				RemoveRoute(mDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
-				RemoveRoute(mDocument->eShellStatus, mEditWindow->eShellStatus);
-				RemoveRoute(mDocument->eSSHProgress, mEditWindow->eSSHProgress);
-			}
-
+			mDocWindow->RemoveRoutes(mDocument);
 			mDocument->RemoveController(this);
 		}
 		
@@ -96,16 +85,7 @@ void MController::SetDocument(MDocument* inDocument)
 		if (mDocument != nil)
 		{
 			mDocument->AddController(this);
-
-			AddRoute(mDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
-			AddRoute(mDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
-			
-			if (mEditWindow != nil)
-			{
-				AddRoute(mDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
-				AddRoute(mDocument->eShellStatus, mEditWindow->eShellStatus);
-				AddRoute(mDocument->eSSHProgress, mEditWindow->eSSHProgress);
-			}
+			mDocWindow->AddRoutes(mDocument);
 		}
 		
 		eDocumentChanged(mDocument);

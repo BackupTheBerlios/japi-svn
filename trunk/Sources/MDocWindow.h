@@ -56,6 +56,12 @@ class MDocWindow : public MWindow
 
 	MDocument*			GetDocument();
 
+	virtual void		AddRoutes(
+							MDocument*		inDocument);
+	
+	virtual void		RemoveRoutes(
+							MDocument*		inDocument);
+
   protected:
 
 	static std::string	GetUntitledTitle();

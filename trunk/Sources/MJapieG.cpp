@@ -36,11 +36,12 @@
 #include <sys/socket.h>
 #include <cerrno>
 #include <signal.h>
+#include <libintl.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MEditWindow.h"
 #include "MPreferences.h"
 #include "MGlobals.h"
@@ -232,7 +233,7 @@ bool MJapieApp::ProcessCommand(
 		case 'test':
 		{
 			MProjectWindow* w = new MProjectWindow();
-			w->Initialize(new MDocument(nil));
+			w->Initialize(new MTextDocument(nil));
 			w->Select();
 			break;
 		}
@@ -297,7 +298,7 @@ void MJapieApp::UpdateWindowMenu(
 	MDocument* doc = MDocument::GetFirstDocument();
 	while (doc != nil)
 	{
-		if (not doc->IsWorksheet())
+		if (doc != MTextDocument::GetWorksheet())
 		{
 			string label;
 			
@@ -482,7 +483,7 @@ void MJapieApp::DoCloseAll(
 	{
 		MDocument* next = doc->GetNextDocument();
 		
-		if (not doc->IsModified() and not doc->IsWorksheet())
+		if (not doc->IsModified() and doc != MTextDocument::GetWorksheet())
 		{
 			MController* controller = doc->GetFirstController();
 			
@@ -505,7 +506,7 @@ void MJapieApp::DoCloseAll(
 	{
 		MDocument* next = doc->GetNextDocument();
 
-		if (not doc->IsWorksheet() or inAction == kSaveChangesQuittingApplication)
+		if (doc != MTextDocument::GetWorksheet() or inAction == kSaveChangesQuittingApplication)
 		{
 			MController* controller = doc->GetFirstController();
 			
@@ -541,7 +542,7 @@ void MJapieApp::DoQuit()
 
 void MJapieApp::DoNew()
 {
-	MDocument*	doc = new MDocument(nil);
+	MDocument*	doc = new MTextDocument(nil);
 	MDocWindow::DisplayDocument(doc);
 }
 
@@ -638,10 +639,10 @@ MDocument* MJapieApp::OpenOneDocument(
 		OpenProject(inFileRef.GetPath());
 	else
 	{
-		doc = MDocument::GetDocumentForURL(inFileRef, false);
+		doc = MDocument::GetDocumentForURL(inFileRef);
 	
 		if (doc == nil)
-			doc = new MDocument(&inFileRef);
+			doc = new MTextDocument(&inFileRef);
 	
 		MDocWindow::DisplayDocument(doc);
 	}
@@ -657,10 +658,10 @@ void MJapieApp::OpenProject(
 {
 	AddToRecentMenu(MUrl(inPath));
 	
-	auto_ptr<MProject> project(new MProject(inPath));
-	project->Initialize();
-	project->Show();
-	project.release();
+//	auto_ptr<MProject> project(new MProject(inPath));
+//	project->Initialize();
+//	project->Show();
+//	project.release();
 }
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
@@ -685,7 +686,7 @@ void MJapieApp::DoOpenTemplate(
 	boost::algorithm::replace_all(text, "$name$", GetUserName(false));
 	boost::algorithm::replace_all(text, "$shortname$", GetUserName(true));
 	
-	MDocument* doc = new MDocument(nil);
+	MTextDocument* doc = new MTextDocument(nil);
 	doc->SetText(text.c_str(), text.length());
 	doc->SetFileNameHint(inTemplate);
 	MDocWindow::DisplayDocument(doc);
@@ -708,8 +709,8 @@ void MJapieApp::ShowWorksheet()
 	}
 		
 	MDocument* doc = OpenOneDocument(MUrl(worksheet));
-	if (doc != nil)
-		doc->SetWorksheet(true);
+	if (doc != nil and dynamic_cast<MTextDocument*>(doc) != nil)
+		MTextDocument::SetWorksheet(static_cast<MTextDocument*>(doc));
 }
 
 gboolean MJapieApp::Timeout(
@@ -823,12 +824,12 @@ void MJapieApp::ProcessSocketMessages()
 						break;
 					
 					case 'new ':
-						doc = new MDocument(nil);
+						doc = new MTextDocument(nil);
 						break;
 					
 					case 'data':
 						readStdin = true;
-						doc = new MDocument(nil);
+						doc = new MTextDocument(nil);
 						break;
 				}
 				

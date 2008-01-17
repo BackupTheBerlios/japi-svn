@@ -2152,17 +2152,6 @@ void MProject::SelectTarget(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::TargetSelected
-
-void MProject::TargetSelected()
-{
-	int32 target = gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup));
-	
-	if (target >= 0)
-		SelectTarget(target);
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::SelectPanel
 
 void MProject::SelectPanel(
@@ -2240,7 +2229,7 @@ void MProject::ResearchForFiles()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::ResearchForFiles
+//	MProject::GetItem
 
 MProjectItem* MProject::GetItem(
 	int32				inItemNr)

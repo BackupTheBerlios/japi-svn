@@ -24,6 +24,7 @@ Leuk om te hebben:
 - functie parser voor HTML/JS/CSS
 - spelling checker
 - Invoegen... menu item(s)
+- tags support
 
 - Afronden Find Dialog:
 	- Replace All in Multi mode verbeteren (melding aantal?)
@@ -61,3 +62,5 @@ Leuk om te hebben:
 
 - linker schrijven
 - debugger
+
+- libglade vervangen door gtkbuilder (als GtkBuilder werkt...)

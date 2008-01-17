@@ -209,3 +209,17 @@ void MDocWindow::FileSpecChanged(
 		SetTitle(GetUntitledTitle());
 }
 
+void MDocWindow::AddRoutes(
+	MDocument*		inDocument)
+{
+	AddRoute(inDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
+	AddRoute(inDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+}
+
+void MDocWindow::RemoveRoutes(
+	MDocument*		inDocument)
+{
+	RemoveRoute(inDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
+	RemoveRoute(inDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+}
+

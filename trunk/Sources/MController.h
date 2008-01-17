@@ -126,16 +126,10 @@ class MController : public MHandler, public MSaverMixin
 						MController(const MController&);
 	MController&		operator=(const MController&);
 
-//	OSStatus			DoTextInputUpdateActiveInputArea(EventRef inEvent);
-//	OSStatus			DoTextInputUnicodeForKeyEvent(EventRef inEvent);
-//	OSStatus			DoTextInputOffsetToPos(EventRef inEvent);
-////	OSStatus			DoTextInputPosToOffset(EventRef inEvent);
-
 	typedef std::list<MTextView*>	TextViewArray;
 
 	MDocument*			mDocument;
 	MDocWindow*			mDocWindow;
-	MEditWindow*		mEditWindow;
 	TextViewArray		mTextViews;
 	bool				mCloseOnNavTerminate;
 };
