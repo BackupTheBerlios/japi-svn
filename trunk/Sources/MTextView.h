@@ -44,13 +44,13 @@ class MDocument;
 class MDocWindow;
 class MController;
 class MDevice;
-class MScrollBar;
 
 class MTextView : public MView, public MHandler
 {
   public:
 						MTextView(
-							MScrollBar*			inVScrollBar);
+							GtkWidget*			inTextViewWidget,
+							GtkWidget*			inVScrollBar);
 						
 	virtual				~MTextView();
 	
@@ -224,8 +224,7 @@ class MTextView : public MView, public MHandler
 	
 	bool				OnRetrieveSurrounding();
 
-	void				OnSBValueChanged(
-							uint32			inValue);
+	void				OnVScrollBarValueChanged();
 	
 	MSlot<bool(gchar*)>						slOnCommit;
 	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
@@ -233,6 +232,7 @@ class MTextView : public MView, public MHandler
 	MSlot<bool()>							slOnPreeditStart;
 	MSlot<bool()>							slOnPreeditEnd;
 	MSlot<bool()>							slOnRetrieveSurrounding;
+	MSlot<void()>							slOnVScrollBarValueChanged;
 
 	bool				OnEvent(
 							GdkEvent*		inEvent);
@@ -262,7 +262,7 @@ class MTextView : public MView, public MHandler
 	
 	MController*		mController;
 	MDocument*			mDocument;
-	MScrollBar*			mVScrollBar;
+	GtkWidget*			mVScrollBar;
 	int32				mLineHeight;
 	int32				mDescent;
 	int32				mImageOriginX, mImageOriginY;

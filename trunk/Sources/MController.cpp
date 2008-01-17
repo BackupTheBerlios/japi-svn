@@ -32,24 +32,15 @@
 
 #include "MJapieG.h"
 
-#include "MDocument.h"
-#include "MDocWindow.h"
-#include "MController.h"
+#include "MEditWindow.h"
 #include "MTextView.h"
-//#include "MTextViewContainer.h"
-#include "MCommands.h"
 #include "MFindDialog.h"
 #include "MClipboard.h"
-//#include "MApplication.h"
 #include "MGoToLineDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MMarkMatchingDialog.h"
-#include "MUnicode.h"
-#include "MGlobals.h"
 #include "MProject.h"
 #include "MLanguage.h"
-//#include "MDocInfoDialog.h"
-#include "MUtils.h"
 #include "MSound.h"
 #include "MDiffWindow.h"
 
@@ -66,29 +57,36 @@ MController::~MController()
 	assert(mDocument == nil);
 }
 
-void MController::SetWindow(MWindow* inWindow)
+void MController::SetWindow(
+	MWindow*	inWindow)
 {
 	SetSuper(inWindow);
 	
-	mWindow = dynamic_cast<MDocWindow*>(inWindow);
-	THROW_IF_NIL(mWindow);
+	mDocWindow = dynamic_cast<MDocWindow*>(inWindow);
+	THROW_IF_NIL(mDocWindow);
+	
+	mEditWindow = dynamic_cast<MEditWindow*>(inWindow);
 
-	AddRoute(eDocumentChanged, mWindow->eDocumentChanged);
+	AddRoute(eDocumentChanged, mDocWindow->eDocumentChanged);
 }
 
 void MController::SetDocument(MDocument* inDocument)
 {
-	assert(mWindow);
+	assert(mDocWindow);
 	
 	if (inDocument != mDocument)
 	{
 		if (mDocument != nil)
 		{
-			RemoveRoute(mDocument->eModifiedChanged, mWindow->eModifiedChanged);
-			RemoveRoute(mDocument->eFileSpecChanged, mWindow->eFileSpecChanged);
-			RemoveRoute(mDocument->eSelectionChanged, mWindow->eSelectionChanged);
-			RemoveRoute(mDocument->eShellStatus, mWindow->eShellStatus);
-			RemoveRoute(mDocument->eSSHProgress, mWindow->eSSHProgress);
+			RemoveRoute(mDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
+			RemoveRoute(mDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+			
+			if (mEditWindow != nil)
+			{
+				RemoveRoute(mDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
+				RemoveRoute(mDocument->eShellStatus, mEditWindow->eShellStatus);
+				RemoveRoute(mDocument->eSSHProgress, mEditWindow->eSSHProgress);
+			}
 
 			mDocument->RemoveController(this);
 		}
@@ -99,11 +97,15 @@ void MController::SetDocument(MDocument* inDocument)
 		{
 			mDocument->AddController(this);
 
-			AddRoute(mDocument->eModifiedChanged, mWindow->eModifiedChanged);
-			AddRoute(mDocument->eFileSpecChanged, mWindow->eFileSpecChanged);
-			AddRoute(mDocument->eSelectionChanged, mWindow->eSelectionChanged);
-			AddRoute(mDocument->eShellStatus, mWindow->eShellStatus);
-			AddRoute(mDocument->eSSHProgress, mWindow->eSSHProgress);
+			AddRoute(mDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
+			AddRoute(mDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+			
+			if (mEditWindow != nil)
+			{
+				AddRoute(mDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
+				AddRoute(mDocument->eShellStatus, mEditWindow->eShellStatus);
+				AddRoute(mDocument->eSSHProgress, mEditWindow->eSSHProgress);
+			}
 		}
 		
 		eDocumentChanged(mDocument);
@@ -140,6 +142,9 @@ bool MController::ProcessCommand(
 	const MMenu*	inMenu,
 	uint32			inItemIndex)
 {
+	if (mDocument == nil)	// shortcut
+		return false;
+
 	bool result = false;
 	
 	if (mDocument != nil)
@@ -433,6 +438,9 @@ bool MController::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
+	if (mDocument == nil)	// shortcut
+		return false;
+	
 	bool result = true;
 
 	MProject* project = MProject::Instance();
@@ -591,9 +599,9 @@ bool MController::TryCloseDocument(
 			if (mDocument->IsSpecified())
 				name = mDocument->GetURL().GetFileName();
 			else
-				name = mWindow->GetTitle();
+				name = mDocWindow->GetTitle();
 			
-			MSaverMixin::TryCloseDocument(inAction, name, mWindow);
+			MSaverMixin::TryCloseDocument(inAction, name, mDocWindow);
 		}
 	}
 	
@@ -627,9 +635,9 @@ void MController::SaveDocumentAs()
 	if (mDocument->IsSpecified())
 		name = mDocument->GetURL().GetFileName();
 	else
-		name = mWindow->GetTitle();
+		name = mDocWindow->GetTitle();
 	
-	MSaverMixin::SaveDocumentAs(mWindow, name);
+	MSaverMixin::SaveDocumentAs(mDocWindow, name);
 }
 
 void MController::TryDiscardChanges()
@@ -637,7 +645,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	MSaverMixin::TryDiscardChanges(mDocument->GetURL().GetFileName(), mWindow);
+	MSaverMixin::TryDiscardChanges(mDocument->GetURL().GetFileName(), mDocWindow);
 }
 
 bool MController::SaveDocument()
@@ -688,7 +696,7 @@ void MController::CloseAfterNavigationDialog()
 //	if (mDocument)
 //		err = mDocument->DoTextInputUpdateActiveInputArea(inEvent);
 //
-//	mWindow->FlushIfNeeded();
+//	mDocWindow->FlushIfNeeded();
 //
 //	return err;
 //}
@@ -699,7 +707,7 @@ void MController::CloseAfterNavigationDialog()
 //	if (mDocument)
 //		err = mDocument->DoTextInputUnicodeForKeyEvent(inEvent);
 //
-//	mWindow->FlushIfNeeded();
+//	mDocWindow->FlushIfNeeded();
 //
 //	return err;
 //}
@@ -710,7 +718,7 @@ void MController::CloseAfterNavigationDialog()
 //	if (mDocument)
 //		err = mDocument->DoTextInputOffsetToPos(inEvent);
 //
-//	mWindow->FlushIfNeeded();
+//	mDocWindow->FlushIfNeeded();
 //
 //	return err;
 //}
@@ -721,8 +729,8 @@ void MController::CloseAfterNavigationDialog()
 ////	if (mDocument)
 ////		err = mDocument->DoTextInputPosToOffset(inEvent);
 ////
-////	if (::HIViewGetNeedsDisplay(mWindow->GetContentViewRef()))
-////		::HIWindowFlush(mWindow->GetSysWindow());
+////	if (::HIViewGetNeedsDisplay(mDocWindow->GetContentViewRef()))
+////		::HIWindowFlush(mDocWindow->GetSysWindow());
 ////
 ////	return err;
 ////}
@@ -732,7 +740,7 @@ void MController::DoGoToLine()
 	if (mDocument == nil)
 		return;
 	
-	new MGoToLineDialog(mDocument, mWindow);
+	new MGoToLineDialog(mDocument, mDocWindow);
 }
 
 bool MController::OpenInclude(
@@ -781,7 +789,7 @@ void MController::DoOpenIncludeFile()
 	
 	if (selection.IsEmpty())
 	{
-		new MFindAndOpenDialog(this, mWindow);
+		new MFindAndOpenDialog(this, mDocWindow);
 		result = true;
 	}
 	else
@@ -876,13 +884,13 @@ void MController::DoOpenCounterpart()
 
 MTextView* MController::GetTextView()
 {
-//	return mWindow->FindViewByID<MTextView>(128);
+//	return mDocWindow->FindViewByID<MTextView>(128);
 	return nil;
 }
 
 MTextViewContainer* MController::GetContainer()
 {
-//	return mWindow->FindViewByID<MTextViewContainer>(127);
+//	return mDocWindow->FindViewByID<MTextViewContainer>(127);
 	return nil;
 }
 
@@ -891,6 +899,6 @@ void MController::DoMarkMatching()
 	if (mDocument == nil)
 		return;
 	
-	new MMarkMatchingDialog(mDocument, mWindow);
+	new MMarkMatchingDialog(mDocument, mDocWindow);
 }
 

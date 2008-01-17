@@ -55,6 +55,7 @@
 #include "MAlerts.h"
 #include "MDiffWindow.h"
 #include "MResources.h"
+#include "MProjectWindow.h"
 
 #include <iostream>
 
@@ -229,7 +230,12 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
+		{
+			MProjectWindow* w = new MProjectWindow();
+			w->Initialize(new MDocument(nil));
+			w->Select();
 			break;
+		}
 		
 		case cmd_ShowDiffWindow:
 			new MDiffWindow;

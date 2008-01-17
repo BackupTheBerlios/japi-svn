@@ -55,7 +55,8 @@ GdkCursor* gGdkCursors[eCursorCount];
 
 MView::MView(
 	GtkWidget*		inWidget,
-	bool			inCanActivate)
+	bool			inCanActivate,
+	bool			inCanDraw)
 	: mFocusInEvent(this, &MView::OnFocusInEvent)
 	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
 	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
@@ -75,7 +76,7 @@ MView::MView(
 	, mGtkWidget(nil)
 	, mPangoContext(nil)
 {
-	SetWidget(inWidget, inCanActivate, false);
+	SetWidget(inWidget, inCanActivate, inCanDraw);
 }
 
 MView::MView(

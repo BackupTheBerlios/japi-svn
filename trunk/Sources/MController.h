@@ -51,6 +51,7 @@ class MTextViewContainer;
 class MDocument;
 class MWindow;
 class MDocWindow;
+class MEditWindow;
 
 class MController : public MHandler, public MSaverMixin
 {
@@ -133,7 +134,8 @@ class MController : public MHandler, public MSaverMixin
 	typedef std::list<MTextView*>	TextViewArray;
 
 	MDocument*			mDocument;
-	MDocWindow*			mWindow;
+	MDocWindow*			mDocWindow;
+	MEditWindow*		mEditWindow;
 	TextViewArray		mTextViews;
 	bool				mCloseOnNavTerminate;
 };

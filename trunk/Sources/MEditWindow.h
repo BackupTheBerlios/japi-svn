@@ -34,8 +34,10 @@
 #define MEDITWINDOW_H
 
 #include "MDocWindow.h"
+#include "MSelection.h"
 
 class MParsePopup;
+class MSSHProgress;
 
 class MEditWindow : public MDocWindow
 {
@@ -50,21 +52,31 @@ class MEditWindow : public MDocWindow
 	static MEditWindow*	FindWindowForDocument(
 							MDocument*		inDocument);
 
-	void				Initialize(
+	virtual void		Initialize(
 							MDocument*		inDocument);
 	
-	virtual void		DocumentChanged(
-							MDocument* 		inDocument);
+	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
+	MEventIn<void(bool)>					eShellStatus;
+	MEventIn<void(float,std::string)>		eSSHProgress;
 
   protected:
 
-	virtual bool		DoClose();
+	void				SelectionChanged(
+							MSelection		inNewSelection,
+							std::string		inRangeName);
 
-	virtual void		ModifiedChanged(
-							bool			inModified);
+	void				ShellStatus(
+							bool			inActive);
 
-	virtual void		FileSpecChanged(
-							const MUrl&		inFile);
+	void				SSHProgress(
+							float			inFraction,
+							std::string		inMessage);
+	
+	MTextView*			mTextView;
+	GtkWidget*			mSelectionPanel;
+	MParsePopup*		mParsePopup;
+	MParsePopup*		mIncludePopup;
+	MSSHProgress*		mSSHProgress;
 };
 
 #endif

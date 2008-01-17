@@ -134,14 +134,13 @@ class MMenubar
 {
   public:
 					MMenubar(
-						MHandler*			inTarget,
-						GtkWidget*			inContainer,
-						GtkWidget*			inWindow);
+						MHandler*			inTarget);
 
 	void			AddMenu(
 						MMenu*				inMenu);
 
-	void			BuildFromResource(
+	void			Initialize(
+						GtkWidget*			inMBarWidget,
 						const char*			inResourceName);
 
   private:

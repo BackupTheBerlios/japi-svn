@@ -34,11 +34,7 @@
 #define MPROJECT_H
 
 #include "MFile.h"
-#include "MWindow.h"
-#include "MCallbacks.h"
-#include "MSaverMixin.h"
 #include "MProjectItem.h"
-#include "MMenu.h"
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -46,11 +42,9 @@
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlwriter.h>
 
-class MListView;
 class MMessageWindow;
 class MProjectJob;
 class MProjectTarget;
-class MDevice;
 
 enum MProjectListPanel
 {
@@ -61,13 +55,21 @@ enum MProjectListPanel
 	ePanelCount
 };
 
-class MProject : public MWindow, public MSaverMixin
+class MProject
 {
   public:
 						MProject(
-							const MPath&		inPath);
+							const MPath&		inProjectFile);
 
 	virtual				~MProject();
+
+	void				Read();
+
+	bool				ReadState(
+							MRect&				outWindowPosition);
+
+	bool				Write(
+							std::ostream*		inFile);
 
 	const MPath&		GetPath() const			{ return mProjectFile; }
 
@@ -76,25 +78,7 @@ class MProject : public MWindow, public MSaverMixin
 	static void			CloseAllProjects(
 							MCloseReason		inAction);
 
-	void				Initialize();
-
 	static void			RecheckFiles();
-
-	virtual bool		ProcessCommand(
-							uint32				inCommand,
-							const MMenu*		inMenu,
-							uint32				inItemIndex);
-
-	virtual bool		UpdateCommandStatus(
-							uint32				inCommand,
-							MMenu*				inMenu,
-							uint32				inItemIndex	,
-							bool&				outEnabled,
-							bool&				outChecked);
-
-	void				SetStatus(
-							const std::string&	inMessage,
-							bool				inActive);
 
 	MMessageWindow*		GetMessageWindow();
 
@@ -144,70 +128,10 @@ class MProject : public MWindow, public MSaverMixin
 	void				CreateNewGroup(
 							const std::string&	inGroupName);
 
-	MEventIn<void()>	eProjectFileStatusChanged;
+	MEventOut<void(std::string,bool)>
+						eStatus;
 
   protected:
-
-	virtual bool		SaveDocument();
-	virtual void		RevertDocument();
-	virtual bool		DoSaveAs(
-							const MUrl&			inPath);
-	virtual void		CloseAfterNavigationDialog();
-
-	virtual bool		DoClose();
-
-	void				DrawProjectItem(
-							MDevice&			inDevice,
-							MRect				inFrame,
-							uint32				inRow,
-							bool				inSelected,
-							const void*			inData,
-							uint32				inDataLength);
-
-	void				ClickProjectItem(
-							MRect				inFrame,
-							uint32				inRow,
-							int32				inX,
-							int32				inY);
-
-	void				FileItemDragged(
-							uint32				inTargetRow,
-							uint32				inNewRow,
-							bool				inDropUnder);
-
-	void				LinkOrderItemDragged(
-							uint32				inTargetRow,
-							uint32				inNewRow,
-							bool				inDropUnder);
-
-	void				PackageItemDragged(
-							uint32				inTargetRow,
-							uint32				inNewRow,
-							bool				inDropUnder);
-
-	void				FilesDropped(
-							uint32				inTargetRow,
-							std::vector<MPath>	inFiles);
-
-	void				PackageFilesDropped(
-							uint32				inTargetRow,
-							std::vector<MPath>	inFiles);
-
-	void				InvokeProjectItem(
-							uint32				inItemNr);
-	
-	void				IsContainerItem(
-							uint32				inItemNr,
-							bool&				outIsContainer);
-
-	void				DeleteProjectItem(
-							uint32				inItemNr);
-
-	void				ProjectFileStatusChanged();
-	
-//						// to check for cancel events
-//	OSStatus			DoRawKeyDown(
-//							EventRef			ioEvent);
 
 	void				Poll(
 							double				inSystemTime);
@@ -298,9 +222,6 @@ class MProject : public MWindow, public MSaverMixin
 							const std::vector<std::string>&
 												inOptions);
 
-	bool				Write(
-							std::ostream*		inFile);
-
 	void				CheckDataDir();
 
 	void				UpdateList();
@@ -313,32 +234,14 @@ class MProject : public MWindow, public MSaverMixin
 	void				SelectTarget(
 							uint32				inTarget);
 	
-	void				SelectPanel(
-							MProjectListPanel	inPanel);
-
 	void				ResearchForFiles();
 
-	void				SetModified(
-							bool				inModified);
-
-	void				Read();
-
-	bool				ReadState();
-	
-						// convenience routine, get the ProjectItem from the current list
-	MProjectItem*		GetItem(
-							int32				inItemNr);
-
-	void				TargetSelected();
-
-	MSlot<void()>			mTargetSelected;
 	MEventIn<void(double)>	ePoll;
 
-	bool				mModified;
 	std::string			mName;
-	MProjectTarget*		mCurrentTarget;
 	MPath				mProjectFile;
 	MPath				mProjectDir;
+	MProjectTarget*		mCurrentTarget;
 	MPath				mOutputDir;
 	MPath				mProjectDataDir;
 	MPath				mObjectDir;
@@ -365,20 +268,6 @@ class MProject : public MWindow, public MSaverMixin
 	
 	std::auto_ptr<MProjectJob>
 						mCurrentJob;
-
-	MListView*			mFileList;
-	MListView*			mLinkOrderList;
-	MListView*			mPackageList;
-
-	GtkWidget*			mVBox;
-	MMenubar			mMenubar;
-	GtkWidget*			mTargetPopup;
-	uint32				mTargetPopupCount;
-	GtkWidget*			mPanelSegment;
-	GtkWidget*			mFilePanel;
-	GtkWidget*			mLinkOrderPanel;
-	GtkWidget*			mPackagePanel;
-	GtkWidget*			mStatusPanel;
 
 	static MProject*	sInstance;
 	MProject*			mNext;

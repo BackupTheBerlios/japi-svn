@@ -47,7 +47,6 @@
 #include "MStyles.h"
 #include "MUtils.h"
 #include "MDevice.h"
-#include "MScrollBar.h"
 
 #ifndef NDEBUG
 #include <iostream>
@@ -80,8 +79,9 @@ const double
 //	Default constructor
 
 MTextView::MTextView(
-	MScrollBar*		inVScrollBar)
-	: MView(-1, -1)
+	GtkWidget*		inTextViewWidget,
+	GtkWidget*		inVScrollBar)
+	: MView(inTextViewWidget, true, true)
 	, MHandler(nil)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
@@ -100,6 +100,8 @@ MTextView::MTextView(
 	, slOnPreeditStart(this, &MTextView::OnPreeditStart)
 	, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
 	, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
+	
+	, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
 	
 	, slOnEvent(this, &MTextView::OnEvent)
 	
@@ -127,7 +129,8 @@ MTextView::MTextView(
 	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
 	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
 	
-	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
+//	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
+	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
 
 	slOnEvent.Connect(GetGtkWidget(), "event");
 
@@ -616,10 +619,10 @@ void MTextView::DrawLine(
 	}
 }
 
-void MTextView::OnSBValueChanged(
-	uint32			inValue)
+void MTextView::OnVScrollBarValueChanged()
 {
-	DoScrollTo(mImageOriginX, inValue);
+	DoScrollTo(mImageOriginX, 
+		static_cast<int32>(gtk_range_get_value(GTK_RANGE(mVScrollBar))));
 }
 
 void MTextView::AdjustScrollBars()
@@ -637,9 +640,19 @@ void MTextView::AdjustScrollBars()
 	
 	uint32 linesPerPage = bounds.height / mLineHeight;
 
-	mVScrollBar->SetAdjustmentValues(0, height,
-		mLineHeight, linesPerPage * mLineHeight,
-		bounds.height, mImageOriginY);
+	GtkAdjustment* adj = gtk_range_get_adjustment(GTK_RANGE(mVScrollBar));
+	
+	if (adj != nil)
+	{
+		adj->lower = 0;
+		adj->upper = height;
+		adj->step_increment = mLineHeight;
+		adj->page_increment = linesPerPage * mLineHeight;
+		adj->page_size = bounds.height;
+		adj->value = mImageOriginY;
+		
+		gtk_adjustment_changed(adj);
+	}
 }
 
 bool MTextView::OnConfigureEvent(
@@ -667,8 +680,8 @@ void MTextView::DoScrollTo(
 	mImageOriginX = inX;
 	mImageOriginY = inY;
 	
-	mVScrollBar->SetValue(inY);
-//	
+	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
+
 //	UpdateNow();
 }
 

@@ -571,27 +571,23 @@ void MMenu::OnSelectionDone()
 // --------------------------------------------------------------------
 
 MMenubar::MMenubar(
-	MHandler*		inTarget,
-	GtkWidget*		inContainer,
-	GtkWidget*		inWindow)
+	MHandler*		inTarget)
 	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
+	, mGtkMenubar(nil)
 	, mTarget(inTarget)
 	, mWindowMenu(nil)
 	, mTemplateMenu(nil)
 {
-	mGtkMenubar = gtk_menu_bar_new();
 	mGtkAccel = gtk_accel_group_new();
-
-	gtk_box_pack_start(GTK_BOX(inContainer), mGtkMenubar, false, false, 0);
-	gtk_widget_show_all(mGtkMenubar);
-	
-	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
-//	gtk_window_add_accel_group(GTK_WINDOW(inWindow), mGtkAccel);
 }
 
-void MMenubar::BuildFromResource(
+void MMenubar::Initialize(
+	GtkWidget*		inMBarWidget,
 	const char*		inResourceName)
 {
+	mGtkMenubar = inMBarWidget;
+	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
+	
 	const char* xml;
 	uint32 size;
 	
@@ -635,6 +631,8 @@ void MMenubar::BuildFromResource(
 	}
 	
 	xmlCleanupParser();
+	
+	gtk_widget_show_all(mGtkMenubar);
 }
 
 MMenu* MMenubar::CreateMenu(

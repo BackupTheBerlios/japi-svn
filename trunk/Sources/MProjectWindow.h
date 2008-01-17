@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2006, Maarten L. Hekkelman
+	Copyright (c) 2008, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,68 +30,44 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MDOCWINDOW_H
-#define MDOCWINDOW_H
+#ifndef MPROJECTWINDOW_H
+#define MPROJECTWINDOW_H
 
-#include "MWindow.h"
+#include "MDocWindow.h"
 #include "MDocument.h"
-#include "MController.h"
-#include "MMenu.h"
 
-class MDocWindow : public MWindow
+class MProject;
+
+class MProjectWindow : public MDocWindow
 {
   public:
-						MDocWindow(
-							const char*		inResource);
-
-	static MDocWindow*	DisplayDocument(
-							MDocument*		inDocument);
-
-	static MDocWindow*	FindWindowForDocument(
-							MDocument*		inDocument);
+					MProjectWindow();
 	
-	MEventIn<void(bool)>					eModifiedChanged;
-	MEventIn<void(const MUrl&)>				eFileSpecChanged;
-	MEventIn<void(MDocument*)>				eDocumentChanged;
+	virtual void	Initialize(
+						MDocument*		inDocument);
 
-	MDocument*			GetDocument();
+	virtual bool	UpdateCommandStatus(
+						uint32			inCommand,
+						MMenu*			inMenu,
+						uint32			inItemIndex,
+						bool&			outEnabled,
+						bool&			outChecked);
+
+	virtual bool	ProcessCommand(
+						uint32			inCommand,
+						const MMenu*	inMenu,
+						uint32			inItemIndex);
 
   protected:
 
-	static std::string	GetUntitledTitle();
+	void			InvokeFileRow(
+						GtkTreePath*		inPath,
+						GtkTreeViewColumn*	inColumn);
 
-	virtual void		Initialize(
-							MDocument*		inDocument);
+	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+					mInvokeFileRow;
 
-	virtual void		DocumentChanged(
-							MDocument*		inDocument);
-
-	virtual bool		DoClose();
-
-	virtual bool		UpdateCommandStatus(
-							uint32			inCommand,
-							MMenu*			inMenu,
-							uint32			inItemIndex,
-							bool&			outEnabled,
-							bool&			outChecked);
-
-	virtual bool		ProcessCommand(
-							uint32			inCommand,
-							const MMenu*	inMenu,
-							uint32			inItemIndex);
-
-	virtual void		ModifiedChanged(
-							bool			inModified);
-
-	virtual void		FileSpecChanged(
-							const MUrl&		inFile);
-	
-  protected:
-
-	MController			mController;
-	MMenubar			mMenubar;
-
-	virtual				~MDocWindow();
+	MProject*		mProject;
 };
 
 #endif

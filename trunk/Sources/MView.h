@@ -114,7 +114,8 @@ class MView
 
 					MView(
 						GtkWidget*		inWidget,
-						bool			inCanActivate);
+						bool			inCanActivate,
+						bool			inCanDraw = false);
 
 					MView();
 
