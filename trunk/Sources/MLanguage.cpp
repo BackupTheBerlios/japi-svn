@@ -547,16 +547,13 @@ MLanguage::SetStyle(
 {
 	if (mStyles != nil and mOffsets != nil)
 	{
-		if (inStyle != mStyles[mLastStyleIndex])
+		if (mLastStyleIndex < kMaxStyles and inStyle != mStyles[mLastStyleIndex])
 		{
 			if (inOffset > mOffsets[mLastStyleIndex])
 				++mLastStyleIndex;
 			
-			if (mLastStyleIndex < kMaxStyles)
-			{
-				mStyles[mLastStyleIndex] = inStyle;
-				mOffsets[mLastStyleIndex] = inOffset;
-			}
+			mStyles[mLastStyleIndex] = inStyle;
+			mOffsets[mLastStyleIndex] = inOffset;
 		}
 	}
 }

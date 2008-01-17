@@ -375,6 +375,11 @@ MLanguagePerl::StyleLine(
 					ioState = STRING;
 					mc = '\'';
 				}
+				else if (c == '`')
+				{
+					ioState = STRING;
+					mc = '`';
+				}
 				else if (c == '&')
 					ioState = SCOPE;
 				else if (c == '$')
@@ -394,7 +399,7 @@ MLanguagePerl::StyleLine(
 				else if (c == '\n' or c == 0)
 					leave = true;
 				else if (not isspace(c))
-					start_regex = not isalnum(c);
+					start_regex = not (isalnum(c) or c == ')');
 					
 				if (leave or (ioState != START and s < i))
 				{

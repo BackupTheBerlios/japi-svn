@@ -145,9 +145,9 @@ bool MSshAgent::GetFirstIdentity(
 	
 	if (RequestReply(out, mIdentities))
 	{
-#if DEBUG
-		mIdentities.Dump();
-#endif
+//#if DEBUG
+//		mIdentities.Dump();
+//#endif
 		mIdentities >> msg;
 		
 		if (msg == SSH2_AGENT_IDENTITIES_ANSWER)

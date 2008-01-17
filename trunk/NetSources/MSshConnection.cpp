@@ -603,9 +603,9 @@ void MSshConnection::Send(string inMessage)
 
 void MSshConnection::Send(const MSshPacket& inPacket)
 {
-#if DEBUG
-	inPacket.Dump();
-#endif
+//#if DEBUG
+//	inPacket.Dump();
+//#endif
 	Send(Wrap(inPacket.data));
 }
 
@@ -748,9 +748,9 @@ void MSshConnection::ProcessPacket()
 	MSshPacket in, out;
 	in.data = fInPacket;
 
-#if DEBUG
-	in.Dump();
-#endif
+//#if DEBUG
+//	in.Dump();
+//#endif
 
 	switch (message)
 	{
@@ -1800,7 +1800,7 @@ void MSshConnection::ProcessChannel(
 	
 	in >> msg >> channelId;
 	
-	PRINT(("%s for channel %d", LookupToken(kTokens, msg), channelId));
+	PRINT(("<< %s for channel %d", LookupToken(kTokens, msg), channelId));
 	
 	ChannelList::iterator ch = find_if(fChannels.begin(), fChannels.end(),
 		boost::bind(&MSshChannel::GetMyChannelID, _1) == channelId);
