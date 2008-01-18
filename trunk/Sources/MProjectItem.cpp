@@ -194,7 +194,7 @@ MProjectItem::MProjectItem(
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectItem::MProjectItem
+//	MProjectItem::GetPosition
 
 int32 MProjectItem::GetPosition() const
 {
@@ -207,6 +207,25 @@ int32 MProjectItem::GetPosition() const
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectItem::GetSiblingPosition
+
+int32 MProjectItem::GetSiblingPosition() const
+{
+	int32 result = 0;
+	
+	if (mParent != nil)
+	{
+		vector<MProjectItem*>::iterator i = find(
+			mParent->GetItems().begin(), mParent->GetItems().end(),
+			this);
+		
+		result = i - mParent->GetItems().begin();
+	}
+
+	return result;
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectItem::GetLevel
 
 uint32 MProjectItem::GetLevel() const
@@ -214,6 +233,29 @@ uint32 MProjectItem::GetLevel() const
 	uint32 result = 0;
 	if (mParent != nil)
 		result = mParent->GetLevel() + 1;
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectItem::GetNext
+
+MProjectItem* MProjectItem::GetNextSibling() const
+{
+	MProjectItem* result = nil;
+
+	if (mParent != nil)
+	{
+		vector<MProjectItem*>::iterator i = find(
+			mParent->GetItems().begin(), mParent->GetItems().end(),
+			this);
+		
+		if (i != mParent->GetItems().end() and
+			i + 1 != mParent->GetItems().end())
+		{
+			result = *(i + 1);
+		}
+	}
+
 	return result;
 }
 
@@ -584,6 +626,15 @@ uint32 MProjectGroup::Count() const
 {
 	return accumulate(mItems.begin(), mItems.end(), 1,
 		boost::bind(plus<uint32>(), _1, boost::bind(&MProjectItem::Count, _2)));
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectGroup::GetItem
+
+MProjectItem* MProjectGroup::GetItem(
+	uint32				inIndex) const
+{
+	return mItems.at(inIndex);
 }
 
 // ---------------------------------------------------------------------------

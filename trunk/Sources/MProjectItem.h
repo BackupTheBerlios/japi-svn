@@ -57,6 +57,10 @@ class MProjectItem
 						MProjectGroup*		inParent)		{ mParent = inParent; }
 
 	virtual int32	GetPosition() const;
+	
+	virtual int32	GetSiblingPosition() const;
+	
+	MProjectItem*	GetNextSibling() const;
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
@@ -212,6 +216,9 @@ class MProjectGroup : public MProjectItem
 
 	std::vector<MProjectItem*>&
 					GetItems()								{ return mItems; }
+
+	MProjectItem*	GetItem(
+						uint32				inIndex) const;
 
   private:
 	std::vector<MProjectItem*>

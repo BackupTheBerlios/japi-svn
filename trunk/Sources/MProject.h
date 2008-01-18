@@ -133,8 +133,6 @@ class MProject : public MDocument
 	MEventOut<void(std::string,bool)>
 						eStatus;
 
-  protected:
-
 	virtual void		ReadFile(
 							std::istream&		inFile);
 

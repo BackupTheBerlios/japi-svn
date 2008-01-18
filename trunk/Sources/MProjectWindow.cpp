@@ -147,6 +147,8 @@ void MProjectFilesTreeModel::GetValue(
 	GValue*			outValue) const
 {
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
+
+	g_value_init(outValue, GetColumnType(inColumn));
 	
 	if (item != nil)
 	{
@@ -161,12 +163,27 @@ void MProjectFilesTreeModel::GetValue(
 				break;
 			
 			case kFilesDataSizeColumn:
-				g_value_set_string(outValue, "");
-				break;
-	
 			case kFilesTextSizeColumn:
-				g_value_set_string(outValue, "");
+			{
+				uint32 size;
+				if (inColumn == kFilesDataSizeColumn)
+					size = item->GetDataSize();
+				else
+					size = item->GetTextSize();
+				
+				stringstream s;
+				if (size >= 1024 * 1024 * 1024)
+					s << (size / (1024 * 1024 * 1024)) << 'G';
+				else if (size >= 1024 * 1024)
+					s << (size / (1024 * 1024)) << 'M';
+				else if (size >= 1024)
+					s << (size / (1024)) << 'K';
+				else if (size >= 1024 * 1024 * 1024)
+					s << size;
+				
+				g_value_set_string(outValue, s.str().c_str());
 				break;
+			}
 		}
 	}
 }
@@ -185,19 +202,19 @@ bool MProjectFilesTreeModel::GetIter(
 	for (int32 ix = 0; ix < depth and item != nil; ++ix)
 	{
 		MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
-		THROW_IF_NIL(group);
-		
-		if (indices[ix] < 0 or indices[ix] >= group->Count())
-			THROW(("Index in path out of range"));
-		
-		item = group->GetItems()[ix];
+		if (group != nil)
+			item = group->GetItem(indices[ix]);
+		else
+		{
+			item = nil;
+			break;
+		}
 	}
 	
+	outIter->user_data = item;
+
 	if (item != nil)
-	{
-		outIter->user_data = item;
 		result = true;
-	}
 	
 	return result;
 }
@@ -210,7 +227,7 @@ GtkTreePath* MProjectFilesTreeModel::GetPath(
 	
 	while (item->GetParent() != nil)
 	{
-		gtk_tree_path_prepend_index(path, item->GetPosition());
+		gtk_tree_path_prepend_index(path, item->GetSiblingPosition());
 		item = item->GetParent();
 	}
 	
@@ -225,16 +242,12 @@ bool MProjectFilesTreeModel::Next(
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(ioIter->user_data);
 	
 	if (item != nil)
+		item = item->GetNextSibling();
+
+	if (item != nil)
 	{
-		MProjectGroup* parent = item->GetParent();
-		int32 ix = item->GetPosition();
-		
-		if (parent != nil and ix + 1 < parent->Count())
-		{
-			item = parent->GetItems()[ix + 1];
-			ioIter->user_data = item;
-			result = true;
-		}
+		ioIter->user_data = item;
+		result = true;
 	}
 	
 	return result;
@@ -262,6 +275,9 @@ bool MProjectFilesTreeModel::Children(
 			result = true;
 		}
 	}
+
+	if (not result)
+		outIter->user_data = 0;
 	
 	return result;
 }
@@ -290,7 +306,7 @@ int32 MProjectFilesTreeModel::CountChildren(
 		if (group != nil)
 			result = group->Count();
 	}
-	
+
 	return result;
 }
 
@@ -316,6 +332,8 @@ bool MProjectFilesTreeModel::GetChild(
 		outIter->user_data = group->GetItems()[inIndex];
 		result = true;
 	}
+	else
+		outIter->user_data = 0;
 	
 	return result;
 }
@@ -333,6 +351,8 @@ bool MProjectFilesTreeModel::GetParent(
 		outIter->user_data = item->GetParent();
 		result = true;
 	}
+	else
+		outIter->user_data = 0;
 	
 	return result;
 }
@@ -366,21 +386,17 @@ MProjectWindow::MProjectWindow()
 	GtkWidget* treeView = GetWidget(kFilesListViewID);
 	THROW_IF_NIL((treeView));
 
+//	gtk_tree_view_set_level_indentation(GTK_TREE_VIEW(treeView), 10);
+
 	// create the tree store for the Files tree
 //	mFilesTree = new MProjectFilesTreeModel(mProject);
 //	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
 	
 	// Add the columns and renderers
 
-	// first the dirty mark	
-	GtkCellRenderer* renderer = gtk_cell_renderer_pixbuf_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
-		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
 	// the name column
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
+	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
 		_("File"), renderer, "text", kFilesNameColumn, nil);
 	g_object_set(G_OBJECT(column), "expand", true, nil);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
@@ -401,6 +417,12 @@ MProjectWindow::MProjectWindow()
 		_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
 	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
 	gtk_tree_view_column_set_alignment(column, 1.0f);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
+
+	// at last the dirty mark	
+	renderer = gtk_cell_renderer_pixbuf_new();
+	column = gtk_tree_view_column_new_with_attributes(
+		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
 
 	gtk_widget_show_all(treeView);
@@ -440,7 +462,17 @@ void MProjectWindow::InvokeFileRow(
 	GtkTreePath*		inPath,
 	GtkTreeViewColumn*	inColumn)
 {
-	cout << "Row invoked" << endl;
+	GtkTreeIter iter;
+	if (gtk_tree_model_get_iter(mFilesTree->GetModel(), &iter, inPath))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
+		if (file != nil)
+		{
+			MPath p = file->GetPath();
+			gApp->OpenOneDocument(MUrl(p));
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -699,4 +731,6 @@ void MProjectWindow::SyncInterfaceWithProject()
 		gtk_combo_box_append_text(GTK_COMBO_BOX(wdgt), (*t)->GetName().c_str());
 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), 0);
+	
+	mProject->SelectTarget(0);
 }

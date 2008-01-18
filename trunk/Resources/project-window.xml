@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Fri Jan 18 12:00:02 2008 by maarten@zuinig-->
+<!--Generated with glade3 3.1.5 on Fri Jan 18 15:36:40 2008 by maarten@zuinig-->
 <glade-interface>
   <widget class="GtkWindow" id="window">
     <property name="default_width">250</property>
@@ -72,8 +72,15 @@ mies</property>
           <widget class="GtkNotebook" id="notebook1">
             <property name="visible">True</property>
             <child>
-              <widget class="GtkTreeView" id="tre1">
+              <widget class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
+                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <child>
+                  <widget class="GtkTreeView" id="tre1">
+                    <property name="visible">True</property>
+                  </widget>
+                </child>
               </widget>
             </child>
             <child>
