@@ -44,40 +44,28 @@
 #include "MHandler.h"
 #include "MSaverMixin.h"
 
-#include <list>
-
-class MTextView;
-class MTextViewContainer;
 class MDocument;
 class MWindow;
 class MDocWindow;
-class MEditWindow;
 
 class MController : public MHandler, public MSaverMixin
 {
   public:
-						MController();
+						MController(
+							MHandler*		inSuper);
 
 						~MController();
 
-	MTextViewContainer*	GetContainer();
-
-	MTextView*			GetTextView();
-
 	void				SetWindow(
-							MWindow*		inWindow);
+							MDocWindow*		inWindow);
 
 	void				SetDocument(
 							MDocument*		inDocument);
 
-	MDocument*			GetDocument() const;
+	MDocument*			GetDocument() const				{ return mDocument; }
 	
-	void				AddTextView(
-							MTextView*		inTextView);
-
-	void				RemoveTextView(
-							MTextView*		inTextView);
-
+	MDocWindow*			GetWindow() const				{ return mDocWindow; }
+	
 	bool				SaveDocument();
 
 	void				RevertDocument();
@@ -109,28 +97,15 @@ class MController : public MHandler, public MSaverMixin
 							const MMenu*	inMenu,
 							uint32			inItemIndex);
 
-	bool				OpenInclude(
-							std::string		inFileName);
-
-	void				OpenCounterpart();
-
 	MEventOut<void(MDocument*)>		eDocumentChanged;
 
-  private:
-
-	void				DoGoToLine();
-	void				DoOpenIncludeFile();
-	void				DoOpenCounterpart();
-	void				DoMarkMatching();
+  protected:
 
 						MController(const MController&);
 	MController&		operator=(const MController&);
 
-	typedef std::list<MTextView*>	TextViewArray;
-
 	MDocument*			mDocument;
 	MDocWindow*			mDocWindow;
-	TextViewArray		mTextViews;
 	bool				mCloseOnNavTerminate;
 };
 

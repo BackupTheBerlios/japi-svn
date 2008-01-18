@@ -96,6 +96,9 @@ class MTextDocument : public MDocument
 
 	virtual				~MTextDocument();
 
+	static MTextDocument*
+						GetFirstTextDocument();
+
 	virtual void		SetFileNameHint(
 							const std::string&	inName);
 
@@ -535,19 +538,7 @@ class MTextDocument : public MDocument
 	void				Idle(
 							double			inSystemTime);
 	
-	typedef std::list<MController*>	MControllerList;
-	
-	MDocument*					mNext;
-	static MDocument*			sFirst;
-	MControllerList				mControllers;
-	std::vector<MDocClosedNotifier>
-								mNotifiers;
 	int							mDataFD;
-	bool						mSpecified;
-	bool						mReadOnly;
-	bool						mWarnedReadOnly;
-	MUrl						mURL;
-	double						mFileModDate;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	MLineInfoArray				mLineInfo;
@@ -563,7 +554,6 @@ class MTextDocument : public MDocument
 	MLanguage*					mLanguage;
 	MNamedRange*				mNamedRange;
 	MIncludeFileList*			mIncludeFiles;
-	bool						mDirty;
 	bool						mNeedReparse;
 	bool						mSoftwrap;
 	bool						mFastFindMode;

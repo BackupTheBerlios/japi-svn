@@ -62,6 +62,11 @@ bool MHandler::UpdateCommandStatus(
 		result = mSuper->UpdateCommandStatus(
 			inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 	}
+	else
+	{
+		outEnabled = false;
+		outChecked = false;
+	}
 	
 	return result;
 }

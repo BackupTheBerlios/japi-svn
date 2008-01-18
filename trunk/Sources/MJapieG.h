@@ -89,6 +89,9 @@ class MJapieApp : public MHandler
 
 	MDocument*			AskOpenOneDocument();
 
+	MDocWindow*			DisplayDocument(
+							MDocument*			inDocument);
+
 	void				OpenProject(
 							const MPath&		inPath);
 

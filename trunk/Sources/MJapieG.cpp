@@ -201,7 +201,7 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case cmd_OpenIncludeFile:
-			new MFindAndOpenDialog(nil, nil);
+			new MFindAndOpenDialog(MProject::Instance(), MWindow::GetFirstWindow());
 			break;
 		
 		case cmd_Worksheet:
@@ -352,7 +352,7 @@ void MJapieApp::DoSelectWindowFromWindowMenu(
 		doc = doc->GetNextDocument();
 	
 	if (doc != nil)
-		MDocWindow::DisplayDocument(doc);	
+		DisplayDocument(doc);	
 }	
 
 void MJapieApp::RecycleWindow(
@@ -533,17 +533,39 @@ void MJapieApp::DoQuit()
 			Preferences::SetString("last project", p);
 		}
 		
-		MProject::CloseAllProjects(kSaveChangesQuittingApplication);
+//		MProject::CloseAllProjects(kSaveChangesQuittingApplication);
 	}
 	
 	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
 		gtk_main_quit();
 }
 
+MDocWindow* MJapieApp::DisplayDocument(
+	MDocument*		inDocument)
+{
+	MDocWindow* result = MDocWindow::FindWindowForDocument(inDocument);
+	
+	if (result == nil)
+	{
+		if (dynamic_cast<MTextDocument*>(inDocument) != nil)
+		{
+			MEditWindow* e = new MEditWindow;
+			e->Initialize(inDocument);
+			e->Show();
+
+			result = e;
+		}
+	}
+	
+	result->Select();
+	
+	return result;
+}
+
 void MJapieApp::DoNew()
 {
 	MDocument*	doc = new MTextDocument(nil);
-	MDocWindow::DisplayDocument(doc);
+	DisplayDocument(doc);
 }
 
 void MJapieApp::SetCurrentFolder(
@@ -622,7 +644,7 @@ void MJapieApp::DoOpen()
 	gtk_widget_destroy(dialog);
 	
 	if (doc != nil)
-		MDocWindow::DisplayDocument(doc); 
+		DisplayDocument(doc); 
 }
 
 // ---------------------------------------------------------------------------
@@ -644,7 +666,7 @@ MDocument* MJapieApp::OpenOneDocument(
 		if (doc == nil)
 			doc = new MTextDocument(&inFileRef);
 	
-		MDocWindow::DisplayDocument(doc);
+		DisplayDocument(doc);
 	}
 	
 	return doc;
@@ -658,10 +680,12 @@ void MJapieApp::OpenProject(
 {
 	AddToRecentMenu(MUrl(inPath));
 	
-//	auto_ptr<MProject> project(new MProject(inPath));
-//	project->Initialize();
-//	project->Show();
-//	project.release();
+	auto_ptr<MProject> project(new MProject(inPath));
+	auto_ptr<MProjectWindow> w(new MProjectWindow());
+	w->Initialize(project.get());
+	project.release();
+	w->Show();
+	w.release();
 }
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
@@ -689,7 +713,7 @@ void MJapieApp::DoOpenTemplate(
 	MTextDocument* doc = new MTextDocument(nil);
 	doc->SetText(text.c_str(), text.length());
 	doc->SetFileNameHint(inTemplate);
-	MDocWindow::DisplayDocument(doc);
+	DisplayDocument(doc);
 }
 
 void MJapieApp::ShowWorksheet()
@@ -835,7 +859,7 @@ void MJapieApp::ProcessSocketMessages()
 				
 				if (doc != nil)
 				{
-					MDocWindow::DisplayDocument(doc);
+					DisplayDocument(doc);
 					doc->AddNotifier(notify, readStdin);
 				}
 			}

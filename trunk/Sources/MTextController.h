@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2008, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,56 +30,65 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*	$Id$
-	Copyright Maarten L. Hekkelman
-	Created 28-09-07 21:35:07
+/*
+	Model = MDocument
+	View = MTextView
+	Controller = MController
+
 */
 
-#ifndef MSCROLLBAR_H
-#define MSCROLLBAR_H
 
-#include "MView.h"
-#include "MCallbacks.h"
+#ifndef MTEXTCONTROLLER_H
+#define MTEXTCONTROLLER_H
 
-class MScrollBar : public MView
+#include "MController.h"
+#include <list>
+
+class MTextView;
+
+class MTextController : public MController
 {
   public:
-						MScrollBar(
-							bool			inVertical);
+						MTextController(
+							MHandler*		inSuper);
 
-	GtkAdjustment*		GetAdjustment() const		{ return mAdjustment; }
+						~MTextController();
 
-	uint32				GetValue() const;
+	MTextView*			GetTextView();
 
-	void				SetValue(
-							uint32			inValue);
+	void				AddTextView(
+							MTextView*		inTextView);
 
-	void				GetAdjustmentValues(
-							uint32&			outLower,
-							uint32&			outUpper,
-							uint32&			outStepIncrement,
-							uint32&			outPageIncrement,
-							uint32&			outPageSize,
-							uint32&			outValue) const;
+	void				RemoveTextView(
+							MTextView*		inTextView);
 
-	void				SetAdjustmentValues(
-							uint32			inLower,
-							uint32			inUpper,
-							uint32			inStepIncrement,
-							uint32			inPageIncrement,
-							uint32			inPageSize,
-							uint32			inValue);
+	virtual bool		UpdateCommandStatus(
+							uint32			inCommand,
+							MMenu*			inMenu,
+							uint32			inItemIndex,
+							bool&			outEnabled,
+							bool&			outChecked);
 
-	MCallBack<void(uint32)>	cbValueChanged;
+	virtual bool		ProcessCommand(
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
+
+	bool				OpenInclude(
+							std::string		inFileName);
+
+	void				OpenCounterpart();
 
   private:
 
-	void				OnValueChanged();
+	void				DoGoToLine();
+	void				DoOpenIncludeFile();
+	void				DoOpenCounterpart();
+	void				DoMarkMatching();
 
-	MSlot<void()>		slOnValueChanged;
+	typedef std::list<MTextView*>	TextViewArray;
 
-	GtkAdjustment*		mAdjustment;
-	uint32				mValue;
+	TextViewArray		mTextViews;
 };
 
-#endif // MSCROLLBAR_H
+#endif

@@ -37,6 +37,7 @@
 #include "MDocument.h"
 
 class MProject;
+class MTreeModelInterface;
 
 class MProjectWindow : public MDocWindow
 {
@@ -58,7 +59,15 @@ class MProjectWindow : public MDocWindow
 						const MMenu*	inMenu,
 						uint32			inItemIndex);
 
+	MEventIn<void(std::string,bool)>	eStatus;
+	
   protected:
+
+	void			SyncInterfaceWithProject();
+
+	void			SetStatus(
+						std::string		inStatus,
+						bool			inHide);
 
 	void			InvokeFileRow(
 						GtkTreePath*		inPath,
@@ -68,6 +77,8 @@ class MProjectWindow : public MDocWindow
 					mInvokeFileRow;
 
 	MProject*		mProject;
+	MTreeModelInterface*
+					mFilesTree;
 };
 
 #endif

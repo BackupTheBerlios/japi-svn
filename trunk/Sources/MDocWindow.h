@@ -44,9 +44,6 @@ class MDocWindow : public MWindow
 						MDocWindow(
 							const char*		inResource);
 
-	static MDocWindow*	DisplayDocument(
-							MDocument*		inDocument);
-
 	static MDocWindow*	FindWindowForDocument(
 							MDocument*		inDocument);
 	
@@ -94,7 +91,7 @@ class MDocWindow : public MWindow
 	
   protected:
 
-	MController			mController;
+	MController*		mController;
 	MMenubar			mMenubar;
 
 	virtual				~MDocWindow();

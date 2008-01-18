@@ -38,51 +38,93 @@
 #ifndef SELECTION_H
 #define SELECTION_H
 
-class MDocument;
+class MTextDocument;
 
 class MSelection
 {
   public:
 					MSelection();
-					MSelection(uint32 inAnchor, uint32 inCaret);
-					MSelection(uint32 inAnchorLine, uint32 inAnchorColumn,
-						uint32 inCaretLine, uint32 inCaretColumn);
-					MSelection(const MSelection& inSelection);
+
+					MSelection(
+						uint32				inAnchor,
+						uint32				inCaret);
+
+					MSelection(
+						uint32				inAnchorLine,
+						uint32				inAnchorColumn,
+						uint32				inCaretLine,
+						uint32				inCaretColumn);
+
+					MSelection(
+						const MSelection&	inSelection);
 	
-	bool			operator==(const MSelection& inOther) const;
-	bool			operator!=(const MSelection& inOther) const;
+	bool			operator==(
+						const MSelection&	inOther) const;
+
+	bool			operator!=(
+						const MSelection&	inOther) const;
 	
 	bool			IsBlock() const;
+
 	bool			IsEmpty() const;
 
-	void			Set(uint32 inAnchor, uint32 inCaret);
-	void			Set(uint32 inAnchorLine, uint32 inAnchorColumn,
-						uint32 inCaretLine, uint32 inCaretColumn);
+	void			Set(
+						uint32				inAnchor,
+						uint32				inCaret);
+
+	void			Set(
+						uint32				inAnchorLine,
+						uint32				inAnchorColumn,
+						uint32				inCaretLine,
+						uint32				inCaretColumn);
 
 	uint32			GetAnchor() const;
-	void			SetAnchor(uint32 inAnchor);
+
+	void			SetAnchor(
+						uint32				inAnchor);
 
 	uint32			GetCaret() const;
-	void			SetCaret(uint32 inCaret);
 
-	void			GetAnchorLineAndColumn(MDocument& inDoc,
-						uint32& outLine, uint32& outColumn) const;
-	void			GetCaretLineAndColumn(MDocument& inDoc,
-						uint32& outLine, uint32& outColumn) const;
+	void			SetCaret(
+						uint32				inCaret);
 
-	uint32			GetMinLine(MDocument& inDoc) const;
-	uint32			GetMaxLine(MDocument& inDoc) const;
-	uint32			GetMinColumn(MDocument& inDoc) const;
-	uint32			GetMaxColumn(MDocument& inDoc) const;
-	uint32			GetMinOffset(MDocument& inDoc) const;
-	uint32			GetMaxOffset(MDocument& inDoc) const;
+	void			GetAnchorLineAndColumn(
+						MTextDocument&		inDoc,
+						uint32&				outLine,
+						uint32&				outColumn) const;
+
+	void			GetCaretLineAndColumn(
+						MTextDocument&		inDoc,
+						uint32&				outLine,
+						uint32&				outColumn) const;
+
+	uint32			GetMinLine(
+						MTextDocument&		inDoc) const;
+
+	uint32			GetMaxLine(
+						MTextDocument&		inDoc) const;
+
+	uint32			GetMinColumn(
+						MTextDocument&		inDoc) const;
+
+	uint32			GetMaxColumn(
+						MTextDocument&		inDoc) const;
+
+	uint32			GetMinOffset(
+						MTextDocument&		inDoc) const;
+
+	uint32			GetMaxOffset(
+						MTextDocument&		inDoc) const;
 
 	uint32			GetMinOffset() const;
+
 	uint32			GetMaxOffset() const;
 	
-	uint32			CountLines(MDocument& inDoc) const;
+	uint32			CountLines(
+						MTextDocument&		inDoc) const;
 	
-	MSelection		SelectLines(MDocument& inDoc) const;
+	MSelection		SelectLines(
+						MTextDocument&		inDoc) const;
 
   private:
 	

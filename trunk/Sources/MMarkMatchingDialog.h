@@ -40,19 +40,19 @@
 
 #include "MDialog.h"
 
-class MDocument;
+class MTextDocument;
 
 class MMarkMatchingDialog : public MDialog
 {
   public:
-					MMarkMatchingDialog(
-						MDocument*	inDocument,
-						MWindow*	inWindow);
+						MMarkMatchingDialog(
+							MTextDocument*	inDocument,
+							MWindow*		inWindow);
 
-	virtual bool	OKClicked();
+	virtual bool		OKClicked();
 	
   private:
-	MDocument*		mDocument;
+	MTextDocument*		mDocument;
 };
 
 #endif // MMARKMATCHINGDIALOG_H

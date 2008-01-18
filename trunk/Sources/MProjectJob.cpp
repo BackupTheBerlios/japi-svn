@@ -54,6 +54,7 @@
 #include "MProject.h"
 #include "MProjectJob.h"
 #include "MObjectFile.h"
+#include "MError.h"
 
 extern char** environ;
 

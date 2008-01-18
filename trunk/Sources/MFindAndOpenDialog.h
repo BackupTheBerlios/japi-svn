@@ -40,19 +40,25 @@
 
 #include "MDialog.h"
 
-class MController;
+class MTextController;
+class MProject;
 
 class MFindAndOpenDialog : public MDialog
 {
   public:
-					MFindAndOpenDialog(
-						MController*	inController,
-						MWindow*		inWindow);
+						MFindAndOpenDialog(
+							MTextController*	inController,
+							MWindow*			inWindow);
 
-	virtual bool	OKClicked();
+						MFindAndOpenDialog(
+							MProject*			inProject,
+							MWindow*			inWindow);
+
+	virtual bool		OKClicked();
 	
   private:
-	MController*	mController;
+	MTextController*	mController;
+	MProject*			mProject;
 };
 
 #endif // MFINDANDOPENDIALOG_H

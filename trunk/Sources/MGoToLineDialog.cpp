@@ -38,7 +38,7 @@
 #include "MJapieG.h"
 
 #include "MGoToLineDialog.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUtils.h"
@@ -55,7 +55,7 @@ enum
 }
 
 MGoToLineDialog::MGoToLineDialog(
-	MDocument*		inDocument,
+	MTextDocument*	inDocument,
 	MWindow*		inWindow)
 	: MDialog("go-to-line-dialog")
 	, mDocument(inDocument)

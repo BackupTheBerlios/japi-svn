@@ -36,7 +36,7 @@
 #include <cassert>
 
 #include "MDocWindow.h"
-#include "MEditWindow.h"
+#include "MDocWindow.h"
 #include "MStrings.h"
 
 using namespace std;
@@ -50,6 +50,7 @@ MDocWindow::MDocWindow(
 	, eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
+	, mController(nil)
 	, mMenubar(this)
 {
 	GdkGeometry geom = {};
@@ -60,18 +61,22 @@ MDocWindow::MDocWindow(
 
 MDocWindow::~MDocWindow()
 {
+	delete mController;
 }
 
 void MDocWindow::Initialize(
 	MDocument*		inDocument)
 {
-	mController.SetWindow(this);
-	mController.SetDocument(inDocument);
+	if (mController == nil)
+		mController = new MController(this);
+	
+	mController->SetWindow(this);
+	mController->SetDocument(inDocument);
 }
 
 bool MDocWindow::DoClose()
 {
-	return mController.TryCloseController(kSaveChangesClosingDocument);
+	return mController->TryCloseController(kSaveChangesClosingDocument);
 }
 
 MDocWindow* MDocWindow::FindWindowForDocument(MDocument* inDocument)
@@ -89,25 +94,6 @@ MDocWindow* MDocWindow::FindWindowForDocument(MDocument* inDocument)
 	}
 
 	return static_cast<MDocWindow*>(w);
-}
-
-MDocWindow* MDocWindow::DisplayDocument(
-	MDocument*		inDocument)
-{
-	MDocWindow* result = FindWindowForDocument(inDocument);
-	
-	if (result == nil)
-	{
-		MEditWindow* e = new MEditWindow;
-		e->Initialize(inDocument);
-		e->Show();
-
-		result = e;
-	}
-	
-	result->Select();
-	
-	return result;
 }
 
 string MDocWindow::GetUntitledTitle()
@@ -130,23 +116,8 @@ bool MDocWindow::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	bool result = mController.UpdateCommandStatus(
+	return MWindow::UpdateCommandStatus(
 		inCommand, inMenu, inItemIndex, outEnabled, outChecked);
-
-	if (result == false)
-	{
-		result = true;
-		
-		switch (inCommand)
-		{
-			default:
-				result = MWindow::UpdateCommandStatus(
-					inCommand, inMenu, inItemIndex, outEnabled, outChecked);
-				break;
-		}
-	}
-	
-	return result;
 }
 
 bool MDocWindow::ProcessCommand(
@@ -154,17 +125,12 @@ bool MDocWindow::ProcessCommand(
 	const MMenu*	inMenu,
 	uint32			inItemIndex)
 {
-	bool result = mController.ProcessCommand(inCommand, inMenu, inItemIndex);
-	
-	if (result == false)
-		result = MWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
-	
-	return result;
+	return MWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
 }
 
 MDocument* MDocWindow::GetDocument()
 {
-	return mController.GetDocument();
+	return mController->GetDocument();
 }
 
 void MDocWindow::DocumentChanged(
@@ -196,7 +162,7 @@ void MDocWindow::FileSpecChanged(
 {
 	if (not inFile.IsLocal() or fs::exists(inFile.GetPath()))
 	{
-		MDocument* doc = mController.GetDocument();
+		MDocument* doc = mController->GetDocument();
 		
 		string title = inFile.str();
 		
@@ -212,14 +178,14 @@ void MDocWindow::FileSpecChanged(
 void MDocWindow::AddRoutes(
 	MDocument*		inDocument)
 {
-	AddRoute(inDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
-	AddRoute(inDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+	AddRoute(inDocument->eModifiedChanged, eModifiedChanged);
+	AddRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
 }
 
 void MDocWindow::RemoveRoutes(
 	MDocument*		inDocument)
 {
-	RemoveRoute(inDocument->eModifiedChanged, mDocWindow->eModifiedChanged);
-	RemoveRoute(inDocument->eFileSpecChanged, mDocWindow->eFileSpecChanged);
+	RemoveRoute(inDocument->eModifiedChanged, eModifiedChanged);
+	RemoveRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
 }
 

@@ -69,6 +69,7 @@
 #include "MSound.h"
 #include "MSftpChannel.h"
 #include "MAlerts.h"
+#include "MDiffWindow.h"
 
 using namespace std;
 
@@ -129,7 +130,7 @@ MTextDocument::MTextDocument(
 {
 	Init();
 	
-	if (not mURL.IsLocal())
+	if (mSpecified and not mURL.IsLocal())
 	{
 		mSFTPChannel.reset(new MSftpChannel(mURL));
 
@@ -152,10 +153,8 @@ MTextDocument::MTextDocument(
 	{
 		fs::ifstream file(mURL.GetPath(), ios::binary);
 		ReadFile(file);
+		mNeedReparse = true;
 	}
-
-	mNext = sFirst;
-	sFirst = this;
 }
 
 MTextDocument::MTextDocument()
@@ -201,6 +200,16 @@ MTextDocument::~MTextDocument()
 	delete mIncludeFiles;
 	
 	eDocumentClosed();
+}
+
+MTextDocument* MTextDocument::GetFirstTextDocument()
+{
+	MDocument* doc = GetFirstDocument();
+	
+	while (doc != nil and dynamic_cast<MTextDocument*>(doc) == nil)
+		doc = doc->GetNextDocument();
+	
+	return dynamic_cast<MTextDocument*>(doc);
 }
 
 void MTextDocument::SetFileNameHint(
@@ -359,8 +368,9 @@ void MTextDocument::ReadFile(
 			mIncludeFiles = new MIncludeFileList;
 	}
 
-	if (mTargetTextView)
-		Rewrap();
+	ReInit();
+	Rewrap();
+	UpdateDirtyLines();
 }
 
 // ---------------------------------------------------------------------------
@@ -2925,7 +2935,7 @@ void MTextDocument::DoComplete(MDirection inDirection)
 		if (mLanguage != nil)
 			mLanguage->CollectKeyWordsBeginningWith(key, mCompletionStrings);
 	
-		MDocument* doc = sFirst;
+		MDocument* doc = GetFirstDocument();
 		while (doc != nil)
 		{
 			if (doc != this and dynamic_cast<MTextDocument*>(doc) != nil)
@@ -4365,6 +4375,19 @@ bool MTextDocument::ProcessCommand(
 			result = StopRunningShellCommand();
 			break;
 		
+		case cmd_ShowDiffWindow:
+		{
+			auto_ptr<MDiffWindow> w(new MDiffWindow(this));
+			w->Select();
+			w.release();
+			break;
+		}
+
+		case cmd_Menu:
+			if (mTargetTextView != nil)
+				mTargetTextView->OnPopupMenu(nil);
+			break;
+	
 		default:
 			result = false;
 			break;
@@ -4511,7 +4534,11 @@ bool MTextDocument::UpdateCommandStatus(
 			outEnabled = true;
 			outChecked = (lang != nil and lang->GetName() == inMenu->GetItemLabel(inItemIndex));
 			break;
-		
+
+		case cmd_Menu:
+			outEnabled = mTargetTextView != nil;
+			break;
+
 		default:
 			result = false;
 			break;

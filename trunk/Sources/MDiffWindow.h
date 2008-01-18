@@ -41,7 +41,8 @@ class MDiffWindow : public MDialog
 {
   public:
 						MDiffWindow(
-							MDocument*		inDocument = nil);
+							MTextDocument*	inDocument = nil);
+
 	virtual				~MDiffWindow();
 
 	MEventIn<void()>	eDocument1Closed;
@@ -62,34 +63,53 @@ class MDiffWindow : public MDialog
 							uint32			inItemIndex);
 
 	virtual void		ValueChanged(
-							uint32				inID);
+							uint32			inID);
 
 	void				Document1Closed();
+
 	void				Document2Closed();
 
-	void				ChooseFile(int inFileNr);
-	void				MergeToFile(int inFileNr);
+	void				ChooseFile(
+							int				inFileNr);
 
-	void				SetDocument(int inDocNr, MDocument* inDocument);
-	void				SetDirectory(int inDirNr, const MPath& inPath);
+	void				MergeToFile(
+							int				inFileNr);
+
+	void				SetDocument(
+							int				inDocNr,
+							MTextDocument*	inDocument);
+
+	void				SetDirectory(
+							int				inDirNr,
+							const MPath&	inPath);
 
 	void				RecalculateDiffs();
+
 	void				RecalculateDiffsForDirs();
 	
 	void				DiffSelected();
 
 	void				DiffInvoked(
-							int32				inDiffNr);
+							int32			inDiffNr);
 	
 	MSlot<void()>		mSelected;
 
-	void				SetButtonTitle(int inButtonNr, const std::string& inTitle);
+	void				SetButtonTitle(
+							int				inButtonNr,
+							const std::string&
+											inTitle);
 
 	virtual void		FocusChanged(
-							uint32				inFocussedID);
+							uint32			inFocussedID);
 
-	void				AddDirDiff(const std::string& inName, uint32 inStatus);
-	bool				FilesDiffer(const MUrl& inA, const MUrl& inB) const;
+	void				AddDirDiff(
+							const std::string&
+											inName,
+							uint32			inStatus);
+
+	bool				FilesDiffer(
+							const MUrl&		inA,
+							const MUrl&		inB) const;
 	
 	void				ArrangeWindows();
 
@@ -101,15 +121,16 @@ class MDiffWindow : public MDialog
 							int32			inRow);
 
 	void				InvokeRow(
-							GtkTreePath*		inPath,
-							GtkTreeViewColumn*	inColumn);
+							GtkTreePath*	inPath,
+							GtkTreeViewColumn*
+											inColumn);
 
 	void				RemoveRow(
 							int32			inRow);
 
   private:
-	MDocument*			mDoc1;
-	MDocument*			mDoc2;
+	MTextDocument*		mDoc1;
+	MTextDocument*		mDoc2;
 	
 	MPath				mDir1, mDir2;
 	

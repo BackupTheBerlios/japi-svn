@@ -38,7 +38,7 @@
 #include "MJapieG.h"
 
 #include "MMarkMatchingDialog.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUtils.h"
@@ -57,8 +57,8 @@ enum
 }
 
 MMarkMatchingDialog::MMarkMatchingDialog(
-	MDocument*	inDocument,
-	MWindow*	inWindow)
+	MTextDocument*	inDocument,
+	MWindow*		inWindow)
 	: MDialog("mark-matching-dialog")
 	, mDocument(inDocument)
 {

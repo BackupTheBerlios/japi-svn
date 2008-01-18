@@ -40,19 +40,19 @@
 
 #include "MDialog.h"
 
-class MDocument;
+class MTextDocument;
 
 class MGoToLineDialog : public MDialog
 {
   public:
 					MGoToLineDialog(
-						MDocument*		inDocument,
+						MTextDocument*	inDocument,
 						MWindow*		inWindow);
 
 	virtual bool	OKClicked();
 	
   private:
-	MDocument*		mDocument;
+	MTextDocument*	mDocument;
 };
 
 #endif // MGOTOLINEDIALOG_H

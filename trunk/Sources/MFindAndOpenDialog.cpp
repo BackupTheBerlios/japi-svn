@@ -38,7 +38,8 @@
 #include "MJapieG.h"
 
 #include "MFindAndOpenDialog.h"
-#include "MController.h"
+#include "MTextController.h"
+#include "MProjectWindow.h"
 #include "MProject.h"
 #include "MPreferences.h"
 #include "MView.h"
@@ -58,10 +59,25 @@ enum {
 }
 
 MFindAndOpenDialog::MFindAndOpenDialog(
-	MController*	inController,
-	MWindow*		inWindow)
+	MTextController*	inController,
+	MWindow*			inWindow)
 	: MDialog("find-and-open-dialog")
 	, mController(inController)
+	, mProject(nil)
+{
+	SetText(kTextBoxControlID,
+		Preferences::GetString("last open include", ""));
+
+	Show(inWindow);
+	SetFocus(kTextBoxControlID);
+}
+
+MFindAndOpenDialog::MFindAndOpenDialog(
+	MProject*			inProject,
+	MWindow*			inWindow)
+	: MDialog("find-and-open-dialog")
+	, mController(nil)
+	, mProject(inProject)
 {
 	SetText(kTextBoxControlID,
 		Preferences::GetString("last open include", ""));
@@ -85,7 +101,7 @@ bool MFindAndOpenDialog::OKClicked()
 	}
 	else
 	{
-		MProject* project = dynamic_cast<MProject*>(GetParentWindow());
+		MProject* project = mProject;
 		
 		if (project == nil)
 			project = MProject::Instance();

@@ -88,6 +88,8 @@ class MDocument
 
 	uint32				CountControllers() const			{ return mControllers.size(); }
 	
+	MDocWindow*			GetWindow() const;
+	
 	virtual MController*
 						GetFirstController() const;
 
@@ -139,9 +141,6 @@ class MDocument
 	typedef std::list<MController*>			MControllerList;
 	typedef std::list<MDocClosedNotifier>	MDocClosedNotifierList;
 	
-	MDocument*			mNext;
-	static MDocument*	sFirst;
-
 	MControllerList		mControllers;
 	MDocClosedNotifierList
 						mNotifiers;
@@ -151,6 +150,10 @@ class MDocument
 	bool				mReadOnly;
 	bool				mWarnedReadOnly;
 	bool				mDirty;
+
+  private:
+	MDocument*			mNext;
+	static MDocument*	sFirst;
 };
 
 #endif

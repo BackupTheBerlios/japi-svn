@@ -35,10 +35,10 @@
 #include <sstream>
 
 #include "MEditWindow.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
+#include "MTextController.h"
 #include "MGlobals.h"
 #include "MStrings.h"
-#include "MScrollBar.h"
 #include "MTextView.h"
 #include "MUtils.h"
 #include "MMenu.h"
@@ -109,7 +109,7 @@ bool MParsePopup::OnButtonPressEvent(
 {
 	assert(mController != nil);
 	
-	MDocument* doc = mController->GetDocument();
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(mController->GetDocument());
 	if (doc != nil)
 	{
 		MMenu* popup = new MMenu("popup");
@@ -230,7 +230,8 @@ MEditWindow::MEditWindow()
 	gtk_container_add(GTK_CONTAINER(frame), mIncludePopup->GetGtkWidget());
 	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
 	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 1);
-	mIncludePopup->SetController(&mController, false);
+	mIncludePopup->SetController(mController, false);
+	gtk_widget_show_all(mIncludePopup->GetGtkWidget());
 	
 	mParsePopup = new MParsePopup(200);
 	frame = gtk_frame_new(nil);
@@ -238,13 +239,18 @@ MEditWindow::MEditWindow()
 	gtk_container_add(GTK_CONTAINER(frame), mParsePopup->GetGtkWidget());
 	gtk_box_pack_start(GTK_BOX(statusBar), frame, true, true, 0);
 	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 2);	
-	mParsePopup->SetController(&mController, true);
+	mParsePopup->SetController(mController, true);
+	gtk_widget_show_all(mParsePopup->GetGtkWidget());
 	
 	// text view
+	
+	MTextController* textController = new MTextController(this);
+	mController = textController;
+	
+	mMenubar.SetTarget(mController);
 
     mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'));
-	mController.AddTextView(mTextView);
-	mTextView->SetSuper(this);
+	textController->AddTextView(mTextView);
 	
 	ConnectChildSignals();
 
@@ -263,13 +269,15 @@ void MEditWindow::Initialize(
 {
 	MDocWindow::Initialize(inDocument);
 	
-	if (inDocument != nil)
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(inDocument);
+	
+	if (doc != nil)
 	{
 		try
 		{
 			MDocState state = {};
 		
-			if (inDocument->IsSpecified() and inDocument->ReadDocState(state))
+			if (inDocument->IsSpecified() and doc->ReadDocState(state))
 			{
 				mTextView->ScrollToPosition(state.mScrollPosition[0], state.mScrollPosition[1]);
 				
@@ -331,7 +339,10 @@ void MEditWindow::SelectionChanged(
 	try
 	{
 		uint32 line, column;
-		inNewSelection.GetCaretLineAndColumn(*GetDocument(), line, column);
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(GetDocument());
+		THROW_IF_NIL(doc);
+		
+		inNewSelection.GetCaretLineAndColumn(*doc, line, column);
 	
 		str << line + 1 << ',' << column + 1;
 	}
@@ -373,11 +384,16 @@ void MEditWindow::SSHProgress(
 void MEditWindow::AddRoutes(
 	MDocument*		inDocument)
 {
-	MDocument::AddRoutes(inDocument);
+	MDocWindow::AddRoutes(inDocument);
 	
-	AddRoute(inDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
-	AddRoute(inDocument->eShellStatus, mEditWindow->eShellStatus);
-	AddRoute(inDocument->eSSHProgress, mEditWindow->eSSHProgress);
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(inDocument);
+
+	if (doc != nil)
+	{
+		AddRoute(doc->eSelectionChanged, eSelectionChanged);
+		AddRoute(doc->eShellStatus, eShellStatus);
+		AddRoute(doc->eSSHProgress, eSSHProgress);
+	}
 }
 
 void MEditWindow::RemoveRoutes(
@@ -385,7 +401,12 @@ void MEditWindow::RemoveRoutes(
 {
 	MDocWindow::RemoveRoutes(inDocument);
 	
-	RemoveRoute(inDocument->eSelectionChanged, mEditWindow->eSelectionChanged);
-	RemoveRoute(inDocument->eShellStatus, mEditWindow->eShellStatus);
-	RemoveRoute(inDocument->eSSHProgress, mEditWindow->eSSHProgress);
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(inDocument);
+
+	if (doc != nil)
+	{
+		RemoveRoute(doc->eSelectionChanged, eSelectionChanged);
+		RemoveRoute(doc->eShellStatus, eShellStatus);
+		RemoveRoute(doc->eSSHProgress, eSSHProgress);
+	}
 }

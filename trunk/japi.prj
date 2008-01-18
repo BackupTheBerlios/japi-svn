@@ -22,6 +22,7 @@
 			<file>MJapieG.cpp</file>
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
+			<file>MTextController.cpp</file>
 			<file>MDocument.cpp</file>
 			<file>MTextDocument.cpp</file>
 			<file>MDocClosedNotifier.cpp</file>
@@ -34,12 +35,11 @@
 				<file>MWindow.cpp</file>
 				<file>MMessageWindow.cpp</file>
 			</group>
-			<file>MScrollBar.cpp</file>
 			<file>MView.cpp</file>
+			<file>MTreeModelInterface.cpp</file>
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
-			<file>MListView.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">

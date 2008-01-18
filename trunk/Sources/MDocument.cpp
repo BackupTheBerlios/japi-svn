@@ -49,12 +49,12 @@ MDocument* MDocument::sFirst;
 
 MDocument::MDocument(
 	const MUrl*			inURL)
-	: mNext(nil)
-	, mFileModDate(0)
+	: mFileModDate(0)
 	, mSpecified(false)
 	, mReadOnly(false)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
+	, mNext(nil)
 {
 	if (inURL != nil)
 	{
@@ -81,12 +81,12 @@ MDocument::MDocument(
 //	MDocument
 
 MDocument::MDocument()
-	: mNext(nil)
-	, mFileModDate(0)
+	: mFileModDate(0)
 	, mSpecified(false)
 	, mReadOnly(false)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
+	, mNext(nil)
 {
 }
 
@@ -261,7 +261,24 @@ void MDocument::RemoveController(MController* inController)
 
 MController* MDocument::GetFirstController() const
 {
-	return mControllers.front();
+	MController* controller = nil;
+	if (mControllers.size() > 0)
+		controller = mControllers.front();
+	return controller;
+}
+
+// ---------------------------------------------------------------------------
+//	GetWindow
+
+MDocWindow* MDocument::GetWindow() const
+{
+	MDocWindow* result = nil;
+	MController* controller = GetFirstController();
+	
+	if (controller != nil)
+		result = controller->GetWindow();
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------

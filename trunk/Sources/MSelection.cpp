@@ -40,7 +40,7 @@
 #include <cassert>
 
 #include "MSelection.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MError.h"
 
 using namespace std;
@@ -187,7 +187,7 @@ void MSelection::SetCaret(
 }
 
 void MSelection::GetAnchorLineAndColumn(
-	MDocument&		inDoc,
+	MTextDocument&	inDoc,
 	uint32&			outLine,
 	uint32&			outColumn) const
 {
@@ -197,7 +197,7 @@ void MSelection::GetAnchorLineAndColumn(
 }
 
 void MSelection::GetCaretLineAndColumn(
-	MDocument&		inDoc,
+	MTextDocument&	inDoc,
 	uint32&			outLine,
 	uint32&			outColumn) const
 {
@@ -207,7 +207,7 @@ void MSelection::GetCaretLineAndColumn(
 }
 
 uint32 MSelection::GetMinLine(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -230,7 +230,7 @@ uint32 MSelection::GetMinLine(
 }
 
 uint32 MSelection::GetMaxLine(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -255,7 +255,7 @@ uint32 MSelection::GetMaxLine(
 }
 
 uint32 MSelection::GetMinColumn(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -280,7 +280,7 @@ uint32 MSelection::GetMinColumn(
 }
 
 uint32 MSelection::GetMaxColumn(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -305,7 +305,7 @@ uint32 MSelection::GetMaxColumn(
 }
 
 uint32 MSelection::GetMinOffset(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -328,7 +328,7 @@ uint32 MSelection::GetMinOffset(
 }
 
 uint32 MSelection::GetMaxOffset(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	uint32 result;
 
@@ -351,7 +351,7 @@ uint32 MSelection::GetMaxOffset(
 }
 
 MSelection MSelection::SelectLines(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	MSelection result;
 	
@@ -365,7 +365,7 @@ MSelection MSelection::SelectLines(
 }
 
 uint32 MSelection::CountLines(
-	MDocument&		inDoc) const
+	MTextDocument&	inDoc) const
 {
 	return GetMaxLine(inDoc) - GetMinLine(inDoc) + 1;
 }

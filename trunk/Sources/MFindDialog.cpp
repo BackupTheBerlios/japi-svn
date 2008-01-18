@@ -40,7 +40,7 @@
 #include <boost/bind.hpp>
 
 #include "MFindDialog.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MEditWindow.h"
 #include "MPreferences.h"
 #include "MUtils.h"
@@ -51,6 +51,7 @@
 #include "MProject.h"
 #include "MSound.h"
 #include "MAlerts.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -247,7 +248,7 @@ void MFindDialog::DoFindCommand(
 	GetText(kStartDirComboboxID, where);
 	StoreComboText(kStartDirComboboxID, where, mStartDirectories);
 
-	MDocument* doc = MDocument::GetFirstDocument();
+	MTextDocument* doc = MTextDocument::GetFirstTextDocument();
 
 	if (IsExpanded(kMultiFileExpanderID))
 	{
@@ -546,13 +547,14 @@ void MFindDialog::FindNext()
 			MUrl file(mMultiFiles.front());
 			mMultiFiles.pop_front();
 		
-			MDocument* doc = MDocument::GetDocumentForURL(file, false);
+			MTextDocument* doc = dynamic_cast<MTextDocument*>(
+				MDocument::GetDocumentForURL(file));
 			
 			if (doc != nil)
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MDocument> newDoc(new MDocument(&file));
+				auto_ptr<MTextDocument> newDoc(new MTextDocument(&file));
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
@@ -565,7 +567,7 @@ void MFindDialog::FindNext()
 			{
 				MSelection s = doc->GetSelection();
 				
-				MEditWindow::DisplayDocument(doc);
+				gApp->DisplayDocument(doc);
 				
 				// center the found and selected text
 				doc->Select(s.GetAnchor(), s.GetCaret(),
@@ -598,13 +600,14 @@ void MFindDialog::ReplaceAll(
 			
 			bool found = false;
 			
-			MDocument* doc = MDocument::GetDocumentForURL(file, false);
+			MTextDocument* doc = dynamic_cast<MTextDocument*>(
+				MDocument::GetDocumentForURL(file));
 			
 			if (doc != nil)
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MDocument> newDoc(new MDocument(&file));
+				auto_ptr<MTextDocument> newDoc(new MTextDocument(&file));
 
 				if (newDoc->DoFindFirst())
 				{
@@ -625,7 +628,7 @@ void MFindDialog::ReplaceAll(
 						delete doc;
 				}
 				else
-					MEditWindow::DisplayDocument(doc);
+					gApp->DisplayDocument(doc);
 			}
 		}
 	}
@@ -666,7 +669,7 @@ void MFindDialog::FindAll(
 			bool searched = false;
 			
 			gdk_threads_enter();
-			MDocument* doc = MDocument::GetDocumentForURL(url, false);
+			MTextDocument* doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(url));
 
 			if (doc != nil)
 			{
@@ -676,7 +679,7 @@ void MFindDialog::FindAll(
 			gdk_threads_leave();
 			
 			if (not searched)
-				MDocument::FindAll(*file, inWhat, inIgnoreCase, inRegex, false, *list.get());
+				MTextDocument::FindAll(*file, inWhat, inIgnoreCase, inRegex, false, *list.get());
 		}
 		
 		mFindAllResult = list.release();

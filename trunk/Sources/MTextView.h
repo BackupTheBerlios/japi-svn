@@ -41,11 +41,12 @@
 #include "MSelection.h"
 
 class MDocument;
+class MTextDocument;
 class MDocWindow;
 class MController;
 class MDevice;
 
-class MTextView : public MView, public MHandler
+class MTextView : public MView
 {
   public:
 						MTextView(
@@ -96,23 +97,11 @@ class MTextView : public MView, public MHandler
 	MEventOut<void()>					eBoundsChanged;
 
 	void				SetDocument(
-							MDocument*			inDocument);
+							MDocument*		inDocument);
 
 	void				DocumentClosed();
 	
   protected:
-
-	virtual bool		UpdateCommandStatus(
-							uint32			inCommand,
-							MMenu*			inMenu,
-							uint32			inItemIndex,
-							bool&			outEnabled,
-							bool&			outChecked);
-
-	virtual bool		ProcessCommand(
-							uint32			inCommand,
-							const MMenu*	inMenu,
-							uint32			inItemIndex);
 
 	virtual bool		OnExposeEvent(
 							GdkEventExpose*	inEvent);
@@ -135,6 +124,8 @@ class MTextView : public MView, public MHandler
 	virtual bool		OnScrollEvent(
 							GdkEventScroll*	inEvent);
 	
+  public:
+
 	virtual void		OnPopupMenu(
 							GdkEventButton*	inEvent);
 	
@@ -261,7 +252,7 @@ class MTextView : public MView, public MHandler
 	virtual void		DragDeleteData();
 	
 	MController*		mController;
-	MDocument*			mDocument;
+	MTextDocument*		mDocument;
 	GtkWidget*			mVScrollBar;
 	int32				mLineHeight;
 	int32				mDescent;

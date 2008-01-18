@@ -143,6 +143,9 @@ class MMenubar
 						GtkWidget*			inMBarWidget,
 						const char*			inResourceName);
 
+	void			SetTarget(
+						MHandler*			inTarget);
+
   private:
 	
 	MMenu*			CreateMenu(

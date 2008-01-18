@@ -32,22 +32,14 @@
 
 #include "MJapieG.h"
 
-#include "MEditWindow.h"
-#include "MTextView.h"
-#include "MFindDialog.h"
-#include "MClipboard.h"
-#include "MGoToLineDialog.h"
-#include "MFindAndOpenDialog.h"
-#include "MMarkMatchingDialog.h"
-#include "MProject.h"
-#include "MLanguage.h"
-#include "MSound.h"
-#include "MDiffWindow.h"
+#include "MDocWindow.h"
+#include "MDocument.h"
 
 using namespace std;
 
-MController::MController()
-	: MHandler(nil)
+MController::MController(
+	MHandler*	inSuper)
+	: MHandler(inSuper)
 	, mDocument(nil)
 {
 }
@@ -58,17 +50,17 @@ MController::~MController()
 }
 
 void MController::SetWindow(
-	MWindow*	inWindow)
+	MDocWindow*		inWindow)
 {
 	SetSuper(inWindow);
 	
-	mDocWindow = dynamic_cast<MDocWindow*>(inWindow);
-	THROW_IF_NIL(mDocWindow);
+	mDocWindow = inWindow;
 	
 	AddRoute(eDocumentChanged, mDocWindow->eDocumentChanged);
 }
 
-void MController::SetDocument(MDocument* inDocument)
+void MController::SetDocument(
+	MDocument*		inDocument)
 {
 	assert(mDocWindow);
 	
@@ -92,48 +84,16 @@ void MController::SetDocument(MDocument* inDocument)
 	}
 }
 
-MDocument* MController::GetDocument() const
-{
-	return mDocument;
-}
-
-void MController::AddTextView(MTextView* inTextView)
-{
-	if (find(mTextViews.begin(), mTextViews.end(), inTextView) == mTextViews.end())
-	{
-		mTextViews.push_back(inTextView);
-		
-		AddRoute(eDocumentChanged, inTextView->eDocumentChanged);
-		
-		inTextView->SetController(this);
-	}
-}
-
-void MController::RemoveTextView(MTextView* inTextView)
-{
-	RemoveRoute(eDocumentChanged, inTextView->eDocumentChanged);
-	
-	mTextViews.erase(remove(mTextViews.begin(), mTextViews.end(), inTextView),
-		mTextViews.end());
-}
-
 bool MController::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
 	uint32			inItemIndex)
 {
-	if (mDocument == nil)	// shortcut
-		return false;
-
-	bool result = false;
+	bool result = true;
 	
-	if (mDocument != nil)
+	if (mDocument == nil or
+		not mDocument->ProcessCommand(inCommand, inMenu, inItemIndex))
 	{
-		result = true;
-		MProject* project = MProject::Instance();
-
-		string s;
-		
 		switch (inCommand)
 		{
 			case cmd_Close:
@@ -151,265 +111,15 @@ bool MController::ProcessCommand(
 			case cmd_Revert:
 				TryDiscardChanges();
 				break;
-			
-			case cmd_Undo:
-				mDocument->DoUndo();
-				break;
-	
-			case cmd_Redo:
-				mDocument->DoRedo();
-				break;
-	
-			case cmd_Cut:
-				mDocument->DoCut(false);
-				break;
-	
-			case cmd_Copy:
-				mDocument->DoCopy(false);
-				break;
-	
-			case cmd_Paste:
-				mDocument->DoPaste();
-				break;
-	
-			case cmd_Clear:
-				mDocument->DoClear();
-				break;
-	
-			case cmd_SelectAll:
-				mDocument->SelectAll();
-				break;
-	
-			case cmd_Balance:
-				mDocument->DoBalance();
-				break;
-	
-			case cmd_ShiftLeft:
-				mDocument->DoShiftLeft();
-				break;
-	
-			case cmd_ShiftRight:
-				mDocument->DoShiftRight();
-				break;
-	
-			case cmd_Entab:
-				mDocument->DoEntab();
-				break;
-	
-			case cmd_Detab:
-				mDocument->DoDetab();
-				break;
-	
-			case cmd_Comment:
-				mDocument->DoComment();
-				break;
-	
-			case cmd_Uncomment:
-				mDocument->DoUncomment();
-				break;
-	
-			case cmd_PasteNext:
-				mDocument->DoPasteNext();
-				break;
-	
-			case cmd_CopyAppend:
-				mDocument->DoCopy(true);
-				break;
-	
-			case cmd_CutAppend:
-				mDocument->DoCut(true);
-				break;
-	
-			case cmd_FastFind:
-				mDocument->DoFastFind(kDirectionForward);
-				break;
-	
-			case cmd_FastFindBW:
-				mDocument->DoFastFind(kDirectionBackward);
-				break;
-	
-			case cmd_Find:
-				MFindDialog::Instance().Select();
-				break;
-	
-			case cmd_FindNext:
-				if (not mDocument->DoFindNext(kDirectionForward))
-					PlaySound("warning");
-				break;
-	
-			case cmd_FindPrev:
-				if (not mDocument->DoFindNext(kDirectionBackward))
-					PlaySound("warning");
-				break;
-			
-			case cmd_EnterSearchString:
-				mDocument->GetSelectedText(s);
-				MFindDialog::Instance().SetFindString(s, false);
-				break;
-	
-			case cmd_EnterReplaceString:
-				mDocument->GetSelectedText(s);
-				MFindDialog::Instance().SetReplaceString(s);
-				break;
-	
-			case cmd_Replace:
-				mDocument->DoReplace(false, kDirectionForward);
-				break;
-	
-			case cmd_ReplaceAll:
-				mDocument->DoReplaceAll();
-				break;
-	
-			case cmd_ReplaceFindNext:
-				mDocument->DoReplace(true, kDirectionForward);
-				break;
-	
-			case cmd_ReplaceFindPrev:
-				mDocument->DoReplace(true, kDirectionBackward);
-				break;
-	
-			case cmd_CompleteLookingBack:
-				mDocument->DoComplete(kDirectionBackward);
-				break;
-	
-			case cmd_CompleteLookingFwd:
-				mDocument->DoComplete(kDirectionForward);
-				break;
-	
-			case cmd_ClearMarks:
-				mDocument->ClearAllMarkers();
-				break;
-	
-			case cmd_MarkLine:
-				mDocument->DoMarkLine();
-				break;
-	
-			case cmd_JumpToNextMark:
-				mDocument->DoJumpToNextMark(kDirectionForward);
-				break;
-	
-			case cmd_JumpToPrevMark:
-				mDocument->DoJumpToNextMark(kDirectionBackward);
-				break;
-			
-			case cmd_MarkMatching:
-				DoMarkMatching();
-				break;
-			
-			case cmd_CutMarkedLines:
-				mDocument->CCCMarkedLines(true, true);
-				break;
-	
-			case cmd_CopyMarkedLines:
-				mDocument->CCCMarkedLines(true, false);
-				break;
-	
-			case cmd_ClearMarkedLines:
-				mDocument->CCCMarkedLines(false, true);
-				break;
-	
-			case cmd_OpenIncludeFile:
-				DoOpenIncludeFile();
-				break;
-	
-			case cmd_GoToLine:
-				DoGoToLine();
-				break;
-	
-			case cmd_SwitchHeaderSource:
-				DoOpenCounterpart();
-				break;
-			
-			case cmd_Softwrap:
-				mDocument->DoSoftwrap();
-				break;
-	
-			case cmd_ShowDocInfoDialog:
-//				if (mDocument != nil)
-//				{
-//					std::auto_ptr<MDocInfoDialog> dlog(new MDocInfoDialog);
-//					dlog->Initialize(mDocument, mWindow);
-//					dlog.release();
-//				}
-				break;
 				
-			case cmd_SelectFunctionFromMenu:
-				mDocument->SelectParsePopupItem(inItemIndex);
-				break;
-			
-			case cmd_OpenIncludeFromMenu:
-				mDocument->SelectIncludePopupItem(inItemIndex);
-				break;
-		
-			case cmd_Preprocess:
-				if (project != nil)
-					project->Preprocess(mDocument->GetURL().GetPath());
-				break;
-				
-			case cmd_CheckSyntax:
-				if (project != nil)
-					project->CheckSyntax(mDocument->GetURL().GetPath());
-				break;
-				
-			case cmd_Compile:
-				if (project != nil)
-					project->Compile(mDocument->GetURL().GetPath());
-				break;
-
-			case cmd_Disassemble:
-				if (project != nil)
-					project->Disassemble(mDocument->GetURL().GetPath());
-				break;
-	
-			case cmd_2CharsPerTab:
-				if (mDocument != nil)
-					mDocument->SetCharsPerTab(2);
-				break;
-	
-			case cmd_4CharsPerTab:
-				if (mDocument != nil)
-					mDocument->SetCharsPerTab(4);
-				break;
-	
-			case cmd_8CharsPerTab:
-				if (mDocument != nil)
-					mDocument->SetCharsPerTab(8);
-				break;
-	
-			case cmd_16CharsPerTab:
-				if (mDocument != nil)
-					mDocument->SetCharsPerTab(16);
-				break;
-			
-			case cmd_SyntaxNone:
-				mDocument->SetLanguage("");
-				break;
-			
-			case cmd_SyntaxLanguage:
-				mDocument->SetLanguage(inMenu->GetItemLabel(inItemIndex));
-				break;
-			
-			case cmd_Stop:
-				result = mDocument->StopRunningShellCommand();
-				break;
-			
-			case cmd_ShowDiffWindow:
-			{
-				auto_ptr<MDiffWindow> w(new MDiffWindow(mDocument));
-				w->Select();
-				w.release();
-				break;
-			}
-	
 			default:
-				result = false;
+				result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex);
 				break;
 		}
 	}
 	
 	return result;
 }
-
 
 bool MController::UpdateCommandStatus(
 	uint32			inCommand,
@@ -418,141 +128,37 @@ bool MController::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	if (mDocument == nil)	// shortcut
-		return false;
-	
 	bool result = true;
 
-	MProject* project = MProject::Instance();
-	MLanguage* lang = mDocument->GetLanguage();
-
-	string title;
-		
-	switch (inCommand)
+	if (mDocument == nil or
+		not mDocument->UpdateCommandStatus(inCommand, inMenu, inItemIndex,
+				outEnabled, outChecked))
 	{
-		// always
-		case cmd_Close:
-		case cmd_SaveAs:
-		case cmd_SelectAll:
-		case cmd_MarkLine:
-		case cmd_CompleteLookingBack:
-		case cmd_CompleteLookingFwd:
-		case cmd_JumpToNextMark:
-		case cmd_JumpToPrevMark:
-		case cmd_FastFind:
-		case cmd_FastFindBW:
-		case cmd_Find:
-		case cmd_FindNext:
-		case cmd_FindPrev:
-		case cmd_ReplaceAll:
-		case cmd_Entab:
-		case cmd_Detab:
-		case cmd_SwitchHeaderSource:
-		case cmd_GoToLine:
-		case cmd_ShiftLeft:
-		case cmd_ShiftRight:
-		case cmd_OpenIncludeFile:
-		case cmd_ShowDocInfoDialog:
-		case cmd_ShowDiffWindow:
-			outEnabled = true;
-			break;
-
-		// dirty
-		case cmd_Save:
-			outEnabled = mDocument->IsModified() and
-				(not mDocument->IsSpecified() or not mDocument->IsReadOnly());
-			break;
-
-		// has selection
-		case cmd_Cut:
-		case cmd_Copy:
-		case cmd_Clear:
-		case cmd_CopyAppend:
-		case cmd_CutAppend:
-		case cmd_EnterSearchString:
-		case cmd_EnterReplaceString:
-			outEnabled = not mDocument->GetSelection().IsEmpty();
-			break;
-
-		// special
-		case cmd_Undo:
-			outEnabled = mDocument->CanUndo(title);
-			break;
-
-		case cmd_Redo:
-			outEnabled = mDocument->CanRedo(title);
-			break;
-
-		case cmd_Revert:
-			outEnabled = mDocument->IsSpecified() and mDocument->IsModified();
-			break;
-
-		case cmd_Paste:
-		case cmd_PasteNext:
-			outEnabled = MClipboard::Instance().HasData();
-			break;
-
-		case cmd_Balance:
-		case cmd_Comment:
-		case cmd_Uncomment:
-			outEnabled = mDocument->GetLanguage() != nil and
-						not mDocument->GetSelection().IsBlock();
-			break;
-
-		case cmd_Replace:
-		case cmd_ReplaceFindNext:
-		case cmd_ReplaceFindPrev:
-			outEnabled = mDocument->CanReplace();
-			break;
-		
-		case cmd_Softwrap:
-			outEnabled = true;
-			outChecked = mDocument->GetSoftwrap();
-			break;
-
-		case cmd_Preprocess:
-		case cmd_Compile:
-		case cmd_CheckSyntax:
-		case cmd_Disassemble:
-			outEnabled =
-				project != nil and
-				mDocument->GetURL().IsLocal() and
-				project->IsFileInProject(mDocument->GetURL().GetPath());
-			break;
-		
-		case cmd_2CharsPerTab:
-			outEnabled = true;
-			outChecked = mDocument->GetCharsPerTab() == 2;
-			break;
-		
-		case cmd_4CharsPerTab:
-			outEnabled = true;
-			outChecked = mDocument->GetCharsPerTab() == 4;
-			break;
-		
-		case cmd_8CharsPerTab:
-			outEnabled = true;
-			outChecked = mDocument->GetCharsPerTab() == 8;
-			break;
-		
-		case cmd_16CharsPerTab:
-			outEnabled = true;
-			outChecked = mDocument->GetCharsPerTab() == 16;
-			break;
-		
-		case cmd_SyntaxNone:
-			outEnabled = true;
-			outChecked = (lang == nil);
-			break;
-		
-		case cmd_SyntaxLanguage:
-			outEnabled = true;
-			outChecked = (lang != nil and lang->GetName() == inMenu->GetItemLabel(inItemIndex));
-			break;
-		
-		default:
-			result = false;
-			break;
+		switch (inCommand)
+		{
+			// always
+			case cmd_Close:
+			case cmd_SaveAs:
+			case cmd_Find:
+				outEnabled = true;
+				break;
+	
+			// dirty
+			case cmd_Save:
+				outEnabled =
+					mDocument->IsModified() and
+					(not mDocument->IsSpecified() or not mDocument->IsReadOnly());
+				break;
+	
+			case cmd_Revert:
+				outEnabled = mDocument->IsSpecified() and mDocument->IsModified();
+				break;
+	
+			default:
+				result = MHandler::UpdateCommandStatus(
+					inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+				break;
+		}
 	}
 	
 	return result;
@@ -565,15 +171,11 @@ bool MController::TryCloseDocument(
 
 	if (mDocument != nil)
 	{
-		if (not mDocument->IsModified() or
-			(mDocument->IsSpecified() and mDocument->IsWorksheet() and SaveDocument()))
-		{
+		if (not mDocument->IsModified())
 			SetDocument(nil);
-		}
 		else
 		{
 			result = false;
-
 			string name;	
 			
 			if (mDocument->IsSpecified())
@@ -669,216 +271,3 @@ void MController::CloseAfterNavigationDialog()
 {
 	SetDocument(nil);
 }
-
-//OSStatus MController::DoTextInputUpdateActiveInputArea(EventRef inEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	if (mDocument)
-//		err = mDocument->DoTextInputUpdateActiveInputArea(inEvent);
-//
-//	mDocWindow->FlushIfNeeded();
-//
-//	return err;
-//}
-//
-//OSStatus MController::DoTextInputUnicodeForKeyEvent(EventRef inEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	if (mDocument)
-//		err = mDocument->DoTextInputUnicodeForKeyEvent(inEvent);
-//
-//	mDocWindow->FlushIfNeeded();
-//
-//	return err;
-//}
-//
-//OSStatus MController::DoTextInputOffsetToPos(EventRef inEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	if (mDocument)
-//		err = mDocument->DoTextInputOffsetToPos(inEvent);
-//
-//	mDocWindow->FlushIfNeeded();
-//
-//	return err;
-//}
-//
-////OSStatus MController::DoTextInputPosToOffset(EventRef inEvent)
-////{
-////	OSStatus err = eventNotHandledErr;
-////	if (mDocument)
-////		err = mDocument->DoTextInputPosToOffset(inEvent);
-////
-////	if (::HIViewGetNeedsDisplay(mDocWindow->GetContentViewRef()))
-////		::HIWindowFlush(mDocWindow->GetSysWindow());
-////
-////	return err;
-////}
-
-void MController::DoGoToLine()
-{
-	if (mDocument == nil)
-		return;
-	
-	new MGoToLineDialog(mDocument, mDocWindow);
-}
-
-bool MController::OpenInclude(
-	string		inFileName)
-{
-	MProject* project = MProject::Instance();
-	MUrl url;
-
-	if (mDocument != nil)
-	{
-		url = mDocument->GetURL();
-		url.SetPath(url.GetPath().branch_path() / inFileName);
-	}
-	
-	bool result = false;
-	
-	if (url.IsValid())
-	{
-		if (url.IsLocal())
-			result = fs::exists(url.GetPath());
-		else
-			result = true;
-	}
-	
-	MPath p;
-	if (not result and project != nil and project->LocateFile(inFileName, true, p))
-	{
-		result = true;
-		url = MUrl(p);
-	}
-	
-	if (result)
-		gApp->OpenOneDocument(url);
-	
-	return result;
-}
-
-void MController::DoOpenIncludeFile()
-{
-	if (mDocument == nil)
-		return;
-	
-	bool result = false;
-	
-	MSelection selection = mDocument->GetSelection();
-	
-	if (selection.IsEmpty())
-	{
-		new MFindAndOpenDialog(this, mDocWindow);
-		result = true;
-	}
-	else
-	{
-		for (;;)
-		{
-			string s;
-			mDocument->GetSelectedText(s);
-
-			if (OpenInclude(s))
-			{
-				result = true;
-				break;
-			}
-			
-			MTextBuffer& textBuffer = mDocument->GetTextBuffer();
-			MTextBuffer::iterator i =
-				textBuffer.begin() + selection.GetMaxOffset(*mDocument);
-			
-			if (i.GetOffset() + 2 >= textBuffer.GetSize() or
-				*i != '.' or
-				not IsAlnum(*(i + 1)))
-			{
-				break;
-			}
-			
-			i += 2;
-			
-			while (i != textBuffer.end() and IsAlnum(*i))
-				++i;
-			
-			mDocument->Select(selection.GetMinOffset(*mDocument), i.GetOffset());
-		}
-	}
-	
-	if (not result)
-		PlaySound("warning");
-}
-
-void MController::DoOpenCounterpart()
-{
-	if (mDocument == nil)
-		return;
-	
-	bool result = false;
-	
-	const char* kSourceExtensions[] = {
-		"c", "cc", "cp", "cpp", "c++", nil
-	};
-
-	const char* kHeaderExtensions[] = {
-		"h", "hp", "hpp", nil
-	};
-
-	if (mDocument->IsSpecified())
-	{
-		string name = mDocument->GetURL().GetFileName();
-		MPath p;
-	
-		const char** ext = nil;
-		
-		if (FileNameMatches("*.h;*.hp;*.hpp", name))
-			ext = kSourceExtensions;
-		else if (FileNameMatches("*.c;*.cc;*.cp;*.cpp;*.c++;*.inl", name))
-			ext = kHeaderExtensions;
-	
-		if (ext != nil)
-		{
-			name.erase(name.rfind('.') + 1);
-			MProject* project = MProject::Instance();
-		
-			if (project != nil)
-			{
-				for (const char** e = ext; result == false and *e != nil; ++e)
-					result = project->LocateFile(name + *e, true, p);
-
-				if (result)
-					gApp->OpenOneDocument(MUrl(p));
-			}
-
-			if (not result)
-			{
-				for (const char** e = ext; result == false and *e != nil; ++e)
-					result = OpenInclude(name + *e);
-			}
-		}
-	}
-	
-	if (not result)
-		PlaySound("warning");
-}
-
-MTextView* MController::GetTextView()
-{
-//	return mDocWindow->FindViewByID<MTextView>(128);
-	return nil;
-}
-
-MTextViewContainer* MController::GetContainer()
-{
-//	return mDocWindow->FindViewByID<MTextViewContainer>(127);
-	return nil;
-}
-
-void MController::DoMarkMatching()
-{
-	if (mDocument == nil)
-		return;
-	
-	new MMarkMatchingDialog(mDocument, mDocWindow);
-}
-

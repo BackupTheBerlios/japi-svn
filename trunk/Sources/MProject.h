@@ -35,6 +35,7 @@
 
 #include "MFile.h"
 #include "MProjectItem.h"
+#include "MDocument.h"
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -55,7 +56,7 @@ enum MProjectListPanel
 	ePanelCount
 };
 
-class MProject
+class MProject : public MDocument
 {
   public:
 						MProject(
@@ -63,20 +64,17 @@ class MProject
 
 	virtual				~MProject();
 
-	void				Read();
-
 	bool				ReadState(
 							MRect&				outWindowPosition);
-
-	bool				Write(
-							std::ostream*		inFile);
 
 	const MPath&		GetPath() const			{ return mProjectFile; }
 
 	static MProject*	Instance();
 
-	static void			CloseAllProjects(
-							MCloseReason		inAction);
+	std::vector<MProjectTarget*>
+						GetTargets() const		{ return mTargets; }
+
+	MProjectGroup*		GetItems() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 
 	static void			RecheckFiles();
 
@@ -128,10 +126,22 @@ class MProject
 	void				CreateNewGroup(
 							const std::string&	inGroupName);
 
+	void				SetStatus(
+							const std::string&	inStatus,
+							bool				inHide);
+
 	MEventOut<void(std::string,bool)>
 						eStatus;
 
   protected:
+
+	virtual void		ReadFile(
+							std::istream&		inFile);
+
+	virtual void		WriteFile(
+							std::ostream&		inFile);
+
+	virtual void		SaveState();
 
 	void				Poll(
 							double				inSystemTime);
@@ -268,9 +278,6 @@ class MProject
 	
 	std::auto_ptr<MProjectJob>
 						mCurrentJob;
-
-	static MProject*	sInstance;
-	MProject*			mNext;
 };
 
 #endif

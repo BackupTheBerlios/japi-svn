@@ -39,7 +39,7 @@
 
 #include "MTypes.h"
 #include "MTextView.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MController.h"
 #include "MGlobals.h"
 #include "MPreferences.h"
@@ -82,7 +82,6 @@ MTextView::MTextView(
 	GtkWidget*		inTextViewWidget,
 	GtkWidget*		inVScrollBar)
 	: MView(inTextViewWidget, true, true)
-	, MHandler(nil)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
 	, eScroll(this, &MTextView::ScrollMessage)
@@ -1271,14 +1270,14 @@ bool MTextView::OnFocusInEvent(
 	{
 		mDocument->SetTargetTextView(this);
 		mDocument->MakeFirstDocument();
-		mDocument->CheckFile();
 		
 		gtk_im_context_focus_in(mIMContext);
 	
-		TakeFocus();
-		
 		mLastFocusTime = GetLocalTime();
 	}
+	
+	if (mController != nil)
+		mController->TakeFocus();
 	
 	return true;
 }
@@ -1286,8 +1285,6 @@ bool MTextView::OnFocusInEvent(
 bool MTextView::OnFocusOutEvent(
 	GdkEventFocus*	inEvent)
 {
-	ReleaseFocus();
-
 	mNeedsDisplay = true;
 	Invalidate();
 
@@ -1297,6 +1294,9 @@ bool MTextView::OnFocusOutEvent(
 		
 		mDocument->Reset();
 	}
+
+	if (mController != nil)
+		mController->ReleaseFocus();
 
 	return true;
 }
@@ -1567,7 +1567,7 @@ void MTextView::SetDocument(MDocument* inDocument)
 		RemoveRoute(eDocumentClosed, mDocument->eDocumentClosed);
 	}
 
-	mDocument = inDocument;
+	mDocument = dynamic_cast<MTextDocument*>(inDocument);;
 	
 	if (mDocument != nil)
 	{
@@ -1661,49 +1661,5 @@ void MTextView::OnPopupMenu(
 	
 	if (popup != nil)
 		popup->Popup(mController, inEvent, x, y, true);
-}
-
-bool MTextView::UpdateCommandStatus(
-	uint32			inCommand,
-	MMenu*			inMenu,
-	uint32			inItemIndex,
-	bool&			outEnabled,
-	bool&			outChecked)
-{
-	bool result = true;
-	
-	switch (inCommand)
-	{
-		case cmd_Menu:
-			outEnabled = (mDocument != nil);
-			break;
-		
-		default:
-			result = MHandler::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
-			break;
-	}
-	
-	return result;
-}
-
-bool MTextView::ProcessCommand(
-	uint32			inCommand,
-	const MMenu*	inMenu,
-	uint32			inItemIndex)
-{
-	bool result = true;
-	
-	switch (inCommand)
-	{
-		case cmd_Menu:
-			OnPopupMenu(nil);
-			break;
-		
-		default:
-			result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex);
-			break;
-	}
-	
-	return result;
 }
 

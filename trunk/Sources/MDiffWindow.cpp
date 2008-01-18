@@ -35,7 +35,7 @@
 #include <sstream>
 
 #include "MFile.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MDiffWindow.h"
 #include "MGlobals.h"
 #include "MUtils.h"
@@ -65,7 +65,7 @@ enum {
 //
 
 MDiffWindow::MDiffWindow(
-	MDocument*		inDocument)
+	MTextDocument*		inDocument)
 	: MDialog("diff-window")
 	, eDocument1Closed(this, &MDiffWindow::Document1Closed)
 	, eDocument2Closed(this, &MDiffWindow::Document2Closed)
@@ -188,7 +188,8 @@ void MDiffWindow::ChooseFile(int inFileNr)
 	}
 	else if (ChooseOneFile(url))
 	{
-		MDocument* doc = gApp->OpenOneDocument(url);
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(
+			gApp->OpenOneDocument(url));
 		
 		if (doc != nil)
 			SetDocument(inFileNr, doc);
@@ -215,7 +216,7 @@ void MDiffWindow::Document2Closed()
 // ----------------------------------------------------------------------------
 // SetDocument
 
-void MDiffWindow::SetDocument(int inDocNr, MDocument* inDocument)
+void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 {
 	if (inDocNr == 1)
 	{
@@ -506,21 +507,21 @@ bool MDiffWindow::FilesDiffer(
 {
 	vector<uint32> a, b;
 	
-	MDocument* doc;
+	MTextDocument* doc;
 	
-	if ((doc = MDocument::GetDocumentForURL(inA, false)) != nil)
+	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(inA))) != nil)
 		doc->HashLines(a);
 	else
 	{
-		auto_ptr<MDocument> d(new MDocument(&inA));
+		auto_ptr<MTextDocument> d(new MTextDocument(&inA));
 		d->HashLines(a);
 	}
 	
-	if ((doc = MDocument::GetDocumentForURL(inB, false)) != nil)
+	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(inB))) != nil)
 		doc->HashLines(b);
 	else
 	{
-		auto_ptr<MDocument> d(new MDocument(&inB));
+		auto_ptr<MTextDocument> d(new MTextDocument(&inB));
 		d->HashLines(b);
 	}
 	
@@ -576,8 +577,10 @@ void MDiffWindow::DiffInvoked(
 			{
 				auto_ptr<MDiffWindow> w(new MDiffWindow);
 				
-				w->SetDocument(1, gApp->OpenOneDocument(MUrl(mDir1 / diff.name)));
-				w->SetDocument(2, gApp->OpenOneDocument(MUrl(mDir2 / diff.name)));
+				w->SetDocument(1,
+					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(mDir1 / diff.name))));
+				w->SetDocument(2,
+					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(mDir2 / diff.name))));
 				
 				w->Select();
 				
@@ -612,8 +615,8 @@ void MDiffWindow::MergeToFile(int inFileNr)
 	mDoc1->Select(mDoc1->LineStart(diff.mA1), mDoc1->LineStart(diff.mA2), kScrollForDiff);
 	mDoc2->Select(mDoc2->LineStart(diff.mB1), mDoc2->LineStart(diff.mB2), kScrollForDiff);
 	
-	MDocument* srcDoc = mDoc2;
-	MDocument* dstDoc = mDoc1;
+	MTextDocument* srcDoc = mDoc2;
+	MTextDocument* dstDoc = mDoc1;
 	
 	if (inFileNr == 2)
 		swap(srcDoc, dstDoc);
@@ -699,11 +702,11 @@ void MDiffWindow::ArrangeWindows()
 	targetWindow2Bounds.width -= wRect.width / 2;
 	targetWindow2Bounds.InsetBy(kGapWidth, kGapWidth);
 	
-	w = MDocWindow::DisplayDocument(mDoc1);
+	w = gApp->DisplayDocument(mDoc1);
 	THROW_IF_NIL(w);
 	w->SetWindowPosition(targetWindow1Bounds, true);
 	
-	w = MDocWindow::DisplayDocument(mDoc2);
+	w = gApp->DisplayDocument(mDoc2);
 	THROW_IF_NIL(w);
 	w->SetWindowPosition(targetWindow2Bounds, true);
 	

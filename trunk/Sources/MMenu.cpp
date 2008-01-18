@@ -696,7 +696,10 @@ void MMenubar::AddMenu(
 	GtkWidget* menuItem = gtk_menu_item_new_with_label(_(inMenu->GetLabel().c_str()));
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuItem), inMenu->GetGtkMenu());
 	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenubar), menuItem);
-	inMenu->SetTarget(mTarget);
+	
+	if (mTarget != nil)
+		inMenu->SetTarget(mTarget);
+
 	inMenu->SetAcceleratorGroup(mGtkAccel);
 	mMenus.push_back(inMenu);
 }
@@ -716,4 +719,13 @@ bool MMenubar::OnButtonPress(
 	gtk_widget_show_all(mGtkMenubar);
 
 	return false;
+}
+
+void MMenubar::SetTarget(
+	MHandler*			inTarget)
+{
+	mTarget = inTarget;
+	
+	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
+		(*m)->SetTarget(inTarget);
 }

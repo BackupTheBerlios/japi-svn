@@ -44,7 +44,6 @@
 #include <boost/filesystem/fstream.hpp>
 
 #include "MProject.h"
-#include "MListView.h"
 #include "MDevice.h"
 #include "MGlobals.h"
 #include "MCommands.h"
@@ -61,6 +60,8 @@
 #include "MStrings.h"
 #include "MAlerts.h"
 #include "MPreferences.h"
+#include "MError.h"
+#include "MTextDocument.h"
 
 using namespace std;
 
@@ -138,11 +139,14 @@ MTargetCPU MProjectTarget::GetNativeCPU()
 // ---------------------------------------------------------------------------
 //	MProject
 
-MProject* MProject::sInstance;
-
 MProject* MProject::Instance()
 {
-	return sInstance;
+	MDocument* doc = GetFirstDocument();
+	
+	while (doc != nil and dynamic_cast<MProject*>(doc) == nil)
+		doc = doc->GetNextDocument();
+	
+	return dynamic_cast<MProject*>(doc);
 }
 
 MProject::MProject(
@@ -155,14 +159,15 @@ MProject::MProject(
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
 	, mCurrentJob(nil)
-	, mNext(nil)
 {
     LIBXML_TEST_VERSION
 
 	AddRoute(gApp->eIdle, ePoll);
-
-	mNext = sInstance;
-	sInstance = this;
+	
+	fs::ifstream file(inProjectFile, ios::binary);
+	if (not file.is_open())
+		THROW(("Could not open project file %s", inProjectFile.string().c_str()));
+	ReadFile(file);
 }
 
 // ---------------------------------------------------------------------------
@@ -175,31 +180,10 @@ MProject::~MProject()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::CloseAllProjects
+//	MProject::ReadFile
 
-void MProject::CloseAllProjects(
-	MCloseReason	inAction)
-{
-	MProject* project = sInstance;
-	while (project != nil)
-	{
-		MProject* next = project->mNext;
-		
-		if (project->mModified)
-		{
-			project->TryCloseDocument(inAction, project->mName, project);
-			break;
-		}
-		
-		project->Close();
-		project = next;
-	}
-}
-
-// ---------------------------------------------------------------------------
-//	MProject::Read
-
-void MProject::Read()
+void MProject::ReadFile(
+	istream&		inFile)
 {
 	xmlDocPtr			xmlDoc = nil;
 	xmlXPathContextPtr	xPathContext = nil;
@@ -213,7 +197,19 @@ void MProject::Read()
 
 	try
 	{
-		xmlDoc = xmlParseFile(mProjectFile.string().c_str());
+		// First read the data into a buffer
+		streambuf* b = inFile.rdbuf();
+		
+		int64 len = b->pubseekoff(0, ios::end);
+		b->pubseekpos(0);
+	
+		if (len > numeric_limits<uint32>::max())
+			THROW(("File too large to open"));
+	
+		auto_array<char> data(new char[len]);
+		b->sgetn(data.get(), len);
+
+		xmlDoc = xmlParseMemory(&data[0], len);
 		if (xmlDoc == nil)
 			THROW(("Failed to parse project file"));
 		
@@ -264,7 +260,7 @@ bool MProject::ReadState(
 			{
 				outWindowPosition = MRect(
 					state.mWindowPosition[0], state.mWindowPosition[1],
-					state.mWindowSize[0], state.mWindowSize[1]));
+					state.mWindowSize[0], state.mWindowSize[1]);
 			}
 			
 	//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
@@ -415,11 +411,14 @@ bool MProject::IsFileInProject(
 
 void MProject::RecheckFiles()
 {
-	MProject* project = sInstance;
-	while (project != nil)
+	MDocument* doc = GetFirstDocument();
+	
+	while (doc != nil)
 	{
-		project->CheckIsOutOfDate();
-		project = project->mNext;
+		if (dynamic_cast<MProject*>(doc) == nil)
+			static_cast<MProject*>(doc)->CheckIsOutOfDate();
+		
+		doc = doc->GetNextDocument();
 	}
 }
 
@@ -429,22 +428,22 @@ void MProject::RecheckFiles()
 void MProject::CreateNewGroup(
 	const string&	inGroupName)
 {
-	int32 selected = mFileList->GetSelected();
-	
-	MProjectGroup* parent = &mProjectItems;
-	int32 position = kListItemLast;
-	
-	if (selected >= 0 and selected < static_cast<int32>(mFileList->GetCount()))
-	{
-		MProjectItem* item = GetItem(selected);
-		parent = item->GetParent();
-		position = item->GetPosition();
-	}
-	
-	parent->AddProjectItem(new MProjectGroup(inGroupName, nil), position);
-	
-	UpdateList();
-	SetModified(true);
+//	int32 selected = mFileList->GetSelected();
+//	
+//	MProjectGroup* parent = &mProjectItems;
+//	int32 position = kListItemLast;
+//	
+//	if (selected >= 0 and selected < static_cast<int32>(mFileList->GetCount()))
+//	{
+//		MProjectItem* item = GetItem(selected);
+//		parent = item->GetParent();
+//		position = item->GetPosition();
+//	}
+//	
+//	parent->AddProjectItem(new MProjectGroup(inGroupName, nil), position);
+//	
+//	UpdateList();
+//	SetModified(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -470,17 +469,17 @@ void MProject::TargetUpdated()
 //			targetMenuRef, targetTitle, ix, 0, cmd_SwitchTarget + ix - 1));
 //	}
 
-	while (mTargetPopupCount-- > 0)
-		gtk_combo_box_remove_text(GTK_COMBO_BOX(mTargetPopup), 0);
-
-	mTargetPopupCount = 0;
-	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
-		target != mTargets.end(); ++target, ++mTargetPopupCount)
-	{
-		gtk_combo_box_append_text(GTK_COMBO_BOX(mTargetPopup), (*target)->GetName().c_str());
-	}
-
-	SetModified(true);
+//	while (mTargetPopupCount-- > 0)
+//		gtk_combo_box_remove_text(GTK_COMBO_BOX(mTargetPopup), 0);
+//
+//	mTargetPopupCount = 0;
+//	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
+//		target != mTargets.end(); ++target, ++mTargetPopupCount)
+//	{
+//		gtk_combo_box_append_text(GTK_COMBO_BOX(mTargetPopup), (*target)->GetName().c_str());
+//	}
+//
+//	SetModified(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -582,7 +581,7 @@ void MProject::ReadPackageAction(
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
 
-				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
+//				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -635,7 +634,7 @@ void MProject::ReadFiles(
 				if (node->property("optional") == "true")
 					projectFile->SetOptional(true);
 
-				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
+//				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -874,7 +873,7 @@ void MProject::Read(
 	if (data != nil)
 		xmlXPathFreeObject(data);
 
-	mModified = false;
+	SetModified(false);
 }
 
 // ---------------------------------------------------------------------------
@@ -1118,12 +1117,11 @@ void MProject::WriteOptions(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::Write
+//	MProject::WriteFile
 
-bool MProject::Write(
-	ostream*			inFile)
+void MProject::WriteFile(
+	ostream&			inFile)
 {
-	bool result = false;
 	xmlBufferPtr buf = nil;
 	
 	try
@@ -1196,20 +1194,58 @@ bool MProject::Write(
 		
 		xmlFreeTextWriter(writer);
 		
-		inFile->write(reinterpret_cast<const char*>(buf->content), buf->use);
-		
-		mModified = false;
-		result = true;
+		inFile.write(reinterpret_cast<const char*>(buf->content), buf->use);
 	}
 	catch (exception& e)
 	{
-		DisplayError(e);
+		if (buf != nil)
+			xmlBufferFree(buf);
+		
+		throw;
 	}
 	
 	if (buf != nil)
 		xmlBufferFree(buf);
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::SaveState
+
+void MProject::SaveState()
+{
+	MProjectState state = { };
+
+	(void)read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
 	
-	return result;
+	state.Swap();
+
+//	state.mSelectedFile = mFileList->GetSelected();
+	state.mSelectedTarget =
+		find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
+
+//	int32 x;
+//	mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
+//				mLinkOrderList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
+//				mPackageList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
+	
+	state.mSelectedPanel = mPanel;
+
+	MDocWindow* w = GetWindow();
+	if (w != nil)
+	{
+		MRect r;
+		w->GetWindowPosition(r);
+		state.mWindowPosition[0] = r.x;
+		state.mWindowPosition[1] = r.y;
+		state.mWindowSize[0] = r.width;
+		state.mWindowSize[1] = r.height;
+	}
+
+	state.Swap();
+	
+	write_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
 }
 
 // ---------------------------------------------------------------------------
@@ -1768,11 +1804,11 @@ void MProject::Preprocess(
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Preprocessing ") + inFile.leaf(), this, argv, file);
 	
-	MDocument* output = new MDocument(nil);
+	MTextDocument* output = new MTextDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
 	
-	SetCallBack(job->eStdOut, output, &MDocument::StdOut);
-	MDocWindow::DisplayDocument(output);
+	SetCallBack(job->eStdOut, output, &MTextDocument::StdOut);
+	gApp->DisplayDocument(output);
 
 	StartJob(job);
 }
@@ -1833,11 +1869,11 @@ void MProject::Disassemble(
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Disassembling ") + inFile.leaf(), this, argv, file);
 	
-	MDocument* output = new MDocument(nil);
+	MTextDocument* output = new MTextDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # disassembled");
 	
-	SetCallBack(job->eStdOut, output, &MDocument::StdOut);
-	MDocWindow::DisplayDocument(output);
+	SetCallBack(job->eStdOut, output, &MTextDocument::StdOut);
+	gApp->DisplayDocument(output);
 
 	StartJob(job);
 }
@@ -2048,58 +2084,58 @@ MMessageWindow* MProject::GetMessageWindow()
 //	MProject::UpdateList
 
 void MProject::UpdateList()
-{
-	switch (mPanel)
-	{
-		case ePanelFiles:
-		{
-			vector<MProjectItem*> files;
-			mProjectItems.Flatten(files);
-		
-			mFileList->RemoveAll();
-		
-			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-			{
-				MProjectItem* item = *file;
-				mFileList->InsertItem(kListItemLast, &item, sizeof(item));
-			}
-			break;
-		}
-		
-		case ePanelLinkOrder:
-		{
-			vector<MProjectItem*> files;
-			mProjectItems.Flatten(files);
-			
-			mLinkOrderList->RemoveAll();
-		
-			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-			{
-				MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
-				if (f != nil)
-					mLinkOrderList->InsertItem(kListItemLast, &f, sizeof(f));
-			}
-			break;
-		}
-
-		case ePanelPackage:
-		{
-			vector<MProjectItem*> files;
-			mPackageItems.Flatten(files);
-		
-			mPackageList->RemoveAll();
-			
-			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-			{
-				MProjectItem* item = *file;
-				mPackageList->InsertItem(kListItemLast, &item, sizeof(item));
-			}
-			break;
-		}
-		
-		default:
-			break;
-	}
+{//
+//	switch (mPanel)
+//	{
+//		case ePanelFiles:
+//		{
+//			vector<MProjectItem*> files;
+//			mProjectItems.Flatten(files);
+//		
+//			mFileList->RemoveAll();
+//		
+//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+//			{
+//				MProjectItem* item = *file;
+//				mFileList->InsertItem(kListItemLast, &item, sizeof(item));
+//			}
+//			break;
+//		}
+//		
+//		case ePanelLinkOrder:
+//		{
+//			vector<MProjectItem*> files;
+//			mProjectItems.Flatten(files);
+//			
+//			mLinkOrderList->RemoveAll();
+//		
+//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+//			{
+//				MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
+//				if (f != nil)
+//					mLinkOrderList->InsertItem(kListItemLast, &f, sizeof(f));
+//			}
+//			break;
+//		}
+//
+//		case ePanelPackage:
+//		{
+//			vector<MProjectItem*> files;
+//			mPackageItems.Flatten(files);
+//		
+//			mPackageList->RemoveAll();
+//			
+//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
+//			{
+//				MProjectItem* item = *file;
+//				mPackageList->InsertItem(kListItemLast, &item, sizeof(item));
+//			}
+//			break;
+//		}
+//		
+//		default:
+//			break;
+//	}
 }
 
 // ---------------------------------------------------------------------------
@@ -2116,8 +2152,8 @@ void MProject::SelectTarget(
 	if (mCurrentTarget == mTargets[inTarget])
 		return;
 	
-	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != int32(inTarget))
-		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
+//	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != int32(inTarget))
+//		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
 	mCurrentTarget = mTargets[inTarget];
 
@@ -2151,40 +2187,40 @@ void MProject::SelectTarget(
 	SetStatus("", false);
 }
 
-// ---------------------------------------------------------------------------
-//	MProject::SelectPanel
-
-void MProject::SelectPanel(
-	MProjectListPanel	inPanel)
-{
-	mPanel = inPanel;
-
-//	switch (mPanel)
-//	{
-//		case ePanelFiles:
-//            ::SetControlVisibility(mFilePanelRef, true, true);
-//            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-//            ::SetControlVisibility(mPackagePanelRef, false, false);
-//			break;
+//// ---------------------------------------------------------------------------
+////	MProject::SelectPanel
 //
-//		case ePanelLinkOrder:
-//            ::SetControlVisibility(mFilePanelRef, false, false);
-//            ::SetControlVisibility(mLinkOrderPanelRef, true, true);
-//            ::SetControlVisibility(mPackagePanelRef, false, false);
-//			break;
+//void MProject::SelectPanel(
+//	MProjectListPanel	inPanel)
+//{
+//	mPanel = inPanel;
 //
-//		case ePanelPackage:
-//            ::SetControlVisibility(mFilePanelRef, false, false);
-//            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-//            ::SetControlVisibility(mPackagePanelRef, true, true);
-//			break;
-//
-//		default:
-//			break;
-//	}
-	
-	UpdateList();
-}
+////	switch (mPanel)
+////	{
+////		case ePanelFiles:
+////            ::SetControlVisibility(mFilePanelRef, true, true);
+////            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
+////            ::SetControlVisibility(mPackagePanelRef, false, false);
+////			break;
+////
+////		case ePanelLinkOrder:
+////            ::SetControlVisibility(mFilePanelRef, false, false);
+////            ::SetControlVisibility(mLinkOrderPanelRef, true, true);
+////            ::SetControlVisibility(mPackagePanelRef, false, false);
+////			break;
+////
+////		case ePanelPackage:
+////            ::SetControlVisibility(mFilePanelRef, false, false);
+////            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
+////            ::SetControlVisibility(mPackagePanelRef, true, true);
+////			break;
+////
+////		default:
+////			break;
+////	}
+//	
+//	UpdateList();
+//}
 
 // ---------------------------------------------------------------------------
 //	MProject::CheckIsOutOfDate
@@ -2228,29 +2264,40 @@ void MProject::ResearchForFiles()
 	CheckIsOutOfDate();
 }
 
-// ---------------------------------------------------------------------------
-//	MProject::GetItem
+//// ---------------------------------------------------------------------------
+////	MProject::GetItem
+//
+//MProjectItem* MProject::GetItem(
+//	int32				inItemNr)
+//{
+//	MListView* listView = nil;
+//	switch (mPanel)
+//	{
+//		case ePanelFiles:		listView = mFileList;		break;
+//		case ePanelLinkOrder:	listView = mLinkOrderList;	break;
+//		case ePanelPackage:		listView = mPackageList;	break;
+//		default:											break;
+//	}
+//	
+//	if (inItemNr < 0 or inItemNr >= static_cast<int32>(listView->GetCount()))
+//		THROW(("Item number out of range"));
+//	
+//	MProjectItem* item = nil;
+//	listView->GetItem(inItemNr, &item, sizeof(item));
+//	
+//	if (item == nil)
+//		THROW(("Item is nil"));
+//	
+//	return item;
+//}
 
-MProjectItem* MProject::GetItem(
-	int32				inItemNr)
+// ---------------------------------------------------------------------------
+//	MProject::SetStatus
+
+void MProject::SetStatus(
+	const string&	inStatus,
+	bool			inHide)
 {
-	MListView* listView = nil;
-	switch (mPanel)
-	{
-		case ePanelFiles:		listView = mFileList;		break;
-		case ePanelLinkOrder:	listView = mLinkOrderList;	break;
-		case ePanelPackage:		listView = mPackageList;	break;
-		default:											break;
-	}
-	
-	if (inItemNr < 0 or inItemNr >= static_cast<int32>(listView->GetCount()))
-		THROW(("Item number out of range"));
-	
-	MProjectItem* item = nil;
-	listView->GetItem(inItemNr, &item, sizeof(item));
-	
-	if (item == nil)
-		THROW(("Item is nil"));
-	
-	return item;
+	eStatus(inStatus, inHide);
 }
+

@@ -41,9 +41,10 @@
 #include "MGlobals.h"
 #include "MUtils.h"
 #include "MUnicode.h"
-#include "MDocument.h"
+#include "MTextDocument.h"
 #include "MEditWindow.h"
 #include "MStrings.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -406,29 +407,29 @@ void MMessageWindow::SetBaseDirectory(
 void MMessageWindow::SelectItem(
 	uint32				inItemNr)
 {
-	MMessageItem& item = mList.GetItem(inItemNr);
-	
-	if (item.mFileNr > 0)
-	{
-		MUrl url(mList.GetFile(item.mFileNr - 1));
-		
-		MDocument* doc = MDocument::GetDocumentForURL(url, false);
-		if (doc == nil)
-			doc = new MDocument(&url);
-		
-//		if (doc == mController.GetDocument() or
-//			mController.TryCloseController(kSaveChangesClosingDocument))
-//		{
-//			mController.SetDocument(doc);
+//	MMessageItem& item = mList.GetItem(inItemNr);
 //	
-//			if (item.mMaxOffset > item.mMinOffset)
-//				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
-//			else if (item.mLineNr > 0)
-//				doc->GoToLine(item.mLineNr - 1);
-//		}
-	}
-//	else
-//		mController.TryCloseController(kSaveChangesClosingDocument);
+//	if (item.mFileNr > 0)
+//	{
+//		MUrl url(mList.GetFile(item.mFileNr - 1));
+//		
+//		MTextDocument* doc = MTextDocument::GetDocumentForURL(url, false);
+//		if (doc == nil)
+//			doc = new MTextDocument(&url);
+//		
+////		if (doc == mController.GetDocument() or
+////			mController.TryCloseController(kSaveChangesClosingDocument))
+////		{
+////			mController.SetDocument(doc);
+////	
+////			if (item.mMaxOffset > item.mMinOffset)
+////				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
+////			else if (item.mLineNr > 0)
+////				doc->GoToLine(item.mLineNr - 1);
+////		}
+//	}
+////	else
+////		mController.TryCloseController(kSaveChangesClosingDocument);
 }
 
 void MMessageWindow::InvokeItem(
@@ -439,7 +440,7 @@ void MMessageWindow::InvokeItem(
 	if (item.mFileNr > 0)
 	{
 		MPath file = mList.GetFile(item.mFileNr - 1);
-		MDocument* doc = gApp->OpenOneDocument(MUrl(file));
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(file)));
 		
 		if (doc != nil)
 		{

@@ -38,6 +38,7 @@
 
 class MParsePopup;
 class MSSHProgress;
+class MTextView;
 
 class MEditWindow : public MDocWindow
 {
