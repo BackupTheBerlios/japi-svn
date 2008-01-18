@@ -43,6 +43,10 @@ class MProjectWindow : public MDocWindow
 {
   public:
 					MProjectWindow();
+
+					~MProjectWindow();
+
+	virtual bool	DoClose();
 	
 	virtual void	Initialize(
 						MDocument*		inDocument);

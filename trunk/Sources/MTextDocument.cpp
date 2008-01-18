@@ -4432,7 +4432,6 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_ReplaceAll:
 		case cmd_Entab:
 		case cmd_Detab:
-		case cmd_SwitchHeaderSource:
 		case cmd_GoToLine:
 		case cmd_ShiftLeft:
 		case cmd_ShiftRight:

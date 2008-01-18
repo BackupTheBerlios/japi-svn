@@ -150,10 +150,11 @@ MProject* MProject::Instance()
 }
 
 MProject::MProject(
-	const MPath&		inProjectFile)
-	: eMsgWindowClosed(this, &MProject::MsgWindowClosed)
+	const MUrl*		inProjectFile)
+	: MDocument(inProjectFile)
+	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
-	, mProjectFile(inProjectFile)
+	, mProjectFile(inProjectFile->GetPath())
 	, mProjectDir(mProjectFile.branch_path())
 	, mCurrentTarget(nil)
 	, mProjectItems("", nil)
@@ -164,9 +165,9 @@ MProject::MProject(
 
 	AddRoute(gApp->eIdle, ePoll);
 	
-	fs::ifstream file(inProjectFile, ios::binary);
+	fs::ifstream file(mProjectFile, ios::binary);
 	if (not file.is_open())
-		THROW(("Could not open project file %s", inProjectFile.string().c_str()));
+		THROW(("Could not open project file %s", mProjectFile.string().c_str()));
 	ReadFile(file);
 }
 
@@ -415,7 +416,7 @@ void MProject::RecheckFiles()
 	
 	while (doc != nil)
 	{
-		if (dynamic_cast<MProject*>(doc) == nil)
+		if (dynamic_cast<MProject*>(doc) != nil)
 			static_cast<MProject*>(doc)->CheckIsOutOfDate();
 		
 		doc = doc->GetNextDocument();
@@ -2301,3 +2302,206 @@ void MProject::SetStatus(
 	eStatus(inStatus, inHide);
 }
 
+// ---------------------------------------------------------------------------
+//	MProject::SetStatus
+
+bool MProject::UpdateCommandStatus(
+	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
+	bool&			outEnabled,
+	bool&			outChecked)
+{
+	bool result = true, isCompilable = false;
+	
+	outEnabled = false;
+	
+	switch (mPanel)
+	{
+		case ePanelFiles:
+		{
+//			int32 selected = mFileList->GetSelected();
+//			
+//			if (selected >= 0)
+//				isCompilable = GetItem(selected)->IsCompilable();
+			break;
+		}
+		
+//		case ePanelLinkOrder:
+//		{
+//			int32 selected = mLinkOrderList->GetSelected();
+//			
+//			if (selected >= 0)
+//				isCompilable = GetItem(selected)->IsCompilable();
+//			break;
+//		}
+		
+		default:
+			break;
+	}
+	
+	switch (inCommand)
+	{
+		case cmd_AddFileToProject:
+			break;
+
+		case cmd_Preprocess:
+		case cmd_CheckSyntax:
+		case cmd_Compile:
+		case cmd_Disassemble:
+			outEnabled = isCompilable;
+			break;
+
+		case cmd_RecheckFiles:
+		case cmd_BringUpToDate:
+		case cmd_MakeClean:
+		case cmd_Make:
+		case cmd_NewGroup:
+		case cmd_OpenIncludeFile:
+			outEnabled = true;
+			break;
+
+		case cmd_Run:
+			break;
+		
+		case cmd_Stop:
+			outEnabled = mCurrentJob.get() != nil;
+			break;
+		
+		default:
+			result = MDocument::UpdateCommandStatus(
+				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+			break;
+	}
+	
+	return result;
+}
+
+bool MProject::ProcessCommand(
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex)
+{
+	bool result = true;
+
+	MProjectItem* item = nil;
+
+	switch (mPanel)
+	{
+		case ePanelFiles:
+		{
+//			int32 selected = mFileList->GetSelected();
+//			
+//			if (selected >= 0)
+//				item = GetItem(selected);
+//			break;
+		}
+		
+//		case ePanelLinkOrder:
+//		{
+//			int32 selected = mLinkOrderList->GetSelected();
+//			
+//			if (selected >= 0)
+//				item = GetItem(selected);
+//			break;
+//		}
+		
+		default:
+			break;
+	}
+	
+	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
+	
+	switch (inCommand)
+	{
+		case cmd_RecheckFiles:
+			CheckIsOutOfDate();
+			break;
+		
+		case cmd_BringUpToDate:
+			BringUpToDate();
+			break;
+		
+		case cmd_Preprocess:
+			if (file != nil)
+				Preprocess(file->GetPath());
+			break;
+		
+		case cmd_CheckSyntax:
+			if (file != nil)
+				CheckSyntax(file->GetPath());
+			break;
+		
+		case cmd_Compile:
+			if (file != nil)
+				Compile(file->GetPath());
+			break;
+
+		case cmd_Disassemble:
+			if (file != nil)
+				Disassemble(file->GetPath());
+			break;
+		
+		case cmd_MakeClean:
+			MakeClean();
+			break;
+		
+		case cmd_Make:
+			Make();
+			break;
+		
+		case cmd_Stop:
+			StopBuilding();
+			break;
+		
+//		case cmd_NewGroup:
+//		{
+//			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
+//			dlog->Initialize(this);
+//			dlog.release();
+//			break;
+//		}
+//		
+//		case cmd_EditProjectInfo:
+//		{
+//			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
+//			dlog->Initialize(this, mCurrentTarget);
+//			dlog.release();
+//			break;
+//		}
+		
+//		case cmd_EditProjectPaths:
+//		{
+//			auto_ptr<MProjectPathsDialog> dlog(new MProjectPathsDialog);
+//			dlog->Initialize(this, mUserSearchPaths, mSysSearchPaths,
+//				mLibSearchPaths, mFrameworkPaths);
+//			dlog.release();
+//			break;
+//		}
+		
+//		case cmd_ChangePanel:
+//			switch (::GetControl32BitValue(mPanelSegmentRef))
+//			{
+//				case 1:	SelectPanel(ePanelFiles); break;
+//				case 2: SelectPanel(ePanelLinkOrder); break;
+//				case 3: SelectPanel(ePanelPackage); break;
+//			}
+//			break;
+		
+		default:
+//			if ((inCommand & 0xFFFFFF00) == cmd_SwitchTarget)
+//			{
+//				uint32 target = inCommand & 0x000000FF;
+//				SelectTarget(target);
+////				Invalidate();
+//				mFileList->Invalidate();
+////				mLinkOrderList->Invalidate();
+////				mPackageList->Invalidate();
+//			}
+
+			result = MDocument::ProcessCommand(inCommand, inMenu, inItemIndex);
+			break;
+	}
+	
+	return result;
+}

@@ -60,12 +60,24 @@ class MProject : public MDocument
 {
   public:
 						MProject(
-							const MPath&		inProjectFile);
+							const MUrl*		inProjectFile);
 
 	virtual				~MProject();
 
 	bool				ReadState(
 							MRect&				outWindowPosition);
+
+	virtual bool		UpdateCommandStatus(
+							uint32			inCommand,
+							MMenu*			inMenu,
+							uint32			inItemIndex,
+							bool&			outEnabled,
+							bool&			outChecked);
+
+	virtual bool		ProcessCommand(
+							uint32			inCommand,
+							const MMenu*	inMenu,
+							uint32			inItemIndex);
 
 	const MPath&		GetPath() const			{ return mProjectFile; }
 

@@ -655,19 +655,22 @@ MDocument* MJapieApp::OpenOneDocument(
 {
 	AddToRecentMenu(inFileRef);
 
-	MDocument* doc = nil;
+	MDocument* doc = MDocument::GetDocumentForURL(inFileRef);
 	
-	if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
-		OpenProject(inFileRef.GetPath());
-	else
+	if (doc == nil)
 	{
-		doc = MDocument::GetDocumentForURL(inFileRef);
-	
-		if (doc == nil)
+		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
+			OpenProject(inFileRef.GetPath());
+		else
+		{
 			doc = new MTextDocument(&inFileRef);
-	
-		DisplayDocument(doc);
+			DisplayDocument(doc);
+		}
 	}
+	
+	MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
+	if (w != nil)
+		w->Select();
 	
 	return doc;
 }
@@ -678,9 +681,11 @@ MDocument* MJapieApp::OpenOneDocument(
 void MJapieApp::OpenProject(
 	const MPath&		inPath)
 {
-	AddToRecentMenu(MUrl(inPath));
+	MUrl url(inPath);
 	
-	auto_ptr<MProject> project(new MProject(inPath));
+	AddToRecentMenu(url);
+	
+	auto_ptr<MProject> project(new MProject(&url));
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();

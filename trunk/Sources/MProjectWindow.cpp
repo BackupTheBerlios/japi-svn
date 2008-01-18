@@ -178,7 +178,7 @@ void MProjectFilesTreeModel::GetValue(
 					s << (size / (1024 * 1024)) << 'M';
 				else if (size >= 1024)
 					s << (size / (1024)) << 'K';
-				else if (size >= 1024 * 1024 * 1024)
+				else
 					s << size;
 				
 				g_value_set_string(outValue, s.str().c_str());
@@ -433,6 +433,33 @@ MProjectWindow::MProjectWindow()
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectWindow::~MProjectWindow
+
+MProjectWindow::~MProjectWindow()
+{
+	delete mFilesTree;
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectWindow::DoClose
+
+bool MProjectWindow::DoClose()
+{
+	bool result = MDocWindow::DoClose();
+
+	if (result)
+	{
+		delete mFilesTree;
+		mFilesTree = nil;
+		
+		GtkWidget* wdgt = GetWidget(kFilesListViewID);
+		gtk_tree_view_set_model(GTK_TREE_VIEW(wdgt), nil);
+	}
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectWindow::Initialize
 
 void MProjectWindow::Initialize(
@@ -448,9 +475,15 @@ void MProjectWindow::Initialize(
 
 	GtkWidget* treeView = GetWidget(kFilesListViewID);
 	THROW_IF_NIL((treeView));
-
+	
 	mFilesTree = new MProjectFilesTreeModel(mProject);
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
+
+	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
+
+	MRect r;
+	mProject->ReadState(r);
+	SetWindowPosition(r);
 	
 	SyncInterfaceWithProject();
 }
@@ -485,66 +518,14 @@ bool MProjectWindow::UpdateCommandStatus(
 	bool&				outEnabled,
 	bool&				outChecked)
 {
-	bool result = true, isCompilable = false;
-	
-	outEnabled = false;
-	
-//	switch (mPanel)
-//	{
-//		case ePanelFiles:
-//		{
-//			int32 selected = mFileList->GetSelected();
-//			
-//			if (selected >= 0)
-//				isCompilable = GetItem(selected)->IsCompilable();
-//			break;
-//		}
-//		
-////		case ePanelLinkOrder:
-////		{
-////			int32 selected = mLinkOrderList->GetSelected();
-////			
-////			if (selected >= 0)
-////				isCompilable = GetItem(selected)->IsCompilable();
-////			break;
-////		}
-//		
-//		default:
-//			break;
-//	}
+	bool result = true;
 	
 	switch (inCommand)
 	{
-//		case cmd_Save:
-//			outEnabled = mModified;
-//			break;
-//		
-//		case cmd_AddFileToProject:
-//			break;
-//
-//		case cmd_Preprocess:
-//		case cmd_CheckSyntax:
-//		case cmd_Compile:
-//		case cmd_Disassemble:
-//			outEnabled = isCompilable;
-//			break;
-
-//		case cmd_RecheckFiles:
-//		case cmd_BringUpToDate:
-//		case cmd_MakeClean:
-//		case cmd_Make:
-//		case cmd_NewGroup:
 		case cmd_OpenIncludeFile:
 			outEnabled = true;
 			break;
 
-//		case cmd_Run:
-//			break;
-//		
-//		case cmd_Stop:
-//			outEnabled = mCurrentJob.get() != nil;
-//			break;
-		
 		default:
 			result = MDocWindow::UpdateCommandStatus(
 				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
@@ -564,137 +545,13 @@ bool MProjectWindow::ProcessCommand(
 {
 	bool result = true;
 
-	MProjectItem* item = nil;
-
-//	switch (mPanel)
-//	{
-//		case ePanelFiles:
-//		{
-//			int32 selected = mFileList->GetSelected();
-//			
-//			if (selected >= 0)
-//				item = GetItem(selected);
-//			break;
-//		}
-//		
-////		case ePanelLinkOrder:
-////		{
-////			int32 selected = mLinkOrderList->GetSelected();
-////			
-////			if (selected >= 0)
-////				item = GetItem(selected);
-////			break;
-////		}
-//		
-//		default:
-//			break;
-//	}
-	
-	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
-	
 	switch (inCommand)
 	{
-//		case cmd_Save:
-//			SaveDocument();
-//			break;
-//
-//		case cmd_SaveAs:
-//			SaveDocumentAs(this, mProjectFile.leaf());
-//			break;
-//
-//		case cmd_Revert:
-//			TryDiscardChanges(mName, this);
-//			break;
-		
 		case cmd_OpenIncludeFile:
 			new MFindAndOpenDialog(mProject, this);
 			break;
 		
-//		case cmd_RecheckFiles:
-//			CheckIsOutOfDate();
-//			break;
-//		
-//		case cmd_BringUpToDate:
-//			BringUpToDate();
-//			break;
-//		
-//		case cmd_Preprocess:
-//			if (file != nil)
-//				Preprocess(file->GetPath());
-//			break;
-//		
-//		case cmd_CheckSyntax:
-//			if (file != nil)
-//				CheckSyntax(file->GetPath());
-//			break;
-//		
-//		case cmd_Compile:
-//			if (file != nil)
-//				Compile(file->GetPath());
-//			break;
-//
-//		case cmd_Disassemble:
-//			if (file != nil)
-//				Disassemble(file->GetPath());
-//			break;
-//		
-//		case cmd_MakeClean:
-//			MakeClean();
-//			break;
-//		
-//		case cmd_Make:
-//			Make();
-//			break;
-//		
-//		case cmd_Stop:
-//			StopBuilding();
-//			break;
-		
-//		case cmd_NewGroup:
-//		{
-//			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
-//			dlog->Initialize(this);
-//			dlog.release();
-//			break;
-//		}
-//		
-//		case cmd_EditProjectInfo:
-//		{
-//			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
-//			dlog->Initialize(this, mCurrentTarget);
-//			dlog.release();
-//			break;
-//		}
-		
-//		case cmd_EditProjectPaths:
-//		{
-//			auto_ptr<MProjectPathsDialog> dlog(new MProjectPathsDialog);
-//			dlog->Initialize(this, mUserSearchPaths, mSysSearchPaths,
-//				mLibSearchPaths, mFrameworkPaths);
-//			dlog.release();
-//			break;
-//		}
-		
-//		case cmd_ChangePanel:
-//			switch (::GetControl32BitValue(mPanelSegmentRef))
-//			{
-//				case 1:	SelectPanel(ePanelFiles); break;
-//				case 2: SelectPanel(ePanelLinkOrder); break;
-//				case 3: SelectPanel(ePanelPackage); break;
-//			}
-//			break;
-		
 		default:
-//			if ((inCommand & 0xFFFFFF00) == cmd_SwitchTarget)
-//			{
-//				uint32 target = inCommand & 0x000000FF;
-//				SelectTarget(target);
-////				Invalidate();
-//				mFileList->Invalidate();
-////				mLinkOrderList->Invalidate();
-////				mPackageList->Invalidate();
-//			}
-
 			result = MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
 			break;
 	}

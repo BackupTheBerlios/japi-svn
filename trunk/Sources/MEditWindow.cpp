@@ -202,6 +202,11 @@ MEditWindow::MEditWindow()
 {
 	mMenubar.Initialize(GetWidget('mbar'), "edit-window-menus");
 
+	MTextController* textController = new MTextController(this);
+	mController = textController;
+	
+	mMenubar.SetTarget(mController);
+
 	// add status 
 	
 	GtkWidget* statusBar = GetWidget('stat');
@@ -231,7 +236,6 @@ MEditWindow::MEditWindow()
 	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
 	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 1);
 	mIncludePopup->SetController(mController, false);
-	gtk_widget_show_all(mIncludePopup->GetGtkWidget());
 	
 	mParsePopup = new MParsePopup(200);
 	frame = gtk_frame_new(nil);
@@ -240,15 +244,11 @@ MEditWindow::MEditWindow()
 	gtk_box_pack_start(GTK_BOX(statusBar), frame, true, true, 0);
 	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 2);	
 	mParsePopup->SetController(mController, true);
-	gtk_widget_show_all(mParsePopup->GetGtkWidget());
+	
+	gtk_widget_show_all(statusBar);
 	
 	// text view
 	
-	MTextController* textController = new MTextController(this);
-	mController = textController;
-	
-	mMenubar.SetTarget(mController);
-
     mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'));
 	textController->AddTextView(mTextView);
 	
