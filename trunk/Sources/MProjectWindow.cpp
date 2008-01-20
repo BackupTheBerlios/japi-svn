@@ -178,7 +178,7 @@ void MProjectFilesTreeModel::GetValue(
 					s << (size / (1024 * 1024)) << 'M';
 				else if (size >= 1024)
 					s << (size / (1024)) << 'K';
-				else
+				else if (size > 0)
 					s << size;
 				
 				g_value_set_string(outValue, s.str().c_str());

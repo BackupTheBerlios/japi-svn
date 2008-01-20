@@ -1532,7 +1532,7 @@ MProjectJob* MProject::CreateCompileJob(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "c++"));
+	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 //	argv.push_back("-arch");
 //	if (target.GetArch() == eTargetArchPPC_32)
@@ -1653,7 +1653,7 @@ MProjectJob* MProject::CreateLinkJob(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "c++"));
+	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 //	argv.push_back("-arch");
 //	if (target.GetArch() == eTargetArchPPC_32)
@@ -1768,7 +1768,7 @@ void MProject::Preprocess(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "c++"));
+	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -1831,7 +1831,7 @@ void MProject::Disassemble(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "c++"));
+	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
@@ -1896,7 +1896,7 @@ void MProject::CheckSyntax(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "c++"));
+	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 	transform(target.GetDefines().begin(), target.GetDefines().end(),
 		back_inserter(argv), bind1st(plus<string>(), "-D"));
