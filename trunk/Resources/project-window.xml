@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Fri Jan 18 15:36:40 2008 by maarten@zuinig-->
+<!--Generated with glade3 3.1.5 on Mon Jan 21 15:03:55 2008 by maarten@zuinig-->
 <glade-interface>
   <widget class="GtkWindow" id="window">
     <property name="default_width">250</property>
@@ -26,6 +26,7 @@
                 <property name="items" translatable="yes">aap
 noot
 mies</property>
+                <signal name="changed" handler="on_targ_changed"/>
               </widget>
             </child>
             <child>

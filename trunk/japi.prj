@@ -13,9 +13,9 @@
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
-	<libpaths>
-		<path>/usr/pkg/lib</path>
-	</libpaths>
+<!--	<libpaths>-->
+<!--		<path>/usr/pkg/lib</path>-->
+<!--	</libpaths>-->
 	<frameworks/>
 	<files>
 		<group name="Sources">

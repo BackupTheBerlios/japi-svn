@@ -207,7 +207,7 @@ void MTreeModelImp::Init(
 void MTreeModelImp::Finalize(
 	GObject*		inObject)
 {
-	PRINT(("Finalize"));
+//	PRINT(("Finalize"));
 	(*sParentClass->finalize)(inObject);
 }
 
@@ -254,6 +254,7 @@ void MTreeModelImp::row_changed(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
+//PRINT(("row_changed"));
 	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 	if (self != nil and self->interface != nil)
 		self->interface->RowChanged(path, iter);
@@ -264,6 +265,7 @@ void MTreeModelImp::row_inserted(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
+//PRINT(("row_inserted"));
 	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 	if (self != nil and self->interface != nil)
 		self->interface->RowInserted(path, iter);
@@ -274,6 +276,7 @@ void MTreeModelImp::row_has_child_toggled(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
+//PRINT(("row_has_child_toggled"));
 	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 	if (self != nil and self->interface != nil)
 		self->interface->RowHasChildToggled(path, iter);
@@ -283,6 +286,7 @@ void MTreeModelImp::row_deleted(
 						GtkTreeModel *tree_model,
 						GtkTreePath  *path)
 {
+//PRINT(("row_deleted"));
 	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 	if (self != nil and self->interface != nil)
 		self->interface->RowDeleted(path);
@@ -294,6 +298,7 @@ void MTreeModelImp::rows_reordered(
 						GtkTreeIter  *iter,
 						gint         *new_order)
 {
+//PRINT(("rows_reordered"));
 	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 	if (self != nil and self->interface != nil)
 		self->interface->RowsReordered(path, iter, *new_order);
@@ -593,4 +598,11 @@ void MTreeModelInterface::RefNode(
 void MTreeModelInterface::UnrefNode(
 	GtkTreeIter*	inIter)
 {
+}
+
+void MTreeModelInterface::DoRowChanged(
+	GtkTreePath*	inPath,
+	GtkTreeIter*	inIter)
+{
+	gtk_tree_model_row_changed(GTK_TREE_MODEL(mImpl), inPath, inIter);
 }

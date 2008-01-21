@@ -115,6 +115,12 @@ class MTreeModelInterface
 
 	virtual void	UnrefNode(
 						GtkTreeIter*	inIter);
+
+  protected:
+
+	void			DoRowChanged(
+						GtkTreePath*	inPath,
+						GtkTreeIter*	inIter);
 	
   private:
 	struct MTreeModelImp*	mImpl;

@@ -36,6 +36,7 @@
 #include <boost/iterator/iterator_facade.hpp>
 
 #include "MTypes.h"
+#include "MColor.h"
 
 struct no_swapper
 {
@@ -249,29 +250,48 @@ class XMLNode
 	xmlNodePtr		mNode;
 };
 
-uint16 CalculateCRC(const void* inData, uint32 inLength, uint16 inCRC);
+uint16 CalculateCRC(
+	const void*		inData,
+	uint32			inLength,
+	uint16			inCRC);
 
-std::string Escape(std::string inString);
-std::string Unescape(std::string inString);
+std::string Escape(
+	std::string		inString);
 
-std::string NumToString(uint32 inNumber);
-uint32 StringToNum(std::string inString);
+std::string Unescape(
+	std::string		inString);
 
-std::string	GetUserName(bool inShortName = false);
+std::string NumToString(
+	uint32			inNumber);
+
+uint32 StringToNum(
+	std::string		inString);
+
+std::string	GetUserName(
+	bool			inShortName = false);
+
 std::string	GetDateTime();
 
-void NormalizePath(std::string& ioPath);
-void NormalizePath(MPath& ioPath);
+void NormalizePath(
+	std::string&	ioPath);
+
+void NormalizePath(
+	MPath&			ioPath);
 
 double GetLocalTime();
+
 double GetDoubleClickTime();
 
 bool IsModifierDown(
-		int						inModifierMask);
+	int				inModifierMask);
 
 void HexDump(
 	const void*		inBuffer,
 	uint32			inLength,
 	std::ostream&	outStream);
+
+GdkPixbuf* CreateDot(
+	MColor			inColor,
+	uint32			inSize);
 
 #endif

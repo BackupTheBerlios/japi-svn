@@ -319,7 +319,14 @@ void MProjectFile::SetOutOfDate(
 	if (mIsOutOfDate != inIsOutOfDate)
 	{
 		mIsOutOfDate = inIsOutOfDate;
-		eStatusChanged();
+		eStatusChanged(this);
+		
+		MProjectItem* parent = GetParent();
+		while (parent != nil)
+		{
+			parent->eStatusChanged(parent);
+			parent = parent->GetParent();
+		}
 	}
 }
 
@@ -332,7 +339,14 @@ void MProjectFile::SetCompiling(
 	if (mIsCompiling != inIsCompiling)
 	{
 		mIsCompiling = inIsCompiling;
-		eStatusChanged();
+		eStatusChanged(this);
+
+		MProjectItem* parent = GetParent();
+		while (parent != nil)
+		{
+			parent->eStatusChanged(parent);
+			parent = parent->GetParent();
+		}
 	}
 }
 
@@ -530,6 +544,15 @@ void MProjectGroup::SetOutOfDate(
 {
 	for_each(mItems.begin(), mItems.end(),
 		boost::bind(&MProjectItem::SetOutOfDate, _1, inIsOutOfDate));
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectGroup::IsCompiling
+
+bool MProjectGroup::IsCompiling() const
+{
+	return accumulate(mItems.begin(), mItems.end(), false,
+		boost::bind(logical_or<bool>(), _1, boost::bind(&MProjectItem::IsCompiling, _2)));
 }
 
 // ---------------------------------------------------------------------------

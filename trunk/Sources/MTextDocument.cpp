@@ -268,6 +268,12 @@ bool MTextDocument::DoSaveAs(
 	const MUrl&		inFile)
 {
 	bool result = false;
+
+	bool specified = mSpecified;
+	mSpecified = true;
+	
+	MUrl url(mURL);
+	mURL = inFile;
 	
 	if (MDocument::DoSaveAs(inFile))
 	{
@@ -290,6 +296,11 @@ bool MTextDocument::DoSaveAs(
 		}
 		
 		result = true;
+	}
+	else
+	{
+		mSpecified = specified;
+		mURL = url;
 	}
 	
 	return result;

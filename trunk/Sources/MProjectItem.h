@@ -81,7 +81,7 @@ class MProjectItem
 	virtual void	SetOutOfDate(
 						bool				inIsOutOfDate)	{}
 
-	MEventOut<void()>						eStatusChanged;
+	MEventOut<void(MProjectItem*)>			eStatusChanged;
 	
 	virtual uint32	GetTextSize() const						{ return 0; }
 	virtual uint32	GetDataSize() const						{ return 0; }
@@ -194,6 +194,8 @@ class MProjectGroup : public MProjectItem
 	virtual bool	IsOutOfDate() const;
 	virtual void	SetOutOfDate(
 						bool				inIsOutOfDate);
+
+	virtual bool	IsCompiling() const;
 
 	virtual int32	GetItemPosition(
 						const MProjectItem*	inItem) const;

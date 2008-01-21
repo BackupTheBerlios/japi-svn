@@ -75,43 +75,6 @@ const string
 	kl("-l"),
 	kL("-L");
 
-const MColor
-	kOutOfDateColor = MColor("#ff664c"),
-	kCompilingColor = MColor("#5ea50c");
-
-struct MProjectState
-{
-	uint16			mWindowPosition[2];
-	uint16			mWindowSize[2];
-	uint8			mSelectedTarget;
-	uint8			mSelectedPanel;
-	uint8			mFillers[2];
-	int32			mScrollPosition[ePanelCount];
-	uint32			mSelectedFile;
-	
-	void			Swap();
-};
-
-const char
-	kJapieProjectState[] = "com.hekkelman.japi.ProjectState";
-
-const uint32
-	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);
-
-void MProjectState::Swap()
-{
-	net_swapper swap;
-	
-	mWindowPosition[0] = swap(mWindowPosition[0]);
-	mWindowPosition[1] = swap(mWindowPosition[1]);
-	mWindowSize[0] = swap(mWindowSize[0]);
-	mWindowSize[1] = swap(mWindowSize[1]);
-	mScrollPosition[ePanelFiles] = swap(mScrollPosition[ePanelFiles]);
-	mScrollPosition[ePanelLinkOrder] = swap(mScrollPosition[ePanelLinkOrder]);
-	mScrollPosition[ePanelPackage] = swap(mScrollPosition[ePanelPackage]);
-	mSelectedFile = swap(mSelectedFile);
-}
-
 }
 
 // ---------------------------------------------------------------------------
@@ -237,152 +200,6 @@ void MProject::ReadFile(
 	
 	xmlCleanupParser();
 }
-
-// ---------------------------------------------------------------------------
-//	MProject::ReadState
-
-bool MProject::ReadState(
-	MRect&		outWindowPosition)
-{
-	bool result = false;
-	
-	if (Preferences::GetInteger("save state", 1))
-	{
-		MProjectState state = {};
-		ssize_t r = read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-		if (r > 0 and static_cast<uint32>(r) == kMProjectStateSize)
-		{
-			state.Swap();
-			
-//			mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
-			
-			if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
-				state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
-			{
-				outWindowPosition = MRect(
-					state.mWindowPosition[0], state.mWindowPosition[1],
-					state.mWindowSize[0], state.mWindowSize[1]);
-			}
-			
-	//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
-	//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
-			
-	//		if (state.mSelectedPanel < ePanelCount)
-	//		{
-	//			mPanel = static_cast<MProjectListPanel>(state.mSelectedPanel);
-	//			::SetControl32BitValue(mPanelSegmentRef, uint32(mPanel) + 1);
-	//			SelectPanel(mPanel);
-	//		}
-	//		else
-	//			mPanel = ePanelFiles;
-	//		
-	//		::MoveWindow(GetSysWindow(),
-	//			state.mWindowPosition[0], state.mWindowPosition[1], true);
-	//
-	//		::SizeWindow(GetSysWindow(),
-	//			state.mWindowSize[0], state.mWindowSize[1], true);
-	//
-	//		::ConstrainWindowToScreen(GetSysWindow(),
-	//			kWindowStructureRgn, kWindowConstrainStandardOptions,
-	//			NULL, NULL);
-	
-			SelectTarget(state.mSelectedTarget);
-//			mFileList->SelectItem(state.mSelectedFile);
-			
-			result = true;
-		}
-	}
-	
-	return result;
-}
-
-//// ---------------------------------------------------------------------------
-////	MProject::DoClose
-//
-//bool MProject::DoClose()
-//{
-//	bool result = false;
-//	
-//	if (mModified)
-//		TryCloseDocument(kSaveChangesClosingDocument, mName, this);
-//	else
-//	{
-//		if (Preferences::GetInteger("save state", 1))
-//		{
-//			try
-//			{
-//				MProjectState state = { };
-//		
-//				(void)read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-//				
-//				state.Swap();
-//	
-//				state.mSelectedFile = mFileList->GetSelected();
-//				state.mSelectedTarget =
-//					find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
-//	
-//				int32 x;
-//				mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
-////				mLinkOrderList->GetScrollPosition(pt);
-////				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
-////				mPackageList->GetScrollPosition(pt);
-////				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
-//				
-//				state.mSelectedPanel = mPanel;
-//	
-//				MRect r;
-//				GetWindowPosition(r);
-//				state.mWindowPosition[0] = r.x;
-//				state.mWindowPosition[1] = r.y;
-//				state.mWindowSize[0] = r.width;
-//				state.mWindowSize[1] = r.height;
-//		
-//				state.Swap();
-//				
-//				write_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-//			}
-//			catch (...) {}
-//		}
-//		
-//		result = MWindow::DoClose();
-//	}
-//	
-//	if (result)
-//	{
-//		StopBuilding();
-//		
-//		if (sInstance == this)
-//			sInstance = mNext;
-//		else
-//		{
-//			MProject* p = sInstance;
-//	
-//			while (p != nil and p->mNext != this)
-//				p = p->mNext;
-//			
-//			if (p != nil)
-//				p->mNext = mNext;
-//		}
-//	}
-//		
-//	return result;
-//}
-
-// ---------------------------------------------------------------------------
-//	MProject::DoRawKeyDown
-
-//OSStatus MProject::DoRawKeyDown(EventRef inEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	
-//	if (::IsUserCancelEventRef(inEvent))
-//	{
-//		StopBuilding();
-//		err = noErr;
-//	}
-//	
-//	return err;
-//}
 
 // ---------------------------------------------------------------------------
 //	MProject::StopBuilding
@@ -1207,46 +1024,6 @@ void MProject::WriteFile(
 	
 	if (buf != nil)
 		xmlBufferFree(buf);
-}
-
-// ---------------------------------------------------------------------------
-//	MProject::SaveState
-
-void MProject::SaveState()
-{
-	MProjectState state = { };
-
-	(void)read_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
-	
-	state.Swap();
-
-//	state.mSelectedFile = mFileList->GetSelected();
-	state.mSelectedTarget =
-		find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
-
-//	int32 x;
-//	mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
-//				mLinkOrderList->GetScrollPosition(pt);
-//				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
-//				mPackageList->GetScrollPosition(pt);
-//				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
-	
-	state.mSelectedPanel = mPanel;
-
-	MDocWindow* w = GetWindow();
-	if (w != nil)
-	{
-		MRect r;
-		w->GetWindowPosition(r);
-		state.mWindowPosition[0] = r.x;
-		state.mWindowPosition[1] = r.y;
-		state.mWindowSize[0] = r.width;
-		state.mWindowSize[1] = r.height;
-	}
-
-	state.Swap();
-	
-	write_attribute(mProjectFile, kJapieProjectState, &state, kMProjectStateSize);
 }
 
 // ---------------------------------------------------------------------------
@@ -2297,13 +2074,13 @@ void MProject::ResearchForFiles()
 
 void MProject::SetStatus(
 	const string&	inStatus,
-	bool			inHide)
+	bool			inBusy)
 {
-	eStatus(inStatus, inHide);
+	eStatus(inStatus, inBusy);
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::SetStatus
+//	MProject::UpdateCommandStatus
 
 bool MProject::UpdateCommandStatus(
 	uint32			inCommand,

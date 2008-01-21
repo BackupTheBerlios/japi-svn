@@ -64,9 +64,6 @@ class MProject : public MDocument
 
 	virtual				~MProject();
 
-	bool				ReadState(
-							MRect&				outWindowPosition);
-
 	virtual bool		UpdateCommandStatus(
 							uint32			inCommand,
 							MMenu*			inMenu,
@@ -78,6 +75,8 @@ class MProject : public MDocument
 							uint32			inCommand,
 							const MMenu*	inMenu,
 							uint32			inItemIndex);
+
+	std::string			GetName() const			{ return mName; }
 
 	const MPath&		GetPath() const			{ return mProjectFile; }
 
@@ -140,7 +139,7 @@ class MProject : public MDocument
 
 	void				SetStatus(
 							const std::string&	inStatus,
-							bool				inHide);
+							bool				inBusy);
 
 	MEventOut<void(std::string,bool)>
 						eStatus;
@@ -150,8 +149,6 @@ class MProject : public MDocument
 
 	virtual void		WriteFile(
 							std::ostream&		inFile);
-
-	virtual void		SaveState();
 
 	void				Poll(
 							double				inSystemTime);

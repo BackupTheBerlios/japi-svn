@@ -55,7 +55,8 @@ class MUrl;
 class MJapieApp : public MHandler
 {
   public:
-						MJapieApp();
+						MJapieApp(
+							bool				inForked);
 	
 						~MJapieApp();
 	
@@ -64,8 +65,8 @@ class MJapieApp : public MHandler
 	
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
-							MMenu*			inMenu,
-							uint32			inItemIndex,
+							MMenu*				inMenu,
+							uint32				inItemIndex,
 							bool&				outEnabled,
 							bool&				outChecked);
 

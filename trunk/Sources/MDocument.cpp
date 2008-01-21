@@ -336,6 +336,13 @@ void MDocument::CloseDocument()
 }
 
 // ---------------------------------------------------------------------------
+//	CloseDocument
+
+void MDocument::SaveState()
+{
+}
+
+// ---------------------------------------------------------------------------
 //	UpdateCommandStatus
 
 bool MDocument::UpdateCommandStatus(

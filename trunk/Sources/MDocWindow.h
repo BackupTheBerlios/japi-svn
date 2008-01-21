@@ -59,6 +59,8 @@ class MDocWindow : public MWindow
 	virtual void		RemoveRoutes(
 							MDocument*		inDocument);
 
+	virtual void		BeFocus();
+
   protected:
 
 	static std::string	GetUntitledTitle();

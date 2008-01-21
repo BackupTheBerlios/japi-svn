@@ -566,13 +566,11 @@ bool ChooseDirectory(
 		
 		THROW_IF_NIL(dialog);
 	
-//		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), true);
-		
-//		if (mCurrentFolder.length() > 0)
-//		{
-//			gtk_file_chooser_set_current_folder(
-//				GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
-//		}
+		if (gApp->GetCurrentFolder().length() > 0)
+		{
+			gtk_file_chooser_set_current_folder_uri(
+				GTK_FILE_CHOOSER(dialog), gApp->GetCurrentFolder().c_str());
+		}
 		
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		{
@@ -584,14 +582,10 @@ bool ChooseDirectory(
 			g_free(uri);
 
 			result = true;
-		}
 
-//		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
-//		if (cwd != nil)
-//		{
-//			mCurrentFolder = cwd;
-//			g_free(cwd);
-//		}
+			gApp->SetCurrentFolder(
+				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
+		}
 	}
 	catch (exception& e)
 	{
@@ -631,6 +625,11 @@ bool ChooseOneFile(
 			gtk_file_chooser_set_uri(
 				GTK_FILE_CHOOSER(dialog), ioFile.str().c_str());
 		}
+		else if (gApp->GetCurrentFolder().length() > 0)
+		{
+			gtk_file_chooser_set_current_folder_uri(
+				GTK_FILE_CHOOSER(dialog), gApp->GetCurrentFolder().c_str());
+		}
 		
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		{
@@ -640,6 +639,9 @@ bool ChooseOneFile(
 			result = true;
 
 			g_free(uri);
+
+			gApp->SetCurrentFolder(
+				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
 		}
 	}
 	catch (exception& e)

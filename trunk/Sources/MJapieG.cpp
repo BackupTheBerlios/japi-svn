@@ -75,54 +75,60 @@ const char
 
 // --------------------------------------------------------------------
 
-MJapieApp::MJapieApp()
+MJapieApp::MJapieApp(
+	bool	inForked)
 	: MHandler(nil)
 	, mRecentMgr(gtk_recent_manager_get_default())
 	, mSocketFD(-1)
-	, mReceivedFirstMsg(false)
+	, mReceivedFirstMsg(not inForked)
 	, mQuit(false)
 	, mQuitPending(false)
 {
-	mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
-
-	struct sockaddr_un addr = {};
-	addr.sun_family = AF_LOCAL;
-	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
-	
-	unlink(addr.sun_path);	// allowed to fail
-
-	int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
-
-	if (err < 0)
-		cerr << _("bind failed: ") << strerror(errno) << endl;
-	else
+	if (inForked)
 	{
-		err = listen(mSocketFD, 5);
+		mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
+	
+		struct sockaddr_un addr = {};
+		addr.sun_family = AF_LOCAL;
+		snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
+		
+		unlink(addr.sun_path);	// allowed to fail
+	
+		int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
+	
 		if (err < 0)
-			cerr << _("Failed to listen to socket: ") << strerror(errno) << endl;
+			cerr << _("bind failed: ") << strerror(errno) << endl;
 		else
 		{
-			int flags = fcntl(mSocketFD, F_GETFL, 0);
-			if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
-				cerr << _("Failed to set mSocketFD non blocking: ") << strerror(errno) << endl;
+			err = listen(mSocketFD, 5);
+			if (err < 0)
+				cerr << _("Failed to listen to socket: ") << strerror(errno) << endl;
+			else
+			{
+				int flags = fcntl(mSocketFD, F_GETFL, 0);
+				if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
+					cerr << _("Failed to set mSocketFD non blocking: ") << strerror(errno) << endl;
+			}
 		}
-	}
-
-	if (err != 0)
-	{
-		close(mSocketFD);
-		mSocketFD = -1;
+	
+		if (err != 0)
+		{
+			close(mSocketFD);
+			mSocketFD = -1;
+		}
 	}
 }
 
 MJapieApp::~MJapieApp()
 {
 	if (mSocketFD >= 0)
+	{
 		close(mSocketFD);
 	
-	char path[1024] = {};
-	snprintf(path, sizeof(path), kSocketName, getuid());
-	unlink(path);
+		char path[1024] = {};
+		snprintf(path, sizeof(path), kSocketName, getuid());
+		unlink(path);
+	}
 }
 
 bool MJapieApp::ProcessCommand(
@@ -483,7 +489,9 @@ void MJapieApp::DoCloseAll(
 	{
 		MDocument* next = doc->GetNextDocument();
 		
-		if (not doc->IsModified() and doc != MTextDocument::GetWorksheet())
+		if (dynamic_cast<MTextDocument*>(doc) != nil and
+			doc != MTextDocument::GetWorksheet() and
+			not doc->IsModified())
 		{
 			MController* controller = doc->GetFirstController();
 			
@@ -506,12 +514,22 @@ void MJapieApp::DoCloseAll(
 	{
 		MDocument* next = doc->GetNextDocument();
 
-		if (doc != MTextDocument::GetWorksheet() or inAction == kSaveChangesQuittingApplication)
+		MController* controller = doc->GetFirstController();
+		assert(controller != nil);
+
+		if (doc == MTextDocument::GetWorksheet())
 		{
-			MController* controller = doc->GetFirstController();
-			
-			assert(controller != nil);
-			
+			if (inAction == kSaveChangesQuittingApplication)
+			{
+				doc->DoSave();
+				
+				if (not controller->TryCloseDocument(inAction))
+					break;
+			}
+		}
+		else if (dynamic_cast<MTextDocument*>(doc) != nil or
+			inAction == kSaveChangesQuittingApplication)
+		{
 			if (not controller->TryCloseDocument(inAction))
 				break;
 		}
@@ -596,7 +614,7 @@ void MJapieApp::DoOpen()
 		
 		if (mCurrentFolder.length() > 0)
 		{
-			gtk_file_chooser_set_current_folder(
+			gtk_file_chooser_set_current_folder_uri(
 				GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
 		}
 		
@@ -626,7 +644,7 @@ void MJapieApp::DoOpen()
 		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end(); ++url)
 			doc = OpenOneDocument(*url);
 		
-		char* cwd = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(dialog));
+		char* cwd = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
 		if (cwd != nil)
 		{
 			mCurrentFolder = cwd;
@@ -653,6 +671,9 @@ void MJapieApp::DoOpen()
 MDocument* MJapieApp::OpenOneDocument(
 	const MUrl&			inFileRef)
 {
+	if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
+		THROW(("Cannot open a directory"));
+	
 	AddToRecentMenu(inFileRef);
 
 	MDocument* doc = MDocument::GetDocumentForURL(inFileRef);
@@ -1187,7 +1208,7 @@ int main(int argc, char* argv[])
 		{
 			InitGlobals();
 	
-			gApp = new MJapieApp();
+			gApp = new MJapieApp(fork);
 
 			gApp->RunEventLoop();
 	

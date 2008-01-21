@@ -189,3 +189,7 @@ void MDocWindow::RemoveRoutes(
 	RemoveRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
 }
 
+void MDocWindow::BeFocus()
+{
+	mController->TakeFocus();
+}

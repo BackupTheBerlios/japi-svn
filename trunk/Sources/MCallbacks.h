@@ -44,6 +44,8 @@
 
 #include <memory>
 
+typedef struct _GladeXML GladeXML;
+
 #include "MAlerts.h"
 
 // shield implementation details in our namespace
@@ -801,6 +803,14 @@ class MSlot : public MCallBackNS::MakeCallBackHandler<Function>::type
 								const char*		inSignalName)
 							{
 								g_signal_connect(inObject, inSignalName,
+									G_CALLBACK(&base_class::GCallback), this);
+							}
+
+	void					Connect(
+								GladeXML*		inGladeXML,
+								const char*		inSignalName)
+							{
+								glade_xml_signal_connect_data(inGladeXML, inSignalName, 
 									G_CALLBACK(&base_class::GCallback), this);
 							}
 	

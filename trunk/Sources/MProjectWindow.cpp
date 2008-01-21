@@ -32,6 +32,8 @@
 
 #include "MJapieG.h"
 
+#include <boost/bind.hpp>
+
 #include "MProjectWindow.h"
 #include "MProjectItem.h"
 #include "MStrings.h"
@@ -40,10 +42,48 @@
 #include "MProject.h"
 #include "MProjectTarget.h"
 #include "MTreeModelInterface.h"
+#include "MUtils.h"
+#include "MPreferences.h"
+#include "MAlerts.h"
 
 using namespace std;
 
 namespace {
+
+struct MProjectState
+{
+	uint16			mWindowPosition[2];
+	uint16			mWindowSize[2];
+	uint8			mSelectedTarget;
+	uint8			mSelectedPanel;
+	uint8			mFillers[2];
+	int32			mScrollPosition[ePanelCount];
+	uint32			mSelectedFile;
+	
+	void			Swap();
+};
+
+const char
+	kJapieProjectState[] = "com.hekkelman.japi.ProjectState";
+
+const uint32
+	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);
+
+void MProjectState::Swap()
+{
+	net_swapper swap;
+	
+	mWindowPosition[0] = swap(mWindowPosition[0]);
+	mWindowPosition[1] = swap(mWindowPosition[1]);
+	mWindowSize[0] = swap(mWindowSize[0]);
+	mWindowSize[1] = swap(mWindowSize[1]);
+	mScrollPosition[ePanelFiles] = swap(mScrollPosition[ePanelFiles]);
+	mScrollPosition[ePanelLinkOrder] = swap(mScrollPosition[ePanelLinkOrder]);
+	mScrollPosition[ePanelPackage] = swap(mScrollPosition[ePanelPackage]);
+	mSelectedFile = swap(mSelectedFile);
+}
+
+
 
 enum {
 	kFilesListViewID	= 'tre1',
@@ -106,21 +146,27 @@ class MProjectFilesTreeModel : public MTreeModelInterface
 						GtkTreeIter*	outIter,
 						GtkTreeIter*	inChild);
 
-	virtual void	RefNode(
-						GtkTreeIter*	inIter);
-
-	virtual void	UnrefNode(
-						GtkTreeIter*	inIter);
-
   private:
+
+	void			ProjectItemStatusChanged(
+						MProjectItem*	inItem);
+
+	MEventIn<void(MProjectItem*)>		eProjectItemStatusChanged;
+
 	MProject*		mProject;
 };
 
 MProjectFilesTreeModel::MProjectFilesTreeModel(
 	MProject*		inProject)
 	: MTreeModelInterface(GTK_TREE_MODEL_ITERS_PERSIST)
+	, eProjectItemStatusChanged(this, &MProjectFilesTreeModel::ProjectItemStatusChanged)
 	, mProject(inProject)
 {
+	vector<MProjectItem*> items;
+	mProject->GetItems()->Flatten(items);
+	
+	for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
+		AddRoute((*i)->eStatusChanged, eProjectItemStatusChanged);
 }
 
 uint32 MProjectFilesTreeModel::GetColumnCount() const
@@ -146,25 +192,39 @@ void MProjectFilesTreeModel::GetValue(
 	uint32			inColumn,
 	GValue*			outValue) const
 {
+	// dots
+	
+	const uint32 kDotSize = 6;
+	const MColor
+		kOutOfDateColor = MColor("#ff664c"),
+		kCompilingColor = MColor("#ffbb6b");
+	
+	static GdkPixbuf* kOutOfDateDot = CreateDot(kOutOfDateColor, kDotSize);
+	static GdkPixbuf* kCompilingDot = CreateDot(kCompilingColor, kDotSize);
+	
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
 
-	g_value_init(outValue, GetColumnType(inColumn));
-	
 	if (item != nil)
 	{
 		switch (inColumn)
 		{
-	//		case kFilesDirtyColumn:
-	//			g_value
-	//			break;
+			case kFilesDirtyColumn:
+				g_value_init(outValue, G_TYPE_OBJECT);
+				if (item->IsCompiling())
+					g_value_set_object(outValue, kCompilingDot);
+				else if (item->IsOutOfDate())
+					g_value_set_object(outValue, kOutOfDateDot);
+				break;
 			
 			case kFilesNameColumn:
+				g_value_init(outValue, G_TYPE_STRING);
 				g_value_set_string(outValue, item->GetName().c_str());
 				break;
 			
 			case kFilesDataSizeColumn:
 			case kFilesTextSizeColumn:
 			{
+				g_value_init(outValue, G_TYPE_STRING);
 				uint32 size;
 				if (inColumn == kFilesDataSizeColumn)
 					size = item->GetDataSize();
@@ -230,7 +290,7 @@ GtkTreePath* MProjectFilesTreeModel::GetPath(
 		gtk_tree_path_prepend_index(path, item->GetSiblingPosition());
 		item = item->GetParent();
 	}
-	
+
 	return path;
 }
 
@@ -271,7 +331,7 @@ bool MProjectFilesTreeModel::Children(
 		
 		if (group != nil and group->Count() > 0)
 		{
-			outIter->user_data = group->GetItems().front();
+			outIter->user_data = group->GetItem(0);
 			result = true;
 		}
 	}
@@ -327,14 +387,14 @@ bool MProjectFilesTreeModel::GetChild(
 		group = dynamic_cast<MProjectGroup*>(item);
 	}
 	
-	if (group != nil and inIndex < group->Count())
+	if (group != nil and static_cast<uint32>(inIndex) < group->Count())
 	{
-		outIter->user_data = group->GetItems()[inIndex];
+		outIter->user_data = group->GetItem(inIndex);
 		result = true;
 	}
 	else
 		outIter->user_data = 0;
-	
+
 	return result;
 }
 
@@ -357,14 +417,23 @@ bool MProjectFilesTreeModel::GetParent(
 	return result;
 }
 
-void MProjectFilesTreeModel::RefNode(
-	GtkTreeIter*	inIter)
+void MProjectFilesTreeModel::ProjectItemStatusChanged(
+	MProjectItem*	inItem)
 {
-}
-
-void MProjectFilesTreeModel::UnrefNode(
-	GtkTreeIter*	inIter)
-{
+	try
+	{
+		GtkTreeIter iter = {};
+		
+		iter.user_data = inItem;
+		
+		GtkTreePath* path = GetPath(&iter);
+		if (path != nil)
+		{
+			DoRowChanged(path, &iter);
+			gtk_tree_path_free(path);
+		}
+	}
+	catch (...) {}
 }
 
 }
@@ -373,8 +442,10 @@ MProjectWindow::MProjectWindow()
 	: MDocWindow("project-window")
 	, eStatus(this, &MProjectWindow::SetStatus)
 	, mInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
+	, eTargetChanged(this, &MProjectWindow::TargetChanged)
 	, mProject(nil)
 	, mFilesTree(nil)
+	, mBusy(false)
 {
 	mController = new MController(this);
 	
@@ -429,6 +500,28 @@ MProjectWindow::MProjectWindow()
 
 	mInvokeFileRow.Connect(treeView, "row-activated");
 
+	// status panel
+	
+	GtkWidget* statusBar = GetWidget('stat');
+
+	GtkShadowType shadow_type;
+	gtk_widget_style_get(statusBar, "shadow_type", &shadow_type, nil);
+
+	GtkWidget* frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	
+	mStatusPanel = gtk_label_new(nil);
+	gtk_label_set_single_line_mode(GTK_LABEL(mStatusPanel), true);
+	gtk_misc_set_alignment(GTK_MISC(mStatusPanel), 0, 0.5);
+	gtk_container_add(GTK_CONTAINER(frame), mStatusPanel);
+
+	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 0);
+	
+	gtk_widget_show_all(statusBar);
+
+	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
+
 	ConnectChildSignals();
 }
 
@@ -438,25 +531,7 @@ MProjectWindow::MProjectWindow()
 MProjectWindow::~MProjectWindow()
 {
 	delete mFilesTree;
-}
-
-// ---------------------------------------------------------------------------
-//	MProjectWindow::DoClose
-
-bool MProjectWindow::DoClose()
-{
-	bool result = MDocWindow::DoClose();
-
-	if (result)
-	{
-		delete mFilesTree;
-		mFilesTree = nil;
-		
-		GtkWidget* wdgt = GetWidget(kFilesListViewID);
-		gtk_tree_view_set_model(GTK_TREE_VIEW(wdgt), nil);
-	}
-	
-	return result;
+	mFilesTree = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -481,9 +556,56 @@ void MProjectWindow::Initialize(
 
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
 
-	MRect r;
-	mProject->ReadState(r);
-	SetWindowPosition(r);
+	// read the project's state, if any
+	
+	if (Preferences::GetInteger("save state", 1))
+	{
+		MPath file = inDocument->GetURL().GetPath();
+		
+		MProjectState state = {};
+		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+		if (r > 0 and static_cast<uint32>(r) == kMProjectStateSize)
+		{
+			state.Swap();
+
+//			mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
+			
+			if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+				state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+			{
+				MRect r(
+					state.mWindowPosition[0], state.mWindowPosition[1],
+					state.mWindowSize[0], state.mWindowSize[1]);
+			
+				SetWindowPosition(r);
+			}
+			
+	//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
+	//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
+			
+	//		if (state.mSelectedPanel < ePanelCount)
+	//		{
+	//			mPanel = static_cast<MProjectListPanel>(state.mSelectedPanel);
+	//			::SetControl32BitValue(mPanelSegmentRef, uint32(mPanel) + 1);
+	//			SelectPanel(mPanel);
+	//		}
+	//		else
+	//			mPanel = ePanelFiles;
+	//		
+	//		::MoveWindow(GetSysWindow(),
+	//			state.mWindowPosition[0], state.mWindowPosition[1], true);
+	//
+	//		::SizeWindow(GetSysWindow(),
+	//			state.mWindowSize[0], state.mWindowSize[1], true);
+	//
+	//		::ConstrainWindowToScreen(GetSysWindow(),
+	//			kWindowStructureRgn, kWindowConstrainStandardOptions,
+	//			NULL, NULL);
+	
+//			SelectTarget(state.mSelectedTarget);
+//			mFileList->SelectItem(state.mSelectedFile);
+		}
+	}
 	
 	SyncInterfaceWithProject();
 }
@@ -564,9 +686,22 @@ bool MProjectWindow::ProcessCommand(
 
 void MProjectWindow::SetStatus(
 	string			inStatus,
-	bool			inHide)
+	bool			inBusy)
 {
-	
+	if (GTK_IS_LABEL(mStatusPanel))
+	{
+		gtk_label_set_text(GTK_LABEL(mStatusPanel), inStatus.c_str());
+		
+		if (mBusy != inBusy)
+		{
+			if (inBusy)
+				gtk_widget_show(mStatusPanel);
+			else
+				gtk_widget_hide(mStatusPanel);
+
+			mBusy = inBusy;
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -590,4 +725,97 @@ void MProjectWindow::SyncInterfaceWithProject()
 	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), 0);
 	
 	mProject->SelectTarget(0);
+}
+
+// ---------------------------------------------------------------------------
+//	TargetChanged
+
+void MProjectWindow::TargetChanged()
+{
+	if (mProject != nil)
+	{
+		GtkWidget* wdgt = GetWidget('targ');
+		if (GTK_IS_COMBO_BOX(wdgt))
+			mProject->SelectTarget(gtk_combo_box_get_active(GTK_COMBO_BOX(wdgt)));
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	DocumentChanged
+
+void MProjectWindow::DocumentChanged(
+	MDocument*		inDocument)
+{
+	if (inDocument != mProject)
+	{
+		delete mFilesTree;
+		mFilesTree = nil;
+		
+		mProject = dynamic_cast<MProject*>(inDocument);
+	}
+	
+	MDocWindow::DocumentChanged(inDocument);
+}
+
+// ---------------------------------------------------------------------------
+//	DoClose
+
+bool MProjectWindow::DoClose()
+{
+	bool result = false;
+
+	if (mBusy == false or
+		DisplayAlert("stop-building-alert", mProject->GetName()))
+	{
+		if (mBusy)
+			mProject->StopBuilding();
+		
+		if (mProject != nil)
+			SaveState();
+		
+		result = MDocWindow::DoClose();
+	}
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	SaveState
+
+void MProjectWindow::SaveState()
+{
+	try
+	{
+		MPath file = mProject->GetURL().GetPath();
+		MProjectState state = { };
+
+		(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+		
+		state.Swap();
+
+//		state.mSelectedFile = mFileList->GetSelected();
+//		state.mSelectedTarget =
+//			find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
+
+//		int32 x;
+//		mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
+//				mLinkOrderList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
+//				mPackageList->GetScrollPosition(pt);
+//				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
+//		
+//		state.mSelectedPanel = mPanel;
+
+		MRect r;
+		GetWindowPosition(r);
+		state.mWindowPosition[0] = r.x;
+		state.mWindowPosition[1] = r.y;
+		state.mWindowSize[0] = r.width;
+		state.mWindowSize[1] = r.height;
+
+		state.Swap();
+		
+		write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+	}
+	catch (...) {}
 }

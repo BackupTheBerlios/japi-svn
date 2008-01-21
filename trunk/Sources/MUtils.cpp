@@ -40,10 +40,12 @@
 #include <string>
 #include <stack>
 #include <pwd.h>
+#include <cmath>
 
 #include <sys/time.h>
 
 #include "MUtils.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -447,3 +449,60 @@ void HexDump(
 		data += rr;
 	}
 }
+
+// --------------------------------------------------------------------
+// code to create a GdkPixbuf containing a single dot.
+//
+// use cairo to create an alpha mask, then set the colour
+// into the pixbuf.
+
+GdkPixbuf* CreateDot(
+	MColor			inColor,
+	uint32			inSize)
+{
+	// first draw in a buffer with cairo
+	cairo_surface_t* cs = cairo_image_surface_create(
+		CAIRO_FORMAT_ARGB32, inSize, inSize);
+	
+	cairo_t* c = cairo_create(cs);
+
+	cairo_translate(c, inSize / 2., inSize / 2.);
+	cairo_scale(c, inSize / 2., inSize / 2.);
+	cairo_arc(c, 0., 0., 1., 0., 2 * M_PI);
+	cairo_fill(c);
+
+	cairo_destroy(c);
+	
+	// then copy the data over to a pixbuf;
+
+	GdkPixbuf* result = gdk_pixbuf_new(
+		GDK_COLORSPACE_RGB, true, 8, inSize, inSize);
+	THROW_IF_NIL(result);
+	
+	unsigned char* dst = gdk_pixbuf_get_pixels(result);
+	unsigned char* src = cairo_image_surface_get_data(cs);
+	
+	uint32 dst_rowstride = gdk_pixbuf_get_rowstride(result);
+	uint32 src_rowstride = cairo_image_surface_get_stride(cs);
+	uint32 n_channels = gdk_pixbuf_get_n_channels(result);
+
+	for (uint32 x = 0; x < inSize; ++x)
+	{
+		for (uint32 y = 0; y < inSize; ++y)
+		{
+			unsigned char* p = dst + y * dst_rowstride + x * n_channels;
+			uint32 cp = *reinterpret_cast<uint32*>(src + y * src_rowstride + x * 4);
+
+			p[0] = inColor.red;
+			p[1] = inColor.green;
+			p[2] = inColor.blue;
+
+			p[3] = (cp >> 24) & 0xFF;
+		}
+	}
+	
+	cairo_surface_destroy(cs);
+
+	return result;
+}
+

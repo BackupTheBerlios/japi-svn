@@ -46,8 +46,6 @@ class MProjectWindow : public MDocWindow
 
 					~MProjectWindow();
 
-	virtual bool	DoClose();
-	
 	virtual void	Initialize(
 						MDocument*		inDocument);
 
@@ -67,22 +65,36 @@ class MProjectWindow : public MDocWindow
 	
   protected:
 
+	bool			DoClose();
+
 	void			SyncInterfaceWithProject();
 
 	void			SetStatus(
 						std::string		inStatus,
-						bool			inHide);
+						bool			inBusy);
 
 	void			InvokeFileRow(
-						GtkTreePath*		inPath,
-						GtkTreeViewColumn*	inColumn);
+						GtkTreePath*	inPath,
+						GtkTreeViewColumn*
+										inColumn);
+
+	virtual void	DocumentChanged(
+						MDocument*		inDocument);
+
+	void			SaveState();
 
 	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
 					mInvokeFileRow;
 
+
+	void			TargetChanged();
+	MSlot<void()>	eTargetChanged;
+
 	MProject*		mProject;
 	MTreeModelInterface*
 					mFilesTree;
+	GtkWidget*		mStatusPanel;
+	bool			mBusy;
 };
 
 #endif
