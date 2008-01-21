@@ -602,7 +602,7 @@ void MProjectWindow::Initialize(
 	//			kWindowStructureRgn, kWindowConstrainStandardOptions,
 	//			NULL, NULL);
 	
-//			SelectTarget(state.mSelectedTarget);
+			mProject->SelectTarget(state.mSelectedTarget);
 //			mFileList->SelectItem(state.mSelectedFile);
 		}
 	}
@@ -712,6 +712,8 @@ void MProjectWindow::SyncInterfaceWithProject()
 	GtkWidget* wdgt = GetWidget(kTargetPopupID);
 	THROW_IF_NIL(wdgt);
 
+	eTargetChanged.Block(wdgt, "on_targ_changed");
+
 	GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(wdgt));
 	int32 count = gtk_tree_model_iter_n_children(model, nil);
 
@@ -722,9 +724,9 @@ void MProjectWindow::SyncInterfaceWithProject()
 	for (vector<MProjectTarget*>::iterator t = targets.begin(); t != targets.end(); ++t)
 		gtk_combo_box_append_text(GTK_COMBO_BOX(wdgt), (*t)->GetName().c_str());
 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), 0);
-	
-	mProject->SelectTarget(0);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), mProject->GetSelectedTarget());
+
+	eTargetChanged.Unblock(wdgt, "on_targ_changed");
 }
 
 // ---------------------------------------------------------------------------
@@ -794,8 +796,7 @@ void MProjectWindow::SaveState()
 		state.Swap();
 
 //		state.mSelectedFile = mFileList->GetSelected();
-//		state.mSelectedTarget =
-//			find(mTargets.begin(), mTargets.end(), mCurrentTarget) - mTargets.begin();
+		state.mSelectedTarget = mProject->GetSelectedTarget();
 
 //		int32 x;
 //		mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);

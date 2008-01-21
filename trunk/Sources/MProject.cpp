@@ -1917,6 +1917,19 @@ void MProject::UpdateList()
 }
 
 // ---------------------------------------------------------------------------
+//	MProject::GetSelectedTarget
+
+uint32 MProject::GetSelectedTarget() const
+{
+	vector<MProjectTarget*>::const_iterator t = find(mTargets.begin(), mTargets.end(), mCurrentTarget);
+
+	if (t == mTargets.end())
+		t = mTargets.begin();
+
+	return t - mTargets.begin();
+}
+
+// ---------------------------------------------------------------------------
 //	MProject::SelectTarget
 
 void MProject::SelectTarget(

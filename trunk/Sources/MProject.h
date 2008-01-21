@@ -251,6 +251,8 @@ class MProject : public MDocument
 	void				SelectTarget(
 							uint32				inTarget);
 	
+	uint32				GetSelectedTarget() const;
+	
 	void				ResearchForFiles();
 
 	MEventIn<void(double)>	ePoll;

@@ -129,6 +129,7 @@
 		<copy>exception-alert.xml</copy>
 		<copy>edit-window.xml</copy>
 		<copy>project-window.xml</copy>
+		<copy>stop-building-alert.xml</copy>
 		<mkdir name="Templates">
 			<copy>empty.c</copy>
 			<copy>Strict.xhtml</copy>

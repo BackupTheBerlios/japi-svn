@@ -813,6 +813,22 @@ class MSlot : public MCallBackNS::MakeCallBackHandler<Function>::type
 								glade_xml_signal_connect_data(inGladeXML, inSignalName, 
 									G_CALLBACK(&base_class::GCallback), this);
 							}
+
+	void					Block(
+								GtkWidget*		inObject,
+								const char*		inSignalName)
+							{
+								g_signal_handlers_block_by_func(G_OBJECT(inObject),
+									(void*)G_CALLBACK(&base_class::GCallback), this);
+							}
+	
+	void					Unblock(
+								GtkWidget*		inObject,
+								const char*		inSignalName)
+							{
+								g_signal_handlers_unblock_by_func(G_OBJECT(inObject),
+									(void*)G_CALLBACK(&base_class::GCallback), this);
+							}
 	
   private:
 
