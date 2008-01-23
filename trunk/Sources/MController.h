@@ -77,10 +77,10 @@ class MController : public MHandler, public MSaverMixin
 
 	void				SaveDocumentAs();
 
-	bool				TryCloseDocument(
+	virtual bool		TryCloseDocument(
 							MCloseReason	inAction);
 
-	bool				TryCloseController(
+	virtual bool		TryCloseController(
 							MCloseReason	inAction);
 
 	void				TryDiscardChanges();

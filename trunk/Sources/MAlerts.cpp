@@ -36,7 +36,6 @@
 #include <libxml/parser.h>
 
 #include <vector>
-#include <boost/bind.hpp>
 
 #include "MResources.h"
 #include "MAlerts.h"

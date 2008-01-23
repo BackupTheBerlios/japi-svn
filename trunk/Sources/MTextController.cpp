@@ -322,3 +322,16 @@ void MTextController::DoMarkMatching()
 	new MMarkMatchingDialog(doc, mDocWindow);
 }
 
+bool MTextController::TryCloseDocument(
+	MCloseReason	inAction)
+{
+	if (mDocument != nil and
+		mDocument->IsSpecified() and
+		mDocument == MTextDocument::GetWorksheet() and
+		mDocument->IsModified())
+	{
+		mDocument->DoSave();
+	}
+
+	return MController::TryCloseDocument(inAction);
+}

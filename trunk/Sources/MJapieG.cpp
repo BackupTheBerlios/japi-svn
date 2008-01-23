@@ -866,11 +866,13 @@ void MJapieApp::ProcessSocketMessages()
 			try
 			{
 				MDocument* doc = nil;
+				int32 lineNr = -1;
 
 				switch (msg.msg)
 				{
 					case 'open':
-						doc = gApp->OpenOneDocument(MUrl(buffer));
+						memcpy(&lineNr, buffer, sizeof(lineNr));
+						doc = gApp->OpenOneDocument(MUrl(buffer + sizeof(lineNr)));
 						break;
 					
 					case 'new ':
@@ -887,6 +889,9 @@ void MJapieApp::ProcessSocketMessages()
 				{
 					DisplayDocument(doc);
 					doc->AddNotifier(notify, readStdin);
+					
+					if (lineNr > 0 and dynamic_cast<MTextDocument*>(doc) != nil)
+						static_cast<MTextDocument*>(doc)->GoToLine(lineNr - 1);
 				}
 			}
 			catch (exception& e)
@@ -926,7 +931,8 @@ int OpenSocketToServer()
 }
 
 bool ForkServer(
-	const vector<MUrl>&	inDocs,
+	const vector<pair<int32,MUrl> >&
+						inDocs,
 	bool				inReadStdin)
 {
 	int sockfd = OpenSocketToServer();
@@ -961,12 +967,14 @@ bool ForkServer(
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (vector<MUrl>::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (vector<pair<int32,MUrl> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
-			string url = d->str();
+			int32 lineNr = d->first;
+			string url = d->second.str();
 			
-			msg.length = url.length();
+			msg.length = url.length() + sizeof(lineNr);
 			write(sockfd, &msg, sizeof(msg));
+			write(sockfd, &lineNr, sizeof(lineNr));
 			write(sockfd, url.c_str(), url.length());
 		}
 	}
@@ -1009,7 +1017,7 @@ bool ForkServer(
 
 void usage()
 {
-	cout << "usage: japi [options] [ files ]" << endl
+	cout << "usage: japi [options] [ [+line] files ]" << endl
 		 << "    available options: " << endl
 		 << endl
 		 << "    -i path    Install japi at location 'path', e.g. /usr/local/bin/japi" << endl
@@ -1155,7 +1163,7 @@ int main(int argc, char* argv[])
 
 //		gdk_set_show_events(true);
 
-		vector<MUrl> docs;
+		vector<pair<int32,MUrl> > docs;
 		
 		int c;
 		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:")) != -1)
@@ -1183,12 +1191,16 @@ int main(int argc, char* argv[])
 		if (fs::exists("/usr/local/share/japi/locale"))
 			bindtextdomain("japi", "/usr/local/share/japi/locale");
 		
+		int32 lineNr = -1;
+		
 		for (int32 i = optind; i < argc; ++i)
 		{
 			string a(argv[i]);
 			
 			if (a == "-")
 				readStdin = true;
+			else if (a.substr(0, 1) == "+")
+				lineNr = atoi(a.c_str() + 1);
 			else  if (a.substr(0, 7) == "file://" or
 				a.substr(0, 7) == "sftp://" or
 				a.substr(0, 6) == "ssh://")
@@ -1198,10 +1210,14 @@ int main(int argc, char* argv[])
 				if (url.GetScheme() == "ssh")
 					url.SetScheme("sftp");
 				
-				docs.push_back(url);
+				docs.push_back(make_pair(lineNr, url));
+				lineNr = -1;
 			}
 			else
-				docs.push_back(MUrl(fs::system_complete(a)));
+			{
+				docs.push_back(make_pair(lineNr, MUrl(fs::system_complete(a))));
+				lineNr = -1;
+			}
 		}
 		
 		if (fork == false or ForkServer(docs, readStdin))

@@ -79,6 +79,11 @@ class MTextController : public MController
 
 	void				OpenCounterpart();
 
+  protected:
+
+	virtual bool		TryCloseDocument(
+							MCloseReason	inAction);
+
   private:
 
 	void				DoGoToLine();

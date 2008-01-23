@@ -1430,7 +1430,10 @@ MProjectJob* MProject::CreateLinkJob(
 	
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+	if (mCurrentTarget->GetKind() == eTargetStaticLibrary)
+		argv.push_back(Preferences::GetString("linker", "/usr/bin/ld"));
+	else
+		argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
 //	argv.push_back("-arch");
 //	if (target.GetArch() == eTargetArchPPC_32)
@@ -1467,10 +1470,6 @@ MProjectJob* MProject::CreateLinkJob(
 
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
-
-#if not defined(__APPLE__)
-	argv.push_back("-pthread");
-#endif
 
 	if (target.GetDebugFlag())
 		argv.push_back("-gdwarf-2");

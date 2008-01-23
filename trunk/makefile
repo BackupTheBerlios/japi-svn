@@ -11,7 +11,7 @@ LIBS		= pcre z cryptopp boost_regex boost_thread \
 LIBPATHS	= 
 INCPATHS	= 
 SYSINCPATHS	= 
-WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas
+WARNINGS	= -Wall -Wno-multichar -Wno-unknown-pragmas -Winvalid-pch
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8
 CFLAGS		+= $(shell pkg-config --cflags libglade-2.0)
 LDFLAGS		= -fdata-sections -g
