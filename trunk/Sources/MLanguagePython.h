@@ -46,7 +46,7 @@ class MLanguagePython : public MLanguage
 					MLanguagePython();
 	
 	virtual std::string
-					GetName() const			{ return "Perl"; }
+					GetName() const			{ return "Python"; }
 
 	virtual void	Init();
 
@@ -70,10 +70,10 @@ class MLanguagePython : public MLanguage
 	virtual void	UncommentLine(
 						std::string&		ioLine);
 
-//	virtual void	Parse(
-//						const MTextBuffer&	inText,
-//						MNamedRange&		outRange,
-//						MIncludeFileList&	outIncludeFiles);
+	virtual void	Parse(
+						const MTextBuffer&	inText,
+						MNamedRange&		outRange,
+						MIncludeFileList&	outIncludeFiles);
 
 	virtual bool	Softwrap() const;
 	

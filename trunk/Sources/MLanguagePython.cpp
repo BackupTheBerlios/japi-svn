@@ -907,6 +907,8 @@ skip(
 			
 			case '[':
 			case '(':
+			case '{':
+			case '}':
 			case ')':
 			case ']':
 				return inText;
@@ -925,14 +927,16 @@ MLanguagePython::Balance(
 {
 	MTextBuffer::const_iterator txt = inText.begin();
 	
-	stack<int32> sbls, pls;
+	stack<int32> bls, sbls, pls;
 	
 	while (txt.GetOffset() < ioOffset + ioLength)
 	{
 		switch (*txt)
 		{
+			case '{':	bls.push(txt.GetOffset());			break;
 			case '[':	sbls.push(txt.GetOffset());			break;
 			case '(':	pls.push(txt.GetOffset());			break;
+			case '}':	if (not bls.empty()) bls.pop();		break;
 			case ']':	if (not sbls.empty()) sbls.pop();	break;
 			case ')':	if (not pls.empty()) pls.pop();		break;
 		}
@@ -942,22 +946,30 @@ MLanguagePython::Balance(
 	char ec = 0, oc;
 	stack<int32> *s;
 	
-	int dsb, dp;
+	int db, dsb, dp;
 	
+	db = bls.empty() ? -1 : static_cast<int32>(ioOffset) - bls.top();
 	dsb = sbls.empty() ? -1 : static_cast<int32>(ioOffset) - sbls.top();
 	dp = pls.empty() ? -1 : static_cast<int32>(ioOffset) - pls.top();
 	
-	if (dsb < 0 and dp < 0)
+	if (db < 0 and dsb < 0 and dp < 0)
 		return false;
 	
-	if (dsb >= 0 and (dp < 0 or dsb < dp))
+	if (db >= 0 and (dsb < 0 or db < dsb) and (dp < 0 or db < dp))
+	{
+		oc = '{';
+		ec = '}';
+		s = &bls;
+	}
+	
+	if (dsb >= 0 and (db < 0 or dsb < db) and (dp < 0 or dsb < dp))
 	{
 		oc= '[';
 		ec = ']';
 		s = &sbls;
 	}
 	
-	if (dp >= 0 and (dsb < 0 or dp < dsb))
+	if (dp >= 0 and (dsb < 0 or dp < dsb) and (db < 0 or dp < db))
 	{
 		oc = '(';
 		ec = ')';
@@ -999,7 +1011,7 @@ bool
 MLanguagePython::IsBalanceChar(
 	wchar_t				inChar)
 {
-	return inChar == ')' or inChar == ']';
+	return inChar == ')' or inChar == ']' or inChar == '}';
 }
 
 void
@@ -1046,48 +1058,277 @@ bool MLanguagePython::Softwrap() const
 	return false;
 }
 
-//void MLanguagePython::Parse(
-//	const MTextBuffer&	inText,
-//	MNamedRange&		outRange,
-//	MIncludeFileList&	outIncludeFiles)
-//{
-//	outRange.name.clear();
-//	outRange.subrange.clear();
-//	outIncludeFiles.clear();
-//
-//	MTextPtr text(inText.begin());
-//
-//	outRange.begin = text.GetOffset();
-//
-//	text = package(text, outRange);
-//	
-//	while (*text and text == "package")
-//	{
-//		MNamedRange p;
-//		p.begin = text.GetOffset();
-//		
-//		text = comment(text + 7);
-//		
-//		p.selectFrom = text.GetOffset();
-//
-//		text = name_append(text, p.name);
-//
-//		while (text == "::")
-//		{
-//			p.name += "::";
-//			text = name_append(text + 2, p.name);
-//		}
-//
-//		p.selectTo = text.GetOffset();
-//		
-//		text = package(text, p);
-//		p.end = text.GetOffset();
-//		
-//		outRange.subrange.push_back(p);
-//	}
-//
-//	outRange.end = text.GetOffset();
-//}
+namespace {
+
+typedef MTextBuffer::const_iterator	MTextPtr;
+
+MTextPtr comment(
+	MTextPtr		text);
+
+MTextPtr parens(
+	MTextPtr		text,
+	char			open);
+
+MTextPtr skip(
+	MTextPtr		text,
+	char			ch);
+
+MTextPtr name_append(
+	MTextPtr		inText,
+	string&			ioName);
+
+MTextPtr block(
+	MTextPtr		text,
+	int				level,
+	MNamedRange&	block,
+	MIncludeFileList&
+					outIncludeFiles);
+
+MTextPtr name_append(MTextPtr text, string& name)
+{
+	MTextPtr s(text);
+	
+	while (isalnum(*text) or *text == '_')
+		name += *text++;
+	
+	return text;
+}
+
+MTextPtr skip(MTextPtr text, char ch)
+{
+	while (*text)
+	{
+		if (*text == ch)
+			break;
+
+		if (*text == '\\' and *(text + 1) != 0)
+			++text;
+
+		++text;
+	}
+
+	return text;
+}
+
+MTextPtr comment(MTextPtr text)
+{
+	while (isspace(*text))
+		++text;
+	
+	if (*text == '#')
+		text = skip(text, '\n');
+	
+	return text;
+}
+
+MTextPtr parens(MTextPtr text, char open)
+{
+	int c;
+	char close = 0;
+	
+	switch (open)
+	{
+		case '(':	close = ')'; break;
+		case '[':	close = ']'; break;
+		case '{':	close = '}'; break;
+//		default:	ASSERT(false); return text;
+	}
+
+	while (true)
+	{
+		text = comment(text);
+
+		c = *text++;
+		
+		if (c == '\'') 
+		{
+			text = skip(text, '\'');
+			if (*text == '\'')
+				++text;
+			continue;
+		}
+		
+		if (c == '"') 
+		{
+			text = skip(text, '"');
+			if (*text == '\"')
+				++text;
+			continue;
+		}
+		
+		if (c == '#')
+			text = skip(text, '\n');
+		
+		if (c == open)
+		{
+			text = parens(text, open);
+			continue;
+		}
+		
+		if (c == close)
+			return text;
+		
+		if (c == '\0')
+			return text - 1;
+	}
+}
+
+MTextPtr indent(
+	MTextPtr			text,
+	int&				outLevel)
+{
+	if (*text == '\n')
+		++text;
+	
+	while (*text)
+	{
+		outLevel = 0;
+
+		while (*text == ' ' or *text == '\t')
+		{
+			if (*text == ' ')
+				outLevel += 1;
+			else
+				outLevel += 8;
+			++text;
+		}
+		
+		if (*text == '#')
+			text = comment(text);
+		
+		if (*text == '\n')
+		{
+			++text;
+			continue;
+		}
+		
+		break;
+	}
+	
+	return text;	
+}
+
+MTextPtr block(
+	MTextPtr			text,
+	int					level,
+	MNamedRange&		outNamespace,
+	MIncludeFileList&	outIncludeFiles)
+{
+	MTextPtr result;
+	
+	while (*text)
+	{
+		result = text;
+		
+		int ws;
+		text = indent(text, ws);
+		
+		if (ws < level)
+			return result;
+		
+		if (text == "import")
+		{
+			text = comment(text + 6);
+			
+			for (;;)
+			{
+				string name;
+				text = name_append(text, name);
+
+				MIncludeFile file = { name, true };
+				outIncludeFiles.push_back(file);
+				
+				text = comment(text + 1);
+				if (text == "as")
+				{
+					text = name_append(text, name);
+					text = comment(text + 1);
+				}
+	
+				if (*text != ',')
+					break;
+			}
+		}
+		else if (text == "from")
+		{
+			string name;
+
+			text = comment(text + 4);
+			text = name_append(text, name);
+			text = comment(text);
+	
+			if (text == "import")
+			{
+				MIncludeFile file = { name, true };
+				outIncludeFiles.push_back(file);
+				text += 6;
+			}
+		}
+		else if (text == "def" or text == "class")
+		{
+			MNamedRange n;
+	
+			n.begin = text.GetOffset();
+			
+			if (text == "class")
+				text = comment(text + 5);
+			else
+				text = comment(text + 3);
+			
+			n.selectFrom = text.GetOffset();
+			text = name_append(text, n.name);
+			n.selectTo = text.GetOffset();
+			
+			text = comment(text);
+	
+			if (*text == '(')
+			{
+				text = parens(text + 1, '(');
+				text = comment(text);
+			}
+	
+			if (*text == ':')
+			{
+				int nl;
+				text = indent(skip(text, '\n'), nl);
+				text = block(text - nl, nl, n, outIncludeFiles);
+				
+				n.end = text.GetOffset();
+				outNamespace.subrange.push_back(n);
+				
+				continue;
+			}
+		}
+
+		if (*text != '\n')
+			text = skip(text, '\n');
+
+		if (*text == '\n')
+			++text;
+	}
+	
+	return text;
+}
+
+}
+
+void MLanguagePython::Parse(
+	const MTextBuffer&	inText,
+	MNamedRange&		outRange,
+	MIncludeFileList&	outIncludeFiles)
+{
+	outRange.name.clear();
+	outRange.subrange.clear();
+	outIncludeFiles.clear();
+
+	MTextPtr text(inText.begin());
+
+	outRange.begin = text.GetOffset();
+
+	text = block(text, 0, outRange, outIncludeFiles);
+	
+	outRange.end = text.GetOffset();
+}
 
 
 

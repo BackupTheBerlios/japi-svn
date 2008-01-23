@@ -60,6 +60,7 @@
 			<item label="C++" cmd='St_L' check='radio' />
 			<item label="HTML" cmd='St_L' check='radio' />
 			<item label="Perl" cmd='St_L' check='radio' />
+			<item label="Python" cmd='St_L' check='radio' />
 			<item label="TeX" cmd='St_L' check='radio' />
 			<item label="XML" cmd='St_L' check='radio' />
 		</menu>
