@@ -35,7 +35,7 @@
 	Created Sunday July 25 2004 21:07:42
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <boost/filesystem/fstream.hpp>
 

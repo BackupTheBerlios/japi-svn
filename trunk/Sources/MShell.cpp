@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <map>
 #include <vector>
@@ -58,6 +58,8 @@
 #include "MShell.h"
 #include "MError.h"
 #include "MPreferences.h"
+#include "MP2PEvents.h"
+#include "MJapiApp.h"
 
 extern char** environ;
 

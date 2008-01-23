@@ -43,6 +43,9 @@
 #include "MUrl.h"
 
 class MDocClosedNotifier;
+class MController;
+class MDocWindow;
+class MMenu;
 
 class MDocument
 {

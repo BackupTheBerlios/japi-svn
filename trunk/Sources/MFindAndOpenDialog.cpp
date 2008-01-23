@@ -35,7 +35,7 @@
 	Created Sunday August 15 2004 20:47:19
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MFindAndOpenDialog.h"
 #include "MTextController.h"
@@ -47,6 +47,7 @@
 #include "MUtils.h"
 #include "MUrl.h"
 #include "MSound.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

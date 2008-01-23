@@ -39,8 +39,10 @@
 #define MWINDOW_H
 
 #include "MView.h"
+#include "MHandler.h"
+
 #include "MCallbacks.h"
-#include <glade/glade-xml.h>
+#include "MP2PEvents.h"
 
 namespace boost {
 class thread;

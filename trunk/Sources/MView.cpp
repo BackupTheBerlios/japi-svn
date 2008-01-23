@@ -35,14 +35,14 @@
 	Created 28-09-07 11:18:30
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <iostream>
 #include <cassert>
 
 #include "MView.h"
-#include "MUtils.h"
 #include "MError.h"
+#include "MUtils.h"
 
 using namespace std;
 

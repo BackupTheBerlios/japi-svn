@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <boost/filesystem/fstream.hpp>
 
@@ -39,6 +39,7 @@
 #include "MError.h"
 #include "MPreferences.h"
 #include "MDocClosedNotifier.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <sstream>
 
@@ -44,6 +44,7 @@
 #include "MError.h"
 #include "MDocWindow.h"
 #include "MStrings.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

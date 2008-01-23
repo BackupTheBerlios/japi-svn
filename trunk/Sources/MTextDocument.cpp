@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <limits>
 #include <cmath>
@@ -70,6 +70,7 @@
 #include "MSftpChannel.h"
 #include "MAlerts.h"
 #include "MDiffWindow.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

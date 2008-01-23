@@ -44,7 +44,7 @@
 	
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MDiff.h"
 #include "MError.h"

@@ -30,87 +30,13 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*	$Id: MAuthDialog.cpp,v 1.3 2004/02/07 13:10:08 maarten Exp $
-	Copyright maarten
-	Created Friday November 21 2003 19:38:34
-*/
+#ifndef MJAPI_H
+#define MJAPI_H
 
-#include "MJapi.h"
+#include <gtk/gtk.h>
 
-#include <cmath>
+#include "MTypes.h"
 
-#include "MAuthDialog.h"
+extern const char kAppName[], kVersionString[];
 
-using namespace std;
-
-MAuthDialog::MAuthDialog(
-	std::string		inTitle,
-	std::string		inInstruction,
-	int32			inFields,
-	std::string		inPrompts[],
-	bool			inEcho[])
-	: MDialog("auth-dialog")
-	, ePulse(this, &MAuthDialog::Pulse)
-{
-	mFields = inFields;
-
-	SetTitle(inTitle);
-	
-	SetText('inst', inInstruction);
-	
-	uint32 lblID = 'lbl1';
-	uint32 edtID = 'edt1';
-	
-	for (int32 i = 0; i < mFields; ++i)
-	{
-		SetVisible(lblID, true);
-		SetVisible(edtID, true);
-
-		SetText(lblID, inPrompts[i]);
-		
-		SetPasswordField(edtID, inEcho[i]);
-		
-		++lblID;
-		++edtID;
-	}
-
-	for (int32 i = mFields; i < 5; ++i)
-	{
-		SetVisible(lblID++, false);
-		SetVisible(edtID++, false);
-	}
-}
-
-bool MAuthDialog::OKClicked()
-{
-	vector<string> args;
-	
-	uint32 edtID = 'edt1';
-	for (int32 i = 0; i < mFields; ++i)
-	{
-		string a;
-		GetText(edtID, a);
-		args.push_back(a);
-		++edtID;
-	}
-	
-	eAuthInfo(args);
-
-	return true;
-}
-
-bool MAuthDialog::CancelClicked()
-{
-	vector<string> args;
-	
-	eAuthInfo(args);
-	
-	return true;
-}
-
-void MAuthDialog::Pulse(
-	double		inTime)
-{
-//	SetNodeVisible('caps',
-//		ModifierKeyDown(kAlphaLock) && (std::fmod(inTime, 1.0) <= 0.5));
-}
+#endif

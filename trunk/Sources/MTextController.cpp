@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MTextController.h"
 #include "MEditWindow.h"
@@ -42,6 +42,7 @@
 #include "MProject.h"
 #include "MSound.h"
 #include "MTextDocument.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

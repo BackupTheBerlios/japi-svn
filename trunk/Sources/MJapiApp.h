@@ -30,10 +30,9 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef MJG_H
-#define MJG_H
+#ifndef MJAPIAPP_H
+#define MJAPIAPP_H
 
-#include <gtk/gtk.h>
 #include <list>
 #include <deque>
 

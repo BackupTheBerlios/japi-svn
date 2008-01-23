@@ -43,6 +43,7 @@
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlwriter.h>
 
+class MWindow;
 class MMessageWindow;
 class MProjectJob;
 class MProjectTarget;

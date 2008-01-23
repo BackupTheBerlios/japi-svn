@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <boost/bind.hpp>
 
@@ -45,6 +45,7 @@
 #include "MUtils.h"
 #include "MPreferences.h"
 #include "MAlerts.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

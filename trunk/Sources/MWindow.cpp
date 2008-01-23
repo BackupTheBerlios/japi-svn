@@ -30,16 +30,18 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <glade/glade-xml.h>
 
 #include "MCommands.h"
 #include "MWindow.h"
 #include "MResources.h"
 #include "MError.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

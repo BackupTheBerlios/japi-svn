@@ -33,14 +33,16 @@
 #ifndef MMENU_H
 #define MMENU_H
 
-#include <vector>
+#include <list>
 #include <gdk/gdkkeysyms.h>
 
 #include "MCommands.h"
 #include "MCallbacks.h"
 
+class MHandler;
+
 struct MMenuItem;
-typedef std::vector<MMenuItem*>	MMenuItemList;
+typedef std::list<MMenuItem*>	MMenuItemList;
 
 class XMLNode;
 

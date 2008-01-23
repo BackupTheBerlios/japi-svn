@@ -19,7 +19,7 @@
 	<frameworks/>
 	<files>
 		<group name="Sources">
-			<file>MJapieG.cpp</file>
+			<file>MJapiApp.cpp</file>
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
 			<file>MTextController.cpp</file>
@@ -75,6 +75,7 @@
 				<file>MLanguageCpp.cpp</file>
 				<file>MLanguageHTML.cpp</file>
 				<file>MLanguagePerl.cpp</file>
+				<file>MLanguagePython.cpp</file>
 				<file>MLanguageTeX.cpp</file>
 				<file>MLanguageXML.cpp</file>
 			</group>

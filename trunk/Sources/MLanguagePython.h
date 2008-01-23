@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2007, Maarten L. Hekkelman
+	Copyright (c) 2006, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,87 +30,57 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*	$Id: MAuthDialog.cpp,v 1.3 2004/02/07 13:10:08 maarten Exp $
-	Copyright maarten
-	Created Friday November 21 2003 19:38:34
+/*	$Id: MLanguagePerl.h 86 2006-09-21 07:10:45Z maarten $
+	Copyright Maarten L. Hekkelman
+	Created Wednesday July 28 2004 15:27:00
 */
 
-#include "MJapi.h"
+#ifndef LANGUAGEPYTHON_H
+#define LANGUAGEPYTHON_H
 
-#include <cmath>
+#include "MLanguage.h"
 
-#include "MAuthDialog.h"
-
-using namespace std;
-
-MAuthDialog::MAuthDialog(
-	std::string		inTitle,
-	std::string		inInstruction,
-	int32			inFields,
-	std::string		inPrompts[],
-	bool			inEcho[])
-	: MDialog("auth-dialog")
-	, ePulse(this, &MAuthDialog::Pulse)
+class MLanguagePython : public MLanguage
 {
-	mFields = inFields;
-
-	SetTitle(inTitle);
+  public:
+					MLanguagePython();
 	
-	SetText('inst', inInstruction);
-	
-	uint32 lblID = 'lbl1';
-	uint32 edtID = 'edt1';
-	
-	for (int32 i = 0; i < mFields; ++i)
-	{
-		SetVisible(lblID, true);
-		SetVisible(edtID, true);
+	virtual std::string
+					GetName() const			{ return "Perl"; }
 
-		SetText(lblID, inPrompts[i]);
-		
-		SetPasswordField(edtID, inEcho[i]);
-		
-		++lblID;
-		++edtID;
-	}
+	virtual void	Init();
 
-	for (int32 i = mFields; i < 5; ++i)
-	{
-		SetVisible(lblID++, false);
-		SetVisible(edtID++, false);
-	}
-}
+	virtual void	StyleLine(
+						const MTextBuffer&	inText,
+						uint32				inOffset,
+						uint32				inLength,
+						uint16&				ioState);
 
-bool MAuthDialog::OKClicked()
-{
-	vector<string> args;
+	virtual bool	Balance(
+						const MTextBuffer&	inText,
+						uint32&				ioOffset,
+						uint32&				ioLength);
+
+	virtual bool	IsBalanceChar(
+						wchar_t				inChar);
+
+	virtual void	CommentLine(
+						std::string&		ioLine);
+
+	virtual void	UncommentLine(
+						std::string&		ioLine);
+
+//	virtual void	Parse(
+//						const MTextBuffer&	inText,
+//						MNamedRange&		outRange,
+//						MIncludeFileList&	outIncludeFiles);
+
+	virtual bool	Softwrap() const;
 	
-	uint32 edtID = 'edt1';
-	for (int32 i = 0; i < mFields; ++i)
-	{
-		string a;
-		GetText(edtID, a);
-		args.push_back(a);
-		++edtID;
-	}
-	
-	eAuthInfo(args);
+	static uint32	MatchLanguage(
+						const std::string&	inFile,
+						MTextBuffer&		inText);
 
-	return true;
-}
+};
 
-bool MAuthDialog::CancelClicked()
-{
-	vector<string> args;
-	
-	eAuthInfo(args);
-	
-	return true;
-}
-
-void MAuthDialog::Pulse(
-	double		inTime)
-{
-//	SetNodeVisible('caps',
-//		ModifierKeyDown(kAlphaLock) && (std::fmod(inTime, 1.0) <= 0.5));
-}
+#endif // LANGUAGEPERL_H

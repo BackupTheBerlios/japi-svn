@@ -38,7 +38,9 @@
 #ifndef MCLIPBOARD_H
 #define MCLIPBOARD_H
 
+#include <string>
 #include "MTypes.h"
+#include "MCallbacks.h"
 
 const uint32
 	kClipboardRingSize = 7;

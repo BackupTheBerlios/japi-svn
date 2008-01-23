@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MLanguageXML.h"
 #include "MTextBuffer.h"

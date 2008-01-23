@@ -37,6 +37,7 @@
 
 #include "MTypes.h"
 #include "MColor.h"
+#include "MFile.h"
 
 struct no_swapper
 {

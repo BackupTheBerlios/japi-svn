@@ -35,7 +35,7 @@
 	Created Sunday September 28 2003 11:38:57
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MError.h"
 #include "MSshChannel.h"

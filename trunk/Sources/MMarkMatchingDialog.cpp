@@ -35,7 +35,7 @@
 	Created Sunday August 15 2004 20:47:19
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MMarkMatchingDialog.h"
 #include "MTextDocument.h"

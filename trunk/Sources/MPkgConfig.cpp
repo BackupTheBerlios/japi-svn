@@ -30,12 +30,13 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <cerrno>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <boost/algorithm/string.hpp>
+#include <sstream>
 
 #include "MFile.h"
 #include "MPkgConfig.h"

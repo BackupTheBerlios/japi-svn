@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -41,6 +41,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
+#include "MJapiApp.h"
 #include "MTextDocument.h"
 #include "MEditWindow.h"
 #include "MPreferences.h"

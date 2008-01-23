@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <pcre.h>
 #include <boost/algorithm/string/trim.hpp>
@@ -45,6 +45,7 @@
 #include "MEditWindow.h"
 #include "MStrings.h"
 #include "MError.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

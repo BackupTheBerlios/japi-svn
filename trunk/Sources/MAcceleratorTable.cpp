@@ -30,9 +30,10 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <set>
+#include <memory>
 #include <gdk/gdkkeysyms.h>
 
 #include "MCommands.h"

@@ -41,7 +41,7 @@
 #include "MP2PEvents.h"
 #include "MCallbacks.h"
 
-#include <vector>
+#include <deque>
 
 #undef Success
 #undef Failure

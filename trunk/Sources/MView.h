@@ -40,6 +40,8 @@
 
 #include "MCallbacks.h"
 
+class MWindow;
+
 enum MCursor
 {
 	eNormalCursor,

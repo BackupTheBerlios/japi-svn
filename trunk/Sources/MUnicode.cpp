@@ -35,9 +35,10 @@
 	Created Monday July 12 2004 21:45:58
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <sstream>
+#include <cassert>
 
 #include "MUnicode.h"
 #include "MError.h"

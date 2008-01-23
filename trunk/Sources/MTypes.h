@@ -35,10 +35,7 @@
 #ifndef MTYPES_H
 #define MTYPES_H
 
-#include <string>
-#include <ostream>
-
-#define	nil					NULL
+#define nil NULL
 
 typedef signed char			int8;
 typedef unsigned char		uint8;
@@ -296,12 +293,12 @@ inline void MRect::InsetBy(
 	}
 }
 
-template<class charT>
-inline
-std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& lhs, MRect rhs)
-{
-	lhs << rhs.x << ',' << rhs.y << '-' << rhs.width << ',' << rhs.height;
-	return lhs;
-}
+//template<class charT>
+//inline
+//std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& lhs, MRect rhs)
+//{
+//	lhs << rhs.x << ',' << rhs.y << '-' << rhs.width << ',' << rhs.height;
+//	return lhs;
+//}
 
 #endif

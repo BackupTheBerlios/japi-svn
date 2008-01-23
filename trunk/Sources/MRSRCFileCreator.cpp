@@ -7,7 +7,7 @@ pkg-config --cflags --libs 'gtk+-2.0'
 
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>

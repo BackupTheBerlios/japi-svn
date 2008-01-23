@@ -35,7 +35,7 @@
 	Created Sunday August 15 2004 20:47:19
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <boost/bind.hpp>
 
@@ -52,6 +52,7 @@
 #include "MSound.h"
 #include "MAlerts.h"
 #include "MError.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

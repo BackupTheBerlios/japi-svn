@@ -48,6 +48,7 @@
 #define MUNICODE_H
 
 #include <vector>
+#include <string>
 
 #include "MTypes.h"
 

@@ -37,7 +37,7 @@
 	Implementation of the Version 3 Secure File Transfer Protocol
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MError.h"
 #include "MSshUtil.h"

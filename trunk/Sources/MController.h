@@ -43,6 +43,7 @@
 
 #include "MHandler.h"
 #include "MSaverMixin.h"
+#include "MP2PEvents.h"
 
 class MDocument;
 class MWindow;

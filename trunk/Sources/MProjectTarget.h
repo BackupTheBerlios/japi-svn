@@ -33,6 +33,8 @@
 #ifndef MPROJECTTARGET_H
 #define MPROJECTTARGET_H
 
+#include <string>
+
 // ---------------------------------------------------------------------------
 //	MProjectTarget
 

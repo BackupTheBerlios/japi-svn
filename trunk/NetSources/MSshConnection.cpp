@@ -35,7 +35,7 @@
 	Created Sunday September 28 2003 11:35:17
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <fstream>
 #include <sstream>
@@ -71,6 +71,7 @@
 #include "MUtils.h"
 #include "MKnownHosts.h"
 #include "MStrings.h"
+#include "MJapiApp.h"
 
 using namespace std;
 using namespace CryptoPP;

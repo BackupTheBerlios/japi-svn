@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <unistd.h>
 
@@ -48,6 +48,7 @@
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MStrings.h"
+#include "MJapiApp.h"
 
 using namespace std;
 

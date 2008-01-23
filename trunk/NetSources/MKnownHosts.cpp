@@ -35,7 +35,7 @@
 	Created Thursday November 06 2003 11:50:26
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <fcntl.h>
 #include <cctype>

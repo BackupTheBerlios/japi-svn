@@ -35,7 +35,7 @@
 	Created Sunday August 15 2004 13:51:21
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <sstream>
 

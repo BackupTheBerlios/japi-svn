@@ -30,7 +30,7 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <cmath>
 #include <sstream>
@@ -47,6 +47,7 @@
 #include "MStyles.h"
 #include "MUtils.h"
 #include "MDevice.h"
+#include "MJapiApp.h"
 
 #ifndef NDEBUG
 #include <iostream>

@@ -35,11 +35,12 @@
 	Created Wednesday July 28 2004 14:05:56
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MLanguage.h"
 #include "MLanguageCpp.h"
 #include "MLanguagePerl.h"
+#include "MLanguagePython.h"
 #include "MLanguageTeX.h"
 #include "MLanguageHTML.h"
 #include "MLanguageXML.h"
@@ -486,6 +487,8 @@ MLanguage::GetLanguageForDocument(
 		result = LanguageFactory<MLanguageHTML>::Create();
 	else if (MLanguagePerl::MatchLanguage(inFile, inText))
 		result = LanguageFactory<MLanguagePerl>::Create();
+	else if (MLanguagePython::MatchLanguage(inFile, inText))
+		result = LanguageFactory<MLanguagePython>::Create();
 	else if (MLanguageTeX::MatchLanguage(inFile, inText))
 		result = LanguageFactory<MLanguageTeX>::Create();
 	else if (MLanguageXML::MatchLanguage(inFile, inText))
@@ -501,6 +504,8 @@ MLanguage::GetLanguage(
 	MLanguage* result = LanguageFactory<MLanguageCpp>::Create();
 	if (inName != result->GetName())
 		result = LanguageFactory<MLanguagePerl>::Create();
+	if (inName != result->GetName())
+		result = LanguageFactory<MLanguagePython>::Create();
 	if (inName != result->GetName())
 		result = LanguageFactory<MLanguageHTML>::Create();
 	if (inName != result->GetName())

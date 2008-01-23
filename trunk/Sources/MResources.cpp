@@ -30,9 +30,10 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include <sstream>
+#include <list>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>

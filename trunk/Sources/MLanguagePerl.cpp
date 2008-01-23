@@ -35,7 +35,7 @@
 	Created Wednesday July 28 2004 15:26:34
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
 
 #include "MLanguagePerl.h"
 #include "MTextBuffer.h"
@@ -961,19 +961,10 @@ skip(
 				}
 				break;
 				
-			case '/':
-				if (inText[1] == '*')
-				{
-					inText += 2;
-					while (*inText and ! (*inText == '*' and inText[1] == '/'))
-						inText++;
-				}
-				else if (inText[1] == '/')
-				{
-					inText += 2;
-					while (*inText and *inText != '\n')
-						inText++;
-				}
+			case '#':
+				inText += 1;
+				while (*inText and *inText != '\n')
+					inText++;
 				break;
 			
 			case '{':

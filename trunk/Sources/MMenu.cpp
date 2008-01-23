@@ -30,8 +30,10 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
+
 #include <iostream>
+#include <algorithm>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
@@ -45,6 +47,7 @@
 #include "MResources.h"
 #include "MUtils.h"
 #include "MError.h"
+#include "MJapiApp.h"
 
 using namespace std;
 
@@ -415,12 +418,14 @@ void MMenu::RemoveItems(
 {
 	if (inFromIndex < mItems.size())
 	{
-		MMenuItemList::iterator b = mItems.begin() + inFromIndex;
+		MMenuItemList::iterator b = mItems.begin();
+		advance(b, inFromIndex);
 
 		if (inFromIndex + inCount > mItems.size())
 			inCount = mItems.size() - inFromIndex;
 
-		MMenuItemList::iterator e = b + inCount;	
+		MMenuItemList::iterator e = b;
+		advance(e, inCount);	
 		
 		for (MMenuItemList::iterator mi = b; mi != e; ++mi)
 			gtk_widget_destroy((*mi)->mGtkMenuItem);
@@ -435,7 +440,10 @@ string MMenu::GetItemLabel(
 	if (inIndex >= mItems.size())
 		THROW(("Item index out of range"));
 	
-	return mItems[inIndex]->mLabel;
+	MMenuItemList::const_iterator i = mItems.begin();
+	advance(i, inIndex);
+	
+	return (*i)->mLabel;
 }
 
 void MMenu::SetTarget(
@@ -465,7 +473,7 @@ void MMenu::UpdateCommandStatus()
 			bool checked = item->mChecked;
 			
 			if (mTarget->UpdateCommandStatus(item->mCommand, this,
-				mi - mItems.begin(), enabled, checked))
+				distance(mItems.begin(), mi), enabled, checked))
 			{
 				if (enabled != item->mEnabled)
 				{

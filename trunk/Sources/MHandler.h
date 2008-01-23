@@ -33,6 +33,8 @@
 #ifndef MHANDLER_H
 #define MHANDLER_H
 
+#include <list>
+
 class MMenu;
 
 class MHandler

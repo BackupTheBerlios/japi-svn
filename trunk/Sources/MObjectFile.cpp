@@ -30,7 +30,9 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "MJapieG.h"
+#include "MJapi.h"
+
+#include "MAlerts.h"
 
 #if defined(__APPLE__) and defined(__MACH__)
 #	include "MObjectFileImp_macho.h"
