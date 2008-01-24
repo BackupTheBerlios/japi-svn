@@ -89,6 +89,15 @@ class MProject : public MDocument
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
+	void				AddFiles(
+							std::vector<std::string>&
+												inFiles,
+							MProjectGroup*		inGroup,
+							uint32				inIndex);
+
+	void				RemoveItem(
+							MProjectItem*		inItem);
+
 	static void			RecheckFiles();
 
 	MMessageWindow*		GetMessageWindow();
@@ -257,7 +266,10 @@ class MProject : public MDocument
 	
 	void				ResearchForFiles();
 
-	MEventIn<void(double)>	ePoll;
+	MEventIn<void(double)>			ePoll;
+
+	MEventOut<void(MProjectItem*)>	eInsertedFile;
+	MEventOut<void(MProjectItem*)>	eInsertedResource;
 
 	std::string			mName;
 	MPath				mProjectFile;

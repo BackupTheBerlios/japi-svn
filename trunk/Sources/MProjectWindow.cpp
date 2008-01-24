@@ -33,6 +33,7 @@
 #include "MJapi.h"
 
 #include <boost/bind.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "MProjectWindow.h"
 #include "MProjectItem.h"
@@ -46,6 +47,8 @@
 #include "MPreferences.h"
 #include "MAlerts.h"
 #include "MJapiApp.h"
+
+namespace ba = boost::algorithm;
 
 using namespace std;
 
@@ -106,6 +109,7 @@ class MProjectTreeModel : public MTreeModelInterface
 {
   public:
 					MProjectTreeModel(
+						MProject*		inProject,
 						MProjectGroup*	inItems);
 
 	virtual uint32	GetColumnCount() const;
@@ -148,20 +152,47 @@ class MProjectTreeModel : public MTreeModelInterface
 						GtkTreeIter*	outIter,
 						GtkTreeIter*	inChild);
 
+
+	virtual bool	RowDraggable(
+						GtkTreePath*		inPath);
+
+	virtual bool	DragDataGet(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	outData);
+
+	virtual bool	DragDataDelete(
+						GtkTreePath*		inPath);
+
+	virtual bool	DragDataReceived(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	inData);
+
+	virtual bool	RowDropPossible(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	inData);
+
+	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
+	MEventIn<void(MProjectItem*)>			eProjectItemInserted;
+
   private:
 
 	void			ProjectItemStatusChanged(
 						MProjectItem*	inItem);
 
-	MEventIn<void(MProjectItem*)>		eProjectItemStatusChanged;
+	void			ProjectItemInserted(
+						MProjectItem*	inItem);
 
+	MProject*		mProject;
 	MProjectGroup*	mItems;
 };
 
 MProjectTreeModel::MProjectTreeModel(
+	MProject*			inProject,
 	MProjectGroup*		inItems)
 	: MTreeModelInterface(GTK_TREE_MODEL_ITERS_PERSIST)
 	, eProjectItemStatusChanged(this, &MProjectTreeModel::ProjectItemStatusChanged)
+	, eProjectItemInserted(this, &MProjectTreeModel::ProjectItemInserted)
+	, mProject(inProject)
 	, mItems(inItems)
 {
 	vector<MProjectItem*> items;
@@ -169,6 +200,11 @@ MProjectTreeModel::MProjectTreeModel(
 	
 	for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
 		AddRoute((*i)->eStatusChanged, eProjectItemStatusChanged);
+
+	if (inItems == inProject->GetFiles())
+		AddRoute(mProject->eInsertedFile, eProjectItemInserted);
+	else
+		AddRoute(mProject->eInsertedResource, eProjectItemInserted);
 }
 
 uint32 MProjectTreeModel::GetColumnCount() const
@@ -438,6 +474,134 @@ void MProjectTreeModel::ProjectItemStatusChanged(
 	catch (...) {}
 }
 
+void MProjectTreeModel::ProjectItemInserted(
+	MProjectItem*	inItem)
+{
+	try
+	{
+		GtkTreeIter iter = {};
+		
+		iter.user_data = inItem;
+		
+		GtkTreePath* path = GetPath(&iter);
+		if (path != nil)
+		{
+			DoRowInserted(path, &iter);
+			gtk_tree_path_free(path);
+		}
+	}
+	catch (...) {}
+}
+
+bool MProjectTreeModel::RowDraggable(
+	GtkTreePath*		inPath)
+{
+	return true;
+}
+
+bool MProjectTreeModel::DragDataGet(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	outData)
+{
+	bool result = false;
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, inPath))
+	{
+		stringstream s;
+		vector<MProjectItem*> items;
+		
+		reinterpret_cast<MProjectItem*>(iter.user_data)->Flatten(items);
+		
+		for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
+		{
+			MProjectFile* file = dynamic_cast<MProjectFile*>(*i);
+			if (file != nil)
+				s << MUrl(file->GetPath()).str(true) << endl;
+		}
+		
+		string data = s.str();
+		
+		gtk_selection_data_set(outData, outData->target,
+			8, (guchar*)data.c_str(), data.length());
+	}
+	
+	return result;
+}
+
+bool MProjectTreeModel::DragDataDelete(
+	GtkTreePath*		inPath)
+{
+
+PRINT(("DragDataDelete on row %s",
+	gtk_tree_path_to_string(inPath)));
+
+	return false;
+}
+
+bool MProjectTreeModel::DragDataReceived(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	inData)
+{
+	bool result = false;
+
+	// split the data into an array of files
+	vector<string> files;
+	boost::iterator_range<const char*> text(
+		reinterpret_cast<const char*>(inData->data),
+		reinterpret_cast<const char*>(inData->data + inData->length));
+	ba::split(files, text, boost::is_any_of("\n\r"), boost::token_compress_on);
+	
+	// find the location where to insert the items
+	MProjectGroup* group = mItems;
+
+	int32 depth = gtk_tree_path_get_depth(inPath);
+	int32* indices = gtk_tree_path_get_indices(inPath);
+	int32 index = 0;
+	
+	for (int32 ix = 0; ix < depth - 1 and group != nil; ++ix)
+	{
+		if (dynamic_cast<MProjectGroup*>(group->GetItem(indices[ix])))
+		{
+			group = static_cast<MProjectGroup*>(group->GetItem(indices[ix]));
+			index = indices[ix + 1];
+		}
+		else
+			break;
+	}
+	
+	// now add the files
+
+	if (files.size() and group != nil)
+	{
+		mProject->AddFiles(files, group, index);
+		result = true;
+	}
+	
+	return result;
+}
+
+bool MProjectTreeModel::RowDropPossible(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	inData)
+{
+	bool result = false;
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, inPath))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		result = dynamic_cast<MProjectGroup*>(item) != nil;
+PRINT(("returning %s for RowDropPossible on row %s",
+	result ? "true" : "false",
+	item->GetName().c_str()));
+	}
+
+	return false;
+}
+
+
+
 }
 
 MProjectWindow::MProjectWindow()
@@ -521,7 +685,7 @@ void MProjectWindow::Initialize(
 	GtkWidget* treeView = GetWidget(kFilesListViewID);
 	THROW_IF_NIL((treeView));
 	
-	mFilesTree = new MProjectTreeModel(mProject->GetFiles());
+	mFilesTree = new MProjectTreeModel(mProject, mProject->GetFiles());
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
 
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
@@ -531,7 +695,7 @@ void MProjectWindow::Initialize(
 	treeView = GetWidget(kResourceViewID);
 	THROW_IF_NIL((treeView));
 	
-	mResourcesTree = new MProjectTreeModel(mProject->GetResources());
+	mResourcesTree = new MProjectTreeModel(mProject, mProject->GetResources());
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mResourcesTree->GetModel());
 
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
@@ -840,6 +1004,20 @@ void MProjectWindow::InitializeTreeView(
 	GtkTreeView*	inGtkTreeView)
 {
 	THROW_IF_NIL(inGtkTreeView);
+
+	const GtkTargetEntry targets[] =
+	{
+	    { "text/uri-list", 0, 1 },
+	};
+
+	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
+		targets, 1, GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	gtk_tree_view_enable_model_drag_source(inGtkTreeView,
+		GDK_BUTTON1_MASK, targets, 1, GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	
+	GtkTreeSelection* selection = gtk_tree_view_get_selection(inGtkTreeView);
+	if (selection != nil)
+		gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
 
 	// Add the columns and renderers
 

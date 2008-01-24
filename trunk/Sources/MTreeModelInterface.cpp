@@ -34,6 +34,9 @@
 
 #include "MTreeModelInterface.h"
 #include "MError.h"
+#include "MAlerts.h"
+
+using namespace std;
 
 #define MTREE_TYPE_LIST            (MTreeModelImp::GetType())
 #define MTREE_LIST(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj), MTREE_TYPE_LIST, MTreeModelImp))
@@ -56,13 +59,19 @@ struct MTreeModelImp
 	static GObjectClass*	sParentClass;
 
 	static void		ClassInit(
-						MTreeModelImpClass*	inClass);
+						MTreeModelImpClass*		inClass);
 
 	static void		ModelInit(
-						GtkTreeModelIface*	iface);
+						GtkTreeModelIface*		iface);
+
+	static void		DragSourceInit(
+						GtkTreeDragSourceIface*	iface);
+
+	static void		DragDestInit(
+						GtkTreeDragDestIface*	iface);
 	
 	static void		Init(
-						MTreeModelImp*		self);
+						MTreeModelImp*			self);
 	
 	static GType	GetType();
 
@@ -92,7 +101,7 @@ struct MTreeModelImp
 						GtkTreeIter  *iter,
 						gint         *new_order);
 
-  /* Virtual Table */
+  /* Model Virtual Table */
 	static GtkTreeModelFlags
 					get_flags(
 						GtkTreeModel *tree_model);
@@ -156,8 +165,38 @@ struct MTreeModelImp
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter);
 
+	/* DragSource VTable */
+	
+	static gboolean	row_draggable(
+						GtkTreeDragSource*	drag_source,
+						GtkTreePath*		path);
+
+	static gboolean	drag_data_get(
+						GtkTreeDragSource*	drag_source,
+						GtkTreePath*		path,
+						GtkSelectionData*	selection_data);
+
+	static gboolean	drag_data_delete(
+						GtkTreeDragSource*	drag_source,
+						GtkTreePath*		path);
+
+	/* DragDest VTable */
+	
+	static gboolean	drag_data_received(
+						GtkTreeDragDest*	drag_dest,
+						GtkTreePath*		dest,
+						GtkSelectionData*	selection_data);
+
+	static gboolean	row_drop_possible(
+						GtkTreeDragDest*	drag_dest,
+						GtkTreePath*		dest_path,
+						GtkSelectionData*	selection_data);
+
+	// common
+	
 	static void		Finalize(
 						GObject*	inObject);
+
 };
 
 GObjectClass* MTreeModelImp::sParentClass;
@@ -197,6 +236,21 @@ void MTreeModelImp::ModelInit(
 	iface->unref_node =				&MTreeModelImp::unref_node;
 }
 
+void MTreeModelImp::DragSourceInit(
+	GtkTreeDragSourceIface*	iface)
+{
+	iface->row_draggable =			&MTreeModelImp::row_draggable;
+	iface->drag_data_get =			&MTreeModelImp::drag_data_get;
+	iface->drag_data_delete =		&MTreeModelImp::drag_data_delete;
+}
+
+void MTreeModelImp::DragDestInit(
+	GtkTreeDragDestIface*	iface)
+{
+	iface->drag_data_received =		&MTreeModelImp::drag_data_received;
+	iface->row_drop_possible =		&MTreeModelImp::row_drop_possible;
+}
+
 void MTreeModelImp::Init(
 	MTreeModelImp*	self)
 {
@@ -218,6 +272,7 @@ GType MTreeModelImp::GetType()
 	/* Some boilerplate type registration stuff */
 	if (sMTreeListType == 0)
 	{
+		/* First register our new derived type with the GObject type system */
 		static const GTypeInfo sMTreeListInfo =
 		{
 			sizeof(MTreeModelImpClass),
@@ -231,6 +286,10 @@ GType MTreeModelImp::GetType()
 			(GInstanceInitFunc)&MTreeModelImp::Init
 		};
 
+		sMTreeListType = g_type_register_static(
+			G_TYPE_OBJECT, "MTreeList", &sMTreeListInfo, (GTypeFlags)0);
+		
+		/* Then register our GtkTreeModel interface with the type system */
 		static const GInterfaceInfo sMTreeModelInfo =
 		{
 			(GInterfaceInitFunc)&MTreeModelImp::ModelInit,
@@ -238,12 +297,25 @@ GType MTreeModelImp::GetType()
 			nil
 		};
 		
-		/* First register our new derived type with the GObject type system */
-		sMTreeListType = g_type_register_static (G_TYPE_OBJECT, "MTreeList",
-		                                       &sMTreeListInfo, (GTypeFlags)0);
+		g_type_add_interface_static(sMTreeListType, GTK_TYPE_TREE_MODEL, &sMTreeModelInfo);
+
+		static const GInterfaceInfo sMTreeDragSourceInfo =
+		{
+			(GInterfaceInitFunc)&MTreeModelImp::DragSourceInit,
+			nil,
+			nil
+		};
 		
-		/* Then register our GtkTreeModel interface with the type system */
-		g_type_add_interface_static (sMTreeListType, GTK_TYPE_TREE_MODEL, &sMTreeModelInfo);
+		g_type_add_interface_static(sMTreeListType, GTK_TYPE_TREE_DRAG_SOURCE, &sMTreeDragSourceInfo);
+
+		static const GInterfaceInfo sMTreeDragDestInfo =
+		{
+			(GInterfaceInitFunc)&MTreeModelImp::DragDestInit,
+			nil,
+			nil
+		};
+		
+		g_type_add_interface_static(sMTreeListType, GTK_TYPE_TREE_DRAG_DEST, &sMTreeDragDestInfo);
 	}
 	
 	return sMTreeListType;
@@ -254,10 +326,17 @@ void MTreeModelImp::row_changed(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT(("row_changed"));
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RowChanged(path, iter);
+	try
+	{
+	//PRINT(("row_changed"));
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RowChanged(path, iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MTreeModelImp::row_inserted(
@@ -265,10 +344,17 @@ void MTreeModelImp::row_inserted(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT(("row_inserted"));
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RowInserted(path, iter);
+	try
+	{
+	//PRINT(("row_inserted"));
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RowInserted(path, iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MTreeModelImp::row_has_child_toggled(
@@ -276,20 +362,34 @@ void MTreeModelImp::row_has_child_toggled(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT(("row_has_child_toggled"));
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RowHasChildToggled(path, iter);
+	try
+	{
+	//PRINT(("row_has_child_toggled"));
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RowHasChildToggled(path, iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MTreeModelImp::row_deleted(
 						GtkTreeModel *tree_model,
 						GtkTreePath  *path)
 {
-//PRINT(("row_deleted"));
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RowDeleted(path);
+	try
+	{
+	//PRINT(("row_deleted"));
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RowDeleted(path);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MTreeModelImp::rows_reordered(
@@ -298,31 +398,51 @@ void MTreeModelImp::rows_reordered(
 						GtkTreeIter  *iter,
 						gint         *new_order)
 {
-//PRINT(("rows_reordered"));
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RowsReordered(path, iter, *new_order);
+	try
+	{
+	//PRINT(("rows_reordered"));
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RowsReordered(path, iter, *new_order);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 GtkTreeModelFlags MTreeModelImp::get_flags(
 						GtkTreeModel *tree_model)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil)
-		return self->flags;
-	else
-		return GtkTreeModelFlags(0);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil)
+			return self->flags;
+		else
+			return GtkTreeModelFlags(0);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 gint MTreeModelImp::get_n_columns(
 						GtkTreeModel *tree_model)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	gint result = 0;
-	
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetColumnCount();
+
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetColumnCount();
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -331,12 +451,18 @@ GType MTreeModelImp::get_column_type(
 						GtkTreeModel *tree_model,
 						gint          index_)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	GType result = G_TYPE_NONE;
 	
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetColumnType(index_);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetColumnType(index_);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -346,12 +472,18 @@ gboolean MTreeModelImp::get_iter(
 						GtkTreeIter  *iter,
 						GtkTreePath  *path)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
-	
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetIter(iter, path);
+
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetIter(iter, path);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -360,12 +492,18 @@ GtkTreePath* MTreeModelImp::get_path(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-
 	GtkTreePath* result = nil;
 
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetPath(iter);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetPath(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -376,22 +514,34 @@ void MTreeModelImp::get_value(
 						gint          column,
 						GValue       *value)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-
-	if (self != nil and self->interface != nil)
-		self->interface->GetValue(iter, column, value);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->GetValue(iter, column, value);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 gboolean MTreeModelImp::iter_next(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
 	
-	if (self != nil and self->interface != nil)
-		result = self->interface->Next(iter);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->Next(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -401,12 +551,18 @@ gboolean MTreeModelImp::iter_children(
 						GtkTreeIter  *iter,
 						GtkTreeIter  *parent)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
 	
-	if (self != nil and self->interface != nil)
-		result = self->interface->Children(iter, parent);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->Children(iter, parent);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -415,12 +571,18 @@ gboolean MTreeModelImp::iter_has_child(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
 	
-	if (self != nil and self->interface != nil)
-		result = self->interface->HasChildren(iter);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->HasChildren(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -429,12 +591,18 @@ gint MTreeModelImp::iter_n_children(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
-	
-	if (self != nil and self->interface != nil)
-		result = self->interface->CountChildren(iter);
+		
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->CountChildren(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -445,12 +613,18 @@ gboolean MTreeModelImp::iter_nth_child(
 						GtkTreeIter  *parent,
 						gint          n)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	
 	bool result = false;
 	
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetChild(iter, parent, n);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetChild(iter, parent, n);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -460,12 +634,18 @@ gboolean MTreeModelImp::iter_parent(
 						GtkTreeIter  *iter,
 						GtkTreeIter  *child)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-
 	bool result = false;
 
-	if (self != nil and self->interface != nil)
-		result = self->interface->GetParent(iter, child);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			result = self->interface->GetParent(iter, child);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	return result;
 }
@@ -474,18 +654,140 @@ void MTreeModelImp::ref_node(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->RefNode(iter);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->RefNode(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MTreeModelImp::unref_node(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-	MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
-	if (self != nil and self->interface != nil)
-		self->interface->UnrefNode(iter);
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
+		if (self != nil and self->interface != nil)
+			self->interface->UnrefNode(iter);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+}
+
+gboolean MTreeModelImp::row_draggable(
+	GtkTreeDragSource*	drag_source,
+	GtkTreePath*		path)
+{
+	bool result = false;
+	
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(drag_source);
+	
+		if (self != nil and self->interface != nil)
+			result = self->interface->RowDraggable(path);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	
+	return result;
+}
+
+gboolean MTreeModelImp::drag_data_get(
+	GtkTreeDragSource*	drag_source,
+	GtkTreePath*		path,
+	GtkSelectionData*	selection_data)
+{
+	bool result = false;
+	
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(drag_source);
+	
+		if (self != nil and self->interface != nil)
+			result = self->interface->DragDataGet(path, selection_data);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	
+	return result;
+}
+
+gboolean MTreeModelImp::drag_data_delete(
+	GtkTreeDragSource*	drag_source,
+	GtkTreePath*		path)
+{
+	bool result = false;
+	
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(drag_source);
+	
+		if (self != nil and self->interface != nil)
+			result = self->interface->DragDataDelete(path);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	
+	return result;
+}
+
+gboolean MTreeModelImp::drag_data_received(
+	GtkTreeDragDest*	drag_dest,
+	GtkTreePath*		dest,
+	GtkSelectionData*	selection_data)
+{
+	bool result = false;
+	
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(drag_dest);
+	
+		if (self != nil and self->interface != nil)
+			result = self->interface->DragDataReceived(dest, selection_data);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	
+	return result;
+}
+
+gboolean MTreeModelImp::row_drop_possible(
+	GtkTreeDragDest*	drag_dest,
+	GtkTreePath*		dest_path,
+	GtkSelectionData*	selection_data)
+{
+	bool result = false;
+
+	try
+	{
+		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(drag_dest);
+	
+		if (self != nil and self->interface != nil)
+			result = self->interface->RowDropPossible(dest_path, selection_data);
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	
+	return result;
 }
 
 // --------------------------------------------------------------------
@@ -600,9 +902,50 @@ void MTreeModelInterface::UnrefNode(
 {
 }
 
+bool MTreeModelInterface::RowDraggable(
+	GtkTreePath*		inPath)
+{
+	return false;
+}
+
+bool MTreeModelInterface::DragDataGet(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	outData)
+{
+	return false;
+}
+
+bool MTreeModelInterface::DragDataDelete(
+	GtkTreePath*		inPath)
+{
+	return false;
+}
+
+bool MTreeModelInterface::DragDataReceived(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	inData)
+{
+	return false;
+}
+
+bool MTreeModelInterface::RowDropPossible(
+	GtkTreePath*		inPath,
+	GtkSelectionData*	inData)
+{
+	return false;
+}
+
 void MTreeModelInterface::DoRowChanged(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
 	gtk_tree_model_row_changed(GTK_TREE_MODEL(mImpl), inPath, inIter);
 }
+
+void MTreeModelInterface::DoRowInserted(
+	GtkTreePath*	inPath,
+	GtkTreeIter*	inIter)
+{
+	gtk_tree_model_row_inserted(GTK_TREE_MODEL(mImpl), inPath, inIter);
+}	
+

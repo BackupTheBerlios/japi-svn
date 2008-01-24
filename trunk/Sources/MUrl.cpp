@@ -81,6 +81,9 @@ struct MUrlImp
 	int16			mPort;
 	fs::path		mPath;
 	
+	static void		Encode(
+						std::string&		ioURL);
+
 	void			Decode(
 						std::string&		ioURL);
 
@@ -185,6 +188,27 @@ void MUrlImp::Decode(
 	}
 	
 	ioURL.assign(&buf[0], r);
+}
+
+void MUrlImp::Encode(
+	string&		ioPath)
+{
+	string path;
+	
+	swap(path, ioPath);
+	
+	for (unsigned int i = 0; i < path.length(); ++i)
+	{
+		unsigned char a = (unsigned char)path[i];
+		if (not (a >= 32 and a < 128 and (kURLAcceptable[a - 32] & 4)))
+		{
+			ioPath += '%';
+			ioPath += kHexChars[a >> 4];
+			ioPath += kHexChars[a & 15];
+		}
+		else
+			ioPath += path[i];
+	}
 }
 
 // --------------------------------------------------------------------
@@ -295,7 +319,8 @@ bool MUrl::IsValid() const
 		mImpl->mPath.is_complete();
 }
 
-string MUrl::str() const
+string MUrl::str(
+	bool			inEncoded) const
 {
 	stringstream s;
 	s << mImpl->mScheme << "://";
@@ -318,7 +343,11 @@ string MUrl::str() const
 		s << '/';
 	}
 	
-	s << mImpl->mPath.string();
+	string path = mImpl->mPath.string();
+	if (inEncoded)
+		MUrlImp::Encode(path);
+	
+	s << path;
 	
 	return s.str();
 }

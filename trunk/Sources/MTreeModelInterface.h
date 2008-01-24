@@ -116,9 +116,33 @@ class MTreeModelInterface
 	virtual void	UnrefNode(
 						GtkTreeIter*	inIter);
 
+	// DND
+	
+	virtual bool	RowDraggable(
+						GtkTreePath*		inPath);
+
+	virtual bool	DragDataGet(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	outData);
+
+	virtual bool	DragDataDelete(
+						GtkTreePath*		inPath);
+
+	virtual bool	DragDataReceived(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	inData);
+
+	virtual bool	RowDropPossible(
+						GtkTreePath*		inPath,
+						GtkSelectionData*	inData);
+
   protected:
 
 	void			DoRowChanged(
+						GtkTreePath*	inPath,
+						GtkTreeIter*	inIter);
+	
+	void			DoRowInserted(
 						GtkTreePath*	inPath,
 						GtkTreeIter*	inIter);
 	

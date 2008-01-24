@@ -67,7 +67,8 @@ class MUrl
 	
 	bool			IsValid() const;
 
-	std::string		str() const;
+	std::string		str(
+						bool				inEncoded = false) const;
 
 	std::string		GetFileName() const;
 	

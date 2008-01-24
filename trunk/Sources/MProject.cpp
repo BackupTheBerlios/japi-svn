@@ -42,6 +42,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "MProject.h"
 #include "MDevice.h"
@@ -65,6 +66,7 @@
 #include "MJapiApp.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 namespace
 {
@@ -2296,3 +2298,77 @@ bool MProject::ProcessCommand(
 	
 	return result;
 }
+
+void MProject::AddFiles(
+	vector<string>&		inFiles,
+	MProjectGroup*		inGroup,
+	uint32				inIndex)
+{
+	MProjectGroup* root = inGroup;
+	THROW_IF_NIL(root);
+	
+	while (root->GetParent() != nil)
+		root = root->GetParent();
+	
+	try
+	{
+		for (vector<string>::iterator file = inFiles.begin(); file != inFiles.end(); ++file)
+		{
+			ba::trim(*file);
+			if (file->length() == 0)
+				continue;
+			
+			MProjectItem* item = nil;
+			
+			MUrl url(*file);
+			if (not url.IsLocal())
+				THROW(("You can only add local files to a project"));
+			
+			MPath p = url.GetPath();
+			string name = p.leaf();
+			
+			if (fs::is_directory(p))
+			{
+				auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
+				inGroup->AddProjectItem(group.release(), inIndex);
+				item = group.release();
+			}
+			else if (root == &mProjectItems)
+			{
+				auto_ptr<MProjectFile> projectFile;
+				MPath filePath;
+				
+				if (LocateFile(name, true, filePath) and p == filePath)
+					projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+				else
+				{
+#warning("implement")					
+				}
+				
+				item = projectFile.get();
+				if (item != nil)
+					inGroup->AddProjectItem(projectFile.release(), inIndex);
+			}
+			
+			if (item != nil)
+			{
+				if (root == &mProjectItems)
+					eInsertedFile(item);
+				else
+					eInsertedResource(item);
+			}
+		}
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+}
+
+void MProject::RemoveItem(
+	MProjectItem*		inItem)
+{
+	
+	
+}
+
