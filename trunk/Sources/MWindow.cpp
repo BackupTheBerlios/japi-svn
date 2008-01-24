@@ -96,7 +96,10 @@ MWindow::MWindow(
 	const char* xml;
 	uint32 size;
 	
-	if (not LoadResource(inWindowResourceName, xml, size))
+	string rsrc = inWindowResourceName;
+	rsrc += ".glade";
+	
+	if (not LoadResource(rsrc, xml, size))
 		THROW(("Could not load dialog resource %s", inWindowResourceName));
 	
 	mGladeXML = glade_xml_new_from_buffer(xml, size, nil, "japi");

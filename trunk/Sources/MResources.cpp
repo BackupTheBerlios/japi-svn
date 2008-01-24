@@ -328,24 +328,15 @@ bool LoadResource(
 
 	if (result == false)
 	{
-		result =
-			dir.GetData(inName.c_str(), offset, outSize) or
-			dir.GetData((inName + ".xml").c_str(), offset, outSize);
+		string path;
+		static const char* LANG = getenv("LANG");
 		
-		if (result == false)
-		{
-			string path;
-			static const char* LANG = getenv("LANG");
-			
-			if (LANG != nil and strncmp(LANG, "nl", 2) == 0)
-				path = "Dutch/";
-			else
-				path = "English/";
-			
-			result =
-				dir.GetData((path + inName).c_str(), offset, outSize) or
-				dir.GetData((path + inName + ".xml").c_str(), offset, outSize);
-		}
+		if (LANG != nil and strncmp(LANG, "nl", 2) == 0)
+			path = "Dutch/";
+		else
+			path = "English/";
+		
+		result = dir.GetData((path + inName).c_str(), offset, outSize);
 	}
 
 	if (result)

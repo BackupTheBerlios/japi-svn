@@ -766,7 +766,7 @@ void MProjectResource::CheckIsOutOfDate(
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectResource::CheckIsOutOfDate
+//	MProjectResource::UpdatePaths
 
 void MProjectResource::UpdatePaths(
 	const MPath&		inObjectDir)
@@ -777,7 +777,7 @@ void MProjectResource::UpdatePaths(
 	while ((p = baseName.find('/', p)) != string::npos)
 		baseName[p] = '-';
 	
-	mObjectPath = inObjectDir / (baseName + ".o");
-	mDependsPath = inObjectDir / (baseName + ".d");
+	mObjectPath = inObjectDir / "__rsrc__.o";
+//	mDependsPath = inObjectDir / (baseName + ".d");
 }
 

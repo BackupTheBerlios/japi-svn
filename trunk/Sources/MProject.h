@@ -86,7 +86,8 @@ class MProject : public MDocument
 	std::vector<MProjectTarget*>
 						GetTargets() const		{ return mTargets; }
 
-	MProjectGroup*		GetItems() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
+	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
+	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
 	static void			RecheckFiles();
 

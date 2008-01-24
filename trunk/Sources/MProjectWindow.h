@@ -78,14 +78,24 @@ class MProjectWindow : public MDocWindow
 						GtkTreeViewColumn*
 										inColumn);
 
+	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+					eInvokeFileRow;
+
+	void			InvokeResourceRow(
+						GtkTreePath*	inPath,
+						GtkTreeViewColumn*
+										inColumn);
+
+	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+					eInvokeResourceRow;
+
 	virtual void	DocumentChanged(
 						MDocument*		inDocument);
 
 	void			SaveState();
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
-					mInvokeFileRow;
-
+	void			InitializeTreeView(
+						GtkTreeView*	inGtkTreeView);
 
 	void			TargetChanged();
 	MSlot<void()>	eTargetChanged;
@@ -93,6 +103,8 @@ class MProjectWindow : public MDocWindow
 	MProject*		mProject;
 	MTreeModelInterface*
 					mFilesTree;
+	MTreeModelInterface*
+					mResourcesTree;
 	GtkWidget*		mStatusPanel;
 	bool			mBusy;
 };

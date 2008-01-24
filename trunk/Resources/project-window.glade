@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Mon Jan 21 15:03:55 2008 by maarten@zuinig-->
+<!--Generated with glade3 3.1.5 on Thu Jan 24 09:17:56 2008 by maarten@zuinig-->
 <glade-interface>
   <widget class="GtkWindow" id="window">
     <property name="default_width">250</property>
@@ -95,8 +95,15 @@ mies</property>
               </packing>
             </child>
             <child>
-              <widget class="GtkTreeView" id="tre2">
+              <widget class="GtkScrolledWindow" id="scrolledwindow2">
                 <property name="visible">True</property>
+                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <child>
+                  <widget class="GtkTreeView" id="tre2">
+                    <property name="visible">True</property>
+                  </widget>
+                </child>
               </widget>
               <packing>
                 <property name="position">1</property>
@@ -114,8 +121,15 @@ mies</property>
               </packing>
             </child>
             <child>
-              <widget class="GtkTreeView" id="tre3">
+              <widget class="GtkScrolledWindow" id="scrolledwindow3">
                 <property name="visible">True</property>
+                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <child>
+                  <widget class="GtkTreeView" id="tre3">
+                    <property name="visible">True</property>
+                  </widget>
+                </child>
               </widget>
               <packing>
                 <property name="position">2</property>

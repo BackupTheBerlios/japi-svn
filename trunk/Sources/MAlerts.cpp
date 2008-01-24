@@ -54,6 +54,9 @@ GtkWidget* CreateAlertWithArgs(
 	xmlDocPtr xmlDoc = nil;
 	GtkWidget* dlg = nil;
 	
+	string rsrc = inResourceName;
+	rsrc += ".xml";
+	
 	try
 	{
 		xmlInitParser();
@@ -61,7 +64,7 @@ GtkWidget* CreateAlertWithArgs(
 		const char* xml;
 		uint32 size;
 		
-		if (not LoadResource(inResourceName, xml, size))
+		if (not LoadResource(rsrc, xml, size))
 			THROW(("Could not load resource %s", inResourceName));
 		
 		xmlDoc = xmlParseMemory(xml, size);

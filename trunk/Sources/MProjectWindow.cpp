@@ -101,11 +101,12 @@ enum {
 	kFilesDataSizeColumn
 };
 
-class MProjectFilesTreeModel : public MTreeModelInterface
+
+class MProjectTreeModel : public MTreeModelInterface
 {
   public:
-					MProjectFilesTreeModel(
-						MProject*		inProject);
+					MProjectTreeModel(
+						MProjectGroup*	inItems);
 
 	virtual uint32	GetColumnCount() const;
 
@@ -154,28 +155,28 @@ class MProjectFilesTreeModel : public MTreeModelInterface
 
 	MEventIn<void(MProjectItem*)>		eProjectItemStatusChanged;
 
-	MProject*		mProject;
+	MProjectGroup*	mItems;
 };
 
-MProjectFilesTreeModel::MProjectFilesTreeModel(
-	MProject*		inProject)
+MProjectTreeModel::MProjectTreeModel(
+	MProjectGroup*		inItems)
 	: MTreeModelInterface(GTK_TREE_MODEL_ITERS_PERSIST)
-	, eProjectItemStatusChanged(this, &MProjectFilesTreeModel::ProjectItemStatusChanged)
-	, mProject(inProject)
+	, eProjectItemStatusChanged(this, &MProjectTreeModel::ProjectItemStatusChanged)
+	, mItems(inItems)
 {
 	vector<MProjectItem*> items;
-	mProject->GetItems()->Flatten(items);
+	mItems->Flatten(items);
 	
 	for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
 		AddRoute((*i)->eStatusChanged, eProjectItemStatusChanged);
 }
 
-uint32 MProjectFilesTreeModel::GetColumnCount() const
+uint32 MProjectTreeModel::GetColumnCount() const
 {
 	return 4;
 }
 
-GType MProjectFilesTreeModel::GetColumnType(
+GType MProjectTreeModel::GetColumnType(
 	uint32			inColumn) const
 {
 	GType result;
@@ -188,7 +189,7 @@ GType MProjectFilesTreeModel::GetColumnType(
 	return result;
 }
 
-void MProjectFilesTreeModel::GetValue(
+void MProjectTreeModel::GetValue(
 	GtkTreeIter*	inIter,
 	uint32			inColumn,
 	GValue*			outValue) const
@@ -249,7 +250,7 @@ void MProjectFilesTreeModel::GetValue(
 	}
 }
 
-bool MProjectFilesTreeModel::GetIter(
+bool MProjectTreeModel::GetIter(
 	GtkTreeIter*	outIter,
 	GtkTreePath*	inPath)
 {
@@ -258,7 +259,7 @@ bool MProjectFilesTreeModel::GetIter(
 	int32 depth = gtk_tree_path_get_depth(inPath);
 	int32* indices = gtk_tree_path_get_indices(inPath);
 	
-	MProjectItem* item = mProject->GetItems();
+	MProjectItem* item = mItems;
 	
 	for (int32 ix = 0; ix < depth and item != nil; ++ix)
 	{
@@ -280,7 +281,7 @@ bool MProjectFilesTreeModel::GetIter(
 	return result;
 }
 
-GtkTreePath* MProjectFilesTreeModel::GetPath(
+GtkTreePath* MProjectTreeModel::GetPath(
 	GtkTreeIter*	inIter)
 {
 	GtkTreePath* path = gtk_tree_path_new();
@@ -295,7 +296,7 @@ GtkTreePath* MProjectFilesTreeModel::GetPath(
 	return path;
 }
 
-bool MProjectFilesTreeModel::Next(
+bool MProjectTreeModel::Next(
 	GtkTreeIter*	ioIter)
 {
 	bool result = false;
@@ -314,7 +315,7 @@ bool MProjectFilesTreeModel::Next(
 	return result;
 }
 
-bool MProjectFilesTreeModel::Children(
+bool MProjectTreeModel::Children(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inParent)
 {
@@ -322,7 +323,7 @@ bool MProjectFilesTreeModel::Children(
 	
 	if (inParent == nil)
 	{
-		outIter->user_data = mProject->GetItems();
+		outIter->user_data = mItems;
 		result = true;
 	}
 	else
@@ -343,7 +344,7 @@ bool MProjectFilesTreeModel::Children(
 	return result;
 }
 
-bool MProjectFilesTreeModel::HasChildren(
+bool MProjectTreeModel::HasChildren(
 	GtkTreeIter*	inIter)
 {
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
@@ -352,13 +353,13 @@ bool MProjectFilesTreeModel::HasChildren(
 	return group != nil;
 }
 
-int32 MProjectFilesTreeModel::CountChildren(
+int32 MProjectTreeModel::CountChildren(
 	GtkTreeIter*	inIter)
 {
 	int32 result = 0;
 	
 	if (inIter == nil)
-		result = mProject->GetItems()->Count();
+		result = mItems->Count();
 	else
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
@@ -371,7 +372,7 @@ int32 MProjectFilesTreeModel::CountChildren(
 	return result;
 }
 
-bool MProjectFilesTreeModel::GetChild(
+bool MProjectTreeModel::GetChild(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inParent,
 	int32			inIndex)
@@ -381,7 +382,7 @@ bool MProjectFilesTreeModel::GetChild(
 	MProjectGroup* group;
 	
 	if (inParent == nil)
-		group = mProject->GetItems();
+		group = mItems;
 	else
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(inParent->user_data);
@@ -399,7 +400,7 @@ bool MProjectFilesTreeModel::GetChild(
 	return result;
 }
 
-bool MProjectFilesTreeModel::GetParent(
+bool MProjectTreeModel::GetParent(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inChild)
 {
@@ -418,7 +419,7 @@ bool MProjectFilesTreeModel::GetParent(
 	return result;
 }
 
-void MProjectFilesTreeModel::ProjectItemStatusChanged(
+void MProjectTreeModel::ProjectItemStatusChanged(
 	MProjectItem*	inItem)
 {
 	try
@@ -442,10 +443,12 @@ void MProjectFilesTreeModel::ProjectItemStatusChanged(
 MProjectWindow::MProjectWindow()
 	: MDocWindow("project-window")
 	, eStatus(this, &MProjectWindow::SetStatus)
-	, mInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
+	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
+	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eTargetChanged(this, &MProjectWindow::TargetChanged)
 	, mProject(nil)
 	, mFilesTree(nil)
+	, mResourcesTree(nil)
 	, mBusy(false)
 {
 	mController = new MController(this);
@@ -456,50 +459,12 @@ MProjectWindow::MProjectWindow()
 	mMenubar.SetTarget(mController);
 
 	GtkWidget* treeView = GetWidget(kFilesListViewID);
-	THROW_IF_NIL((treeView));
+	InitializeTreeView(GTK_TREE_VIEW(treeView));
+	eInvokeFileRow.Connect(treeView, "row-activated");
 
-//	gtk_tree_view_set_level_indentation(GTK_TREE_VIEW(treeView), 10);
-
-	// create the tree store for the Files tree
-//	mFilesTree = new MProjectFilesTreeModel(mProject);
-//	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
-	
-	// Add the columns and renderers
-
-	// the name column
-	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-		_("File"), renderer, "text", kFilesNameColumn, nil);
-	g_object_set(G_OBJECT(column), "expand", true, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-	
-	// the text size column
-	
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
-	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-	gtk_tree_view_column_set_alignment(column, 1.0f);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	// the data size column
-	
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
-	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-	gtk_tree_view_column_set_alignment(column, 1.0f);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	// at last the dirty mark	
-	renderer = gtk_cell_renderer_pixbuf_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	gtk_widget_show_all(treeView);
-
-	mInvokeFileRow.Connect(treeView, "row-activated");
+	treeView = GetWidget(kResourceViewID);
+	InitializeTreeView(GTK_TREE_VIEW(treeView));
+	eInvokeResourceRow.Connect(treeView, "row-activated");
 
 	// status panel
 	
@@ -533,6 +498,9 @@ MProjectWindow::~MProjectWindow()
 {
 	delete mFilesTree;
 	mFilesTree = nil;
+	
+	delete mResourcesTree;
+	mResourcesTree = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -549,11 +517,22 @@ void MProjectWindow::Initialize(
 	
 	MDocWindow::Initialize(inDocument);
 
+	// Files tree
 	GtkWidget* treeView = GetWidget(kFilesListViewID);
 	THROW_IF_NIL((treeView));
 	
-	mFilesTree = new MProjectFilesTreeModel(mProject);
+	mFilesTree = new MProjectTreeModel(mProject->GetFiles());
 	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
+
+	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
+
+	// Resources tree
+
+	treeView = GetWidget(kResourceViewID);
+	THROW_IF_NIL((treeView));
+	
+	mResourcesTree = new MProjectTreeModel(mProject->GetResources());
+	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mResourcesTree->GetModel());
 
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
 
@@ -627,6 +606,38 @@ void MProjectWindow::InvokeFileRow(
 		{
 			MPath p = file->GetPath();
 			gApp->OpenOneDocument(MUrl(p));
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectWindow::InvokeResourceRow
+
+void MProjectWindow::InvokeResourceRow(
+	GtkTreePath*		inPath,
+	GtkTreeViewColumn*	inColumn)
+{
+	GtkTreeIter iter;
+	if (gtk_tree_model_get_iter(mResourcesTree->GetModel(), &iter, inPath))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
+		if (file != nil)
+		{
+			MPath p = file->GetPath();
+			
+			if (FileNameMatches("*.glade", p))
+			{
+				// start up glade
+				string cmd = Preferences::GetString("glade", "glade-3");
+				cmd += " ";
+				cmd += p.string();
+				cmd += "&";
+				
+				system(cmd.c_str());
+			}
+			else
+				gApp->OpenOneDocument(MUrl(p));
 		}
 	}
 }
@@ -820,4 +831,48 @@ void MProjectWindow::SaveState()
 		write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
 	}
 	catch (...) {}
+}
+
+// ---------------------------------------------------------------------------
+//	InitializeTreeView
+
+void MProjectWindow::InitializeTreeView(
+	GtkTreeView*	inGtkTreeView)
+{
+	THROW_IF_NIL(inGtkTreeView);
+
+	// Add the columns and renderers
+
+	// the name column
+	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
+		_("File"), renderer, "text", kFilesNameColumn, nil);
+	g_object_set(G_OBJECT(column), "expand", true, nil);
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the text size column
+	
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
+	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+	gtk_tree_view_column_set_alignment(column, 1.0f);
+	gtk_tree_view_append_column(inGtkTreeView, column);
+
+	// the data size column
+	
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
+	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+	gtk_tree_view_column_set_alignment(column, 1.0f);
+	gtk_tree_view_append_column(inGtkTreeView, column);
+
+	// at last the dirty mark	
+	renderer = gtk_cell_renderer_pixbuf_new();
+	column = gtk_tree_view_column_new_with_attributes(
+		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
+	gtk_tree_view_append_column(inGtkTreeView, column);
+
+	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
 }
