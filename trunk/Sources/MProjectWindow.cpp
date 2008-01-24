@@ -455,7 +455,7 @@ MProjectWindow::MProjectWindow()
 	
 	mController->SetWindow(this);
 	
-	mMenubar.Initialize(GetWidget('mbar'), "project-window-menus");
+	mMenubar.Initialize(GetWidget('mbar'), "project-window-menu");
 	mMenubar.SetTarget(mController);
 
 	GtkWidget* treeView = GetWidget(kFilesListViewID);

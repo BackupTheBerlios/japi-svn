@@ -200,7 +200,7 @@ MEditWindow::MEditWindow()
 	, mIncludePopup(nil)
 	, mSSHProgress(nil)
 {
-	mMenubar.Initialize(GetWidget('mbar'), "edit-window-menus");
+	mMenubar.Initialize(GetWidget('mbar'), "edit-window-menu");
 
 	MTextController* textController = new MTextController(this);
 	mController = textController;

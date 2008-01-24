@@ -47,6 +47,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "MFile.h"
 #include "MMessageWindow.h"
@@ -57,6 +58,8 @@
 #include "MError.h"
 
 extern char** environ;
+
+namespace ba = boost::algorithm;
 
 using namespace std;
 
@@ -442,9 +445,15 @@ void MProjectCreateResourceJob::Execute()
 	
 	for (vector<MPath>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
 	{
-		fs::ifstream f(mRsrcDir / *p);
+		fs::ifstream f(*p);
 
 		string name = p->string();
+		
+		if (ba::starts_with(name, mRsrcDir.string()))
+			ba::erase_head(name, mRsrcDir.string().length());
+		
+		if (name[0] == '/')
+			name.erase(name.begin());
 		
 		if (not f.is_open())
 			THROW(("Could not open resource data file %s", name.c_str()));

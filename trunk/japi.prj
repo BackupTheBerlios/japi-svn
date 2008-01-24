@@ -109,28 +109,36 @@
 		</group>
 	</files>
 	<package resource_dir="Resources">
-		<copy>unknown-host-alert.xml</copy>
-		<copy>host-key-changed-alert.xml</copy>
-		<copy>edit-window-menus.xml</copy>
-		<copy>project-window-menus.xml</copy>
-		<copy>find-dialog.glade</copy>
-		<copy>find-and-open-dialog.glade</copy>
-		<copy>mark-matching-dialog.glade</copy>
-		<copy>go-to-line-dialog.glade</copy>
-		<copy>auth-dialog.glade</copy>
-		<copy>prefs-dialog.glade</copy>
-		<copy>diff-window.glade</copy>
-		<copy>message-list-window.glade</copy>
-		<copy>make-clean-alert.xml</copy>
-		<copy>save-changes-alert.xml</copy>
-		<copy>discard-changes-alert.xml</copy>
-		<copy>replace-all-alert.xml</copy>
-		<copy>text-view-context-menu.xml</copy>
-		<copy>read-only-alert.xml</copy>
-		<copy>exception-alert.xml</copy>
-		<copy>edit-window.glade</copy>
-		<copy>project-window.glade</copy>
-		<copy>stop-building-alert.xml</copy>
+		<mkdir name="Alerts">
+			<copy>unknown-host-alert.xml</copy>
+			<copy>host-key-changed-alert.xml</copy>
+			<copy>make-clean-alert.xml</copy>
+			<copy>save-changes-alert.xml</copy>
+			<copy>discard-changes-alert.xml</copy>
+			<copy>replace-all-alert.xml</copy>
+			<copy>read-only-alert.xml</copy>
+			<copy>exception-alert.xml</copy>
+			<copy>stop-building-alert.xml</copy>
+		</mkdir>
+		<mkdir name="Dialogs">
+			<copy>find-dialog.glade</copy>
+			<copy>find-and-open-dialog.glade</copy>
+			<copy>mark-matching-dialog.glade</copy>
+			<copy>go-to-line-dialog.glade</copy>
+			<copy>auth-dialog.glade</copy>
+			<copy>prefs-dialog.glade</copy>
+		</mkdir>
+		<mkdir name="Windows">
+			<copy>diff-window.glade</copy>
+			<copy>message-list-window.glade</copy>
+			<copy>edit-window.glade</copy>
+			<copy>project-window.glade</copy>
+		</mkdir>
+		<mkdir name="Menus">
+			<copy>text-view-context-menu.xml</copy>
+			<copy>edit-window-menu.xml</copy>
+			<copy>project-window-menu.xml</copy>
+		</mkdir>
 		<mkdir name="Templates">
 			<copy>empty.c</copy>
 			<copy>Strict.xhtml</copy>

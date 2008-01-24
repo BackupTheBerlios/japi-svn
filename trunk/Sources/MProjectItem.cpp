@@ -752,7 +752,7 @@ void MProjectResource::CheckIsOutOfDate(
 	MPath path = GetPath();
 	MPath object = GetObjectPath();
 	
-	if (not exists(object))
+	if (not fs::exists(object) or not fs::exists(path))
 	{
 		isOutOfDate = true;
 		mTextSize = 0;

@@ -96,8 +96,12 @@ MWindow::MWindow(
 	const char* xml;
 	uint32 size;
 	
-	string rsrc = inWindowResourceName;
-	rsrc += ".glade";
+	string rsrc;
+	
+	if (strcmp(inRootWidgetName, "dialog") == 0)
+		rsrc = string("Dialogs/") + inWindowResourceName + ".glade";
+	else
+		rsrc = string("Windows/") + inWindowResourceName + ".glade";
 	
 	if (not LoadResource(rsrc, xml, size))
 		THROW(("Could not load dialog resource %s", inWindowResourceName));

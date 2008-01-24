@@ -587,12 +587,13 @@ void MProject::Read(
 		{
 			XMLNode node(data->nodesetval->nodeTab[i]);
 
+			mResourcesDir = mProjectDir;
+
 			string rd = node.property("resource_dir");
 			if (rd.length() > 0)
-				mResourcesDir = mProjectDir / rd;
+				mResourcesDir /= rd;
 	
-			MPath dir;		// empty
-			ReadPackageAction(node, dir, &mPackageItems);
+			ReadPackageAction(node, mResourcesDir, &mPackageItems);
 		}
 	}
 	

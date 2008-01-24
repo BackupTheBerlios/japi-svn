@@ -54,8 +54,7 @@ GtkWidget* CreateAlertWithArgs(
 	xmlDocPtr xmlDoc = nil;
 	GtkWidget* dlg = nil;
 	
-	string rsrc = inResourceName;
-	rsrc += ".xml";
+	string rsrc = string("Alerts/") + inResourceName + ".xml";
 	
 	try
 	{

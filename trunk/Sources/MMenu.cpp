@@ -250,8 +250,7 @@ MMenu* MMenu::CreateFromResource(
 	const char* xml;
 	uint32 size;
 	
-	string rsrc = inResourceName;
-	rsrc += ".xml";
+	string rsrc = string("Menus/") + inResourceName + ".xml";
 	
 	if (not LoadResource(rsrc, xml, size))
 		THROW(("Menu resource not found: %s", inResourceName));
@@ -602,8 +601,7 @@ void MMenubar::Initialize(
 	const char* xml;
 	uint32 size;
 	
-	string rsrc = inResourceName;
-	rsrc += ".xml";
+	string rsrc = string("Menus/") + inResourceName + ".xml";
 	
 	if (not LoadResource(rsrc, xml, size))
 		THROW(("Menu resource not found: %s", inResourceName));
