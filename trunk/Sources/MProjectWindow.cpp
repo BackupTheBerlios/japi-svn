@@ -54,6 +54,23 @@ using namespace std;
 
 namespace {
 
+enum MTreeDragKind {
+	kTreeDragItemTreeItem,
+	kTreeDragItemURI
+};
+
+const GtkTargetEntry kTreeDragTargets[] =
+{
+	{ "application/x-japi-tree-item", GTK_TARGET_SAME_WIDGET, 0 },
+    { "text/uri-list", 0, 0 },
+};
+
+const GdkAtom kTreeDragTargetAtoms[] =
+{
+	gdk_atom_intern(kTreeDragTargets[kTreeDragItemTreeItem].target, false),
+	gdk_atom_intern(kTreeDragTargets[kTreeDragItemURI].target, false),
+};
+
 struct MProjectState
 {
 	uint16			mWindowPosition[2];
@@ -337,7 +354,7 @@ GtkTreePath* MProjectTreeModel::GetPath(
 	
 	while (item->GetParent() != nil)
 	{
-		gtk_tree_path_prepend_index(path, item->GetSiblingPosition());
+		gtk_tree_path_prepend_index(path, item->GetPosition());
 		item = item->GetParent();
 	}
 
@@ -352,7 +369,7 @@ bool MProjectTreeModel::Next(
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(ioIter->user_data);
 	
 	if (item != nil)
-		item = item->GetNextSibling();
+		item = item->GetNext();
 
 	if (item != nil)
 	{
@@ -541,22 +558,34 @@ bool MProjectTreeModel::DragDataGet(
 	GtkTreeIter iter;
 	if (GetIter(&iter, inPath))
 	{
-		stringstream s;
-		vector<MProjectItem*> items;
-		
-		reinterpret_cast<MProjectItem*>(iter.user_data)->Flatten(items);
-		
-		for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
+		result = true;
+
+		if (outData->target == kTreeDragTargetAtoms[kTreeDragItemURI])
 		{
-			MProjectFile* file = dynamic_cast<MProjectFile*>(*i);
-			if (file != nil)
-				s << MUrl(file->GetPath()).str(true) << endl;
+			stringstream s;
+			vector<MProjectItem*> items;
+			
+			reinterpret_cast<MProjectItem*>(iter.user_data)->Flatten(items);
+			
+			for (vector<MProjectItem*>::iterator i = items.begin(); i != items.end(); ++i)
+			{
+				MProjectFile* file = dynamic_cast<MProjectFile*>(*i);
+				if (file != nil)
+					s << MUrl(file->GetPath()).str(true) << endl;
+			}
+			
+			string data = s.str();
+			gtk_selection_data_set_text(outData, data.c_str(), data.length());
 		}
-		
-		string data = s.str();
-		
-		gtk_selection_data_set(outData, outData->target,
-			8, (guchar*)data.c_str(), data.length());
+		else if (outData->target == kTreeDragTargetAtoms[kTreeDragItemTreeItem])
+		{
+			char* p = gtk_tree_path_to_string(inPath);
+			gtk_selection_data_set(outData, outData->target,
+				8, (guchar*)p, strlen(p) + 1);
+			g_free(p);
+		}
+		else
+			result = false;
 	}
 	
 	return result;
@@ -567,12 +596,12 @@ bool MProjectTreeModel::DragDataDelete(
 {
 	bool result = false;
 	
-	GtkTreeIter iter;
-	if (GetIter(&iter, inPath))
-	{
-		mProject->RemoveItem(reinterpret_cast<MProjectItem*>(iter.user_data));
-		result = true;
-	}
+//	GtkTreeIter iter;
+//	if (GetIter(&iter, inPath))
+//	{
+//		mProject->RemoveItem(reinterpret_cast<MProjectItem*>(iter.user_data));
+//		result = true;
+//	}
 	
 	return result;
 }
@@ -583,13 +612,6 @@ bool MProjectTreeModel::DragDataReceived(
 {
 	bool result = false;
 
-	// split the data into an array of files
-	vector<string> files;
-	boost::iterator_range<const char*> text(
-		reinterpret_cast<const char*>(inData->data),
-		reinterpret_cast<const char*>(inData->data + inData->length));
-	ba::split(files, text, boost::is_any_of("\n\r"), boost::token_compress_on);
-	
 	// find the location where to insert the items
 	MProjectGroup* group = mItems;
 
@@ -608,12 +630,37 @@ bool MProjectTreeModel::DragDataReceived(
 			break;
 	}
 	
-	// now add the files
-
-	if (files.size() and group != nil)
+	if (inData->target == kTreeDragTargetAtoms[kTreeDragItemURI])
 	{
-		mProject->AddFiles(files, group, index);
-		result = true;
+		// split the data into an array of files
+		vector<string> files;
+		boost::iterator_range<const char*> text(
+			reinterpret_cast<const char*>(inData->data),
+			reinterpret_cast<const char*>(inData->data + inData->length));
+		ba::split(files, text, boost::is_any_of("\n\r"), boost::token_compress_on);
+		
+		// now add the files
+	
+		if (files.size() and group != nil)
+		{
+			mProject->AddFiles(files, group, index);
+			result = true;
+		}
+	}
+	else if (inData->target == kTreeDragTargetAtoms[kTreeDragItemTreeItem])
+	{
+		GtkTreePath* path = gtk_tree_path_new_from_string((const gchar*)inData->data);
+		
+		GtkTreeIter iter;
+		if (GetIter(&iter, path))
+		{
+			mProject->MoveItem(reinterpret_cast<MProjectItem*>(iter.user_data),
+				group, index);
+			result = true;
+		}
+		
+		if (path != nil)
+			gtk_tree_path_free(path);
 	}
 	
 	return result;
@@ -1043,15 +1090,12 @@ void MProjectWindow::InitializeTreeView(
 {
 	THROW_IF_NIL(inGtkTreeView);
 
-	const GtkTargetEntry targets[] =
-	{
-	    { "text/uri-list", 0, 1 },
-	};
-
 	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
-		targets, 1, GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-	gtk_tree_view_enable_model_drag_source(inGtkTreeView,
-		GDK_BUTTON1_MASK, targets, 1, GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+		kTreeDragTargets, sizeof(kTreeDragTargets) / sizeof(GtkTargetEntry),
+		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
+		kTreeDragTargets, sizeof(kTreeDragTargets) / sizeof(GtkTargetEntry),
+		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
 	
 	GtkTreeSelection* selection = gtk_tree_view_get_selection(inGtkTreeView);
 	if (selection != nil)

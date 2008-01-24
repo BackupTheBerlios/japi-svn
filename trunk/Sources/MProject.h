@@ -98,6 +98,11 @@ class MProject : public MDocument
 	void				RemoveItem(
 							MProjectItem*		inItem);
 
+	void				MoveItem(
+							MProjectItem*		inItem,
+							MProjectGroup*		inGroup,
+							uint32				inIndex);
+
 	static void			RecheckFiles();
 
 	MMessageWindow*		GetMessageWindow();
@@ -251,13 +256,6 @@ class MProject : public MDocument
 												inOptions);
 
 	void				CheckDataDir();
-
-	void				UpdateList();
-
-	void				AddItem(
-							MProjectItem*		inItem,
-							int32				inPosition,
-							bool				inAddUnder);
 
 	void				SelectTarget(
 							uint32				inTarget);

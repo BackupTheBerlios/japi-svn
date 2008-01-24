@@ -58,9 +58,7 @@ class MProjectItem
 
 	virtual int32	GetPosition() const;
 	
-	virtual int32	GetSiblingPosition() const;
-	
-	MProjectItem*	GetNextSibling() const;
+	MProjectItem*	GetNext() const;
 
 	virtual MProjectFile*
 					GetProjectFileForPath(

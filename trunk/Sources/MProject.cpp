@@ -1862,64 +1862,6 @@ MMessageWindow* MProject::GetMessageWindow()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::UpdateList
-
-void MProject::UpdateList()
-{//
-//	switch (mPanel)
-//	{
-//		case ePanelFiles:
-//		{
-//			vector<MProjectItem*> files;
-//			mProjectItems.Flatten(files);
-//		
-//			mFileList->RemoveAll();
-//		
-//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-//			{
-//				MProjectItem* item = *file;
-//				mFileList->InsertItem(kListItemLast, &item, sizeof(item));
-//			}
-//			break;
-//		}
-//		
-//		case ePanelLinkOrder:
-//		{
-//			vector<MProjectItem*> files;
-//			mProjectItems.Flatten(files);
-//			
-//			mLinkOrderList->RemoveAll();
-//		
-//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-//			{
-//				MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
-//				if (f != nil)
-//					mLinkOrderList->InsertItem(kListItemLast, &f, sizeof(f));
-//			}
-//			break;
-//		}
-//
-//		case ePanelPackage:
-//		{
-//			vector<MProjectItem*> files;
-//			mPackageItems.Flatten(files);
-//		
-//			mPackageList->RemoveAll();
-//			
-//			for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-//			{
-//				MProjectItem* item = *file;
-//				mPackageList->InsertItem(kListItemLast, &item, sizeof(item));
-//			}
-//			break;
-//		}
-//		
-//		default:
-//			break;
-//	}
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::GetSelectedTarget
 
 uint32 MProject::GetSelectedTarget() const
@@ -2373,7 +2315,7 @@ void MProject::RemoveItem(
 	THROW_IF_NIL(inItem);
 	
 	MProjectGroup* group = inItem->GetParent();
-	int32 index = inItem->GetSiblingPosition();
+	int32 index = inItem->GetPosition();
 	
 	group->RemoveProjectItem(inItem);
 	SetModified(true);
@@ -2390,3 +2332,34 @@ void MProject::RemoveItem(
 		eRemovedResource(group, index);
 }
 
+void MProject::MoveItem(
+	MProjectItem*		inItem,
+	MProjectGroup*		inGroup,
+	uint32				inIndex)
+{
+	THROW_IF_NIL(inItem);
+	
+	MProjectGroup* group = inItem->GetParent();
+	int32 index = inItem->GetPosition();
+	
+	MProjectGroup* root = group;
+	THROW_IF_NIL(root);
+	
+	while (root->GetParent() != nil)
+		root = root->GetParent();
+	
+	group->RemoveProjectItem(inItem);
+	SetModified(true);
+	
+	if (root == &mProjectItems)
+		eRemovedFile(group, index);
+	else
+		eRemovedResource(group, index);
+
+	inGroup->AddProjectItem(inItem, inIndex);
+			
+	if (root == &mProjectItems)
+		eInsertedFile(inItem);
+	else
+		eInsertedResource(inItem);
+}

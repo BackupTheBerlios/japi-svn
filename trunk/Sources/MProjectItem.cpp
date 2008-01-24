@@ -42,6 +42,7 @@
 #include "MFile.h"
 #include "MProjectItem.h"
 #include "MObjectFile.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -201,23 +202,13 @@ int32 MProjectItem::GetPosition() const
 	int32 result = 0;
 	
 	if (mParent != nil)
-		result = mParent->GetItemPosition(this);
-	
-	return result;
-}
-
-// ---------------------------------------------------------------------------
-//	MProjectItem::GetSiblingPosition
-
-int32 MProjectItem::GetSiblingPosition() const
-{
-	int32 result = 0;
-	
-	if (mParent != nil)
 	{
 		vector<MProjectItem*>::iterator i = find(
 			mParent->GetItems().begin(), mParent->GetItems().end(),
 			this);
+		
+		if (i == mParent->GetItems().end())
+			THROW(("tree error"));
 		
 		result = i - mParent->GetItems().begin();
 	}
@@ -239,7 +230,7 @@ uint32 MProjectItem::GetLevel() const
 // ---------------------------------------------------------------------------
 //	MProjectItem::GetNext
 
-MProjectItem* MProjectItem::GetNextSibling() const
+MProjectItem* MProjectItem::GetNext() const
 {
 	MProjectItem* result = nil;
 
@@ -583,20 +574,12 @@ void MProjectGroup::AddProjectItem(
 	MProjectItem*	inItem,
 	int32			inPosition)
 {
-	if (inPosition == -1)
+	if (inPosition >= 0 and inPosition < mItems.size())
+		mItems.insert(mItems.begin() + inPosition, inItem);
+	else if (inPosition == -1)
 		mItems.insert(mItems.end(), inItem);
 	else
-	{
-		vector<MProjectItem*>::iterator i = mItems.begin();
-		
-		while (inPosition > 0 and i != mItems.end())
-		{
-			inPosition -= (*i)->Count();
-			++i;
-		}
-		
-		mItems.insert(i, inItem);
-	}
+		THROW(("Index out or range"));
 
 	inItem->SetParent(this);
 }
