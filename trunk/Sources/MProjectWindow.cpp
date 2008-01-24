@@ -173,6 +173,7 @@ class MProjectTreeModel : public MTreeModelInterface
 
 	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
 	MEventIn<void(MProjectItem*)>			eProjectItemInserted;
+	MEventIn<void(MProjectGroup*,int32)>	eProjectItemRemoved;
 
   private:
 
@@ -181,6 +182,10 @@ class MProjectTreeModel : public MTreeModelInterface
 
 	void			ProjectItemInserted(
 						MProjectItem*	inItem);
+
+	void			ProjectItemRemoved(
+						MProjectGroup*	inGroup,
+						int32			inIndex);
 
 	MProject*		mProject;
 	MProjectGroup*	mItems;
@@ -192,6 +197,7 @@ MProjectTreeModel::MProjectTreeModel(
 	: MTreeModelInterface(GTK_TREE_MODEL_ITERS_PERSIST)
 	, eProjectItemStatusChanged(this, &MProjectTreeModel::ProjectItemStatusChanged)
 	, eProjectItemInserted(this, &MProjectTreeModel::ProjectItemInserted)
+	, eProjectItemRemoved(this, &MProjectTreeModel::ProjectItemRemoved)
 	, mProject(inProject)
 	, mItems(inItems)
 {
@@ -202,9 +208,15 @@ MProjectTreeModel::MProjectTreeModel(
 		AddRoute((*i)->eStatusChanged, eProjectItemStatusChanged);
 
 	if (inItems == inProject->GetFiles())
+	{
 		AddRoute(mProject->eInsertedFile, eProjectItemInserted);
+		AddRoute(mProject->eRemovedFile, eProjectItemRemoved);
+	}
 	else
+	{
 		AddRoute(mProject->eInsertedResource, eProjectItemInserted);
+		AddRoute(mProject->eRemovedResource, eProjectItemRemoved);
+	}
 }
 
 uint32 MProjectTreeModel::GetColumnCount() const
@@ -493,6 +505,27 @@ void MProjectTreeModel::ProjectItemInserted(
 	catch (...) {}
 }
 
+void MProjectTreeModel::ProjectItemRemoved(
+	MProjectGroup*	inGroup,
+	int32			inIndex)
+{
+	try
+	{
+		GtkTreeIter iter = {};
+		
+		iter.user_data = inGroup;
+		
+		GtkTreePath* path = GetPath(&iter);
+		if (path != nil)
+		{
+			gtk_tree_path_append_index(path, inIndex);
+			DoRowDeleted(path);
+			gtk_tree_path_free(path);
+		}
+	}
+	catch (...) {}
+}
+
 bool MProjectTreeModel::RowDraggable(
 	GtkTreePath*		inPath)
 {
@@ -532,11 +565,16 @@ bool MProjectTreeModel::DragDataGet(
 bool MProjectTreeModel::DragDataDelete(
 	GtkTreePath*		inPath)
 {
-
-PRINT(("DragDataDelete on row %s",
-	gtk_tree_path_to_string(inPath)));
-
-	return false;
+	bool result = false;
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, inPath))
+	{
+		mProject->RemoveItem(reinterpret_cast<MProjectItem*>(iter.user_data));
+		result = true;
+	}
+	
+	return result;
 }
 
 bool MProjectTreeModel::DragDataReceived(

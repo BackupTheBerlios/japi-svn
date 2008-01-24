@@ -146,6 +146,9 @@ class MTreeModelInterface
 						GtkTreePath*	inPath,
 						GtkTreeIter*	inIter);
 	
+	void			DoRowDeleted(
+						GtkTreePath*	inPath);
+	
   private:
 	struct MTreeModelImp*	mImpl;
 };

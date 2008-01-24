@@ -949,3 +949,9 @@ void MTreeModelInterface::DoRowInserted(
 	gtk_tree_model_row_inserted(GTK_TREE_MODEL(mImpl), inPath, inIter);
 }	
 
+void MTreeModelInterface::DoRowDeleted(
+	GtkTreePath*	inPath)
+{
+	gtk_tree_model_row_deleted(GTK_TREE_MODEL(mImpl), inPath);
+}	
+

@@ -2352,6 +2352,8 @@ void MProject::AddFiles(
 			
 			if (item != nil)
 			{
+				SetModified(true);
+
 				if (root == &mProjectItems)
 					eInsertedFile(item);
 				else
@@ -2368,7 +2370,23 @@ void MProject::AddFiles(
 void MProject::RemoveItem(
 	MProjectItem*		inItem)
 {
+	THROW_IF_NIL(inItem);
 	
+	MProjectGroup* group = inItem->GetParent();
+	int32 index = inItem->GetSiblingPosition();
 	
+	group->RemoveProjectItem(inItem);
+	SetModified(true);
+	
+	MProjectGroup* root = group;
+	THROW_IF_NIL(root);
+	
+	while (root->GetParent() != nil)
+		root = root->GetParent();
+	
+	if (root == &mProjectItems)
+		eRemovedFile(group, index);
+	else
+		eRemovedResource(group, index);
 }
 

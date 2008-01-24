@@ -13,20 +13,21 @@
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
-<!--	<libpaths>-->
-<!--		<path>/usr/pkg/lib</path>-->
-<!--	</libpaths>-->
+	<libpaths>
+		<path>/usr/pkg/lib</path>
+	</libpaths>
 	<frameworks/>
 	<files>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
-			<file>MTextController.cpp</file>
 			<file>MDocument.cpp</file>
-			<file>MTextDocument.cpp</file>
 			<file>MDocClosedNotifier.cpp</file>
+			<file>MTextBuffer.cpp</file>
+			<file>MTextDocument.cpp</file>
 			<file>MTextView.cpp</file>
+			<file>MTextController.cpp</file>
 			<file>MMenu.cpp</file>
 			<file>MHandler.cpp</file>
 			<group name="Windows">
@@ -40,7 +41,6 @@
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
-			<file>MTextBuffer.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MDialog.cpp</file>
@@ -61,14 +61,11 @@
 			<group name="Project">
 				<file>MProject.cpp</file>
 				<file>MProjectWindow.cpp</file>
-				<!--file>MProjectInfoDialog.cpp</file-->
 				<file>MProjectItem.cpp</file>
 				<file>MProjectJob.cpp</file>
-				<!--file>MProjectPathsDialog.cpp</file-->
 				<file>MObjectFile.cpp</file>
 				<file>MObjectFileImp_elf.cpp</file>
 				<file>MObjectFileImp_macho.cpp</file>
-				<!--file>MNewGroupDialog.cpp</file-->
 			</group>
 			<group name="Language">
 				<file>MLanguage.cpp</file>
@@ -110,48 +107,48 @@
 	</files>
 	<package resource_dir="Resources">
 		<mkdir name="Alerts">
-			<copy>unknown-host-alert.xml</copy>
-			<copy>host-key-changed-alert.xml</copy>
-			<copy>make-clean-alert.xml</copy>
-			<copy>save-changes-alert.xml</copy>
-			<copy>discard-changes-alert.xml</copy>
-			<copy>replace-all-alert.xml</copy>
-			<copy>read-only-alert.xml</copy>
-			<copy>exception-alert.xml</copy>
-			<copy>stop-building-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/unknown-host-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/host-key-changed-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/make-clean-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/save-changes-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/discard-changes-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/replace-all-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/read-only-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/exception-alert.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/../Users/maarten/projects/jg/Resources/Alerts/stop-building-alert.xml</copy>
 		</mkdir>
 		<mkdir name="Dialogs">
-			<copy>find-dialog.glade</copy>
-			<copy>find-and-open-dialog.glade</copy>
-			<copy>mark-matching-dialog.glade</copy>
-			<copy>go-to-line-dialog.glade</copy>
-			<copy>auth-dialog.glade</copy>
-			<copy>prefs-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/find-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/find-and-open-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/mark-matching-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/go-to-line-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/auth-dialog.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/../Users/maarten/projects/jg/Resources/Dialogs/prefs-dialog.glade</copy>
 		</mkdir>
 		<mkdir name="Windows">
-			<copy>diff-window.glade</copy>
-			<copy>message-list-window.glade</copy>
-			<copy>edit-window.glade</copy>
-			<copy>project-window.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/diff-window.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/message-list-window.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/edit-window.glade</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/../Users/maarten/projects/jg/Resources/Windows/project-window.glade</copy>
 		</mkdir>
 		<mkdir name="Menus">
-			<copy>text-view-context-menu.xml</copy>
-			<copy>edit-window-menu.xml</copy>
-			<copy>project-window-menu.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/text-view-context-menu.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/edit-window-menu.xml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/../Users/maarten/projects/jg/Resources/Menus/project-window-menu.xml</copy>
 		</mkdir>
 		<mkdir name="Templates">
-			<copy>empty.c</copy>
-			<copy>Strict.xhtml</copy>
-			<copy>Template.html</copy>
-			<copy>Transitional.xhtml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/empty.c</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/Strict.xhtml</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/Template.html</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/../Users/maarten/projects/jg/Resources/Templates/Transitional.xhtml</copy>
 		</mkdir>
 		<mkdir name="Dutch">
-			<copy>japi.po</copy>
+			<copy>../Users/maarten/projects/jg/Resources/Dutch/../Users/maarten/projects/jg/Resources/Dutch/../Users/maarten/projects/jg/Resources/Dutch/japi.po</copy>
 		</mkdir>
-		<copy>japi.desktop</copy>
+		<copy>Users/maarten/projects/jg/Resources/Users/maarten/projects/jg/Resources/Users/maarten/projects/jg/Resources/japi.desktop</copy>
 	</package>
 	<targets>
-		<target kind="Executable" arch="native" name="Japie Debug" linkTarget="japi" debug="true">
+		<target kind="Executable" name="Japie Debug" linkTarget="japi" debug="true">
 			<bundle>
 				<name>japi</name>
 			</bundle>
@@ -161,16 +158,13 @@
 			<cflags>
 				<cflag>-O0</cflag>
 			</cflags>
-			<ldflags>
-				<ldflag>-static-libgcc</ldflag>
-			</ldflags>
 			<warnings>
 				<warning>all</warning>
 				<warning>no-multichar</warning>
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" arch="native" name="Japie Release" linkTarget="japi">
+		<target kind="Executable" name="Japie Release" linkTarget="japi">
 			<bundle>
 				<name>japi</name>
 			</bundle>
@@ -180,9 +174,6 @@
 			<cflags>
 				<cflag>-O3</cflag>
 			</cflags>
-			<ldflags>
-				<ldflag>-static-libgcc</ldflag>
-			</ldflags>
 			<warnings>
 				<warning>all</warning>
 				<warning>no-multichar</warning>
