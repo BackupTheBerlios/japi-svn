@@ -628,6 +628,18 @@ MProjectItem* MProjectGroup::GetItem(
 	return mItems.at(inIndex);
 }
 
+
+// ---------------------------------------------------------------------------
+//	MProjectGroup::Contains
+
+bool MProjectGroup::Contains(
+	MProjectItem*		inItem) const
+{
+	return this == inItem or
+		accumulate(mItems.begin(), mItems.end(), false,
+			boost::bind(logical_or<bool>(), _1, boost::bind(&MProjectItem::Contains, _2, inItem)));
+}
+
 // ---------------------------------------------------------------------------
 //	MProjectCpFile::GetDestPath
 

@@ -1934,9 +1934,6 @@ bool MProject::UpdateCommandStatus(
 	
 	switch (inCommand)
 	{
-		case cmd_AddFileToProject:
-			break;
-
 		case cmd_Preprocess:
 		case cmd_CheckSyntax:
 		case cmd_Compile:
@@ -2179,6 +2176,22 @@ void MProject::RemoveItem(
 		eRemovedFile(group, index);
 	else
 		eRemovedResource(group, index);
+}
+
+void MProject::RemoveItems(
+	vector<MProjectItem*>&	inItems)
+{
+	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
+	{
+		if (IsValidItem(*item))
+			RemoveItem(*item);
+	}
+}
+
+bool MProject::IsValidItem(
+	MProjectItem*		inItem)
+{
+	return mProjectItems.Contains(inItem) or mPackageItems.Contains(inItem);
 }
 
 void MProject::MoveItem(

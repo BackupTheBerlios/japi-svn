@@ -541,16 +541,17 @@ void MJapieApp::DoCloseAll(
 
 void MJapieApp::DoQuit()
 {
+	if (MProject::Instance() != nil)
+	{
+		string p = MProject::Instance()->GetPath().string();
+		Preferences::SetString("last project", p);
+	}
+
 	DoCloseAll(kSaveChangesQuittingApplication);
 //	MDialog::CloseAllDialogs();
 
 	if (MDocument::GetFirstDocument() == nil)
 	{
-		if (MProject::Instance() != nil)
-		{
-			string p = MProject::Instance()->GetPath().string();
-			Preferences::SetString("last project", p);
-		}
 		
 //		MProject::CloseAllProjects(kSaveChangesQuittingApplication);
 	}
@@ -596,71 +597,15 @@ void MJapieApp::SetCurrentFolder(
 
 void MJapieApp::DoOpen()
 {
-	GtkWidget* dialog = nil;
+	vector<MUrl> urls;
+	
 	MDocument* doc = nil;
 	
-	try
+	if (ChooseFiles(false, urls))
 	{
-		dialog = 
-			gtk_file_chooser_dialog_new(_("Open"), nil,
-				GTK_FILE_CHOOSER_ACTION_OPEN,
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				NULL);
-		
-		THROW_IF_NIL(dialog);
-	
-		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
-		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
-		
-		if (mCurrentFolder.length() > 0)
-		{
-			gtk_file_chooser_set_current_folder_uri(
-				GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
-		}
-		
-		vector<MUrl> urls;
-		
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			GSList* uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
-			
-			GSList* file = uris;	
-			
-			while (file != nil)
-			{
-				MUrl url(reinterpret_cast<char*>(file->data));
-
-				g_free(file->data);
-				file->data = nil;
-
-				urls.push_back(url);
-
-				file = file->next;
-			}
-			
-			g_slist_free(uris);
-		}
-		
 		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end(); ++url)
 			doc = OpenOneDocument(*url);
-		
-		char* cwd = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
-		if (cwd != nil)
-		{
-			mCurrentFolder = cwd;
-			g_free(cwd);
-		}
 	}
-	catch (exception& e)
-	{
-		if (dialog)
-			gtk_widget_destroy(dialog);
-		
-		throw;
-	}
-	
-	gtk_widget_destroy(dialog);
 	
 	if (doc != nil)
 		DisplayDocument(doc); 

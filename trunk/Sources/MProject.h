@@ -98,6 +98,13 @@ class MProject : public MDocument
 	void				RemoveItem(
 							MProjectItem*		inItem);
 
+	void				RemoveItems(
+							std::vector<MProjectItem*>&
+												inItems);
+
+	bool				IsValidItem(
+							MProjectItem*		inItem);
+
 	void				MoveItem(
 							MProjectItem*		inItem,
 							MProjectGroup*		inGroup,

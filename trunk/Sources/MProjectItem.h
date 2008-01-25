@@ -92,6 +92,9 @@ class MProjectItem
 						std::vector<MProjectItem*>&
 											outItems)		{ outItems.push_back(this); }
 
+	virtual bool	Contains(
+						MProjectItem*		inItem) const	{ return this == inItem; }
+
   protected:
 					
 	std::string		mName;
@@ -217,6 +220,9 @@ class MProjectGroup : public MProjectItem
 
 	MProjectItem*	GetItem(
 						uint32				inIndex) const;
+
+	virtual bool	Contains(
+						MProjectItem*		inItem) const;
 
   private:
 	std::vector<MProjectItem*>

@@ -70,6 +70,10 @@ class MProjectWindow : public MDocWindow
   protected:
 
 	bool			DoClose();
+	
+	void			AddFilesToProject();
+	
+	void			DeleteSelectedItems();
 
 	void			SyncInterfaceWithProject();
 
@@ -92,6 +96,12 @@ class MProjectWindow : public MDocWindow
 
 	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
 					eInvokeResourceRow;
+
+	virtual bool	OnKeyPressEvent(
+						GdkEventKey*	inEvent);
+
+	MSlot<bool(GdkEventKey*)>
+					eKeyPressEvent;
 
 	virtual void	DocumentChanged(
 						MDocument*		inDocument);

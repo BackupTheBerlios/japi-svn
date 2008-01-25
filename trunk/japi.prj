@@ -42,13 +42,13 @@
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MDialog.cpp</file>
+				<file>MDiffWindow.cpp</file>
+				<file>MFindAndOpenDialog.cpp</file>
 				<file>MFindDialog.cpp</file>
 				<file>MGoToLineDialog.cpp</file>
-				<file>MFindAndOpenDialog.cpp</file>
 				<file>MMarkMatchingDialog.cpp</file>
 				<file>MNewGroupDialog.cpp</file>
 				<file>MPrefsDialog.cpp</file>
-				<file>MDiffWindow.cpp</file>
 			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>

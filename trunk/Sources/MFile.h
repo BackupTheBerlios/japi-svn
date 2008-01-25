@@ -35,6 +35,7 @@
 
 #include <fcntl.h>
 #include <cassert>
+#include <vector>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -96,6 +97,10 @@ bool ChooseDirectory(
 
 bool ChooseOneFile(
 	MUrl&				ioFile);
+
+bool ChooseFiles(
+	bool				inLocalOnly,
+	std::vector<MUrl>&	outFiles);
 
 bool FileNameMatches(
 	const char*			inPattern,

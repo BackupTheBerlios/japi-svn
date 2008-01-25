@@ -576,7 +576,8 @@ bool MProjectTreeModel::DragDataGet(
 			}
 			
 			string data = s.str();
-			gtk_selection_data_set_text(outData, data.c_str(), data.length());
+			gtk_selection_data_set(outData, outData->target,
+				8, (guchar*)data.c_str(), data.length());
 		}
 		else if (outData->target == kTreeDragTargetAtoms[kTreeDragItemTreeItem])
 		{
@@ -788,6 +789,27 @@ class MGtkTreeView : public MGtkWidget
 					
 					return result;
 				}
+
+	void		GetSelectedRows(
+					vector<GtkTreePath*>&	outRows)
+				{
+					GList* rows = gtk_tree_selection_get_selected_rows(
+						gtk_tree_view_get_selection(GTK_TREE_VIEW(mGtkWidget)),
+						nil);
+					
+					if (rows != nil)
+					{
+						GList* row = rows;
+						while (row != nil)
+						{
+							outRows.push_back(gtk_tree_path_copy((GtkTreePath*)row->data));
+							row = row->next;
+						}
+						
+						g_list_foreach(rows, (GFunc)(gtk_tree_path_free), nil);
+						g_list_free(rows);
+					}
+				}
 	
 //	int32		GetScrollPosition() const
 //				{
@@ -847,6 +869,7 @@ MProjectWindow::MProjectWindow()
 	, eStatus(this, &MProjectWindow::SetStatus)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
+	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
 	, eTargetChanged(this, &MProjectWindow::TargetChanged)
 	, eInfoClicked(this, &MProjectWindow::InfoClicked)
 	, eMakeClicked(this, &MProjectWindow::MakeClicked)
@@ -1047,6 +1070,7 @@ bool MProjectWindow::UpdateCommandStatus(
 	
 	switch (inCommand)
 	{
+		case cmd_AddFileToProject:
 		case cmd_OpenIncludeFile:
 			outEnabled = true;
 			break;
@@ -1076,6 +1100,10 @@ bool MProjectWindow::ProcessCommand(
 
 	switch (inCommand)
 	{
+		case cmd_AddFileToProject:
+			AddFilesToProject();
+			break;
+		
 		case cmd_NewGroup:
 			new MNewGroupDialog(this);
 			break;
@@ -1281,6 +1309,8 @@ void MProjectWindow::InitializeTreeView(
 	gtk_tree_view_append_column(inGtkTreeView, column);
 
 	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
+	
+	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
 }
 
 // ---------------------------------------------------------------------------
@@ -1322,6 +1352,82 @@ void MProjectWindow::CreateNewGroup(
 }
 
 // ---------------------------------------------------------------------------
+//	AddFilesToProject
+
+void MProjectWindow::AddFilesToProject()
+{
+	vector<MUrl> urls;
+	if (ChooseFiles(true, urls))
+	{
+		MProjectGroup* group = mProject->GetFiles();
+		int32 index = 0;
+
+		MGtkNotebook notebook(GetWidget(kNoteBookID));
+		
+		if (notebook.GetPage() == ePanelFiles)
+		{
+			MGtkTreeView treeView(GetWidget(kFilesListViewID));
+
+			GtkTreePath* path;
+			GtkTreeIter iter;
+			
+			if (treeView.GetFirstSelectedRow(path) and
+				mFilesTree->GetIter(&iter, path))
+			{
+				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+				group = item->GetParent();
+				index = item->GetPosition();
+			}
+		}
+		
+		vector<string> files;
+		transform(urls.begin(), urls.end(), back_inserter(files),
+			boost::bind(&MUrl::str, _1, false));
+		
+		mProject->AddFiles(files, group, index);
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	DeleteSelectedItems
+
+void MProjectWindow::DeleteSelectedItems()
+{
+	vector<MProjectItem*> items;
+	vector<GtkTreePath*> paths;
+
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	if (notebook.GetPage() == ePanelFiles)
+	{
+		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+		treeView.GetSelectedRows(paths);
+		
+		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
+		{
+			GtkTreeIter iter;
+			if (mFilesTree->GetIter(&iter, *path))
+				items.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+			gtk_tree_path_free(*path);
+		}
+	}
+	else
+	{
+		MGtkTreeView treeView(GetWidget(kResourceViewID));
+		treeView.GetSelectedRows(paths);
+
+		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
+		{
+			GtkTreeIter iter;
+			if (mResourcesTree->GetIter(&iter, *path))
+				items.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+			gtk_tree_path_free(*path);
+		}
+	}
+	
+	mProject->RemoveItems(items);
+}
+
+// ---------------------------------------------------------------------------
 //	InfoClicked
 
 void MProjectWindow::InfoClicked()
@@ -1336,3 +1442,22 @@ void MProjectWindow::MakeClicked()
 	mProject->Make();
 }
 
+// ---------------------------------------------------------------------------
+//	OnKeyPressEvent
+
+bool MProjectWindow::OnKeyPressEvent(
+	GdkEventKey*	inEvent)
+{
+	bool result = false;
+	
+	uint32 modifiers = inEvent->state & gtk_accelerator_get_default_mod_mask();
+	uint32 keyValue = inEvent->keyval;
+	
+	if (modifiers == 0 and (keyValue == GDK_BackSpace or keyValue == GDK_Delete))
+	{
+		DeleteSelectedItems();
+		result = true;
+	}
+	
+	return result;
+}
