@@ -142,8 +142,6 @@ class MProject : public MDocument
 	void				GetIncludePaths(
 							std::vector<MPath>&	outPaths) const;
 
-	void				TargetUpdated();
-
 	void				SetProjectPaths(
 							const std::vector<MPath>&	inUserPaths,
 							const std::vector<MPath>&	inSysPaths,
@@ -151,7 +149,9 @@ class MProject : public MDocument
 							const std::vector<MPath>&	inFrameworks);
 
 	void				CreateNewGroup(
-							const std::string&	inGroupName);
+							const std::string&	inGroupName,
+							MProjectGroup*		inGroup,
+							int32				inIndex);
 
 	void				SetStatus(
 							const std::string&	inStatus,
@@ -219,9 +219,8 @@ class MProject : public MDocument
 							xmlNodePtr			inData,
 							MProjectGroup*		inGroup);
 
-	void				ReadPackageAction(
+	void				ReadResources(
 							xmlNodePtr			inData,
-							MPath				inDir,
 							MProjectGroup*		inGroup);
 
 	void				Read(
@@ -238,9 +237,8 @@ class MProject : public MDocument
 							std::vector<MProjectItem*>&
 												inItems);
 
-	void				WritePackage(
+	void				WriteResources(
 							xmlTextWriterPtr	inWriter,
-							const MPath&		inDir,
 							std::vector<MProjectItem*>&
 												inItems);
 
@@ -271,6 +269,18 @@ class MProject : public MDocument
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedFile;
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedResource;
 
+	void				EmitRemovedRecursive(
+							MEventOut<void(MProjectGroup*,int32)>&
+												inEvent,
+							MProjectItem*		inItem,
+							MProjectGroup*		inParent,
+							int32				inIndex);
+
+	void				EmitInsertedRecursive(
+							MEventOut<void(MProjectItem*)>&
+												inEvent,
+							MProjectItem*		inItem);
+
 	std::string			mName;
 	MPath				mProjectFile;
 	MPath				mProjectDir;
@@ -281,7 +291,6 @@ class MProject : public MDocument
 	MPath				mResourcesDir;
 	MProjectGroup		mProjectItems;
 	MProjectGroup		mPackageItems;
-	MProjectListPanel	mPanel;
 	std::vector<MProjectTarget*>
 						mTargets;
 	std::vector<std::string>

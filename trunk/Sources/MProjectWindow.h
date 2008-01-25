@@ -62,6 +62,10 @@ class MProjectWindow : public MDocWindow
 						uint32			inItemIndex);
 
 	MEventIn<void(std::string,bool)>	eStatus;
+
+	void			CreateNewGroup(
+						const std::string&
+										inGroupName);
 	
   protected:
 
@@ -99,6 +103,12 @@ class MProjectWindow : public MDocWindow
 
 	void			TargetChanged();
 	MSlot<void()>	eTargetChanged;
+	
+	void			InfoClicked();
+	MSlot<void()>	eInfoClicked;
+
+	void			MakeClicked();
+	MSlot<void()>	eMakeClicked;
 
 	MProject*		mProject;
 	MTreeModelInterface*

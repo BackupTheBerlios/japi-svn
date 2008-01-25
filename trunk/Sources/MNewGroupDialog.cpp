@@ -33,7 +33,7 @@
 #include "MJapi.h"
 
 #include "MNewGroupDialog.h"
-#include "MProject.h"
+#include "MProjectWindow.h"
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUnicode.h"
@@ -48,31 +48,18 @@ enum {
 
 }
 
-MNewGroupDialog::MNewGroupDialog()
-	: mProject(nil)
+MNewGroupDialog::MNewGroupDialog(
+	MProjectWindow*	inProject)
+	: MDialog("new-group-dialog")
+	, mProject(inProject)
 {
-	SetTitle("Find and Open File");
-	
-	AddHBox('hbox', false, 12);
-	AddStaticText('lbl1', "Filename:", 'hbox');
-	AddEditField(kTextBoxControlID, "", 'hbox');
-
-	AddCancelButton("Cancel");
-	AddOKButton("OK");
-}
-
-void MNewGroupDialog::Initialize(MProject* inProject)
-{
-	mProject = inProject;
-	
 	Show(inProject);
 	SetFocus(kTextBoxControlID);
 }
 
 bool MNewGroupDialog::OKClicked()
 {
-	std::string s;
-
+	string s;
 	GetText(kTextBoxControlID, s);
 
 	if (mProject != nil)

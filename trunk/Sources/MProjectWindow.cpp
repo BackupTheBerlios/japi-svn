@@ -47,6 +47,7 @@
 #include "MPreferences.h"
 #include "MAlerts.h"
 #include "MJapiApp.h"
+#include "MNewGroupDialog.h"
 
 namespace ba = boost::algorithm;
 
@@ -78,8 +79,8 @@ struct MProjectState
 	uint8			mSelectedTarget;
 	uint8			mSelectedPanel;
 	uint8			mFillers[2];
-	int32			mScrollPosition[ePanelCount];
-	uint32			mSelectedFile;
+//	int32			mScrollPosition[ePanelCount];
+//	uint32			mSelectedFile;
 	
 	void			Swap();
 };
@@ -88,7 +89,7 @@ const char
 	kJapieProjectState[] = "com.hekkelman.japi.ProjectState";
 
 const uint32
-	kMProjectStateSize = 7 * sizeof(uint32); // sizeof(MProjectState);
+	kMProjectStateSize = sizeof(MProjectState);
 
 void MProjectState::Swap()
 {
@@ -98,20 +99,20 @@ void MProjectState::Swap()
 	mWindowPosition[1] = swap(mWindowPosition[1]);
 	mWindowSize[0] = swap(mWindowSize[0]);
 	mWindowSize[1] = swap(mWindowSize[1]);
-	mScrollPosition[ePanelFiles] = swap(mScrollPosition[ePanelFiles]);
-	mScrollPosition[ePanelLinkOrder] = swap(mScrollPosition[ePanelLinkOrder]);
-	mScrollPosition[ePanelPackage] = swap(mScrollPosition[ePanelPackage]);
-	mSelectedFile = swap(mSelectedFile);
+//	mScrollPosition[ePanelFiles] = swap(mScrollPosition[ePanelFiles]);
+//	mScrollPosition[ePanelLinkOrder] = swap(mScrollPosition[ePanelLinkOrder]);
+//	mScrollPosition[ePanelPackage] = swap(mScrollPosition[ePanelPackage]);
+//	mSelectedFile = swap(mSelectedFile);
 }
-
-
 
 enum {
 	kFilesListViewID	= 'tre1',
 	kLinkOrderViewID	= 'tre2',
 	kResourceViewID		= 'tre3',
 	
-	kTargetPopupID		= 'targ'
+	kTargetPopupID		= 'targ',
+	
+	kNoteBookID			= 'note'
 };
 
 enum {
@@ -329,7 +330,7 @@ bool MProjectTreeModel::GetIter(
 	for (int32 ix = 0; ix < depth and item != nil; ++ix)
 	{
 		MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
-		if (group != nil)
+		if (group != nil and indices[ix] < group->Count())
 			item = group->GetItem(indices[ix]);
 		else
 		{
@@ -415,7 +416,7 @@ bool MProjectTreeModel::HasChildren(
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
 	MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
 	
-	return group != nil;
+	return group != nil and group->Count() > 0;
 }
 
 int32 MProjectTreeModel::CountChildren(
@@ -454,7 +455,7 @@ bool MProjectTreeModel::GetChild(
 		group = dynamic_cast<MProjectGroup*>(item);
 	}
 	
-	if (group != nil and static_cast<uint32>(inIndex) < group->Count())
+	if (group != nil and inIndex < group->Count())
 	{
 		outIter->user_data = group->GetItem(inIndex);
 		result = true;
@@ -621,7 +622,8 @@ bool MProjectTreeModel::DragDataReceived(
 	
 	for (int32 ix = 0; ix < depth - 1 and group != nil; ++ix)
 	{
-		if (dynamic_cast<MProjectGroup*>(group->GetItem(indices[ix])))
+		if (indices[ix] < group->Count() and
+			dynamic_cast<MProjectGroup*>(group->GetItem(indices[ix])))
 		{
 			group = static_cast<MProjectGroup*>(group->GetItem(indices[ix]));
 			index = indices[ix + 1];
@@ -670,22 +672,173 @@ bool MProjectTreeModel::RowDropPossible(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inData)
 {
-	bool result = false;
-	
-	GtkTreeIter iter;
-	if (GetIter(&iter, inPath))
-	{
-		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-		result = dynamic_cast<MProjectGroup*>(item) != nil;
-PRINT(("returning %s for RowDropPossible on row %s",
-	result ? "true" : "false",
-	item->GetName().c_str()));
-	}
+	// find the location where to insert the items
+	MProjectGroup* group = mItems;
 
-	return false;
+	int32 depth = gtk_tree_path_get_depth(inPath);
+	int32* indices = gtk_tree_path_get_indices(inPath);
+	int32 index = 0;
+	
+	for (int32 ix = 0; ix < depth - 1 and group != nil; ++ix)
+	{
+		if (indices[ix] < group->Count() and
+			dynamic_cast<MProjectGroup*>(group->GetItem(indices[ix])))
+		{
+			group = static_cast<MProjectGroup*>(group->GetItem(indices[ix]));
+			index = indices[ix + 1];
+		}
+		else
+			break;
+	}
+	
+	return group != nil and index <= group->Count();
 }
 
+class MGtkWidget
+{
+  public:
+				MGtkWidget(
+					GtkWidget*		inWidget)
+					: mGtkWidget(inWidget)
+				{
+//					g_object_ref(G_OBJECT(mGtkWidget));
+				}
 
+	virtual		~MGtkWidget()
+				{
+//					g_object_unref(G_OBJECT(mGtkWidget));
+				}
+				
+				operator GtkWidget*()		{ return mGtkWidget; }
+
+  protected:
+	GtkWidget*	mGtkWidget;
+
+  private:
+				MGtkWidget(
+					const MGtkWidget&	rhs);
+				
+	MGtkWidget&	operator=(
+					const MGtkWidget&	rhs);
+};
+
+class MGtkNotebook : public MGtkWidget
+{
+  public:
+				MGtkNotebook(
+					GtkWidget*		inWidget)
+					: MGtkWidget(inWidget)
+				{
+					assert(GTK_IS_NOTEBOOK(mGtkWidget));
+				}
+	
+				operator GtkNotebook*()		{ return GTK_NOTEBOOK(mGtkWidget); }
+	
+	int32		GetPage() const
+				{
+					return gtk_notebook_get_current_page(GTK_NOTEBOOK(mGtkWidget));
+				}
+
+	void		SetPage(
+					int32			inPage)
+				{
+					return gtk_notebook_set_current_page(GTK_NOTEBOOK(mGtkWidget), inPage);
+				}
+};
+
+class MGtkTreeView : public MGtkWidget
+{
+  public:
+				MGtkTreeView(
+					GtkWidget*		inWidget)
+					: MGtkWidget(inWidget)
+				{
+					assert(GTK_IS_TREE_VIEW(mGtkWidget));
+				}	
+
+				operator GtkTreeView*()		{ return GTK_TREE_VIEW(mGtkWidget); }
+
+	void		SetModel(
+					GtkTreeModel*	inModel)
+				{
+					gtk_tree_view_set_model(GTK_TREE_VIEW(mGtkWidget), inModel);
+				}
+
+	void		ExpandAll()
+				{
+					gtk_tree_view_expand_all(GTK_TREE_VIEW(mGtkWidget));
+				}
+
+	bool		GetFirstSelectedRow(
+					GtkTreePath*&	outRow)
+				{
+					bool result = false;
+					GList* rows = gtk_tree_selection_get_selected_rows(
+						gtk_tree_view_get_selection(GTK_TREE_VIEW(mGtkWidget)),
+						nil);
+					
+					if (rows != nil)
+					{
+						outRow = gtk_tree_path_copy((GtkTreePath*)rows->data);
+						result = outRow != nil;
+						
+						g_list_foreach(rows, (GFunc)(gtk_tree_path_free), nil);
+						g_list_free(rows);
+					}
+					
+					return result;
+				}
+	
+//	int32		GetScrollPosition() const
+//				{
+//					GdkRectangle r;
+//					gtk_tree_view_get_visible_rect(GTK_TREE_VIEW(mGtkWidget), &r);
+//					return r.y;
+//				}
+//	
+//	void		SetScrollPosition(
+//					int32			inPosition)
+//				{
+//					gtk_tree_view_scroll_to_point(GTK_TREE_VIEW(mGtkWidget), -1, inPosition);
+//				}
+};
+
+class MGtkComboBox : public MGtkWidget
+{
+  public:
+				MGtkComboBox(
+					GtkWidget*		inWidget)
+					: MGtkWidget(inWidget)
+				{
+					assert(GTK_IS_COMBO_BOX(mGtkWidget));
+				}
+	
+	int32		GetActive() const
+				{
+					return gtk_combo_box_get_active(GTK_COMBO_BOX(mGtkWidget));
+				}
+	
+	void		SetActive(
+					int32			inActive)
+				{
+					gtk_combo_box_set_active(GTK_COMBO_BOX(mGtkWidget), inActive);
+				}
+	
+	void		RemoveAll()
+				{
+					GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(mGtkWidget));
+					int32 count = gtk_tree_model_iter_n_children(model, nil);
+				
+					while (count-- > 0)
+						gtk_combo_box_remove_text(GTK_COMBO_BOX(mGtkWidget), count);
+				}
+
+	void		Append(
+					const string&	inLabel)
+				{
+					gtk_combo_box_append_text(GTK_COMBO_BOX(mGtkWidget), inLabel.c_str());
+				}
+};
 
 }
 
@@ -695,6 +848,8 @@ MProjectWindow::MProjectWindow()
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eTargetChanged(this, &MProjectWindow::TargetChanged)
+	, eInfoClicked(this, &MProjectWindow::InfoClicked)
+	, eMakeClicked(this, &MProjectWindow::MakeClicked)
 	, mProject(nil)
 	, mFilesTree(nil)
 	, mResourcesTree(nil)
@@ -702,18 +857,8 @@ MProjectWindow::MProjectWindow()
 {
 	mController = new MController(this);
 	
-	mController->SetWindow(this);
-	
 	mMenubar.Initialize(GetWidget('mbar'), "project-window-menu");
 	mMenubar.SetTarget(mController);
-
-	GtkWidget* treeView = GetWidget(kFilesListViewID);
-	InitializeTreeView(GTK_TREE_VIEW(treeView));
-	eInvokeFileRow.Connect(treeView, "row-activated");
-
-	treeView = GetWidget(kResourceViewID);
-	InitializeTreeView(GTK_TREE_VIEW(treeView));
-	eInvokeResourceRow.Connect(treeView, "row-activated");
 
 	// status panel
 	
@@ -736,6 +881,8 @@ MProjectWindow::MProjectWindow()
 	gtk_widget_show_all(statusBar);
 
 	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
+	eInfoClicked.Connect(GetGladeXML(), "on_info_clicked");
+	eMakeClicked.Connect(GetGladeXML(), "on_make_clicked");
 
 	ConnectChildSignals();
 }
@@ -767,76 +914,69 @@ void MProjectWindow::Initialize(
 	MDocWindow::Initialize(inDocument);
 
 	// Files tree
-	GtkWidget* treeView = GetWidget(kFilesListViewID);
-	THROW_IF_NIL((treeView));
-	
+	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
+	InitializeTreeView(filesTree);
+	eInvokeFileRow.Connect(filesTree, "row-activated");
 	mFilesTree = new MProjectTreeModel(mProject, mProject->GetFiles());
-	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mFilesTree->GetModel());
-
-	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
+	filesTree.SetModel(mFilesTree->GetModel());
+	filesTree.ExpandAll();
 
 	// Resources tree
 
-	treeView = GetWidget(kResourceViewID);
-	THROW_IF_NIL((treeView));
-	
+	MGtkTreeView resourcesTree(GetWidget(kResourceViewID));
+	InitializeTreeView(resourcesTree);
+	eInvokeResourceRow.Connect(resourcesTree, "row-activated");
 	mResourcesTree = new MProjectTreeModel(mProject, mProject->GetResources());
-	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), mResourcesTree->GetModel());
+	resourcesTree.SetModel(mResourcesTree->GetModel());
+	resourcesTree.ExpandAll();
 
-	gtk_tree_view_expand_all(GTK_TREE_VIEW(treeView));
+	// initialize interface
+
+	SyncInterfaceWithProject();
 
 	// read the project's state, if any
+	
+	bool useState = false;
+	MProjectState state = {};
 	
 	if (Preferences::GetInteger("save state", 1))
 	{
 		MPath file = inDocument->GetURL().GetPath();
 		
-		MProjectState state = {};
 		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-		if (r > 0 and static_cast<uint32>(r) == kMProjectStateSize)
-		{
-			state.Swap();
-
-//			mFileList->ScrollToPosition(0, state.mScrollPosition[ePanelFiles]);
-			
-			if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
-				state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
-			{
-				MRect r(
-					state.mWindowPosition[0], state.mWindowPosition[1],
-					state.mWindowSize[0], state.mWindowSize[1]);
-			
-				SetWindowPosition(r);
-			}
-			
-	//		mLinkOrderList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelLinkOrder]));
-	//		mPackageList->ScrollToPosition(::CGPointMake(0, state.mScrollPosition[ePanelPackage]));
-			
-	//		if (state.mSelectedPanel < ePanelCount)
-	//		{
-	//			mPanel = static_cast<MProjectListPanel>(state.mSelectedPanel);
-	//			::SetControl32BitValue(mPanelSegmentRef, uint32(mPanel) + 1);
-	//			SelectPanel(mPanel);
-	//		}
-	//		else
-	//			mPanel = ePanelFiles;
-	//		
-	//		::MoveWindow(GetSysWindow(),
-	//			state.mWindowPosition[0], state.mWindowPosition[1], true);
-	//
-	//		::SizeWindow(GetSysWindow(),
-	//			state.mWindowSize[0], state.mWindowSize[1], true);
-	//
-	//		::ConstrainWindowToScreen(GetSysWindow(),
-	//			kWindowStructureRgn, kWindowConstrainStandardOptions,
-	//			NULL, NULL);
-	
-			mProject->SelectTarget(state.mSelectedTarget);
-//			mFileList->SelectItem(state.mSelectedFile);
-		}
+		
+		useState = r > 0 and static_cast<uint32>(r) == kMProjectStateSize;
 	}
 	
-	SyncInterfaceWithProject();
+	if (useState)
+	{
+		state.Swap();
+
+		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+		{
+			MRect r(
+				state.mWindowPosition[0], state.mWindowPosition[1],
+				state.mWindowSize[0], state.mWindowSize[1]);
+		
+			SetWindowPosition(r);
+		}
+		
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		book.SetPage(state.mSelectedPanel);
+		
+//		treeView = MGtkTreeView(GetWidget(kFilesListViewID));
+//		treeView.SetScrollPosition(state.mScrollPosition[ePanelFiles]);
+//
+//		treeView = MGtkTreeView(GetWidget(kResourceViewID));
+//		treeView.SetScrollPosition(state.mScrollPosition[ePanelPackage]);
+
+		mProject->SelectTarget(state.mSelectedTarget);
+	}
+	else
+	{
+		mProject->SelectTarget(0);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -903,10 +1043,16 @@ bool MProjectWindow::UpdateCommandStatus(
 {
 	bool result = true;
 	
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	
 	switch (inCommand)
 	{
 		case cmd_OpenIncludeFile:
 			outEnabled = true;
+			break;
+
+		case cmd_NewGroup:
+			outEnabled = notebook.GetPage() != ePanelLinkOrder;
 			break;
 
 		default:
@@ -930,6 +1076,10 @@ bool MProjectWindow::ProcessCommand(
 
 	switch (inCommand)
 	{
+		case cmd_NewGroup:
+			new MNewGroupDialog(this);
+			break;
+		
 		case cmd_OpenIncludeFile:
 			new MFindAndOpenDialog(mProject, this);
 			break;
@@ -970,24 +1120,19 @@ void MProjectWindow::SetStatus(
 
 void MProjectWindow::SyncInterfaceWithProject()
 {
-	GtkWidget* wdgt = GetWidget(kTargetPopupID);
-	THROW_IF_NIL(wdgt);
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
 
-	eTargetChanged.Block(wdgt, "on_targ_changed");
-
-	GtkTreeModel* model = gtk_combo_box_get_model(GTK_COMBO_BOX(wdgt));
-	int32 count = gtk_tree_model_iter_n_children(model, nil);
-
-	while (count-- > 0)
-		gtk_combo_box_remove_text(GTK_COMBO_BOX(wdgt), count);
+	eTargetChanged.Block(targetPopup, "on_targ_changed");
+	
+	targetPopup.RemoveAll();
 
 	vector<MProjectTarget*> targets = mProject->GetTargets();
 	for (vector<MProjectTarget*>::iterator t = targets.begin(); t != targets.end(); ++t)
-		gtk_combo_box_append_text(GTK_COMBO_BOX(wdgt), (*t)->GetName().c_str());
+		targetPopup.Append((*t)->GetName());
 
-	gtk_combo_box_set_active(GTK_COMBO_BOX(wdgt), mProject->GetSelectedTarget());
+	targetPopup.SetActive(mProject->GetSelectedTarget());
 
-	eTargetChanged.Unblock(wdgt, "on_targ_changed");
+	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
 }
 
 // ---------------------------------------------------------------------------
@@ -997,9 +1142,8 @@ void MProjectWindow::TargetChanged()
 {
 	if (mProject != nil)
 	{
-		GtkWidget* wdgt = GetWidget('targ');
-		if (GTK_IS_COMBO_BOX(wdgt))
-			mProject->SelectTarget(gtk_combo_box_get_active(GTK_COMBO_BOX(wdgt)));
+		MGtkComboBox targetPopup(GetWidget('targ'));
+		mProject->SelectTarget(targetPopup.GetActive());
 	}
 }
 
@@ -1013,6 +1157,9 @@ void MProjectWindow::DocumentChanged(
 	{
 		delete mFilesTree;
 		mFilesTree = nil;
+		
+		delete mResourcesTree;
+		mResourcesTree = nil;
 		
 		mProject = dynamic_cast<MProject*>(inDocument);
 	}
@@ -1033,7 +1180,7 @@ bool MProjectWindow::DoClose()
 		if (mBusy)
 			mProject->StopBuilding();
 		
-		if (mProject != nil)
+		if (mProject != nil and mProject->IsSpecified())
 			SaveState();
 		
 		result = MDocWindow::DoClose();
@@ -1056,17 +1203,16 @@ void MProjectWindow::SaveState()
 		
 		state.Swap();
 
-//		state.mSelectedFile = mFileList->GetSelected();
 		state.mSelectedTarget = mProject->GetSelectedTarget();
 
-//		int32 x;
-//		mFileList->GetScrollPosition(x, state.mScrollPosition[ePanelFiles]);
-//				mLinkOrderList->GetScrollPosition(pt);
-//				state.mScrollPosition[ePanelLinkOrder] = static_cast<uint32>(pt.y);
-//				mPackageList->GetScrollPosition(pt);
-//				state.mScrollPosition[ePanelPackage] = static_cast<uint32>(pt.y);
-//		
-//		state.mSelectedPanel = mPanel;
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		state.mSelectedPanel = book.GetPage();
+
+//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+//		state.mScrollPosition[ePanelFiles] = treeView.GetScrollPosition();
+//
+//		treeView = MGtkTreeView(GetWidget(kResourceViewID));
+//		state.mScrollPosition[ePanelPackage] = treeView.GetScrollPosition();
 
 		MRect r;
 		GetWindowPosition(r);
@@ -1136,3 +1282,57 @@ void MProjectWindow::InitializeTreeView(
 
 	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
 }
+
+// ---------------------------------------------------------------------------
+//	CreateNewGroup
+
+void MProjectWindow::CreateNewGroup(
+	const string&		inGroupName)
+{
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	
+	if (notebook.GetPage() == ePanelFiles)
+	{
+		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+		
+		MProjectGroup* group = mProject->GetFiles();
+		int32 index = 0;
+		
+		GtkTreePath* path;
+		GtkTreeIter iter;
+		
+		if (treeView.GetFirstSelectedRow(path) and
+			mFilesTree->GetIter(&iter, path))
+		{
+			MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+			group = item->GetParent();
+			index = item->GetPosition();
+		}
+			
+		mProject->CreateNewGroup(inGroupName, group, index);
+		
+		if (path != nil)
+			gtk_tree_path_free(path);
+	}
+	else
+	{
+		MGtkTreeView treeView(GetWidget(kResourceViewID));
+		
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	InfoClicked
+
+void MProjectWindow::InfoClicked()
+{
+}
+
+// ---------------------------------------------------------------------------
+//	MakeClicked
+
+void MProjectWindow::MakeClicked()
+{
+	mProject->Make();
+}
+

@@ -247,60 +247,24 @@ void MProject::RecheckFiles()
 //	MProject::CreateNewGroup
 
 void MProject::CreateNewGroup(
-	const string&	inGroupName)
+	const string&		inGroupName,
+	MProjectGroup*		inGroup,
+	int32				inIndex)
 {
-//	int32 selected = mFileList->GetSelected();
-//	
-//	MProjectGroup* parent = &mProjectItems;
-//	int32 position = kListItemLast;
-//	
-//	if (selected >= 0 and selected < static_cast<int32>(mFileList->GetCount()))
-//	{
-//		MProjectItem* item = GetItem(selected);
-//		parent = item->GetParent();
-//		position = item->GetPosition();
-//	}
-//	
-//	parent->AddProjectItem(new MProjectGroup(inGroupName, nil), position);
-//	
-//	UpdateList();
-//	SetModified(true);
-}
+	MProjectGroup* root = inGroup;
+	THROW_IF_NIL(root);
+	
+	while (root->GetParent() != nil)
+		root = root->GetParent();
 
-// ---------------------------------------------------------------------------
-//	MProject::TargetUpdated
-
-void MProject::TargetUpdated()
-{
-//	ControlID id = { kJapieSignature, kTargetPopupViewID };
-//	
-//	THROW_IF_OSERROR(::HIViewFindByID(GetContentViewRef(), id, &mTargetPopupRef));
-//	MenuRef targetMenuRef = ::GetControlPopupMenuHandle(mTargetPopupRef);
-//	if (mTargetPopupRef == nil)
-//		THROW(("Missing target menu"));
-//	
-//	THROW_IF_OSERROR(::DeleteMenuItems(targetMenuRef, 1, ::CountMenuItems(targetMenuRef)));
-//	uint32 ix = 1;
-//	
-//	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
-//		target != mTargets.end(); ++target, ++ix)
-//	{
-//		MCFString targetTitle((*target)->GetName());
-//		THROW_IF_OSERROR(::InsertMenuItemTextWithCFString(
-//			targetMenuRef, targetTitle, ix, 0, cmd_SwitchTarget + ix - 1));
-//	}
-
-//	while (mTargetPopupCount-- > 0)
-//		gtk_combo_box_remove_text(GTK_COMBO_BOX(mTargetPopup), 0);
-//
-//	mTargetPopupCount = 0;
-//	for (vector<MProjectTarget*>::iterator target = mTargets.begin();
-//		target != mTargets.end(); ++target, ++mTargetPopupCount)
-//	{
-//		gtk_combo_box_append_text(GTK_COMBO_BOX(mTargetPopup), (*target)->GetName().c_str());
-//	}
-//
-//	SetModified(true);
+	MProjectGroup* newGroup = new MProjectGroup(inGroupName, nil);
+	inGroup->AddProjectItem(newGroup, inIndex);
+	
+	SetModified(true);
+	if (root == &mProjectItems)
+		eInsertedFile(newGroup);
+	else
+		eInsertedResource(newGroup);
 }
 
 // ---------------------------------------------------------------------------
@@ -378,18 +342,17 @@ void MProject::ReadOptions(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::ReadPackageAction
+//	MProject::ReadResources
 
-void MProject::ReadPackageAction(
+void MProject::ReadResources(
 	xmlNodePtr		inData,
-	MPath			inDir,
 	MProjectGroup*	inGroup)
 {
 	XMLNode data(inData);
 	
 	for (XMLNode::iterator node = data.begin(); node != data.end(); ++node)
 	{		
-		if (node->name() == "copy")
+		if (node->name() == "resource")
 		{
 			string fileName = node->text();
 			if (fileName.length() == 0)
@@ -397,12 +360,10 @@ void MProject::ReadPackageAction(
 			
 			try
 			{
-				MPath filePath = inDir / fileName;
+				MPath filePath = mResourcesDir / fileName;
 
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
-
-//				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -411,14 +372,14 @@ void MProject::ReadPackageAction(
 				DisplayError(e);
 			}
 		}
-		else if (node->name() == "mkdir")
+		else if (node->name() == "group")
 		{
 			string name = node->property("name");
 			
-			auto_ptr<MProjectMkDir> group(new MProjectMkDir(name, inGroup));
+			auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
 			if (node->children() != nil)
-				ReadPackageAction(*node, inDir / name, group.get());
+				ReadResources(*node, group.get());
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -581,7 +542,7 @@ void MProject::Read(
 
 	// and the package actions, if any
 	
-	data = xmlXPathEvalExpression(BAD_CAST "/project/package", inContext);
+	data = xmlXPathEvalExpression(BAD_CAST "/project/resources", inContext);
 	
 	if (data != nil and data->nodesetval != nil)
 	{
@@ -589,13 +550,13 @@ void MProject::Read(
 		{
 			XMLNode node(data->nodesetval->nodeTab[i]);
 
-			mResourcesDir = mProjectDir;
-
 			string rd = node.property("resource_dir");
 			if (rd.length() > 0)
-				mResourcesDir /= rd;
+				mResourcesDir = mProjectDir / rd;
+			else
+				mResourcesDir = mProjectDir / "Resources";
 	
-			ReadPackageAction(node, mResourcesDir, &mPackageItems);
+			ReadResources(node, &mPackageItems);
 		}
 	}
 	
@@ -776,37 +737,33 @@ void MProject::WriteFiles(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::WritePackage
+//	MProject::WriteResources
 
-void MProject::WritePackage(
+void MProject::WriteResources(
 	xmlTextWriterPtr		inWriter,
-	const MPath&			inDir,
 	vector<MProjectItem*>&	inItems)
 {
 	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
 	{
 		if (dynamic_cast<MProjectGroup*>(*item) != nil)
 		{
-			THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "mkdir"));
+			THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "group"));
 			
 			MProjectGroup* group = static_cast<MProjectGroup*>(*item);
 			
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "name",
 				BAD_CAST group->GetName().c_str()));
 			
-			WritePackage(inWriter, inDir / group->GetName(), group->GetItems());
+			WriteResources(inWriter, group->GetItems());
 			
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
 		}
 		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
-			MPath path = mResourcesDir / static_cast<MProjectResource*>(*item)->GetPath();
+			MPath path = static_cast<MProjectResource*>(*item)->GetPath();
 
-			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
-				BAD_CAST relative_path(inDir, path).string().c_str()));
-
-//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "copy",
-//				BAD_CAST path.string().c_str()));
+			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "resource",
+				BAD_CAST relative_path(mResourcesDir, path).string().c_str()));
 		}
 	}
 }
@@ -989,13 +946,13 @@ void MProject::WriteFile(
 		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 
 		// <package>
-		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "package"));
+		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "resources"));
 
 		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
 			BAD_CAST "resource_dir",
 			BAD_CAST relative_path(mProjectDir, mResourcesDir).string().c_str()));
 
-		WritePackage(writer, mResourcesDir, mPackageItems.GetItems());
+		WriteResources(writer, mPackageItems.GetItems());
 		
 		// </package>
 		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
@@ -1394,28 +1351,14 @@ MProjectJob* MProject::CreateCompileAllJob()
 	files.clear();
 	mPackageItems.Flatten(files);
 
-	vector<MPath> rsrcFiles;
-
-	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-	{		
-		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
-		{
-			MProjectFile& f(dynamic_cast<MProjectFile&>(**file));
-			rsrcFiles.push_back(f.GetPath());
-		}
-	}
-	
-	if (rsrcFiles.size() > 0)
+	if (files.size() > 0)
 	{
 		MTargetCPU arch = mCurrentTarget->GetTargetCPU();
 		if (arch == eCPU_native)
 			arch = MProjectTarget::GetNativeCPU();
 		
 		job->AddJob(new MProjectCreateResourceJob(
-			"Creating resources",
-			this, mResourcesDir, rsrcFiles,
-			mObjectDir / "__rsrc__.o",
-			arch));
+			"Creating resources", this, files, mObjectDir / "__rsrc__.o", arch));
 	}
 
 	return job.release();
@@ -1923,41 +1866,6 @@ void MProject::SelectTarget(
 	SetStatus("", false);
 }
 
-//// ---------------------------------------------------------------------------
-////	MProject::SelectPanel
-//
-//void MProject::SelectPanel(
-//	MProjectListPanel	inPanel)
-//{
-//	mPanel = inPanel;
-//
-////	switch (mPanel)
-////	{
-////		case ePanelFiles:
-////            ::SetControlVisibility(mFilePanelRef, true, true);
-////            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-////            ::SetControlVisibility(mPackagePanelRef, false, false);
-////			break;
-////
-////		case ePanelLinkOrder:
-////            ::SetControlVisibility(mFilePanelRef, false, false);
-////            ::SetControlVisibility(mLinkOrderPanelRef, true, true);
-////            ::SetControlVisibility(mPackagePanelRef, false, false);
-////			break;
-////
-////		case ePanelPackage:
-////            ::SetControlVisibility(mFilePanelRef, false, false);
-////            ::SetControlVisibility(mLinkOrderPanelRef, false, false);
-////            ::SetControlVisibility(mPackagePanelRef, true, true);
-////			break;
-////
-////		default:
-////			break;
-////	}
-//	
-//	UpdateList();
-//}
-
 // ---------------------------------------------------------------------------
 //	MProject::CheckIsOutOfDate
 
@@ -2000,33 +1908,6 @@ void MProject::ResearchForFiles()
 	CheckIsOutOfDate();
 }
 
-//// ---------------------------------------------------------------------------
-////	MProject::GetItem
-//
-//MProjectItem* MProject::GetItem(
-//	int32				inItemNr)
-//{
-//	MListView* listView = nil;
-//	switch (mPanel)
-//	{
-//		case ePanelFiles:		listView = mFileList;		break;
-//		case ePanelLinkOrder:	listView = mLinkOrderList;	break;
-//		case ePanelPackage:		listView = mPackageList;	break;
-//		default:											break;
-//	}
-//	
-//	if (inItemNr < 0 or inItemNr >= static_cast<int32>(listView->GetCount()))
-//		THROW(("Item number out of range"));
-//	
-//	MProjectItem* item = nil;
-//	listView->GetItem(inItemNr, &item, sizeof(item));
-//	
-//	if (item == nil)
-//		THROW(("Item is nil"));
-//	
-//	return item;
-//}
-
 // ---------------------------------------------------------------------------
 //	MProject::SetStatus
 
@@ -2051,30 +1932,6 @@ bool MProject::UpdateCommandStatus(
 	
 	outEnabled = false;
 	
-	switch (mPanel)
-	{
-		case ePanelFiles:
-		{
-//			int32 selected = mFileList->GetSelected();
-//			
-//			if (selected >= 0)
-//				isCompilable = GetItem(selected)->IsCompilable();
-			break;
-		}
-		
-//		case ePanelLinkOrder:
-//		{
-//			int32 selected = mLinkOrderList->GetSelected();
-//			
-//			if (selected >= 0)
-//				isCompilable = GetItem(selected)->IsCompilable();
-//			break;
-//		}
-		
-		default:
-			break;
-	}
-	
 	switch (inCommand)
 	{
 		case cmd_AddFileToProject:
@@ -2091,7 +1948,6 @@ bool MProject::UpdateCommandStatus(
 		case cmd_BringUpToDate:
 		case cmd_MakeClean:
 		case cmd_Make:
-		case cmd_NewGroup:
 		case cmd_OpenIncludeFile:
 			outEnabled = true;
 			break;
@@ -2120,31 +1976,6 @@ bool MProject::ProcessCommand(
 	bool result = true;
 
 	MProjectItem* item = nil;
-
-	switch (mPanel)
-	{
-		case ePanelFiles:
-		{
-//			int32 selected = mFileList->GetSelected();
-//			
-//			if (selected >= 0)
-//				item = GetItem(selected);
-//			break;
-		}
-		
-//		case ePanelLinkOrder:
-//		{
-//			int32 selected = mLinkOrderList->GetSelected();
-//			
-//			if (selected >= 0)
-//				item = GetItem(selected);
-//			break;
-//		}
-		
-		default:
-			break;
-	}
-	
 	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 	
 	switch (inCommand)
@@ -2189,14 +2020,6 @@ bool MProject::ProcessCommand(
 			StopBuilding();
 			break;
 		
-//		case cmd_NewGroup:
-//		{
-//			auto_ptr<MNewGroupDialog> dlog(new MNewGroupDialog);
-//			dlog->Initialize(this);
-//			dlog.release();
-//			break;
-//		}
-//		
 //		case cmd_EditProjectInfo:
 //		{
 //			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
@@ -2260,8 +2083,6 @@ void MProject::AddFiles(
 			if (file->length() == 0)
 				continue;
 			
-			MProjectItem* item = nil;
-			
 			MUrl url(*file);
 			if (not url.IsLocal())
 				THROW(("You can only add local files to a project"));
@@ -2271,35 +2092,63 @@ void MProject::AddFiles(
 			
 			if (fs::is_directory(p))
 			{
-				auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
-				inGroup->AddProjectItem(group.release(), inIndex);
-				item = group.release();
+				SetModified(true);
+
+				MProjectGroup* group = new MProjectGroup(name, inGroup);
+				inGroup->AddProjectItem(group, inIndex);
+				
+				if (root == &mProjectItems)
+					eInsertedFile(group);
+				else
+					eInsertedResource(group);
+				
+				vector<string> files;
+				MFileIterator iter(p, kFileIter_ReturnDirectories);
+				while (iter.Next(p))
+					files.push_back(MUrl(p).str());
+				
+				AddFiles(files, group, 0);
 			}
 			else if (root == &mProjectItems)
 			{
 				auto_ptr<MProjectFile> projectFile;
 				MPath filePath;
 				
-				if (LocateFile(name, true, filePath) and p == filePath)
-					projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+				if (LocateFile(name, true, filePath))
+				{
+					if (p == filePath)
+						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					else
+						THROW(("Cannot add file %s since another file with that name but in another location is already present.",
+							name.c_str()));
+				}
 				else
 				{
-#warning("implement")					
+					MPath dir = relative_path(mProjectDir, p.branch_path());
+					
+					if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
+					{
+						mUserSearchPaths.push_back(dir);
+
+						if (not LocateFile(name, true, filePath))
+							THROW(("Cannot find file, something is wrong, sorry..."));
+						
+						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					}
 				}
 				
-				item = projectFile.get();
+				MProjectItem* item = projectFile.release();
 				if (item != nil)
-					inGroup->AddProjectItem(projectFile.release(), inIndex);
-			}
-			
-			if (item != nil)
-			{
-				SetModified(true);
+				{
+					SetModified(true);
+	
+					inGroup->AddProjectItem(item, inIndex);
 
-				if (root == &mProjectItems)
-					eInsertedFile(item);
-				else
-					eInsertedResource(item);
+					if (root == &mProjectItems)
+						eInsertedFile(item);
+					else
+						eInsertedResource(item);
+				}
 			}
 		}
 	}
@@ -2348,18 +2197,69 @@ void MProject::MoveItem(
 	while (root->GetParent() != nil)
 		root = root->GetParent();
 	
+	if (root == &mProjectItems)
+		EmitRemovedRecursive(eRemovedFile, inItem, group, index);
+	else
+		EmitRemovedRecursive(eRemovedResource, inItem, group, index);
+
 	group->RemoveProjectItem(inItem);
 	SetModified(true);
 	
-	if (root == &mProjectItems)
-		eRemovedFile(group, index);
-	else
-		eRemovedResource(group, index);
-
 	inGroup->AddProjectItem(inItem, inIndex);
 			
 	if (root == &mProjectItems)
-		eInsertedFile(inItem);
+		EmitInsertedRecursive(eInsertedFile, inItem);
 	else
-		eInsertedResource(inItem);
+		EmitInsertedRecursive(eInsertedResource, inItem);
+	
+	ResearchForFiles();
+	
+	MModDateCache modDateCache;
+	
+	if (root == &mProjectItems)
+	{
+		mProjectItems.UpdatePaths(mObjectDir);
+		mProjectItems.CheckCompilationResult();
+		mProjectItems.CheckIsOutOfDate(modDateCache);
+	}
+	else
+	{
+		mPackageItems.UpdatePaths(mObjectDir);
+		mPackageItems.CheckCompilationResult();
+		mPackageItems.CheckIsOutOfDate(modDateCache);
+	}
+}
+
+void MProject::EmitRemovedRecursive(
+	MEventOut<void(MProjectGroup*,int32)>&	inEvent,
+	MProjectItem*							inItem,
+	MProjectGroup*							inParent,
+	int32									inIndex)
+{
+	if (dynamic_cast<MProjectGroup*>(inItem) != nil)
+	{
+		MProjectGroup* group = static_cast<MProjectGroup*>(inItem);
+		vector<MProjectItem*>& items = group->GetItems();
+		
+		for (int32 ix = items.size() - 1; ix >= 0; --ix)
+			EmitRemovedRecursive(inEvent, items[ix], group, ix);
+	}
+
+	inEvent(inParent, inIndex);
+}
+
+void MProject::EmitInsertedRecursive(
+	MEventOut<void(MProjectItem*)>&			inEvent,
+	MProjectItem*							inItem)
+{
+	inEvent(inItem);
+
+	if (dynamic_cast<MProjectGroup*>(inItem) != nil)
+	{
+		MProjectGroup* group = static_cast<MProjectGroup*>(inItem);
+		vector<MProjectItem*>& items = group->GetItems();
+		
+		for (int32 ix = items.size() - 1; ix >= 0; --ix)
+			EmitInsertedRecursive(inEvent, items[ix]);
+	}
 }

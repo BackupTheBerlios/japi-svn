@@ -55,6 +55,7 @@
 #include "MProject.h"
 #include "MProjectJob.h"
 #include "MObjectFile.h"
+//#include "MProjectItem.h"
 #include "MError.h"
 
 extern char** environ;
@@ -443,17 +444,15 @@ void MProjectCreateResourceJob::Execute()
 {
 	MResourceFile rsrcFile(mTargetCPU);
 	
-	for (vector<MPath>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
+	for (vector<MProjectItem*>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
 	{
-		fs::ifstream f(*p);
+		MProjectResource* rsrc = dynamic_cast<MProjectResource*>(*p);
+		if (rsrc == nil)
+			continue;
+		
+		fs::ifstream f(rsrc->GetPath());
 
-		string name = p->string();
-		
-		if (ba::starts_with(name, mRsrcDir.string()))
-			ba::erase_head(name, mRsrcDir.string().length());
-		
-		if (name[0] == '/')
-			name.erase(name.begin());
+		string name = rsrc->GetResourceName();
 		
 		if (not f.is_open())
 			THROW(("Could not open resource data file %s", name.c_str()));

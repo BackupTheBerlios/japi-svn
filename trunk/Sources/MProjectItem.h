@@ -92,8 +92,6 @@ class MProjectItem
 						std::vector<MProjectItem*>&
 											outItems)		{ outItems.push_back(this); }
 
-	virtual uint32	Count() const							{ return 1; }
-
   protected:
 					
 	std::string		mName;
@@ -212,7 +210,7 @@ class MProjectGroup : public MProjectItem
 						std::vector<MProjectItem*>&
 											outItems);
 
-	virtual uint32	Count() const;
+	virtual int32	Count() const							{ return mItems.size(); }
 
 	std::vector<MProjectItem*>&
 					GetItems()								{ return mItems; }
@@ -223,18 +221,6 @@ class MProjectGroup : public MProjectItem
   private:
 	std::vector<MProjectItem*>
 					mItems;
-};
-
-// ---------------------------------------------------------------------------
-//	MProjectMkDir
-
-class MProjectMkDir : public MProjectGroup
-{
-  public:
-					MProjectMkDir(
-						const std::string&	inName,
-						MProjectGroup*		inParent)
-						: MProjectGroup(inName, inParent) {}
 };
 
 // ---------------------------------------------------------------------------

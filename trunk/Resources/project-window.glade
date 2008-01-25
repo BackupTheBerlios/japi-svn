@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Thu Jan 24 09:17:56 2008 by maarten@zuinig-->
+<!--Generated with glade3 3.1.5 on Fri Jan 25 14:18:40 2008 by maarten@zuinig-->
 <glade-interface>
   <widget class="GtkWindow" id="window">
     <property name="default_width">250</property>
@@ -32,6 +32,7 @@ mies</property>
             <child>
               <widget class="GtkButton" id="info">
                 <property name="visible">True</property>
+                <signal name="clicked" handler="on_info_clicked"/>
                 <child>
                   <widget class="GtkImage" id="image1">
                     <property name="visible">True</property>
@@ -48,6 +49,7 @@ mies</property>
             <child>
               <widget class="GtkButton" id="make">
                 <property name="visible">True</property>
+                <signal name="clicked" handler="on_make_clicked"/>
                 <child>
                   <widget class="GtkImage" id="image2">
                     <property name="visible">True</property>
@@ -70,7 +72,7 @@ mies</property>
           </packing>
         </child>
         <child>
-          <widget class="GtkNotebook" id="notebook1">
+          <widget class="GtkNotebook" id="note">
             <property name="visible">True</property>
             <child>
               <widget class="GtkScrolledWindow" id="scrolledwindow1">

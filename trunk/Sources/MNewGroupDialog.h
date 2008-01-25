@@ -35,19 +35,18 @@
 
 #include "MDialog.h"
 
-class MProject;
+class MProjectWindow;
 
 class MNewGroupDialog : public MDialog
 {
   public:
-					MNewGroupDialog();
-
-	void			Initialize(MProject* inWindow);
+					MNewGroupDialog(
+						MProjectWindow*		inParentWindow);
 
 	virtual bool	OKClicked();
 	
   private:
-	MProject*		mProject;
+	MProjectWindow*	mProject;
 };
 
-#endif // MFINDANDOPENDIALOG_H
+#endif // MNEWGROUPDIALOG_H

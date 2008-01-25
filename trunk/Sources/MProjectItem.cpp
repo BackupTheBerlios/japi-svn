@@ -556,13 +556,7 @@ int32 MProjectGroup::GetItemPosition(
 	
 	vector<MProjectItem*>::const_iterator i = find(mItems.begin(), mItems.end(), inItem);
 	if (i != mItems.end())
-	{
-		result = accumulate(mItems.begin(), i, 0,
-			boost::bind(plus<uint32>(), _1, boost::bind(&MProjectItem::Count, _2)));
-	}
-	
-	if (mParent != nil)
-		result += mParent->GetItemPosition(this);
+		result = i - mItems.begin();
 	
 	return result;
 }
@@ -574,7 +568,7 @@ void MProjectGroup::AddProjectItem(
 	MProjectItem*	inItem,
 	int32			inPosition)
 {
-	if (inPosition >= 0 and inPosition < mItems.size())
+	if (inPosition >= 0 and inPosition <= static_cast<int32>(mItems.size()))
 		mItems.insert(mItems.begin() + inPosition, inItem);
 	else if (inPosition == -1)
 		mItems.insert(mItems.end(), inItem);
@@ -626,15 +620,6 @@ void MProjectGroup::Flatten(
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectGroup::GetDataSize
-
-uint32 MProjectGroup::Count() const
-{
-	return accumulate(mItems.begin(), mItems.end(), 1,
-		boost::bind(plus<uint32>(), _1, boost::bind(&MProjectItem::Count, _2)));
-}
-
-// ---------------------------------------------------------------------------
 //	MProjectGroup::GetItem
 
 MProjectItem* MProjectGroup::GetItem(
@@ -649,13 +634,13 @@ MProjectItem* MProjectGroup::GetItem(
 MPath MProjectCpFile::GetDestPath(
 	const MPath&		inPackageDir) const
 {
-	stack<MProjectMkDir*>	sp;
+	stack<MProjectGroup*>	sp;
 	
-	MProjectMkDir* parent = dynamic_cast<MProjectMkDir*>(mParent);
+	MProjectGroup* parent = dynamic_cast<MProjectGroup*>(mParent);
 	while (parent != nil)
 	{
 		sp.push(parent);
-		parent = dynamic_cast<MProjectMkDir*>(parent->GetParent());
+		parent = dynamic_cast<MProjectGroup*>(parent->GetParent());
 	}
 	
 	MPath result = inPackageDir;
@@ -754,13 +739,6 @@ void MProjectResource::CheckIsOutOfDate(
 void MProjectResource::UpdatePaths(
 	const MPath&		inObjectDir)
 {
-	string baseName = GetResourceName();
-	
-	string::size_type p = 0;
-	while ((p = baseName.find('/', p)) != string::npos)
-		baseName[p] = '-';
-	
 	mObjectPath = inObjectDir / "__rsrc__.o";
-//	mDependsPath = inObjectDir / (baseName + ".d");
 }
 

@@ -42,6 +42,8 @@ MController::MController(
 	: MHandler(inSuper)
 	, mDocument(nil)
 {
+	if (dynamic_cast<MDocWindow*>(inSuper) != nil)
+		SetWindow(static_cast<MDocWindow*>(inSuper));
 }
 
 MController::~MController()

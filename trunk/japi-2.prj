@@ -13,43 +13,45 @@
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
-	<libpaths/>
+	<libpaths>
+		<path>/usr/pkg/lib</path>
+	</libpaths>
 	<frameworks/>
 	<files>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
 			<file>MAcceleratorTable.cpp</file>
 			<file>MController.cpp</file>
-			<file>MTextBuffer.cpp</file>
-			<file>MDocClosedNotifier.cpp</file>
 			<file>MDocument.cpp</file>
+			<file>MDocClosedNotifier.cpp</file>
+			<file>MTextBuffer.cpp</file>
 			<file>MTextDocument.cpp</file>
 			<file>MTextView.cpp</file>
 			<file>MTextController.cpp</file>
-			<file>MMenu.cpp</file>
-			<file>MHandler.cpp</file>
 			<group name="Windows">
+				<file>MWindow.cpp</file>
 				<file>MEditWindow.cpp</file>
 				<file>MDocWindow.cpp</file>
-				<file>MWindow.cpp</file>
 				<file>MMessageWindow.cpp</file>
+				<group name="Dialogs">
+					<file>MDialog.cpp</file>
+					<file>MNewGroupDialog.cpp</file>
+					<file>MFindDialog.cpp</file>
+					<file>MGoToLineDialog.cpp</file>
+					<file>MFindAndOpenDialog.cpp</file>
+					<file>MMarkMatchingDialog.cpp</file>
+					<file>MPrefsDialog.cpp</file>
+					<file>MDiffWindow.cpp</file>
+				</group>
 			</group>
+			<file>MMenu.cpp</file>
+			<file>MHandler.cpp</file>
 			<file>MView.cpp</file>
 			<file>MTreeModelInterface.cpp</file>
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
 			<file>MPreferences.cpp</file>
-			<group name="Dialogs">
-				<file>MDialog.cpp</file>
-				<file>MFindDialog.cpp</file>
-				<file>MGoToLineDialog.cpp</file>
-				<file>MFindAndOpenDialog.cpp</file>
-				<file>MMarkMatchingDialog.cpp</file>
-				<file>MNewGroupDialog.cpp</file>
-				<file>MPrefsDialog.cpp</file>
-				<file>MDiffWindow.cpp</file>
-			</group>
 			<file>MUnicode.cpp</file>
 			<file>MUtils.cpp</file>
 			<file>MDiff.cpp</file>
@@ -104,50 +106,48 @@
 			<link>z</link>
 		</group>
 	</files>
-	<resources resource_dir="Resources">
-		<group name="Alerts">
-			<resource>ask-add-include-path-alert.xml</resource>
-			<resource>unknown-host-alert.xml</resource>
-			<resource>host-key-changed-alert.xml</resource>
-			<resource>make-clean-alert.xml</resource>
-			<resource>save-changes-alert.xml</resource>
-			<resource>discard-changes-alert.xml</resource>
-			<resource>replace-all-alert.xml</resource>
-			<resource>read-only-alert.xml</resource>
-			<resource>exception-alert.xml</resource>
-			<resource>stop-building-alert.xml</resource>
-		</group>
-		<group name="Dialogs">
-			<resource>find-dialog.glade</resource>
-			<resource>find-and-open-dialog.glade</resource>
-			<resource>mark-matching-dialog.glade</resource>
-			<resource>go-to-line-dialog.glade</resource>
-			<resource>new-group-dialog.glade</resource>
-			<resource>auth-dialog.glade</resource>
-			<resource>prefs-dialog.glade</resource>
-		</group>
-		<group name="Windows">
-			<resource>diff-window.glade</resource>
-			<resource>message-list-window.glade</resource>
-			<resource>edit-window.glade</resource>
-			<resource>project-window.glade</resource>
-		</group>
-		<group name="Menus">
-			<resource>text-view-context-menu.xml</resource>
-			<resource>edit-window-menu.xml</resource>
-			<resource>project-window-menu.xml</resource>
-		</group>
-		<group name="Templates">
-			<resource>Templates/empty.c</resource>
-			<resource>Templates/Strict.xhtml</resource>
-			<resource>Templates/Template.html</resource>
-			<resource>Templates/Transitional.xhtml</resource>
-		</group>
-		<group name="Dutch">
-			<resource>Dutch/japi.po</resource>
-		</group>
-		<resource>japi.desktop</resource>
-	</resources>
+	<package resource_dir="Resources">
+		<mkdir name="Alerts">
+			<copy>unknown-host-alert.xml</copy>
+			<copy>host-key-changed-alert.xml</copy>
+			<copy>make-clean-alert.xml</copy>
+			<copy>save-changes-alert.xml</copy>
+			<copy>discard-changes-alert.xml</copy>
+			<copy>replace-all-alert.xml</copy>
+			<copy>read-only-alert.xml</copy>
+			<copy>exception-alert.xml</copy>
+			<copy>stop-building-alert.xml</copy>
+		</mkdir>
+		<mkdir name="Dialogs">
+			<copy>find-dialog.glade</copy>
+			<copy>find-and-open-dialog.glade</copy>
+			<copy>mark-matching-dialog.glade</copy>
+			<copy>go-to-line-dialog.glade</copy>
+			<copy>auth-dialog.glade</copy>
+			<copy>prefs-dialog.glade</copy>
+		</mkdir>
+		<mkdir name="Windows">
+			<copy>diff-window.glade</copy>
+			<copy>message-list-window.glade</copy>
+			<copy>edit-window.glade</copy>
+			<copy>project-window.glade</copy>
+		</mkdir>
+		<mkdir name="Menus">
+			<copy>text-view-context-menu.xml</copy>
+			<copy>edit-window-menu.xml</copy>
+			<copy>project-window-menu.xml</copy>
+		</mkdir>
+		<mkdir name="Templates">
+			<copy>empty.c</copy>
+			<copy>Strict.xhtml</copy>
+			<copy>Template.html</copy>
+			<copy>Transitional.xhtml</copy>
+		</mkdir>
+		<mkdir name="Dutch">
+			<copy>japi.po</copy>
+		</mkdir>
+		<copy>japi.desktop</copy>
+	</package>
 	<targets>
 		<target kind="Executable" name="Japie Debug" linkTarget="japi" debug="true">
 			<bundle>

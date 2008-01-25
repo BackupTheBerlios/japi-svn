@@ -195,13 +195,11 @@ struct MProjectCreateResourceJob : public MProjectJob
 							MProjectCreateResourceJob(
 								const std::string&	inTitle,
 								MProject*			inProject,
-								const MPath&		inRsrcDir,
-								const std::vector<MPath>&
+								const std::vector<MProjectItem*>&
 													inSrcFiles,
 								const MPath&		inDstFile,		// in the package dir
 								MTargetCPU			inTargetCPU)
 								: MProjectJob(inTitle, inProject)
-								, mRsrcDir(inRsrcDir)
 								, mSrcFiles(inSrcFiles)
 								, mDstFile(inDstFile)
 								, mTargetCPU(inTargetCPU) {}
@@ -209,8 +207,8 @@ struct MProjectCreateResourceJob : public MProjectJob
 	virtual void			Execute();
 	virtual bool			IsDone()			{ return true; }
 
-	MPath					mRsrcDir;
-	std::vector<MPath>		mSrcFiles;
+	std::vector<MProjectItem*>
+							mSrcFiles;
 	MPath					mDstFile;
 	MTargetCPU				mTargetCPU;
 };
