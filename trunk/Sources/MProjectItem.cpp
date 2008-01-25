@@ -754,3 +754,17 @@ void MProjectResource::UpdatePaths(
 	mObjectPath = inObjectDir / "__rsrc__.o";
 }
 
+// ---------------------------------------------------------------------------
+//	MProjectResource::GetDataSize
+
+uint32 MProjectResource::GetDataSize() const
+{
+	uint32 result = 0;
+	try
+	{
+		result = fs::file_size(GetPath());
+	}
+	catch (...) {}
+	return result;
+}
+

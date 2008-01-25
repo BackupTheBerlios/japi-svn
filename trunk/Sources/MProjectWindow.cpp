@@ -938,7 +938,7 @@ void MProjectWindow::Initialize(
 
 	// Files tree
 	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
-	InitializeTreeView(filesTree);
+	InitializeTreeView(filesTree, ePanelFiles);
 	eInvokeFileRow.Connect(filesTree, "row-activated");
 	mFilesTree = new MProjectTreeModel(mProject, mProject->GetFiles());
 	filesTree.SetModel(mFilesTree->GetModel());
@@ -947,7 +947,7 @@ void MProjectWindow::Initialize(
 	// Resources tree
 
 	MGtkTreeView resourcesTree(GetWidget(kResourceViewID));
-	InitializeTreeView(resourcesTree);
+	InitializeTreeView(resourcesTree, ePanelPackage);
 	eInvokeResourceRow.Connect(resourcesTree, "row-activated");
 	mResourcesTree = new MProjectTreeModel(mProject, mProject->GetResources());
 	resourcesTree.SetModel(mResourcesTree->GetModel());
@@ -1260,7 +1260,8 @@ void MProjectWindow::SaveState()
 //	InitializeTreeView
 
 void MProjectWindow::InitializeTreeView(
-	GtkTreeView*	inGtkTreeView)
+	GtkTreeView*		inGtkTreeView,
+	int32				inPanel)
 {
 	THROW_IF_NIL(inGtkTreeView);
 
@@ -1284,24 +1285,38 @@ void MProjectWindow::InitializeTreeView(
 	g_object_set(G_OBJECT(column), "expand", true, nil);
 	gtk_tree_view_append_column(inGtkTreeView, column);
 	
-	// the text size column
+	if (inPanel == ePanelFiles or inPanel == ePanelLinkOrder)
+	{
+		// the text size column
+		
+		renderer = gtk_cell_renderer_text_new();
+		column = gtk_tree_view_column_new_with_attributes (
+			_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
+		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+		gtk_tree_view_column_set_alignment(column, 1.0f);
+		gtk_tree_view_append_column(inGtkTreeView, column);
 	
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
-	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-	gtk_tree_view_column_set_alignment(column, 1.0f);
-	gtk_tree_view_append_column(inGtkTreeView, column);
-
-	// the data size column
+		// the data size column
+		
+		renderer = gtk_cell_renderer_text_new();
+		column = gtk_tree_view_column_new_with_attributes (
+			_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
+		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+		gtk_tree_view_column_set_alignment(column, 1.0f);
+		gtk_tree_view_append_column(inGtkTreeView, column);
+	}
+	else if (inPanel == ePanelPackage)
+	{
+		// the data size column
+		
+		renderer = gtk_cell_renderer_text_new();
+		column = gtk_tree_view_column_new_with_attributes (
+			_("Size"), renderer, "text", kFilesDataSizeColumn, nil);
+		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+		gtk_tree_view_column_set_alignment(column, 1.0f);
+		gtk_tree_view_append_column(inGtkTreeView, column);
+	}
 	
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
-	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-	gtk_tree_view_column_set_alignment(column, 1.0f);
-	gtk_tree_view_append_column(inGtkTreeView, column);
-
 	// at last the dirty mark	
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(

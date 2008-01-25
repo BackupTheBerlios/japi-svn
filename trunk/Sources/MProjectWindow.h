@@ -109,7 +109,8 @@ class MProjectWindow : public MDocWindow
 	void			SaveState();
 
 	void			InitializeTreeView(
-						GtkTreeView*	inGtkTreeView);
+						GtkTreeView*	inGtkTreeView,
+						int32			inPanel);
 
 	void			TargetChanged();
 	MSlot<void()>	eTargetChanged;

@@ -13,7 +13,9 @@
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
-	<libpaths/>
+	<libpaths>
+		<path>Lib</path>
+	</libpaths>
 	<frameworks/>
 	<files>
 		<group name="Sources">
@@ -96,7 +98,6 @@
 			<file>libpcre.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem.a</file>
-			<file>libboost_date_time.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>

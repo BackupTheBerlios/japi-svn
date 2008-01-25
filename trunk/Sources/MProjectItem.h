@@ -286,6 +286,8 @@ class MProjectResource : public MProjectFile
 						MModDateCache&		ioModDateCache);
 	
 	std::string		GetResourceName() const;
+
+	virtual uint32	GetDataSize() const;
 };
 
 #endif
