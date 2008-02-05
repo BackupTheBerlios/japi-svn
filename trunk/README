@@ -1,0 +1,9 @@
+Japi can build itself, but then you need japi...
+
+To work around this, you can use the Makefile to build a first version, and
+then open the japi.prj file from within japi to build japi itself a second
+time.
+
+.. info more will follow here in due time ...
+
+-maarten
