@@ -14,7 +14,7 @@
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
-		<path>Lib</path>
+		<path>/Users/maarten/projects/japi/Lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -126,9 +126,9 @@
 			<resource>new-group-dialog.glade</resource>
 			<resource>auth-dialog.glade</resource>
 			<resource>prefs-dialog.glade</resource>
+			<resource>diff-window.glade</resource>
 		</group>
 		<group name="Windows">
-			<resource>diff-window.glade</resource>
 			<resource>message-list-window.glade</resource>
 			<resource>edit-window.glade</resource>
 			<resource>project-window.glade</resource>
