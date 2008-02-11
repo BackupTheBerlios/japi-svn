@@ -14,7 +14,7 @@
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
-		<path>/Users/maarten/projects/japi/Lib</path>
+		<path>Lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
