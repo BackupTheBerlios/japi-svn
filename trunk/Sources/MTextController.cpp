@@ -112,6 +112,11 @@ bool MTextController::ProcessCommand(
 //				new MDocInfoDialog(mDocument, mWindow);
 				break;
 
+			case cmd_MarkMatching:
+				new MMarkMatchingDialog(
+					static_cast<MTextDocument*>(mDocument), GetWindow());
+				break;
+
 			default:
 				result = false;
 				break;
@@ -145,6 +150,7 @@ bool MTextController::UpdateCommandStatus(
 			case cmd_GoToLine:
 			case cmd_OpenIncludeFile:
 			case cmd_ShowDocInfoDialog:
+			case cmd_MarkMatching:
 				outEnabled = true;
 				break;
 	

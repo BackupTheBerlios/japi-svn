@@ -2,6 +2,10 @@
 
 Moet af:
 
+- forward-deleten van laatste letter op laatste regel lukt niet
+
+- bij inlezen file zonder newline op einde wordt laatste letter afgehakt.
+
 - overnemen muisklik afhandeling van
 	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
 

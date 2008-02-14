@@ -611,6 +611,9 @@ void MTextBuffer::ReadFromFile(
 	int64 len = b->pubseekoff(0, ios::end);
 	b->pubseekpos(0);
 
+	if (len < 0)
+		THROW(("File is not open?"));
+
 	if (len > numeric_limits<uint32>::max())
 		THROW(("File too large to open"));
 

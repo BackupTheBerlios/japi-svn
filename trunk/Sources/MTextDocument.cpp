@@ -152,7 +152,13 @@ MTextDocument::MTextDocument(
 	
 	if (mSpecified and mURL.IsLocal() and fs::exists(mURL.GetPath()))
 	{
-		fs::ifstream file(mURL.GetPath(), ios::binary);
+		fs::path p = mURL.GetPath();
+
+		fs::ifstream file(p, ios::binary);
+		
+		if (not file.is_open())
+			THROW(("Could not open file '%' for reading", p.string().c_str()));
+		
 		ReadFile(file);
 		mNeedReparse = true;
 	}
@@ -4152,7 +4158,7 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 }
 
 // ---------------------------------------------------------------------------
-//	MDocument::SelectIncludePopupItem
+//	MDocument::ProcessCommand
 
 bool MTextDocument::ProcessCommand(
 	uint32			inCommand,

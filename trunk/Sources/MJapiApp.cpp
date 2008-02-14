@@ -620,8 +620,6 @@ MDocument* MJapieApp::OpenOneDocument(
 	if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
 		THROW(("Cannot open a directory"));
 	
-	AddToRecentMenu(inFileRef);
-
 	MDocument* doc = MDocument::GetDocumentForURL(inFileRef);
 	
 	if (doc == nil)
@@ -638,6 +636,8 @@ MDocument* MJapieApp::OpenOneDocument(
 	MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
 	if (w != nil)
 		w->Select();
+
+	AddToRecentMenu(inFileRef);
 	
 	return doc;
 }
@@ -650,14 +650,14 @@ void MJapieApp::OpenProject(
 {
 	MUrl url(inPath);
 	
-	AddToRecentMenu(url);
-	
 	auto_ptr<MProject> project(new MProject(&url));
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();
 	w->Show();
 	w.release();
+
+	AddToRecentMenu(url);
 }
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
