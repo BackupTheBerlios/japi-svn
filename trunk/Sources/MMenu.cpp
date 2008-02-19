@@ -263,7 +263,7 @@ MMenu* MMenu::CreateFromResource(
 	{
 		xmlDoc = xmlParseMemory(xml, size);
 		if (xmlDoc == nil or xmlDoc->children == nil)
-			THROW(("Failed to parse project file"));
+			THROW(("Failed to parse menu resource"));
 		
 		// build a menu
 		
@@ -614,7 +614,7 @@ void MMenubar::Initialize(
 	{
 		xmlDoc = xmlParseMemory(xml, size);
 		if (xmlDoc == nil or xmlDoc->children == nil)
-			THROW(("Failed to parse project file"));
+			THROW(("Failed to parse menu resource"));
 		
 		// build a menu
 		

@@ -300,7 +300,7 @@ class MProject : public MDocument
 	MProjectGroup		mPackageItems;
 	std::vector<MProjectTarget*>
 						mTargets;
-	std::vector<std::string>
+	std::vector<std::pair<std::string,std::string> >
 						mPkgConfigPkgs;
 	std::vector<std::string>
 						mPkgConfigCFlags;

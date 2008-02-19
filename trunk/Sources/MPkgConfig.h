@@ -46,4 +46,9 @@ void GetCompilerPaths(
 	std::string&				outCppIncludeDir,
 	std::vector<MPath>&			outLibDirs);
 
+void GetToolConfigResult(
+	const std::string&			inTool,
+	const char*					inArgs[],
+	std::vector<std::string>&	outFlags);
+
 #endif

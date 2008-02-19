@@ -151,32 +151,19 @@ static void RunCommand(
 	waitpid(pid, &status, WNOHANG);	// avoid zombies
 }
 
-}
-
-void GetPkgConfigResult(
-	const string&		inPackage,
-	const char*			inInfo,
+void ParseString(
+	const string&		inString,
 	vector<string>&		outFlags)
 {
-	fs::path cmd;
-	LocateCommand("pkg-config", cmd);
-	
-	const char* args[] = {
-		cmd.leaf().c_str(),
-		inInfo,
-		inPackage.c_str(),
-		NULL
-	};
-
-	string s;
-	RunCommand(cmd, args, s);
-
 	// OK, so s now contains the result from the pkg-config command
 	// parse it, and extract the various parts
 	
 	vector<char*> argv;
 	bool esc = false, squot = false, dquot = false;
-	char* ss = const_cast<char*>(s.c_str());
+	char* ss = const_cast<char*>(inString.c_str());
+	
+	while (isspace(*ss))
+		++ss;
 	
 	argv.push_back(ss);
 	
@@ -215,6 +202,29 @@ void GetPkgConfigResult(
 	}
 	
 	copy(argv.begin(), argv.end(), back_inserter(outFlags));
+}
+
+}
+
+void GetPkgConfigResult(
+	const string&		inPackage,
+	const char*			inInfo,
+	vector<string>&		outFlags)
+{
+	fs::path cmd;
+	LocateCommand("pkg-config", cmd);
+	
+	const char* args[] = {
+		cmd.leaf().c_str(),
+		inInfo,
+		inPackage.c_str(),
+		NULL
+	};
+
+	string s;
+	RunCommand(cmd, args, s);
+
+	ParseString(s, outFlags);
 
 //cout << "pkg-config: " << path << endl
 //	 << "pkg: " << inPackage << endl
@@ -303,4 +313,27 @@ void GetCompilerPaths(
 			}
 		}
 	}
+}
+
+void GetToolConfigResult(
+	const std::string&			inTool,
+	const char*					inArgs[],
+	std::vector<std::string>&	outFlags)
+{
+	fs::path cmd;
+	LocateCommand(inTool, cmd);
+	
+	vector<const char*> argv;
+	argv.push_back(inTool.c_str());
+	for (const char*const* a = inArgs; *a != nil; ++a)
+		argv.push_back(*a);
+	argv.push_back(nil);
+
+	string s;
+	RunCommand(cmd, &argv[0], s);
+	ParseString(s, outFlags);
+
+cout << "tool: " << inTool << endl
+	 << "flags:" << endl;
+	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
 }

@@ -465,17 +465,17 @@ void MProject::Read(
 		{
 			for (int i = 0; i < data->nodesetval->nodeNr; ++i)
 			{
-				xmlNodePtr node = data->nodesetval->nodeTab[i];
+				XMLNode node(data->nodesetval->nodeTab[i]);
 				
-				if (node->children == nil)
+				if (node.children() == nil)
 					continue;
 				
-				const xmlChar* text = XML_GET_CONTENT(node->children);
-				if (text == nil)
-					THROW(("Invalid project file, missing pkg"));
+				string tool = node.property("tool");
+				if (tool.length() == 0)
+					tool = "pkg-config";
 				
-				string pkg((const char*)text);
-				mPkgConfigPkgs.push_back(pkg);
+				string pkg = node.text();
+				mPkgConfigPkgs.push_back(make_pair(tool, pkg));
 			}
 		}
 			
@@ -926,8 +926,18 @@ void MProject::WriteFile(
 		{
 			THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "pkg-config"));
 			
-			for (vector<string>::iterator p = mPkgConfigPkgs.begin(); p != mPkgConfigPkgs.end(); ++p)
-				THROW_IF_XML_ERR(xmlTextWriterWriteElement(writer, BAD_CAST "pkg", BAD_CAST p->c_str()));
+			for (vector<pair<string,string> >::iterator p = mPkgConfigPkgs.begin(); p != mPkgConfigPkgs.end(); ++p)
+			{
+				THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "pkg"));
+
+				if (p->first.length() > 0)
+					THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer, BAD_CAST "tool", BAD_CAST p->first.c_str()));
+				
+				if (p->second.length() > 0)
+					THROW_IF_XML_ERR(xmlTextWriterWriteString(writer, BAD_CAST p->second.c_str()));
+				
+				THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
+			}
 			
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 		}
@@ -1847,10 +1857,33 @@ void MProject::SelectTarget(
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();
 	
-	for (vector<string>::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
+	for (vector<pair<string,string> >::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
 	{
-		GetPkgConfigResult(*pkg, "--cflags", mPkgConfigCFlags);
-		GetPkgConfigResult(*pkg, "--libs", mPkgConfigLibs);
+		if (pkg->first == "pkg-config")
+		{
+			GetPkgConfigResult(pkg->second, "--cflags", mPkgConfigCFlags);
+			GetPkgConfigResult(pkg->second, "--libs", mPkgConfigLibs);
+		}
+		else if (pkg->first == "perl")
+		{
+			const char* kCFlagsArgs[] = {
+				"-MExtUtils::Embed",
+				"-e",
+				"perl_inc",
+				nil
+			};
+
+			GetToolConfigResult("perl", kCFlagsArgs, mPkgConfigCFlags);
+
+			const char* kLDFlagsArgs[] = {
+				"-MExtUtils::Embed",
+				"-e",
+				"ldopts",
+				nil
+			};
+
+			GetToolConfigResult("perl", kLDFlagsArgs, mPkgConfigLibs);
+		}
 	}
 	
 	ResearchForFiles();
