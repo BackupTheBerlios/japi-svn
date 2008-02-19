@@ -1343,7 +1343,7 @@ void MProjectWindow::CreateNewGroup(
 		MProjectGroup* group = mProject->GetFiles();
 		int32 index = 0;
 		
-		GtkTreePath* path;
+		GtkTreePath* path = nil;
 		GtkTreeIter iter;
 		
 		if (treeView.GetFirstSelectedRow(path) and

@@ -34,7 +34,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
 Sources = $(wildcard Sources/*.cpp NetSources/*.cpp)
 
-Sources := $(filter-out Sources/MRSRCFileCreator.cpp Sources/MNewGroupDialog.cpp Sources/MProjectInfoDialog.cpp Sources/MProjectPathsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
+Sources := $(filter-out Sources/MRSRCFileCreator.cpp Sources/MProjectInfoDialog.cpp Sources/MProjectPathsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)
@@ -47,20 +47,21 @@ endef
 OBJS = $(SRC_TO_OBJ)
 
 RSRC_DATA = \
-	auth-dialog.xml \
+	auth-dialog.glade \
 	clean-target-alert.xml \
-	diff-window.xml \
+	diff-window.glade \
 	discard-changes-alert.xml \
-	edit-window-menus.xml \
-	find-and-open-dialog.xml \
-	find-dialog.xml \
-	go-to-line-dialog.xml \
+	edit-window-menu.xml \
+	find-and-open-dialog.glade \
+	find-dialog.glade \
+	go-to-line-dialog.glade \
 	host-key-changed-alert.xml \
 	make-clean-alert.xml \
-	mark-matching-dialog.xml \
-	message-list-window.xml \
-	prefs-dialog.xml \
-	project-window-menus.xml \
+	mark-matching-dialog.glade \
+	message-list-window.glade \
+	prefs-dialog.glade \
+	project-window.glade \
+	project-window-menu.xml \
 	replace-all-alert.xml \
 	save-changes-alert.xml \
 	strings.xml \

@@ -339,6 +339,14 @@ bool LoadResource(
 		result = dir.GetData((path + inName).c_str(), offset, outSize);
 	}
 
+#ifndef NDEBUG
+	string::size_type p;
+	if (result == nil and (p = inName.rfind('/')) != string::npos)
+	{
+		result = dir.GetData(inName.substr(p + 1).c_str(), offset, outSize);
+	}
+#endif
+
 	if (result)
 		outData = gResourceData + offset;
 
