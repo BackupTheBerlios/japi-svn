@@ -414,8 +414,6 @@ void MProjectFile::CheckIsOutOfDate(
 		return;
 
 	isOutOfDate = true;
-	mTextSize = 0;
-	mDataSize = 0;
 
 	try
 	{
@@ -452,6 +450,11 @@ void MProjectFile::CheckIsOutOfDate(
 					isOutOfDate = depModDate > objectDate;
 				}
 			}
+		}
+		else
+		{
+			mTextSize = 0;
+			mDataSize = 0;
 		}
 	}
 	catch (...)
