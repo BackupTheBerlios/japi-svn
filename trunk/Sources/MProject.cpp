@@ -835,33 +835,34 @@ void MProject::WriteTarget(
 	if (inTarget.GetDebugFlag())
 		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "debug", BAD_CAST "true"));
 	
-	if (inTarget.GetBundleName().length() > 0)
-	{
-		// <bundle>
-		
-		THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "bundle"));
-		
-		THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "name",
-			BAD_CAST inTarget.GetBundleName().c_str()));
-
-		if (inTarget.GetType().length() == 4)
-		{
-			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "type",
-				BAD_CAST inTarget.GetType().c_str()));
-		}
-
-		if (inTarget.GetCreator().length() == 4)
-		{
-			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "creator",
-				BAD_CAST inTarget.GetCreator().c_str()));
-		}
-		
-		// </bundle>
-		THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
-	}
+//	if (inTarget.GetBundleName().length() > 0)
+//	{
+//		// <bundle>
+//		
+//		THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "bundle"));
+//		
+//		THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "name",
+//			BAD_CAST inTarget.GetBundleName().c_str()));
+//
+//		if (inTarget.GetType().length() == 4)
+//		{
+//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "type",
+//				BAD_CAST inTarget.GetType().c_str()));
+//		}
+//
+//		if (inTarget.GetCreator().length() == 4)
+//		{
+//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "creator",
+//				BAD_CAST inTarget.GetCreator().c_str()));
+//		}
+//		
+//		// </bundle>
+//		THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
+//	}
 	
 	WriteOptions(inWriter, "defines", "define", inTarget.GetDefines());
 	WriteOptions(inWriter, "cflags", "cflag", inTarget.GetCFlags());
+	WriteOptions(inWriter, "ldflags", "ldflag", inTarget.GetLDFlags());
 	WriteOptions(inWriter, "warnings", "warning", inTarget.GetWarnings());
 	WriteOptions(inWriter, "frameworks", "framework", inTarget.GetFrameworks());
 	
@@ -1405,10 +1406,11 @@ MProjectJob* MProject::CreateLinkJob(
 	switch (mCurrentTarget->GetKind())
 	{
 		case eTargetSharedLibrary:
-			argv.push_back("-bundle");
-			argv.push_back("-undefined");
-			argv.push_back("suppress");
-			argv.push_back("-flat_namespace");
+			argv.push_back("-shared");
+			argv.push_back("-static-libgcc");
+//			argv.push_back("-undefined");
+//			argv.push_back("suppress");
+//			argv.push_back("-flat_namespace");
 			break;
 		
 		case eTargetStaticLibrary:
@@ -1738,7 +1740,7 @@ void MProject::Make()
 		}
 		
 		case eTargetSharedLibrary:
-			targetPath = mProjectDir / mCurrentTarget->GetBundleName();
+			targetPath = mProjectDir / (mCurrentTarget->GetLinkTarget() + ".so");
 			break;
 		
 		case eTargetStaticLibrary:

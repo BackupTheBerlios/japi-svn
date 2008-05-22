@@ -410,7 +410,7 @@ void MMessageWindow::AddStdErr(
 		const char* errmsg;
 		int errcode, erroffset;
 
-		pattern = pcre_compile2("^([^:]+):((\\d+):)?( (note|warning|error):)?([^:].+)$",
+		pattern = pcre_compile2("^([^:]+):((\\d+):)?( (note|warning|error|fout):)?([^:].+)$",
 			PCRE_UTF8 | PCRE_MULTILINE, &errcode, &errmsg, &erroffset, nil);
 		
 		if (pattern == nil or errcode != 0)
@@ -459,7 +459,7 @@ void MMessageWindow::AddStdErr(
 					MMessageKind kind = kMsgKindNone;
 					if (warn.length() > 0)
 					{
-						if (warn == "error")
+						if (warn == "error" or warn == "fout")
 							kind = kMsgKindError;
 						else if (warn == "warning")
 							kind = kMsgKindWarning;

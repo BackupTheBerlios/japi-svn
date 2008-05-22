@@ -90,6 +90,7 @@ MDiffWindow::MDiffWindow(
 	
 	GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeView));
 	mSelected.Connect(G_OBJECT(selection), "changed");
+	mInvokeRow.Connect(G_OBJECT(treeView), "row-activated");
 	
 	if (inDocument != nil /*and inDocument->IsSpecified()*/)
 		SetDocument(1, inDocument);
@@ -598,7 +599,6 @@ void MDiffWindow::DiffInvoked(
 				break;
 		}
 	}
-	
 }
 
 // ----------------------------------------------------------------------------

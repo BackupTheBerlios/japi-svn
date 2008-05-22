@@ -413,44 +413,50 @@ void MProjectFile::CheckIsOutOfDate(
 	if (not IsCompilable())
 		return;
 
-	if (not exists(mObjectPath) or not exists(mDependsPath))
+	isOutOfDate = true;
+	mTextSize = 0;
+	mDataSize = 0;
+
+	try
+	{
+		if (exists(path) and exists(mObjectPath) and exists(mDependsPath))
+		{
+			isOutOfDate = fs::last_write_time(path) > fs::last_write_time(mObjectPath);
+	
+			if (isOutOfDate == false)
+				isOutOfDate = fs::last_write_time(path) > fs::last_write_time(mDependsPath);
+			
+			if (isOutOfDate == false)
+			{
+				double objectDate = fs::last_write_time(mObjectPath);
+				
+				vector<string>::iterator m1 = mIncludedFiles.begin();
+				vector<string>::iterator m2 = mIncludedFiles.end();
+				
+				while (isOutOfDate == false and m1 != m2)
+				{
+					string path = *m1++;
+		
+					double depModDate = ioModDateCache[path];
+		
+					if (depModDate == 0)
+					{
+						try
+						{
+							MPath dependancy(path);
+							ioModDateCache[path] = depModDate = fs::last_write_time(dependancy);
+						}
+						catch (...) {}
+					}
+		
+					isOutOfDate = depModDate > objectDate;
+				}
+			}
+		}
+	}
+	catch (...)
 	{
 		isOutOfDate = true;
-		mTextSize = 0;
-		mDataSize = 0;
-	}
-
-	if (isOutOfDate == false)
-		isOutOfDate = fs::last_write_time(path) > fs::last_write_time(mObjectPath);
-	
-	if (isOutOfDate == false)
-		isOutOfDate = fs::last_write_time(path) > fs::last_write_time(mDependsPath);
-	
-	if (isOutOfDate == false)
-	{
-		double objectDate = fs::last_write_time(mObjectPath);
-		
-		vector<string>::iterator m1 = mIncludedFiles.begin();
-		vector<string>::iterator m2 = mIncludedFiles.end();
-		
-		while (isOutOfDate == false and m1 != m2)
-		{
-			string path = *m1++;
-
-			double depModDate = ioModDateCache[path];
-
-			if (depModDate == 0)
-			{
-				try
-				{
-					MPath dependancy(path);
-					ioModDateCache[path] = depModDate = fs::last_write_time(dependancy);
-				}
-				catch (...) {}
-			}
-
-			isOutOfDate = depModDate > objectDate;
-		}
 	}
 	
 	SetOutOfDate(isOutOfDate);

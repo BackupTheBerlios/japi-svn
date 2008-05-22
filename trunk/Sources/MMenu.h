@@ -40,6 +40,7 @@
 #include "MCallbacks.h"
 
 class MHandler;
+class MUrl;
 
 struct MMenuItem;
 typedef std::list<MMenuItem*>	MMenuItemList;
@@ -79,6 +80,10 @@ class MMenu
 
 	std::string		GetItemLabel(
 						uint32				inIndex) const;
+
+	bool			GetRecentItem(
+						uint32				inIndex,
+						MUrl&				outURL) const;
 
 	void			SetTarget(
 						MHandler*			inHandler);

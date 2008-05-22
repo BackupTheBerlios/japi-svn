@@ -448,6 +448,35 @@ string MMenu::GetItemLabel(
 	return (*i)->mLabel;
 }
 
+bool MMenu::GetRecentItem(
+	uint32				inIndex,
+	MUrl&				outURL) const
+{
+	if (inIndex >= mItems.size())
+		THROW(("Item index out of range"));
+	
+	MMenuItemList::const_iterator i = mItems.begin();
+	advance(i, inIndex);
+	
+	MMenuItem* item = *i;
+	
+	if (item->mSubMenu == nil or not GTK_IS_RECENT_CHOOSER(item->mSubMenu->GetGtkMenu()))
+		THROW(("Invalid item/menu"));
+
+	bool result = false;
+	char* uri = gtk_recent_chooser_get_current_uri(GTK_RECENT_CHOOSER(item->mSubMenu->GetGtkMenu()));
+	
+	if (uri != nil)
+	{
+		outURL = MUrl(uri);
+		g_free(uri);
+		
+		result = true;
+	}
+
+	return result;
+}
+
 void MMenu::SetTarget(
 	MHandler*		inTarget)
 {

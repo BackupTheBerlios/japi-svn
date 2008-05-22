@@ -599,8 +599,12 @@ MLanguage::Move(
 	int			inState)
 {
 	int result = 0;
-	if (inState > 0 and inChar < numeric_limits<uint8>::max())
-		result = mRecognizer->Move(inChar, inState);
+	
+	uint8 ch = static_cast<uint8>(inChar);
+	
+	if (inState > 0 and ch < numeric_limits<uint8>::max())
+		result = mRecognizer->Move(ch, inState);
+
 	return result;
 }
 

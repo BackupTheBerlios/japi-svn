@@ -151,8 +151,8 @@ void MShellImp::Execute(
 	
 	vector<char*> argv;
 
-	argv.push_back("/bin/sh");
-	argv.push_back("-c");
+	argv.push_back(const_cast<char*>("/bin/sh"));
+	argv.push_back(const_cast<char*>("-c"));
 	argv.push_back(const_cast<char*>(cmd.c_str()));
 
 	argv.push_back(nil);

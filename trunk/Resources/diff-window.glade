@@ -20,6 +20,7 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">File 1</property>
                 <property name="use_underline">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -34,6 +35,7 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">File 2</property>
                 <property name="use_underline">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -49,6 +51,7 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">&lt;&lt;</property>
                 <property name="use_underline">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>
@@ -63,6 +66,7 @@
                 <property name="can_focus">True</property>
                 <property name="label" translatable="yes">&gt;&gt;</property>
                 <property name="use_underline">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_changed"/>
               </widget>
               <packing>

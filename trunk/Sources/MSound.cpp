@@ -35,6 +35,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <iostream>
+#include <gst/gst.h>
 
 #include "MFile.h"
 #include "MSound.h"
@@ -42,14 +43,6 @@
 #include "MGlobals.h"
 #include "MWindow.h"
 #include "MError.h"
-
-//#if defined(G_MODULE_SUFFIX)
-//#	define SO_EXT	"." G_MODULE_SUFFIX
-#if defined(__APPLE__) and defined(__MACH__)
-#	define SO_EXT ".dylib"
-#else
-#	define SO_EXT ".so"
-#endif
 
 using namespace std;
 
@@ -66,46 +59,28 @@ class MAudioSocket
 
   private:
 
-	typedef int		(*esd_play_file)(
-						const char*		name_prefix,
-						const char*		filename,
-						int				fallback);
-
 					MAudioSocket();
 					~MAudioSocket();
 	
-	void*			mHandle;
-	esd_play_file	mFunc;
+	GstElement*		mPlayer;
 };
 
 MAudioSocket::MAudioSocket()
 {
-	mHandle = dlopen("libesd" SO_EXT, RTLD_LAZY);
+	gst_init(nil, nil);
 	
-	if (mHandle == nil)
-		mHandle = dlopen("libesd.so.0", RTLD_LAZY);
+	mPlayer = gst_element_factory_make("playbin", nil);
 	
-	if (mHandle == nil)
-		cerr << "Failed to locate esd library, sounds are disabled" << endl;
-	else
-	{
-		dlerror();
-	
-		mFunc = reinterpret_cast<esd_play_file>(dlsym(mHandle, "esd_play_file"));
-		
-		const char* err;
-		if ((err = dlerror()) != NULL)
-		{
-			cerr << "Could not find esd_play_file: " << err << endl;
-			dlclose(mHandle);
-			mHandle = nil;
-		}
-	}
+	// Instead of using the default audiosink, use the gconfaudiosink, which
+	// will respect the defaults in gstreamer-properties
+
+	g_object_set(G_OBJECT(mPlayer), "audio-sink",
+		gst_element_factory_make("gconfaudiosink", "GconfAudioSink"), nil);
 }
 
 MAudioSocket::~MAudioSocket()
 {
-	dlclose(mHandle);
+	g_object_unref(mPlayer);
 }
 
 MAudioSocket& MAudioSocket::Instance()
@@ -117,8 +92,20 @@ MAudioSocket& MAudioSocket::Instance()
 void MAudioSocket::Play(
 	const string&	inFile)
 {
-	if (mFunc != nil)
-		(*mFunc)("Japie", inFile.c_str(), 1);
+	if (mPlayer != nil)
+	{
+		string uri = "file://";
+		uri += inFile;
+		
+		// stop old sound
+		gst_element_set_state(mPlayer, GST_STATE_NULL);
+	
+		// Set the input to a local file
+		g_object_set(G_OBJECT(mPlayer), "uri", uri.c_str(), nil);
+	
+		// Start the pipeline again
+		gst_element_set_state(mPlayer, GST_STATE_PLAYING);
+	}
 	else if (MWindow::GetFirstWindow() != nil)
 		MWindow::GetFirstWindow()->Beep();
 	else
