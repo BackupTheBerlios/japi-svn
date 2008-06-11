@@ -37,6 +37,7 @@
 #include "MDocument.h"
 
 class MProject;
+class MProjectItem;
 class MTreeModelInterface;
 
 class MProjectWindow : public MDocWindow
@@ -72,6 +73,10 @@ class MProjectWindow : public MDocWindow
 	bool			DoClose();
 	
 	void			AddFilesToProject();
+	
+	void			GetSelectedItems(
+						std::vector<MProjectItem*>&
+										outItems);
 	
 	void			DeleteSelectedItems();
 

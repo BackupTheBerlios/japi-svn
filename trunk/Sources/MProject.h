@@ -140,20 +140,13 @@ class MProject : public MDocument
 							const std::string&	inFile,
 							MPath&				outPath) const;
 
-	bool				LocateInFramework(
-							const MPath&		inFrameworksPath,
-							const std::string&	inFramework,
-							const std::string&	inFile,
-							MPath&				outPath) const;
-
 	void				GetIncludePaths(
 							std::vector<MPath>&	outPaths) const;
 
 	void				SetProjectPaths(
 							const std::vector<MPath>&	inUserPaths,
 							const std::vector<MPath>&	inSysPaths,
-							const std::vector<MPath>&	inLibPaths,
-							const std::vector<MPath>&	inFrameworks);
+							const std::vector<MPath>&	inLibPaths);
 
 	void				CreateNewGroup(
 							const std::string&	inGroupName,
@@ -311,9 +304,7 @@ class MProject : public MDocument
 	std::vector<MPath>	mSysSearchPaths;
 	std::vector<MPath>	mUserSearchPaths;
 	std::vector<MPath>	mLibSearchPaths;
-	std::vector<MPath>	mFrameworkPaths;
-	std::auto_ptr<MMessageWindow>
-						mStdErrWindow;
+	MMessageWindow*		mStdErrWindow;
 	
 	std::auto_ptr<MProjectJob>
 						mCurrentJob;

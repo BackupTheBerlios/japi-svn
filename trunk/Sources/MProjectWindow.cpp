@@ -1067,9 +1067,30 @@ bool MProjectWindow::UpdateCommandStatus(
 	bool result = true;
 	
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
-	
+
 	switch (inCommand)
 	{
+		case cmd_Preprocess:
+		case cmd_CheckSyntax:
+		case cmd_Compile:
+		case cmd_Disassemble:
+		{
+			vector<MProjectItem*> selectedItems;
+			GetSelectedItems(selectedItems);
+			
+			if (selectedItems.size() == 1)
+			{
+				for (vector<MProjectItem*>::iterator item = selectedItems.begin();
+					outEnabled == false and item != selectedItems.end();
+					++item)
+				{
+					MProjectFile* file = dynamic_cast<MProjectFile*>(*item);
+					outEnabled = file != nil and file->IsCompilable();
+				}
+			}
+			break;
+		}
+
 		case cmd_AddFileToProject:
 		case cmd_OpenIncludeFile:
 			outEnabled = true;
@@ -1098,8 +1119,35 @@ bool MProjectWindow::ProcessCommand(
 {
 	bool result = true;
 
+	vector<MProjectItem*> selectedItems;
+	GetSelectedItems(selectedItems);
+
+	MProjectFile* file = nil;
+	if (selectedItems.size() == 1)
+		file = dynamic_cast<MProjectFile*>(selectedItems.front());
+
 	switch (inCommand)
 	{
+		case cmd_Preprocess:
+			if (file != nil)
+				mProject->Preprocess(file->GetPath());
+			break;
+			
+		case cmd_CheckSyntax:
+			if (file != nil)
+				mProject->CheckSyntax(file->GetPath());
+			break;
+
+		case cmd_Compile:
+			if (file != nil)
+				mProject->Compile(file->GetPath());
+			break;
+
+		case cmd_Disassemble:
+			if (file != nil)
+				mProject->Disassemble(file->GetPath());
+			break;
+
 		case cmd_AddFileToProject:
 			AddFilesToProject();
 			break;
@@ -1404,11 +1452,11 @@ void MProjectWindow::AddFilesToProject()
 }
 
 // ---------------------------------------------------------------------------
-//	DeleteSelectedItems
+//	GetSelectedItems
 
-void MProjectWindow::DeleteSelectedItems()
+void MProjectWindow::GetSelectedItems(
+	vector<MProjectItem*>&	outItems)
 {
-	vector<MProjectItem*> items;
 	vector<GtkTreePath*> paths;
 
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
@@ -1421,7 +1469,7 @@ void MProjectWindow::DeleteSelectedItems()
 		{
 			GtkTreeIter iter;
 			if (mFilesTree->GetIter(&iter, *path))
-				items.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
 			gtk_tree_path_free(*path);
 		}
 	}
@@ -1434,10 +1482,20 @@ void MProjectWindow::DeleteSelectedItems()
 		{
 			GtkTreeIter iter;
 			if (mResourcesTree->GetIter(&iter, *path))
-				items.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
 			gtk_tree_path_free(*path);
 		}
 	}
+}
+
+// ---------------------------------------------------------------------------
+//	DeleteSelectedItems
+
+void MProjectWindow::DeleteSelectedItems()
+{
+	vector<MProjectItem*> items;
+	
+	GetSelectedItems(items);
 	
 	mProject->RemoveItems(items);
 }

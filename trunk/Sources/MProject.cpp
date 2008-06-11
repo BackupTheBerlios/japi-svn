@@ -125,6 +125,7 @@ MProject::MProject(
 	, mCurrentTarget(nil)
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
+	, mStdErrWindow(nil)
 	, mCurrentJob(nil)
 {
     LIBXML_TEST_VERSION
@@ -144,6 +145,9 @@ MProject::~MProject()
 {
 	for (vector<MProjectTarget*>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
 		delete *target;
+
+	if (mStdErrWindow != nil)
+		mStdErrWindow->Close();
 }
 
 // ---------------------------------------------------------------------------
@@ -273,18 +277,15 @@ void MProject::CreateNewGroup(
 void MProject::SetProjectPaths(
 	const vector<MPath>&	inUserPaths,
 	const vector<MPath>&	inSysPaths,
-	const vector<MPath>&	inLibPaths,
-	const vector<MPath>&	inFrameworks)
+	const vector<MPath>&	inLibPaths)
 {
 	if (inUserPaths != mUserSearchPaths or
 		inSysPaths != mSysSearchPaths or
-		inLibPaths != mLibSearchPaths or
-		inFrameworks != mFrameworkPaths)
+		inLibPaths != mLibSearchPaths)
 	{
 		mUserSearchPaths = inUserPaths;
 		mSysSearchPaths = inSysPaths;
 		mLibSearchPaths = inLibPaths;
-		mFrameworkPaths = inFrameworks;
 		
 		SetModified(true);
 		
@@ -516,17 +517,6 @@ void MProject::Read(
 		xmlXPathFreeObject(data);
 	}
 	
-	// then the framework paths
-	data = xmlXPathEvalExpression(BAD_CAST "/project/frameworks/path", inContext);
-	
-	if (data != nil)
-	{
-		if (data->nodesetval != nil)
-			ReadPaths(data, mFrameworkPaths);
-
-		xmlXPathFreeObject(data);
-	}
-	
 	// now we're ready to read the files
 	
 	data = xmlXPathEvalExpression(BAD_CAST "/project/files", inContext);
@@ -643,8 +633,6 @@ void MProject::Read(
 					ReadOptions(*node, "cflag", target.get(), &MProjectTarget::AddCFlag);
 				else if (node->name() == "ldflags")
 					ReadOptions(*node, "ldflag", target.get(), &MProjectTarget::AddLDFlag);
-				else if (node->name() == "frameworks")
-					ReadOptions(*node, "framework", target.get(), &MProjectTarget::AddFramework);
 				else if (node->name() == "warnings")
 					ReadOptions(*node, "warning", target.get(), &MProjectTarget::AddWarning);
 			}
@@ -864,7 +852,6 @@ void MProject::WriteTarget(
 	WriteOptions(inWriter, "cflags", "cflag", inTarget.GetCFlags());
 	WriteOptions(inWriter, "ldflags", "ldflag", inTarget.GetLDFlags());
 	WriteOptions(inWriter, "warnings", "warning", inTarget.GetWarnings());
-	WriteOptions(inWriter, "frameworks", "framework", inTarget.GetFrameworks());
 	
 	// </target>
 	THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
@@ -946,7 +933,6 @@ void MProject::WriteFile(
 		WritePaths(writer, "syspaths", mSysSearchPaths, true);
 		WritePaths(writer, "userpaths", mUserSearchPaths, false);
 		WritePaths(writer, "libpaths", mLibSearchPaths, true);
-		WritePaths(writer, "frameworks", mFrameworkPaths, true);
 
 		// <files>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "files"));
@@ -1040,8 +1026,11 @@ void MProject::StartJob(
 	
 	mCurrentJob = job;
 	
-	if (mStdErrWindow.get() != nil)
-		mStdErrWindow->Close();
+	if (mStdErrWindow != nil)
+	{
+		mStdErrWindow->ClearList();
+		mStdErrWindow->Hide();
+	}
 
 	mCurrentJob->Execute();
 }
@@ -1118,55 +1107,10 @@ bool MProject::LocateFile(
 			}
 		}
 		
-		string::size_type s;
-		if (not found and (s = inFile.find('/')) != string::npos)
-		{
-			string framework = inFile.substr(0, s);
-			string filename = inFile.substr(s + 1);
-			
-			for (vector<MPath>::const_iterator p = mFrameworkPaths.begin();
-				 not found and p != mFrameworkPaths.end();
-				 ++p)
-			{
-				found = LocateInFramework(*p, framework, filename, outPath);
-			}
-		}
-		
 		if (not found and fs::exists(mCppIncludeDir))
 		{
 			outPath = MPath(mCppIncludeDir) / inFile;
 			found = fs::exists(outPath);
-		}
-	}
-	
-	return found;
-}
-
-// ---------------------------------------------------------------------------
-//	MProject::LocateInFramework
-
-bool MProject::LocateInFramework(
-	const MPath&	inFrameworksPath,
-	const string&	inFramework,
-	const string&	inFile,
-	MPath&			outPath) const
-{
-	outPath = inFrameworksPath / (inFramework + ".framework") / "Headers" / inFile;
-	
-	bool found = exists(outPath);
-
-	if (not found)
-	{
-		MFileIterator iter(inFrameworksPath, kFileIter_ReturnDirectories);
-		iter.SetFilter("*.framework");
-
-		MPath fw;
-		while (not found and iter.Next(fw))
-		{
-			MPath subFramework = fw / "Frameworks";
-			
-			if (exists(subFramework) and is_directory(subFramework))
-				found = LocateInFramework(subFramework, inFramework, inFile, outPath);
 		}
 	}
 	
@@ -1180,43 +1124,6 @@ void MProject::GetIncludePaths(
 	vector<MPath>&	outPaths) const
 {
 	copy(mSysSearchPaths.begin(), mSysSearchPaths.end(), back_inserter(outPaths));
-	
-	// duh... ••• TODO, fix? We only search at most one sub framework level deep
-	
-//	foreach (const MPath& p, mFrameworkPaths)
-	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-	{
-		fs::directory_iterator end;
-		for (fs::directory_iterator fw(*p); fw != end; ++fw)
-		{
-			if (not fs::is_directory(*fw))
-				continue;
-			
-			MPath headers = *fw;
-			headers /= "Headers";
-			
-			if (exists(headers) and is_directory(headers))
-				outPaths.push_back(headers);
-			
-			MPath sub = *fw;
-			sub /= "Frameworks";
-			
-			if (fs::exists(sub) and fs::is_directory(sub))
-			{
-				for (fs::directory_iterator fw(sub); fw != end; ++fw)
-				{
-					if (not fs::is_directory(*fw))
-						continue;
-					
-					MPath headers = *fw;
-					headers /= "Headers";
-					
-					if (fs::exists(headers) and fs::is_directory(headers))
-						outPaths.push_back(headers);
-				}
-			}
-		}
-	}
 
 	for (vector<string>::const_iterator f = mPkgConfigCFlags.begin();
 		 f != mPkgConfigCFlags.end();
@@ -1331,12 +1238,6 @@ MProjectJob* MProject::CreateCompileJob(
 			argv.push_back(kI + p->string());
 	}
 	
-	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-	{
-		if (fs::exists(*p) and fs::is_directory(*p))
-			argv.push_back(kF + p->string());
-	}
-	
 	argv.push_back(inFile.string());
 
 	return new MProjectCompileJob(
@@ -1419,12 +1320,6 @@ MProjectJob* MProject::CreateLinkJob(
 		
 		default:
 			break;
-	}
-
-	for (vector<string>::const_iterator f = target.GetFrameworks().begin(); f != target.GetFrameworks().end(); ++f)
-	{
-		argv.push_back("-framework");
-		argv.push_back(*f);
 	}
 
 	argv.push_back("-o");
@@ -1532,9 +1427,6 @@ void MProject::Preprocess(
 	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
 		argv.push_back(kI + p->string());
 	
-	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-		argv.push_back(kF + p->string());
-	
 	argv.push_back(inFile.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
@@ -1597,9 +1489,6 @@ void MProject::Disassemble(
 	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
 		argv.push_back(kI + p->string());
 	
-	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-		argv.push_back(kF + p->string());
-	
 	argv.push_back(inFile.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
@@ -1658,9 +1547,6 @@ void MProject::CheckSyntax(
 
 	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
 		argv.push_back(kI + p->string());
-	
-	for (vector<MPath>::const_iterator p = mFrameworkPaths.begin(); p != mFrameworkPaths.end(); ++p)
-		argv.push_back(kF + p->string());
 	
 	argv.push_back(inFile.string());
 
@@ -1798,8 +1684,8 @@ void MProject::Make()
 void MProject::MsgWindowClosed(
 	MWindow*		inWindow)
 {
-	assert(inWindow == mStdErrWindow.get());
-	mStdErrWindow.release();
+	assert(inWindow == mStdErrWindow);
+	mStdErrWindow = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -1807,13 +1693,15 @@ void MProject::MsgWindowClosed(
 
 MMessageWindow* MProject::GetMessageWindow()
 {
-	if (mStdErrWindow.get() == nil)
+	if (mStdErrWindow == nil)
 	{
-		mStdErrWindow.reset(new MMessageWindow(FormatString("Build messages for ^0", mName)));
+		mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
 		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
-				
-	return mStdErrWindow.get();
+	else
+		mStdErrWindow->Show();
+	
+	return mStdErrWindow;
 }
 
 // ---------------------------------------------------------------------------
@@ -1964,19 +1852,12 @@ bool MProject::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	bool result = true, isCompilable = false;
+	bool result = true;
 	
 	outEnabled = false;
 	
 	switch (inCommand)
 	{
-		case cmd_Preprocess:
-		case cmd_CheckSyntax:
-		case cmd_Compile:
-		case cmd_Disassemble:
-			outEnabled = isCompilable;
-			break;
-
 		case cmd_RecheckFiles:
 		case cmd_BringUpToDate:
 		case cmd_MakeClean:
@@ -2008,9 +1889,6 @@ bool MProject::ProcessCommand(
 {
 	bool result = true;
 
-	MProjectItem* item = nil;
-	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
-	
 	switch (inCommand)
 	{
 		case cmd_RecheckFiles:
@@ -2019,26 +1897,6 @@ bool MProject::ProcessCommand(
 		
 		case cmd_BringUpToDate:
 			BringUpToDate();
-			break;
-		
-		case cmd_Preprocess:
-			if (file != nil)
-				Preprocess(file->GetPath());
-			break;
-		
-		case cmd_CheckSyntax:
-			if (file != nil)
-				CheckSyntax(file->GetPath());
-			break;
-		
-		case cmd_Compile:
-			if (file != nil)
-				Compile(file->GetPath());
-			break;
-
-		case cmd_Disassemble:
-			if (file != nil)
-				Disassemble(file->GetPath());
 			break;
 		
 		case cmd_MakeClean:
