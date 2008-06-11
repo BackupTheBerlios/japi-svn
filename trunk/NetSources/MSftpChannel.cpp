@@ -579,7 +579,6 @@ void MSftpChannelImp3::ProcessRead(
 void MSftpChannelImp3::WriteFile(string inPath)
 {
 	assert(fHandle.size() == 0);
-
 	MSshPacket p;
 	p << uint8(SSH_FXP_OPEN) << fRequestId++ << inPath <<
 		uint32(SSH_FXF_READ | SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC) << uint32(0);

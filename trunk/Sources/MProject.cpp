@@ -1854,7 +1854,8 @@ void MProject::SelectTarget(
 	
 	SetStatus("Checking modification dates", true);
 	
-	GetCompilerPaths("c++", mCppIncludeDir, mCLibSearchPaths);
+	GetCompilerPaths(Preferences::GetString("c++", "/usr/bin/c++"),
+		mCppIncludeDir, mCLibSearchPaths);
 
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();

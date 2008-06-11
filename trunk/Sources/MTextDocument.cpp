@@ -307,7 +307,9 @@ bool MTextDocument::DoSaveAs(
 	else
 	{
 		mSpecified = specified;
-		mURL = url;
+		
+		if (mURL.IsLocal())
+			mURL = url;
 	}
 	
 	return result;
