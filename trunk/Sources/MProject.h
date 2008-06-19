@@ -182,6 +182,10 @@ class MProject : public MDocument
 	MPath				GetObjectPathForFile(
 							const MPath&		inFile) const;
 
+	void				GenerateCFlags(
+							std::vector<std::string>&
+												outArgv) const;
+
 	MProjectJob*		CreateCompileJob(
 							const MPath&		inFile);
 

@@ -30,6 +30,7 @@
 		<item label="Update" cmd='Pupd'/>
 		<item label="Make" cmd='Pmak'/>
 		<item label="Make Clean" cmd='Pcln'/>
+		<item label="Stop Making" cmd='stop' />
 		<item label="-"/>
 		<item label="Run" cmd='Prun'/>
 	</menu>

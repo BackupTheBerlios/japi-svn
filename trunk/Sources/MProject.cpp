@@ -312,11 +312,11 @@ void MProject::ReadPaths(
 			THROW(("Invalid project file, missing path"));
 		
 		string path((const char*)text);
-
-		if (path.length() > 0 and path[0] == '/')
-			outPaths.push_back(MPath(path));
-		else
-			outPaths.push_back(mProjectDir / path);
+		outPaths.push_back(path);
+//		if (path.length() > 0 and path[0] == '/')
+//			outPaths.push_back(MPath(path));
+//		else
+//			outPaths.push_back(mProjectDir / path);
 	}
 }
 
@@ -666,11 +666,16 @@ void MProject::WritePaths(
 	for (vector<MPath>::iterator p = inPaths.begin(); p != inPaths.end(); ++p)
 	{
 		string path;
-		if (inFullPath)
+
+		if (p->is_complete())
+			path = p->string();
+		else if (inFullPath)
 			path = fs::system_complete(*p).string();
 		else
-			path = relative_path(mProjectDir, *p).string();
+			path = p->string();
 
+cerr << p->string() << " => " << path << endl;
+		
 		THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "path", BAD_CAST path.c_str()));
 	}
 	
@@ -932,7 +937,7 @@ void MProject::WriteFile(
 		
 		WritePaths(writer, "syspaths", mSysSearchPaths, true);
 		WritePaths(writer, "userpaths", mUserSearchPaths, false);
-		WritePaths(writer, "libpaths", mLibSearchPaths, true);
+		WritePaths(writer, "libpaths", mLibSearchPaths, false);
 
 		// <files>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "files"));
@@ -1060,7 +1065,11 @@ bool MProject::LocateFile(
 			 not found and p != mLibSearchPaths.end();
 			 ++p)
 		{
-			outPath = *p / inFile;
+			if (p->is_complete())
+				outPath = *p / inFile;
+			else
+				outPath = mProjectDir / *p / inFile;
+
 			found = exists(outPath);
 		}
 		
@@ -1083,7 +1092,11 @@ bool MProject::LocateFile(
 				 not found and p != mUserSearchPaths.end();
 				 ++p)
 			{
-				outPath = *p / inFile;
+				if (p->is_complete())
+					outPath = *p / inFile;
+				else
+					outPath = mProjectDir / *p / inFile;
+
 				found = exists(outPath);
 			}
 		}
@@ -1133,7 +1146,15 @@ void MProject::GetIncludePaths(
 			outPaths.push_back(MPath(f->substr(2)));
 	}
 
-	copy(mUserSearchPaths.begin(), mUserSearchPaths.end(), back_inserter(outPaths));
+	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin();
+		 p != mUserSearchPaths.end();
+		 ++p)
+	{
+		if (p->is_complete())
+			outPaths.push_back(*p);
+		else
+			outPaths.push_back(mProjectDir / *p);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1172,6 +1193,72 @@ MPath MProject::GetObjectPathForFile(
 }
 
 // ---------------------------------------------------------------------------
+//	MProject::GenerateCFlags
+
+void MProject::GenerateCFlags(
+	vector<string>&	outArgv) const
+{
+	assert(mCurrentTarget != nil);
+	MProjectTarget& target = *mCurrentTarget;
+	
+//	argv.push_back("-arch");
+//	if (target.GetArch() == eTargetArchPPC_32)
+//		argv.push_back("ppc");
+//	else if (target.GetArch() == eTargetArchx86_32)
+//		argv.push_back("i386");
+//	else
+//		assert(false);
+
+	transform(target.GetDefines().begin(), target.GetDefines().end(),
+		back_inserter(outArgv), bind1st(plus<string>(), "-D"));
+
+	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
+		back_inserter(outArgv), bind1st(plus<string>(), "-W"));
+
+	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
+		back_inserter(outArgv));
+
+	outArgv.insert(outArgv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+
+	outArgv.push_back("-pipe");
+
+	if (target.IsAnsiStrict())
+		outArgv.push_back("-ansi");
+	
+	if (target.IsPedantic())
+		outArgv.push_back("-pedantic");
+		
+	if (target.GetDebugFlag())
+		outArgv.push_back("-gdwarf-2");
+	
+//	outArgv.push_back("-fmessage-length=132");
+	
+	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
+	{
+		fs::path path;
+		if (p->is_complete())
+			path = *p;
+		else
+			path = mProjectDir / *p;
+		
+		if (fs::exists(path) and fs::is_directory(path))
+			outArgv.push_back(kIQuote + path.string());
+	}
+
+	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
+	{
+		fs::path path;
+		if (p->is_complete())
+			path = *p;
+		else
+			path = mProjectDir / *p;
+		
+		if (fs::exists(path) and fs::is_directory(path))
+			outArgv.push_back(kI + path.string());
+	}
+}
+
+// ---------------------------------------------------------------------------
 //	MProject::CreateCompileJob
 
 MProjectJob* MProject::CreateCompileJob(
@@ -1183,60 +1270,16 @@ MProjectJob* MProject::CreateCompileJob(
 	if (file == nil)
 		THROW(("File is not part of the target project"));
 
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
-	
 	vector<string> argv;
 	
 	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
-//	argv.push_back("-arch");
-//	if (target.GetArch() == eTargetArchPPC_32)
-//		argv.push_back("ppc");
-//	else if (target.GetArch() == eTargetArchx86_32)
-//		argv.push_back("i386");
-//	else
-//		assert(false);
+	GenerateCFlags(argv);
 
-	transform(target.GetDefines().begin(), target.GetDefines().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-D"));
-
-	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-W"));
-
-	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
-		back_inserter(argv));
-
-	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
-
-	argv.push_back("-pipe");
 	argv.push_back("-c");
 	argv.push_back("-o");
 	argv.push_back(GetObjectPathForFile(inFile).string());
 	argv.push_back("-MD");
-	
-	if (target.IsAnsiStrict())
-		argv.push_back("-ansi");
-	
-	if (target.IsPedantic())
-		argv.push_back("-pedantic");
-		
-	if (target.GetDebugFlag())
-		argv.push_back("-gdwarf-2");
-	
-//	argv.push_back("-fmessage-length=132");
-	
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
-	{
-		if (fs::exists(*p) and fs::is_directory(*p))
-			argv.push_back(kIQuote + p->string());
-	}
-
-	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
-	{
-		if (fs::exists(*p) and fs::is_directory(*p))
-			argv.push_back(kI + p->string());
-	}
 	
 	argv.push_back(inFile.string());
 
@@ -1330,8 +1373,15 @@ MProjectJob* MProject::CreateLinkJob(
 
 	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
 	{
-		if (fs::exists(*p) and fs::is_directory(*p))
-			argv.push_back(kL + p->string());
+		fs::path path;
+		
+		if (p->is_complete())
+			path = *p;
+		else
+			path = mProjectDir / *p;
+		
+		if (fs::exists(path) and fs::is_directory(path))
+			argv.push_back(kL + path.string());
 	}
 	
 	vector<MProjectItem*> files;
@@ -1393,40 +1443,13 @@ void MProject::Preprocess(
 	if (file == nil)
 		THROW(("File is not part of the target project"));
 
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
-	
 	vector<string> argv;
 	
 	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
-	transform(target.GetDefines().begin(), target.GetDefines().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-D"));
-
-	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-W"));
-
-	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
-		back_inserter(argv));
-
-	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+	GenerateCFlags(argv);
 
 	argv.push_back("-E");
-	
-	if (target.IsAnsiStrict())
-		argv.push_back("-ansi");
-	
-	if (target.IsPedantic())
-		argv.push_back("-pedantic");
-	
-	argv.push_back("-fmessage-length=132");
-	
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
-		argv.push_back(kIQuote + p->string());
-
-	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
-		argv.push_back(kI + p->string());
-	
 	argv.push_back(inFile.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
@@ -1453,41 +1476,15 @@ void MProject::Disassemble(
 	if (file == nil)
 		THROW(("File is not part of the target project"));
 
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
-	
 	vector<string> argv;
 	
 	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
-
-	transform(target.GetDefines().begin(), target.GetDefines().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-D"));
-
-	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-W"));
-
-	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
-		back_inserter(argv));
-
-	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+	
+	GenerateCFlags(argv);
 
 	argv.push_back("-S");
 	argv.push_back("-o");
 	argv.push_back("-");
-	
-	if (target.IsAnsiStrict())
-		argv.push_back("-ansi");
-	
-	if (target.IsPedantic())
-		argv.push_back("-pedantic");
-	
-	argv.push_back("-fmessage-length=132");
-	
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
-		argv.push_back(kIQuote + p->string());
-
-	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
-		argv.push_back(kI + p->string());
 	
 	argv.push_back(inFile.string());
 
@@ -1515,39 +1512,15 @@ void MProject::CheckSyntax(
 	if (file == nil)
 		THROW(("File is not part of the target project"));
 
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
-	
 	vector<string> argv;
 	
 	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
-	transform(target.GetDefines().begin(), target.GetDefines().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-D"));
+	GenerateCFlags(argv);
 
-	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
-		back_inserter(argv), bind1st(plus<string>(), "-W"));
-
-	argv.insert(argv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
-
-	argv.push_back("-c");
 	argv.push_back("-o");
 	argv.push_back("/dev/null");
-	
-	if (target.IsAnsiStrict())
-		argv.push_back("-ansi");
-	
-	if (target.IsPedantic())
-		argv.push_back("-pedantic");
-	
-	argv.push_back("-fmessage-length=132");
-	
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
-		argv.push_back(kIQuote + p->string());
-
-	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
-		argv.push_back(kI + p->string());
-	
+	argv.push_back("-c");
 	argv.push_back(inFile.string());
 
 	StartJob(new MProjectCompileJob(

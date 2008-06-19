@@ -332,8 +332,8 @@ void GetToolConfigResult(
 	string s;
 	RunCommand(cmd, &argv[0], s);
 	ParseString(s, outFlags);
-
-cout << "tool: " << inTool << endl
-	 << "flags:" << endl;
-	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
+//
+//cout << "tool: " << inTool << endl
+//	 << "flags:" << endl;
+//	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
 }

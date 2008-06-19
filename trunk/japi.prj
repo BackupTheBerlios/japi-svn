@@ -98,7 +98,7 @@
 		<group name="Libraries">
 			<file>libpcre.a</file>
 			<file>libboost_thread-mt.a</file>
-			<file>libboost_filesystem.a</file>
+			<file>libboost_filesystem-mt.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
