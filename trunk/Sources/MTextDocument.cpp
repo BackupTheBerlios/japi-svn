@@ -2905,6 +2905,8 @@ void MTextDocument::DoReplaceAll()
 		}
 		
 		offset = found.GetMinOffset();
+		int32 lengthOfSelection = found.GetMaxOffset() - offset;
+		
 		replace = MFindDialog::Instance().GetReplaceString();
 		
 		if (regex)
@@ -2918,6 +2920,7 @@ void MTextDocument::DoReplaceAll()
 		
 		lastMatch = offset;
 		offset += replace.length();
+		lastOffset += replace.length() - lengthOfSelection;
 	}
 	
 	if (replacedAny)
