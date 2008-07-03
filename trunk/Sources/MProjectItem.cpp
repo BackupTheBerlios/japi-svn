@@ -275,7 +275,7 @@ MProjectFile* MProjectFile::GetProjectFileForPath(
 	const MPath&		inPath) const
 {
 	MProjectFile* result = nil;
-	if (inPath == GetPath())
+	if (fs::exists(inPath) and fs::exists(GetPath()) and fs::equivalent(inPath, GetPath()))
 		result = const_cast<MProjectFile*>(this);
 	return result;
 }
