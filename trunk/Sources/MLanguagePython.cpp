@@ -1189,7 +1189,7 @@ MTextPtr indent(
 			if (*text == ' ')
 				outLevel += 1;
 			else
-				outLevel += 8;
+				outLevel = 8 * ((outLevel / 8) + 1);
 			++text;
 		}
 		
@@ -1215,6 +1215,7 @@ MTextPtr block(
 	MIncludeFileList&	outIncludeFiles)
 {
 	MTextPtr result;
+	MTextPtr begin = text;
 	
 	while (*text)
 	{
@@ -1290,12 +1291,12 @@ MTextPtr block(
 			if (*text == ':')
 			{
 				int nl;
-				text = indent(skip(text, '\n'), nl);
-				text = block(text - nl, nl, n, outIncludeFiles);
-				
+				text = skip(text, '\n') + 1;
+				indent(text, nl);
+				text = block(text, nl, n, outIncludeFiles);
+
 				n.end = text.GetOffset();
 				outNamespace.subrange.push_back(n);
-				
 				continue;
 			}
 		}
