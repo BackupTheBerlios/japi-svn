@@ -970,7 +970,7 @@ void usage()
 		 << endl
 		 << "    -i path    Install japi at location 'path', e.g. /usr/local/bin/japi" << endl
 		 << "    -l path    Install locale files at location 'path' " << endl
-		 << "                    e.g. /usr/local/share/japi/locale" << endl
+		 << "                    e.g. /usr/local/share/japi" << endl
 		 << "    -h         This help message" << endl
 		 << "    -f         Don't fork into client/server" << endl
 		 << endl
@@ -1071,10 +1071,10 @@ void install_locale(
 	
 	MPath japiLocale(inPath);
 	
-	fs::create_directories(japiLocale / "locale" / "nl");
+	fs::create_directories(japiLocale / "locale" / "nl" / "LC_MESSAGES");
 	
 	string cmd = "msgfmt -o ";
-	cmd += (japiLocale / "locale" / "nl" / "japi.mo").string();
+	cmd += (japiLocale / "locale" / "nl" / "LC_MESSAGES" / "japi.mo").string();
 	cmd += " /tmp/japi.po";
 
 	cout << "Executing: " << cmd << endl;
