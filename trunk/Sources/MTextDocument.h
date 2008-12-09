@@ -388,7 +388,8 @@ class MTextDocument : public MDocument
 	void				ReplaceSelectedText(
 							const std::string&
 											inText,
-							bool			isBlock = false);
+							bool			isBlock,
+							bool			inSelectPastedText);
 	
 	void				Type(
 							const char*		inText,

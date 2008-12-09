@@ -953,10 +953,6 @@ void MProjectWindow::Initialize(
 	resourcesTree.SetModel(mResourcesTree->GetModel());
 	resourcesTree.ExpandAll();
 
-	// initialize interface
-
-	SyncInterfaceWithProject();
-
 	// read the project's state, if any
 	
 	bool useState = false;
@@ -968,7 +964,7 @@ void MProjectWindow::Initialize(
 		
 		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
 		
-		useState = r > 0 and static_cast<uint32>(r) == kMProjectStateSize;
+		useState = static_cast<uint32>(r) == kMProjectStateSize;
 	}
 	
 	if (useState)
@@ -1000,6 +996,9 @@ void MProjectWindow::Initialize(
 	{
 		mProject->SelectTarget(0);
 	}
+
+	// initialize interface
+	SyncInterfaceWithProject();
 }
 
 // ---------------------------------------------------------------------------
@@ -1206,6 +1205,7 @@ void MProjectWindow::SyncInterfaceWithProject()
 	for (vector<MProjectTarget*>::iterator t = targets.begin(); t != targets.end(); ++t)
 		targetPopup.Append((*t)->GetName());
 
+PRINT(("zet selected target op %d", mProject->GetSelectedTarget()));
 	targetPopup.SetActive(mProject->GetSelectedTarget());
 
 	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
@@ -1218,7 +1218,7 @@ void MProjectWindow::TargetChanged()
 {
 	if (mProject != nil)
 	{
-		MGtkComboBox targetPopup(GetWidget('targ'));
+		MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
 		mProject->SelectTarget(targetPopup.GetActive());
 	}
 }

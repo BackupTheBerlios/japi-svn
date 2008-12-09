@@ -40,6 +40,8 @@
 #include <signal.h>
 #include <libintl.h>
 
+#include <gdk/gdkx.h>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
@@ -382,15 +384,18 @@ void MJapieApp::RunEventLoop()
 			OpenProject(pp);
 	}
 	
-//	gdk_add_client_message_filter(gdk_atom_intern_static_string("_NET_RESTACK_WINDOW"),
+//	gdk_display_add_client_message_filter(
+//		gdk_display_get_default(),
+//		gdk_atom_intern("WM_PROTOCOLS", false),
 //		&MJapieApp::ClientMessageFilter, this);
+//	gdk_window_add_filter(nil, &MJapieApp::ClientMessageFilter, this);
 
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
 	/*uint32 timer = */
 		//g_timeout_add(250, &MJapieApp::Timeout, nil);
-		g_timeout_add(50, &MJapieApp::Timeout, nil);
+	g_timeout_add(50, &MJapieApp::Timeout, nil);
 	
 //	gdk_event_handler_set(&MJapieApp::EventHandler, nil, nil);
 	gdk_threads_enter();
@@ -405,9 +410,20 @@ GdkFilterReturn MJapieApp::ClientMessageFilter(
 	GdkEvent*			inEvent,
 	gpointer			data)
 {
-	PRINT(("Received ClientMessage: "));
+	XEvent* xevent = (XEvent*)inXEvent;
+	GdkFilterReturn result = GDK_FILTER_CONTINUE;
+
+	if (xevent->type == ClientMessage)
+	{
+		PRINT(("Received ClientMessage: "));
+		
+		if ((Atom)xevent->xclient.data.l[0] == gdk_x11_get_xatom_by_name("WM_TAKE_FOCUS"))
+		{
+			PRINT(("Take Focus event"));
+		}
+	}
 	
-	return GDK_FILTER_CONTINUE;
+	return result;
 }
 
 gint MJapieApp::Snooper(

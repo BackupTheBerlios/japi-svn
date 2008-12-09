@@ -1002,7 +1002,8 @@ void MTextDocument::DeleteSelectedText()
 
 void MTextDocument::ReplaceSelectedText(
 	const string&		inText,
-	bool				isBlock)
+	bool				isBlock,
+	bool				inSelectPastedText)
 {
 	DeleteSelectedText();
 	
@@ -1015,6 +1016,7 @@ void MTextDocument::ReplaceSelectedText(
 		uint32 anchor = mSelection.GetAnchor();
 		uint32 line = OffsetToLine(anchor);
 		uint32 column = OffsetToColumn(anchor);
+		uint32 caret;
 		
 		while (s != inText.end())
 		{
@@ -1022,11 +1024,12 @@ void MTextDocument::ReplaceSelectedText(
 			while (e != inText.end() and *e != '\n')
 				++e;
 			
-			if (line > mLineInfo.size())
+			if (line >= mLineInfo.size())
 				Insert(mText.GetSize(), "\n", 1);
 			
 			uint32 offset = LineColumnToOffsetBreakingTabs(line, column, true);
 			Insert(offset, string(s, e));
+			caret = offset + (e - s);
 			
 			if (e == inText.end())	// should never happen
 				break;
@@ -1035,16 +1038,25 @@ void MTextDocument::ReplaceSelectedText(
 			++line;
 		}
 		
-		uint32 caret = mSelection.GetCaret();
-		
-		ChangeSelection(MSelection(this,
-			OffsetToLine(anchor), column,
-			line - 1, OffsetToColumn(caret)));
+		if (inSelectPastedText)
+		{
+			ChangeSelection(MSelection(this,
+				OffsetToLine(anchor), column,
+				line - 1, OffsetToColumn(caret)));
+		}
+		else
+			ChangeSelection(caret, caret);
 	}
 	else
 	{
 		Insert(anchor, inText);
-		ChangeSelection(MSelection(this, anchor, anchor + inText.length()));
+		
+		uint32 caret = anchor + inText.length();
+		
+		if (inSelectPastedText)
+			ChangeSelection(MSelection(this, anchor, caret));
+		else
+			ChangeSelection(caret, caret);
 	}
 }
 
@@ -2888,7 +2900,7 @@ void MTextDocument::DoPaste()
 		MClipboard::Instance().GetData(text, isBlock);
 		
 		StartAction(kPasteAction);
-		ReplaceSelectedText(text, isBlock);
+		ReplaceSelectedText(text, isBlock, false);
 		FinishAction();
 	}
 	else

@@ -72,7 +72,7 @@ const int32
 const double
 	kCaretBlinkTime = 0.6,
 	kScrollDelay = 0.05,
-	kIsFocusClickDelay = 0.01;
+	kIsFocusClickDelay = 0.1;
 
 }
 

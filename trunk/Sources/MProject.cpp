@@ -1127,6 +1127,9 @@ bool MProject::LocateFile(
 		}
 	}
 	
+	if (found)
+		NormalizePath(outPath);
+	
 	return found;
 }
 
@@ -1983,8 +1986,13 @@ void MProject::AddFiles(
 					if (p == filePath)
 						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
 					else
+{
+PRINT(("pad 1: '%s', pad 2: '%s'", p.string().c_str(), filePath.string().c_str()));
+
 						THROW(("Cannot add file %s since another file with that name but in another location is already present.",
 							name.c_str()));
+
+}
 				}
 				else
 				{

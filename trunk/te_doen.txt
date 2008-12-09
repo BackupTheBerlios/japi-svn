@@ -2,11 +2,9 @@
 
 Moet af:
 
-- overnemen muisklik afhandeling van
-	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
+- Diff window, default mappen kan beter
 
 - printen
-- horizontaal scrollen
 - utf-8 problemen bij lopen door tekst
 - utf-8 validatie voor het doorsturen naar pango
 
@@ -20,6 +18,9 @@ Moet af:
 
 Leuk om te hebben:
 
+- overnemen muisklik afhandeling van
+	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
+
 - libglade vervangen door gtkbuilder (als gtkbuilder werkt)
 
 - functie parser voor HTML/JS/CSS
@@ -32,7 +33,6 @@ Leuk om te hebben:
 
 - toch een rpm/installer?
 
-- python language plugin
 - fortran language plugin
 
 - regelnummer vlak
@@ -62,5 +62,3 @@ Leuk om te hebben:
 
 - linker schrijven
 - debugger
-
-- libglade vervangen door gtkbuilder (als GtkBuilder werkt...)

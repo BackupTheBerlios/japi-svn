@@ -626,7 +626,7 @@ void MDiffWindow::MergeToFile(int inFileNr)
 	srcDoc->GetSelectedText(txt);
 	
 	dstDoc->StartAction("Merge");
-	dstDoc->ReplaceSelectedText(txt);
+	dstDoc->ReplaceSelectedText(txt, false, true);
 	dstDoc->FinishAction();
 	
 	int32 d;
