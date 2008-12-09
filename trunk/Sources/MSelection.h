@@ -43,21 +43,27 @@ class MTextDocument;
 class MSelection
 {
   public:
-					MSelection();
+					MSelection(
+						MTextDocument*		inDocument);
 
 					MSelection(
+						const MSelection&	inSelection);
+
+	MSelection		operator=(
+						const MSelection&	rhs);
+
+					MSelection(
+						MTextDocument*		inDocument,
 						uint32				inAnchor,
 						uint32				inCaret);
 
 					MSelection(
+						MTextDocument*		inDocument,
 						uint32				inAnchorLine,
 						uint32				inAnchorColumn,
 						uint32				inCaretLine,
 						uint32				inCaretColumn);
 
-					MSelection(
-						const MSelection&	inSelection);
-	
 	bool			operator==(
 						const MSelection&	inOther) const;
 
@@ -67,6 +73,9 @@ class MSelection
 	bool			IsBlock() const;
 
 	bool			IsEmpty() const;
+
+	void			SetDocument(
+						MTextDocument*		inDocument);
 
 	void			Set(
 						uint32				inAnchor,
@@ -89,42 +98,28 @@ class MSelection
 						uint32				inCaret);
 
 	void			GetAnchorLineAndColumn(
-						MTextDocument&		inDoc,
 						uint32&				outLine,
 						uint32&				outColumn) const;
 
 	void			GetCaretLineAndColumn(
-						MTextDocument&		inDoc,
 						uint32&				outLine,
 						uint32&				outColumn) const;
 
-	uint32			GetMinLine(
-						MTextDocument&		inDoc) const;
+	uint32			GetMinLine() const;
 
-	uint32			GetMaxLine(
-						MTextDocument&		inDoc) const;
+	uint32			GetMaxLine() const;
 
-	uint32			GetMinColumn(
-						MTextDocument&		inDoc) const;
+	uint32			GetMinColumn() const;
 
-	uint32			GetMaxColumn(
-						MTextDocument&		inDoc) const;
-
-	uint32			GetMinOffset(
-						MTextDocument&		inDoc) const;
-
-	uint32			GetMaxOffset(
-						MTextDocument&		inDoc) const;
+	uint32			GetMaxColumn() const;
 
 	uint32			GetMinOffset() const;
 
 	uint32			GetMaxOffset() const;
+
+	uint32			CountLines() const;
 	
-	uint32			CountLines(
-						MTextDocument&		inDoc) const;
-	
-	MSelection		SelectLines(
-						MTextDocument&		inDoc) const;
+	MSelection		SelectLines() const;
 
   private:
 	
@@ -147,6 +142,7 @@ class MSelection
 		};
 	};
 	
+	MTextDocument*	mDocument;
 	Pos				mAnchor;
 	Pos				mCaret;
 	bool			mIsBlock;

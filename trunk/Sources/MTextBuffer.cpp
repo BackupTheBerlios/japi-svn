@@ -408,6 +408,8 @@ Action::Action(
 	const string&		inTitle)
 	: mBuffer(inBuffer)
 	, mTitle(inTitle)
+	, mSelectionBefore(nil)
+	, mSelectionAfter(nil)
 {
 }
 
@@ -843,9 +845,9 @@ void MTextBuffer::GuessLineEndCharacter()
 	}
 	else if (mEOLNKind == eEOLN_DOS)
 	{
-		for (src = dst = mData; src < end - 1; ++src, ++dst)
+		for (src = dst = mData; src < end; ++src, ++dst)
 		{
-			if (*src == '\r' and *(src + 1) == '\n')
+			if (*src == '\r' and src < end - 1 and *(src + 1) == '\n')
 				++src;
 			*dst = *src;
 		}
@@ -1899,7 +1901,7 @@ MTextBuffer::CollectWordsBeginningWith(
 				break;
 		}
 		
-		MSelection found;
+		MSelection found(nil);
 		if (not Find(offset, inPattern, inDirection, false, false, found))
 		{
 			if (not wrapped)

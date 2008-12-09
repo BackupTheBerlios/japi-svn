@@ -629,17 +629,14 @@ MDocument* MJapieApp::OpenOneDocument(
 		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
 			OpenProject(inFileRef.GetPath());
 		else
-		{
 			doc = new MTextDocument(&inFileRef);
-			DisplayDocument(doc);
-		}
 	}
 	
-	MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
-	if (w != nil)
-		w->Select();
-
-	AddToRecentMenu(inFileRef);
+	if (doc != nil)
+	{
+		DisplayDocument(doc);
+		AddToRecentMenu(inFileRef);
+	}
 	
 	return doc;
 }

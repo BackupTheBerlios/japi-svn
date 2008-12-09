@@ -1041,7 +1041,7 @@ MLanguagePython::MatchLanguage(
 	}
 	else
 	{
-		MSelection s;
+		MSelection s(nil);
 		
 		if (inText.Find(0, "^#!\\s*.*?python.*\\n",
 				kDirectionForward, false, true, s) and

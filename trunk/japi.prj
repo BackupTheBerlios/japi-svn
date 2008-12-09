@@ -6,6 +6,7 @@
 		<pkg>gstreamer-0.10</pkg>
 	</pkg-config>
 	<syspaths>
+		<path>/usr/local/include/boost-1_36</path>
 		<path>/usr/include</path>
 		<path>/usr/local/include</path>
 		<path>/usr/include/libxml2</path>
@@ -16,6 +17,7 @@
 	</userpaths>
 	<libpaths>
 		<path>Lib</path>
+		<path>/usr/local/lib</path>
 	</libpaths>
 	<frameworks/>
 	<files>
@@ -97,8 +99,9 @@
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<file>libboost_thread-mt.a</file>
-			<file>libboost_filesystem-mt.a</file>
+			<file>libboost_system-gcc42-mt-1_36.a</file>
+			<file>libboost_thread-gcc42-mt-1_36.a</file>
+			<file>libboost_filesystem-gcc42-mt-1_36.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
@@ -151,7 +154,7 @@
 		<resource>japi.desktop</resource>
 	</resources>
 	<targets>
-		<target kind="Executable" name="Japie Debug" linkTarget="japi" debug="true">
+		<target kind="Executable" name="Japi Debug" linkTarget="japi" debug="true">
 			<bundle>
 				<name>japi</name>
 			</bundle>
@@ -167,7 +170,7 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" name="Japie Release" linkTarget="japi">
+		<target kind="Executable" name="Japi Release" linkTarget="japi">
 			<bundle>
 				<name>japi</name>
 			</bundle>

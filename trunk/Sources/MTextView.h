@@ -255,6 +255,7 @@ class MTextView : public MView
 	MTextDocument*		mDocument;
 	GtkWidget*			mVScrollBar;
 	int32				mLineHeight;
+	int32				mCharWidth;		// for block selection drawing
 	int32				mDescent;
 	int32				mImageOriginX, mImageOriginY;
 	int32				mSavedOriginX, mSavedOriginY;	// for kissing
@@ -276,7 +277,8 @@ class MTextView : public MView
 		eSelectStartDrag,
 		eSelectRegular,
 		eSelectWords,
-		eSelectLines
+		eSelectLines,
+		eSelectBlock
 	}					mClickMode;
 	uint32				mClickAnchor, mClickCaret;
 	uint32				mMinClickAnchor, mMaxClickAnchor;

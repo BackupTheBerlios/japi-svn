@@ -128,6 +128,7 @@ MTextDocument::MTextDocument(
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
 	, eIdle(this, &MTextDocument::Idle)
+	, mSelection(this)
 {
 	Init();
 	
@@ -169,6 +170,7 @@ MTextDocument::MTextDocument()
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
 	, eIdle(this, &MTextDocument::Idle)
+	, mSelection(this)
 {
 	Init();
 }
@@ -427,9 +429,9 @@ void MTextDocument::SaveState()
 	
 	if (mSelection.IsBlock())
 	{
-		mSelection.GetAnchorLineAndColumn(*this,
+		mSelection.GetAnchorLineAndColumn(
 			state.mSelection[0], state.mSelection[1]);
-		mSelection.GetCaretLineAndColumn(*this,
+		mSelection.GetCaretLineAndColumn(
 			state.mSelection[2], state.mSelection[3]);
 		state.mFlags.mSelectionIsBlock = true;
 	}
@@ -790,8 +792,16 @@ bool MTextDocument::ReadDocState(
 			ioDocState.Swap();
 
 			if (ioDocState.mFlags.mSelectionIsBlock)
-				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
-					ioDocState.mSelection[2], ioDocState.mSelection[3]);
+			{
+				if (ioDocState.mSelection[0] <= mLineInfo.size() and
+					ioDocState.mSelection[2] <= mLineInfo.size() and
+					ioDocState.mSelection[1] <= 1000 and
+					ioDocState.mSelection[3] <= 1000)
+				{
+					mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
+						ioDocState.mSelection[2], ioDocState.mSelection[3]);
+				}
+			}
 			else
 				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1]);
 		
@@ -872,7 +882,7 @@ void MTextDocument::HandleDeleteKey(MDirection inDirection)
 		uint32 anchor = caret;
 		
 		if ((caret > 0 and inDirection == kDirectionBackward) or
-			(caret + 1 < mText.GetSize() and inDirection == kDirectionForward))
+			(caret < mText.GetSize() and inDirection == kDirectionForward))
 		{
 			if (inDirection == kDirectionForward)
 				caret = mText.NextCursorPosition(caret, eMoveOneCharacter);
@@ -932,7 +942,7 @@ void MTextDocument::HandleDeleteKey(MDirection inDirection)
 		if (anchor != caret)
 			Delete(anchor, caret - anchor);
 	
-		ChangeSelection(MSelection(anchor, anchor));
+		ChangeSelection(MSelection(this, anchor, anchor));
 	}
 	else
 		DeleteSelectedText();
@@ -951,7 +961,23 @@ void MTextDocument::DeleteSelectedText()
 {
 	if (mSelection.IsBlock())
 	{
+		uint32 anchor = 0;
 		
+		uint32 minLine = mSelection.GetMinLine();
+		uint32 maxLine = mSelection.GetMaxLine();
+		
+		uint32 minColumn = mSelection.GetMinColumn();
+		uint32 maxColumn = mSelection.GetMaxColumn();
+		
+		for (uint32 line = minLine; line <= maxLine; ++line)
+		{
+			uint32 start = LineColumnToOffsetBreakingTabs(line, minColumn, false);
+			uint32 end = LineColumnToOffsetBreakingTabs(line, maxColumn, false);
+			
+			Delete(start, end - start);
+		}
+
+		ChangeSelection(MSelection(this, anchor, anchor));
 	}
 	else
 	{
@@ -964,7 +990,7 @@ void MTextDocument::DeleteSelectedText()
 		if (anchor != caret)
 			Delete(anchor, caret - anchor);
 	
-		ChangeSelection(MSelection(anchor, anchor));
+		ChangeSelection(MSelection(this, anchor, anchor));
 	}
 }
 
@@ -972,26 +998,101 @@ void MTextDocument::DeleteSelectedText()
 // ReplaceSelectedText
 
 void MTextDocument::ReplaceSelectedText(
-	const string&		inText)
+	const string&		inText,
+	bool				isBlock)
 {
-	if (mSelection.IsBlock())
+	DeleteSelectedText();
+	
+	uint32 anchor = mSelection.GetAnchor();
+	
+	if (isBlock)
 	{
+		string::const_iterator s = inText.begin();
 		
+		uint32 anchor = mSelection.GetAnchor();
+		uint32 line = OffsetToLine(anchor);
+		uint32 column = OffsetToColumn(anchor);
+		
+		while (s != inText.end())
+		{
+			string::const_iterator e = s;
+			while (e != inText.end() and *e != '\n')
+				++e;
+			
+			if (line > mLineInfo.size())
+				Insert(mText.GetSize(), "\n", 1);
+			
+			uint32 offset = LineColumnToOffsetBreakingTabs(line, column, true);
+			Insert(offset, string(s, e));
+			
+			if (e == inText.end())	// should never happen
+				break;
+
+			s = e + 1;
+			++line;
+		}
+		
+		uint32 caret = mSelection.GetCaret();
+		
+		ChangeSelection(MSelection(this,
+			OffsetToLine(anchor), column,
+			line - 1, OffsetToColumn(caret)));
 	}
 	else
 	{
-		uint32 anchor = mSelection.GetAnchor();
-		uint32 caret = mSelection.GetCaret();
-		
-		if (anchor > caret)
-			swap(anchor, caret);
-	
-		if (anchor != caret)
-			Delete(anchor, caret - anchor);
-	
 		Insert(anchor, inText);
-		ChangeSelection(MSelection(anchor, anchor + inText.length()));
+		ChangeSelection(MSelection(this, anchor, anchor + inText.length()));
 	}
+}
+
+// ---------------------------------------------------------------------------
+// LineColumnToOffsetBreakingTabs
+
+uint32 MTextDocument::LineColumnToOffsetBreakingTabs(
+	uint32		inLine,
+	uint32		inColumn,
+	bool		inAddSpacesExtendingLine)
+{
+	MTextBuffer::iterator text(&mText, LineStart(inLine));
+	MTextBuffer::iterator end(&mText, LineEnd(inLine));
+	
+	uint32 column = 0;
+	
+	while (column < inColumn and text < end)
+	{
+		if (*text == '\t')
+		{
+			uint32 d = mCharsPerTab - (column % mCharsPerTab);
+			
+			if (column + d > inColumn)
+			{
+				// we have to split this tab
+				Delete(text.GetOffset(), 1);
+				vector<char> s(d, ' ');
+				Insert(text.GetOffset(), &s[0], d);
+				
+				text += inColumn - column;
+				column = inColumn;
+				break;
+			}
+			else
+				column += d;
+		}
+		else
+			++column;
+		++text;
+	}
+	
+	if (inAddSpacesExtendingLine and column < inColumn)
+	{
+		uint32 d = inColumn - column;
+		vector<char> s(d, ' ');
+		Insert(text.GetOffset(), &s[0], d);
+		
+		text += d;
+	}
+	
+	return text.GetOffset();
 }
 
 // ---------------------------------------------------------------------------
@@ -1028,7 +1129,7 @@ void MTextDocument::Type(
 	if (s.GetCaret() == offset)
 		s.SetCaret(offset + inLength);
 	mText.SetSelectionAfter(s);
-	ChangeSelection(MSelection(offset + inLength, offset + inLength));
+	ChangeSelection(MSelection(this, offset + inLength, offset + inLength));
 
 	if (gKiss and
 		inLength == 1 and
@@ -1042,7 +1143,7 @@ void MTextDocument::Type(
 			offset + length == mSelection.GetCaret() - 1)
 		{
 			MSelection save(mSelection);
-			ChangeSelection(MSelection(offset - 1, offset));
+			ChangeSelection(MSelection(this, offset - 1, offset));
 			eScroll(kScrollForKiss);
 			usleep(250000UL);
 			ChangeSelection(save);
@@ -1116,11 +1217,11 @@ void MTextDocument::Drop(
 	
 	if (inDragMove)
 	{
-		uint32 start = mSelection.GetMinOffset(*this);
-		uint32 length = mSelection.GetMaxOffset(*this) - start;
+		uint32 start = mSelection.GetMinOffset();
+		uint32 length = mSelection.GetMaxOffset() - start;
 		
 		Delete(start, length);
-		if (inOffset > mSelection.GetMaxOffset(*this))
+		if (inOffset > mSelection.GetMaxOffset())
 			inOffset -= length;
 	}
 	
@@ -1158,12 +1259,12 @@ void MTextDocument::MarkMatching(
 {
 	MSelection savedSelection(mSelection);
 	
-	MSelection found;
+	MSelection found(this);
 	uint32 offset = 0;
 	
 	while (mText.Find(offset, inMatch, kDirectionForward, inIgnoreCase, inRegEx, found))
 	{
-		uint32 line = found.GetMinLine(*this);
+		uint32 line = found.GetMinLine();
 
 		mLineInfo[line].marked = true;
 		mLineInfo[line].dirty = true;
@@ -1172,6 +1273,7 @@ void MTextDocument::MarkMatching(
 	}
 	
 	mSelection = savedSelection;
+	mSelection.SetDocument(this);
 	
 	eInvalidateDirtyLines();
 }
@@ -1304,7 +1406,7 @@ void MTextDocument::CCCMarkedLines(bool inCopy, bool inClear)
 	{
 		StartAction(kCutAction);
 		
-		uint32 offset = mSelection.GetMinOffset(*this);
+		uint32 offset = mSelection.GetMinOffset();
 		
 		// watch out, unsigned integers in use
 		for (uint32 lineNr = mLineInfo.size(); lineNr > 0; --lineNr)
@@ -1317,7 +1419,7 @@ void MTextDocument::CCCMarkedLines(bool inCopy, bool inClear)
 			}
 		}
 		
-		ChangeSelection(MSelection(offset, offset));
+		ChangeSelection(MSelection(this, offset, offset));
 		
 		FinishAction();
 	}
@@ -1347,9 +1449,9 @@ void MTextDocument::DoJumpToNextMark(MDirection inDirection)
 {
 	uint32 currentLine;
 	if (inDirection == kDirectionForward)
-		currentLine = OffsetToLine(mSelection.GetMaxOffset(*this));
+		currentLine = OffsetToLine(mSelection.GetMaxOffset());
 	else
-		currentLine = OffsetToLine(mSelection.GetMinOffset(*this));
+		currentLine = OffsetToLine(mSelection.GetMinOffset());
 	uint32 markLine = currentLine;
 	uint32 line;
 
@@ -1763,7 +1865,10 @@ void MTextDocument::GetSelectionBounds(
 {
 	if (mSelection.IsBlock())
 	{
-		assert(false);
+		outBounds.y = mSelection.GetMinLine() * mLineHeight;
+		outBounds.height = mSelection.CountLines() * mLineHeight;
+		outBounds.x = mSelection.GetMinColumn() * mCharWidth;
+		outBounds.width = (mSelection.GetMaxColumn() - mSelection.GetMinColumn()) * mCharWidth;
 	}
 	else
 	{
@@ -1810,7 +1915,75 @@ void MTextDocument::GetSelectedText(
 	if (not mSelection.IsEmpty())
 	{
 		if (mSelection.IsBlock())
-			assert(false);
+		{
+			outText.clear();
+			
+			uint32 minLine = mSelection.GetMinLine();
+			uint32 maxLine = mSelection.GetMaxLine();
+			
+			uint32 minColumn = mSelection.GetMinColumn();
+			uint32 maxColumn = mSelection.GetMaxColumn();
+			
+			if (minColumn == maxColumn)
+				outText.insert(outText.begin(), maxLine - minLine + 1, '\n');
+			else
+			{
+				outText.reserve((maxLine - minLine + 1) * (maxColumn - minColumn + 2));
+				
+				for (uint32 line = minLine; line <= maxLine; ++line)
+				{
+					MTextBuffer::const_iterator text(&mText, LineStart(line));
+					MTextBuffer::const_iterator end(&mText, LineEnd(line));
+					
+					uint32 column = 0;
+					
+					while (column < minColumn and text < end)
+					{
+						if (*text == '\t')
+						{
+							uint32 d = mCharsPerTab - (column % mCharsPerTab);
+							column += d;
+						}
+						else
+							++column;
+						++text;
+					}
+					
+					if (column > minColumn)
+						outText.insert(outText.end(), column - minColumn, ' ');
+					uint32 startOffset = text.GetOffset();
+					
+					uint32 d = 0;
+					while (column < maxColumn and text < end)
+					{
+						if (*text == '\t')
+						{
+							d = mCharsPerTab - (column % mCharsPerTab);
+							column += d;
+						}
+						else
+							++column;
+						++text;
+					}
+					
+					string copy;
+					if (column > maxColumn)
+					{
+						mText.GetText(startOffset, text.GetOffset() - startOffset - 1, copy);
+						copy.insert(copy.end(), maxColumn - (column - d), ' ');
+					}
+					else
+					{
+						mText.GetText(startOffset, text.GetOffset() - startOffset, copy);
+						if (column < maxColumn)
+							copy.insert(copy.end(), maxColumn - column, ' ');
+					}
+					
+					outText += copy;
+					outText += '\n';
+				}
+			}
+		}
 		else
 		{
 			uint32 anchor = mSelection.GetAnchor();
@@ -1835,10 +2008,26 @@ void MTextDocument::Select(
 void MTextDocument::Select(
 	uint32			inAnchor,
 	uint32			inCaret,
+	bool			inBlock)
+{
+	if (inBlock)
+	{
+		MSelection selection(this,
+			OffsetToLine(inAnchor), OffsetToColumn(inAnchor),
+			OffsetToLine(inCaret), OffsetToColumn(inCaret));
+		Select(selection);
+	}
+	else
+		Select(inAnchor, inCaret, kScrollNone);
+}
+
+void MTextDocument::Select(
+	uint32			inAnchor,
+	uint32			inCaret,
 	MScrollMessage	inScrollMessage)
 {
 	FinishAction();
-	ChangeSelection(MSelection(inAnchor, inCaret));
+	ChangeSelection(MSelection(this, inAnchor, inCaret));
 	if (inScrollMessage != kScrollNone)
 		eScroll(inScrollMessage);
 }
@@ -1846,11 +2035,18 @@ void MTextDocument::Select(
 void MTextDocument::ChangeSelection(
 	MSelection	inSelection)
 {
+	inSelection.SetDocument(this);
+	
 	if (inSelection != mSelection)
 	{
 		uint32 a, c, sl1, sl2, el1, el2, l;
 
-		if (not mSelection.IsBlock())
+		if (mSelection.IsBlock())
+		{
+			sl1 = mSelection.GetMinLine();
+			el1 = mSelection.GetMaxLine();
+		}
+		else
 		{
 			a = mSelection.GetAnchor();
 			c = mSelection.GetCaret();
@@ -1861,7 +2057,12 @@ void MTextDocument::ChangeSelection(
 			el1 = OffsetToLine(c);
 		}
 
-		if (not inSelection.IsBlock())
+		if (inSelection.IsBlock())
+		{
+			sl2 = inSelection.GetMinLine();
+			el2 = inSelection.GetMaxLine();
+		}
+		else
 		{
 			a = inSelection.GetAnchor();
 			c = inSelection.GetCaret();
@@ -1873,7 +2074,8 @@ void MTextDocument::ChangeSelection(
 		}
 		
 		// check for overlap
-		if (sl1 < el2 and sl2 < el1)
+		if (not mSelection.IsBlock() and not inSelection.IsBlock() and
+			sl1 < el2 and sl2 < el1)
 		{
 			for (l = min(sl1, sl2); l <= max(sl1, sl2); ++l)
 				mLineInfo[l].dirty = true;
@@ -1893,8 +2095,11 @@ void MTextDocument::ChangeSelection(
 //		for (l = 0; l < mLineInfo.size(); ++l)
 //			mLineInfo[l].dirty = false;
 		
-		uint32 line;
-		OffsetToPosition(inSelection.GetCaret(), line, mWalkOffset);
+		if (not mSelection.IsBlock())
+		{
+			uint32 line;
+			OffsetToPosition(inSelection.GetCaret(), line, mWalkOffset);
+		}
 	}
 
 	SendSelectionChangedEvent();
@@ -1967,6 +2172,9 @@ void MTextDocument::OffsetToPosition(
 	}
 }
 
+// ---------------------------------------------------------------------------
+//	OffsetToColumn
+
 uint32 MTextDocument::OffsetToColumn(
 	uint32		inOffset) const
 {
@@ -2030,6 +2238,69 @@ void MTextDocument::PositionToOffset(
 	}
 }
 
+// ---------------------------------------------------------------------------
+//	PositionToLineColumn
+
+void MTextDocument::PositionToLineColumn(
+	int32			inLocationX,
+	int32			inLocationY,
+	uint32&			outLine,
+	uint32&			outColumn) const
+{
+	outLine = 0;
+	if (inLocationY > 0)
+		outLine = static_cast<uint32>(inLocationY / mLineHeight);
+	
+	if (outLine >= mLineInfo.size())
+		outLine = mLineInfo.size() - 1;
+
+	string text;
+	MDevice device;
+	
+	GetStyledText(outLine, device, text);
+	
+	if (GetSoftwrap())
+		inLocationX -= GetLineIndentWidth(outLine);
+	
+	if (inLocationX > 0)
+	{
+//		bool trailing;
+//		/*bool hit = */device.PositionToIndex(inLocationX, outColumn, trailing);
+		outColumn = static_cast<uint32>((inLocationX + (mCharWidth / 2)) / mCharWidth);
+	}
+	else
+		outColumn = 0;
+}
+
+// ---------------------------------------------------------------------------
+//	LineAndColumnToOffset
+
+uint32 MTextDocument::LineAndColumnToOffset(
+	uint32			inLine,
+	uint32			inColumn) const
+{
+	uint32 start = LineStart(inLine);
+	uint32 end = LineStart(inLine + 1);
+	MTextBuffer::const_iterator text = mText.begin() + start;
+	
+	uint32 column = 0;
+
+	while (column < inColumn and text != mText.end() and text.GetOffset() < end)
+	{
+		if (*text == '\t')
+		{
+			uint32 d = mCharsPerTab - (column % mCharsPerTab);
+			column += d;
+		}
+		else
+			++column;
+
+		++text;
+	}
+	
+	return text.GetOffset();
+}
+
 // -----------------------------------------------------------------------------
 // StartAction
 
@@ -2084,18 +2355,15 @@ void MTextDocument::Insert(
 		for (uint32 l = line + 1; l < mLineInfo.size(); ++l)
 			mLineInfo[l].start += inLength;
 
-		if (not mSelection.IsBlock())
-		{
-			uint32 anchor = mSelection.GetAnchor();
-			if (inOffset <= anchor)
-				anchor += inLength;
-			
-			uint32 caret = mSelection.GetCaret();
-			if (inOffset <= caret)
-				caret += inLength;
-			
-			mSelection.Set(anchor, caret);
-		}
+		uint32 anchor = mSelection.GetAnchor();
+		if (inOffset <= anchor)
+			anchor += inLength;
+		
+		uint32 caret = mSelection.GetCaret();
+		if (inOffset <= caret)
+			caret += inLength;
+		
+		mSelection.Set(anchor, caret);
 	
 		int32 delta = RewrapLines(inOffset, inOffset + inLength);
 		if (delta)
@@ -2124,22 +2392,19 @@ void MTextDocument::Delete(
 		if (not mDirty)
 			SetModified(true);
 
-		if (not mSelection.IsBlock())
-		{
-			uint32 anchor = mSelection.GetAnchor();
-			if (inOffset + inLength <= anchor)
-				anchor -= inLength;
-			else if (inOffset < anchor)
-				anchor = inOffset;
-			
-			uint32 caret = mSelection.GetCaret();
-			if (inOffset + inLength <= caret)
-				caret -= inLength;
-			else if (inOffset < caret)
-				caret = inOffset;
-			
-			mSelection.Set(anchor, caret);
-		}
+		uint32 anchor = mSelection.GetAnchor();
+		if (inOffset + inLength <= anchor)
+			anchor -= inLength;
+		else if (inOffset < anchor)
+			anchor = inOffset;
+		
+		uint32 caret = mSelection.GetCaret();
+		if (inOffset + inLength <= caret)
+			caret -= inLength;
+		else if (inOffset < caret)
+			caret = inOffset;
+		
+		mSelection.Set(anchor, caret);
 
 		uint32 firstLine = OffsetToLine(inOffset);
 		uint32 lastLine = OffsetToLine(inOffset + inLength);
@@ -2170,7 +2435,7 @@ bool MTextDocument::CanUndo(string& outAction)
 
 void MTextDocument::DoUndo()
 {
-	MSelection s;
+	MSelection s(this);
 	uint32 offset, length;
 	int32 delta;
 	
@@ -2192,7 +2457,7 @@ bool MTextDocument::CanRedo(string& outAction)
 
 void MTextDocument::DoRedo()
 {
-	MSelection s;
+	MSelection s(this);
 	uint32 offset, length;
 	int32 delta;
 	
@@ -2236,8 +2501,8 @@ void MTextDocument::RepairAfterUndo(
 
 void MTextDocument::DoBalance()
 {
-	uint32 offset = mSelection.GetMinOffset(*this);
-	uint32 length = mSelection.GetMaxOffset(*this) - offset;
+	uint32 offset = mSelection.GetMinOffset();
+	uint32 length = mSelection.GetMaxOffset() - offset;
 	
 	uint32 newOffset = offset;
 	uint32 newLength = length;
@@ -2262,12 +2527,12 @@ void MTextDocument::DoBalance()
 								
 void MTextDocument::DoShiftLeft()
 {
-	Select(mSelection.SelectLines(*this));
+	Select(mSelection.SelectLines());
 	
 	StartAction("Shift left");
 	
-	uint32 minLine = mSelection.GetMinLine(*this);
-	uint32 maxLine = mSelection.GetMaxLine(*this);
+	uint32 minLine = mSelection.GetMinLine();
+	uint32 maxLine = mSelection.GetMaxLine();
 	
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
@@ -2294,15 +2559,15 @@ void MTextDocument::DoShiftLeft()
 
 void MTextDocument::DoShiftRight()
 {
-	Select(mSelection.SelectLines(*this));
+	Select(mSelection.SelectLines());
 	
 	StartAction("Shift right");
 	
 	uint32 anchor = mSelection.GetAnchor();
 	uint32 caret = mSelection.GetCaret();
 
-	uint32 minLine = mSelection.GetMinLine(*this);
-	uint32 maxLine = mSelection.GetMaxLine(*this);
+	uint32 minLine = mSelection.GetMinLine();
+	uint32 maxLine = mSelection.GetMaxLine();
 	
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
@@ -2319,7 +2584,7 @@ void MTextDocument::DoComment()
 	if (mLanguage and not mSelection.IsBlock())
 	{
 		if (mSelection.IsEmpty())
-			Select(mSelection.SelectLines(*this));
+			Select(mSelection.SelectLines());
 		
 		uint32 selectionStart, selectionEnd;
 		selectionStart = mSelection.GetMinOffset();
@@ -2327,20 +2592,20 @@ void MTextDocument::DoComment()
 		
 		StartAction("Comment");
 
-		uint32 minLine = mSelection.GetMinLine(*this);
-		uint32 maxLine = mSelection.GetMaxLine(*this);
+		uint32 minLine = mSelection.GetMinLine();
+		uint32 maxLine = mSelection.GetMaxLine();
 		
 		for (uint32 line = minLine; line <= maxLine; ++line)
 		{
 			uint32 offset;
 			if (line == minLine)
-				offset = mSelection.GetMinOffset(*this);
+				offset = mSelection.GetMinOffset();
 			else
 				offset = LineStart(line);
 			
 			uint32 length;
 			if (line == maxLine)
-				length = mSelection.GetMaxOffset(*this) - offset;
+				length = mSelection.GetMaxOffset() - offset;
 			else
 				length = LineEnd(line) - offset;
 			
@@ -2373,7 +2638,7 @@ void MTextDocument::DoUncomment()
 	if (mLanguage and not mSelection.IsBlock())
 	{
 		if (mSelection.IsEmpty())
-			Select(mSelection.SelectLines(*this));
+			Select(mSelection.SelectLines());
 		
 		uint32 selectionStart, selectionEnd;
 		selectionStart = mSelection.GetMinOffset();
@@ -2381,20 +2646,20 @@ void MTextDocument::DoUncomment()
 		
 		StartAction("Uncomment");
 
-		uint32 minLine = mSelection.GetMinLine(*this);
-		uint32 maxLine = mSelection.GetMaxLine(*this);
+		uint32 minLine = mSelection.GetMinLine();
+		uint32 maxLine = mSelection.GetMaxLine();
 		
 		for (uint32 line = minLine; line <= maxLine; ++line)
 		{
 			uint32 offset;
 			if (line == minLine)
-				offset = mSelection.GetMinOffset(*this);
+				offset = mSelection.GetMinOffset();
 			else
 				offset = LineStart(line);
 			
 			uint32 length;
 			if (line == maxLine)
-				length = mSelection.GetMaxOffset(*this) - offset;
+				length = mSelection.GetMaxOffset() - offset;
 			else
 				length = LineEnd(line) - offset;
 			
@@ -2597,17 +2862,8 @@ void MTextDocument::DoPaste()
 		MClipboard::Instance().GetData(text, isBlock);
 		
 		StartAction(kPasteAction);
-		
-		if (not mSelection.IsEmpty())
-			DeleteSelectedText();
-		
-		uint32 offset = mSelection.GetCaret();
-		Insert(offset, text);
-//		ChangeSelection(Selection(offset, offset + textLength));
-		
+		ReplaceSelectedText(text, isBlock);
 		FinishAction();
-
-		ChangeSelection(MSelection(offset + text.length(), offset + text.length()));
 	}
 	else
 		assert(false);
@@ -2634,7 +2890,7 @@ void MTextDocument::DoPasteNext()
 
 void MTextDocument::DoFastFind(MDirection inDirection)
 {
-	mFastFindStartOffset = mSelection.GetMaxOffset(*this);
+	mFastFindStartOffset = mSelection.GetMaxOffset();
 	
 	if (not mFastFindMode)
 	{
@@ -2691,13 +2947,13 @@ bool MTextDocument::FastFind(MDirection inDirection)
 	if (inDirection == kDirectionBackward and offset > 0)
 		offset -= mFastFindWhat.length();
 	
-	MSelection found;
+	MSelection found(this);
 	bool result = mText.Find(offset, mFastFindWhat, inDirection, true, false, found);
 	
 	if (result)
 	{
 		MFindDialog::Instance().SetFindString(mFastFindWhat, true);
-		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
+		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
 	}
 	else
 		PlaySound("warning");
@@ -2714,7 +2970,7 @@ bool MTextDocument::CanReplace()
 
 void MTextDocument::DoMarkLine()
 {
-	uint32 line = mSelection.GetMinLine(*this);
+	uint32 line = mSelection.GetMinLine();
 	MarkLine(line, not mLineInfo[line].marked);
 	eInvalidateDirtyLines();
 }
@@ -2752,11 +3008,11 @@ bool MTextDocument::DoFindFirst()
 	bool regex = MFindDialog::Instance().GetRegex();
 	uint32 offset = 0;
 	
-	MSelection found;
+	MSelection found(this);
 	bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
 	
 	if (result)
-		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
+		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
 	
 	return result;
 }
@@ -2769,15 +3025,15 @@ bool MTextDocument::DoFindNext(MDirection inDirection)
 	uint32 offset;
 	
 	if (inDirection == kDirectionBackward)
-		offset = mSelection.GetMinOffset(*this);
+		offset = mSelection.GetMinOffset();
 	else
-		offset = mSelection.GetMaxOffset(*this);
+		offset = mSelection.GetMaxOffset();
 	
-	MSelection found;
+	MSelection found(this);
 	bool result = mText.Find(offset, what, inDirection, ignoreCase, regex, found);
 	
 	if (result)
-		Select(found.GetMinOffset(*this), found.GetMaxOffset(*this), kScrollToSelection);
+		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
 	
 	return result;
 }
@@ -2793,22 +3049,22 @@ void MTextDocument::FindAll(string inWhat, bool inIgnoreCase,
 
 	if (inSelection)
 	{
-		minOffset = mSelection.GetMinOffset(*this);
-		maxOffset = mSelection.GetMaxOffset(*this);
+		minOffset = mSelection.GetMinOffset();
+		maxOffset = mSelection.GetMaxOffset();
 	}
 	
-	MSelection sel;
+	MSelection sel(this);
 	while (mText.Find(minOffset, inWhat, kDirectionForward, inIgnoreCase, inRegex, sel) and
 		sel.GetMaxOffset() <= maxOffset)
 	{
-		uint32 lineNr = sel.GetMinLine(*this);
+		uint32 lineNr = sel.GetMinLine();
 		
 		string s;
 		GetLine(lineNr, s);
 		boost::trim_right(s);
 		
 		outHits.AddMessage(kMsgKindNone, mURL.GetPath(), lineNr + 1,
-			sel.GetMinOffset(*this), sel.GetMaxOffset(*this), s);
+			sel.GetMinOffset(), sel.GetMaxOffset(), s);
 		
 		minOffset = sel.GetMaxOffset();
 	}
@@ -2840,7 +3096,7 @@ void MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 		string what = MFindDialog::Instance().GetFindString();
 		string replace = MFindDialog::Instance().GetReplaceString();
 		
-		uint32 offset = mSelection.GetMinOffset(*this);
+		uint32 offset = mSelection.GetMinOffset();
 		
 		if (MFindDialog::Instance().GetRegex())
 		{
@@ -2860,7 +3116,7 @@ void MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 			if (inDirection == kDirectionForward)
 				nextOffset += replace.length();
 		
-			MSelection found;
+			MSelection found(this);
 			bool result = mText.Find(nextOffset, what, inDirection, ignoreCase, regex, found);
 			
 			if (result)
@@ -2887,7 +3143,7 @@ void MTextDocument::DoReplaceAll()
 	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
 	bool replacedAny = false;
 	bool regex = MFindDialog::Instance().GetRegex();
-	MSelection found;
+	MSelection found(this);
 
 	if (MFindDialog::Instance().GetInSelection())
 	{
@@ -3277,7 +3533,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = mText.PreviousCursorPosition(caret, eMoveOneCharacter);
 			else
-				caret = anchor = mSelection.GetMinOffset(*this);
+				caret = anchor = mSelection.GetMinOffset();
 			break;
 
 		case kcmd_MoveCharacterRight:
@@ -3285,7 +3541,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = mText.NextCursorPosition(caret, eMoveOneCharacter);
 			else
-				caret = anchor = mSelection.GetMaxOffset(*this);
+				caret = anchor = mSelection.GetMaxOffset();
 			break;
 
 		case kcmd_MoveWordLeft:
@@ -3293,7 +3549,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = FindWord(caret, kDirectionBackward);
 			else
-				caret = anchor = mSelection.GetMinOffset(*this);
+				caret = anchor = mSelection.GetMinOffset();
 			break;
 
 		case kcmd_MoveWordRight:
@@ -3301,7 +3557,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = FindWord(caret, kDirectionForward);
 			else
-				caret = anchor = mSelection.GetMaxOffset(*this);
+				caret = anchor = mSelection.GetMaxOffset();
 			break;
 
 		case kcmd_MoveToBeginningOfLine:
@@ -3309,7 +3565,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = LineStart(minLine);
 			else
-				caret = anchor = mSelection.GetMinOffset(*this);
+				caret = anchor = mSelection.GetMinOffset();
 			break;
 
 		case kcmd_MoveToEndOfLine:
@@ -3317,7 +3573,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 			if (mSelection.IsEmpty())
 				caret = anchor = LineEnd(minLine);
 			else
-				caret = anchor = mSelection.GetMaxOffset(*this);
+				caret = anchor = mSelection.GetMaxOffset();
 			break;
 
 		case kcmd_MoveToPreviousLine:
@@ -3333,7 +3589,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 					caret = 0;
 			}
 			else
-				caret = mSelection.GetMinOffset(*this);
+				caret = mSelection.GetMinOffset();
 			anchor = caret;
 			updateWalkOffset = false;
 			break;
@@ -3346,7 +3602,7 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 				PositionToOffset(x, y, caret);
 			}
 			else
-				caret = mSelection.GetMaxOffset(*this);
+				caret = mSelection.GetMaxOffset();
 			anchor = caret;
 			updateWalkOffset = false;
 			break;
@@ -3585,12 +3841,12 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 		case kcmd_MoveLineUp:
 			if (minLine > 0)
 			{
-				Select(mSelection.SelectLines(*this));
+				Select(mSelection.SelectLines());
 
 				anchor = mSelection.GetAnchor();
 				caret = mSelection.GetCaret();
 				
-				minLine = mSelection.GetMinLine(*this);
+				minLine = mSelection.GetMinLine();
 
 				StartAction("Shift lines up");
 			
@@ -3616,12 +3872,12 @@ bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 		case kcmd_MoveLineDown:
 			if (maxLine < mLineInfo.size() - 1)
 			{
-				Select(mSelection.SelectLines(*this));
+				Select(mSelection.SelectLines());
 
 				anchor = mSelection.GetAnchor();
 				caret = mSelection.GetCaret();
 				
-				maxLine = mSelection.GetMaxLine(*this);
+				maxLine = mSelection.GetMaxLine();
 
 				StartAction("Shift lines down");
 			
@@ -3733,7 +3989,7 @@ bool MTextDocument::HandleRawKeydown(
 				else
 				{
 					// Enter a return, optionally auto indented
-					uint32 minOffset = mSelection.GetMinOffset(*this);
+					uint32 minOffset = mSelection.GetMinOffset();
 	
 					string s;
 					s += '\n';
@@ -3773,7 +4029,7 @@ bool MTextDocument::HandleRawKeydown(
 				{
 					if (not mSelection.IsEmpty() and
 						not mFastFindMode and
-						mSelection.GetMinLine(*this) != mSelection.GetMaxLine(*this))
+						mSelection.GetMinLine() != mSelection.GetMaxLine())
 					{
 						if (inModifiers & GDK_SHIFT_MASK)
 							DoShiftLeft();
@@ -3967,7 +4223,7 @@ void MTextDocument::StdOut(const char* inText, uint32 inSize)
 	{
 		StartAction(kTypeAction);
 		
-		uint32 line = mSelection.GetMaxLine(*this);
+		uint32 line = mSelection.GetMaxLine();
 		ChangeSelection(LineEnd(line), LineEnd(line));
 		
 		Type("\n", 1);
@@ -4020,7 +4276,7 @@ void MTextDocument::Execute()
 	
 	if (mSelection.IsEmpty())
 	{
-		uint32 line = mSelection.GetMinLine(*this);
+		uint32 line = mSelection.GetMinLine();
 		ChangeSelection(LineStart(line), LineEnd(line));
 	}
 	

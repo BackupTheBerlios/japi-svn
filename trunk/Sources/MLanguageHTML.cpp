@@ -961,7 +961,7 @@ MLanguageHTML::MatchLanguage(
 	}
 	else
 	{
-		MSelection s;
+		MSelection s(nil);
 		
 		if (inText.Find(0, "<!DOCTYPE\\s+HTML\\s+",
 			kDirectionForward, false, true, s))

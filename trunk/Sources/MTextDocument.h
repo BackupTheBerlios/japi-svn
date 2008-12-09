@@ -223,6 +223,11 @@ class MTextDocument : public MDocument
 
 	void				Select(
 							MSelection		inSelection);
+	
+	void				Select(
+							uint32			inAnchor,
+							uint32			inCaret,
+							bool			inBlock);
 
 	void				Select(
 							uint32			inAnchor,
@@ -241,8 +246,18 @@ class MTextDocument : public MDocument
 							int32			inLocationY,
 							uint32&			outOffset) const;
 	
+	void				PositionToLineColumn(
+							int32			inLocationX,
+							int32			inLocationY,
+							uint32&			outLine,
+							uint32&			outColumn) const;
+	
 	uint32				OffsetToColumn(
 							uint32			inOffset) const;
+
+	uint32				LineAndColumnToOffset(
+							uint32			inLine,
+							uint32			inColumn) const;
 
 	uint32				OffsetToLine(
 							uint32			inOffset) const;
@@ -370,7 +385,8 @@ class MTextDocument : public MDocument
 
 	void				ReplaceSelectedText(
 							const std::string&
-											inText);
+											inText,
+							bool			isBlock = false);
 	
 	void				Type(
 							const char*		inText,
@@ -471,6 +487,11 @@ class MTextDocument : public MDocument
 	void				Delete(
 							uint32			inOffset,
 							uint32			inLength);
+
+	uint32				LineColumnToOffsetBreakingTabs(
+							uint32			inLine,
+							uint32			inColumn,
+							bool			inAddSpacesExtendingLine);
 
 	uint32				FindLineBreak(
 							uint32			inFromOffset,
@@ -651,7 +672,7 @@ void MTextDocument::ChangeSelection(
 	uint32				inAnchor,
 	uint32				inCaret)
 {
-	ChangeSelection(MSelection(inAnchor, inCaret));
+	ChangeSelection(MSelection(this, inAnchor, inCaret));
 }
 
 inline

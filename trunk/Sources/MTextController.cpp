@@ -242,7 +242,7 @@ void MTextController::DoOpenIncludeFile()
 			
 			MTextBuffer& textBuffer = doc->GetTextBuffer();
 			MTextBuffer::iterator i =
-				textBuffer.begin() + selection.GetMaxOffset(*doc);
+				textBuffer.begin() + selection.GetMaxOffset();
 			
 			if (i.GetOffset() + 2 >= textBuffer.GetSize() or
 				*i != '.' or
@@ -256,7 +256,7 @@ void MTextController::DoOpenIncludeFile()
 			while (i != textBuffer.end() and IsAlnum(*i))
 				++i;
 			
-			doc->Select(selection.GetMinOffset(*doc), i.GetOffset());
+			doc->Select(selection.GetMinOffset(), i.GetOffset());
 		}
 	}
 	

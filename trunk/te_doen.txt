@@ -2,10 +2,6 @@
 
 Moet af:
 
-- forward-deleten van laatste letter op laatste regel lukt niet
-
-- bij inlezen file zonder newline op einde wordt laatste letter afgehakt.
-
 - overnemen muisklik afhandeling van
 	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
 
@@ -20,6 +16,7 @@ Moet af:
 
 - SSH/SFTP afronden
 	- bug vissen uit 'hangen' van connectie
+	- connecten met NAS gaat mis
 
 Leuk om te hebben:
 

@@ -227,15 +227,18 @@ bool MTextView::OnButtonPressEvent(
 		mClickAnchor = selection.GetAnchor();
 	else
 		mClickAnchor = mClickCaret;
+
+	if (keyModifiers & GDK_CONTROL_MASK)
+		mClickMode = eSelectBlock;
 	
 	mCaretVisible = true;
 	
-	if (mClickMode == eSelectRegular)
+	if (mClickMode == eSelectRegular or mClickMode == eSelectBlock)
 	{
 		if (IsPointInSelection(x, y) and IsActive())
 			mClickMode = eSelectStartDrag;
 		else
-			mDocument->Select(mClickAnchor, mClickCaret);
+			mDocument->Select(mClickAnchor, mClickCaret, mClickMode == eSelectBlock);
 	}
 	else if (mClickMode == eSelectWords)
 	{
@@ -316,7 +319,15 @@ bool MTextView::ScrollToPointer(
 
 	mDocument->PositionToOffset(inX, inY, mClickCaret);
 
-	if (mClickMode == eSelectRegular)
+	if (mClickMode == eSelectBlock)
+	{
+		MSelection selection = mDocument->GetSelection();
+		uint32 al, ac, cl, cc;
+		selection.GetAnchorLineAndColumn(al, ac);
+		mDocument->PositionToLineColumn(inX, inY, cl, cc);
+		mDocument->Select(MSelection(mDocument, al, ac, cl, cc));
+	}
+	else if (mClickMode == eSelectRegular)
 	{
 		mDocument->Select(mClickAnchor, mClickCaret);
 		scrolled = ScrollToCaret();
@@ -496,8 +507,8 @@ void MTextView::DrawLine(
 	uint32 caretLine, caretColumn = 0;
 	
 	if (selection.IsEmpty() or
-		selection.GetMaxLine(*mDocument) < inLineNr or
-		selection.GetMinLine(*mDocument) > inLineNr)
+		selection.GetMaxLine() < inLineNr or
+		selection.GetMinLine() > inLineNr)
 	{
 		if (not mDrawForDragImage)
 			inDevice.DrawText(x, y);
@@ -515,63 +526,69 @@ void MTextView::DrawLine(
 	{
 		uint32 selectionStart = selection.GetAnchor();
 		uint32 selectionEnd = selection.GetCaret();
-		if (selectionStart > selectionEnd)
-			swap(selectionEnd, selectionStart);
-
-		uint32 startOffset = mDocument->LineStart(inLineNr);
-//		uint32 endOffset = mDocument->LineStart(inLineNr + 1);
-		
-//		if (not mDrawForDragImage)
-//		{
-//			if (selection.IsBlock())
-//			{
-//				
-//			}
-//			else if (selectionStart < endOffset and selectionEnd >= endOffset)
-//			{
-//				MCGContextSaver save(inContext);
-//	
-//				(void)::ATSUOffsetToPosition(textLayout,
-//					text.length(), false, &mainCaret, &secondCaret, &isSplit);
-//	
-//				CGRect s = lineRect;
-//				s.x = min(Fix2X(mainCaret.fX), Fix2X(mainCaret.fDeltaX));
-//	
-//				if (IsActive() and not mDrawForDragImage)
-//					::CGContextSetRGBFillColor(inContext, gHiliteColor.red,
-//						gHiliteColor.green, gHiliteColor.blue, gHiliteColor.alpha);
-//				else
-//					::CGContextSetRGBFillColor(inContext, gInactiveHiliteColor.red,
-//						gInactiveHiliteColor.green, gInactiveHiliteColor.blue,
-//						gInactiveHiliteColor.alpha);
-//					
-//				::CGContextFillRect(inContext, s);
-//			}
-//		}
 		
 		bool fillBefore = false;
 		bool fillAfter = false;
 		
-		if (selectionStart < startOffset)
+		if (selection.IsBlock())
+		{
+			selectionStart = mDocument->LineAndColumnToOffset(inLineNr, selection.GetMinColumn());
+			selectionEnd = mDocument->LineAndColumnToOffset(inLineNr, selection.GetMaxColumn());
+		}
+		else
+		{
+			selectionStart = selection.GetAnchor();
+			selectionEnd = selection.GetCaret();
+		}
+
+		if (selectionStart > selectionEnd)
+			swap(selectionEnd, selectionStart);
+		uint32 startOffset = mDocument->LineStart(inLineNr);
+
+		if (selectionStart < startOffset and not selection.IsBlock())
 		{
 			fillBefore = true;
 			selectionStart = 0;
 		}
 		else
 			selectionStart -= startOffset;
+
+		selectionEnd -= startOffset;
 		
 		uint32 length = text.length();
 		if (trailingNL)
 			++length;
 		
-		selectionEnd -= startOffset;
-		if (selectionEnd >= length)
+		if (selectionEnd >= length and not selection.IsBlock())
 		{
 			fillAfter = true;
 			selectionEnd = text.length();
 		}
 		
-		if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
+		if (selection.IsBlock())
+		{
+			MColor selectionColor;
+			
+			if (IsActive())
+				selectionColor = gHiliteColor;
+			else
+				selectionColor = gInactiveHiliteColor;
+		
+			MRect r = lineRect;
+			
+			uint32 c1, c2;
+			c1 = selection.GetMinColumn();
+			c2 = selection.GetMaxColumn();
+			
+			r.x += indent + c1 * mCharWidth;
+			r.width = (c2 - c1) * mCharWidth;
+
+			inDevice.Save();
+			inDevice.SetForeColor(selectionColor);
+			inDevice.FillRect(r);
+			inDevice.Restore();
+		}
+		else if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
 		{
 			MColor selectionColor;
 			
@@ -598,6 +615,7 @@ void MTextView::DrawLine(
 				inDevice.Restore();
 			}
 		}
+
 		inDevice.DrawText(x, y);
 	}
 	
@@ -706,15 +724,17 @@ bool MTextView::OnScrollEvent(
 	switch (inEvent->direction)
 	{
 		case GDK_SCROLL_UP:
-			ScrollMessage(kScrollLineDown);
+			for (int i = 0; i < 3; ++i)
+				ScrollMessage(kScrollLineDown);
 			break; 
 
 		case GDK_SCROLL_DOWN:
-			ScrollMessage(kScrollLineUp);
+			for (int i = 0; i < 3; ++i)
+				ScrollMessage(kScrollLineUp);
 			break; 
 
 		case GDK_SCROLL_LEFT:
-			break; 
+			break;
 
 		case GDK_SCROLL_RIGHT:
 			break; 
@@ -1114,7 +1134,7 @@ void MTextView::ScrollToSelection(
 		
 	if (not inForceCenter)
 	{
-		line = selection.GetMinLine(*mDocument);
+		line = selection.GetMinLine();
 		y = line * mLineHeight;
 		
 		if (y < mImageOriginY)
@@ -1123,7 +1143,7 @@ void MTextView::ScrollToSelection(
 			
 	if (not inForceCenter)
 	{
-		line = selection.GetMaxLine(*mDocument);
+		line = selection.GetMaxLine();
 		y = (line + 1) * mLineHeight;
 	 
 		if (y > mImageOriginY + bounds.height)
@@ -1135,7 +1155,7 @@ void MTextView::ScrollToSelection(
 		uint32 midLine =
 			static_cast<uint32>(bounds.height / (3 * mLineHeight));
 
-		line = selection.GetMinLine(*mDocument);
+		line = selection.GetMinLine();
 		if (line < midLine)
 			line = 0;
 		else
@@ -1156,8 +1176,8 @@ void MTextView::ScrollToSelection(
 //	{
 //		int32 ax, cx;
 //		uint32 line;
-//		mDocument->OffsetToPosition(selection.GetMinOffset(*mDocument), line, ax);
-//		mDocument->OffsetToPosition(selection.GetMaxOffset(*mDocument), line, cx);
+//		mDocument->OffsetToPosition(selection.GetMinOffset(), line, ax);
+//		mDocument->OffsetToPosition(selection.GetMaxOffset(), line, cx);
 //
 //		int32 center = (ax + cx) / 2;
 //
@@ -1455,63 +1475,10 @@ bool MTextView::IsPointInSelection(
 	int32			inX,
 	int32			inY)
 {
-	bool result = false;
-	if (mDocument != nil and inX > kLeftMargin)
-	{
-		MSelection selection(mDocument->GetSelection());
-		
-		if (not selection.IsEmpty())
-		{
-			uint32 caret;
-//			inX -= kLeftMargin;
-//			inWhere.y += bounds.y;
-			
-			mDocument->PositionToOffset(inX, inY, caret);
-		
-			if (caret >= selection.GetMinOffset(*mDocument) and
-				caret <= selection.GetMaxOffset(*mDocument))
-			{
-				// we're not there yet. Make sure we didn't click below the selection
-				
-				uint32 line = mDocument->OffsetToLine(caret);
-				
-				int32 y = line * mLineHeight;
-				
-				result = inY >= y and inY <= y + mLineHeight;
-			}
-		}
-	}
-	
-	return result;
+	MRect bounds;
+	mDocument->GetSelectionBounds(bounds);
+	return bounds.ContainsPoint(inX, inY);
 }
-
-//RgnHandle MTextView::SelectionToRegion()
-//{
-//	MRegion rgn;
-//	
-//	if (mDocument != nil)
-//	{
-//		MSelection selection = mDocument->GetSelection();
-//		
-//		MRect bounds;
-//		GetBounds(bounds);
-//		bounds.x += kLeftMargin;
-//		
-//		MRect r = bounds;
-//		r.y += selection.GetMinLine(*mDocument) * mLineHeight - bounds.y;
-//		r.height = mLineHeight * selection.CountLines(*mDocument);
-//		
-//		r = ::CGRectIntersection(r, bounds);
-//		
-//		HIPoint p = { 0 };
-//		ConvertToGlobal(p);
-//		
-//		r = ::CGRectOffset(r, p.x, p.y);
-//		rgn.Set(r);
-//	}
-//	
-//	return rgn.Release();
-//}
 
 void MTextView::DrawDragHilite(
 	MDevice&		inDevice)
@@ -1545,9 +1512,13 @@ void MTextView::StylesChanged()
 		mDocument->GetStyledText(0, dev, txt);
 		mDescent = dev.GetDescent();
 		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
+		mCharWidth = dev.GetStringWidth("          ") / 10;
 	}
 	else
-		mLineHeight = 10;
+	{
+		mLineHeight = 10;	// reasonable guess
+		mCharWidth = 6;
+	}
 }
 
 void MTextView::DocumentClosed()

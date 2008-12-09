@@ -124,7 +124,7 @@ class MTextBuffer
 	};
 	
 	class iterator : public boost::iterator_facade<iterator, char,
-		boost::random_access_traversal_tag, ref, uint32>
+		boost::random_access_traversal_tag, ref, int32>
 	{
 	  public:
 						iterator() : mBuffer(nil), mOffset(0) {}

@@ -342,7 +342,7 @@ void MEditWindow::SelectionChanged(
 		MTextDocument* doc = dynamic_cast<MTextDocument*>(GetDocument());
 		THROW_IF_NIL(doc);
 		
-		inNewSelection.GetCaretLineAndColumn(*doc, line, column);
+		inNewSelection.GetCaretLineAndColumn(line, column);
 	
 		str << line + 1 << ',' << column + 1;
 	}

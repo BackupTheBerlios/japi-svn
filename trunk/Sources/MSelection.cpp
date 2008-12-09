@@ -77,43 +77,65 @@ MSelection::Pos::operator!=(
 	return mOffset != inOther.mOffset;
 }
 
-MSelection::MSelection()
-	: mIsBlock(false)
+MSelection::MSelection(
+	MTextDocument*		inDoc)
+	: mDocument(inDoc)
+	, mIsBlock(false)
 {
 }
 
 MSelection::MSelection(
-	uint32		inAnchor,
-	uint32		inCaret)
-	: mAnchor(inAnchor)
+	const MSelection&	inSelection)
+	: mDocument(inSelection.mDocument)
+	, mAnchor(inSelection.mAnchor)
+	, mCaret(inSelection.mCaret)
+	, mIsBlock(inSelection.mIsBlock)
+{
+}
+
+MSelection MSelection::operator=(
+	const MSelection&	rhs)
+{
+	if (this != &rhs)
+	{
+		mDocument = rhs.mDocument;
+		mAnchor = rhs.mAnchor;
+		mCaret = rhs.mCaret;
+		mIsBlock = rhs.mIsBlock;
+	}
+	
+	return *this;
+}
+
+MSelection::MSelection(
+	MTextDocument*	mDocumentument,
+	uint32			inAnchor,
+	uint32			inCaret)
+	: mDocument(mDocumentument)
+	, mAnchor(inAnchor)
 	, mCaret(inCaret)
 	, mIsBlock(false)
 {
 }
 
 MSelection::MSelection(
-	uint32		inAnchorLine,
-	uint32		inAnchorColumn,
-	uint32		inCaretLine,
-	uint32		inCaretColumn)
-	: mAnchor(inAnchorLine, inAnchorColumn)
+	MTextDocument*	mDocumentument,
+	uint32			inAnchorLine,
+	uint32			inAnchorColumn,
+	uint32			inCaretLine,
+	uint32			inCaretColumn)
+	: mDocument(mDocumentument)
+	, mAnchor(inAnchorLine, inAnchorColumn)
 	, mCaret(inCaretLine, inCaretColumn)
 	, mIsBlock(true)
 {
-}
-
-MSelection::MSelection(
-	const MSelection&	inSelection)
-{
-	mAnchor = inSelection.mAnchor;
-	mCaret = inSelection.mCaret;
-	mIsBlock = inSelection.mIsBlock;
 }
 
 bool MSelection::operator==(
 	const MSelection&	inOther) const
 {
 	return
+		mDocument == inOther.mDocument and
 		mIsBlock == inOther.mIsBlock and
 		mAnchor == inOther.mAnchor and
 		mCaret == inOther.mCaret;
@@ -123,6 +145,7 @@ bool MSelection::operator!=(
 	const MSelection&	inOther) const
 {
 	return
+		mDocument != inOther.mDocument or
 		mIsBlock != inOther.mIsBlock or
 		mAnchor != inOther.mAnchor or
 		mCaret != inOther.mCaret;
@@ -136,6 +159,12 @@ bool MSelection::IsBlock() const
 bool MSelection::IsEmpty() const
 {
 	return mAnchor == mCaret;
+}
+
+void MSelection::SetDocument(
+	MTextDocument*		inDocument)
+{
+	mDocument = inDocument;
 }
 
 void MSelection::Set(
@@ -162,8 +191,10 @@ void MSelection::Set(
 
 uint32 MSelection::GetAnchor() const
 {
-	assert(not mIsBlock);
-	return mAnchor.mOffset;
+	uint32 result = mAnchor.mOffset;
+	if (mIsBlock)
+		result = mDocument->LineAndColumnToOffset(mAnchor.mLocation.line, mAnchor.mLocation.column);
+	return result;
 }
 
 void MSelection::SetAnchor(
@@ -175,8 +206,10 @@ void MSelection::SetAnchor(
 
 uint32 MSelection::GetCaret() const
 {
-	assert(not mIsBlock);
-	return mCaret.mOffset;
+	uint32 result = mCaret.mOffset;
+	if (mIsBlock)
+		result = mDocument->LineAndColumnToOffset(mCaret.mLocation.line, mCaret.mLocation.column);
+	return result;
 }
 
 void MSelection::SetCaret(
@@ -187,27 +220,38 @@ void MSelection::SetCaret(
 }
 
 void MSelection::GetAnchorLineAndColumn(
-	MTextDocument&	inDoc,
 	uint32&			outLine,
 	uint32&			outColumn) const
 {
-	assert(not mIsBlock);
-	outLine = inDoc.OffsetToLine(mAnchor.mOffset);
-	outColumn = inDoc.OffsetToColumn(mAnchor.mOffset);
+	if (mIsBlock)
+	{
+		outLine = mAnchor.mLocation.line;
+		outColumn = mAnchor.mLocation.column;
+	}
+	else
+	{
+		outLine = mDocument->OffsetToLine(mAnchor.mOffset);
+		outColumn = mDocument->OffsetToColumn(mAnchor.mOffset);
+	}
 }
 
 void MSelection::GetCaretLineAndColumn(
-	MTextDocument&	inDoc,
 	uint32&			outLine,
 	uint32&			outColumn) const
 {
-	assert(not mIsBlock);
-	outLine = inDoc.OffsetToLine(mCaret.mOffset);
-	outColumn = inDoc.OffsetToColumn(mCaret.mOffset);
+	if (mIsBlock)
+	{
+		outLine = mCaret.mLocation.line;
+		outColumn = mCaret.mLocation.column;
+	}
+	else
+	{
+		outLine = mDocument->OffsetToLine(mCaret.mOffset);
+		outColumn = mDocument->OffsetToColumn(mCaret.mOffset);
+	}
 }
 
-uint32 MSelection::GetMinLine(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMinLine() const
 {
 	uint32 result;
 
@@ -223,14 +267,13 @@ uint32 MSelection::GetMinLine(
 		if (mCaret.mOffset < offset)
 			offset = mCaret.mOffset;
 		
-		result = inDoc.OffsetToLine(offset);
+		result = mDocument->OffsetToLine(offset);
 	}
 
 	return result;
 }
 
-uint32 MSelection::GetMaxLine(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMaxLine() const
 {
 	uint32 result;
 
@@ -246,16 +289,15 @@ uint32 MSelection::GetMaxLine(
 		if (mCaret.mOffset > offset)
 			offset = mCaret.mOffset;
 		
-		result = inDoc.OffsetToLine(offset);
-		if (mAnchor != mCaret and offset == inDoc.LineStart(result) and result > 0)
+		result = mDocument->OffsetToLine(offset);
+		if (mAnchor != mCaret and offset == mDocument->LineStart(result) and result > 0)
 			--result;
 	}
 
 	return result;
 }
 
-uint32 MSelection::GetMinColumn(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMinColumn() const
 {
 	uint32 result;
 
@@ -268,8 +310,8 @@ uint32 MSelection::GetMinColumn(
 	else
 	{
 		uint32 line, ac, cc;
-		GetAnchorLineAndColumn(inDoc, line, ac);
-		GetCaretLineAndColumn(inDoc, line, cc);
+		GetAnchorLineAndColumn(line, ac);
+		GetCaretLineAndColumn(line, cc);
 		
 		result = ac;
 		if (cc < result)
@@ -279,8 +321,7 @@ uint32 MSelection::GetMinColumn(
 	return result;
 }
 
-uint32 MSelection::GetMaxColumn(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMaxColumn() const
 {
 	uint32 result;
 
@@ -293,8 +334,8 @@ uint32 MSelection::GetMaxColumn(
 	else
 	{
 		uint32 line, ac, cc;
-		GetAnchorLineAndColumn(inDoc, line, ac);
-		GetCaretLineAndColumn(inDoc, line, cc);
+		GetAnchorLineAndColumn(line, ac);
+		GetCaretLineAndColumn(line, cc);
 		
 		result = ac;
 		if (cc > result)
@@ -304,18 +345,17 @@ uint32 MSelection::GetMaxColumn(
 	return result;
 }
 
-uint32 MSelection::GetMinOffset(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMinOffset() const
 {
 	uint32 result;
 
 	if (mIsBlock)
 	{
-		uint32 line = GetMinLine(inDoc);
-		uint32 column = GetMinColumn(inDoc);
-		result = inDoc.LineStart(line) + column;
-		if (result >= inDoc.LineStart(line + 1))
-			result = inDoc.LineStart(line + 1) - 1;
+		uint32 line = GetMinLine();
+		uint32 column = GetMinColumn();
+		result = mDocument->LineStart(line) + column;
+		if (result >= mDocument->LineStart(line + 1))
+			result = mDocument->LineStart(line + 1) - 1;
 	}
 	else
 	{
@@ -327,18 +367,17 @@ uint32 MSelection::GetMinOffset(
 	return result;
 }
 
-uint32 MSelection::GetMaxOffset(
-	MTextDocument&	inDoc) const
+uint32 MSelection::GetMaxOffset() const
 {
 	uint32 result;
 
 	if (mIsBlock)
 	{
-		uint32 line = GetMaxLine(inDoc);
-		uint32 column = GetMaxColumn(inDoc);
-		result = inDoc.LineStart(line) + column;
-		if (result >= inDoc.LineStart(line + 1))
-			result = inDoc.LineStart(line + 1) - 1;
+		uint32 line = GetMaxLine();
+		uint32 column = GetMaxColumn();
+		result = mDocument->LineStart(line) + column;
+		if (result >= mDocument->LineStart(line + 1))
+			result = mDocument->LineStart(line + 1) - 1;
 	}
 	else
 	{
@@ -350,44 +389,42 @@ uint32 MSelection::GetMaxOffset(
 	return result;
 }
 
-MSelection MSelection::SelectLines(
-	MTextDocument&	inDoc) const
+MSelection MSelection::SelectLines() const
 {
-	MSelection result;
+	MSelection result(*this);
 	
-	uint32 line = GetMinLine(inDoc);
-	result.SetAnchor(inDoc.LineStart(line));
+	uint32 line = GetMinLine();
+	result.SetAnchor(mDocument->LineStart(line));
 	
-	line = GetMaxLine(inDoc);
-	result.SetCaret(inDoc.LineStart(line + 1));
+	line = GetMaxLine();
+	result.SetCaret(mDocument->LineStart(line + 1));
 	
 	return result;
 }
 
-uint32 MSelection::CountLines(
-	MTextDocument&	inDoc) const
+uint32 MSelection::CountLines() const
 {
-	return GetMaxLine(inDoc) - GetMinLine(inDoc) + 1;
+	return GetMaxLine() - GetMinLine() + 1;
 }
 
-uint32 MSelection::GetMinOffset() const
-{
-	if (IsBlock())
-		THROW(("parameter error"));
-	
-	uint32 result = mAnchor.mOffset;
-	if (mCaret.mOffset < result)
-		result = mCaret.mOffset;
-	return result;
-}
-
-uint32 MSelection::GetMaxOffset() const
-{
-	if (IsBlock())
-		THROW(("parameter error"));
-
-	uint32 result = mAnchor.mOffset;
-	if (mCaret.mOffset > result)
-		result = mCaret.mOffset;
-	return result;
-}
+//uint32 MSelection::GetMinOffset() const
+//{
+//	if (IsBlock())
+//		THROW(("parameter error"));
+//	
+//	uint32 result = mAnchor.mOffset;
+//	if (mCaret.mOffset < result)
+//		result = mCaret.mOffset;
+//	return result;
+//}
+//
+//uint32 MSelection::GetMaxOffset() const
+//{
+//	if (IsBlock())
+//		THROW(("parameter error"));
+//
+//	uint32 result = mAnchor.mOffset;
+//	if (mCaret.mOffset > result)
+//		result = mCaret.mOffset;
+//	return result;
+//}
