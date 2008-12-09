@@ -975,6 +975,9 @@ void MTextDocument::DeleteSelectedText()
 			uint32 end = LineColumnToOffsetBreakingTabs(line, maxColumn, false);
 			
 			Delete(start, end - start);
+			
+			if (line == minLine)
+				anchor = start;
 		}
 
 		ChangeSelection(MSelection(this, anchor, anchor));
@@ -2102,6 +2105,7 @@ void MTextDocument::ChangeSelection(
 		}
 	}
 
+	mText.SetSelectionAfter(mSelection);
 	SendSelectionChangedEvent();
 }
 
@@ -2318,8 +2322,7 @@ void MTextDocument::StartAction(
 
 void MTextDocument::FinishAction()
 {
-	if (mCurrentAction == kTypeAction)
-		mText.SetSelectionAfter(mSelection);
+	mText.ActionFinished();
 
 	mLastAction = mCurrentAction;
 	mCurrentAction = kNoAction;

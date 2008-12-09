@@ -520,6 +520,7 @@ MTextBuffer::MTextBuffer()
 	, mPhysicalLength(0)
 	, mLogicalLength(0)
 	, mGapOffset(0)
+	, mActionFinished(true)
 {
 	string s = Preferences::GetString("default encoding", "utf-8");
 	if (s == "utf-16 be")
@@ -1312,6 +1313,13 @@ MTextBuffer::StartAction(
 		delete mUndoneActions.top();
 		mUndoneActions.pop();
 	}
+
+	mActionFinished = false;
+}
+
+void MTextBuffer::ActionFinished()
+{
+	mActionFinished = true;
 }
 
 void
@@ -1335,9 +1343,8 @@ void
 MTextBuffer::SetSelectionAfter(
 	const MSelection&	inSelection)
 {
-	if (mDoneActions.size() == 0)
-		THROW(("No Action defined"));
-	mDoneActions.top()->SetSelectionAfter(inSelection);
+	if (not mActionFinished and mDoneActions.size() > 0 and mUndoneActions.size() == 0)
+		mDoneActions.top()->SetSelectionAfter(inSelection);
 }
 
 MSelection
@@ -1388,6 +1395,8 @@ MTextBuffer::Undo(
 	a->Undo(outSelection, outChangeOffset, outChangeLength, outDelta);
 	mDoneActions.pop();
 	mUndoneActions.push(a);
+	
+	mActionFinished = true;
 }
 
 void

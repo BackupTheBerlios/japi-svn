@@ -276,6 +276,8 @@ class MTextBuffer
 					const std::string&	inAction,
 					const MSelection&	inSelection);
 
+	void		ActionFinished();
+
 	void		SetSelectionBefore(
 					const MSelection&	inSelection);
 
@@ -361,6 +363,7 @@ class MTextBuffer
 	uint32			mPhysicalLength;
 	uint32			mLogicalLength;
 	uint32			mGapOffset;
+	bool			mActionFinished;
 	ActionStack		mDoneActions;
 	ActionStack		mUndoneActions;
 	MEncoding		mEncoding;
