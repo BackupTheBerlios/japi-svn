@@ -81,7 +81,8 @@ const double
 
 MTextView::MTextView(
 	GtkWidget*		inTextViewWidget,
-	GtkWidget*		inVScrollBar)
+	GtkWidget*		inVScrollBar,
+	GtkWidget*		inHScrollBar)
 	: MView(inTextViewWidget, true, true)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
@@ -102,12 +103,14 @@ MTextView::MTextView(
 	, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
 	
 	, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
+	, slOnHScrollBarValueChanged(this, &MTextView::OnHScrollBarValueChanged)
 	
 	, slOnEvent(this, &MTextView::OnEvent)
 	
 	, mController(nil)
 	, mDocument(nil)
 	, mVScrollBar(inVScrollBar)
+	, mHScrollBar(inHScrollBar)
 	, mLineHeight(10)
 	, mCaretVisible(false)
 	, mDrawForDragImage(false)
@@ -131,6 +134,7 @@ MTextView::MTextView(
 	
 //	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
 	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
+	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
 
 	slOnEvent.Connect(GetGtkWidget(), "event");
 
@@ -443,8 +447,11 @@ void MTextView::DrawLine(
 	int32 indent = mDocument->GetLineIndentWidth(inLineNr);
 
 	MDeviceContextSaver save(inDevice);
+
+	inDevice.SetOrigin(-mImageOriginX, 0);
+
 	int32 y = lineRect.y;
-	int32 x = lineRect.x + indent - mImageOriginX;
+	int32 x = lineRect.x + indent;
 
 	MSelection selection = mDocument->GetSelection();
 
@@ -643,13 +650,20 @@ void MTextView::OnVScrollBarValueChanged()
 		static_cast<int32>(gtk_range_get_value(GTK_RANGE(mVScrollBar))));
 }
 
+void MTextView::OnHScrollBarValueChanged()
+{
+	DoScrollTo(
+		static_cast<int32>(gtk_range_get_value(GTK_RANGE(mHScrollBar))),
+		mImageOriginY);
+}
+
 void MTextView::AdjustScrollBars()
 {
 	uint32 width = 10, height = 10;
 	
 	if (mDocument != nil)
 	{
-		width = 1000;
+		width = mDocument->GuessMaxWidth();
 		height = mDocument->CountLines() * mLineHeight;
 	}
 	
@@ -670,6 +684,27 @@ void MTextView::AdjustScrollBars()
 		adj->value = mImageOriginY;
 		
 		gtk_adjustment_changed(adj);
+	}
+	
+	if (width == 0)
+		gtk_widget_hide(mHScrollBar);
+	else
+	{
+		gtk_widget_show(mHScrollBar);
+	
+		adj = gtk_range_get_adjustment(GTK_RANGE(mHScrollBar));
+		
+		if (adj != nil)
+		{
+			adj->lower = 0;
+			adj->upper = width + (bounds.width / 2);
+			adj->step_increment = mCharWidth;
+			adj->page_increment = bounds.width / 2;
+			adj->page_size = bounds.width;
+			adj->value = mImageOriginX;
+			
+			gtk_adjustment_changed(adj);
+		}
 	}
 }
 
@@ -699,6 +734,7 @@ void MTextView::DoScrollTo(
 	mImageOriginY = inY;
 	
 	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
+	gtk_range_set_value(GTK_RANGE(mHScrollBar), inX);
 
 //	UpdateNow();
 }
@@ -830,10 +866,11 @@ MRect MTextView::GetLineRect(
 	MRect result;
 	
 	GetBounds(result);
-	result.y = inLineNr * mLineHeight - mImageOriginY;
-	result.height = mLineHeight;
 
 	result.x = 0;
+	result.y = inLineNr * mLineHeight - mImageOriginY;
+	result.height = mLineHeight;
+	result.width += mImageOriginX;
 	
 	return result;
 }

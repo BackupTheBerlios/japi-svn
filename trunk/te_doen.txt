@@ -35,7 +35,6 @@ Leuk om te hebben:
 - python language plugin
 - fortran language plugin
 
-- vierkante selectie
 - regelnummer vlak
 
 - rewrap, met kolom breedte, quoted en al

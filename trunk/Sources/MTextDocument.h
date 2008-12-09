@@ -262,6 +262,8 @@ class MTextDocument : public MDocument
 	uint32				OffsetToLine(
 							uint32			inOffset) const;
 
+	uint32				GuessMaxWidth() const;
+
 	uint32				LineStart(
 							uint32			inLine) const;
 							// line end is the offset before the EOLN char, if any

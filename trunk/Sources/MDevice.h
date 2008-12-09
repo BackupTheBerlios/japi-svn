@@ -61,6 +61,10 @@ class MDevice
 	
 	void			Restore();
 
+	void			SetOrigin(
+						int32				inX,
+						int32				inY);
+
 	void			SetFont(
 						const std::string&	inFont);
 

@@ -213,7 +213,7 @@ MEditWindow::MEditWindow()
 	
 	GtkShadowType shadow_type;
 	gtk_widget_style_get(statusBar, "shadow_type", &shadow_type, nil);
-
+	
 	// selection status
 
 	GtkWidget* frame = gtk_frame_new(nil);
@@ -244,12 +244,21 @@ MEditWindow::MEditWindow()
 	gtk_box_pack_start(GTK_BOX(statusBar), frame, true, true, 0);
 	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 2);	
 	mParsePopup->SetController(mController, true);
+
+	// hscrollbar
+	GtkWidget* hScrollBar = gtk_hscrollbar_new(nil);
+	frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	gtk_container_add(GTK_CONTAINER(frame), hScrollBar);
+	gtk_box_pack_end(GTK_BOX(statusBar), frame, false, false, 0);
+//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 3);
+	gtk_widget_set_size_request(hScrollBar, 150, -1);
 	
 	gtk_widget_show_all(statusBar);
 	
 	// text view
 	
-    mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'));
+    mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'), hScrollBar);
 	textController->AddTextView(mTextView);
 	
 	ConnectChildSignals();

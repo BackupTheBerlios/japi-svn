@@ -51,7 +51,8 @@ class MTextView : public MView
   public:
 						MTextView(
 							GtkWidget*			inTextViewWidget,
-							GtkWidget*			inVScrollBar);
+							GtkWidget*			inVScrollBar,
+							GtkWidget*			inHScrollBar);
 						
 	virtual				~MTextView();
 	
@@ -216,6 +217,8 @@ class MTextView : public MView
 	bool				OnRetrieveSurrounding();
 
 	void				OnVScrollBarValueChanged();
+
+	void				OnHScrollBarValueChanged();
 	
 	MSlot<bool(gchar*)>						slOnCommit;
 	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
@@ -224,6 +227,7 @@ class MTextView : public MView
 	MSlot<bool()>							slOnPreeditEnd;
 	MSlot<bool()>							slOnRetrieveSurrounding;
 	MSlot<void()>							slOnVScrollBarValueChanged;
+	MSlot<void()>							slOnHScrollBarValueChanged;
 
 	bool				OnEvent(
 							GdkEvent*		inEvent);
@@ -254,6 +258,7 @@ class MTextView : public MView
 	MController*		mController;
 	MTextDocument*		mDocument;
 	GtkWidget*			mVScrollBar;
+	GtkWidget*			mHScrollBar;
 	int32				mLineHeight;
 	int32				mCharWidth;		// for block selection drawing
 	int32				mDescent;

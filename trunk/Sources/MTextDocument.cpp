@@ -2305,6 +2305,29 @@ uint32 MTextDocument::LineAndColumnToOffset(
 	return text.GetOffset();
 }
 
+// ---------------------------------------------------------------------------
+//	GuessMaxWidth
+
+uint32 MTextDocument::GuessMaxWidth() const
+{
+	uint32 maxWidth = 0;
+
+	if (not mSoftwrap)
+	{
+		uint32 offset = 0;
+		for (uint32 line = 1; line < mLineInfo.size(); ++line)
+		{
+			if (maxWidth < mLineInfo[line].start - offset)
+				maxWidth = mLineInfo[line].start - offset;
+			offset = mLineInfo[line].start;
+		}
+		
+		maxWidth *= mCharWidth;
+	}
+	
+	return maxWidth;
+}
+
 // -----------------------------------------------------------------------------
 // StartAction
 

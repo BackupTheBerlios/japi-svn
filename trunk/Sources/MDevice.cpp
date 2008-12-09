@@ -56,6 +56,10 @@ class MDeviceImp
 	
 	virtual void			Restore();
 
+	virtual void			SetOrigin(
+								int32				inX,
+								int32				inY);
+
 	virtual void			SetFont(
 								const string&		inFont);
 
@@ -210,6 +214,12 @@ void MDeviceImp::Save()
 }
 
 void MDeviceImp::Restore()
+{
+}
+
+void MDeviceImp::SetOrigin(
+	int32		inX,
+	int32		inY)
 {
 }
 
@@ -564,6 +574,10 @@ class MCairoDeviceImp : public MDeviceImp
 	
 	virtual void			Restore();
 
+	virtual void			SetOrigin(
+								int32				inX,
+								int32				inY);
+
 	virtual void			SetForeColor(
 								MColor				inColor);
 
@@ -656,6 +670,13 @@ void MCairoDeviceImp::Save()
 void MCairoDeviceImp::Restore()
 {
 	cairo_restore(mContext);
+}
+
+void MCairoDeviceImp::SetOrigin(
+	int32				inX,
+	int32				inY)
+{
+	cairo_translate(mContext, inX, inY);
 }
 
 void MCairoDeviceImp::SetForeColor(
@@ -928,6 +949,13 @@ void MDevice::Save()
 void MDevice::Restore()
 {
 	mImpl->Restore();
+}
+
+void MDevice::SetOrigin(
+	int32				inX,
+	int32				inY)
+{
+	mImpl->SetOrigin(inX, inY);
 }
 
 void MDevice::SetFont(
