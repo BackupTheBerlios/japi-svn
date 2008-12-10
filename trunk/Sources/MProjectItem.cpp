@@ -307,7 +307,7 @@ void MProjectFile::UpdatePaths(
 void MProjectFile::SetOutOfDate(
 	bool			inIsOutOfDate)
 {
-	if (mIsOutOfDate != inIsOutOfDate)
+	if (IsCompilable() and mIsOutOfDate != inIsOutOfDate)
 	{
 		mIsOutOfDate = inIsOutOfDate;
 		eStatusChanged(this);

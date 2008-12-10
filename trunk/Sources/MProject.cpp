@@ -78,12 +78,7 @@ const string
 	kl("-l"),
 	kL("-L");
 
-}
-
-// ---------------------------------------------------------------------------
-//	MProjectTarget
-
-MTargetCPU MProjectTarget::GetNativeCPU()
+MTargetCPU GetNativeCPU()
 {
 	MTargetCPU arch;
 #if defined(__amd64)
@@ -98,6 +93,8 @@ MTargetCPU MProjectTarget::GetNativeCPU()
 #	error("Undefined processor")
 #endif
 	return arch;
+}
+
 }
 
 #pragma mark -
@@ -122,9 +119,9 @@ MProject::MProject(
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile->GetPath())
 	, mProjectDir(mProjectFile.branch_path())
-	, mCurrentTarget(nil)
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
+	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
 	, mStdErrWindow(nil)
 	, mCurrentJob(nil)
 {
@@ -143,9 +140,6 @@ MProject::MProject(
 
 MProject::~MProject()
 {
-	for (vector<MProjectTarget*>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
-		delete *target;
-
 	if (mStdErrWindow != nil)
 		mStdErrWindow->Close();
 }
@@ -326,8 +320,7 @@ void MProject::ReadPaths(
 void MProject::ReadOptions(
 	xmlNodePtr			inData,
 	const char*			inOptionName,
-	MProjectTarget*		inTarget,
-	AddOptionProc		inAddOptionProc)
+	vector<string>&		outOptions)
 {
 	for (xmlNodePtr node = inData->children; node != nil; node = node->next)
 	{
@@ -338,7 +331,7 @@ void MProject::ReadOptions(
 		if (option == nil)
 			THROW(("invalid option in project"));
 		
-		(inTarget->*inAddOptionProc)(option);
+		outOptions.push_back(option);
 	}
 }
 
@@ -576,9 +569,7 @@ void MProject::Read(
 				THROW(("Invalid target, missing kind"));
 			
 			MTargetKind kind;
-			if (p == "Application Package")
-				kind = eTargetApplicationPackage;
-			else if (p == "Shared Library")
+			if (p == "Shared Library")
 				kind = eTargetSharedLibrary;
 			else if (p == "Static Library")
 				kind = eTargetStaticLibrary;
@@ -607,37 +598,38 @@ void MProject::Read(
 					THROW(("Unsupported target arch"));
 			}
 			
-			auto_ptr<MProjectTarget> target(new MProjectTarget(linkTarget, name, kind, arch));
+			MProjectTarget target;
+			target.mLinkTarget = linkTarget;
+			target.mName = name;
+			target.mKind = kind;
+			target.mTargetCPU = arch;
+			target.mBuildFlags = 0;
 			
 			p = targetNode.property("debug");
 			if (p == "true")
-				target->SetDebugFlag(true);
+				target.mBuildFlags |= eBF_debug;
+			
+			p = targetNode.property("pic");
+			if (p == "true")
+				target.mBuildFlags |= eBF_pic;
+			
+			p = targetNode.property("profile");
+			if (p == "true")
+				target.mBuildFlags |= eBF_profile;
 			
 			for (XMLNode::iterator node = targetNode.begin(); node != targetNode.end(); ++node)
 			{
-				if (node->name() == "bundle")
-				{
-					for (XMLNode::iterator d = node->begin(); d != node->end(); ++d)
-					{
-						if (d->name() == "name")
-							target->SetBundleName(d->text());
-						else if (d->name() == "creator")
-							target->SetCreator(d->text());
-						else if (d->name() == "type")
-							target->SetType(d->text());
-					}
-				}
-				else if (node->name() == "defines")
-					ReadOptions(*node, "define", target.get(), &MProjectTarget::AddDefine);
+				if (node->name() == "defines")
+					ReadOptions(*node, "define", target.mDefines);
 				else if (node->name() == "cflags")
-					ReadOptions(*node, "cflag", target.get(), &MProjectTarget::AddCFlag);
+					ReadOptions(*node, "cflag", target.mCFlags);
 				else if (node->name() == "ldflags")
-					ReadOptions(*node, "ldflag", target.get(), &MProjectTarget::AddLDFlag);
+					ReadOptions(*node, "ldflag", target.mLDFlags);
 				else if (node->name() == "warnings")
-					ReadOptions(*node, "warning", target.get(), &MProjectTarget::AddWarning);
+					ReadOptions(*node, "warning", target.mWarnings);
 			}
 			
-			mTargets.push_back(target.release());
+			mTargets.push_back(target);
 		}
 	}
 	
@@ -771,7 +763,7 @@ void MProject::WriteTarget(
 	// <target>
 	THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "target"));
 	
-	switch (inTarget.GetKind())
+	switch (inTarget.mKind)
 	{
 		case eTargetExecutable:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "kind",
@@ -788,16 +780,11 @@ void MProject::WriteTarget(
 				BAD_CAST "Shared Library"));
 			break;
 		
-		case eTargetApplicationPackage:
-			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "kind",
-				BAD_CAST "Application Package"));
-			break;
-		
 		default:
 			break;
 	}
 		
-	switch (inTarget.GetTargetCPU())
+	switch (inTarget.mTargetCPU)
 	{
 		case eCPU_PowerPC_32:
 			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "arch", BAD_CAST "ppc"));
@@ -820,43 +807,24 @@ void MProject::WriteTarget(
 	}
 	
 	THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "name",
-		BAD_CAST inTarget.GetName().c_str()));
+		BAD_CAST inTarget.mName.c_str()));
 	
 	THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "linkTarget",
-		BAD_CAST inTarget.GetLinkTarget().c_str()));
+		BAD_CAST inTarget.mLinkTarget.c_str()));
 
-	if (inTarget.GetDebugFlag())
+	if (inTarget.mBuildFlags & eBF_debug)
 		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "debug", BAD_CAST "true"));
 	
-//	if (inTarget.GetBundleName().length() > 0)
-//	{
-//		// <bundle>
-//		
-//		THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST "bundle"));
-//		
-//		THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "name",
-//			BAD_CAST inTarget.GetBundleName().c_str()));
-//
-//		if (inTarget.GetType().length() == 4)
-//		{
-//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "type",
-//				BAD_CAST inTarget.GetType().c_str()));
-//		}
-//
-//		if (inTarget.GetCreator().length() == 4)
-//		{
-//			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "creator",
-//				BAD_CAST inTarget.GetCreator().c_str()));
-//		}
-//		
-//		// </bundle>
-//		THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
-//	}
+	if (inTarget.mBuildFlags & eBF_profile)
+		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "profile", BAD_CAST "true"));
 	
-	WriteOptions(inWriter, "defines", "define", inTarget.GetDefines());
-	WriteOptions(inWriter, "cflags", "cflag", inTarget.GetCFlags());
-	WriteOptions(inWriter, "ldflags", "ldflag", inTarget.GetLDFlags());
-	WriteOptions(inWriter, "warnings", "warning", inTarget.GetWarnings());
+	if (inTarget.mBuildFlags & eBF_pic)
+		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "pic", BAD_CAST "true"));
+	
+	WriteOptions(inWriter, "defines", "define", inTarget.mDefines);
+	WriteOptions(inWriter, "cflags", "cflag", inTarget.mCFlags);
+	WriteOptions(inWriter, "ldflags", "ldflag", inTarget.mLDFlags);
+	WriteOptions(inWriter, "warnings", "warning", inTarget.mWarnings);
 	
 	// </target>
 	THROW_IF_XML_ERR(xmlTextWriterEndElement(inWriter));
@@ -962,8 +930,8 @@ void MProject::WriteFile(
 		// <targets>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "targets"));
 
-		for (vector<MProjectTarget*>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
-			WriteTarget(writer, **target);
+		for (vector<MProjectTarget>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
+			WriteTarget(writer, *target);
 		
 		// </targets>
 		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
@@ -1174,7 +1142,7 @@ void MProject::CheckDataDir()
 	else if (not is_directory(mProjectDataDir))
 		THROW(("Project data dir is not valid"));
 	
-	mObjectDir = mProjectDataDir / (mCurrentTarget->GetName() + "_Object");
+	mObjectDir = mProjectDataDir / (mTargets[mCurrentTarget].mName + "_Object");
 	if (not exists(mObjectDir))
 		fs::create_directory(mObjectDir);
 	else if (not is_directory(mObjectDir))
@@ -1201,38 +1169,43 @@ MPath MProject::GetObjectPathForFile(
 void MProject::GenerateCFlags(
 	vector<string>&	outArgv) const
 {
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
+	const MProjectTarget& target(mTargets[mCurrentTarget]);
 	
-//	argv.push_back("-arch");
-//	if (target.GetArch() == eTargetArchPPC_32)
-//		argv.push_back("ppc");
-//	else if (target.GetArch() == eTargetArchx86_32)
-//		argv.push_back("i386");
-//	else
-//		assert(false);
+	switch (target.mTargetCPU)
+	{
+		case eCPU_native:	break;
+		case eCPU_386:		outArgv.push_back("-m32"); break;
+		case eCPU_x86_64:	outArgv.push_back("-m64"); break;
+		default:			THROW(("Unsupported CPU"));
+	}
 
-	transform(target.GetDefines().begin(), target.GetDefines().end(),
+	transform(target.mDefines.begin(), target.mDefines.end(),
 		back_inserter(outArgv), bind1st(plus<string>(), "-D"));
 
-	transform(target.GetWarnings().begin(), target.GetWarnings().end(),
+	transform(target.mWarnings.begin(), target.mWarnings.end(),
 		back_inserter(outArgv), bind1st(plus<string>(), "-W"));
 
 	copy(mPkgConfigCFlags.begin(), mPkgConfigCFlags.end(),
 		back_inserter(outArgv));
 
-	outArgv.insert(outArgv.end(), target.GetCFlags().begin(), target.GetCFlags().end());
+	outArgv.insert(outArgv.end(), target.mCFlags.begin(), target.mCFlags.end());
 
 	outArgv.push_back("-pipe");
 
-	if (target.IsAnsiStrict())
-		outArgv.push_back("-ansi");
-	
-	if (target.IsPedantic())
-		outArgv.push_back("-pedantic");
+//	if (target.IsAnsiStrict())
+//		outArgv.push_back("-ansi");
+//	
+//	if (target.IsPedantic())
+//		outArgv.push_back("-pedantic");
 		
-	if (target.GetDebugFlag())
+	if (target.mBuildFlags & eBF_debug)
 		outArgv.push_back("-gdwarf-2");
+	
+	if (target.mBuildFlags & eBF_profile)
+		outArgv.push_back("-pg");
+	
+	if (target.mBuildFlags & eBF_pic)
+		outArgv.push_back("-fPIC");
 	
 //	outArgv.push_back("-fmessage-length=132");
 	
@@ -1311,9 +1284,9 @@ MProjectJob* MProject::CreateCompileAllJob()
 
 	if (files.size() > 0)
 	{
-		MTargetCPU arch = mCurrentTarget->GetTargetCPU();
+		MTargetCPU arch = mTargets[mCurrentTarget].mTargetCPU;
 		if (arch == eCPU_native)
-			arch = MProjectTarget::GetNativeCPU();
+			arch = GetNativeCPU();
 		
 		job->AddJob(new MProjectCreateResourceJob(
 			"Creating resources", this, files, mObjectDir / "__rsrc__.o", arch));
@@ -1330,34 +1303,30 @@ MProjectJob* MProject::CreateLinkJob(
 {
 	CheckDataDir();
 	
-	assert(mCurrentTarget != nil);
-	MProjectTarget& target = *mCurrentTarget;
+	MProjectTarget& target = mTargets[mCurrentTarget];
 	
 	vector<string> argv;
 	
-	if (mCurrentTarget->GetKind() == eTargetStaticLibrary)
+	if (target.mKind == eTargetStaticLibrary)
 		argv.push_back(Preferences::GetString("linker", "/usr/bin/ld"));
 	else
 		argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
 
-//	argv.push_back("-arch");
-//	if (target.GetArch() == eTargetArchPPC_32)
-//		argv.push_back("ppc");
-//	else if (target.GetArch() == eTargetArchx86_32)
-//		argv.push_back("i386");
-//	else
-//		assert(false);
+	switch (target.mTargetCPU)
+	{
+		case eCPU_native:	break;
+		case eCPU_386:		argv.push_back("-m32"); break;
+		case eCPU_x86_64:	argv.push_back("-m64"); break;
+		default:			THROW(("Unsupported CPU"));
+	}
 
-	argv.insert(argv.end(), target.GetLDFlags().begin(), target.GetLDFlags().end());
+	argv.insert(argv.end(), target.mLDFlags.begin(), target.mLDFlags.end());
 
-	switch (mCurrentTarget->GetKind())
+	switch (target.mKind)
 	{
 		case eTargetSharedLibrary:
 			argv.push_back("-shared");
 			argv.push_back("-static-libgcc");
-//			argv.push_back("-undefined");
-//			argv.push_back("suppress");
-//			argv.push_back("-flat_namespace");
 			break;
 		
 		case eTargetStaticLibrary:
@@ -1371,8 +1340,14 @@ MProjectJob* MProject::CreateLinkJob(
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
 
-	if (target.GetDebugFlag())
+	if (target.mBuildFlags | eBF_debug)
 		argv.push_back("-gdwarf-2");
+
+	if (target.mBuildFlags | eBF_pic)
+		argv.push_back("-fPIC");
+
+	if (target.mBuildFlags | eBF_profile)
+		argv.push_back("-pg");
 
 	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
 	{
@@ -1580,37 +1555,18 @@ void MProject::Make()
 
 	MPath targetPath;
 
-	switch (mCurrentTarget->GetKind())
+	switch (mTargets[mCurrentTarget].mKind)
 	{
-		case eTargetApplicationPackage:
-		{
-			MPath macOsDir = mProjectDir / mCurrentTarget->GetBundleName() / "Contents" / "MacOS";
-			
-			if (not exists(macOsDir))
-				fs::create_directories(macOsDir);
-			
-			targetPath = macOsDir / mCurrentTarget->GetLinkTarget();
-						
-			string pkginfo = mCurrentTarget->GetType() + mCurrentTarget->GetCreator();
-			if (pkginfo.length() == 8)
-			{
-				fs::ofstream pkgInfoFile(macOsDir / ".." / "PkgInfo", ios_base::trunc);
-				if (pkgInfoFile.is_open())
-					pkgInfoFile.write(pkginfo.c_str(), 8);
-			}
-			break;
-		}
-		
 		case eTargetSharedLibrary:
-			targetPath = mProjectDir / (mCurrentTarget->GetLinkTarget() + ".so");
+			targetPath = mProjectDir / (mTargets[mCurrentTarget].mLinkTarget + ".so");
 			break;
 		
 		case eTargetStaticLibrary:
-			targetPath = mProjectDir / (mCurrentTarget->GetLinkTarget() + ".a");
+			targetPath = mProjectDir / (mTargets[mCurrentTarget].mLinkTarget + ".a");
 			break;
 		
 		case eTargetExecutable:
-			targetPath = mProjectDir / mCurrentTarget->GetLinkTarget();
+			targetPath = mProjectDir / mTargets[mCurrentTarget].mLinkTarget;
 			break;
 		
 		default:
@@ -1620,37 +1576,7 @@ void MProject::Make()
 	// combine with link job
 	job.reset(new MProjectIfJob("", this, job.release(), CreateLinkJob(targetPath)));
 
-//	if (mCurrentTarget->GetKind() == eTargetApplicationPackage and mPackageItems.Count() > 0)
-//	{
-//		// and a copy job for the Package contents, if needed
-//		
-//		auto_ptr<MProjectCompileAllJob> copyAllJob(new MProjectCompileAllJob("Copying", this));
-//		MPath appPath = mProjectDir / mCurrentTarget->GetBundleName();
-//
-//		vector<MProjectItem*> files;
-//		mPackageItems.Flatten(files);
-//		
-//		for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
-//		{
-//			MProjectResource* f = dynamic_cast<MProjectResource*>(*file);
-//			
-//			if (f == nil)
-//				continue;
-//
-//			MPath dstDir = f->GetDestPath(appPath).branch_path();
-//			
-//			if (not exists(dstDir))
-//				fs::create_directories(dstDir);
-//			
-//			copyAllJob->AddJob(new MProjectCopyFileJob("Copying files", this,
-//				f->GetSourcePath(), f->GetDestPath(appPath), true));
-//		}
-//
-//		job.reset(new MProjectIfJob("", this, job.release(), copyAllJob.release()));
-//	}
-	
 	// and that's it for now
-	
 	StartJob(job.release());
 }
 
@@ -1681,19 +1607,6 @@ MMessageWindow* MProject::GetMessageWindow()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::GetSelectedTarget
-
-uint32 MProject::GetSelectedTarget() const
-{
-	vector<MProjectTarget*>::const_iterator t = find(mTargets.begin(), mTargets.end(), mCurrentTarget);
-
-	if (t == mTargets.end())
-		t = mTargets.begin();
-
-	return t - mTargets.begin();
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::SelectTarget
 
 void MProject::SelectTarget(
@@ -1704,13 +1617,13 @@ void MProject::SelectTarget(
 	
 	assert(inTarget < mTargets.size());
 
-	if (mCurrentTarget == mTargets[inTarget])
+	if (mCurrentTarget == inTarget)
 		return;
 	
 //	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != int32(inTarget))
 //		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
-	mCurrentTarget = mTargets[inTarget];
+	mCurrentTarget = inTarget;
 
 	CheckDataDir();	// set up all directory paths
 	
@@ -2151,3 +2064,25 @@ void MProject::EmitInsertedRecursive(
 			EmitInsertedRecursive(inEvent, items[ix]);
 	}
 }
+
+void MProject::GetPaths(
+	vector<MPath>&	outSysSearchPaths,
+	vector<MPath>&	outUserSearchPaths,
+	vector<MPath>&	outLibSearchPaths)
+{
+	outSysSearchPaths = mSysSearchPaths;
+	outUserSearchPaths = mUserSearchPaths;
+	outLibSearchPaths = mLibSearchPaths;
+}
+
+void MProject::SetPaths(
+	vector<MPath>&	inSysSearchPaths,
+	vector<MPath>&	inUserSearchPaths,
+	vector<MPath>&	inLibSearchPaths)
+{
+	mSysSearchPaths = inSysSearchPaths;
+	mUserSearchPaths = inUserSearchPaths;
+	mLibSearchPaths = inLibSearchPaths;
+}
+
+

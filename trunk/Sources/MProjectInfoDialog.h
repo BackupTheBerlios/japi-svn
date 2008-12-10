@@ -34,7 +34,6 @@
 #define MPROJECTINFODIALOG_H
 
 #include "MDialog.h"
-#include "MCallbacks.h"
 
 class MProject;
 class MProjectTarget;
@@ -44,9 +43,10 @@ class MProjectInfoDialog : public MDialog
   public:
 						MProjectInfoDialog();
 
+						~MProjectInfoDialog();
+
 	void				Initialize(
-							MProject*		inWindow,
-							MProjectTarget*	inTarget);
+							MProject*		inProject);
 
 	virtual bool		OKClicked();
 	
@@ -55,15 +55,17 @@ class MProjectInfoDialog : public MDialog
 	virtual void		ButtonClicked(
 							uint32			inButtonID);
 
-	void				SelectPage(
-							int32			inPage);
+	virtual void		ValueChanged(
+							uint32			inID);
 
-	void				SelectProjectType(
-							int32			inProjectType);
+	void				TargetChanged();
+	MSlot<void()>		eTargetChanged;
 
-	MProject*			mProject;
-	MProjectTarget*		mTarget;
-	int32				mCurrentPage;
+	MProject*					mProject;
+	std::vector<MProjectTarget>	mTargets;
+	GtkTreeStore*				mSysPaths;
+	GtkTreeStore*				mUsrPaths;
+	GtkTreeStore*				mLibPaths;
 };
 
 #endif // MFINDANDOPENDIALOG_H

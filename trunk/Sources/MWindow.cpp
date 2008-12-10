@@ -48,8 +48,6 @@ using namespace std;
 
 MWindow* MWindow::sFirst = nil;
 
-const uint32 kWindowFocusTimeout = 50;
-
 MWindow::MWindow()
 	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
 	, MHandler(gApp)
@@ -118,12 +116,6 @@ MWindow::MWindow(
 
 void MWindow::Init()
 {
-	mFocusTimoutTag = 0;
-	
-	gdk_window_add_filter(
-		gtk_widget_get_window(GetGtkWidget()),
-		&MWindow::ClientMessageFilter, this);
-	
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
 
@@ -445,55 +437,6 @@ void MWindow::DoForEach(
 	
 	if (GTK_IS_CONTAINER(inWidget))
 		gtk_container_foreach(GTK_CONTAINER(inWidget), &MWindow::DoForEachCallBack, this);
-}
-
-GdkFilterReturn MWindow::ClientMessageFilter(
-	GdkXEvent*			inXEvent,
-	GdkEvent*			inEvent,
-	gpointer			data)
-{
-	XEvent* xevent = (XEvent*)inXEvent;
-	GdkFilterReturn result = GDK_FILTER_CONTINUE;
-	
-//	MWindow* self = (MWindow*)data;
-//
-//	if (xevent->type == ClientMessage and
-//		(Atom)xevent->xclient.data.l[0] == gdk_x11_get_xatom_by_name("WM_TAKE_FOCUS"))
-//	{
-//		self->mFocusTimestamp = xevent->xclient.data.l[1];
-//		
-//		if (self->mFocusTimoutTag)
-//			g_source_remove(self->mFocusTimoutTag);
-//
-//		self->mFocusTimoutTag = g_timeout_add(kWindowFocusTimeout,
-//			&MWindow::FocusTimeout, self);
-//		
-//		result = GDK_FILTER_REMOVE;
-//	}
-	
-	return result;
-}
-
-int MWindow::FocusTimeout(
-	void*				data)
-{
-	PRINT(("Focus Timeout"));
-
-	MWindow* self = (MWindow*)data;
-
-	if (GTK_WIDGET_REALIZED(self->GetGtkWidget()))
-	{
-		gdk_error_trap_push();
-		XSetInputFocus(GDK_DISPLAY(),
-			GDK_WINDOW_XWINDOW(gtk_widget_get_window(self->GetGtkWidget())),
-			RevertToParent, self->mFocusTimestamp);
-		gdk_flush();
-		gdk_error_trap_pop();
-	}
-	
-	self->mFocusTimoutTag = 0;
-	
-	return false;
 }
 
 bool MWindow::ChildFocus(

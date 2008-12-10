@@ -50,155 +50,29 @@ enum MTargetCPU {
 enum MTargetKind
 {
 	eTargetNone,
-	eTargetApplicationPackage,
-	eTargetBundlePackage,
 	eTargetExecutable,
 	eTargetSharedLibrary,
-	eTargetBundle,
 	eTargetStaticLibrary
 };
 
-class MProjectTarget
+enum MBuildFlags
 {
-  public:
-						MProjectTarget(
-							const std::string&	inLinkTarget,
-							const std::string&	inName,
-							MTargetKind			inKind,
-							MTargetCPU			inTargetCPU)
-							: mLinkTarget(inLinkTarget)
-							, mBundleName(inLinkTarget)
-							, mName(inName)
-							, mKind(inKind)
-							, mTargetCPU(inTargetCPU)
-							, mAnsiStrict(false)
-							, mPedantic(false)
-							, mDebug(false) {}
+	eBF_debug		= 1 << 0,
+	eBF_profile		= 1 << 1,
+	eBF_pic			= 1 << 2
+};
 
-//						MProjectTarget(
-//							const MProjectTarget& inOther);
-//
-//	MProjectTarget&		operator=(
-//							const MProjectTarget& rhs);
-
-	static MTargetCPU	GetNativeCPU();
-
-	void				AddCFlag(
-							const char*		inFlag)
-						{
-							mCFlags.push_back(inFlag); 
-						}
-
-	void				AddLDFlag(
-							const char*		inFlag)
-						{
-							mLDFlags.push_back(inFlag); 
-						}
-
-	void				AddWarning(
-							const char*		inWarning)
-						{
-							mWarnings.push_back(inWarning);
-						}
-
-	void				AddDefine(
-							const char*		inDefine)
-						{
-							mDefines.push_back(inDefine);
-						}
-
-	void				AddFramework(
-							const char*		inFramework)
-						{
-							mFrameworks.push_back(inFramework);
-						}
-
-	void				SetBundleName(
-							const std::string&	inBundleName)
-						{
-							mBundleName = inBundleName;
-						}
-	
-	void				SetName(
-							const std::string&	inName)
-						{
-							mName = inName;
-						}
-	
-	void				SetLinkTarget(
-							const std::string&	inName)
-						{
-							mLinkTarget = inName;
-						}
-	
-	void				SetKind(
-							MTargetKind			inKind)
-						{
-							mKind = inKind;
-						}
-	
-	void				SetTargetCPU(
-							MTargetCPU			inTargetCPU)
-						{
-							mTargetCPU = inTargetCPU;
-						}
-	
-	std::string			GetLinkTarget() const	{ return mLinkTarget; }
-	std::string			GetBundleName() const	{ return mBundleName; }
-	std::string			GetName() const			{ return mName; }
-	MTargetKind			GetKind() const			{ return mKind; }
-	MTargetCPU			GetTargetCPU() const	{ return mTargetCPU; }
-	
-	const std::vector<std::string>&
-						GetCFlags() const		{ return mCFlags; }
-	const std::vector<std::string>&
-						GetLDFlags() const		{ return mLDFlags; }
-	const std::vector<std::string>&
-						GetWarnings() const		{ return mWarnings; }
-	const std::vector<std::string>&
-						GetDefines() const		{ return mDefines; }
-	const std::vector<std::string>&
-						GetFrameworks() const	{ return mFrameworks; }
-	
-	bool				IsAnsiStrict() const	{ return mAnsiStrict; }
-	void				SetAnsiStrict(
-							bool inAnsiStrict)	{ mAnsiStrict = inAnsiStrict; }
-
-	bool				IsPedantic() const	{ return mPedantic; }
-	void				SetPedantic(
-							bool inPedantic)	{ mPedantic = inPedantic; }
-
-	bool				GetDebugFlag() const	{ return mDebug; }
-	void				SetDebugFlag(
-							bool inDebug)		{ mDebug = inDebug; }
-
-	void				SetCreator(const std::string& inCreator)	{ mCreator = inCreator; }
-	std::string			GetCreator() const							{ return mCreator; }
-
-	void				SetType(const std::string& inType)			{ mType = inType; }
-	std::string			GetType() const								{ return mType; }
-
-  private:
-	std::string			mLinkTarget;
-	std::string			mBundleName;
-	std::string			mName;
-	std::string			mCreator;
-	std::string			mType;
-	MTargetKind			mKind;
-	MTargetCPU			mTargetCPU;
-	std::vector<std::string>
-						mCFlags;
-	std::vector<std::string>
-						mLDFlags;
-	std::vector<std::string>
-						mWarnings;
-	std::vector<std::string>
-						mDefines;
-	std::vector<std::string>
-						mFrameworks;
-	bool				mAnsiStrict;
-	bool				mPedantic;
-	bool				mDebug;
+struct MProjectTarget
+{
+	std::string					mLinkTarget;
+	std::string					mName;
+	MTargetKind					mKind;
+	MTargetCPU					mTargetCPU;
+	std::vector<std::string>	mCFlags;
+	std::vector<std::string>	mLDFlags;
+	std::vector<std::string>	mWarnings;
+	std::vector<std::string>	mDefines;
+	uint32						mBuildFlags;
 };
 
 #endif

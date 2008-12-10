@@ -45,34 +45,30 @@
 #include "MGlobals.h"
 #include "MProjectInfoDialog.h"
 #include "MDevice.h"
+#include "MGtkWrappers.h"
+#include "MError.h"
 
 using namespace std;
 
 namespace {
 
-const uint32
-	kPageIDs[] = { 0, 1291, 1293, 1294 },
-	kPageCount = sizeof(kPageIDs) / sizeof(uint32) - 1,
-	kTabControlID = 129;
-
-
 enum {
-	kProjectTypeControlID		= 1001,
-	kBundleNameLabelID			= 10021,
-	kBundleNameControlID		= 1002,
-	kCreatorTypeLabelID			= 10031,
-	kCreatorControlID			= 1003,
-	kTypeControlID				= 1004,
-	kPICControlID				= 1005,
-	kFlatNamespaceControlID		= 1006,
-	kTargetNameControlID		= 1007,
-	kDisablePreBindingControlID	= 1008,
-	kLinkerOutputControlID		= 1009,
-	kArchitectureControlID		= 1010,
-	kDebugInfoControlID			= 1011,
-	
-	kUserPathControlID			= 2001,
-	
+	kNotebookControlID			= 'note',
+
+	kTargetPopupID				= 'targ',
+
+	kTargetNameControlID		= 'name',
+	kLinkerOutputControlID		= 'link',
+	kProjectTypeControlID		= 'kind',
+	kArchitectureControlID		= 'cpu ',
+	kDebugInfoControlID			= 'debu',
+	kProfileControlID			= 'prof',
+	kPICControlID				= 'pic ',
+
+	kSystemPathsListID			= 'sysp',
+	kUserPathsListID			= 'usrp',
+	kLibrariesListID			= 'libp',
+
 	kAnsiStrictControlID		= 3001,
 	kPedanticControlID			= 3002,
 	kDefinesControlID			= 3011,
@@ -80,259 +76,421 @@ enum {
 	kWarningsControlID			= 4001
 };
 
-enum {
-//	kTextBoxControlID = 2
-};
-
 }
 
 MProjectInfoDialog::MProjectInfoDialog()
-	: mProject(nil)
-	, mTarget(nil)
+	: MDialog("project-info-dialog")
+	, eTargetChanged(this, &MProjectInfoDialog::TargetChanged)
+	, mProject(nil)
 {
-	SetCloseImmediatelyFlag(false);
+	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
+}
+
+MProjectInfoDialog::~MProjectInfoDialog()
+{
+	g_object_unref(G_OBJECT(mSysPaths));
+	g_object_unref(G_OBJECT(mUsrPaths));
+	g_object_unref(G_OBJECT(mLibPaths));
 }
 
 void MProjectInfoDialog::Initialize(
-	MProject*		inProject,
-	MProjectTarget*	inTarget)
+	MProject*		inProject)
 {
 //	MView::RegisterSubclass<MListView>();
 
 	mProject = inProject;
-	mTarget = inTarget;
+	mTargets = mProject->GetTargets();
 	
-//	MDialog::Initialize(CFSTR("ProjectInfo"), inProject);
+	// setup the targets
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	eTargetChanged.Block(targetPopup, "on_targ_changed");
+	
+	targetPopup.RemoveAll();
+	
+	for (vector<MProjectTarget>::iterator t = mTargets.begin(); t != mTargets.end(); ++t)
+		targetPopup.Append(t->mName);
+	
+	targetPopup.SetActive(mProject->GetSelectedTarget());
 
-//	ControlRef tabControl = FindControl(kTabControlID);
+	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
+
+	TargetChanged();
+	
+	// page 1
+	
+	vector<MPath> sysPaths, userPaths, libPaths;
+	mProject->GetPaths(sysPaths, userPaths, libPaths);
+	
+	GtkWidget* list = GetWidget(kSystemPathsListID);
+	if (list == nil)
+		THROW(("Missing list"));
+	
+	mSysPaths = gtk_tree_store_new(1, G_TYPE_STRING);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mSysPaths));
+
+	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
+		"", renderer, "text", 0, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+	
+	for (vector<MPath>::iterator path = sysPaths.begin(); path != sysPaths.end(); ++path)
+	{
+		GtkTreeIter iter;
+		gtk_tree_store_append(mSysPaths, &iter, nil);
+		gtk_tree_store_set(mSysPaths, &iter, 0, path->string().c_str(), -1);
+	}
+
+	list = GetWidget(kUserPathsListID);
+	if (list == nil)
+		THROW(("Missing list"));
+	
+	mUsrPaths = gtk_tree_store_new(1, G_TYPE_STRING);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mUsrPaths));
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+	
+	for (vector<MPath>::iterator path = userPaths.begin(); path != userPaths.end(); ++path)
+	{
+		GtkTreeIter iter;
+		gtk_tree_store_append(mUsrPaths, &iter, nil);
+		gtk_tree_store_set(mUsrPaths, &iter, 0, path->string().c_str(), -1);
+	}
+
+	list = GetWidget(kLibrariesListID);
+	if (list == nil)
+		THROW(("Missing list"));
+	
+	mLibPaths = gtk_tree_store_new(1, G_TYPE_STRING);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mLibPaths));
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+	
+	for (vector<MPath>::iterator path = libPaths.begin(); path != libPaths.end(); ++path)
+	{
+		GtkTreeIter iter;
+		gtk_tree_store_append(mLibPaths, &iter, nil);
+		gtk_tree_store_set(mLibPaths, &iter, 0, path->string().c_str(), -1);
+	}
+
+	
 //	
-	SetValue(kTabControlID, 1);
-	SelectPage(1);
-
-	// set up the first page
-	
-	stringstream s;
-	string txt;
-	
-	int32 projectType = 1;
-	switch (mTarget->GetKind())
-	{
-		case eTargetApplicationPackage:	projectType = 1; break;
-		case eTargetBundlePackage:		projectType = 2; break;
-		case eTargetExecutable:			projectType = 4; break;
-		case eTargetSharedLibrary:		projectType = 5; break;
-		case eTargetBundle:				projectType = 6; break;
-		case eTargetStaticLibrary:		projectType = 7; break;
-		default:										 break;
-	}
-	
-	SetValue(kProjectTypeControlID, projectType);
-	SelectProjectType(projectType);
-	
-	SetText(kTargetNameControlID, mTarget->GetName());
-//		kProductNameLabelID,
-
-//	SetChecked(kPICControlID, mTarget->GetPIC());
-//	SetChecked(kFlatNamespaceControlID, mTarget->GetFlatNamespace());
-//	SetChecked(kDisablePreBindingControlID, mTarget->GetDisablePreBinding());
-	SetChecked(kDebugInfoControlID, mTarget->GetDebugFlag());
-	SetText(kBundleNameControlID, mTarget->GetBundleName());
-	SetText(kLinkerOutputControlID, mTarget->GetLinkTarget());
-//	kTargetNameLabelID,
-//	kSeparatorID,
-
-	SetText(kCreatorControlID, mTarget->GetCreator());
-	SetText(kTypeControlID, mTarget->GetType());
-
-//	if (mTarget->GetTargetCPU() == eTargetArchPPC_32)
+////	MDialog::Initialize(CFSTR("ProjectInfo"), inProject);
+//
+////	ControlRef tabControl = FindControl(kTabControlID);
+////	
+//	SetValue(kTabControlID, 1);
+//	SelectPage(1);
+//
+//	// set up the first page
+//	
+//	stringstream s;
+//	string txt;
+//	
+//	int32 projectType = 1;
+//	switch (mTarget->GetKind())
 //	{
-//		SetValue(kArchitectureControlID, 1);
+//		case eTargetApplicationPackage:	projectType = 1; break;
+//		case eTargetBundlePackage:		projectType = 2; break;
+//		case eTargetExecutable:			projectType = 4; break;
+//		case eTargetSharedLibrary:		projectType = 5; break;
+//		case eTargetBundle:				projectType = 6; break;
+//		case eTargetStaticLibrary:		projectType = 7; break;
+//		default:										 break;
 //	}
-//	else if (mTarget->GetTargetCPU() == eTargetArchx86_32)
-//	{
-//		SetValue(kArchitectureControlID, 2);
-//	}
-	
-//	kCPUControlID
-
-	const vector<string>& defs = mTarget->GetDefines();
-	copy(defs.begin(), defs.end(), ostream_iterator<string>(s, " "));
-	SetText(kDefinesControlID, s.str());
-	
-	
-	// page two
-	
-	SetChecked(kPedanticControlID, mTarget->IsPedantic());
-	SetChecked(kAnsiStrictControlID, mTarget->IsAnsiStrict());
-
-	// page three
-
-	stringstream w;
-	const vector<string>& warnings = mTarget->GetWarnings();
-	copy(warnings.begin(), warnings.end(), ostream_iterator<string>(w, " "));
-	SetText(kWarningsControlID, w.str());
-
-	Show(inProject);
+//	
+//	SetValue(kProjectTypeControlID, projectType);
+//	SelectProjectType(projectType);
+//	
+//	SetText(kTargetNameControlID, mTarget->GetName());
+////		kProductNameLabelID,
+//
+////	SetChecked(kPICControlID, mTarget->GetPIC());
+////	SetChecked(kFlatNamespaceControlID, mTarget->GetFlatNamespace());
+////	SetChecked(kDisablePreBindingControlID, mTarget->GetDisablePreBinding());
+//	SetChecked(kDebugInfoControlID, mTarget->GetDebugFlag());
+//	SetText(kBundleNameControlID, mTarget->GetBundleName());
+//	SetText(kLinkerOutputControlID, mTarget->GetLinkTarget());
+////	kTargetNameLabelID,
+////	kSeparatorID,
+//
+//	SetText(kCreatorControlID, mTarget->GetCreator());
+//	SetText(kTypeControlID, mTarget->GetType());
+//
+////	if (mTarget->GetTargetCPU() == eTargetArchPPC_32)
+////	{
+////		SetValue(kArchitectureControlID, 1);
+////	}
+////	else if (mTarget->GetTargetCPU() == eTargetArchx86_32)
+////	{
+////		SetValue(kArchitectureControlID, 2);
+////	}
+//	
+////	kCPUControlID
+//
+//	const vector<string>& defs = mTarget->GetDefines();
+//	copy(defs.begin(), defs.end(), ostream_iterator<string>(s, " "));
+//	SetText(kDefinesControlID, s.str());
+//	
+//	
+//	// page two
+//	
+//	SetChecked(kPedanticControlID, mTarget->IsPedantic());
+//	SetChecked(kAnsiStrictControlID, mTarget->IsAnsiStrict());
+//
+//	// page three
+//
+//	stringstream w;
+//	const vector<string>& warnings = mTarget->GetWarnings();
+//	copy(warnings.begin(), warnings.end(), ostream_iterator<string>(w, " "));
+//	SetText(kWarningsControlID, w.str());
+//
+//	Show(inProject);
 }
 
-void MProjectInfoDialog::SelectProjectType(
-	int32			inType)
+// ---------------------------------------------------------------------------
+//	TargetChanged
+
+void MProjectInfoDialog::TargetChanged()
 {
-	string name;
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	const MProjectTarget& target = mTargets[targetPopup.GetActive()];
 	
-	switch (inType)
+	// name
+	SetText(kTargetNameControlID, target.mName);
+	SetText(kLinkerOutputControlID, target.mLinkTarget);
+	
+	switch (target.mTargetCPU)
 	{
-		case 1:
-			GetText(kBundleNameControlID, name);
-			name = fs::basename(name);
-			SetText(kBundleNameControlID, name + ".app");
-			SetText(kLinkerOutputControlID, name);
-			SetVisible(kBundleNameControlID, true);
-			SetVisible(kBundleNameLabelID, true);
-			SetVisible(kCreatorTypeLabelID, true);
-			SetVisible(kCreatorControlID, true);
-			SetVisible(kTypeControlID, true);
-			break;
-
-		case 2:
-			GetText(kBundleNameControlID, name);
-			name = fs::basename(name);
-			SetText(kBundleNameControlID, name + ".bundle");
-			SetText(kLinkerOutputControlID, name);
-			SetVisible(kBundleNameControlID, true);
-			SetVisible(kBundleNameLabelID, true);
-			SetVisible(kCreatorTypeLabelID, true);
-			SetVisible(kCreatorControlID, true);
-			SetVisible(kTypeControlID, true);
-			break;
-
-		case 4:
-			GetText(kLinkerOutputControlID, name);
-			name = fs::basename(name);
-			SetText(kLinkerOutputControlID, name);
-			SetVisible(kBundleNameControlID, false);
-			SetVisible(kBundleNameLabelID, false);
-			SetVisible(kCreatorTypeLabelID, false);
-			SetVisible(kCreatorControlID, false);
-			SetVisible(kTypeControlID, false);
-			break;
-		
-		case 5:
-			GetText(kLinkerOutputControlID, name);
-			name = fs::basename(name);
-			SetText(kLinkerOutputControlID, name + ".dylib");
-			SetVisible(kBundleNameControlID, false);
-			SetVisible(kBundleNameLabelID, false);
-			SetVisible(kCreatorTypeLabelID, false);
-			SetVisible(kCreatorControlID, false);
-			SetVisible(kTypeControlID, false);
-			break;
-		
-		case 6:
-			GetText(kLinkerOutputControlID, name);
-			name = fs::basename(name);
-			SetText(kLinkerOutputControlID, name + ".bundle");
-			SetVisible(kBundleNameControlID, false);
-			SetVisible(kBundleNameLabelID, false);
-			SetVisible(kCreatorTypeLabelID, false);
-			SetVisible(kCreatorControlID, false);
-			SetVisible(kTypeControlID, false);
-			break;
-		
-		case 7:
-			GetText(kLinkerOutputControlID, name);
-			name = fs::basename(name);
-			SetText(kLinkerOutputControlID, name + ".a");
-			SetVisible(kBundleNameControlID, false);
-			SetVisible(kBundleNameLabelID, false);
-			SetVisible(kCreatorTypeLabelID, false);
-			SetVisible(kCreatorControlID, false);
-			SetVisible(kTypeControlID, false);
-			break;
-		
+		case eCPU_native:		SetValue(kArchitectureControlID, 1); break;
+		case eCPU_386:			SetValue(kArchitectureControlID, 2); break;
+		case eCPU_x86_64:		SetValue(kArchitectureControlID, 3); break;
+		case eCPU_PowerPC_32:	SetValue(kArchitectureControlID, 4); break;
+		case eCPU_PowerPC_64:	SetValue(kArchitectureControlID, 5); break;
 	}
+	
+	switch (target.mKind)
+	{
+		case eTargetExecutable:
+			SetValue(kProjectTypeControlID, 1);
+			break;
+
+		case eTargetSharedLibrary:
+			SetValue(kProjectTypeControlID, 2);
+			break;
+		
+		case eTargetStaticLibrary:
+			SetValue(kProjectTypeControlID, 3);
+			break;
+	}
+	
+	SetChecked(kDebugInfoControlID, target.mBuildFlags & eBF_debug);
+	SetChecked(kProfileControlID, target.mBuildFlags & eBF_profile);
+	SetChecked(kPICControlID, target.mBuildFlags & eBF_pic);
 }
 
+//void MProjectInfoDialog::SelectProjectType(
+//	int32			inType)
+//{//
+////	string name;
+////	
+////	switch (inType)
+////	{
+////		case 1:
+////			GetText(kBundleNameControlID, name);
+////			name = fs::basename(name);
+////			SetText(kBundleNameControlID, name + ".app");
+////			SetText(kLinkerOutputControlID, name);
+////			SetVisible(kBundleNameControlID, true);
+////			SetVisible(kBundleNameLabelID, true);
+////			SetVisible(kCreatorTypeLabelID, true);
+////			SetVisible(kCreatorControlID, true);
+////			SetVisible(kTypeControlID, true);
+////			break;
+////
+////		case 2:
+////			GetText(kBundleNameControlID, name);
+////			name = fs::basename(name);
+////			SetText(kBundleNameControlID, name + ".bundle");
+////			SetText(kLinkerOutputControlID, name);
+////			SetVisible(kBundleNameControlID, true);
+////			SetVisible(kBundleNameLabelID, true);
+////			SetVisible(kCreatorTypeLabelID, true);
+////			SetVisible(kCreatorControlID, true);
+////			SetVisible(kTypeControlID, true);
+////			break;
+////
+////		case 4:
+////			GetText(kLinkerOutputControlID, name);
+////			name = fs::basename(name);
+////			SetText(kLinkerOutputControlID, name);
+////			SetVisible(kBundleNameControlID, false);
+////			SetVisible(kBundleNameLabelID, false);
+////			SetVisible(kCreatorTypeLabelID, false);
+////			SetVisible(kCreatorControlID, false);
+////			SetVisible(kTypeControlID, false);
+////			break;
+////		
+////		case 5:
+////			GetText(kLinkerOutputControlID, name);
+////			name = fs::basename(name);
+////			SetText(kLinkerOutputControlID, name + ".dylib");
+////			SetVisible(kBundleNameControlID, false);
+////			SetVisible(kBundleNameLabelID, false);
+////			SetVisible(kCreatorTypeLabelID, false);
+////			SetVisible(kCreatorControlID, false);
+////			SetVisible(kTypeControlID, false);
+////			break;
+////		
+////		case 6:
+////			GetText(kLinkerOutputControlID, name);
+////			name = fs::basename(name);
+////			SetText(kLinkerOutputControlID, name + ".bundle");
+////			SetVisible(kBundleNameControlID, false);
+////			SetVisible(kBundleNameLabelID, false);
+////			SetVisible(kCreatorTypeLabelID, false);
+////			SetVisible(kCreatorControlID, false);
+////			SetVisible(kTypeControlID, false);
+////			break;
+////		
+////		case 7:
+////			GetText(kLinkerOutputControlID, name);
+////			name = fs::basename(name);
+////			SetText(kLinkerOutputControlID, name + ".a");
+////			SetVisible(kBundleNameControlID, false);
+////			SetVisible(kBundleNameLabelID, false);
+////			SetVisible(kCreatorTypeLabelID, false);
+////			SetVisible(kCreatorControlID, false);
+////			SetVisible(kTypeControlID, false);
+////			break;
+////		
+////	}
+//}
+//
 void MProjectInfoDialog::ButtonClicked(
 	uint32		inButtonID)
-{
-	switch (inButtonID)
-	{
-		case kProjectTypeControlID:
-			SelectProjectType(GetValue(kProjectTypeControlID));
-			break;
-		
-		case kTabControlID:
-			if (GetValue(kTabControlID) != mCurrentPage)
-				SelectPage(GetValue(kTabControlID));
-			break;
-	}
+{//
+//	switch (inButtonID)
+//	{
+//		case kProjectTypeControlID:
+//			SelectProjectType(GetValue(kProjectTypeControlID));
+//			break;
+//		
+//		case kTabControlID:
+//			if (GetValue(kTabControlID) != mCurrentPage)
+//				SelectPage(GetValue(kTabControlID));
+//			break;
+//	}
 }
 
 bool MProjectInfoDialog::OKClicked()
-{
-	string s;
-
-	// page 1
-
-	switch (GetValue(kProjectTypeControlID))
-	{
-		case 1: mTarget->SetKind(eTargetApplicationPackage);	break;
-		case 2: mTarget->SetKind(eTargetBundlePackage);			break;
-		case 4: mTarget->SetKind(eTargetExecutable);			break;
-		case 5: mTarget->SetKind(eTargetSharedLibrary);			break;
-		case 6: mTarget->SetKind(eTargetBundle);				break;
-		case 7: mTarget->SetKind(eTargetStaticLibrary);			break;
-	}
-
-	GetText(kTargetNameControlID, s);
-	mTarget->SetName(s);
-
-	GetText(kBundleNameControlID, s);
-	mTarget->SetBundleName(s);
-	
-	GetText(kLinkerOutputControlID, s);
-	mTarget->SetLinkTarget(s);
-
-//	switch (GetValue(kArchitectureControlID))
+{//
+//	string s;
+//
+//	// page 1
+//
+//	switch (GetValue(kProjectTypeControlID))
 //	{
-//		case 1:	mTarget->SetArch(eTargetArchPPC_32); break;
-//		case 2:	mTarget->SetArch(eTargetArchx86_32); break;
+//		case 1: mTarget->SetKind(eTargetApplicationPackage);	break;
+//		case 2: mTarget->SetKind(eTargetBundlePackage);			break;
+//		case 4: mTarget->SetKind(eTargetExecutable);			break;
+//		case 5: mTarget->SetKind(eTargetSharedLibrary);			break;
+//		case 6: mTarget->SetKind(eTargetBundle);				break;
+//		case 7: mTarget->SetKind(eTargetStaticLibrary);			break;
 //	}
-	
-	GetText(kCreatorControlID, s);
-	while (s.length() < 4)
-		s += ' ';
-	mTarget->SetCreator(s.substr(0, 4));
-
-	GetText(kTypeControlID, s);
-	while (s.length() < 4)
-		s += ' ';
-	mTarget->SetType(s.substr(0, 4));
-	
-	// page 2
-	
-	// page 3
-	
-	mTarget->SetPedantic(IsChecked(kPedanticControlID));
-	mTarget->SetAnsiStrict(IsChecked(kAnsiStrictControlID));
-	mTarget->SetDebugFlag(IsChecked(kDebugInfoControlID));
-
-	// notify project of changes
-	
-	mProject->TargetUpdated();
+//
+//	GetText(kTargetNameControlID, s);
+//	mTarget->SetName(s);
+//
+//	GetText(kBundleNameControlID, s);
+//	mTarget->SetBundleName(s);
+//	
+//	GetText(kLinkerOutputControlID, s);
+//	mTarget->SetLinkTarget(s);
+//
+////	switch (GetValue(kArchitectureControlID))
+////	{
+////		case 1:	mTarget->SetArch(eTargetArchPPC_32); break;
+////		case 2:	mTarget->SetArch(eTargetArchx86_32); break;
+////	}
+//	
+//	GetText(kCreatorControlID, s);
+//	while (s.length() < 4)
+//		s += ' ';
+//	mTarget->SetCreator(s.substr(0, 4));
+//
+//	GetText(kTypeControlID, s);
+//	while (s.length() < 4)
+//		s += ' ';
+//	mTarget->SetType(s.substr(0, 4));
+//	
+//	// page 2
+//	
+//	// page 3
+//	
+//	mTarget->SetPedantic(IsChecked(kPedanticControlID));
+//	mTarget->SetAnsiStrict(IsChecked(kAnsiStrictControlID));
+//	mTarget->SetDebugFlag(IsChecked(kDebugInfoControlID));
+//
+//	// notify project of changes
+//	
+//	mProject->TargetUpdated();
 	
 	return true;
 }
 
-void MProjectInfoDialog::SelectPage(
-	int32 		inPage)
+void MProjectInfoDialog::ValueChanged(
+	uint32			inID)
 {
-	for (int32 page = 1; page <= int32(kPageCount); ++page)
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	MProjectTarget& target = mTargets[targetPopup.GetActive()];
+	
+	switch (inID)
 	{
-		SetEnabled(kPageIDs[page], page == inPage);
-		SetVisible(kPageIDs[page], page == inPage);
-	}
-
-	mCurrentPage = inPage;
+		case kTargetNameControlID:		GetText(inID, target.mName); break;
+		case kLinkerOutputControlID:	GetText(inID, target.mLinkTarget); break;
+		case kProjectTypeControlID:
+			switch (GetValue(inID))
+			{
+				case 1:	target.mKind = eTargetExecutable; break;
+				case 2:	target.mKind = eTargetSharedLibrary; break;
+				case 3:	target.mKind = eTargetStaticLibrary; break;
+			}
+			break;
+		
+		case kArchitectureControlID:
+			switch (GetValue(inID))
+			{
+				case 1:	target.mTargetCPU = eCPU_native; break;
+				case 2:	target.mTargetCPU = eCPU_386; break;
+				case 3:	target.mTargetCPU = eCPU_x86_64; break;
+				case 4:	target.mTargetCPU = eCPU_PowerPC_32; break;
+				case 5:	target.mTargetCPU = eCPU_PowerPC_64; break;
+			}
+			break;
+		
+		case kDebugInfoControlID:
+			if (IsChecked(inID))
+				target.mBuildFlags |= eBF_debug;
+			else
+				target.mBuildFlags &= ~(eBF_debug);
+			break;
+		
+		case kProfileControlID:
+			if (IsChecked(inID))
+				target.mBuildFlags |= eBF_profile;
+			else
+				target.mBuildFlags &= ~(eBF_profile);
+			break;
+		
+		case kPICControlID:
+			if (IsChecked(inID))
+				target.mBuildFlags |= eBF_pic;
+			else
+				target.mBuildFlags &= ~(eBF_pic);
+			break;
+	}	
 }

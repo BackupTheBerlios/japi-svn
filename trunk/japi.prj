@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <project>
 	<pkg-config>
-		<pkg>libglade-2.0</pkg>
-		<pkg>gthread-2.0</pkg>
-		<pkg>gstreamer-0.10</pkg>
+		<pkg tool="pkg-config">libglade-2.0</pkg>
+		<pkg tool="pkg-config">gthread-2.0</pkg>
+		<pkg tool="pkg-config">gstreamer-0.10</pkg>
 	</pkg-config>
 	<syspaths>
 		<path>/usr/local/include/boost-1_36</path>
@@ -19,7 +19,6 @@
 		<path>Lib</path>
 		<path>/usr/local/lib</path>
 	</libpaths>
-	<frameworks/>
 	<files>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
@@ -69,6 +68,7 @@
 				<file>MObjectFile.cpp</file>
 				<file>MObjectFileImp_elf.cpp</file>
 				<file>MObjectFileImp_macho.cpp</file>
+				<file>MProjectInfoDialog.cpp</file>
 				<file>MProjectWindow.cpp</file>
 			</group>
 			<group name="Language">
@@ -105,8 +105,8 @@
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
 			<file>libgthread-2.0.a</file>
-			<link>cryptopp</link>
 			<link>z</link>
+			<link>cryptopp</link>
 		</group>
 	</files>
 	<resources resource_dir="Resources">
@@ -131,6 +131,7 @@
 			<resource>auth-dialog.glade</resource>
 			<resource>prefs-dialog.glade</resource>
 			<resource>diff-window.glade</resource>
+			<resource>project-info-dialog.glade</resource>
 		</group>
 		<group name="Windows">
 			<resource>message-list-window.glade</resource>
@@ -155,9 +156,6 @@
 	</resources>
 	<targets>
 		<target kind="Executable" name="Japi Debug" linkTarget="japi" debug="true">
-			<bundle>
-				<name>japi</name>
-			</bundle>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
@@ -171,9 +169,6 @@
 			</warnings>
 		</target>
 		<target kind="Executable" name="Japi Release" linkTarget="japi">
-			<bundle>
-				<name>japi</name>
-			</bundle>
 			<defines>
 				<define>NDEBUG</define>
 			</defines>

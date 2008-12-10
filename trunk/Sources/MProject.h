@@ -83,7 +83,7 @@ class MProject : public MDocument
 
 	static MProject*	Instance();
 
-	std::vector<MProjectTarget*>
+	const std::vector<MProjectTarget>&
 						GetTargets() const		{ return mTargets; }
 
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
@@ -211,13 +211,11 @@ class MProject : public MDocument
 							xmlXPathObjectPtr	inData,
 							std::vector<MPath>&	outPaths);
 
-	typedef void (MProjectTarget::*AddOptionProc)(const char* inOption);
-
 	void		 		ReadOptions(
 							xmlNodePtr			inData,
 							const char*			inOptionName,
-							MProjectTarget*		inTarget,
-							AddOptionProc		inAddOptionProc);
+							std::vector<std::string>&
+												outOptions);
 
 	void				ReadFiles(
 							xmlNodePtr			inData,
@@ -257,16 +255,26 @@ class MProject : public MDocument
 							const std::vector<std::string>&
 												inOptions);
 
+	void				GetPaths(
+							std::vector<MPath>&	outSysSearchPaths,
+							std::vector<MPath>&	outUserSearchPaths,
+							std::vector<MPath>&	outLibSearchPaths);
+
+	void				SetPaths(
+							std::vector<MPath>&	outSysSearchPaths,
+							std::vector<MPath>&	outUserSearchPaths,
+							std::vector<MPath>&	outLibSearchPaths);
+
 	void				CheckDataDir();
 
 	void				SelectTarget(
 							uint32				inTarget);
 	
-	uint32				GetSelectedTarget() const;
+	uint32				GetSelectedTarget() const		{ return mCurrentTarget; }
 	
 	void				ResearchForFiles();
 
-	MEventIn<void(double)>			ePoll;
+	MEventIn<void(double)>					ePoll;
 
 	MEventOut<void(MProjectItem*)>			eInsertedFile;
 	MEventOut<void(MProjectItem*)>			eInsertedResource;
@@ -288,14 +296,14 @@ class MProject : public MDocument
 	std::string			mName;
 	MPath				mProjectFile;
 	MPath				mProjectDir;
-	MProjectTarget*		mCurrentTarget;
 	MPath				mOutputDir;
 	MPath				mProjectDataDir;
 	MPath				mObjectDir;
 	MPath				mResourcesDir;
 	MProjectGroup		mProjectItems;
 	MProjectGroup		mPackageItems;
-	std::vector<MProjectTarget*>
+	uint32				mCurrentTarget;
+	std::vector<MProjectTarget>
 						mTargets;
 	std::vector<std::pair<std::string,std::string> >
 						mPkgConfigPkgs;

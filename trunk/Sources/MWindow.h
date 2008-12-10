@@ -135,18 +135,8 @@ class MWindow : public MView, public MHandler
 	bool					mModified;
 	boost::thread*			mTransitionThread;
 	GladeXML*				mGladeXML;
-	uint32					mFocusTimestamp;
-	uint32					mFocusTimoutTag;
 
 	void					Init();
-
-	static GdkFilterReturn	ClientMessageFilter(
-								GdkXEvent*			inXEvent,
-								GdkEvent*			inEvent,
-								gpointer			data);
-
-	static int				FocusTimeout(
-								void*				data);
 
 	void					TransitionTo(
 								MRect			inPosition);

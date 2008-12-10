@@ -1016,7 +1016,7 @@ void MTextDocument::ReplaceSelectedText(
 		uint32 anchor = mSelection.GetAnchor();
 		uint32 line = OffsetToLine(anchor);
 		uint32 column = OffsetToColumn(anchor);
-		uint32 caret;
+		uint32 caret = anchor;
 		
 		while (s != inText.end())
 		{
