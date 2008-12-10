@@ -148,7 +148,7 @@ static void RunCommand(
 	}
 	
 	int status;
-	waitpid(pid, &status, WNOHANG);	// avoid zombies
+	waitpid(pid, &status, 0);	// avoid zombies
 }
 
 void ParseString(

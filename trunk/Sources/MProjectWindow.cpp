@@ -1205,7 +1205,6 @@ void MProjectWindow::SyncInterfaceWithProject()
 	for (vector<MProjectTarget*>::iterator t = targets.begin(); t != targets.end(); ++t)
 		targetPopup.Append((*t)->GetName());
 
-PRINT(("zet selected target op %d", mProject->GetSelectedTarget()));
 	targetPopup.SetActive(mProject->GetSelectedTarget());
 
 	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
