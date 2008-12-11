@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Thu Dec 11 19:01:34 2008 -->
+<!--Generated with glade3 3.4.5 on Thu Dec 11 22:10:43 2008 -->
 <glade-interface>
   <widget class="GtkDialog" id="dialog">
     <property name="width_request">400</property>
@@ -49,6 +49,7 @@ Target 2</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="response_id">0</property>
+                    <signal name="clicked" handler="on_changed"/>
                     <child>
                       <widget class="GtkImage" id="image1">
                         <property name="visible">True</property>
@@ -67,6 +68,7 @@ Target 2</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="response_id">0</property>
+                    <signal name="clicked" handler="on_changed"/>
                     <child>
                       <widget class="GtkImage" id="image2">
                         <property name="visible">True</property>
@@ -236,8 +238,7 @@ Target 2</property>
                                     <property name="visible">True</property>
                                     <property name="items" translatable="yes">Executable
 Shared Library
-Static Library
-Perl Plugin</property>
+Static Library</property>
                                     <signal name="changed" handler="on_changed"/>
                                   </widget>
                                   <packing>
@@ -368,7 +369,7 @@ PowerPC (64bit)
                                   <widget class="GtkEntry" id="outd">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="tooltip_text">The compiler to use, e.g. /usr/bin/gcc</property>
+                                    <property name="tooltip_text">Where to create the final executable or library, leave empty to use the project directory.</property>
                                     <signal name="changed" handler="on_changed"/>
                                   </widget>
                                   <packing>
@@ -385,6 +386,7 @@ PowerPC (64bit)
                               <widget class="GtkCheckButton" id="rsrc">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text">Allow the creation of a resource section in your executable to store static data.</property>
                                 <property name="tooltip" translatable="yes">This enables you to compile files into the executable so they can be accessed as globals from within your code.</property>
                                 <property name="label" translatable="yes">Enable resources</property>
                                 <property name="response_id">0</property>
@@ -416,7 +418,7 @@ PowerPC (64bit)
                                   <widget class="GtkEntry" id="rscd">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="tooltip_text">The compiler to use, e.g. /usr/bin/gcc</property>
+                                    <property name="tooltip_text">The directory containing the resource files.</property>
                                     <signal name="changed" handler="on_changed"/>
                                   </widget>
                                   <packing>
@@ -475,13 +477,15 @@ PowerPC (64bit)
                       <widget class="GtkScrolledWindow" id="scrolledwindow6">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                        <property name="hscrollbar_policy">GTK_POLICY_NEVER</property>
                         <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                         <property name="shadow_type">GTK_SHADOW_IN</property>
                         <child>
                           <widget class="GtkTreeView" id="pkgc">
+                            <property name="height_request">100</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">Check the packages that you want to use, the pkg-config settings are picked up automatically.</property>
                             <property name="headers_visible">False</property>
                             <property name="headers_clickable">False</property>
                             <property name="search_column">1</property>
@@ -547,6 +551,7 @@ PowerPC (64bit)
                           <widget class="GtkTextView" id="sysp">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">The list of system include directories.</property>
                             <property name="accepts_tab">False</property>
                           </widget>
                         </child>
@@ -594,6 +599,7 @@ PowerPC (64bit)
                           <widget class="GtkTextView" id="usrp">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">The list of user (quoted) directories.</property>
                             <property name="accepts_tab">False</property>
                           </widget>
                         </child>
@@ -641,6 +647,7 @@ PowerPC (64bit)
                           <widget class="GtkTextView" id="libp">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">The list of directories containing library files.</property>
                             <property name="accepts_tab">False</property>
                           </widget>
                         </child>
@@ -752,6 +759,7 @@ PowerPC (64bit)
                               <widget class="GtkCheckButton" id="debu">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text">Generate debug information in Dwarf-2 format.</property>
                                 <property name="label" translatable="yes">Generate debug code</property>
                                 <property name="response_id">0</property>
                                 <property name="draw_indicator">True</property>
@@ -765,6 +773,7 @@ PowerPC (64bit)
                               <widget class="GtkCheckButton" id="prof">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text">Generate calls to a profiler library, using the -pg switch.</property>
                                 <property name="label" translatable="yes">Generate profiler code</property>
                                 <property name="response_id">0</property>
                                 <property name="draw_indicator">True</property>
@@ -778,6 +787,7 @@ PowerPC (64bit)
                               <widget class="GtkCheckButton" id="pic ">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="tooltip_text">Generate position-independant code which is recommended for libraries.</property>
                                 <property name="label" translatable="yes">Generate position-independant code (PIC)</property>
                                 <property name="response_id">0</property>
                                 <property name="draw_indicator">True</property>
@@ -785,6 +795,58 @@ PowerPC (64bit)
                               </widget>
                               <packing>
                                 <property name="position">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <widget class="GtkCheckButton" id="thre">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="tooltip_text">Generate code that can be run multithreaded.</property>
+                                <property name="label" translatable="yes">Generate multithreaded code (-pthread)</property>
+                                <property name="response_id">0</property>
+                                <property name="draw_indicator">True</property>
+                                <signal name="toggled" handler="on_changed"/>
+                              </widget>
+                              <packing>
+                                <property name="position">4</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <widget class="GtkHBox" id="hbox17">
+                                <property name="visible">True</property>
+                                <property name="spacing">4</property>
+                                <child>
+                                  <widget class="GtkLabel" id="label20">
+                                    <property name="width_request">100</property>
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Optimisation</property>
+                                    <property name="justify">GTK_JUSTIFY_FILL</property>
+                                  </widget>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <widget class="GtkComboBox" id="opti">
+                                    <property name="visible">True</property>
+                                    <property name="items" translatable="yes">No optimisation (-O0)
+Optimise for size (-Os)
+Optimiser level 1 (-O1)
+Optimiser level 2 (-O2)
+Optimiser level 3 (-O3)</property>
+                                    <signal name="changed" handler="on_changed"/>
+                                  </widget>
+                                  <packing>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </widget>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">5</property>
                               </packing>
                             </child>
                           </widget>
@@ -839,6 +901,7 @@ PowerPC (64bit)
                           <widget class="GtkTextView" id="defs">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">Enter symbols that should be defined during compilation.</property>
                             <property name="accepts_tab">False</property>
                           </widget>
                         </child>
@@ -886,6 +949,7 @@ PowerPC (64bit)
                           <widget class="GtkTextView" id="warn">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="tooltip_text">Enter the list of warnings you want to enable.</property>
                             <property name="accepts_tab">False</property>
                           </widget>
                         </child>

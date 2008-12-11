@@ -566,18 +566,10 @@ void MJapieApp::DoQuit()
 	}
 
 	DoCloseAll(kSaveChangesQuittingApplication);
-//	MDialog::CloseAllDialogs();
-
-	if (MDocument::GetFirstDocument() == nil)
-	{
-		
-//		MProject::CloseAllProjects(kSaveChangesQuittingApplication);
-	}
 	
 	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
 	{
 		MFindDialog::Instance().Close();
-		
 		gtk_main_quit();
 	}
 }

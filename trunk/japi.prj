@@ -154,13 +154,17 @@
 		<resource>japi.desktop</resource>
 	</resources>
 	<targets>
-		<target kind="Executable" name="Japi-Debug" linkTarget="japi" debug="true">
+		<target kind="Executable">
+			<name>Japi-Debug</name>
+			<linkTarget>japi</linkTarget>
 			<compiler>/usr/bin/g++-4.2</compiler>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
 			<cflags>
 				<cflag>-O0</cflag>
+				<cflag>-pthread</cflag>
+				<cflag>-gdwarf-2</cflag>
 			</cflags>
 			<warnings>
 				<warning>all</warning>
@@ -168,13 +172,16 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" name="Japi-Release" linkTarget="japi">
+		<target kind="Executable">
+			<name>Japi-Release</name>
+			<linkTarget>japi</linkTarget>
 			<compiler>/usr/bin/g++-4.2</compiler>
 			<defines>
 				<define>NDEBUG</define>
 			</defines>
 			<cflags>
 				<cflag>-O3</cflag>
+				<cflag>-pthread</cflag>
 			</cflags>
 			<warnings>
 				<warning>all</warning>

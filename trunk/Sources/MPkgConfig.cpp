@@ -373,4 +373,6 @@ void GetPkgConfigPackagesList(
 
 		outPackages.push_back(pkg);
 	}
+	
+	sort(outPackages.begin(), outPackages.end());
 }

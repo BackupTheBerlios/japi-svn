@@ -561,12 +561,7 @@ void MProject::Read(
 			XMLNode targetNode(data->nodesetval->nodeTab[i]);
 			
 			string linkTarget = targetNode.property("linkTarget");
-			if (linkTarget.length() == 0)
-				THROW(("Invalid target, missing linkTarget"));
-			
 			string name = targetNode.property("name");
-			if (name.length() == 0)
-				THROW(("Invalid target, missing name"));
 			
 			string p = targetNode.property("kind");
 			if (p.length() == 0)
@@ -607,24 +602,25 @@ void MProject::Read(
 			target.mName = name;
 			target.mKind = kind;
 			target.mTargetCPU = arch;
-			target.mBuildFlags = 0;
 			target.mCompiler = Preferences::GetString("c++", "/usr/bin/c++");
 			
 			p = targetNode.property("debug");
 			if (p == "true")
-				target.mBuildFlags |= eBF_debug;
+				target.mCFlags.push_back("-gdwarf-2");
 			
 			p = targetNode.property("pic");
 			if (p == "true")
-				target.mBuildFlags |= eBF_pic;
+				target.mCFlags.push_back("-fPIC");
 			
 			p = targetNode.property("profile");
 			if (p == "true")
-				target.mBuildFlags |= eBF_profile;
+				target.mCFlags.push_back("-pg");
 			
 			for (XMLNode::iterator node = targetNode.begin(); node != targetNode.end(); ++node)
 			{
-				if (node->name() == "defines")
+				if (node->name() == "name")
+					target.mName = node->text();
+				else if (node->name() == "defines")
 					ReadOptions(*node, "define", target.mDefines);
 				else if (node->name() == "cflags")
 					ReadOptions(*node, "cflag", target.mCFlags);
@@ -634,6 +630,8 @@ void MProject::Read(
 					ReadOptions(*node, "warning", target.mWarnings);
 				else if (node->name() == "compiler")
 					target.mCompiler = node->text();
+				else if (node->name() == "linkTarget")
+					target.mLinkTarget = node->text();
 			}
 			
 			mProjectInfo.mTargets.push_back(target);
@@ -813,20 +811,11 @@ void MProject::WriteTarget(
 			break;
 	}
 	
-	THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "name",
+	THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "name",
 		BAD_CAST inTarget.mName.c_str()));
 	
-	THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "linkTarget",
+	THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "linkTarget",
 		BAD_CAST inTarget.mLinkTarget.c_str()));
-
-	if (inTarget.mBuildFlags & eBF_debug)
-		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "debug", BAD_CAST "true"));
-	
-	if (inTarget.mBuildFlags & eBF_profile)
-		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "profile", BAD_CAST "true"));
-	
-	if (inTarget.mBuildFlags & eBF_pic)
-		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "pic", BAD_CAST "true"));
 
 	THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST"compiler",
 		BAD_CAST inTarget.mCompiler.c_str()));
@@ -920,7 +909,7 @@ void MProject::WriteFile(
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 		}
 		
-		WritePaths(writer, "syspaths", mProjectInfo.mSysSearchPaths, true);
+		WritePaths(writer, "syspaths", mProjectInfo.mSysSearchPaths, false);
 		WritePaths(writer, "userpaths", mProjectInfo.mUserSearchPaths, false);
 		WritePaths(writer, "libpaths", mProjectInfo.mLibSearchPaths, false);
 
@@ -1232,15 +1221,6 @@ void MProject::GenerateCFlags(
 //	if (target.IsPedantic())
 //		outArgv.push_back("-pedantic");
 		
-	if (target.mBuildFlags & eBF_debug)
-		outArgv.push_back("-gdwarf-2");
-	
-	if (target.mBuildFlags & eBF_profile)
-		outArgv.push_back("-pg");
-	
-	if (target.mBuildFlags & eBF_pic)
-		outArgv.push_back("-fPIC");
-	
 //	outArgv.push_back("-fmessage-length=132");
 	
 	for (vector<fs::path>::const_iterator p = mProjectInfo.mUserSearchPaths.begin(); p != mProjectInfo.mUserSearchPaths.end(); ++p)
@@ -1360,6 +1340,9 @@ MProjectJob* MProject::CreateLinkJob(
 	}
 
 	argv.insert(argv.end(), target.mLDFlags.begin(), target.mLDFlags.end());
+	// I think this is OK:
+	if (target.mKind != eTargetStaticLibrary)
+		argv.insert(argv.end(), target.mCFlags.begin(), target.mCFlags.end());
 
 	switch (target.mKind)
 	{
@@ -1378,15 +1361,6 @@ MProjectJob* MProject::CreateLinkJob(
 
 	argv.push_back("-o");
 	argv.push_back(inLinkerOutput.string());
-
-	if (target.mBuildFlags | eBF_debug)
-		argv.push_back("-gdwarf-2");
-
-	if (target.mBuildFlags | eBF_pic)
-		argv.push_back("-fPIC");
-
-	if (target.mBuildFlags | eBF_profile)
-		argv.push_back("-pg");
 
 	for (vector<fs::path>::const_iterator p = mProjectInfo.mLibSearchPaths.begin(); p != mProjectInfo.mLibSearchPaths.end(); ++p)
 	{
@@ -1623,7 +1597,7 @@ bool MProject::Make(
 		case eTargetExecutable:
 			targetPath = outputDir / mProjectInfo.mTargets[mCurrentTarget].mLinkTarget;
 			break;
-		
+
 		default:
 			THROW(("Unsupported target kind"));
 	}

@@ -76,13 +76,6 @@ enum MTargetKind
 	eTargetStaticLibrary
 };
 
-enum MBuildFlags
-{
-	eBF_debug		= 1 << 0,
-	eBF_profile		= 1 << 1,
-	eBF_pic			= 1 << 2
-};
-
 struct MProjectTarget
 {
 	std::string					mLinkTarget;
@@ -94,7 +87,6 @@ struct MProjectTarget
 	std::vector<std::string>	mLDFlags;
 	std::vector<std::string>	mWarnings;
 	std::vector<std::string>	mDefines;
-	uint32						mBuildFlags;
 };
 
 // These are the settable fields (using info dialog)

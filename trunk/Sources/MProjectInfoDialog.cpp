@@ -50,6 +50,7 @@
 #include "MGtkWrappers.h"
 #include "MError.h"
 #include "MPkgConfig.h"
+#include "MStrings.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -97,6 +98,7 @@ MProjectInfoDialog::MProjectInfoDialog()
 	, eSysPathsChanged(this, &MProjectInfoDialog::SysPathsChanged)
 	, eUserPathsChanged(this, &MProjectInfoDialog::UserPathsChanged)
 	, eLibPathsChanged(this, &MProjectInfoDialog::LibPathsChanged)
+	, ePkgToggled(this, &MProjectInfoDialog::PkgToggled)
 	, mProject(nil)
 {
 	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
@@ -131,23 +133,13 @@ void MProjectInfoDialog::Initialize(
 	mProject->GetInfo(mProjectInfo);
 	
 	// setup the targets
-	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
-	eTargetChanged.Block(targetPopup, "on_targ_changed");
-	
-	targetPopup.RemoveAll();
-	
-	for (vector<MProjectTarget>::iterator t = mProjectInfo.mTargets.begin(); t != mProjectInfo.mTargets.end(); ++t)
-		targetPopup.Append(t->mName);
-	
-	targetPopup.SetActive(mProject->GetSelectedTarget());
+	UpdateTargetPopup(mProject->GetSelectedTarget());
 
-	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
+	TargetChanged();
 
 	SetText(kOutputDirControlID, mProjectInfo.mOutputDir.string());
 	SetChecked(kResourcesControlID, mProjectInfo.mAddResources);
 	SetText(kResourceDirControlID, mProjectInfo.mResourcesDir.string());
-
-	TargetChanged();
 	
 	// set up the paths
 	vector<string> paths;
@@ -167,11 +159,57 @@ void MProjectInfoDialog::Initialize(
 	
 	// pkg-config
 	
-	vector<string> pkgs, desc;
-	GetPkgConfigPackagesList(pkgs, desc);
+	vector<pair<string,string> > pkgs;
+	GetPkgConfigPackagesList(pkgs);
 	
-//	copy(pkgs.begin(), pkgs.end(), ostream_iterator<string>(cout, "\n"));
+	GtkWidget* list = GetWidget('pkgc');
+	if (list == nil)
+		THROW(("Missing list"));
 	
+	mPkgList = gtk_tree_store_new(3, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mPkgList));
+
+	GtkCellRenderer* renderer = gtk_cell_renderer_toggle_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
+		"", renderer, "active", 0, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+	ePkgToggled.Connect(G_OBJECT(renderer), "toggled");
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes(
+		"", renderer, "text", 1, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes(
+		"", renderer, "text", 2, nil);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+
+	// fill the list, starting with the perl option
+	bool isChecked = find(
+		mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
+		"perl:default") != mProjectInfo.mPkgConfigPkgs.end();
+	
+	GtkTreeIter iter;
+	gtk_tree_store_append(mPkgList, &iter, nil);
+	gtk_tree_store_set(mPkgList, &iter,
+		0, isChecked, 1, "perl", 2, "Create code that uses an embedded Perl interpreter", -1);
+	
+	for (vector<pair<string,string> >::iterator pkg = pkgs.begin(); pkg != pkgs.end(); ++pkg)
+	{
+		string test = "pkg-config:";
+		test += pkg->first;
+		
+		isChecked = find(
+			mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
+			test) != mProjectInfo.mPkgConfigPkgs.end();
+		
+		gtk_tree_store_append(mPkgList, &iter, nil);
+		gtk_tree_store_set(mPkgList, &iter,
+			0, isChecked, 1, pkg->first.c_str(), 2, pkg->second.c_str(), -1);
+	}
+	
+	SetEnabled('delt', mProjectInfo.mTargets.size() > 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -202,22 +240,35 @@ void MProjectInfoDialog::TargetChanged()
 		case eTargetExecutable:
 			SetValue(kProjectTypeControlID, 1);
 			break;
-
 		case eTargetSharedLibrary:
 			SetValue(kProjectTypeControlID, 2);
 			break;
-		
 		case eTargetStaticLibrary:
 			SetValue(kProjectTypeControlID, 3);
 			break;
-		
 		default:
 			break;
 	}
 	
-	SetChecked(kDebugInfoControlID, target.mBuildFlags & eBF_debug);
-	SetChecked(kProfileControlID, target.mBuildFlags & eBF_profile);
-	SetChecked(kPICControlID, target.mBuildFlags & eBF_pic);
+	// find out the optimiser level
+	int optimiser = 1;
+	const vector<string>& cflags = target.mCFlags;
+	if (find(cflags.begin(), cflags.end(), "-Os") != cflags.end())
+		optimiser = 2;
+	else if (find(cflags.begin(), cflags.end(), "-O1") != cflags.end())
+		optimiser = 3;
+	else if (find(cflags.begin(), cflags.end(), "-O2") != cflags.end())
+		optimiser = 4;
+	else if (find(cflags.begin(), cflags.end(), "-O3") != cflags.end())
+		optimiser = 5;
+	SetValue('opti', optimiser);
+	
+	// pthread
+	SetChecked('thre', find(cflags.begin(), cflags.end(), "-pthread") != cflags.end());
+	
+	SetChecked(kDebugInfoControlID, find(cflags.begin(), cflags.end(), "-gdwarf-2") != cflags.end());
+	SetChecked(kProfileControlID, find(cflags.begin(), cflags.end(), "-pg") != cflags.end());
+	SetChecked(kPICControlID, find(cflags.begin(), cflags.end(), "-fPIC") != cflags.end());
 
 	SetText(kCompilerControlID, target.mCompiler);
 	
@@ -236,13 +287,23 @@ void MProjectInfoDialog::ValueChanged(
 {
 	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
 	MProjectTarget& target = mProjectInfo.mTargets[targetPopup.GetActive()];
+
+	vector<string>& cflags = target.mCFlags;
+//	vector<string>& ldflags = target.mLDFlags;
 	
 	string s;
 	
 	switch (inID)
 	{
-		case kTargetNameControlID:		GetText(inID, target.mName); break;
-		case kLinkerOutputControlID:	GetText(inID, target.mLinkTarget); break;
+		case kTargetNameControlID:
+			GetText(inID, target.mName);
+			UpdateTargetPopup(targetPopup.GetActive());
+			break;
+
+		case kLinkerOutputControlID:
+			GetText(inID, target.mLinkTarget);
+			break;
+
 		case kProjectTypeControlID:
 			switch (GetValue(inID))
 			{
@@ -263,25 +324,45 @@ void MProjectInfoDialog::ValueChanged(
 			}
 			break;
 		
-		case kDebugInfoControlID:
+		case 'opti':
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O0"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-Os"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O1"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O2"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O3"), cflags.end());
+		
+			switch (GetValue(inID))
+			{
+				case 1:	cflags.push_back("-O0"); break;
+				case 2:	cflags.push_back("-Os"); break;
+				case 3:	cflags.push_back("-O1"); break;
+				case 4:	cflags.push_back("-O2"); break;
+				case 5:	cflags.push_back("-O3"); break;
+			}
+			break;
+		
+		case 'thre':
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-pthread"), cflags.end());
 			if (IsChecked(inID))
-				target.mBuildFlags |= eBF_debug;
-			else
-				target.mBuildFlags &= ~(eBF_debug);
+				cflags.push_back("-pthread");
+			break;
+		
+		case kDebugInfoControlID:
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-gdwarf-2"), cflags.end());
+			if (IsChecked(inID))
+				cflags.push_back("-gdwarf-2");
 			break;
 		
 		case kProfileControlID:
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-pg"), cflags.end());
 			if (IsChecked(inID))
-				target.mBuildFlags |= eBF_profile;
-			else
-				target.mBuildFlags &= ~(eBF_profile);
+				cflags.push_back("-pg");
 			break;
 		
 		case kPICControlID:
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-fPIC"), cflags.end());
 			if (IsChecked(inID))
-				target.mBuildFlags |= eBF_pic;
-			else
-				target.mBuildFlags &= ~(eBF_pic);
+				cflags.push_back("-fPIC");
 			break;
 		
 		case 'defs':
@@ -292,6 +373,14 @@ void MProjectInfoDialog::ValueChanged(
 		case 'warn':
 			GetText(inID, s);
 			ba::split(target.mWarnings, s, ba::is_any_of("\n\r\t "));
+			break;
+		
+		case 'addt':
+			AddTarget();
+			break;
+
+		case 'delt':
+			DeleteTarget();
 			break;
 	}	
 }
@@ -341,3 +430,91 @@ void MProjectInfoDialog::WarningsChanged()
 {
 	ValueChanged('warn');
 }
+
+void MProjectInfoDialog::PkgToggled(
+	gchar*			inPath)
+{
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(mPkgList), &iter, path);
+	gtk_tree_path_free(path);
+
+	bool checked;
+	gchar* pkg;
+	
+	gtk_tree_model_get(GTK_TREE_MODEL(mPkgList), &iter, 0, &checked, 1, &pkg, -1);
+	
+	if (pkg == nil)
+		THROW(("Missing string"));
+	
+	string test = "pkg-config:";
+	
+	if (strcmp(pkg, "perl") == 0)
+		test = "perl:default";
+	else
+		test += pkg;
+	
+	if (checked)
+	{
+		vector<string>::iterator p = find(
+			mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
+			test);
+		
+		if (p != mProjectInfo.mPkgConfigPkgs.end())
+			mProjectInfo.mPkgConfigPkgs.erase(p);
+	}
+	else
+		mProjectInfo.mPkgConfigPkgs.push_back(test);
+	
+	g_free(pkg);
+
+	gtk_tree_store_set(mPkgList, &iter, 0, not checked, -1);
+}
+
+void MProjectInfoDialog::AddTarget()
+{
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	MProjectTarget newTarget = mProjectInfo.mTargets[targetPopup.GetActive()];
+	
+	newTarget.mName += _(" (copy)");
+	
+	mProjectInfo.mTargets.push_back(newTarget);
+
+	UpdateTargetPopup(mProjectInfo.mTargets.size() - 1);
+
+	TargetChanged();
+
+	SetEnabled('delt', true);
+}
+
+void MProjectInfoDialog::DeleteTarget()
+{
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	
+	mProjectInfo.mTargets.erase(mProjectInfo.mTargets.begin() + targetPopup.GetActive());
+
+	UpdateTargetPopup(0);
+
+	TargetChanged();
+
+	SetEnabled('delt', mProjectInfo.mTargets.size() > 1);
+}
+
+void MProjectInfoDialog::UpdateTargetPopup(
+	uint32			inActive)
+{
+	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
+	
+	eTargetChanged.Block(targetPopup, "on_targ_changed");
+	
+	targetPopup.RemoveAll();
+	
+	for (vector<MProjectTarget>::iterator t = mProjectInfo.mTargets.begin(); t != mProjectInfo.mTargets.end(); ++t)
+		targetPopup.Append(t->mName);
+	
+	targetPopup.SetActive(inActive);
+
+	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
+}
+

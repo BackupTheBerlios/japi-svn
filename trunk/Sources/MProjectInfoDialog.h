@@ -55,6 +55,13 @@ class MProjectInfoDialog : public MDialog
 	virtual void		ValueChanged(
 							uint32			inID);
 
+	void				AddTarget();
+	
+	void				DeleteTarget();
+
+	void				UpdateTargetPopup(
+							uint32			inActive);
+
 	void				TargetChanged();
 	MSlot<void()>		eTargetChanged;
 
@@ -73,8 +80,13 @@ class MProjectInfoDialog : public MDialog
 	void				LibPathsChanged();
 	MSlot<void()>		eLibPathsChanged;
 
+	void				PkgToggled(
+							gchar*			inPath);
+	MSlot<void(gchar*)>	ePkgToggled;
+
 	MProject*			mProject;
 	MProjectInfo		mProjectInfo;
+	GtkTreeStore*		mPkgList;
 };
 
 #endif // MFINDANDOPENDIALOG_H
