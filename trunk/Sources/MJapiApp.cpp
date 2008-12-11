@@ -575,7 +575,11 @@ void MJapieApp::DoQuit()
 	}
 	
 	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
+	{
+		MFindDialog::Instance().Close();
+		
 		gtk_main_quit();
+	}
 }
 
 MDocWindow* MJapieApp::DisplayDocument(
