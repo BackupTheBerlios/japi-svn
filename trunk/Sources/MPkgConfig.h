@@ -44,7 +44,7 @@ void GetPkgConfigResult(
 void GetCompilerPaths(
 	const std::string&			inCompiler,
 	std::string&				outCppIncludeDir,
-	std::vector<MPath>&			outLibDirs);
+	std::vector<fs::path>&			outLibDirs);
 
 void GetToolConfigResult(
 	const std::string&			inTool,

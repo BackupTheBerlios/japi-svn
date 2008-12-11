@@ -62,7 +62,7 @@ class MProjectInfoDialog : public MDialog
 	MSlot<void()>		eTargetChanged;
 
 	MProject*					mProject;
-	std::vector<MProjectTarget>	mTargets;
+	MProjectInfo				mProjectInfo;
 	GtkTreeStore*				mSysPaths;
 	GtkTreeStore*				mUsrPaths;
 	GtkTreeStore*				mLibPaths;

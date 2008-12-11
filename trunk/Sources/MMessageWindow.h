@@ -46,7 +46,7 @@ enum MMessageKind
 };
 
 struct MMessageItem;
-typedef std::vector<MPath> MFileTable;
+typedef std::vector<fs::path> MFileTable;
 
 class MMessageList
 {
@@ -61,7 +61,7 @@ class MMessageList
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const MPath&			inFile,
+						const fs::path&			inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -70,7 +70,7 @@ class MMessageList
 	MMessageItem&	GetItem(
 						uint32				inIndex) const;
 	
-	MPath			GetFile(
+	fs::path			GetFile(
 						uint32				inFileNr) const;
 
 	uint32			GetCount() const;
@@ -94,11 +94,11 @@ class MMessageWindow : public MWindow
 						const char*			inText,
 						uint32				inSize);
 	
-	MEventIn<void(const MPath&)>
+	MEventIn<void(const fs::path&)>
 					eBaseDirChanged;
 	
 	void			SetBaseDirectory(
-						const MPath&			inDir);
+						const fs::path&			inDir);
 
 	void			SetMessages(
 						const std::string&	inDescription,
@@ -115,7 +115,7 @@ class MMessageWindow : public MWindow
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const MPath&		inFile,
+						const fs::path&		inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -135,7 +135,7 @@ class MMessageWindow : public MWindow
 	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
 					mInvokeRow;
 
-	MPath			mBaseDirectory;
+	fs::path			mBaseDirectory;
 	MMessageList	mList;
 	std::string		mText;
 	double			mLastAddition;

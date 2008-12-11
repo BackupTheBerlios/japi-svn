@@ -60,7 +60,7 @@ template
 	typename	traits
 >
 void MELFObjectFileImp<CPU,traits>::Read(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	fs::ifstream file(inFile, ios::binary);
 	if (not file.is_open())
@@ -163,7 +163,7 @@ template
 	typename	traits
 >
 void MELFObjectFileImp<CPU, traits>::Write(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	fs::ofstream f(inFile, ios::binary | ios::trunc);
 	if (not f.is_open())
@@ -376,7 +376,7 @@ MObjectFileImp* CreateELFObjectFileImp(
 }
 
 MObjectFileImp* CreateELFObjectFileImp(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	MTargetCPU target = eCPU_Unknown;
 	

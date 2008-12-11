@@ -63,7 +63,7 @@ class MLibMagic
 	static MLibMagic&	Instance();
 	
 	bool		IsText(
-					const MPath&	inPath);
+					const fs::path&	inPath);
 	
   private:
 
@@ -104,7 +104,7 @@ MLibMagic& MLibMagic::Instance()
 }
 
 bool MLibMagic::IsText(
-	const MPath&	inPath)
+	const fs::path&	inPath)
 {
 	bool result = false;
 	const char* t;
@@ -127,7 +127,7 @@ bool MLibMagic::IsText(
 
 #include <sys/extattr.h>
 
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
@@ -135,7 +135,7 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 		inName, outData, inDataSize);
 }
 
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
@@ -156,7 +156,7 @@ void write_attribute(const MPath& inPath, const char* inName, const void* inData
 
 #include <attr/attributes.h>
 
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 
@@ -170,7 +170,7 @@ ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, s
 	return length;
 }
 
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
@@ -187,14 +187,14 @@ void write_attribute(const MPath& inPath, const char* inName, const void* inData
 
 #include <sys/xattr.h>
 
-ssize_t read_attribute(const MPath& inPath, const char* inName, void* outData, size_t inDataSize)
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 
 	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
 }
 
-void write_attribute(const MPath& inPath, const char* inName, const void* inData, size_t inDataSize)
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 
@@ -255,7 +255,7 @@ bool Match(
 
 bool FileNameMatches(
 	const char*		inPattern,
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	return FileNameMatches(inPattern, inFile.leaf());
 }
@@ -299,7 +299,7 @@ struct MFileIteratorImp
 {
 	struct MInfo
 	{
-		MPath			mParent;
+		fs::path			mParent;
 		DIR*			mDIR;
 		struct dirent	mEntry;
 	};
@@ -309,16 +309,16 @@ struct MFileIteratorImp
 							, mReturnDirs(false) {}
 	virtual				~MFileIteratorImp() {}
 	
-	virtual	bool		Next(MPath& outFile) = 0;
+	virtual	bool		Next(fs::path& outFile) = 0;
 	bool				IsTEXT(
-							const MPath&	inFile);
+							const fs::path&	inFile);
 	
 	string				mFilter;
 	bool				mOnlyTEXT;
 	bool				mReturnDirs;
 };
 
-bool MFileIteratorImp::IsTEXT(const MPath& inFile)
+bool MFileIteratorImp::IsTEXT(const fs::path& inFile)
 {
 	return MLibMagic::Instance().IsText(inFile);
 }
@@ -326,18 +326,18 @@ bool MFileIteratorImp::IsTEXT(const MPath& inFile)
 struct MSingleFileIteratorImp : public MFileIteratorImp
 {
 						MSingleFileIteratorImp(
-							const MPath&	inDirectory);
+							const fs::path&	inDirectory);
 
 	virtual				~MSingleFileIteratorImp();
 	
 	virtual	bool		Next(
-							MPath&			outFile);
+							fs::path&			outFile);
 	
 	MInfo				mInfo;
 };
 
 MSingleFileIteratorImp::MSingleFileIteratorImp(
-	const MPath&	inDirectory)
+	const fs::path&	inDirectory)
 {
 	mInfo.mParent = inDirectory;
 	mInfo.mDIR = opendir(inDirectory.string().c_str());
@@ -351,7 +351,7 @@ MSingleFileIteratorImp::~MSingleFileIteratorImp()
 }
 
 bool MSingleFileIteratorImp::Next(
-	MPath&			outFile)
+	fs::path&			outFile)
 {
 	bool result = false;
 	
@@ -397,16 +397,16 @@ bool MSingleFileIteratorImp::Next(
 struct MDeepFileIteratorImp : public MFileIteratorImp
 {
 						MDeepFileIteratorImp(
-							const MPath&	inDirectory);
+							const fs::path&	inDirectory);
 
 	virtual				~MDeepFileIteratorImp();
 
-	virtual	bool		Next(MPath& outFile);
+	virtual	bool		Next(fs::path& outFile);
 
 	stack<MInfo>		mStack;
 };
 
-MDeepFileIteratorImp::MDeepFileIteratorImp(const MPath& inDirectory)
+MDeepFileIteratorImp::MDeepFileIteratorImp(const fs::path& inDirectory)
 {
 	MInfo info;
 
@@ -427,7 +427,7 @@ MDeepFileIteratorImp::~MDeepFileIteratorImp()
 }
 
 bool MDeepFileIteratorImp::Next(
-	MPath&		outFile)
+	fs::path&		outFile)
 {
 	bool result = false;
 	
@@ -483,7 +483,7 @@ bool MDeepFileIteratorImp::Next(
 }
 
 MFileIterator::MFileIterator(
-	const MPath&	inDirectory,
+	const fs::path&	inDirectory,
 	uint32			inFlags)
 {
 	if (inFlags & kFileIter_Deep)
@@ -501,7 +501,7 @@ MFileIterator::~MFileIterator()
 }
 
 bool MFileIterator::Next(
-	MPath&			outFile)
+	fs::path&			outFile)
 {
 	return mImpl->Next(outFile);
 }
@@ -515,7 +515,7 @@ void MFileIterator::SetFilter(
 // ----------------------------------------------------------------------------
 //	relative_path
 
-MPath relative_path(const MPath& inFromDir, const MPath& inFile)
+fs::path relative_path(const fs::path& inFromDir, const fs::path& inFile)
 {
 //	assert(false);
 
@@ -528,7 +528,7 @@ MPath relative_path(const MPath& inFromDir, const MPath& inFile)
 		++f;
 	}
 	
-	MPath result;
+	fs::path result;
 	
 	if (d == inFromDir.end() and f == inFile.end())
 		result = ".";
@@ -551,7 +551,7 @@ MPath relative_path(const MPath& inFromDir, const MPath& inFile)
 }
 
 bool ChooseDirectory(
-	MPath&	outDirectory)
+	fs::path&	outDirectory)
 {
 	GtkWidget* dialog = nil;
 	bool result = false;

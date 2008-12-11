@@ -167,8 +167,8 @@ struct MProjectCopyFileJob : public MProjectJob
 							MProjectCopyFileJob(
 								const std::string&	inTitle,
 								MProject*			inProject,
-								const MPath&		inSrcFile,
-								const MPath&		inDstFile,
+								const fs::path&		inSrcFile,
+								const fs::path&		inDstFile,
 								bool				inRecursive = true)		// in the package dir
 								: MProjectJob(inTitle, inProject)
 								, mSrcFile(inSrcFile)
@@ -179,11 +179,11 @@ struct MProjectCopyFileJob : public MProjectJob
 	virtual bool			IsDone()			{ return true; }
 
 	void					CopyFilesRecursive(
-								const MPath&	inSrcDir,
-								const MPath&	inDstDir);
+								const fs::path&	inSrcDir,
+								const fs::path&	inDstDir);
 
-	MPath					mSrcFile;
-	MPath					mDstFile;
+	fs::path					mSrcFile;
+	fs::path					mDstFile;
 	bool					mRecursive;
 };
 
@@ -197,7 +197,7 @@ struct MProjectCreateResourceJob : public MProjectJob
 								MProject*			inProject,
 								const std::vector<MProjectItem*>&
 													inSrcFiles,
-								const MPath&		inDstFile,		// in the package dir
+								const fs::path&		inDstFile,		// in the package dir
 								MTargetCPU			inTargetCPU)
 								: MProjectJob(inTitle, inProject)
 								, mSrcFiles(inSrcFiles)
@@ -209,7 +209,7 @@ struct MProjectCreateResourceJob : public MProjectJob
 
 	std::vector<MProjectItem*>
 							mSrcFiles;
-	MPath					mDstFile;
+	fs::path					mDstFile;
 	MTargetCPU				mTargetCPU;
 };
 

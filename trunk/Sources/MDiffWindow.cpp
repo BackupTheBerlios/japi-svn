@@ -183,7 +183,7 @@ void MDiffWindow::ChooseFile(int inFileNr)
 	
 	if (GetModifiers() != 0)
 	{
-		MPath dir;
+		fs::path dir;
 
 		if (ChooseDirectory(dir) and is_directory(dir))
 			SetDirectory(inFileNr, dir);
@@ -265,7 +265,7 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 
 void MDiffWindow::SetDirectory(
 	int				inDirNr,
-	const MPath&	inDir)
+	const fs::path&	inDir)
 {
 	if (mDoc1 != nil)
 		SetDocument(1, nil);
@@ -415,8 +415,8 @@ void MDiffWindow::RecalculateDiffsForDirs()
 
 	ClearList();
 
-	vector<MPath> a, b;
-	MPath p;
+	vector<fs::path> a, b;
+	fs::path p;
 	
 	MFileIterator iter_a(mDir1, 0);
 	while (iter_a.Next(p))
@@ -429,7 +429,7 @@ void MDiffWindow::RecalculateDiffsForDirs()
 	sort(a.begin(), a.end());
 	sort(b.begin(), b.end());
 	
-	vector<MPath>::iterator ai, bi;
+	vector<fs::path>::iterator ai, bi;
 	ai = a.begin();
 	bi = b.begin();
 	

@@ -82,7 +82,7 @@ class MJapieApp : public MHandler
 
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
-							MPath&				outFile);
+							fs::path&				outFile);
 
 	MDocument*			OpenOneDocument(
 							const MUrl&			inFileRef);
@@ -93,7 +93,7 @@ class MJapieApp : public MHandler
 							MDocument*			inDocument);
 
 	void				OpenProject(
-							const MPath&		inPath);
+							const fs::path&		inPath);
 
 	void				AddToRecentMenu(
 							const MUrl&			inFileRef);

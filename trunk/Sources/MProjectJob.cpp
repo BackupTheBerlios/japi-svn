@@ -51,7 +51,6 @@
 
 #include "MFile.h"
 #include "MMessageWindow.h"
-#include "MProjectTarget.h"
 #include "MProject.h"
 #include "MProjectJob.h"
 #include "MObjectFile.h"
@@ -381,17 +380,17 @@ bool MProjectIfJob::IsDone()
 //	MProjectCopyFileJob::CopyFilesRecursive
 
 void MProjectCopyFileJob::CopyFilesRecursive(
-	const MPath&	inSrcDir,
-	const MPath&	inDstDir)
+	const fs::path&	inSrcDir,
+	const fs::path&	inDstDir)
 {
 	if (not exists(inDstDir))
 	{
-		MPath dstDir(inDstDir);
+		fs::path dstDir(inDstDir);
 		fs::create_directory(dstDir);
 	}
 	
 	MFileIterator iter(inSrcDir, kFileIter_ReturnDirectories);
-	MPath p;
+	fs::path p;
 	
 	while (iter.Next(p))
 	{
@@ -404,7 +403,7 @@ void MProjectCopyFileJob::CopyFilesRecursive(
 			CopyFilesRecursive(p, inDstDir / p.leaf());
 		else
 		{
-			MPath dstFile = inDstDir / p.leaf();
+			fs::path dstFile = inDstDir / p.leaf();
 			
 			if (fs::exists(dstFile))
 				fs::remove(dstFile);

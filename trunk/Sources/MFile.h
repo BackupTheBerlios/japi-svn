@@ -45,8 +45,6 @@
 
 namespace fs = boost::filesystem;
 
-typedef fs::path MPath;
-
 enum {
 	kFileIter_Deep				= 1 << 0,
 	kFileIter_TEXTFilesOnly		= 1 << 1,
@@ -57,7 +55,7 @@ class MFileIterator
 {
   public:
 					MFileIterator(
-						const MPath&		inDirectory,
+						const fs::path&		inDirectory,
 						uint32				inFlags);
 
 					~MFileIterator();
@@ -65,7 +63,7 @@ class MFileIterator
 	void			SetFilter(
 						const std::string&	inFilter);
 	
-	bool			Next(MPath& outFile);
+	bool			Next(fs::path& outFile);
 
   private:
 
@@ -81,19 +79,19 @@ class MFileIterator
 class MUrl;
 
 ssize_t read_attribute(
-	const MPath&		inPath,
+	const fs::path&		inPath,
 	const char*			inName,
 	void*				outData,
 	size_t				inDataSize);
 
 void write_attribute(
-	const MPath&		inPath,
+	const fs::path&		inPath,
 	const char*			inName,
 	const void*			inData,
 	size_t				inDataSize);
 
 bool ChooseDirectory(
-	MPath&				outDirectory);
+	fs::path&				outDirectory);
 
 bool ChooseOneFile(
 	MUrl&				ioFile);
@@ -104,14 +102,14 @@ bool ChooseFiles(
 
 bool FileNameMatches(
 	const char*			inPattern,
-	const MPath&		inFile);
+	const fs::path&		inFile);
 
 bool FileNameMatches(
 	const char*			inPattern,
 	const std::string&	inFile);
 
-MPath relative_path(
-	const MPath&		inFromDir,
-	const MPath&		inFile);
+fs::path relative_path(
+	const fs::path&		inFromDir,
+	const fs::path&		inFile);
 
 #endif

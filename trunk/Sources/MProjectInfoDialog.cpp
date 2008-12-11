@@ -41,7 +41,6 @@
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUnicode.h"
-#include "MProjectTarget.h"
 #include "MGlobals.h"
 #include "MProjectInfoDialog.h"
 #include "MDevice.h"
@@ -99,7 +98,7 @@ void MProjectInfoDialog::Initialize(
 //	MView::RegisterSubclass<MListView>();
 
 	mProject = inProject;
-	mTargets = mProject->GetTargets();
+	mProject->GetInfo(mProjectInfo);
 	
 	// setup the targets
 	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
@@ -107,7 +106,7 @@ void MProjectInfoDialog::Initialize(
 	
 	targetPopup.RemoveAll();
 	
-	for (vector<MProjectTarget>::iterator t = mTargets.begin(); t != mTargets.end(); ++t)
+	for (vector<MProjectTarget>::iterator t = mProjectInfo.mTargets.begin(); t != mProjectInfo.mTargets.end(); ++t)
 		targetPopup.Append(t->mName);
 	
 	targetPopup.SetActive(mProject->GetSelectedTarget());
@@ -117,9 +116,6 @@ void MProjectInfoDialog::Initialize(
 	TargetChanged();
 	
 	// page 1
-	
-	vector<MPath> sysPaths, userPaths, libPaths;
-	mProject->GetPaths(sysPaths, userPaths, libPaths);
 	
 	GtkWidget* list = GetWidget(kSystemPathsListID);
 	if (list == nil)
@@ -133,7 +129,7 @@ void MProjectInfoDialog::Initialize(
 		"", renderer, "text", 0, nil);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
 	
-	for (vector<MPath>::iterator path = sysPaths.begin(); path != sysPaths.end(); ++path)
+	for (vector<fs::path>::iterator path = mProjectInfo.mSysSearchPaths.begin(); path != mProjectInfo.mSysSearchPaths.end(); ++path)
 	{
 		GtkTreeIter iter;
 		gtk_tree_store_append(mSysPaths, &iter, nil);
@@ -151,7 +147,7 @@ void MProjectInfoDialog::Initialize(
 	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
 	
-	for (vector<MPath>::iterator path = userPaths.begin(); path != userPaths.end(); ++path)
+	for (vector<fs::path>::iterator path = mProjectInfo.mUserSearchPaths.begin(); path != mProjectInfo.mUserSearchPaths.end(); ++path)
 	{
 		GtkTreeIter iter;
 		gtk_tree_store_append(mUsrPaths, &iter, nil);
@@ -169,7 +165,7 @@ void MProjectInfoDialog::Initialize(
 	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
 	
-	for (vector<MPath>::iterator path = libPaths.begin(); path != libPaths.end(); ++path)
+	for (vector<fs::path>::iterator path = mProjectInfo.mLibSearchPaths.begin(); path != mProjectInfo.mLibSearchPaths.end(); ++path)
 	{
 		GtkTreeIter iter;
 		gtk_tree_store_append(mLibPaths, &iter, nil);
@@ -257,7 +253,7 @@ void MProjectInfoDialog::Initialize(
 void MProjectInfoDialog::TargetChanged()
 {
 	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
-	const MProjectTarget& target = mTargets[targetPopup.GetActive()];
+	const MProjectTarget& target = mProjectInfo.mTargets[targetPopup.GetActive()];
 	
 	// name
 	SetText(kTargetNameControlID, target.mName);
@@ -387,58 +383,8 @@ void MProjectInfoDialog::ButtonClicked(
 }
 
 bool MProjectInfoDialog::OKClicked()
-{//
-//	string s;
-//
-//	// page 1
-//
-//	switch (GetValue(kProjectTypeControlID))
-//	{
-//		case 1: mTarget->SetKind(eTargetApplicationPackage);	break;
-//		case 2: mTarget->SetKind(eTargetBundlePackage);			break;
-//		case 4: mTarget->SetKind(eTargetExecutable);			break;
-//		case 5: mTarget->SetKind(eTargetSharedLibrary);			break;
-//		case 6: mTarget->SetKind(eTargetBundle);				break;
-//		case 7: mTarget->SetKind(eTargetStaticLibrary);			break;
-//	}
-//
-//	GetText(kTargetNameControlID, s);
-//	mTarget->SetName(s);
-//
-//	GetText(kBundleNameControlID, s);
-//	mTarget->SetBundleName(s);
-//	
-//	GetText(kLinkerOutputControlID, s);
-//	mTarget->SetLinkTarget(s);
-//
-////	switch (GetValue(kArchitectureControlID))
-////	{
-////		case 1:	mTarget->SetArch(eTargetArchPPC_32); break;
-////		case 2:	mTarget->SetArch(eTargetArchx86_32); break;
-////	}
-//	
-//	GetText(kCreatorControlID, s);
-//	while (s.length() < 4)
-//		s += ' ';
-//	mTarget->SetCreator(s.substr(0, 4));
-//
-//	GetText(kTypeControlID, s);
-//	while (s.length() < 4)
-//		s += ' ';
-//	mTarget->SetType(s.substr(0, 4));
-//	
-//	// page 2
-//	
-//	// page 3
-//	
-//	mTarget->SetPedantic(IsChecked(kPedanticControlID));
-//	mTarget->SetAnsiStrict(IsChecked(kAnsiStrictControlID));
-//	mTarget->SetDebugFlag(IsChecked(kDebugInfoControlID));
-//
-//	// notify project of changes
-//	
-//	mProject->TargetUpdated();
-	
+{
+	mProject->SetInfo(mProjectInfo);
 	return true;
 }
 
@@ -446,7 +392,7 @@ void MProjectInfoDialog::ValueChanged(
 	uint32			inID)
 {
 	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
-	MProjectTarget& target = mTargets[targetPopup.GetActive()];
+	MProjectTarget& target = mProjectInfo.mTargets[targetPopup.GetActive()];
 	
 	switch (inID)
 	{

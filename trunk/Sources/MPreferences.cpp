@@ -63,7 +63,7 @@ class IniFile
 					~IniFile();
 	
 	GKeyFile*		mKeyFile;
-	MPath			mIniFile;
+	fs::path			mIniFile;
 };
 
 IniFile::IniFile()

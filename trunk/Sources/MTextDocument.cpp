@@ -3109,7 +3109,7 @@ void MTextDocument::FindAll(string inWhat, bool inIgnoreCase,
 }
 
 void MTextDocument::FindAll(
-	const MPath&		inPath,
+	const fs::path&		inPath,
 	const std::string&	inWhat,
 	bool				inIgnoreCase, 
 	bool				inRegex,
@@ -4297,7 +4297,7 @@ void MTextDocument::StdErr(const char* inText, uint32 inSize)
 	else if (not mStdErrWindowSelected)
 		mStdErrWindow->Select();
 
-	mStdErrWindow->SetBaseDirectory(MPath(mShell->GetCWD()));
+	mStdErrWindow->SetBaseDirectory(fs::path(mShell->GetCWD()));
 
 	mStdErrWindow->AddStdErr(inText, inSize);
 }
@@ -4443,13 +4443,13 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 
 		if (mSpecified and mURL.IsLocal())
 		{
-			MPath path = mURL.GetPath().branch_path() / file.name;
+			fs::path path = mURL.GetPath().branch_path() / file.name;
 			if (fs::exists(path))
 				gApp->OpenOneDocument(MUrl(path));
 		}
 
 		MProject* project = MProject::Instance();
-		MPath p;
+		fs::path p;
 		
 		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
 			gApp->OpenOneDocument(MUrl(p));

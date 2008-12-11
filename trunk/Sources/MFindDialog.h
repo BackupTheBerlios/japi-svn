@@ -102,8 +102,8 @@ class MFindDialog : public MDialog
 
 
 	typedef std::vector<std::string>		StringArray;
-	typedef std::deque<MPath>				FileArray;
-	typedef std::set<MPath>					FileSet;
+	typedef std::deque<fs::path>				FileArray;
+	typedef std::set<fs::path>					FileSet;
 
 	virtual bool	OKClicked();
 
@@ -129,14 +129,14 @@ class MFindDialog : public MDialog
 						bool				inIgnoreCase,
 						bool				inRegex,
 						MMultiMethod		inMethod,
-						MPath				inDirectory,
+						fs::path				inDirectory,
 						bool				inRecursive,
 						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter);
 	
 	void			GetFilesForFindAll(
 						MMultiMethod		inMethod,
-						const MPath&			inDirectory,
+						const fs::path&			inDirectory,
 						bool				inRecursive,
 						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter,

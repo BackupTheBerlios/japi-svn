@@ -55,7 +55,7 @@ void LocateCommand(
 {
 	// Try to locate the executable
 	
-	outPath = MPath(Preferences::GetString(inCommand.c_str(), inCommand));
+	outPath = fs::path(Preferences::GetString(inCommand.c_str(), inCommand));
 	bool found = true;
 	
 	// If the path contains slashes we don't bother
@@ -236,7 +236,7 @@ void GetPkgConfigResult(
 void GetCompilerPaths(
 	const string&	inCompiler,
 	string&			outCppIncludeDir,
-	vector<MPath>&	outLibDirs)
+	vector<fs::path>&	outLibDirs)
 {
 	fs::path cmd;
 	LocateCommand(inCompiler, cmd);

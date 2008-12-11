@@ -389,7 +389,7 @@ void MResourceFile::Add(
 
 void MResourceFile::Add(
 	const string&	inPath,
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	fs::ifstream f(inFile);
 
@@ -412,7 +412,7 @@ void MResourceFile::Add(
 }
 
 void MResourceFile::Write(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	MObjectFile obj(mImpl->mTarget);
 

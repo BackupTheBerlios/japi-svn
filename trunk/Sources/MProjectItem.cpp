@@ -48,18 +48,18 @@ using namespace std;
 
 namespace {
 
-class MPathIterator : public boost::iterator_facade
+class path_iterator : public boost::iterator_facade
 <
-	MPathIterator,
+	path_iterator,
 	string,
 	boost::forward_traversal_tag,
 	string
 >
 {
   public:
-					MPathIterator();		// means 'end'
+					path_iterator();		// means 'end'
 	
-					MPathIterator(
+					path_iterator(
 						const string&		inData);
 					
   private:
@@ -70,7 +70,7 @@ class MPathIterator : public boost::iterator_facade
 
 	void			increment();
 	bool			equal(
-						const MPathIterator&	rhs) const;
+						const path_iterator&	rhs) const;
 
 	const string*	mData;
 	uint32			mOffset;
@@ -78,7 +78,7 @@ class MPathIterator : public boost::iterator_facade
 	bool			mQuoted;
 };
 
-MPathIterator::MPathIterator()
+path_iterator::path_iterator()
 	: mData(nil)
 	, mOffset(0)
 	, mLength(0)
@@ -86,7 +86,7 @@ MPathIterator::MPathIterator()
 {
 }
 
-MPathIterator::MPathIterator(
+path_iterator::path_iterator(
 	const string&		inData)
 	: mData(&inData)
 	, mOffset(0)
@@ -96,7 +96,7 @@ MPathIterator::MPathIterator(
 	increment();
 }
 
-string MPathIterator::dereference() const
+string path_iterator::dereference() const
 {
 	string::const_iterator a = mData->begin() + mOffset;
 	string::const_iterator b = a + mLength;
@@ -119,7 +119,7 @@ string MPathIterator::dereference() const
 	return result;
 }
 
-void MPathIterator::increment()
+void path_iterator::increment()
 {
 	bool found = false;
 	
@@ -173,7 +173,7 @@ void MPathIterator::increment()
 	}
 }
 
-bool MPathIterator::equal(const MPathIterator& rhs) const
+bool path_iterator::equal(const path_iterator& rhs) const
 {
 	return
 		mData == rhs.mData and
@@ -256,7 +256,7 @@ MProjectItem* MProjectItem::GetNext() const
 MProjectFile::MProjectFile(
 	const string&		inName,
 	MProjectGroup*		inParent,
-	const MPath&		inParentDir)
+	const fs::path&		inParentDir)
 	: MProjectItem(inName, inParent)
 	, mParentDir(inParentDir)
 	, mTextSize(0)
@@ -272,7 +272,7 @@ MProjectFile::MProjectFile(
 //	MProjectFile::GetProjectFileForPath
 
 MProjectFile* MProjectFile::GetProjectFileForPath(
-	const MPath&		inPath) const
+	const fs::path&		inPath) const
 {
 	MProjectFile* result = nil;
 	if (fs::exists(inPath) and fs::exists(GetPath()) and fs::equivalent(inPath, GetPath()))
@@ -284,7 +284,7 @@ MProjectFile* MProjectFile::GetProjectFileForPath(
 //	MProjectFile::SetParentDir
 
 void MProjectFile::SetParentDir(
-	const MPath&		inParentDir)
+	const fs::path&		inParentDir)
 {
 	mParentDir = inParentDir;
 }
@@ -293,7 +293,7 @@ void MProjectFile::SetParentDir(
 //	MProjectFile::UpdatePaths
 
 void MProjectFile::UpdatePaths(
-	const MPath&		inObjectDir)
+	const fs::path&		inObjectDir)
 {
 	string baseName = fs::basename(mName);
 	
@@ -384,7 +384,7 @@ void MProjectFile::CheckCompilationResult()
 			}
 		}
 		
-		MPathIterator m1(text), m2;
+		path_iterator m1(text), m2;
 		
 		while (m1 != m2)
 		{
@@ -408,7 +408,7 @@ void MProjectFile::CheckIsOutOfDate(
 {
 	bool isOutOfDate = false;
 	
-	MPath path = mParentDir / mName;
+	fs::path path = mParentDir / mName;
 	
 	if (not IsCompilable())
 		return;
@@ -441,7 +441,7 @@ void MProjectFile::CheckIsOutOfDate(
 					{
 						try
 						{
-							MPath dependancy(path);
+							fs::path dependancy(path);
 							ioModDateCache[path] = depModDate = fs::last_write_time(dependancy);
 						}
 						catch (...) {}
@@ -488,7 +488,7 @@ MProjectGroup::~MProjectGroup()
 //	MProjectGroup::GetProjectFileForPath
 
 MProjectFile* MProjectGroup::GetProjectFileForPath(
-	const MPath&	inPath) const
+	const fs::path&	inPath) const
 {
 	MProjectFile* result = nil;
 
@@ -502,7 +502,7 @@ MProjectFile* MProjectGroup::GetProjectFileForPath(
 //	MProjectGroup::UpdatePaths
 
 void MProjectGroup::UpdatePaths(
-	const MPath&	inObjectDir)
+	const fs::path&	inObjectDir)
 {
 	for_each(mItems.begin(), mItems.end(),
 		boost::bind(&MProjectItem::UpdatePaths, _1, inObjectDir));
@@ -652,8 +652,8 @@ bool MProjectGroup::Contains(
 // ---------------------------------------------------------------------------
 //	MProjectCpFile::GetDestPath
 
-MPath MProjectCpFile::GetDestPath(
-	const MPath&		inPackageDir) const
+fs::path MProjectCpFile::GetDestPath(
+	const fs::path&		inPackageDir) const
 {
 	stack<MProjectGroup*>	sp;
 	
@@ -664,7 +664,7 @@ MPath MProjectCpFile::GetDestPath(
 		parent = dynamic_cast<MProjectGroup*>(parent->GetParent());
 	}
 	
-	MPath result = inPackageDir;
+	fs::path result = inPackageDir;
 	
 	while (not sp.empty())
 	{
@@ -686,7 +686,7 @@ uint32 MProjectCpFile::GetDataSize() const
 		if (is_directory(mPath))
 		{
 			MFileIterator iter(mPath, kFileIter_Deep);
-			MPath p;
+			fs::path p;
 			
 			while (iter.Next(p))
 			{
@@ -738,8 +738,8 @@ void MProjectResource::CheckIsOutOfDate(
 {
 	bool isOutOfDate = false;
 	
-	MPath path = GetPath();
-	MPath object = GetObjectPath();
+	fs::path path = GetPath();
+	fs::path object = GetObjectPath();
 	
 	if (not fs::exists(object) or not fs::exists(path))
 	{
@@ -758,7 +758,7 @@ void MProjectResource::CheckIsOutOfDate(
 //	MProjectResource::UpdatePaths
 
 void MProjectResource::UpdatePaths(
-	const MPath&		inObjectDir)
+	const fs::path&		inObjectDir)
 {
 	mObjectPath = inObjectDir / "__rsrc__.o";
 }

@@ -62,10 +62,10 @@ class MProjectItem
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
-						const MPath&		inPath) const	{ return nil; }
+						const fs::path&		inPath) const	{ return nil; }
 
 	virtual void	UpdatePaths(
-						const MPath&		inObjectDir)	{}
+						const fs::path&		inObjectDir)	{}
 
 	virtual void	CheckCompilationResult()				{}
 
@@ -116,17 +116,17 @@ class MProjectFile : public MProjectItem
 					MProjectFile(
 						const std::string&	inName,
 						MProjectGroup*		inParent,
-						const MPath&		inParentDir);
+						const fs::path&		inParentDir);
 	
 	virtual void	UpdatePaths(
-						const MPath&		inObjectDir);
+						const fs::path&		inObjectDir);
 
 	void			SetParentDir(
-						const MPath&		inParentDir);
+						const fs::path&		inParentDir);
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
-						const MPath&		inPath) const;
+						const fs::path&		inPath) const;
 
 	virtual void	CheckCompilationResult();
 
@@ -147,17 +147,17 @@ class MProjectFile : public MProjectItem
 	void			SetCompiling(
 						bool				inIsCompiling);
 	
-	MPath			GetPath() const							{ return mParentDir / mName; }
-	const MPath&	GetObjectPath() const					{ return mObjectPath; }
-	const MPath&	GetDependsPath() const					{ return mDependsPath; }
+	fs::path		GetPath() const							{ return mParentDir / mName; }
+	const fs::path&	GetObjectPath() const					{ return mObjectPath; }
+	const fs::path&	GetDependsPath() const					{ return mDependsPath; }
 
 	virtual uint32	GetTextSize() const						{ return mTextSize; }
 	virtual uint32	GetDataSize() const						{ return mDataSize; }
 
   protected:
-	MPath			mParentDir;
-	MPath			mObjectPath;
-	MPath			mDependsPath;
+	fs::path		mParentDir;
+	fs::path		mObjectPath;
+	fs::path		mDependsPath;
 	std::vector<std::string>
 					mIncludedFiles;
 	uint32			mTextSize;
@@ -180,10 +180,10 @@ class MProjectGroup : public MProjectItem
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
-						const MPath&		inPath) const;
+						const fs::path&		inPath) const;
 	
 	virtual void	UpdatePaths(
-						const MPath&		inObjectDir);
+						const fs::path&		inObjectDir);
 
 	virtual void	CheckCompilationResult();
 
@@ -238,19 +238,19 @@ class MProjectCpFile : public MProjectItem
 					MProjectCpFile(
 						const std::string&	inName,
 						MProjectGroup*		inParent,
-						const MPath&		inPath)
+						const fs::path&		inPath)
 						: MProjectItem(inName, inParent)
 						, mPath(inPath) {}
 
-	const MPath&	GetSourcePath() const					{ return mPath; }
+	const fs::path&	GetSourcePath() const					{ return mPath; }
 
-	MPath			GetDestPath(
-						const MPath& inPackageDir) const;
+	fs::path		GetDestPath(
+						const fs::path& inPackageDir) const;
 
 	virtual uint32	GetDataSize() const;
 
   private:
-	MPath			mPath;
+	fs::path			mPath;
 };
 
 // ---------------------------------------------------------------------------
@@ -274,13 +274,13 @@ class MProjectResource : public MProjectFile
 					MProjectResource(
 						const std::string&	inName,
 						MProjectGroup*		inParent,
-						MPath				inParentDir)
+						fs::path			inParentDir)
 						: MProjectFile(inName, inParent, inParentDir) {}
 
 	virtual bool	IsCompilable() const					{ return true; }
 
 	virtual void	UpdatePaths(
-						const MPath&		inObjectDir);
+						const fs::path&		inObjectDir);
 
 	virtual void	CheckIsOutOfDate(
 						MModDateCache&		ioModDateCache);

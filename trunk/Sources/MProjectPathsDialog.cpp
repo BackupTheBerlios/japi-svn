@@ -42,7 +42,6 @@
 #include "MView.h"
 #include "MUnicode.h"
 #include "MListView.h"
-#include "MProjectTarget.h"
 #include "MGlobals.h"
 #include "MProjectPathsDialog.h"
 #include "MDevice.h"
@@ -77,10 +76,10 @@ MProjectPathsDialog::MProjectPathsDialog()
 
 void MProjectPathsDialog::Initialize(
 	MProject*				inProject,
-	const vector<MPath>&	inUserPaths,
-	const vector<MPath>&	inSysPaths,
-	const vector<MPath>&	inLibPaths,
-	const vector<MPath>&	inFrameworks)
+	const vector<fs::path>&	inUserPaths,
+	const vector<fs::path>&	inSysPaths,
+	const vector<fs::path>&	inLibPaths,
+	const vector<fs::path>&	inFrameworks)
 {
 //	MView::RegisterSubclass<MListView>();
 //
@@ -121,7 +120,7 @@ void MProjectPathsDialog::Initialize(
 //	//	AddRoute(listView->eRowInvoked, eInvokeProjectItem);
 //	//	AddRoute(listView->eRowDeleted, eDeleteProjectItem);
 //	
-//		vector<MPath>::const_iterator b, e;
+//		vector<fs::path>::const_iterator b, e;
 //		
 //		switch (page)
 //		{
@@ -247,7 +246,7 @@ void MProjectPathsDialog::ChooseDirectory()
 //					THROW_IF_OSERROR(::AEGetNthPtr(&navReply.selection, 1,
 //						typeFSRef, nil, nil, &fileRef, sizeof(FSRef), nil));
 //					
-//					MPath path;
+//					fs::path path;
 //					THROW_IF_OSERROR(FSRefMakePath(fileRef, path));
 //					
 //					listView->InsertItem(kListItemLast, path.string().c_str(),
@@ -271,13 +270,13 @@ void MProjectPathsDialog::ChooseDirectory()
 
 bool MProjectPathsDialog::OKClicked()
 {
-//	vector<MPath> userPaths, sysPaths, libPaths, frameworks;
+//	vector<fs::path> userPaths, sysPaths, libPaths, frameworks;
 //	
 //	for (int page = 1; page <= 4; ++page)
 //	{
 //		MListView* listView = FindViewByID<MListView>(page * kPathsBaseID + kListViewControlID);
 //		
-//		vector<MPath>* paths;
+//		vector<fs::path>* paths;
 //		switch (page)
 //		{
 //			case 1:	paths = &userPaths; break;
@@ -293,7 +292,7 @@ bool MProjectPathsDialog::OKClicked()
 //			listView->GetItem(p, b, size);
 //			b[size] = 0;
 //			
-//			MPath path(b);
+//			fs::path path(b);
 //			paths->push_back(path);
 //			
 //			delete[] b;
@@ -360,14 +359,14 @@ void MProjectPathsDialog::DrawPath(
 
 void MProjectPathsDialog::FilesDropped(
 	uint32			inTargetRow,
-	vector<MPath>	inFiles)
+	vector<fs::path>	inFiles)
 {
 //	MListView* listView =
 //		FindViewByID<MListView>(mCurrentPage * kPathsBaseID + kListViewControlID);
 //	
-//	for (vector<MPath>::iterator p = inFiles.begin(); p != inFiles.end(); ++p)
+//	for (vector<fs::path>::iterator p = inFiles.begin(); p != inFiles.end(); ++p)
 //	{
-//		MPath path = *p;
+//		fs::path path = *p;
 //		if (not is_directory(path))
 //			path = path.branch_path();
 //		

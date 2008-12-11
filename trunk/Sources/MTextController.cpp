@@ -198,7 +198,7 @@ bool MTextController::OpenInclude(
 			result = true;
 	}
 	
-	MPath p;
+	fs::path p;
 	if (not result and project != nil and project->LocateFile(inFileName, true, p))
 	{
 		result = true;
@@ -284,7 +284,7 @@ void MTextController::DoOpenCounterpart()
 	if (doc->IsSpecified())
 	{
 		string name = doc->GetURL().GetFileName();
-		MPath p;
+		fs::path p;
 	
 		const char** ext = nil;
 		

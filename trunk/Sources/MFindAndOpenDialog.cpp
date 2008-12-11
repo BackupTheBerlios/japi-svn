@@ -107,7 +107,7 @@ bool MFindAndOpenDialog::OKClicked()
 		if (project == nil)
 			project = MProject::Instance();
 
-		MPath p(s);
+		fs::path p(s);
 		
 		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
 			gApp->OpenOneDocument(MUrl(p));

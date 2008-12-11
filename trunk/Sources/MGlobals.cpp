@@ -88,7 +88,7 @@ MColor			gHiliteColor, gInactiveHiliteColor;
 MColor			gCurrentLineColor, gMarkedLineColor;
 MColor			gPCLineColor, gBreakpointColor;
 
-MPath			gTemplatesDir, gPrefsDir;
+fs::path			gTemplatesDir, gPrefsDir;
 
 void InitGlobals()
 {

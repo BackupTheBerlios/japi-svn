@@ -184,7 +184,7 @@ MMessageList::~MMessageList()
 
 void MMessageList::AddMessage(
 	MMessageKind	inKind,
-	const MPath&	inFile,
+	const fs::path&	inFile,
 	uint32			inLine,
 	uint32			inMinOffset,
 	uint32			inMaxOffset,
@@ -213,7 +213,7 @@ MMessageItem& MMessageList::GetItem(
 	return *mImpl->mArray[inIndex];
 }
 
-MPath MMessageList::GetFile(
+fs::path MMessageList::GetFile(
 	uint32				inFileNr) const
 {
 	if (inFileNr >= mImpl->mFileTable.size())
@@ -279,7 +279,7 @@ MMessageWindow::MMessageWindow(
 	
 void MMessageWindow::AddMessage(
 	MMessageKind		inKind,
-	const MPath&		inFile,
+	const fs::path&		inFile,
 	uint32				inLine,
 	uint32				inMinOffset,
 	uint32				inMaxOffset,
@@ -343,7 +343,7 @@ void MMessageWindow::SetMessages(
 }
 
 void MMessageWindow::SetBaseDirectory(
-	const MPath&			inBaseDir)
+	const fs::path&			inBaseDir)
 {
 	mBaseDirectory = inBaseDir;
 }
@@ -383,7 +383,7 @@ void MMessageWindow::InvokeItem(
 	
 	if (item.mFileNr > 0)
 	{
-		MPath file = mList.GetFile(item.mFileNr - 1);
+		fs::path file = mList.GetFile(item.mFileNr - 1);
 		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(file)));
 		
 		if (doc != nil)
@@ -432,7 +432,7 @@ void MMessageWindow::AddStdErr(
 			string line = mText.substr(0, n);
 			mText.erase(0, n + 1);
 			
-			MPath spec;
+			fs::path spec;
 			int m[33] = {};
 
 			if (pcre_exec(pattern, info, line.c_str(), line.length(), 0, PCRE_NOTEMPTY, m, 33) >= 0)

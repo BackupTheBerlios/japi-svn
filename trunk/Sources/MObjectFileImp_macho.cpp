@@ -88,7 +88,7 @@ void MMachoObjectFileImp::Read(
 }
 
 void MMachoObjectFileImp::Read(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	mFile = inFile;
 	
@@ -125,7 +125,7 @@ uint32 WriteDataAligned(
 }
 
 void MMachoObjectFileImp::Write(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	fs::ofstream f(inFile, ios::binary | ios::trunc);
 	if (not f.is_open())

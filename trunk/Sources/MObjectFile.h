@@ -35,7 +35,7 @@
 
 #include <vector>
 
-#include "MProjectTarget.h"
+#include "MProject.h"
 #include "MFile.h"
 
 uint32 AddNameToNameTable(
@@ -44,17 +44,17 @@ uint32 AddNameToNameTable(
 
 struct MObjectFileImp
 {
-	MPath			mFile;
+	fs::path			mFile;
 	uint32			mTextSize;
 	uint32			mDataSize;
 					
 	virtual			~MObjectFileImp() {}
 	
 	virtual void	Read(
-						const MPath&		inFile) = 0;
+						const fs::path&		inFile) = 0;
 
 	virtual void	Write(
-						const MPath&		inFile) = 0;
+						const fs::path&		inFile) = 0;
 
   protected:
 
@@ -78,7 +78,7 @@ class MObjectFile
 					MTargetCPU			inTarget);
 
 				MObjectFile(
-					const MPath&		inFile);
+					const fs::path&		inFile);
 
 				~MObjectFile();
 
@@ -91,7 +91,7 @@ class MObjectFile
 					uint32				inSize);
 
 	void		Write(
-					const MPath&		inFile);
+					const fs::path&		inFile);
 
   private:
 	struct MObjectFileImp*	mImpl;

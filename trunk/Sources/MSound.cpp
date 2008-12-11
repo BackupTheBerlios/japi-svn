@@ -62,25 +62,67 @@ class MAudioSocket
 					MAudioSocket();
 					~MAudioSocket();
 	
+	static gboolean	BusCall(
+						GstBus*		inBus,
+						GstMessage*	inMessage,
+						void*		inData);
+	
 	GstElement*		mPlayer;
+	GstElement*		mSink;
+	GstBus*			mBus;
 };
 
 MAudioSocket::MAudioSocket()
 {
 	gst_init(nil, nil);
 	
-	mPlayer = gst_element_factory_make("playbin", nil);
+	mPlayer = gst_element_factory_make("playbin", "play");
 	
 	// Instead of using the default audiosink, use the gconfaudiosink, which
 	// will respect the defaults in gstreamer-properties
 
 	g_object_set(G_OBJECT(mPlayer), "audio-sink",
 		gst_element_factory_make("gconfaudiosink", "GconfAudioSink"), nil);
+
+	mBus = gst_pipeline_get_bus(GST_PIPELINE(mPlayer));
+	gst_bus_add_watch(mBus, &MAudioSocket::BusCall, mPlayer);
 }
 
 MAudioSocket::~MAudioSocket()
 {
 	g_object_unref(mPlayer);
+	g_object_unref(mBus);
+}
+
+gboolean MAudioSocket::BusCall(
+	GstBus*		inBus,
+	GstMessage*	inMessage,
+	void*		inData)
+{
+	GstElement *play = (GstElement*)inData;
+	GError *err = nil;
+	
+	switch (GST_MESSAGE_TYPE(inMessage))
+	{
+		case GST_MESSAGE_EOS:
+			gst_element_set_state(play, GST_STATE_NULL);
+//			gst_object_unref(GST_OBJECT(play));
+			break;
+		case GST_MESSAGE_ERROR:
+			gst_message_parse_error(inMessage, &err, NULL);
+			PRINT(("gstreamer: %s", err->message));
+			g_error_free(err);
+			break;
+		case GST_MESSAGE_WARNING:
+			gst_message_parse_warning(inMessage, &err, NULL);
+			PRINT(("gstreamer: %s", err->message));
+			g_error_free(err);
+			break;
+		default:
+			break;
+	}
+
+	return true;
 }
 
 MAudioSocket& MAudioSocket::Instance()
@@ -99,7 +141,7 @@ void MAudioSocket::Play(
 		
 		// stop old sound
 		gst_element_set_state(mPlayer, GST_STATE_NULL);
-	
+
 		// Set the input to a local file
 		g_object_set(G_OBJECT(mPlayer), "uri", uri.c_str(), nil);
 	
@@ -136,12 +178,12 @@ void PlaySound(
 			cerr << "Unknown sound name " << inSoundName << endl;
 		}
 
-		MPath path = filename;
+		fs::path path = filename;
 
 		const char* const* config_dirs = g_get_system_data_dirs();
 		for (const char* const* dir = config_dirs; *dir != nil; ++dir)
 		{
-			path = MPath(*dir) / "sounds" / filename;
+			path = fs::path(*dir) / "sounds" / filename;
 			if (fs::exists(path))
 				break;
 		}

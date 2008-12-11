@@ -325,7 +325,7 @@ class MTextDocument : public MDocument
 
 						// this one is for the MFindDialog
 	static void			FindAll(
-							const MPath&	inPath,
+							const fs::path&	inPath,
 							const std::string&
 											inWhat,
 							bool			inIgnoreCase, 

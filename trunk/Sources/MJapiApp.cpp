@@ -343,12 +343,12 @@ void MJapieApp::UpdateTemplateMenu(
 {
 	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
 
-	MPath templatesDir = gTemplatesDir;
+	fs::path templatesDir = gTemplatesDir;
 	if (fs::exists(templatesDir) and fs::is_directory(templatesDir))
 	{
 		MFileIterator iter(templatesDir, 0);
 		
-		MPath file;
+		fs::path file;
 		while (iter.Next(file))
 			inMenu->AppendItem(file.leaf(), cmd_OpenTemplate);
 	}
@@ -379,7 +379,7 @@ void MJapieApp::RunEventLoop()
 	
 	if (Preferences::GetInteger("reopen project", 1))
 	{
-		MPath pp = Preferences::GetString("last project", "");
+		fs::path pp = Preferences::GetString("last project", "");
 		if (fs::exists(pp))
 			OpenProject(pp);
 	}
@@ -665,7 +665,7 @@ MDocument* MJapieApp::OpenOneDocument(
 //	OpenProject
 
 void MJapieApp::OpenProject(
-	const MPath&		inPath)
+	const fs::path&		inPath)
 {
 	MUrl url(inPath);
 	
@@ -709,7 +709,7 @@ void MJapieApp::DoOpenTemplate(
 
 void MJapieApp::ShowWorksheet()
 {
-	MPath worksheet = gPrefsDir / "Worksheet";
+	fs::path worksheet = gPrefsDir / "Worksheet";
 	
 	if (not fs::exists(worksheet))
 	{
@@ -876,7 +876,7 @@ int OpenSocketToServer()
 	addr.sun_family = AF_LOCAL;
 	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
 
-	if (fs::exists(MPath(addr.sun_path)))
+	if (fs::exists(fs::path(addr.sun_path)))
 	{
 		result = socket(AF_LOCAL, SOCK_STREAM, 0);
 		if (result < 0)
@@ -1042,12 +1042,12 @@ void install(
 	
 	// locate applications directory
 	
-	MPath desktopFile, applicationsDir;
+	fs::path desktopFile, applicationsDir;
 	
 	const char* const* config_dirs = g_get_system_data_dirs();
 	for (const char* const* dir = config_dirs; *dir != nil; ++dir)
 	{
-		applicationsDir = MPath(*dir) / "applications";
+		applicationsDir = fs::path(*dir) / "applications";
 		if (fs::exists(applicationsDir) and fs::is_directory(applicationsDir))
 			break;
 	}
@@ -1086,7 +1086,7 @@ void install_locale(
 	po.write(po_text, length);
 	po.close();
 	
-	MPath japiLocale(inPath);
+	fs::path japiLocale(inPath);
 	
 	fs::create_directories(japiLocale / "locale" / "nl" / "LC_MESSAGES");
 	

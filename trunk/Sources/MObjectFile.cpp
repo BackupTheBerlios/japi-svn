@@ -93,7 +93,7 @@ MObjectFile::MObjectFile(
 }
 
 MObjectFile::MObjectFile(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 	: mImpl(nil)
 {
 	try
@@ -145,7 +145,7 @@ void MObjectFile::AddGlobal(
 }
 
 void MObjectFile::Write(
-	const MPath&		inFile)
+	const fs::path&		inFile)
 {
 	mImpl->Write(inFile);
 }

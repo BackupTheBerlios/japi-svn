@@ -52,7 +52,6 @@
 #include "MUtils.h"
 #include "MSound.h"
 #include "MProjectItem.h"
-#include "MProjectTarget.h"
 #include "MProjectJob.h"
 #include "MNewGroupDialog.h"
 #include "MProjectInfoDialog.h"
@@ -121,8 +120,8 @@ MProject::MProject(
 	, mProjectDir(mProjectFile.branch_path())
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
-	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
 	, mStdErrWindow(nil)
+	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
 	, mCurrentJob(nil)
 {
     LIBXML_TEST_VERSION
@@ -220,7 +219,7 @@ void MProject::StopBuilding()
 //	MProject::IsFileInProject
 
 bool MProject::IsFileInProject(
-	const MPath&		inPath) const
+	const fs::path&		inPath) const
 {
 	return GetProjectFileForPath(inPath) != nil;
 }
@@ -266,33 +265,11 @@ void MProject::CreateNewGroup(
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::SetProjectPaths
-
-void MProject::SetProjectPaths(
-	const vector<MPath>&	inUserPaths,
-	const vector<MPath>&	inSysPaths,
-	const vector<MPath>&	inLibPaths)
-{
-	if (inUserPaths != mUserSearchPaths or
-		inSysPaths != mSysSearchPaths or
-		inLibPaths != mLibSearchPaths)
-	{
-		mUserSearchPaths = inUserPaths;
-		mSysSearchPaths = inSysPaths;
-		mLibSearchPaths = inLibPaths;
-		
-		SetModified(true);
-		
-		ResearchForFiles();
-	}
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::ReadPaths
 
 void MProject::ReadPaths(
 	xmlXPathObjectPtr	inData,
-	vector<MPath>&		outPaths)
+	vector<fs::path>&	outPaths)
 {
 	for (int i = 0; i < inData->nodesetval->nodeNr; ++i)
 	{
@@ -307,10 +284,6 @@ void MProject::ReadPaths(
 		
 		string path((const char*)text);
 		outPaths.push_back(path);
-//		if (path.length() > 0 and path[0] == '/')
-//			outPaths.push_back(MPath(path));
-//		else
-//			outPaths.push_back(mProjectDir / path);
 	}
 }
 
@@ -354,7 +327,7 @@ void MProject::ReadResources(
 			
 			try
 			{
-				MPath filePath = mResourcesDir / fileName;
+				fs::path filePath = mProjectInfo.mResourcesDir / fileName;
 
 				auto_ptr<MProjectResource> projectFile(
 					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
@@ -397,7 +370,7 @@ void MProject::ReadFiles(
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
-			MPath filePath;
+			fs::path filePath;
 			try
 			{
 				auto_ptr<MProjectFile> projectFile;
@@ -405,7 +378,7 @@ void MProject::ReadFiles(
 				if (LocateFile(fileName, true, filePath))
 					projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
 				else
-					projectFile.reset(new MProjectFile(fileName, inGroup, MPath()));
+					projectFile.reset(new MProjectFile(fileName, inGroup, fs::path()));
 				
 				if (node->property("optional") == "true")
 					projectFile->SetOptional(true);
@@ -469,7 +442,7 @@ void MProject::Read(
 					tool = "pkg-config";
 				
 				string pkg = node.text();
-				mPkgConfigPkgs.push_back(make_pair(tool, pkg));
+				mProjectInfo.mPkgConfigPkgs.push_back(tool + ':' + pkg);
 			}
 		}
 			
@@ -483,7 +456,7 @@ void MProject::Read(
 	if (data != nil)
 	{
 		if (data->nodesetval != nil)
-			ReadPaths(data, mSysSearchPaths);
+			ReadPaths(data, mProjectInfo.mSysSearchPaths);
 
 		xmlXPathFreeObject(data);
 	}
@@ -494,7 +467,7 @@ void MProject::Read(
 	if (data != nil)
 	{
 		if (data->nodesetval != nil)
-			ReadPaths(data, mUserSearchPaths);
+			ReadPaths(data, mProjectInfo.mUserSearchPaths);
 
 		xmlXPathFreeObject(data);
 	}
@@ -505,7 +478,7 @@ void MProject::Read(
 	if (data != nil)
 	{
 		if (data->nodesetval != nil)
-			ReadPaths(data, mLibSearchPaths);
+			ReadPaths(data, mProjectInfo.mLibSearchPaths);
 
 		xmlXPathFreeObject(data);
 	}
@@ -533,11 +506,11 @@ void MProject::Read(
 		{
 			XMLNode node(data->nodesetval->nodeTab[i]);
 
-			string rd = node.property("resource_dir");
+			string rd = node.property("resource-dir");
 			if (rd.length() > 0)
-				mResourcesDir = mProjectDir / rd;
+				mProjectInfo.mResourcesDir = mProjectDir / rd;
 			else
-				mResourcesDir = mProjectDir / "Resources";
+				mProjectInfo.mResourcesDir = mProjectDir / "Resources";
 	
 			ReadResources(node, &mPackageItems);
 		}
@@ -629,7 +602,7 @@ void MProject::Read(
 					ReadOptions(*node, "warning", target.mWarnings);
 			}
 			
-			mTargets.push_back(target);
+			mProjectInfo.mTargets.push_back(target);
 		}
 	}
 	
@@ -650,12 +623,12 @@ void MProject::Read(
 void MProject::WritePaths(
 	xmlTextWriterPtr	inWriter,
 	const char*			inTag,
-	vector<MPath>&		inPaths,
+	vector<fs::path>&	inPaths,
 	bool				inFullPath)
 {
 	THROW_IF_XML_ERR(xmlTextWriterStartElement(inWriter, BAD_CAST inTag));
 	
-	for (vector<MPath>::iterator p = inPaths.begin(); p != inPaths.end(); ++p)
+	for (vector<fs::path>::iterator p = inPaths.begin(); p != inPaths.end(); ++p)
 	{
 		string path;
 
@@ -666,8 +639,6 @@ void MProject::WritePaths(
 		else
 			path = p->string();
 
-cerr << p->string() << " => " << path << endl;
-		
 		THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "path", BAD_CAST path.c_str()));
 	}
 	
@@ -745,10 +716,10 @@ void MProject::WriteResources(
 		}
 		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
-			MPath path = static_cast<MProjectResource*>(*item)->GetPath();
+			fs::path path = static_cast<MProjectResource*>(*item)->GetPath();
 
 			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "resource",
-				BAD_CAST relative_path(mResourcesDir, path).string().c_str()));
+				BAD_CAST relative_path(mProjectInfo.mResourcesDir, path).string().c_str()));
 		}
 	}
 }
@@ -883,19 +854,26 @@ void MProject::WriteFile(
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "project"));
 		
 		// pkg-config
-		if (mPkgConfigPkgs.size() > 0)
+		if (mProjectInfo.mPkgConfigPkgs.size() > 0)
 		{
 			THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "pkg-config"));
 			
-			for (vector<pair<string,string> >::iterator p = mPkgConfigPkgs.begin(); p != mPkgConfigPkgs.end(); ++p)
+			for (vector<string>::iterator p = mProjectInfo.mPkgConfigPkgs.begin(); p != mProjectInfo.mPkgConfigPkgs.end(); ++p)
 			{
 				THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "pkg"));
-
-				if (p->first.length() > 0)
-					THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer, BAD_CAST "tool", BAD_CAST p->first.c_str()));
 				
-				if (p->second.length() > 0)
-					THROW_IF_XML_ERR(xmlTextWriterWriteString(writer, BAD_CAST p->second.c_str()));
+				vector<string> f;
+				ba::split(f, *p, ba::is_any_of(":"));
+				
+				if (f.size() == 2)
+				{
+					THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer, BAD_CAST "tool", BAD_CAST f[0].c_str()));
+					THROW_IF_XML_ERR(xmlTextWriterWriteString(writer, BAD_CAST f[1].c_str()));
+				}
+				else if (f[0] == "perl")
+					THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer, BAD_CAST "tool", BAD_CAST f[0].c_str()));
+				else
+					THROW_IF_XML_ERR(xmlTextWriterWriteString(writer, BAD_CAST f[0].c_str()));
 				
 				THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 			}
@@ -903,9 +881,9 @@ void MProject::WriteFile(
 			THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 		}
 		
-		WritePaths(writer, "syspaths", mSysSearchPaths, true);
-		WritePaths(writer, "userpaths", mUserSearchPaths, false);
-		WritePaths(writer, "libpaths", mLibSearchPaths, false);
+		WritePaths(writer, "syspaths", mProjectInfo.mSysSearchPaths, true);
+		WritePaths(writer, "userpaths", mProjectInfo.mUserSearchPaths, false);
+		WritePaths(writer, "libpaths", mProjectInfo.mLibSearchPaths, false);
 
 		// <files>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "files"));
@@ -918,9 +896,12 @@ void MProject::WriteFile(
 		// <package>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "resources"));
 
-		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
-			BAD_CAST "resource_dir",
-			BAD_CAST relative_path(mProjectDir, mResourcesDir).string().c_str()));
+		if (fs::exists(mProjectInfo.mResourcesDir))
+		{
+			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
+				BAD_CAST "resource-dir",
+				BAD_CAST relative_path(mProjectDir, mProjectInfo.mResourcesDir).string().c_str()));
+		}
 
 		WriteResources(writer, mPackageItems.GetItems());
 		
@@ -930,7 +911,7 @@ void MProject::WriteFile(
 		// <targets>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "targets"));
 
-		for (vector<MProjectTarget>::iterator target = mTargets.begin(); target != mTargets.end(); ++target)
+		for (vector<MProjectTarget>::iterator target = mProjectInfo.mTargets.begin(); target != mProjectInfo.mTargets.end(); ++target)
 			WriteTarget(writer, *target);
 		
 		// </targets>
@@ -1012,7 +993,7 @@ void MProject::StartJob(
 //	MProject::GetProjectFileForPath
 
 MProjectFile* MProject::GetProjectFileForPath(
-	const MPath&		inPath) const
+	const fs::path&		inPath) const
 {
 	return mProjectItems.GetProjectFileForPath(inPath);
 }
@@ -1023,14 +1004,14 @@ MProjectFile* MProject::GetProjectFileForPath(
 bool MProject::LocateFile(
 	const string&		inFile,
 	bool				inSearchUserPaths,
-	MPath&				outPath) const
+	fs::path&			outPath) const
 {
 	bool found = false;
 	
 	if (FileNameMatches("*.a;*.dylib", inFile))
 	{
-		for (vector<MPath>::const_iterator p = mLibSearchPaths.begin();
-			 not found and p != mLibSearchPaths.end();
+		for (vector<fs::path>::const_iterator p = mProjectInfo.mLibSearchPaths.begin();
+			 not found and p != mProjectInfo.mLibSearchPaths.end();
 			 ++p)
 		{
 			if (p->is_complete())
@@ -1043,7 +1024,7 @@ bool MProject::LocateFile(
 		
 		if (not found)
 		{
-			for (vector<MPath>::const_iterator p = mCLibSearchPaths.begin();
+			for (vector<fs::path>::const_iterator p = mCLibSearchPaths.begin();
 				 not found and p != mCLibSearchPaths.end();
 				 ++p)
 			{
@@ -1056,8 +1037,8 @@ bool MProject::LocateFile(
 	{
 		if (inSearchUserPaths)
 		{
-			for (vector<MPath>::const_iterator p = mUserSearchPaths.begin();
-				 not found and p != mUserSearchPaths.end();
+			for (vector<fs::path>::const_iterator p = mProjectInfo.mUserSearchPaths.begin();
+				 not found and p != mProjectInfo.mUserSearchPaths.end();
 				 ++p)
 			{
 				if (p->is_complete())
@@ -1069,8 +1050,8 @@ bool MProject::LocateFile(
 			}
 		}
 
-		for (vector<MPath>::const_iterator p = mSysSearchPaths.begin();
-			 not found and p != mSysSearchPaths.end();
+		for (vector<fs::path>::const_iterator p = mProjectInfo.mSysSearchPaths.begin();
+			 not found and p != mProjectInfo.mSysSearchPaths.end();
 			 ++p)
 		{
 			outPath = *p / inFile;
@@ -1090,7 +1071,7 @@ bool MProject::LocateFile(
 		
 		if (not found and fs::exists(mCppIncludeDir))
 		{
-			outPath = MPath(mCppIncludeDir) / inFile;
+			outPath = fs::path(mCppIncludeDir) / inFile;
 			found = fs::exists(outPath);
 		}
 	}
@@ -1105,20 +1086,20 @@ bool MProject::LocateFile(
 //	MProject::GetIncludePaths
 
 void MProject::GetIncludePaths(
-	vector<MPath>&	outPaths) const
+	vector<fs::path>&	outPaths) const
 {
-	copy(mSysSearchPaths.begin(), mSysSearchPaths.end(), back_inserter(outPaths));
+	copy(mProjectInfo.mSysSearchPaths.begin(), mProjectInfo.mSysSearchPaths.end(), back_inserter(outPaths));
 
 	for (vector<string>::const_iterator f = mPkgConfigCFlags.begin();
 		 f != mPkgConfigCFlags.end();
 		 ++f)
 	{
 		if (f->length() > 2 and f->substr(0, 2) == "-I")
-			outPaths.push_back(MPath(f->substr(2)));
+			outPaths.push_back(fs::path(f->substr(2)));
 	}
 
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin();
-		 p != mUserSearchPaths.end();
+	for (vector<fs::path>::const_iterator p = mProjectInfo.mUserSearchPaths.begin();
+		 p != mProjectInfo.mUserSearchPaths.end();
 		 ++p)
 	{
 		if (p->is_complete())
@@ -1142,7 +1123,7 @@ void MProject::CheckDataDir()
 	else if (not is_directory(mProjectDataDir))
 		THROW(("Project data dir is not valid"));
 	
-	mObjectDir = mProjectDataDir / (mTargets[mCurrentTarget].mName + "_Object");
+	mObjectDir = mProjectDataDir / (mProjectInfo.mTargets[mCurrentTarget].mName + "_Object");
 	if (not exists(mObjectDir))
 		fs::create_directory(mObjectDir);
 	else if (not is_directory(mObjectDir))
@@ -1152,8 +1133,8 @@ void MProject::CheckDataDir()
 // ---------------------------------------------------------------------------
 //	MProject::GetObjectPathForFile
 
-MPath MProject::GetObjectPathForFile(
-	const MPath&	inFile) const
+fs::path MProject::GetObjectPathForFile(
+	const fs::path&	inFile) const
 {
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	
@@ -1169,7 +1150,7 @@ MPath MProject::GetObjectPathForFile(
 void MProject::GenerateCFlags(
 	vector<string>&	outArgv) const
 {
-	const MProjectTarget& target(mTargets[mCurrentTarget]);
+	const MProjectTarget& target(mProjectInfo.mTargets[mCurrentTarget]);
 	
 	switch (target.mTargetCPU)
 	{
@@ -1209,7 +1190,7 @@ void MProject::GenerateCFlags(
 	
 //	outArgv.push_back("-fmessage-length=132");
 	
-	for (vector<MPath>::const_iterator p = mUserSearchPaths.begin(); p != mUserSearchPaths.end(); ++p)
+	for (vector<fs::path>::const_iterator p = mProjectInfo.mUserSearchPaths.begin(); p != mProjectInfo.mUserSearchPaths.end(); ++p)
 	{
 		fs::path path;
 		if (p->is_complete())
@@ -1221,7 +1202,7 @@ void MProject::GenerateCFlags(
 			outArgv.push_back(kIQuote + path.string());
 	}
 
-	for (vector<MPath>::const_iterator p = mSysSearchPaths.begin(); p != mSysSearchPaths.end(); ++p)
+	for (vector<fs::path>::const_iterator p = mProjectInfo.mSysSearchPaths.begin(); p != mProjectInfo.mSysSearchPaths.end(); ++p)
 	{
 		fs::path path;
 		if (p->is_complete())
@@ -1238,7 +1219,7 @@ void MProject::GenerateCFlags(
 //	MProject::CreateCompileJob
 
 MProjectJob* MProject::CreateCompileJob(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	CheckDataDir();
 	
@@ -1284,7 +1265,7 @@ MProjectJob* MProject::CreateCompileAllJob()
 
 	if (files.size() > 0)
 	{
-		MTargetCPU arch = mTargets[mCurrentTarget].mTargetCPU;
+		MTargetCPU arch = mProjectInfo.mTargets[mCurrentTarget].mTargetCPU;
 		if (arch == eCPU_native)
 			arch = GetNativeCPU();
 		
@@ -1299,11 +1280,11 @@ MProjectJob* MProject::CreateCompileAllJob()
 //	MProject::CreateLinkJob
 
 MProjectJob* MProject::CreateLinkJob(
-	const MPath&		inLinkerOutput)
+	const fs::path&		inLinkerOutput)
 {
 	CheckDataDir();
 	
-	MProjectTarget& target = mTargets[mCurrentTarget];
+	MProjectTarget& target = mProjectInfo.mTargets[mCurrentTarget];
 	
 	vector<string> argv;
 	
@@ -1349,7 +1330,7 @@ MProjectJob* MProject::CreateLinkJob(
 	if (target.mBuildFlags | eBF_profile)
 		argv.push_back("-pg");
 
-	for (vector<MPath>::const_iterator p = mLibSearchPaths.begin(); p != mLibSearchPaths.end(); ++p)
+	for (vector<fs::path>::const_iterator p = mProjectInfo.mLibSearchPaths.begin(); p != mProjectInfo.mLibSearchPaths.end(); ++p)
 	{
 		fs::path path;
 		
@@ -1398,7 +1379,7 @@ MProjectJob* MProject::CreateLinkJob(
 		MProjectFile* f = dynamic_cast<MProjectFile*>(*file);
 		if (f != nil and f->IsCompilable())
 		{
-			MPath p(mObjectDir / "__rsrc__.o");
+			fs::path p(mObjectDir / "__rsrc__.o");
 			argv.push_back(p.string());
 			break;
 		}
@@ -1413,7 +1394,7 @@ MProjectJob* MProject::CreateLinkJob(
 //	MProject::Preprocess
 
 void MProject::Preprocess(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	CheckDataDir();
 	
@@ -1446,7 +1427,7 @@ void MProject::Preprocess(
 //	MProject::Disassemble
 
 void MProject::Disassemble(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	CheckDataDir();
 	
@@ -1482,7 +1463,7 @@ void MProject::Disassemble(
 //	MProject::CheckSyntax
 
 void MProject::CheckSyntax(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	CheckDataDir();
 	
@@ -1509,7 +1490,7 @@ void MProject::CheckSyntax(
 //	MProject::Compile
 
 void MProject::Compile(
-	const MPath&	inFile)
+	const fs::path&	inFile)
 {
 	StartJob(CreateCompileJob(inFile));
 }
@@ -1553,20 +1534,20 @@ void MProject::Make()
 {
 	auto_ptr<MProjectJob> job(CreateCompileAllJob());
 
-	MPath targetPath;
+	fs::path targetPath;
 
-	switch (mTargets[mCurrentTarget].mKind)
+	switch (mProjectInfo.mTargets[mCurrentTarget].mKind)
 	{
 		case eTargetSharedLibrary:
-			targetPath = mProjectDir / (mTargets[mCurrentTarget].mLinkTarget + ".so");
+			targetPath = mProjectDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".so");
 			break;
 		
 		case eTargetStaticLibrary:
-			targetPath = mProjectDir / (mTargets[mCurrentTarget].mLinkTarget + ".a");
+			targetPath = mProjectDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".a");
 			break;
 		
 		case eTargetExecutable:
-			targetPath = mProjectDir / mTargets[mCurrentTarget].mLinkTarget;
+			targetPath = mProjectDir / mProjectInfo.mTargets[mCurrentTarget].mLinkTarget;
 			break;
 		
 		default:
@@ -1612,10 +1593,10 @@ MMessageWindow* MProject::GetMessageWindow()
 void MProject::SelectTarget(
 	uint32	inTarget)
 {
-	if (inTarget >= mTargets.size())
+	if (inTarget >= mProjectInfo.mTargets.size())
 		inTarget = 0;
 	
-	assert(inTarget < mTargets.size());
+	assert(inTarget < mProjectInfo.mTargets.size());
 
 	if (mCurrentTarget == inTarget)
 		return;
@@ -1637,14 +1618,17 @@ void MProject::SelectTarget(
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();
 	
-	for (vector<pair<string,string> >::iterator pkg = mPkgConfigPkgs.begin(); pkg != mPkgConfigPkgs.end(); ++pkg)
+	for (vector<string>::iterator pkg = mProjectInfo.mPkgConfigPkgs.begin(); pkg != mProjectInfo.mPkgConfigPkgs.end(); ++pkg)
 	{
-		if (pkg->first == "pkg-config")
+		vector<string> p;
+		ba::split(p, *pkg, ba::is_any_of(":"));
+		
+		if (p[0] == "pkg-config")
 		{
-			GetPkgConfigResult(pkg->second, "--cflags", mPkgConfigCFlags);
-			GetPkgConfigResult(pkg->second, "--libs", mPkgConfigLibs);
+			GetPkgConfigResult(p[1], "--cflags", mPkgConfigCFlags);
+			GetPkgConfigResult(p[1], "--libs", mPkgConfigLibs);
 		}
-		else if (pkg->first == "perl")
+		else if (p[0] == "perl")
 		{
 			const char* kCFlagsArgs[] = {
 				"-MExtUtils::Embed",
@@ -1710,12 +1694,12 @@ void MProject::ResearchForFiles()
 			continue;
 		
 		MProjectFile* f = static_cast<MProjectFile*>(*file);
-		MPath filePath;
+		fs::path filePath;
 		
 		if (LocateFile(f->GetName(), true, filePath))
 			f->SetParentDir(filePath.branch_path());
 		else
-			f->SetParentDir(MPath());
+			f->SetParentDir(fs::path());
 	}
 	
 	CheckIsOutOfDate();
@@ -1867,7 +1851,7 @@ void MProject::AddFiles(
 			if (not url.IsLocal())
 				THROW(("You can only add local files to a project"));
 			
-			MPath p = url.GetPath();
+			fs::path p = url.GetPath();
 			string name = p.leaf();
 			
 			if (fs::is_directory(p))
@@ -1892,7 +1876,7 @@ void MProject::AddFiles(
 			else if (root == &mProjectItems)
 			{
 				auto_ptr<MProjectFile> projectFile;
-				MPath filePath;
+				fs::path filePath;
 				
 				if (LocateFile(name, true, filePath))
 				{
@@ -1909,11 +1893,11 @@ PRINT(("pad 1: '%s', pad 2: '%s'", p.string().c_str(), filePath.string().c_str()
 				}
 				else
 				{
-					MPath dir = relative_path(mProjectDir, p.branch_path());
+					fs::path dir = relative_path(mProjectDir, p.branch_path());
 					
 					if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
 					{
-						mUserSearchPaths.push_back(dir);
+						mProjectInfo.mUserSearchPaths.push_back(dir);
 
 						if (not LocateFile(name, true, filePath))
 							THROW(("Cannot find file, something is wrong, sorry..."));
@@ -2065,24 +2049,21 @@ void MProject::EmitInsertedRecursive(
 	}
 }
 
-void MProject::GetPaths(
-	vector<MPath>&	outSysSearchPaths,
-	vector<MPath>&	outUserSearchPaths,
-	vector<MPath>&	outLibSearchPaths)
+void MProject::GetInfo(
+	MProjectInfo&							outInfo) const
 {
-	outSysSearchPaths = mSysSearchPaths;
-	outUserSearchPaths = mUserSearchPaths;
-	outLibSearchPaths = mLibSearchPaths;
+	outInfo = mProjectInfo;
 }
 
-void MProject::SetPaths(
-	vector<MPath>&	inSysSearchPaths,
-	vector<MPath>&	inUserSearchPaths,
-	vector<MPath>&	inLibSearchPaths)
+void MProject::SetInfo(
+	const MProjectInfo&						inInfo)
 {
-	mSysSearchPaths = inSysSearchPaths;
-	mUserSearchPaths = inUserSearchPaths;
-	mLibSearchPaths = inLibSearchPaths;
+	mProjectInfo = inInfo;
+	
+	uint32 currentTarget = mCurrentTarget;
+	mCurrentTarget = mProjectInfo.mTargets.size();	// force update
+	SelectTarget(currentTarget);
+	
+	ResearchForFiles();
 }
-
 

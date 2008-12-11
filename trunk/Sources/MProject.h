@@ -46,7 +46,6 @@
 class MWindow;
 class MMessageWindow;
 class MProjectJob;
-class MProjectTarget;
 
 enum MProjectListPanel
 {
@@ -56,6 +55,62 @@ enum MProjectListPanel
 	
 	ePanelCount
 };
+
+// ---------------------------------------------------------------------------
+//	MProjectTarget
+
+enum MTargetCPU {
+	eCPU_Unknown,
+	eCPU_native,
+	eCPU_386,
+	eCPU_x86_64,
+	eCPU_PowerPC_32,
+	eCPU_PowerPC_64
+};
+
+enum MTargetKind
+{
+	eTargetNone,
+	eTargetExecutable,
+	eTargetSharedLibrary,
+	eTargetStaticLibrary
+};
+
+enum MBuildFlags
+{
+	eBF_debug		= 1 << 0,
+	eBF_profile		= 1 << 1,
+	eBF_pic			= 1 << 2
+};
+
+struct MProjectTarget
+{
+	std::string					mLinkTarget;
+	std::string					mName;
+	MTargetKind					mKind;
+	MTargetCPU					mTargetCPU;
+	std::string					mCompiler;
+	std::vector<std::string>	mCFlags;
+	std::vector<std::string>	mLDFlags;
+	std::vector<std::string>	mWarnings;
+	std::vector<std::string>	mDefines;
+	uint32						mBuildFlags;
+};
+
+// These are the settable fields (using info dialog)
+struct MProjectInfo
+{
+	std::vector<MProjectTarget>	mTargets;
+	fs::path					mOutputDir;
+	fs::path					mResourcesDir;
+	std::vector<std::string>	mPkgConfigPkgs;
+	std::vector<fs::path>		mSysSearchPaths;
+	std::vector<fs::path>		mUserSearchPaths;
+	std::vector<fs::path>		mLibSearchPaths;
+};
+
+// --------------------------------------------------------------------
+// MProject
 
 class MProject : public MDocument
 {
@@ -79,13 +134,12 @@ class MProject : public MDocument
 
 	std::string			GetName() const			{ return mName; }
 
-	const MPath&		GetPath() const			{ return mProjectFile; }
+	const fs::path&		GetPath() const			{ return mProjectFile; }
 
 	static MProject*	Instance();
 
 	const std::vector<MProjectTarget>&
-						GetTargets() const		{ return mTargets; }
-
+						GetTargets() const		{ return mProjectInfo.mTargets; }
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
@@ -117,36 +171,32 @@ class MProject : public MDocument
 	void				StopBuilding();
 
 	void				Preprocess(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
 	void				CheckSyntax(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
 	void				Compile(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
 	void				Disassemble(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
 	bool				IsFileInProject(
-							const MPath&		inFile) const;
+							const fs::path&		inFile) const;
 
 	bool				LocateFile(
 							const std::string&	inFile,
 							bool				inSearchUserPaths,
-							MPath&				outPath) const;
+							fs::path&			outPath) const;
 
 	bool				LocateLibrary(
 							const std::string&	inFile,
-							MPath&				outPath) const;
+							fs::path&			outPath) const;
 
 	void				GetIncludePaths(
-							std::vector<MPath>&	outPaths) const;
-
-	void				SetProjectPaths(
-							const std::vector<MPath>&	inUserPaths,
-							const std::vector<MPath>&	inSysPaths,
-							const std::vector<MPath>&	inLibPaths);
+							std::vector<fs::path>&
+												outPaths) const;
 
 	void				CreateNewGroup(
 							const std::string&	inGroupName,
@@ -175,28 +225,24 @@ class MProject : public MDocument
 							MWindow*			inWindow);
 
 	MProjectFile*		GetProjectFileForPath(
-							const MPath&		inPath) const;
+							const fs::path&		inPath) const;
 
 	void				CheckIsOutOfDate();
 
-	MPath				GetObjectPathForFile(
-							const MPath&		inFile) const;
+	fs::path			GetObjectPathForFile(
+							const fs::path&		inFile) const;
 
 	void				GenerateCFlags(
 							std::vector<std::string>&
 												outArgv) const;
 
 	MProjectJob*		CreateCompileJob(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
 	MProjectJob*		CreateCompileAllJob();
 
 	MProjectJob*		CreateLinkJob(
-							const MPath&		inLinkerOutput);
-
-	MProjectJob*		CreateGenerateDSymJob(
-							const MPath&		inLinkerOutput,
-							const MPath&		inDSymFile);
+							const fs::path&		inLinkerOutput);
 
 	void				StartJob(
 							MProjectJob*		inJob);
@@ -209,7 +255,8 @@ class MProject : public MDocument
 
 	void				ReadPaths(
 							xmlXPathObjectPtr	inData,
-							std::vector<MPath>&	outPaths);
+							std::vector<fs::path>&
+												outPaths);
 
 	void		 		ReadOptions(
 							xmlNodePtr			inData,
@@ -231,7 +278,8 @@ class MProject : public MDocument
 	void				WritePaths(
 							xmlTextWriterPtr	inWriter,
 							const char*			inTag,
-							std::vector<MPath>&	inPaths,
+							std::vector<fs::path>&
+												inPaths,
 							bool				inFullPath);
 
 	void				WriteFiles(
@@ -255,15 +303,12 @@ class MProject : public MDocument
 							const std::vector<std::string>&
 												inOptions);
 
-	void				GetPaths(
-							std::vector<MPath>&	outSysSearchPaths,
-							std::vector<MPath>&	outUserSearchPaths,
-							std::vector<MPath>&	outLibSearchPaths);
+	// interface for Project Info Dialog
+	void				GetInfo(
+							MProjectInfo&		outInfo) const;
 
-	void				SetPaths(
-							std::vector<MPath>&	outSysSearchPaths,
-							std::vector<MPath>&	outUserSearchPaths,
-							std::vector<MPath>&	outLibSearchPaths);
+	void				SetInfo(
+							const MProjectInfo&	inInfo);
 
 	void				CheckDataDir();
 
@@ -293,33 +338,23 @@ class MProject : public MDocument
 												inEvent,
 							MProjectItem*		inItem);
 
-	std::string			mName;
-	MPath				mProjectFile;
-	MPath				mProjectDir;
-	MPath				mOutputDir;
-	MPath				mProjectDataDir;
-	MPath				mObjectDir;
-	MPath				mResourcesDir;
-	MProjectGroup		mProjectItems;
-	MProjectGroup		mPackageItems;
-	uint32				mCurrentTarget;
-	std::vector<MProjectTarget>
-						mTargets;
-	std::vector<std::pair<std::string,std::string> >
-						mPkgConfigPkgs;
-	std::vector<std::string>
-						mPkgConfigCFlags;
-	std::vector<std::string>
-						mPkgConfigLibs;
-	std::string			mCppIncludeDir;		// compiler's c++ include dir
-	std::vector<MPath>	mCLibSearchPaths;	// compiler default search dirs
-	std::vector<MPath>	mSysSearchPaths;
-	std::vector<MPath>	mUserSearchPaths;
-	std::vector<MPath>	mLibSearchPaths;
-	MMessageWindow*		mStdErrWindow;
-	
-	std::auto_ptr<MProjectJob>
-						mCurrentJob;
+	std::string					mName;
+	fs::path					mProjectFile;
+	fs::path					mProjectDir;
+	fs::path					mProjectDataDir;
+	fs::path					mObjectDir;
+
+	MProjectInfo				mProjectInfo;
+	MProjectGroup				mProjectItems;
+	MProjectGroup				mPackageItems;
+
+	std::vector<std::string>	mPkgConfigCFlags;
+	std::vector<std::string>	mPkgConfigLibs;
+	std::string					mCppIncludeDir;		// compiler's c++ include dir
+	std::vector<fs::path>		mCLibSearchPaths;	// compiler default search dirs
+	MMessageWindow*				mStdErrWindow;
+	uint32						mCurrentTarget;
+	std::auto_ptr<MProjectJob>	mCurrentJob;
 };
 
 #endif

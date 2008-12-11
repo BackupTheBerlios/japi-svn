@@ -41,7 +41,6 @@
 #include "MError.h"
 #include "MFindAndOpenDialog.h"
 #include "MProject.h"
-#include "MProjectTarget.h"
 #include "MTreeModelInterface.h"
 #include "MUtils.h"
 #include "MPreferences.h"
@@ -796,7 +795,7 @@ void MProjectWindow::Initialize(
 	
 	if (Preferences::GetInteger("save state", 1))
 	{
-		MPath file = inDocument->GetURL().GetPath();
+		fs::path file = inDocument->GetURL().GetPath();
 		
 		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
 		
@@ -851,7 +850,7 @@ void MProjectWindow::InvokeFileRow(
 		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 		if (file != nil)
 		{
-			MPath p = file->GetPath();
+			fs::path p = file->GetPath();
 			gApp->OpenOneDocument(MUrl(p));
 		}
 	}
@@ -871,7 +870,7 @@ void MProjectWindow::InvokeResourceRow(
 		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 		if (file != nil)
 		{
-			MPath p = file->GetPath();
+			fs::path p = file->GetPath();
 			
 			if (FileNameMatches("*.glade", p))
 			{
@@ -1107,7 +1106,7 @@ void MProjectWindow::SaveState()
 {
 	try
 	{
-		MPath file = mProject->GetURL().GetPath();
+		fs::path file = mProject->GetURL().GetPath();
 		MProjectState state = { };
 
 		(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);

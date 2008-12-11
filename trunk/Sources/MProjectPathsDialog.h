@@ -46,10 +46,10 @@ class MProjectPathsDialog : public MDialog
 
 	void				Initialize(
 							MProject*					inWindow,
-							const std::vector<MPath>&	inUserPaths,
-							const std::vector<MPath>&	inSysPaths,
-							const std::vector<MPath>&	inLibPaths,
-							const std::vector<MPath>&	inFrameworks);
+							const std::vector<fs::path>&	inUserPaths,
+							const std::vector<fs::path>&	inSysPaths,
+							const std::vector<fs::path>&	inLibPaths,
+							const std::vector<fs::path>&	inFrameworks);
 
 	virtual bool		OKClicked();
 	
@@ -71,7 +71,7 @@ class MProjectPathsDialog : public MDialog
 
 	void				FilesDropped(
 							uint32				inTargetRow,
-							std::vector<MPath>	inFiles);
+							std::vector<fs::path>	inFiles);
 
 	void				ItemDragged(
 							uint32				inTargetRow,

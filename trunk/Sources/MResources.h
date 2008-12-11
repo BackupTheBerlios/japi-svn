@@ -69,10 +69,10 @@ class MResourceFile
 
 	void				Add(
 							const std::string&	inPath,
-							const MPath&		inFile);
+							const fs::path&		inFile);
 	
 	void				Write(
-							const MPath&		inFile);
+							const fs::path&		inFile);
 
   private:
 	struct MResourceFileImp*	mImpl;

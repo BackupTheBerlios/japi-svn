@@ -253,7 +253,7 @@ void MFindDialog::DoFindCommand(
 
 	if (IsExpanded(kMultiFileExpanderID))
 	{
-		MPath dir;
+		fs::path dir;
 		bool recursive, textFilesOnly;
 		string filter;
 		MMultiMethod method = eMMDirectory;
@@ -644,7 +644,7 @@ void MFindDialog::FindAll(
 	bool			inIgnoreCase,
 	bool			inRegex,
 	MMultiMethod	inMethod,
-	MPath			inDirectory,
+	fs::path			inDirectory,
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter)
@@ -688,19 +688,19 @@ void MFindDialog::FindAll(
 	catch (exception& e)
 	{
 		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
-		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, e.what());
+		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, "Error in find all, sorry");
+		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, e.what());
 	}	
 	catch (...)
 	{
 		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-		mFindAllResult->AddMessage(kMsgKindError, MPath(), 0, 0, 0, "Error in find all, sorry");
+		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, "Error in find all, sorry");
 	}	
 }
 
 void MFindDialog::GetFilesForFindAll(
 	MMultiMethod	inMethod,
-	const MPath&	inDirectory,
+	const fs::path&	inDirectory,
 	bool			inRecursive,
 	bool			inTextFilesOnly,
 	const string&	inFileNameFilter,
@@ -725,7 +725,7 @@ void MFindDialog::GetFilesForFindAll(
 			if (inFileNameFilter.c_str())
 				iter.SetFilter(inFileNameFilter);
 		
-			MPath file;
+			fs::path file;
 			while (iter.Next(file))
 				outFiles.insert(file);
 			break;
@@ -736,7 +736,7 @@ void MFindDialog::GetFilesForFindAll(
 			MDocument* doc = MDocument::GetFirstDocument();
 			while (doc != nil)
 			{
-				MPath file = doc->GetURL().GetPath();
+				fs::path file = doc->GetURL().GetPath();
 				if (exists(file))
 					outFiles.insert(file);
 				doc = doc->GetNextDocument();
@@ -749,14 +749,14 @@ void MFindDialog::GetFilesForFindAll(
 			MProject* project = MProject::Instance();
 			if (project != nil)
 			{
-				vector<MPath> includePaths;
+				vector<fs::path> includePaths;
 
 				project->GetIncludePaths(includePaths);
 
 				sort(includePaths.begin(), includePaths.end());
 				includePaths.erase(unique(includePaths.begin(), includePaths.end()), includePaths.end());
 
-				for (vector<MPath>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
+				for (vector<fs::path>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
 					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inTextFilesOnly, inFileNameFilter, outFiles);
 			}
 			break;
@@ -778,7 +778,7 @@ void MFindDialog::SetStatusString(
 
 void MFindDialog::SelectSearchDir()
 {
-	MPath dir;
+	fs::path dir;
 	if (ChooseDirectory(dir))
 		StoreComboText(kStartDirComboboxID, dir.string(), mStartDirectories);
 }

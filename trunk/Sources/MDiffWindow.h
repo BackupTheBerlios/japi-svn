@@ -81,7 +81,7 @@ class MDiffWindow : public MDialog
 
 	void				SetDirectory(
 							int				inDirNr,
-							const MPath&	inPath);
+							const fs::path&	inPath);
 
 	void				RecalculateDiffs();
 
@@ -132,7 +132,7 @@ class MDiffWindow : public MDialog
 	MTextDocument*		mDoc1;
 	MTextDocument*		mDoc2;
 	
-	MPath				mDir1, mDir2;
+	fs::path				mDir1, mDir2;
 	
 	MDiffScript			mScript;
 	

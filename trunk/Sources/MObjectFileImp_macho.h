@@ -43,10 +43,10 @@ struct MMachoObjectFileImp : public MObjectFileImp
 						std::istream&		inData);
 	
 	virtual void	Read(
-						const MPath&		inFile);
+						const fs::path&		inFile);
 
 	virtual void	Write(
-						const MPath&		inFile);
+						const fs::path&		inFile);
 };
 
 #endif

@@ -148,7 +148,7 @@ uint32 StringToNum(string inString)
 }
 
 void NormalizePath(
-	MPath&	ioPath)
+	fs::path&	ioPath)
 {
 	string p = ioPath.string();
 	NormalizePath(p);

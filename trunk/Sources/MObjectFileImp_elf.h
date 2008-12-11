@@ -119,16 +119,16 @@ struct MELFObjectFileImp : public MObjectFileImp
 	typedef typename traits::Elf_Sym	Elf_Sym;
 
 	virtual void	Read(
-						const MPath&	inFile);
+						const fs::path&	inFile);
 
 	void			Write(
-						const MPath&	inFile);
+						const fs::path&	inFile);
 };
 
 MObjectFileImp* CreateELFObjectFileImp(
 	MTargetCPU		inTarget);
 
 MObjectFileImp* CreateELFObjectFileImp(
-	const MPath&	inFile);
+	const fs::path&	inFile);
 
 #endif

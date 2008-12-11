@@ -34,10 +34,13 @@
 #define MUTILS_H
 
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/filesystem.hpp>
 
 #include "MTypes.h"
 #include "MColor.h"
 #include "MFile.h"
+
+namespace fs = boost::filesystem;
 
 struct no_swapper
 {
@@ -277,7 +280,7 @@ void NormalizePath(
 	std::string&	ioPath);
 
 void NormalizePath(
-	MPath&			ioPath);
+	fs::path&		ioPath);
 
 double GetLocalTime();
 
