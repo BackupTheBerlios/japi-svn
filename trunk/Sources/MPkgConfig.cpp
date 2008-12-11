@@ -44,6 +44,7 @@
 #include "MError.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 extern char** environ;
 
@@ -262,7 +263,7 @@ void GetCompilerPaths(
 			if (ss.eof())
 				break;
 	
-			if (boost::algorithm::starts_with(line, "Configured with: "))
+			if (ba::starts_with(line, "Configured with: "))
 			{
 				string::size_type p = line.find("--with-gxx-include-dir");
 				if (p != string::npos)
@@ -300,15 +301,15 @@ void GetCompilerPaths(
 			if (ss.eof())
 				break;
 	
-	//		if (boost::algorithm::starts_with(line, "install: "))
+	//		if (ba::starts_with(line, "install: "))
 	//			outInstallDir = line.substr(9);
 	//		else
-			if (boost::algorithm::starts_with(line, "libraries: ="))
+			if (ba::starts_with(line, "libraries: ="))
 			{
-				boost::algorithm::erase_first(line, "libraries: =");
+				ba::erase_first(line, "libraries: =");
 				
 				vector<string> l;
-				split(l, line, boost::algorithm::is_any_of(":"));
+				split(l, line, ba::is_any_of(":"));
 				copy(l.begin(), l.end(), back_inserter(outLibDirs));
 			}
 		}
@@ -336,4 +337,40 @@ void GetToolConfigResult(
 //cout << "tool: " << inTool << endl
 //	 << "flags:" << endl;
 //	copy(outFlags.begin(), outFlags.end(), ostream_iterator<string>(cout, "\n"));
+}
+
+void GetPkgConfigPackagesList(
+	vector<pair<string,string> >&	outPackages)
+{
+	fs::path cmd;
+	LocateCommand("pkg-config", cmd);
+	
+	vector<const char*> argv;
+	argv.push_back("pkg-config");
+	argv.push_back("--list-all");
+	argv.push_back(nil);
+
+	string s;
+	RunCommand(cmd, &argv[0], s);
+	
+	stringstream ss(s);
+	while (not ss.eof())
+	{
+		string line;
+		getline(ss, line);
+		
+		string::size_type p = line.find(' ');
+		if (p == string::npos)
+			continue;
+		
+		pair<string,string> pkg;
+		pkg.first = line.substr(0, p);
+
+		while (p != line.length() and line[p] == ' ')
+			++p;
+		
+		pkg.second = line.substr(p);
+
+		outPackages.push_back(pkg);
+	}
 }

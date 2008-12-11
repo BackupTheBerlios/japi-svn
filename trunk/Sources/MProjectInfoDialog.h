@@ -61,6 +61,9 @@ class MProjectInfoDialog : public MDialog
 	void				DefinesChanged();
 	MSlot<void()>		eDefinesChanged;
 
+	void				WarningsChanged();
+	MSlot<void()>		eWarningsChanged;
+
 	void				SysPathsChanged();
 	MSlot<void()>		eSysPathsChanged;
 

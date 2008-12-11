@@ -49,6 +49,7 @@
 #include "MDevice.h"
 #include "MGtkWrappers.h"
 #include "MError.h"
+#include "MPkgConfig.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -92,6 +93,7 @@ MProjectInfoDialog::MProjectInfoDialog()
 	: MDialog("project-info-dialog")
 	, eTargetChanged(this, &MProjectInfoDialog::TargetChanged)
 	, eDefinesChanged(this, &MProjectInfoDialog::DefinesChanged)
+	, eWarningsChanged(this, &MProjectInfoDialog::WarningsChanged)
 	, eSysPathsChanged(this, &MProjectInfoDialog::SysPathsChanged)
 	, eUserPathsChanged(this, &MProjectInfoDialog::UserPathsChanged)
 	, eLibPathsChanged(this, &MProjectInfoDialog::LibPathsChanged)
@@ -162,6 +164,14 @@ void MProjectInfoDialog::Initialize(
 	transform(mProjectInfo.mLibSearchPaths.begin(), mProjectInfo.mLibSearchPaths.end(),
 		back_inserter(paths), boost::bind(&fs::path::string, _1));
 	SetText(kLibrariesListID, ba::join(paths, "\n"));
+	
+	// pkg-config
+	
+	vector<string> pkgs, desc;
+	GetPkgConfigPackagesList(pkgs, desc);
+	
+//	copy(pkgs.begin(), pkgs.end(), ostream_iterator<string>(cout, "\n"));
+	
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +193,8 @@ void MProjectInfoDialog::TargetChanged()
 		case eCPU_x86_64:		SetValue(kArchitectureControlID, 3); break;
 		case eCPU_PowerPC_32:	SetValue(kArchitectureControlID, 4); break;
 		case eCPU_PowerPC_64:	SetValue(kArchitectureControlID, 5); break;
+		default:
+			break;
 	}
 	
 	switch (target.mKind)
@@ -198,6 +210,9 @@ void MProjectInfoDialog::TargetChanged()
 		case eTargetStaticLibrary:
 			SetValue(kProjectTypeControlID, 3);
 			break;
+		
+		default:
+			break;
 	}
 	
 	SetChecked(kDebugInfoControlID, target.mBuildFlags & eBF_debug);
@@ -207,6 +222,7 @@ void MProjectInfoDialog::TargetChanged()
 	SetText(kCompilerControlID, target.mCompiler);
 	
 	SetText('defs', ba::join(target.mDefines, "\n"));
+	SetText('warn', ba::join(target.mWarnings, "\n"));
 }
 
 bool MProjectInfoDialog::OKClicked()
@@ -271,10 +287,11 @@ void MProjectInfoDialog::ValueChanged(
 		case 'defs':
 			GetText(inID, s);
 			ba::split(target.mDefines, s, ba::is_any_of("\n\r\t "));
-			target.mDefines.erase(
-				remove_if(target.mDefines.begin(), target.mDefines.end(),
-					boost::bind(&string::empty, _1)),
-				target.mDefines.end());
+			break;
+
+		case 'warn':
+			GetText(inID, s);
+			ba::split(target.mWarnings, s, ba::is_any_of("\n\r\t "));
 			break;
 	}	
 }
@@ -318,4 +335,9 @@ void MProjectInfoDialog::LibPathsChanged()
 void MProjectInfoDialog::DefinesChanged()
 {
 	ValueChanged('defs');
+}
+
+void MProjectInfoDialog::WarningsChanged()
+{
+	ValueChanged('warn');
 }

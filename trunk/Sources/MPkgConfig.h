@@ -41,6 +41,10 @@ void GetPkgConfigResult(
 	const char*					inInfo,
 	std::vector<std::string>&	outFlags);
 
+void GetPkgConfigPackagesList(
+	std::vector<std::pair<std::string,std::string> >&
+								outPackages);
+
 void GetCompilerPaths(
 	const std::string&			inCompiler,
 	std::string&				outCppIncludeDir,
