@@ -49,8 +49,10 @@ using namespace std;
 extern const char gResourceIndex[];
 extern const char gResourceData[];
 
-//const char gResourceIndex[] = "\0\0\0\0";
-//const char gResourceData[] = "\0\0\0\0";
+#if defined(BUILDING_TEMPORARY_JAPI)
+const char gResourceIndex[] = "\0\0\0\0";
+const char gResourceData[] = "\0\0\0\0";
+#endif
 
 namespace
 {

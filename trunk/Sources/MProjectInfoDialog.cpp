@@ -36,6 +36,9 @@
 #include <iterator>
 #include <vector>
 
+#include <boost/bind.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include "MFile.h"
 #include "MProject.h"
 #include "MPreferences.h"
@@ -48,6 +51,7 @@
 #include "MError.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 namespace {
 
@@ -60,19 +64,26 @@ enum {
 	kLinkerOutputControlID		= 'link',
 	kProjectTypeControlID		= 'kind',
 	kArchitectureControlID		= 'cpu ',
-	kDebugInfoControlID			= 'debu',
-	kProfileControlID			= 'prof',
-	kPICControlID				= 'pic ',
+	
+	kOutputDirControlID			= 'outd',
+	kResourcesControlID			= 'rsrc',
+	kResourceDirControlID		= 'rscd',
 
 	kSystemPathsListID			= 'sysp',
 	kUserPathsListID			= 'usrp',
 	kLibrariesListID			= 'libp',
 
-	kAnsiStrictControlID		= 3001,
-	kPedanticControlID			= 3002,
-	kDefinesControlID			= 3011,
+	kCompilerControlID			= 'comp',
+	kDebugInfoControlID			= 'debu',
+	kProfileControlID			= 'prof',
+	kPICControlID				= 'pic ',
 	
-	kWarningsControlID			= 4001
+	
+//	kAnsiStrictControlID		= 3001,
+//	kPedanticControlID			= 3002,
+//	kDefinesControlID			= 3011,
+//	
+//	kWarningsControlID			= 4001
 };
 
 }
@@ -80,16 +91,33 @@ enum {
 MProjectInfoDialog::MProjectInfoDialog()
 	: MDialog("project-info-dialog")
 	, eTargetChanged(this, &MProjectInfoDialog::TargetChanged)
+	, eDefinesChanged(this, &MProjectInfoDialog::DefinesChanged)
+	, eSysPathsChanged(this, &MProjectInfoDialog::SysPathsChanged)
+	, eUserPathsChanged(this, &MProjectInfoDialog::UserPathsChanged)
+	, eLibPathsChanged(this, &MProjectInfoDialog::LibPathsChanged)
 	, mProject(nil)
 {
 	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
+
+	GtkWidget* wdgt = GetWidget(kSystemPathsListID);
+	if (wdgt)
+		eSysPathsChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
+
+	wdgt = GetWidget(kUserPathsListID);
+	if (wdgt)
+		eUserPathsChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
+
+	wdgt = GetWidget(kLibrariesListID);
+	if (wdgt)
+		eLibPathsChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
+
+	wdgt = GetWidget('defs');
+	if (wdgt)
+		eDefinesChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
 }
 
 MProjectInfoDialog::~MProjectInfoDialog()
 {
-	g_object_unref(G_OBJECT(mSysPaths));
-	g_object_unref(G_OBJECT(mUsrPaths));
-	g_object_unref(G_OBJECT(mLibPaths));
 }
 
 void MProjectInfoDialog::Initialize(
@@ -113,138 +141,27 @@ void MProjectInfoDialog::Initialize(
 
 	eTargetChanged.Unblock(targetPopup, "on_targ_changed");
 
+	SetText(kOutputDirControlID, mProjectInfo.mOutputDir.string());
+	SetChecked(kResourcesControlID, mProjectInfo.mAddResources);
+	SetText(kResourceDirControlID, mProjectInfo.mResourcesDir.string());
+
 	TargetChanged();
 	
-	// page 1
-	
-	GtkWidget* list = GetWidget(kSystemPathsListID);
-	if (list == nil)
-		THROW(("Missing list"));
-	
-	mSysPaths = gtk_tree_store_new(1, G_TYPE_STRING);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mSysPaths));
+	// set up the paths
+	vector<string> paths;
+	transform(mProjectInfo.mSysSearchPaths.begin(), mProjectInfo.mSysSearchPaths.end(),
+		back_inserter(paths), boost::bind(&fs::path::string, _1));
+	SetText(kSystemPathsListID, ba::join(paths, "\n"));
 
-	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
-		"", renderer, "text", 0, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-	
-	for (vector<fs::path>::iterator path = mProjectInfo.mSysSearchPaths.begin(); path != mProjectInfo.mSysSearchPaths.end(); ++path)
-	{
-		GtkTreeIter iter;
-		gtk_tree_store_append(mSysPaths, &iter, nil);
-		gtk_tree_store_set(mSysPaths, &iter, 0, path->string().c_str(), -1);
-	}
+	paths.clear();
+	transform(mProjectInfo.mUserSearchPaths.begin(), mProjectInfo.mUserSearchPaths.end(),
+		back_inserter(paths), boost::bind(&fs::path::string, _1));
+	SetText(kUserPathsListID, ba::join(paths, "\n"));
 
-	list = GetWidget(kUserPathsListID);
-	if (list == nil)
-		THROW(("Missing list"));
-	
-	mUsrPaths = gtk_tree_store_new(1, G_TYPE_STRING);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mUsrPaths));
-
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-	
-	for (vector<fs::path>::iterator path = mProjectInfo.mUserSearchPaths.begin(); path != mProjectInfo.mUserSearchPaths.end(); ++path)
-	{
-		GtkTreeIter iter;
-		gtk_tree_store_append(mUsrPaths, &iter, nil);
-		gtk_tree_store_set(mUsrPaths, &iter, 0, path->string().c_str(), -1);
-	}
-
-	list = GetWidget(kLibrariesListID);
-	if (list == nil)
-		THROW(("Missing list"));
-	
-	mLibPaths = gtk_tree_store_new(1, G_TYPE_STRING);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mLibPaths));
-
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes("", renderer, "text", 0, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-	
-	for (vector<fs::path>::iterator path = mProjectInfo.mLibSearchPaths.begin(); path != mProjectInfo.mLibSearchPaths.end(); ++path)
-	{
-		GtkTreeIter iter;
-		gtk_tree_store_append(mLibPaths, &iter, nil);
-		gtk_tree_store_set(mLibPaths, &iter, 0, path->string().c_str(), -1);
-	}
-
-	
-//	
-////	MDialog::Initialize(CFSTR("ProjectInfo"), inProject);
-//
-////	ControlRef tabControl = FindControl(kTabControlID);
-////	
-//	SetValue(kTabControlID, 1);
-//	SelectPage(1);
-//
-//	// set up the first page
-//	
-//	stringstream s;
-//	string txt;
-//	
-//	int32 projectType = 1;
-//	switch (mTarget->GetKind())
-//	{
-//		case eTargetApplicationPackage:	projectType = 1; break;
-//		case eTargetBundlePackage:		projectType = 2; break;
-//		case eTargetExecutable:			projectType = 4; break;
-//		case eTargetSharedLibrary:		projectType = 5; break;
-//		case eTargetBundle:				projectType = 6; break;
-//		case eTargetStaticLibrary:		projectType = 7; break;
-//		default:										 break;
-//	}
-//	
-//	SetValue(kProjectTypeControlID, projectType);
-//	SelectProjectType(projectType);
-//	
-//	SetText(kTargetNameControlID, mTarget->GetName());
-////		kProductNameLabelID,
-//
-////	SetChecked(kPICControlID, mTarget->GetPIC());
-////	SetChecked(kFlatNamespaceControlID, mTarget->GetFlatNamespace());
-////	SetChecked(kDisablePreBindingControlID, mTarget->GetDisablePreBinding());
-//	SetChecked(kDebugInfoControlID, mTarget->GetDebugFlag());
-//	SetText(kBundleNameControlID, mTarget->GetBundleName());
-//	SetText(kLinkerOutputControlID, mTarget->GetLinkTarget());
-////	kTargetNameLabelID,
-////	kSeparatorID,
-//
-//	SetText(kCreatorControlID, mTarget->GetCreator());
-//	SetText(kTypeControlID, mTarget->GetType());
-//
-////	if (mTarget->GetTargetCPU() == eTargetArchPPC_32)
-////	{
-////		SetValue(kArchitectureControlID, 1);
-////	}
-////	else if (mTarget->GetTargetCPU() == eTargetArchx86_32)
-////	{
-////		SetValue(kArchitectureControlID, 2);
-////	}
-//	
-////	kCPUControlID
-//
-//	const vector<string>& defs = mTarget->GetDefines();
-//	copy(defs.begin(), defs.end(), ostream_iterator<string>(s, " "));
-//	SetText(kDefinesControlID, s.str());
-//	
-//	
-//	// page two
-//	
-//	SetChecked(kPedanticControlID, mTarget->IsPedantic());
-//	SetChecked(kAnsiStrictControlID, mTarget->IsAnsiStrict());
-//
-//	// page three
-//
-//	stringstream w;
-//	const vector<string>& warnings = mTarget->GetWarnings();
-//	copy(warnings.begin(), warnings.end(), ostream_iterator<string>(w, " "));
-//	SetText(kWarningsControlID, w.str());
-//
-//	Show(inProject);
+	paths.clear();
+	transform(mProjectInfo.mLibSearchPaths.begin(), mProjectInfo.mLibSearchPaths.end(),
+		back_inserter(paths), boost::bind(&fs::path::string, _1));
+	SetText(kLibrariesListID, ba::join(paths, "\n"));
 }
 
 // ---------------------------------------------------------------------------
@@ -286,100 +203,10 @@ void MProjectInfoDialog::TargetChanged()
 	SetChecked(kDebugInfoControlID, target.mBuildFlags & eBF_debug);
 	SetChecked(kProfileControlID, target.mBuildFlags & eBF_profile);
 	SetChecked(kPICControlID, target.mBuildFlags & eBF_pic);
-}
 
-//void MProjectInfoDialog::SelectProjectType(
-//	int32			inType)
-//{//
-////	string name;
-////	
-////	switch (inType)
-////	{
-////		case 1:
-////			GetText(kBundleNameControlID, name);
-////			name = fs::basename(name);
-////			SetText(kBundleNameControlID, name + ".app");
-////			SetText(kLinkerOutputControlID, name);
-////			SetVisible(kBundleNameControlID, true);
-////			SetVisible(kBundleNameLabelID, true);
-////			SetVisible(kCreatorTypeLabelID, true);
-////			SetVisible(kCreatorControlID, true);
-////			SetVisible(kTypeControlID, true);
-////			break;
-////
-////		case 2:
-////			GetText(kBundleNameControlID, name);
-////			name = fs::basename(name);
-////			SetText(kBundleNameControlID, name + ".bundle");
-////			SetText(kLinkerOutputControlID, name);
-////			SetVisible(kBundleNameControlID, true);
-////			SetVisible(kBundleNameLabelID, true);
-////			SetVisible(kCreatorTypeLabelID, true);
-////			SetVisible(kCreatorControlID, true);
-////			SetVisible(kTypeControlID, true);
-////			break;
-////
-////		case 4:
-////			GetText(kLinkerOutputControlID, name);
-////			name = fs::basename(name);
-////			SetText(kLinkerOutputControlID, name);
-////			SetVisible(kBundleNameControlID, false);
-////			SetVisible(kBundleNameLabelID, false);
-////			SetVisible(kCreatorTypeLabelID, false);
-////			SetVisible(kCreatorControlID, false);
-////			SetVisible(kTypeControlID, false);
-////			break;
-////		
-////		case 5:
-////			GetText(kLinkerOutputControlID, name);
-////			name = fs::basename(name);
-////			SetText(kLinkerOutputControlID, name + ".dylib");
-////			SetVisible(kBundleNameControlID, false);
-////			SetVisible(kBundleNameLabelID, false);
-////			SetVisible(kCreatorTypeLabelID, false);
-////			SetVisible(kCreatorControlID, false);
-////			SetVisible(kTypeControlID, false);
-////			break;
-////		
-////		case 6:
-////			GetText(kLinkerOutputControlID, name);
-////			name = fs::basename(name);
-////			SetText(kLinkerOutputControlID, name + ".bundle");
-////			SetVisible(kBundleNameControlID, false);
-////			SetVisible(kBundleNameLabelID, false);
-////			SetVisible(kCreatorTypeLabelID, false);
-////			SetVisible(kCreatorControlID, false);
-////			SetVisible(kTypeControlID, false);
-////			break;
-////		
-////		case 7:
-////			GetText(kLinkerOutputControlID, name);
-////			name = fs::basename(name);
-////			SetText(kLinkerOutputControlID, name + ".a");
-////			SetVisible(kBundleNameControlID, false);
-////			SetVisible(kBundleNameLabelID, false);
-////			SetVisible(kCreatorTypeLabelID, false);
-////			SetVisible(kCreatorControlID, false);
-////			SetVisible(kTypeControlID, false);
-////			break;
-////		
-////	}
-//}
-//
-void MProjectInfoDialog::ButtonClicked(
-	uint32		inButtonID)
-{//
-//	switch (inButtonID)
-//	{
-//		case kProjectTypeControlID:
-//			SelectProjectType(GetValue(kProjectTypeControlID));
-//			break;
-//		
-//		case kTabControlID:
-//			if (GetValue(kTabControlID) != mCurrentPage)
-//				SelectPage(GetValue(kTabControlID));
-//			break;
-//	}
+	SetText(kCompilerControlID, target.mCompiler);
+	
+	SetText('defs', ba::join(target.mDefines, "\n"));
 }
 
 bool MProjectInfoDialog::OKClicked()
@@ -393,6 +220,8 @@ void MProjectInfoDialog::ValueChanged(
 {
 	MGtkComboBox targetPopup(GetWidget(kTargetPopupID));
 	MProjectTarget& target = mProjectInfo.mTargets[targetPopup.GetActive()];
+	
+	string s;
 	
 	switch (inID)
 	{
@@ -438,5 +267,55 @@ void MProjectInfoDialog::ValueChanged(
 			else
 				target.mBuildFlags &= ~(eBF_pic);
 			break;
+		
+		case 'defs':
+			GetText(inID, s);
+			ba::split(target.mDefines, s, ba::is_any_of("\n\r\t "));
+			target.mDefines.erase(
+				remove_if(target.mDefines.begin(), target.mDefines.end(),
+					boost::bind(&string::empty, _1)),
+				target.mDefines.end());
+			break;
 	}	
+}
+
+void MProjectInfoDialog::SysPathsChanged()
+{
+	string s;
+	GetText(kSystemPathsListID, s);
+	
+	vector<string> paths;
+	ba::split(paths, s, ba::is_any_of("\n\r"));
+	
+	mProjectInfo.mSysSearchPaths.clear();
+	copy(paths.begin(), paths.end(), back_inserter(mProjectInfo.mSysSearchPaths));
+}
+
+void MProjectInfoDialog::UserPathsChanged()
+{
+	string s;
+	GetText(kUserPathsListID, s);
+	
+	vector<string> paths;
+	ba::split(paths, s, ba::is_any_of("\n\r"));
+	
+	mProjectInfo.mUserSearchPaths.clear();
+	copy(paths.begin(), paths.end(), back_inserter(mProjectInfo.mUserSearchPaths));
+}
+
+void MProjectInfoDialog::LibPathsChanged()
+{
+	string s;
+	GetText(kLibrariesListID, s);
+	
+	vector<string> paths;
+	ba::split(paths, s, ba::is_any_of("\n\r"));
+	
+	mProjectInfo.mLibSearchPaths.clear();
+	copy(paths.begin(), paths.end(), back_inserter(mProjectInfo.mLibSearchPaths));
+}
+
+void MProjectInfoDialog::DefinesChanged()
+{
+	ValueChanged('defs');
 }

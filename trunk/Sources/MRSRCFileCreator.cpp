@@ -74,24 +74,14 @@ void CreateRSRSFile(
 		uint32 size = b->pubseekoff(0, ios::end);
 		b->pubseekpos(0);
 	
-		char* data = new char[size + 1];
+		vector<char> data(size + 1);
 		
-		try
-		{
-			b->sgetn(data, size);
-			data[size] = 0;
+		b->sgetn(&data[0], size);
+		data[size] = 0;
+	
+		f.close();
 		
-			f.close();
-			
-			rsrcFile.Add(name, data, size);
-		}
-		catch (...)
-		{
-			delete[] data;
-			throw;
-		}
-		
-		delete[] data;
+		rsrcFile.Add(name, &data[0], size);
 	}
 	
 	rsrcFile.Write(inRSRCFile);

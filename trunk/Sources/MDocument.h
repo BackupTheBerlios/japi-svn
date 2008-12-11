@@ -53,6 +53,9 @@ class MDocument
 	explicit			MDocument(
 							const MUrl*			inURL);
 
+	explicit			MDocument(
+							const fs::path&		inPath);
+
 	virtual				~MDocument();
 
 	virtual void		SetFileNameHint(

@@ -667,16 +667,14 @@ MDocument* MJapieApp::OpenOneDocument(
 void MJapieApp::OpenProject(
 	const fs::path&		inPath)
 {
-	MUrl url(inPath);
-	
-	auto_ptr<MProject> project(new MProject(&url));
+	auto_ptr<MProject> project(new MProject(inPath));
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();
 	w->Show();
 	w.release();
 
-	AddToRecentMenu(url);
+	AddToRecentMenu(MUrl(inPath));
 }
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
@@ -1115,6 +1113,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		bool fork = true, readStdin = false;
+		string target;
 
 		fs::path::default_name_check(fs::no_check);
 
@@ -1131,7 +1130,7 @@ int main(int argc, char* argv[])
 		vector<pair<int32,MUrl> > docs;
 		
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:")) != -1)
 		{
 			switch (c)
 			{
@@ -1147,10 +1146,25 @@ int main(int argc, char* argv[])
 					install_locale(optarg);
 					break;
 				
+				case 'm':
+					target = optarg;
+					break;
+				
 				default:
 					usage();
 					break;
 			}
+		}
+		
+		if (not target.empty() and optind < argc)
+		{
+			MProject project(fs::system_complete(argv[optind]));
+			project.SelectTarget(target);
+			if (project.Make(false))
+				cout << "Build successful, " << target << " is up-to-date" << endl;
+			else
+				cout << "Building " << target << " Failed" << endl;
+			exit(0);
 		}
 		
 		if (fs::exists("/usr/local/share/japi/locale"))

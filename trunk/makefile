@@ -1,11 +1,10 @@
 # makefile voor JapieG
 
-TARGET		= japi
 # DEBUG should be either 1 or 0
 DEBUG		= 1
-DEFINES		= 
+DEFINES		= BUILDING_TEMPORARY_JAPI
 WARNINGS	= -Wall -Wno-multichar
-LIBS		= pcre z cryptopp boost_regex boost_thread \
+LIBS		= z cryptopp boost_regex boost_thread \
 			  boost_filesystem boost_date_time attr \
 			  gthread-2.0 magic
 LIBPATHS	= 
@@ -16,8 +15,8 @@ CFLAGS		= -fsigned-char -g -finput-charset=UTF-8
 CFLAGS		+= $(shell pkg-config --cflags libglade-2.0 gstreamer-0.10)
 LDFLAGS		= -fdata-sections -g
 LDFLAGS		+= $(shell pkg-config --libs libglade-2.0 gstreamer-0.10)
-CC			= c++
-OPT			+= -O3
+CC			= g++-4.2
+# OPT			+= -O3
 
 ifeq ($(DEBUG),0)
 	CFLAGS	+= $(OPT)
@@ -34,7 +33,7 @@ LDFLAGS += $(addprefix -L, $(LIBPATHS)) $(LD_LIBS)
 
 Sources = $(wildcard Sources/*.cpp NetSources/*.cpp)
 
-Sources := $(filter-out Sources/MRSRCFileCreator.cpp Sources/MProjectInfoDialog.cpp Sources/MProjectPathsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
+Sources := $(filter-out Sources/MRSRCFileCreator.cpp Sources/MProjectPathsDialog.cpp NetSources/MSshTerminalChannel.cpp, $(Sources))
 
 define SOURCES
 	$(Sources)
@@ -102,39 +101,25 @@ CFLAGS	+= $(DBG) $(WARNINGS)
 DEFS	= $(foreach define, $(DEFINES), $(addprefix -D, $(define)))
 CFLAGS	+= $(DEFS)
 
-all: $(TARGET)
+all: japi
 
 # build rules
 
-RSRCFileCreatorObjects = \
-	$(OBJDIR)/MResources.o \
-	$(OBJDIR)/MError.o \
-	$(OBJDIR)/MObjectFile.o \
-	$(OBJDIR)/MObjectFileImp_elf.o
-
-RSRCFileCreator: $(RSRCFileCreatorObjects) Sources/MRSRCFileCreator.cpp
+japi-temp: $(OBJDIR) $(OBJS)
 	@ echo "Linking "$(@F)
-	$(CC) -o $@ Sources/MRSRCFileCreator.cpp $(CFLAGS) $(RSRCFileCreatorObjects) $(LDFLAGS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 	@ chmod a+rx $@
 
-$(TARGET)::
-	@ echo Compiler flags used: $(CFLAGS)
-	@ echo Include paths: $(INCLUDES)
-
-$(TARGET):: $(OBJDIR) $(OBJS) $(OBJDIR)/__rsrc__.o
-	@ echo "Linking "$(@F)
-	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS) $(OBJDIR)/__rsrc__.o
-	@ chmod a+rx $(TARGET)
+japi: japi-temp
+	@ echo "Rebuilding using japi"
+	./japi-temp -m 'Japi-Debug' japi.prj
 	@ echo "Done"
-
+	
 clean: FORCE
 	rm -rf $(OBJDIR)
 
 $(OBJDIR):
 	@ test -d $(OBJDIR) || mkdir $(OBJDIR)
-
-$(OBJDIR)/__rsrc__.o: RSRCFileCreator $(RSRC_DATA)
-	./RSRCFileCreator -o $@ -r Resources $(addprefix -d, $(RSRC_DATA))
 
 $(OBJDIR)/%.o: %.cpp
 	@ echo "=> "$(@F)

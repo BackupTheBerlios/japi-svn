@@ -61,7 +61,7 @@ class MMessageList
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const fs::path&			inFile,
+						const fs::path&		inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -135,7 +135,7 @@ class MMessageWindow : public MWindow
 	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
 					mInvokeRow;
 
-	fs::path			mBaseDirectory;
+	fs::path		mBaseDirectory;
 	MMessageList	mList;
 	std::string		mText;
 	double			mLastAddition;

@@ -48,6 +48,7 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 
 #include "MFile.h"
 #include "MMessageWindow.h"
@@ -68,11 +69,11 @@ using namespace std;
 
 void MProjectExecJob::Execute()
 {
-#if DEBUG
-cout << "About to execute:" << endl;
-copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, "\n  "));
-cout << endl;
-#endif
+//#if DEBUG
+//cout << "About to execute:" << endl;
+//copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, "\n  "));
+//cout << endl;
+//#endif
 
 	int ifd[2], ofd[2], efd[2];
 	
@@ -198,6 +199,8 @@ bool MProjectExecJob::IsDone()
 		}
 	}
 	
+	string stderr;
+	
 	if (not mStdErrDone)
 	{
 		char buffer[10240];
@@ -209,10 +212,7 @@ bool MProjectExecJob::IsDone()
 			r = read(mStdErr, buffer, sizeof(buffer));
 
 			if (r > 0)
-			{
-				MMessageWindow* messageWindow = mProject->GetMessageWindow();
-				messageWindow->AddStdErr(buffer, r);
-			}
+				stderr.append(buffer, buffer + r);
 			else if (r == 0 or errno != EAGAIN)
 			{
 				if (mStdErr >= 0)
@@ -224,12 +224,15 @@ bool MProjectExecJob::IsDone()
 				break;
 		}
 	}
+	
+	if (stderr.length())
+		eStdErr(stderr.c_str(), stderr.length());
 
 	if (mStdOutDone and mStdErrDone)
 	{
 		if (mPID >= 0)
 		{
-			waitpid(mPID, &mStatus, WNOHANG);
+			waitpid(mPID, &mStatus, 0);	// used to pass in WNOHANG...
 			mPID = -1;
 		}
 		else
@@ -278,10 +281,15 @@ void MProjectCompileAllJob::AddJob(
 // ---------------------------------------------------------------------------
 //	MProjectCompileAllJob::Execute
 
+const uint32 kMaxSimulateousJobs = 2;
+
 void MProjectCompileAllJob::Execute()
 {
-	if (mCompileJobs.size() > 0)
-		mCompileJobs.front().Execute();
+	while (not mCompileJobs.empty() and mCurrentJobs.size() < kMaxSimulateousJobs)
+	{
+		mCurrentJobs.transfer(mCurrentJobs.end(), mCompileJobs.begin(), mCompileJobs);
+		mCurrentJobs.back().Execute();
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -289,8 +297,8 @@ void MProjectCompileAllJob::Execute()
 
 void MProjectCompileAllJob::Kill()
 {
-	if (mCompileJobs.size() > 0)
-		mCompileJobs.front().Kill();
+	for_each(mCurrentJobs.begin(), mCurrentJobs.end(),
+		boost::bind(&MProjectJob::Kill, _1));
 }
 
 // ---------------------------------------------------------------------------
@@ -298,28 +306,22 @@ void MProjectCompileAllJob::Kill()
 
 bool MProjectCompileAllJob::IsDone()
 {
-	bool result = true;
-	
-	if (mCompileJobs.size() > 0)
+	boost::ptr_deque<MProjectJob>::iterator job = mCurrentJobs.begin();
+	while (job != mCurrentJobs.end())
 	{
-		result = mCompileJobs.front().IsDone();
-		
-		if (result)
+		if (job->IsDone())
 		{
-			if (mStatus == 0 and mCompileJobs.front().mStatus != 0)
-				mStatus = mCompileJobs.front().mStatus;
-			
-			mCompileJobs.pop_front();
-			
-			if (mCompileJobs.size() > 0)
-			{
-				mCompileJobs.front().Execute();
-				result = false;
-			}
+			mStatus = mStatus or job->mStatus;
+			job = mCurrentJobs.erase(job);
+			continue;
 		}
+		++job;
 	}
 	
-	return result;
+	if (mCurrentJobs.size() < kMaxSimulateousJobs)
+		Execute();
+	
+	return mCurrentJobs.empty() and mCompileJobs.empty();
 }
 
 // ---------------------------------------------------------------------------

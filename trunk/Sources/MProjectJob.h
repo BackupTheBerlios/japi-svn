@@ -84,6 +84,7 @@ struct MProjectExecJob : public MProjectJob
 	virtual bool			IsDone();
 
 	MCallBack<void(const char* inText, uint32 inSize)>	eStdOut;
+	MCallBack<void(const char* inText, uint32 inSize)>	eStdErr;
 
 	std::vector<std::string>
 							mArgv;
@@ -133,6 +134,8 @@ struct MProjectCompileAllJob : public MProjectJob
 
 	boost::ptr_deque<MProjectJob>
 							mCompileJobs;
+	boost::ptr_deque<MProjectJob>
+							mCurrentJobs;
 };
 
 // ---------------------------------------------------------------------------

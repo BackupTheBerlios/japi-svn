@@ -52,20 +52,26 @@ class MProjectInfoDialog : public MDialog
 	
   private:
 
-	virtual void		ButtonClicked(
-							uint32			inButtonID);
-
 	virtual void		ValueChanged(
 							uint32			inID);
 
 	void				TargetChanged();
 	MSlot<void()>		eTargetChanged;
 
-	MProject*					mProject;
-	MProjectInfo				mProjectInfo;
-	GtkTreeStore*				mSysPaths;
-	GtkTreeStore*				mUsrPaths;
-	GtkTreeStore*				mLibPaths;
+	void				DefinesChanged();
+	MSlot<void()>		eDefinesChanged;
+
+	void				SysPathsChanged();
+	MSlot<void()>		eSysPathsChanged;
+
+	void				UserPathsChanged();
+	MSlot<void()>		eUserPathsChanged;
+
+	void				LibPathsChanged();
+	MSlot<void()>		eLibPathsChanged;
+
+	MProject*			mProject;
+	MProjectInfo		mProjectInfo;
 };
 
 #endif // MFINDANDOPENDIALOG_H

@@ -102,6 +102,7 @@ struct MProjectInfo
 {
 	std::vector<MProjectTarget>	mTargets;
 	fs::path					mOutputDir;
+	bool						mAddResources;
 	fs::path					mResourcesDir;
 	std::vector<std::string>	mPkgConfigPkgs;
 	std::vector<fs::path>		mSysSearchPaths;
@@ -115,8 +116,14 @@ struct MProjectInfo
 class MProject : public MDocument
 {
   public:
+
+	explicit			MProject(
+							const fs::path&		inProjectFile);
+
 						MProject(
-							const MUrl*		inProjectFile);
+							const fs::path&		inParentDir,
+							const std::string&	inName,
+							const std::string&	inTemplate);
 
 	virtual				~MProject();
 
@@ -224,6 +231,10 @@ class MProject : public MDocument
 	void				MsgWindowClosed(
 							MWindow*			inWindow);
 
+	void				StdErrIn(
+							const char*			inText,
+							uint32				inLength);
+
 	MProjectFile*		GetProjectFileForPath(
 							const fs::path&		inPath) const;
 
@@ -249,7 +260,8 @@ class MProject : public MDocument
 
 	void				BringUpToDate();
 
-	void				Make();
+	bool				Make(
+							bool				inUsePolling = true);
 
 	void				MakeClean();
 
@@ -315,6 +327,9 @@ class MProject : public MDocument
 	void				SelectTarget(
 							uint32				inTarget);
 	
+	void				SelectTarget(
+							const std::string&	inTarget);
+	
 	uint32				GetSelectedTarget() const		{ return mCurrentTarget; }
 	
 	void				ResearchForFiles();
@@ -353,6 +368,7 @@ class MProject : public MDocument
 	std::string					mCppIncludeDir;		// compiler's c++ include dir
 	std::vector<fs::path>		mCLibSearchPaths;	// compiler default search dirs
 	MMessageWindow*				mStdErrWindow;
+	bool						mAllowWindows;
 	uint32						mCurrentTarget;
 	std::auto_ptr<MProjectJob>	mCurrentJob;
 };

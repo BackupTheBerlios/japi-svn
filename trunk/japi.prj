@@ -9,7 +9,6 @@
 		<path>/usr/local/include/boost-1_36</path>
 		<path>/usr/include</path>
 		<path>/usr/local/include</path>
-		<path>/usr/include/libxml2</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -109,7 +108,7 @@
 			<link>cryptopp</link>
 		</group>
 	</files>
-	<resources resource_dir="Resources">
+	<resources resource-dir="Resources">
 		<group name="Alerts">
 			<resource>ask-add-include-path-alert.xml</resource>
 			<resource>unknown-host-alert.xml</resource>
@@ -155,7 +154,8 @@
 		<resource>japi.desktop</resource>
 	</resources>
 	<targets>
-		<target kind="Executable" name="Japi Debug" linkTarget="japi" debug="true">
+		<target kind="Executable" name="Japi-Debug" linkTarget="japi" debug="true">
+			<compiler>/usr/bin/g++-4.2</compiler>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
@@ -168,7 +168,8 @@
 				<warning>no-unknown-pragmas</warning>
 			</warnings>
 		</target>
-		<target kind="Executable" name="Japi Release" linkTarget="japi">
+		<target kind="Executable" name="Japi-Release" linkTarget="japi">
+			<compiler>/usr/bin/g++-4.2</compiler>
 			<defines>
 				<define>NDEBUG</define>
 			</defines>

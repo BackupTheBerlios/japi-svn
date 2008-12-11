@@ -112,27 +112,56 @@ MProject* MProject::Instance()
 }
 
 MProject::MProject(
-	const MUrl*		inProjectFile)
+	const fs::path&		inProjectFile)
 	: MDocument(inProjectFile)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
-	, mProjectFile(inProjectFile->GetPath())
+	, mProjectFile(inProjectFile)
 	, mProjectDir(mProjectFile.branch_path())
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
 	, mStdErrWindow(nil)
+	, mAllowWindows(true)
 	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
 	, mCurrentJob(nil)
 {
     LIBXML_TEST_VERSION
 
-	AddRoute(gApp->eIdle, ePoll);
+	if (gApp != nil)
+		AddRoute(gApp->eIdle, ePoll);
 	
 	fs::ifstream file(mProjectFile, ios::binary);
 	if (not file.is_open())
 		THROW(("Could not open project file %s", mProjectFile.string().c_str()));
 	ReadFile(file);
 }
+
+//MProject::MProject(
+//	const fs::path&		inParentDir,
+//	const std::string&	inName,
+//	const std::string&	inTemplate)
+//	: MDocument(inProjectFile)
+//	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
+//	, ePoll(this, &MProject::Poll)
+//	, mProjectFile(inProjectFile->GetPath())
+//	, mProjectDir(mProjectFile.branch_path())
+//	, mProjectItems("", nil)
+//	, mPackageItems("", nil)
+//	, mStdErrWindow(nil)
+//	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
+//	, mCurrentJob(nil)
+//{
+//    LIBXML_TEST_VERSION
+//
+//	AddRoute(gApp->eIdle, ePoll);
+//	
+//	
+//	
+//	fs::ifstream file(mProjectFile, ios::binary);
+//	if (not file.is_open())
+//		THROW(("Could not open project file %s", mProjectFile.string().c_str()));
+//	ReadFile(file);
+//}
 
 // ---------------------------------------------------------------------------
 //	MProject::MProject
@@ -327,10 +356,8 @@ void MProject::ReadResources(
 			
 			try
 			{
-				fs::path filePath = mProjectInfo.mResourcesDir / fileName;
-
 				auto_ptr<MProjectResource> projectFile(
-					new MProjectResource(filePath.leaf(), inGroup, filePath.branch_path()));
+					new MProjectResource(fileName, inGroup, mProjectDir / mProjectInfo.mResourcesDir));
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -502,19 +529,23 @@ void MProject::Read(
 	
 	if (data != nil and data->nodesetval != nil)
 	{
+		mProjectInfo.mAddResources = true;
+		
 		for (int i = 0; i < data->nodesetval->nodeNr; ++i)
 		{
 			XMLNode node(data->nodesetval->nodeTab[i]);
 
 			string rd = node.property("resource-dir");
 			if (rd.length() > 0)
-				mProjectInfo.mResourcesDir = mProjectDir / rd;
+				mProjectInfo.mResourcesDir = rd;
 			else
-				mProjectInfo.mResourcesDir = mProjectDir / "Resources";
+				mProjectInfo.mResourcesDir = "Resources";
 	
 			ReadResources(node, &mPackageItems);
 		}
 	}
+	else
+		mProjectInfo.mAddResources = false;
 	
 	if (data != nil)
 		xmlXPathFreeObject(data);
@@ -577,6 +608,7 @@ void MProject::Read(
 			target.mKind = kind;
 			target.mTargetCPU = arch;
 			target.mBuildFlags = 0;
+			target.mCompiler = Preferences::GetString("c++", "/usr/bin/c++");
 			
 			p = targetNode.property("debug");
 			if (p == "true")
@@ -600,6 +632,8 @@ void MProject::Read(
 					ReadOptions(*node, "ldflag", target.mLDFlags);
 				else if (node->name() == "warnings")
 					ReadOptions(*node, "warning", target.mWarnings);
+				else if (node->name() == "compiler")
+					target.mCompiler = node->text();
 			}
 			
 			mProjectInfo.mTargets.push_back(target);
@@ -699,6 +733,8 @@ void MProject::WriteResources(
 	xmlTextWriterPtr		inWriter,
 	vector<MProjectItem*>&	inItems)
 {
+	fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
+	
 	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
 	{
 		if (dynamic_cast<MProjectGroup*>(*item) != nil)
@@ -719,7 +755,7 @@ void MProject::WriteResources(
 			fs::path path = static_cast<MProjectResource*>(*item)->GetPath();
 
 			THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST "resource",
-				BAD_CAST relative_path(mProjectInfo.mResourcesDir, path).string().c_str()));
+				BAD_CAST relative_path(rsrcDir, path).string().c_str()));
 		}
 	}
 }
@@ -791,6 +827,9 @@ void MProject::WriteTarget(
 	
 	if (inTarget.mBuildFlags & eBF_pic)
 		THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(inWriter, BAD_CAST "pic", BAD_CAST "true"));
+
+	THROW_IF_XML_ERR(xmlTextWriterWriteElement(inWriter, BAD_CAST"compiler",
+		BAD_CAST inTarget.mCompiler.c_str()));
 	
 	WriteOptions(inWriter, "defines", "define", inTarget.mDefines);
 	WriteOptions(inWriter, "cflags", "cflag", inTarget.mCFlags);
@@ -893,20 +932,23 @@ void MProject::WriteFile(
 		// </files>
 		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 
-		// <package>
-		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "resources"));
-
-		if (fs::exists(mProjectInfo.mResourcesDir))
+		// <resources>
+		if (mProjectInfo.mAddResources)
 		{
-			THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
-				BAD_CAST "resource-dir",
-				BAD_CAST relative_path(mProjectDir, mProjectInfo.mResourcesDir).string().c_str()));
+			THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "resources"));
+	
+			if (fs::exists(mProjectDir / mProjectInfo.mResourcesDir))
+			{
+				THROW_IF_XML_ERR(xmlTextWriterWriteAttribute(writer,
+					BAD_CAST "resource-dir",
+					BAD_CAST mProjectInfo.mResourcesDir.string().c_str()));
+			}
+	
+			WriteResources(writer, mPackageItems.GetItems());
+			
+			// </resources>
+			THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 		}
-
-		WriteResources(writer, mPackageItems.GetItems());
-		
-		// </package>
-		THROW_IF_XML_ERR(xmlTextWriterEndElement(writer));
 
 		// <targets>
 		THROW_IF_XML_ERR(xmlTextWriterStartElement(writer, BAD_CAST "targets"));
@@ -1128,6 +1170,17 @@ void MProject::CheckDataDir()
 		fs::create_directory(mObjectDir);
 	else if (not is_directory(mObjectDir))
 		THROW(("Project data dir is not valid"));
+	
+	if (not mProjectInfo.mOutputDir.empty() and not fs::exists(mProjectInfo.mOutputDir))
+	{
+		fs::path outputDir;
+		if (mProjectInfo.mOutputDir.is_complete())
+			outputDir = mProjectInfo.mOutputDir;
+		else
+			outputDir = mProjectDir / mProjectInfo.mOutputDir;
+		
+		fs::create_directory(outputDir);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1229,7 +1282,7 @@ MProjectJob* MProject::CreateCompileJob(
 
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
 	GenerateCFlags(argv);
 
@@ -1240,8 +1293,10 @@ MProjectJob* MProject::CreateCompileJob(
 	
 	argv.push_back(inFile.string());
 
-	return new MProjectCompileJob(
+	MProjectExecJob* result = new MProjectCompileJob(
 		string("Compiling ") + inFile.leaf(), this, argv, file);
+	result->eStdErr.SetProc(this, &MProject::StdErrIn);
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1259,18 +1314,21 @@ MProjectJob* MProject::CreateCompileAllJob()
 		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
 			job->AddJob(CreateCompileJob(static_cast<MProjectFile*>(*file)->GetPath()));
 	}
-
-	files.clear();
-	mPackageItems.Flatten(files);
-
-	if (files.size() > 0)
+	
+	if (mProjectInfo.mAddResources)
 	{
-		MTargetCPU arch = mProjectInfo.mTargets[mCurrentTarget].mTargetCPU;
-		if (arch == eCPU_native)
-			arch = GetNativeCPU();
-		
-		job->AddJob(new MProjectCreateResourceJob(
-			"Creating resources", this, files, mObjectDir / "__rsrc__.o", arch));
+		files.clear();
+		mPackageItems.Flatten(files);
+	
+		if (files.size() > 0)
+		{
+			MTargetCPU arch = mProjectInfo.mTargets[mCurrentTarget].mTargetCPU;
+			if (arch == eCPU_native)
+				arch = GetNativeCPU();
+			
+			job->AddJob(new MProjectCreateResourceJob(
+				"Creating resources", this, files, mObjectDir / "__rsrc__.o", arch));
+		}
 	}
 
 	return job.release();
@@ -1291,7 +1349,7 @@ MProjectJob* MProject::CreateLinkJob(
 	if (target.mKind == eTargetStaticLibrary)
 		argv.push_back(Preferences::GetString("linker", "/usr/bin/ld"));
 	else
-		argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+		argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
 	switch (target.mTargetCPU)
 	{
@@ -1387,7 +1445,9 @@ MProjectJob* MProject::CreateLinkJob(
 
 	copy(mPkgConfigLibs.begin(), mPkgConfigLibs.end(), back_inserter(argv));
 	
-	return new MProjectExecJob("Linking", this, argv);
+	MProjectExecJob* result = new MProjectExecJob("Linking", this, argv);
+	result->eStdErr.SetProc(this, &MProject::StdErrIn);
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1404,7 +1464,7 @@ void MProject::Preprocess(
 
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
 	GenerateCFlags(argv);
 
@@ -1413,6 +1473,8 @@ void MProject::Preprocess(
 
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Preprocessing ") + inFile.leaf(), this, argv, file);
+
+	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = new MTextDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
@@ -1437,7 +1499,7 @@ void MProject::Disassemble(
 
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 	
 	GenerateCFlags(argv);
 
@@ -1449,6 +1511,8 @@ void MProject::Disassemble(
 
 	MProjectExecJob* job = new MProjectCompileJob(
 		string("Disassembling ") + inFile.leaf(), this, argv, file);
+
+	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = new MTextDocument(nil);
 	output->SetFileNameHint(inFile.leaf() + " # disassembled");
@@ -1473,7 +1537,7 @@ void MProject::CheckSyntax(
 
 	vector<string> argv;
 	
-	argv.push_back(Preferences::GetString("c++", "/usr/bin/c++"));
+	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
 	GenerateCFlags(argv);
 
@@ -1482,8 +1546,10 @@ void MProject::CheckSyntax(
 	argv.push_back("-c");
 	argv.push_back(inFile.string());
 
-	StartJob(new MProjectCompileJob(
-		string("Checking syntax of ") + inFile.leaf(), this, argv, file));
+	MProjectExecJob* job = new MProjectCompileJob(
+		string("Checking syntax of ") + inFile.leaf(), this, argv, file);
+	job->eStdErr.SetProc(this, &MProject::StdErrIn);
+	StartJob(job);
 }
 
 // ---------------------------------------------------------------------------
@@ -1530,24 +1596,32 @@ void MProject::BringUpToDate()
 // ---------------------------------------------------------------------------
 //	MProject::Make
 
-void MProject::Make()
+bool MProject::Make(
+	bool		inUsePolling)
 {
 	auto_ptr<MProjectJob> job(CreateCompileAllJob());
 
 	fs::path targetPath;
+	fs::path outputDir;
+	if (mProjectInfo.mOutputDir.empty())
+		outputDir = mProjectDir;
+	else if (mProjectInfo.mOutputDir.is_complete())
+		outputDir = mProjectInfo.mOutputDir;
+	else
+		outputDir = mProjectDir / mProjectInfo.mOutputDir;
 
 	switch (mProjectInfo.mTargets[mCurrentTarget].mKind)
 	{
 		case eTargetSharedLibrary:
-			targetPath = mProjectDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".so");
+			targetPath = outputDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".so");
 			break;
 		
 		case eTargetStaticLibrary:
-			targetPath = mProjectDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".a");
+			targetPath = outputDir / (mProjectInfo.mTargets[mCurrentTarget].mLinkTarget + ".a");
 			break;
 		
 		case eTargetExecutable:
-			targetPath = mProjectDir / mProjectInfo.mTargets[mCurrentTarget].mLinkTarget;
+			targetPath = outputDir / mProjectInfo.mTargets[mCurrentTarget].mLinkTarget;
 			break;
 		
 		default:
@@ -1559,6 +1633,24 @@ void MProject::Make()
 
 	// and that's it for now
 	StartJob(job.release());
+	
+	bool result = true;
+	if (inUsePolling == false)
+	{
+		mAllowWindows = false;
+		while (mCurrentJob.get() != nil)
+		{
+			usleep(50000);
+
+			if (mCurrentJob->IsDone())
+			{
+				result = mCurrentJob->mStatus == 0;
+				mCurrentJob.reset(nil);
+			}
+		}
+	}
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1576,22 +1668,54 @@ void MProject::MsgWindowClosed(
 
 MMessageWindow* MProject::GetMessageWindow()
 {
-	if (mStdErrWindow == nil)
+	if (mAllowWindows)
 	{
-		mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
-		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+		if (mStdErrWindow == nil)
+		{
+			mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
+			AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+		}
+		else
+			mStdErrWindow->Show();
 	}
-	else
-		mStdErrWindow->Show();
 	
 	return mStdErrWindow;
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::GetMessageWindow
+
+void MProject::StdErrIn(
+	const char*			inText,
+	uint32				inLength)
+{
+	MMessageWindow* errWindow = GetMessageWindow();
+	if (errWindow != nil)
+		errWindow->AddStdErr(inText, inLength);
+	else
+		cerr.write(inText, inLength);
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::SelectTarget
 
 void MProject::SelectTarget(
-	uint32	inTarget)
+	const string&		inTarget)
+{
+	vector<MProjectTarget>::iterator target;
+
+	for (target = mProjectInfo.mTargets.begin(); target != mProjectInfo.mTargets.end(); ++target)
+	{
+		SelectTarget(target - mProjectInfo.mTargets.begin());
+		break;
+	}
+	
+	if (target == mProjectInfo.mTargets.end())
+		THROW(("Target not found: %s", inTarget.c_str()));
+}
+
+void MProject::SelectTarget(
+	uint32				inTarget)
 {
 	if (inTarget >= mProjectInfo.mTargets.size())
 		inTarget = 0;
@@ -1612,8 +1736,7 @@ void MProject::SelectTarget(
 	
 	SetStatus("Checking modification dates", true);
 	
-	GetCompilerPaths(Preferences::GetString("c++", "/usr/bin/c++"),
-		mCppIncludeDir, mCLibSearchPaths);
+	GetCompilerPaths(mProjectInfo.mTargets[mCurrentTarget].mCompiler, mCppIncludeDir, mCLibSearchPaths);
 
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();
@@ -1712,7 +1835,10 @@ void MProject::SetStatus(
 	const string&	inStatus,
 	bool			inBusy)
 {
-	eStatus(inStatus, inBusy);
+	if (mAllowWindows)
+		eStatus(inStatus, inBusy);
+	else
+		cout << inStatus << endl;
 }
 
 // ---------------------------------------------------------------------------
@@ -2059,6 +2185,8 @@ void MProject::SetInfo(
 	const MProjectInfo&						inInfo)
 {
 	mProjectInfo = inInfo;
+
+	SetModified(true);
 	
 	uint32 currentTarget = mCurrentTarget;
 	mCurrentTarget = mProjectInfo.mTargets.size();	// force update

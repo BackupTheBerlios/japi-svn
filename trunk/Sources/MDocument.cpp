@@ -78,6 +78,30 @@ MDocument::MDocument(
 	sFirst = this;
 }
 
+MDocument::MDocument(
+	const fs::path&		inPath)
+	: mURL(inPath)
+	, mFileModDate(0)
+	, mSpecified(false)
+	, mReadOnly(false)
+	, mWarnedReadOnly(false)
+	, mDirty(false)
+	, mNext(nil)
+{
+	if (fs::exists(inPath))
+	{
+		mFileModDate = fs::last_write_time(inPath);
+		mReadOnly = access(inPath.string().c_str(), W_OK) != 0;
+	}
+	else
+		mFileModDate = GetLocalTime();
+
+	mSpecified = true;
+
+	mNext = sFirst;
+	sFirst = this;
+}
+
 // ---------------------------------------------------------------------------
 //	MDocument
 

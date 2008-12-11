@@ -121,6 +121,22 @@ void MDialog::GetText(
 		outText = gtk_font_button_get_font_name(GTK_FONT_BUTTON(wdgt));
 	else if (GTK_IS_ENTRY(wdgt))
 		outText = gtk_entry_get_text(GTK_ENTRY(wdgt));
+	else if (GTK_IS_TEXT_VIEW(wdgt))
+	{
+		GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt));
+		if (buffer == nil)
+			THROW(("Invalid text buffer"));
+		
+		GtkTextIter start, end;
+		gtk_text_buffer_get_bounds(buffer, &start, &end);
+		gchar* text = gtk_text_buffer_get_text(buffer, &start, &end, false);
+		
+		if (text != nil)
+		{
+			outText = text;
+			g_free(text);
+		}
+	}
 	else
 		THROW(("item is not an entry"));
 }
@@ -140,6 +156,13 @@ assert(false);//		gtk_combo_box_set_active_text(GTK_COMBO_BOX(wdgt), inText.c_st
 		gtk_label_set_text(GTK_LABEL(wdgt), inText.c_str());
 	else if (GTK_IS_BUTTON(wdgt))
 		gtk_button_set_label(GTK_BUTTON(wdgt), inText.c_str());
+	else if (GTK_IS_TEXT_VIEW(wdgt))
+	{
+		GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt));
+		if (buffer == nil)
+			THROW(("Invalid text buffer"));
+		gtk_text_buffer_set_text(buffer, inText.c_str(), inText.length());
+	}
 	else if (GTK_IS_PROGRESS_BAR(wdgt))
 	{
 		gtk_progress_bar_set_text(GTK_PROGRESS_BAR(wdgt), inText.c_str());
