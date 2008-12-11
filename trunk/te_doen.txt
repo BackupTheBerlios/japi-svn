@@ -8,6 +8,8 @@ Moet af:
 - utf-8 problemen bij lopen door tekst
 - utf-8 validatie voor het doorsturen naar pango
 
+- sound crash?
+
 - keyboard shortcuts voor alert dialogs
 
 - clean up code na leaks test
