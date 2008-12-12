@@ -119,6 +119,9 @@ class MProjectWindow : public MDocWindow
 
 	void			TargetChanged();
 	MSlot<void()>	eTargetChanged;
+
+	void			TargetsChanged();
+	MEventIn<void()>eTargetsChanged;
 	
 	void			InfoClicked();
 	MSlot<void()>	eInfoClicked;

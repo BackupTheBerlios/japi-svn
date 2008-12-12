@@ -170,6 +170,7 @@ class MMenubar
 					mMenus;
 	MMenu*			mWindowMenu;
 	MMenu*			mTemplateMenu;
+	MMenu*			mScriptsMenu;
 };
 
 #endif

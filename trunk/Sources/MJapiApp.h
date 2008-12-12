@@ -80,6 +80,9 @@ class MJapieApp : public MHandler
 	void				UpdateTemplateMenu(
 							MMenu*				inMenu);
 
+	void				UpdateScriptsMenu(
+							MMenu*				inMenu);
+
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
 							fs::path&				outFile);

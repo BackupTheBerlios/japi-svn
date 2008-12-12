@@ -91,7 +91,14 @@ struct MShellImp
 	string	GetCWD()									{ return mENV["PWD"]; }
 
 	void	Execute(
+				vector<char*>&		argv);
+
+	void	Execute(
 				const string&		inCommand);
+
+	void	ExecuteScript(
+				const string&		inScript,
+				const string&		inText);
 
 	void	Poll(
 				double				inTime);
@@ -142,21 +149,8 @@ MShellImp::~MShellImp()
 }
 
 void MShellImp::Execute(
-	const string&		inCommand)
+	vector<char*>&	argv)
 {
-	string cmd = inCommand;
-	cmd += " ; echo '";
-	cmd += kSetDelimiterStr;
-	cmd += "' ; env ;";
-	
-	vector<char*> argv;
-
-	argv.push_back(const_cast<char*>("/bin/sh"));
-	argv.push_back(const_cast<char*>("-c"));
-	argv.push_back(const_cast<char*>(cmd.c_str()));
-
-	argv.push_back(nil);
-	
 	vector<string> envBuffer;
 	vector<char*> envv;
 	
@@ -252,6 +246,42 @@ void MShellImp::Execute(
 	
 	mState = 0;
 	mSetString.clear();
+}
+
+void MShellImp::Execute(
+	const string&		inCommand)
+{
+	string cmd = inCommand;
+	cmd += " ; echo '";
+	cmd += kSetDelimiterStr;
+	cmd += "' ; env ;";
+	
+	vector<char*> argv;
+
+	argv.push_back(const_cast<char*>("/bin/sh"));
+	argv.push_back(const_cast<char*>("-c"));
+	argv.push_back(const_cast<char*>(cmd.c_str()));
+
+	argv.push_back(nil);
+	
+	Execute(argv);
+}
+
+void MShellImp::ExecuteScript(
+	const string&		inScript,
+	const string&		inText)
+{
+	vector<char*> argv;
+
+	argv.push_back(const_cast<char*>(inScript.c_str()));
+	argv.push_back(nil);
+	
+	Execute(argv);
+
+	// make this a thread
+	
+	int r = write(mStdInFD, inText.c_str(), inText.length());
+	close(mStdInFD);
 }
 
 void MShellImp::Poll(
@@ -391,6 +421,13 @@ void MShell::Execute(
 	const string&	inScript)
 {
 	mImpl->Execute(inScript);
+}
+
+void MShell::ExecuteScript(
+	const string&	inScript,
+	const string&	inText)
+{
+	mImpl->ExecuteScript(inScript, inText);
 }
 
 void MShell::Kill()

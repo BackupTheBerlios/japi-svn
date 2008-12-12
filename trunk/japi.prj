@@ -132,21 +132,26 @@
 			<resource>diff-window.glade</resource>
 			<resource>project-info-dialog.glade</resource>
 		</group>
-		<group name="Windows">
-			<resource>message-list-window.glade</resource>
-			<resource>edit-window.glade</resource>
-			<resource>project-window.glade</resource>
-		</group>
 		<group name="Menus">
 			<resource>text-view-context-menu.xml</resource>
 			<resource>edit-window-menu.xml</resource>
 			<resource>project-window-menu.xml</resource>
+		</group>
+		<group name="Windows">
+			<resource>message-list-window.glade</resource>
+			<resource>edit-window.glade</resource>
+			<resource>project-window.glade</resource>
 		</group>
 		<group name="Templates">
 			<resource>Templates/empty.c</resource>
 			<resource>Templates/Strict.xhtml</resource>
 			<resource>Templates/Template.html</resource>
 			<resource>Templates/Transitional.xhtml</resource>
+		</group>
+		<group name="Scripts">
+			<resource>Scripts/run-perl-script.pl</resource>
+			<resource>Scripts/strip-tags.pl</resource>
+			<resource>Scripts/sort.pl</resource>
 		</group>
 		<group name="Dutch">
 			<resource>Dutch/japi.po</resource>
@@ -182,6 +187,24 @@
 			<cflags>
 				<cflag>-O3</cflag>
 				<cflag>-pthread</cflag>
+			</cflags>
+			<warnings>
+				<warning>all</warning>
+				<warning>no-multichar</warning>
+				<warning>no-unknown-pragmas</warning>
+			</warnings>
+		</target>
+		<target kind="Executable" arch="i386">
+			<name>Japi-32bit-Debug</name>
+			<linkTarget>japi</linkTarget>
+			<compiler>/usr/bin/g++-4.2</compiler>
+			<defines>
+				<define>DEBUG</define>
+			</defines>
+			<cflags>
+				<cflag>-O0</cflag>
+				<cflag>-pthread</cflag>
+				<cflag>-gdwarf-2</cflag>
 			</cflags>
 			<warnings>
 				<warning>all</warning>

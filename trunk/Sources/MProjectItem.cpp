@@ -704,7 +704,7 @@ uint32 MProjectCpFile::GetDataSize() const
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectResource::GetDataSize
+//	MProjectResource::GetResourceName
 
 string MProjectResource::GetResourceName() const
 {

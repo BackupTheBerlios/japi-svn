@@ -453,6 +453,7 @@ class MTextDocument : public MDocument
 	bool				DoFindNext(MDirection inDirection);
 	void				DoFastFind(MDirection inDirection);
 	void				DoSoftwrap();
+	void				DoApplyScript(const std::string& inScript);
 
 	bool				CanUndo(std::string& outAction);
 	bool				CanRedo(std::string& outAction);

@@ -203,6 +203,13 @@ bool MJapieApp::ProcessCommand(
 			DoOpenTemplate(inMenu->GetItemLabel(inItemIndex));
 			break;
 		
+		case cmd_ApplyScript:
+		{
+			MUrl url(gScriptsDir / inMenu->GetItemLabel(inItemIndex));
+			OpenOneDocument(url);
+			break;
+		}
+		
 		case cmd_Find:
 			MFindDialog::Instance().Select();
 			break;
@@ -351,6 +358,21 @@ void MJapieApp::UpdateTemplateMenu(
 		fs::path file;
 		while (iter.Next(file))
 			inMenu->AppendItem(file.leaf(), cmd_OpenTemplate);
+	}
+}
+
+void MJapieApp::UpdateScriptsMenu(
+	MMenu*				inMenu)
+{
+	inMenu->RemoveItems(0, inMenu->CountItems());
+
+	if (fs::exists(gScriptsDir) and fs::is_directory(gScriptsDir))
+	{
+		MFileIterator iter(gScriptsDir, 0);
+		
+		fs::path file;
+		while (iter.Next(file))
+			inMenu->AppendItem(file.leaf(), cmd_ApplyScript);
 	}
 }
 

@@ -616,6 +616,7 @@ MMenubar::MMenubar(
 	, mTarget(inTarget)
 	, mWindowMenu(nil)
 	, mTemplateMenu(nil)
+	, mScriptsMenu(nil)
 {
 	mGtkAccel = gtk_accel_group_new();
 }
@@ -727,6 +728,8 @@ MMenu* MMenubar::CreateMenu(
 		mWindowMenu = menu;
 	else if (special == "template")
 		mTemplateMenu = menu;
+	else if (special == "scripts")
+		mScriptsMenu = menu;
 	
 	return menu;
 }
@@ -756,6 +759,9 @@ bool MMenubar::OnButtonPress(
 	
 	if (mTemplateMenu != nil)
 		gApp->UpdateTemplateMenu(mTemplateMenu);
+
+	if (mScriptsMenu != nil)
+		gApp->UpdateScriptsMenu(mScriptsMenu);
 
 	gtk_widget_show_all(mGtkMenubar);
 

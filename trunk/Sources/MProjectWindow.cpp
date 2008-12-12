@@ -620,7 +620,7 @@ bool MProjectTreeModel::DragDataReceived(
 
 	int32 depth = gtk_tree_path_get_depth(inPath);
 	int32* indices = gtk_tree_path_get_indices(inPath);
-	int32 index = 0;
+	int32 index = indices[0];
 	
 	for (int32 ix = 0; ix < depth - 1 and group != nil; ++ix)
 	{
@@ -706,6 +706,7 @@ MProjectWindow::MProjectWindow()
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
 	, eTargetChanged(this, &MProjectWindow::TargetChanged)
+	, eTargetsChanged(this, &MProjectWindow::TargetsChanged)
 	, eInfoClicked(this, &MProjectWindow::InfoClicked)
 	, eMakeClicked(this, &MProjectWindow::MakeClicked)
 	, mProject(nil)
@@ -768,6 +769,7 @@ void MProjectWindow::Initialize(
 		THROW(("Invalid document type passed"));
 	
 	AddRoute(mProject->eStatus, eStatus);
+	AddRoute(mProject->eTargetsChanged, eTargetsChanged);
 	
 	MDocWindow::Initialize(inDocument);
 
@@ -1058,6 +1060,14 @@ void MProjectWindow::TargetChanged()
 }
 
 // ---------------------------------------------------------------------------
+//	TargetsChanged
+
+void MProjectWindow::TargetsChanged()
+{
+	SyncInterfaceWithProject();
+}
+
+// ---------------------------------------------------------------------------
 //	DocumentChanged
 
 void MProjectWindow::DocumentChanged(
@@ -1245,6 +1255,24 @@ void MProjectWindow::CreateNewGroup(
 	{
 		MGtkTreeView treeView(GetWidget(kResourceViewID));
 		
+		MProjectGroup* group = mProject->GetResources();
+		int32 index = 0;
+		
+		GtkTreePath* path = nil;
+		GtkTreeIter iter;
+		
+		if (treeView.GetFirstSelectedRow(path) and
+			mFilesTree->GetIter(&iter, path))
+		{
+			MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+			group = item->GetParent();
+			index = item->GetPosition();
+		}
+			
+		mProject->CreateNewGroup(inGroupName, group, index);
+		
+		if (path != nil)
+			gtk_tree_path_free(path);
 	}
 }
 
@@ -1256,13 +1284,15 @@ void MProjectWindow::AddFilesToProject()
 	vector<MUrl> urls;
 	if (ChooseFiles(true, urls))
 	{
-		MProjectGroup* group = mProject->GetFiles();
+		MProjectGroup* group;
 		int32 index = 0;
 
 		MGtkNotebook notebook(GetWidget(kNoteBookID));
 		
 		if (notebook.GetPage() == ePanelFiles)
 		{
+			group = mProject->GetFiles();
+			
 			MGtkTreeView treeView(GetWidget(kFilesListViewID));
 
 			GtkTreePath* path;
@@ -1272,8 +1302,35 @@ void MProjectWindow::AddFilesToProject()
 				mFilesTree->GetIter(&iter, path))
 			{
 				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-				group = item->GetParent();
-				index = item->GetPosition();
+				if (dynamic_cast<MProjectGroup*>(item) != nil)
+					group = static_cast<MProjectGroup*>(item);
+				else
+				{
+					group = item->GetParent();
+					index = item->GetPosition();
+				}
+			}
+		}
+		else if (notebook.GetPage() == ePanelPackage)
+		{
+			group = mProject->GetResources();
+
+			MGtkTreeView treeView(GetWidget(kResourceViewID));
+
+			GtkTreePath* path;
+			GtkTreeIter iter;
+			
+			if (treeView.GetFirstSelectedRow(path) and
+				mResourcesTree->GetIter(&iter, path))
+			{
+				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+				if (dynamic_cast<MProjectGroup*>(item) != nil)
+					group = static_cast<MProjectGroup*>(item);
+				else
+				{
+					group = item->GetParent();
+					index = item->GetPosition();
+				}
 			}
 		}
 		

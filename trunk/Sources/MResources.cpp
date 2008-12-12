@@ -330,6 +330,8 @@ bool LoadResource(
 
 	if (result == false)
 	{
+dir.Print(1);
+
 		string path;
 		static const char* LANG = getenv("LANG");
 		

@@ -131,7 +131,9 @@ const uint32
 	cmd_SyntaxNone =			'St_N',
 	cmd_SyntaxLanguage =		'St_L',
 	
-	cmd_Stop =					'stop';
+	cmd_Stop =					'stop',
+	
+	cmd_ApplyScript =			'scri';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

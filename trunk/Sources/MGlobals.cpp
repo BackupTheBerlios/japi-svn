@@ -88,7 +88,7 @@ MColor			gHiliteColor, gInactiveHiliteColor;
 MColor			gCurrentLineColor, gMarkedLineColor;
 MColor			gPCLineColor, gBreakpointColor;
 
-fs::path			gTemplatesDir, gPrefsDir;
+fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
 void InitGlobals()
 {
@@ -102,6 +102,8 @@ void InitGlobals()
 	else
 #endif
 		gTemplatesDir = gPrefsDir / "Templates";
+
+	gScriptsDir = gPrefsDir / "Scripts";
 		
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
@@ -153,6 +155,33 @@ void InitGlobals()
 		{
 			fs::ofstream f(gTemplatesDir / *t);
 			f.write(txt, length);
+		}
+	}
+
+	if (not fs::exists(gScriptsDir))
+		fs::create_directory(gScriptsDir);
+
+	const char* kBuiltInScripts[] = {
+		"sort.pl",
+		"strip-tags.pl",
+		"run-perl-script.pl",
+		nil
+	};
+
+	for (const char** t = kBuiltInScripts; *t != nil; ++t)
+	{
+		const char* txt;
+		uint32 length;
+
+		if (not fs::exists(gScriptsDir / *t) and
+			LoadResource(string("Scripts/") + *t, txt, length))
+		{
+			fs::path file(gScriptsDir / *t);
+			
+			fs::ofstream f(file);
+			f.write(txt, length);
+			
+			chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 		}
 	}
 }

@@ -113,6 +113,8 @@
 		<item label="Worksheet" cmd='Wrks'/>	
 		<item label="-" />
 	</menu>
+	<menu id='' label="#!" special="scripts">
+	</menu>
 	<menu id='' label="Help">
 		<item label="About…" cmd='abou'/>
 	</menu>

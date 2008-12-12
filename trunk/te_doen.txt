@@ -18,6 +18,15 @@ Moet af:
 	- bug vissen uit 'hangen' van connectie
 	- connecten met NAS gaat mis
 
+- script menu
+
+- verbeteringen project
+	- bibliotheken toevoegen
+	- optional attribuut van bibliotheken kunnen wijzigen
+	- 'touchen' van source files mogelijk maken
+	- keyboard afhandeling
+	- resource items toevoegen
+
 Leuk om te hebben:
 
 - overnemen muisklik afhandeling van
@@ -51,7 +60,6 @@ Leuk om te hebben:
 
 - libp11 support?
 
-- project afronden (refactor?), bugs fixen
 - onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten
 

@@ -69,11 +69,11 @@ using namespace std;
 
 void MProjectExecJob::Execute()
 {
-//#if DEBUG
-//cout << "About to execute:" << endl;
-//copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, "\n  "));
-//cout << endl;
-//#endif
+#if DEBUG
+cout << "About to execute:" << endl;
+copy(mArgv.begin(), mArgv.end(), ostream_iterator<string>(cout, "\n  "));
+cout << endl;
+#endif
 
 	int ifd[2], ofd[2], efd[2];
 	

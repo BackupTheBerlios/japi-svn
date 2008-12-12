@@ -356,8 +356,11 @@ void MProject::ReadResources(
 			
 			try
 			{
+				fs::path p(fileName);
+				
 				auto_ptr<MProjectResource> projectFile(
-					new MProjectResource(fileName, inGroup, mProjectDir / mProjectInfo.mResourcesDir));
+					new MProjectResource(p.leaf(), inGroup,
+						mProjectDir / mProjectInfo.mResourcesDir / p.branch_path()));
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -1973,23 +1976,24 @@ void MProject::AddFiles(
 				
 				AddFiles(files, group, 0);
 			}
-			else if (root == &mProjectItems)
+			else if (root == &mProjectItems or root == &mPackageItems)
 			{
 				auto_ptr<MProjectFile> projectFile;
 				fs::path filePath;
 				
-				if (LocateFile(name, true, filePath))
+				if (root == &mPackageItems)
+				{
+					fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
+					filePath = relative_path(rsrcDir, p);
+					projectFile.reset(
+						new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path()));
+				}
+				else if (LocateFile(name, true, filePath))
 				{
 					if (p == filePath)
 						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
-					else
-{
-PRINT(("pad 1: '%s', pad 2: '%s'", p.string().c_str(), filePath.string().c_str()));
-
 						THROW(("Cannot add file %s since another file with that name but in another location is already present.",
 							name.c_str()));
-
-}
 				}
 				else
 				{
@@ -2167,5 +2171,7 @@ void MProject::SetInfo(
 	SelectTarget(currentTarget);
 	
 	ResearchForFiles();
+	
+	eTargetsChanged();
 }
 

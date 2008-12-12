@@ -56,7 +56,7 @@ extern uint32			gSpacesPerTab;
 extern uint32			gFontSize;
 extern std::string		gFontName;
 
-extern fs::path			gTemplatesDir, gPrefsDir;
+extern fs::path			gTemplatesDir, gScriptsDir, gPrefsDir;
 
 extern MColor			gLanguageColors[];
 extern MColor			gHiliteColor, gInactiveHiliteColor;

@@ -46,6 +46,10 @@ class MShell
 	void					Execute(
 								const std::string&	inScript);
 
+	void					ExecuteScript(
+								const std::string&	inScript,
+								const std::string&	inText);
+
 	void					Kill();
 
 	bool					IsRunning() const;

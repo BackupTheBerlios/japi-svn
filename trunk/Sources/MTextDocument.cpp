@@ -3297,6 +3297,31 @@ void MTextDocument::DoSoftwrap()
 	UpdateDirtyLines();
 }
 
+void MTextDocument::DoApplyScript(const std::string& inScript)
+{
+	if (mShell.get() != nil and mShell->IsRunning())
+		return;
+	
+	if (mShell.get() == nil)
+	{
+		mShell.reset(new MShell(true));
+
+		SetCallBack(mShell->eStdOut, this, &MTextDocument::StdOut);
+		SetCallBack(mShell->eStdErr, this, &MTextDocument::StdErr);
+		SetCallBack(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+	}
+	
+	string text;
+	if (mSelection.IsEmpty())
+		SelectAll();
+
+	GetSelectedText(text);
+	
+	mPreparedForStdOut = true;
+	StartAction(inScript.c_str());
+	mShell->ExecuteScript((gScriptsDir / inScript).string(), text);
+}
+
 void MTextDocument::GetStyledText(
 	uint32		inLine,
 	MDevice&	inDevice,
@@ -4334,6 +4359,8 @@ void MTextDocument::Execute()
 				string d(cwd, size);
 				mShell->SetCWD(d);
 			}
+			else
+				mShell->SetCWD(mURL.GetPath().branch_path().string());
 		}
 		
 		SetCallBack(mShell->eStdOut, this, &MTextDocument::StdOut);
@@ -4703,6 +4730,13 @@ bool MTextDocument::ProcessCommand(
 		case cmd_Menu:
 			if (mTargetTextView != nil)
 				mTargetTextView->OnPopupMenu(nil);
+			break;
+	
+		case cmd_ApplyScript:
+			if (mTargetTextView != nil and (mTargetTextView->GetModifiers() & GDK_CONTROL_MASK) == 0)
+				DoApplyScript(inMenu->GetItemLabel(inItemIndex));
+			else
+				result = false;
 			break;
 	
 		default:

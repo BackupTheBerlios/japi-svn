@@ -332,6 +332,7 @@ class MProject : public MDocument
 	MEventOut<void(MProjectItem*)>			eInsertedResource;
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedFile;
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedResource;
+	MEventOut<void()>						eTargetsChanged;	// notify window
 
 	void				EmitRemovedRecursive(
 							MEventOut<void(MProjectGroup*,int32)>&
