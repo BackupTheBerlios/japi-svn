@@ -1041,8 +1041,9 @@ bool MProject::LocateFile(
 	fs::path&			outPath) const
 {
 	bool found = false;
-	
-	if (FileNameMatches("*.a;*.dylib", inFile))
+
+	// search library files in libpath	
+	if (FileNameMatches("*.a;*.so;*.dylib", inFile))
 	{
 		for (vector<fs::path>::const_iterator p = mProjectInfo.mLibSearchPaths.begin();
 			 not found and p != mProjectInfo.mLibSearchPaths.end();
@@ -1978,7 +1979,7 @@ void MProject::AddFiles(
 			}
 			else if (root == &mProjectItems or root == &mPackageItems)
 			{
-				auto_ptr<MProjectFile> projectFile;
+				auto_ptr<MProjectItem> projectFile;
 				fs::path filePath;
 				
 				if (root == &mPackageItems)
@@ -1991,7 +1992,30 @@ void MProject::AddFiles(
 				else if (LocateFile(name, true, filePath))
 				{
 					if (p == filePath)
-						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					{
+						if (FileNameMatches("lib*.a;lib*.so;lib*.dylib", p))
+						{
+							int r = DisplayAlert("ask-add-lib-as-link", p.leaf());
+							
+							if (r == 1)
+								projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+							else if (r == 2)
+							{
+								string linkName = p.leaf().substr(3);
+								if (ba::ends_with(linkName, ".a"))
+									linkName.erase(linkName.end() - 2, linkName.end());
+								else if (ba::ends_with(linkName, ".so"))
+									linkName.erase(linkName.end() - 3, linkName.end());
+								else
+									linkName.erase(linkName.end() - 6, linkName.end());
+								
+								projectFile.reset(new MProjectLib(linkName, inGroup));
+							}
+						}
+						else
+							projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					}
+					else
 						THROW(("Cannot add file %s since another file with that name but in another location is already present.",
 							name.c_str()));
 				}

@@ -69,6 +69,8 @@ using namespace std;
 
 static bool gQuit = false;
 
+int VERBOSE;
+
 const char
 	kAppName[] = "Japi",
 	kVersionString[] = "0.9.1";
@@ -760,9 +762,9 @@ void MJapieApp::Pulse()
 		ProcessSocketMessages();
 	
 	if (gQuit or
-		MWindow::GetFirstWindow() == nil and
-		mReceivedFirstMsg and
-		MProject::Instance() == nil)
+		(MWindow::GetFirstWindow() == nil and
+		 mReceivedFirstMsg and
+		 MProject::Instance() == nil))
 	{
 		DoQuit();
 		gQuit = false;	// in case user cancelled the quit
@@ -1144,7 +1146,7 @@ int main(int argc, char* argv[])
 		vector<pair<int32,MUrl> > docs;
 		
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:v")) != -1)
 		{
 			switch (c)
 			{
@@ -1162,6 +1164,10 @@ int main(int argc, char* argv[])
 				
 				case 'm':
 					target = optarg;
+					break;
+				
+				case 'v':
+					++VERBOSE;
 					break;
 				
 				default:

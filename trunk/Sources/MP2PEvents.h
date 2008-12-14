@@ -323,8 +323,8 @@ struct make_eventouthandler
 template<typename Function>
 class MEventIn
 {
-	typedef MEventOut<Function>							MEventOut;
-	typedef std::list<MEventOut*>						MEventOutList;
+	typedef MEventOut<Function>							MEventOut_;
+	typedef std::list<MEventOut_*>						MEventOutList;
 	typedef typename MP2PEvent::HandlerBase<Function>	HandlerBase;
 	
   public:
@@ -337,8 +337,8 @@ class MEventIn
 							
 	HandlerBase*			GetHandler() const					{ return fHandler.get(); }
 
-	void					AddEventOut(MEventOut* inEventOut);
-	void					RemoveEventOut(MEventOut* inEventOut);
+	void					AddEventOut(MEventOut_* inEventOut);
+	void					RemoveEventOut(MEventOut_* inEventOut);
 
   private:
 							MEventIn(const MEventIn&);
@@ -355,15 +355,15 @@ class MEventIn
 template<typename Function>
 class MEventOut : public MP2PEvent::make_eventouthandler<Function>::type
 {
-	typedef MEventIn<Function>							MEventIn;
-	typedef std::list<MEventIn*>						MEventInList;
+	typedef MEventIn<Function>							MEventIn_;
+	typedef std::list<MEventIn_*>						MEventInList;
 
   public:
 							MEventOut();
 	virtual					~MEventOut();
 
-	void					AddEventIn(MEventIn* inEventIn);
-	void					RemoveEventIn(MEventIn* inEventIn);
+	void					AddEventIn(MEventIn_* inEventIn);
+	void					RemoveEventIn(MEventIn_* inEventIn);
 	
 	MEventInList			GetInEvents() const							{ return fInEvents; }
 	
@@ -411,18 +411,18 @@ MEventIn<Function>::~MEventIn()
 	std::swap(events, fOutEvents);
 
 	std::for_each(events.begin(), events.end(),
-		std::bind2nd(std::mem_fun(&MEventOut::RemoveEventIn), this));
+		std::bind2nd(std::mem_fun(&MEventOut_::RemoveEventIn), this));
 }
 
 template<typename Function>
-void MEventIn<Function>::AddEventOut(MEventOut* inEventOut)
+void MEventIn<Function>::AddEventOut(MEventOut_* inEventOut)
 {
 	if (std::find(fOutEvents.begin(), fOutEvents.end(), inEventOut) == fOutEvents.end())
 		fOutEvents.push_back(inEventOut);
 }
 
 template<typename Function>
-void MEventIn<Function>::RemoveEventOut(MEventOut* inEventOut)
+void MEventIn<Function>::RemoveEventOut(MEventOut_* inEventOut)
 {
 	if (fOutEvents.size())
 		fOutEvents.erase(std::remove(fOutEvents.begin(), fOutEvents.end(), inEventOut), fOutEvents.end());
@@ -439,11 +439,11 @@ template<typename Function>
 MEventOut<Function>::~MEventOut()
 {
 	std::for_each(fInEvents.begin(), fInEvents.end(),
-		std::bind2nd(std::mem_fun(&MEventIn::RemoveEventOut), this));
+		std::bind2nd(std::mem_fun(&MEventIn_::RemoveEventOut), this));
 }
 
 template<typename Function>
-void MEventOut<Function>::AddEventIn(MEventIn* inEventIn)
+void MEventOut<Function>::AddEventIn(MEventIn_* inEventIn)
 {
 	if (std::find(fInEvents.begin(), fInEvents.end(), inEventIn) == fInEvents.end())
 	{
@@ -453,7 +453,7 @@ void MEventOut<Function>::AddEventIn(MEventIn* inEventIn)
 }
 
 template<typename Function>
-void MEventOut<Function>::RemoveEventIn(MEventIn* inEventIn)
+void MEventOut<Function>::RemoveEventIn(MEventIn_* inEventIn)
 {
 	inEventIn->RemoveEventOut(this);
 	fInEvents.erase(std::remove(fInEvents.begin(), fInEvents.end(), inEventIn), fInEvents.end());

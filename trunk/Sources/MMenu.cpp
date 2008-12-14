@@ -34,6 +34,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cstring>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>

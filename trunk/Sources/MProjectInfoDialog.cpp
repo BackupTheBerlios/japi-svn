@@ -38,6 +38,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include "MFile.h"
 #include "MProject.h"
@@ -363,6 +364,10 @@ void MProjectInfoDialog::ValueChanged(
 			cflags.erase(remove(cflags.begin(), cflags.end(), "-fPIC"), cflags.end());
 			if (IsChecked(inID))
 				cflags.push_back("-fPIC");
+			break;
+		
+		case kCompilerControlID:
+			GetText(inID, target.mCompiler);
 			break;
 		
 		case 'defs':

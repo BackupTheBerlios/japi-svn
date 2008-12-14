@@ -35,6 +35,7 @@
 #include <set>
 #include <memory>
 #include <gdk/gdkkeysyms.h>
+#include <cstring>
 
 #include "MCommands.h"
 #include "MAcceleratorTable.h"

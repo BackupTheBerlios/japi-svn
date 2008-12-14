@@ -6,9 +6,7 @@
 		<pkg tool="pkg-config">gstreamer-0.10</pkg>
 	</pkg-config>
 	<syspaths>
-		<path>/usr/local/include/boost-1_36</path>
 		<path>/usr/include</path>
-		<path>/usr/local/include</path>
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
@@ -16,7 +14,6 @@
 	</userpaths>
 	<libpaths>
 		<path>Lib</path>
-		<path>/usr/local/lib</path>
 	</libpaths>
 	<files>
 		<group name="Sources">
@@ -98,11 +95,11 @@
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<file>libboost_system-gcc42-mt-1_36.a</file>
-			<file>libboost_thread-gcc42-mt-1_36.a</file>
-			<file>libboost_filesystem-gcc42-mt-1_36.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libmagic.a</file>
+			<file>libboost_system-mt.a</file>
+			<file>libboost_thread-mt.a</file>
+			<file>libboost_filesystem-mt.a</file>
 			<file>libgthread-2.0.a</file>
 			<link>z</link>
 			<link>cryptopp</link>
@@ -110,6 +107,7 @@
 	</files>
 	<resources resource-dir="Resources">
 		<group name="Alerts">
+			<resource>Alerts/ask-add-lib-as-link.xml</resource>
 			<resource>ask-add-include-path-alert.xml</resource>
 			<resource>unknown-host-alert.xml</resource>
 			<resource>host-key-changed-alert.xml</resource>
@@ -162,7 +160,7 @@
 		<target kind="Executable">
 			<name>Japi-Debug</name>
 			<linkTarget>japi</linkTarget>
-			<compiler>/usr/bin/g++-4.2</compiler>
+			<compiler>/usr/bin/g++</compiler>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
@@ -180,13 +178,13 @@
 		<target kind="Executable">
 			<name>Japi-Release</name>
 			<linkTarget>japi</linkTarget>
-			<compiler>/usr/bin/g++-4.2</compiler>
+			<compiler>/usr/bin/g++</compiler>
 			<defines>
 				<define>NDEBUG</define>
 			</defines>
 			<cflags>
-				<cflag>-O3</cflag>
 				<cflag>-pthread</cflag>
+				<cflag>-O3</cflag>
 			</cflags>
 			<warnings>
 				<warning>all</warning>
@@ -197,13 +195,13 @@
 		<target kind="Executable" arch="i386">
 			<name>Japi-32bit-Debug</name>
 			<linkTarget>japi</linkTarget>
-			<compiler>/usr/bin/g++-4.2</compiler>
+			<compiler>/usr/bin/g++</compiler>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
 			<cflags>
-				<cflag>-O0</cflag>
 				<cflag>-pthread</cflag>
+				<cflag>-O0</cflag>
 				<cflag>-gdwarf-2</cflag>
 			</cflags>
 			<warnings>

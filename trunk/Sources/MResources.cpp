@@ -34,6 +34,7 @@
 
 #include <sstream>
 #include <list>
+#include <limits>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>

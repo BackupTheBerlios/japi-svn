@@ -33,6 +33,7 @@
 #include "MJapi.h"
 
 #include <cmath>
+#include <cstring>
 
 #include "MDevice.h"
 #include "MView.h"

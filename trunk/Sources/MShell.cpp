@@ -37,6 +37,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <cstring>
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -280,7 +281,22 @@ void MShellImp::ExecuteScript(
 
 	// make this a thread
 	
-	int r = write(mStdInFD, inText.c_str(), inText.length());
+	uint32 l = inText.length();
+	const char* p = inText.c_str();
+	
+	while (l > 0)
+	{
+		uint32 k = 512;
+		if (k > l)
+			k = l;
+		
+		int r = write(mStdInFD, p, k);
+		p += r;
+		l -= r;
+		
+		Poll(0);
+	}
+		
 	close(mStdInFD);
 }
 

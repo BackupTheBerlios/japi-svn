@@ -32,6 +32,8 @@
 
 #include "MJapi.h"
 
+#include <cstring>
+
 #include <boost/filesystem/fstream.hpp>
 
 #if not (defined(__APPLE__) and defined(__MACH__))

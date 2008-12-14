@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Fri Jan 25 14:18:40 2008 by maarten@zuinig-->
+<!--Generated with glade3 3.4.5 on Fri Dec 12 16:10:31 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="window">
+    <property name="width_request">400</property>
     <property name="default_width">250</property>
     <property name="default_height">500</property>
     <child>
@@ -32,6 +33,7 @@ mies</property>
             <child>
               <widget class="GtkButton" id="info">
                 <property name="visible">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_info_clicked"/>
                 <child>
                   <widget class="GtkImage" id="image1">
@@ -49,6 +51,7 @@ mies</property>
             <child>
               <widget class="GtkButton" id="make">
                 <property name="visible">True</property>
+                <property name="response_id">0</property>
                 <signal name="clicked" handler="on_make_clicked"/>
                 <child>
                   <widget class="GtkImage" id="image2">
@@ -74,9 +77,12 @@ mies</property>
         <child>
           <widget class="GtkNotebook" id="note">
             <property name="visible">True</property>
+            <property name="tab_hborder">6</property>
+            <property name="homogeneous">True</property>
             <child>
               <widget class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <child>
@@ -99,6 +105,7 @@ mies</property>
             <child>
               <widget class="GtkScrolledWindow" id="scrolledwindow2">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <child>
@@ -125,6 +132,7 @@ mies</property>
             <child>
               <widget class="GtkScrolledWindow" id="scrolledwindow3">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
                 <child>

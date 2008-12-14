@@ -32,6 +32,8 @@
 
 #include "MJapi.h"
 
+#include <cstring>
+
 #include "MAlerts.h"
 
 #if defined(__APPLE__) and defined(__MACH__)

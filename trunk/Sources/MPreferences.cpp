@@ -39,6 +39,7 @@
 
 #include <sstream>
 #include <cerrno>
+#include <cstring>
 #include <boost/bind.hpp>
 
 #include "MTypes.h"
