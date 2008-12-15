@@ -1335,6 +1335,9 @@ MProjectJob* MProject::CreateLinkJob(
 	else
 		argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
+	argv.push_back("-o");
+	argv.push_back(inLinkerOutput.string());
+
 	switch (target.mTargetCPU)
 	{
 		case eCPU_native:	break;
@@ -1342,11 +1345,6 @@ MProjectJob* MProject::CreateLinkJob(
 		case eCPU_x86_64:	argv.push_back("-m64"); break;
 		default:			THROW(("Unsupported CPU"));
 	}
-
-	argv.insert(argv.end(), target.mLDFlags.begin(), target.mLDFlags.end());
-	// I think this is OK:
-	if (target.mKind != eTargetStaticLibrary)
-		argv.insert(argv.end(), target.mCFlags.begin(), target.mCFlags.end());
 
 	switch (target.mKind)
 	{
@@ -1363,9 +1361,6 @@ MProjectJob* MProject::CreateLinkJob(
 			break;
 	}
 
-	argv.push_back("-o");
-	argv.push_back(inLinkerOutput.string());
-
 	for (vector<fs::path>::const_iterator p = mProjectInfo.mLibSearchPaths.begin(); p != mProjectInfo.mLibSearchPaths.end(); ++p)
 	{
 		fs::path path;
@@ -1379,6 +1374,11 @@ MProjectJob* MProject::CreateLinkJob(
 			argv.push_back(kL + path.string());
 	}
 	
+	argv.insert(argv.end(), target.mLDFlags.begin(), target.mLDFlags.end());
+	// I think this is OK:
+	if (target.mKind != eTargetStaticLibrary)
+		argv.insert(argv.end(), target.mCFlags.begin(), target.mCFlags.end());
+
 	vector<MProjectItem*> files;
 	mProjectItems.Flatten(files);
 

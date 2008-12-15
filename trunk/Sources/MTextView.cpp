@@ -833,7 +833,7 @@ void MTextView::Tick(
 		}
 
 		if ((not IsActive() and mCaretVisible) or
-			IsActive() and (sel.IsEmpty() or mCaretVisible))
+			(IsActive() and (sel.IsEmpty() or mCaretVisible)))
 		{
 			if (mDocument->GetFastFindMode())
 				mCaretVisible = true;
@@ -1090,7 +1090,7 @@ bool MTextView::ScrollToCaret()
 			newY += mLineHeight;
 	}
 	
-	if (x < 3 or mDocument != nil and mDocument->GetSoftwrap())
+	if (x < 3 or (mDocument != nil and mDocument->GetSoftwrap()))
 		newX = 0;
 	else if (x < mImageOriginX)
 		newX = mImageOriginX;

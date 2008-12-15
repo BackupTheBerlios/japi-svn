@@ -325,27 +325,18 @@ void MProjectInfoDialog::ValueChanged(
 			}
 			break;
 		
-		case 'opti':
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-O0"), cflags.end());
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-Os"), cflags.end());
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-O1"), cflags.end());
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-O2"), cflags.end());
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-O3"), cflags.end());
-		
-			switch (GetValue(inID))
-			{
-				case 1:	cflags.push_back("-O0"); break;
-				case 2:	cflags.push_back("-Os"); break;
-				case 3:	cflags.push_back("-O1"); break;
-				case 4:	cflags.push_back("-O2"); break;
-				case 5:	cflags.push_back("-O3"); break;
-			}
+		case kOutputDirControlID:
+			GetText(inID, s);
+			mProjectInfo.mOutputDir = s;
 			break;
 		
-		case 'thre':
-			cflags.erase(remove(cflags.begin(), cflags.end(), "-pthread"), cflags.end());
-			if (IsChecked(inID))
-				cflags.push_back("-pthread");
+		case kResourceDirControlID:
+			GetText(inID, s);
+			mProjectInfo.mResourcesDir = s;
+			break;
+		
+		case kCompilerControlID:
+			GetText(inID, target.mCompiler);
 			break;
 		
 		case kDebugInfoControlID:
@@ -366,8 +357,27 @@ void MProjectInfoDialog::ValueChanged(
 				cflags.push_back("-fPIC");
 			break;
 		
-		case kCompilerControlID:
-			GetText(inID, target.mCompiler);
+		case 'thre':
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-pthread"), cflags.end());
+			if (IsChecked(inID))
+				cflags.push_back("-pthread");
+			break;
+		
+		case 'opti':
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O0"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-Os"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O1"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O2"), cflags.end());
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-O3"), cflags.end());
+		
+			switch (GetValue(inID))
+			{
+				case 1:	cflags.push_back("-O0"); break;
+				case 2:	cflags.push_back("-Os"); break;
+				case 3:	cflags.push_back("-O1"); break;
+				case 4:	cflags.push_back("-O2"); break;
+				case 5:	cflags.push_back("-O3"); break;
+			}
 			break;
 		
 		case 'defs':

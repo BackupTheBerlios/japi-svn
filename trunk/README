@@ -1,9 +1,14 @@
-Japi can build itself, but then you need japi...
+Japi is a small text editor and IDE. To build it you need to have 
+installed several packages installed. The required packages to
+build japi on Ubuntu are:
 
-To work around this, you can use the Makefile to build a first version, and
-then open the japi.prj file from within japi to build japi itself a second
-time.
+  libboost1.35-dev libglade2-dev libattr1-dev libmagic-dev libpcre3-dev
+  zlib1g-dev
 
-.. info more will follow here in due time ...
+You can install those using apt-get.
 
--maarten
+After you've installed those packages, you can build japi
+by simply typing make. This will start a two-stage build.
+In the first stage a limited version of japi is build which
+is then capable of building a full japi.
+

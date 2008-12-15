@@ -13,7 +13,7 @@
 		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
-		<path>Lib</path>
+		<path>Lib32</path>
 	</libpaths>
 	<files>
 		<group name="Sources">
@@ -183,8 +183,8 @@
 				<define>NDEBUG</define>
 			</defines>
 			<cflags>
-				<cflag>-pthread</cflag>
 				<cflag>-O3</cflag>
+				<cflag>-pthread</cflag>
 			</cflags>
 			<warnings>
 				<warning>all</warning>
@@ -194,14 +194,32 @@
 		</target>
 		<target kind="Executable" arch="i386">
 			<name>Japi-32bit-Debug</name>
-			<linkTarget>japi</linkTarget>
+			<linkTarget>japi-32</linkTarget>
 			<compiler>/usr/bin/g++</compiler>
 			<defines>
 				<define>DEBUG</define>
 			</defines>
 			<cflags>
-				<cflag>-pthread</cflag>
 				<cflag>-O0</cflag>
+				<cflag>-pthread</cflag>
+				<cflag>-gdwarf-2</cflag>
+			</cflags>
+			<warnings>
+				<warning>all</warning>
+				<warning>no-multichar</warning>
+				<warning>no-unknown-pragmas</warning>
+			</warnings>
+		</target>
+		<target kind="Executable" arch="i386">
+			<name>Japi-32bit-Release</name>
+			<linkTarget>japi-32</linkTarget>
+			<compiler>/usr/bin/g++</compiler>
+			<defines>
+				<define>NDEBUG</define>
+			</defines>
+			<cflags>
+				<cflag>-O3</cflag>
+				<cflag>-pthread</cflag>
 				<cflag>-gdwarf-2</cflag>
 			</cflags>
 			<warnings>
