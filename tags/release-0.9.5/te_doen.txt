@@ -1,0 +1,76 @@
+﻿Te doen
+
+Moet af:
+
+- project templates
+
+- Diff window, default mappen kan beter
+
+- printen
+- utf-8 problemen bij lopen door tekst
+- utf-8 validatie voor het doorsturen naar pango
+
+- sound crash?
+
+- keyboard shortcuts voor alert dialogs
+
+- clean up code na leaks test
+
+- SSH/SFTP afronden
+	- bug vissen uit 'hangen' van connectie
+	- connecten met NAS gaat mis
+
+- verbeteringen project
+	- bibliotheken toevoegen
+	- optional attribuut van bibliotheken kunnen wijzigen
+	- 'touchen' van source files mogelijk maken
+	- keyboard afhandeling
+	- resource items toevoegen
+
+Leuk om te hebben:
+
+- gio gaan gebruiken
+
+- overnemen muisklik afhandeling van
+	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
+
+- libglade vervangen door gtkbuilder (als gtkbuilder werkt)
+
+- functie parser voor HTML/JS/CSS
+- spelling checker
+- Invoegen... menu item(s)
+- tags support
+
+- Afronden Find Dialog:
+	- Replace All in Multi mode verbeteren (melding aantal?)
+
+- toch een rpm/installer?
+
+- fortran language plugin
+
+- regelnummer vlak
+
+- rewrap, met kolom breedte, quoted en al
+
+- subversion support
+
+- veralgemeniseren van pkg-config
+- configuratie van compiler, koppelen aan extensie(s)
+
+- upper/lower case menu maken
+- een 'normalize unicode' menu item
+
+- libp11 support?
+
+- onzichtbare tekens tekenen
+- Lange foutmeldingen wrappen in meldingen lijsten
+
+- accelerator-achtig iets
+
+- split windows?
+- dynamische menus?
+
+- xml parser: pad in popup?
+
+- linker schrijven
+- debugger
