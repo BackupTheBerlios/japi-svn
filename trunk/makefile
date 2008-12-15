@@ -1,6 +1,8 @@
 # makefile voor Japi
 #
 # highly simplified to create just a starter japi
+#
+# This makefile needs GNU make.
 
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
 LIBS		= z cryptopp boost_thread boost_filesystem attr gthread-2.0 magic

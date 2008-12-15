@@ -144,10 +144,10 @@ MTextView::MTextView(
 	
 	const GtkTargetEntry targets[] =
 	{
-	    { "text/uri-list", 0, DND_TARGET_TYPE_URI_LIST },
-	    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
-	    { "STRING", 0, DND_TARGET_TYPE_STRING },
-//	    { "text/plain", 0, DND_TARGET_TYPE_TEXT_PLAIN }
+	    { const_cast<gchar*>("text/uri-list"), 0, DND_TARGET_TYPE_URI_LIST },
+	    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
+	    { const_cast<gchar*>("STRING"), 0, DND_TARGET_TYPE_STRING },
+//	    { const_cast<gchar*>("text/plain"), 0, DND_TARGET_TYPE_TEXT_PLAIN }
 	};
 
 	SetupDragAndDrop(
@@ -288,7 +288,7 @@ bool MTextView::OnMotionNotifyEvent(
 		{
 			const GtkTargetEntry sources[] =
 			{
-			    { "UTF8_STRING", 0, DND_TARGET_TYPE_UTF8_STRING },
+			    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
 			};
 			
 			DragBegin(sources, 1, inEvent);

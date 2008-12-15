@@ -118,7 +118,7 @@ GtkWidget* CreateAlertWithArgs(
 		}
 		
 		dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-			type, GTK_BUTTONS_NONE, text.c_str());
+			type, GTK_BUTTONS_NONE, "%s", text.c_str());
 		
 		THROW_IF_NIL(dlg);
 		
@@ -190,7 +190,7 @@ void DisplayError(
 	catch (...)
 	{
 		GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-			GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, inErr.what());
+			GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, "%s", inErr.what());
 		gtk_dialog_run(GTK_DIALOG(dlg));
 		gtk_widget_destroy(dlg);
 	}

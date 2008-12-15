@@ -165,10 +165,10 @@ void MClipboard::SetData(const string& inText, bool inBlock)
 	}
 
 	GtkTargetEntry targets[] = {
-		{"UTF8_STRING", 0, 0},
-		{"COMPOUND_TEXT", 0, 0},
-		{"TEXT", 0, 0},
-		{"STRING", 0, 0},
+		{ const_cast<gchar*>("UTF8_STRING"), 0, 0 },
+		{ const_cast<gchar*>("COMPOUND_TEXT"), 0, 0 },
+		{ const_cast<gchar*>("TEXT"), 0, 0 },
+		{ const_cast<gchar*>("STRING"), 0, 0 },
 	};
 
 	gtk_clipboard_set_with_data(mGtkClipboard, 

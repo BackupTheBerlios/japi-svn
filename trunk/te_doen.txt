@@ -2,6 +2,8 @@
 
 Moet af:
 
+- gio gaan gebruiken
+
 - Diff window, default mappen kan beter
 
 - printen
