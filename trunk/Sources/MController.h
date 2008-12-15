@@ -96,7 +96,8 @@ class MController : public MHandler, public MSaverMixin
 	virtual bool		ProcessCommand(
 							uint32			inCommand,
 							const MMenu*	inMenu,
-							uint32			inItemIndex);
+							uint32			inItemIndex,
+							uint32			inModifiers);
 
 	MEventOut<void(MDocument*)>		eDocumentChanged;
 

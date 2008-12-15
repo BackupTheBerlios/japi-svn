@@ -12,9 +12,7 @@
 		<path>Sources</path>
 		<path>NetSources</path>
 	</userpaths>
-	<libpaths>
-		<path>Lib32</path>
-	</libpaths>
+	<libpaths/>
 	<files>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
@@ -145,6 +143,10 @@
 			<resource>Templates/Strict.xhtml</resource>
 			<resource>Templates/Template.html</resource>
 			<resource>Templates/Transitional.xhtml</resource>
+			<group name="Projects">
+				<resource>Templates/projects/hello-cmdline.prj</resource>
+				<resource>Templates/projects/hello.cpp</resource>
+			</group>
 		</group>
 		<group name="Scripts">
 			<resource>Scripts/run-perl-script.pl</resource>

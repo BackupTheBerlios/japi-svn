@@ -283,7 +283,7 @@ void MProject::CreateNewGroup(
 	while (root->GetParent() != nil)
 		root = root->GetParent();
 
-	MProjectGroup* newGroup = new MProjectGroup(inGroupName, nil);
+	MProjectGroup* newGroup = new MProjectGroup(inGroupName, inGroup);
 	inGroup->AddProjectItem(newGroup, inIndex);
 	
 	SetModified(true);
@@ -1862,7 +1862,8 @@ bool MProject::UpdateCommandStatus(
 bool MProject::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 
@@ -1925,7 +1926,7 @@ bool MProject::ProcessCommand(
 ////				mPackageList->Invalidate();
 //			}
 
-			result = MDocument::ProcessCommand(inCommand, inMenu, inItemIndex);
+			result = MDocument::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
 	}
 	

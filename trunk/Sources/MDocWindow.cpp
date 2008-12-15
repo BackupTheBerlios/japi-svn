@@ -123,9 +123,10 @@ bool MDocWindow::UpdateCommandStatus(
 bool MDocWindow::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
-	return MWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
+	return MWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 }
 
 MDocument* MDocWindow::GetDocument()

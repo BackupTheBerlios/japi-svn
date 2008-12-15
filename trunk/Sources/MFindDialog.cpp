@@ -163,7 +163,8 @@ MFindDialog::MFindDialog()
 bool MFindDialog::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 	
@@ -174,7 +175,7 @@ bool MFindDialog::ProcessCommand(
 			break;
 		
 		default:
-			result = MDialog::ProcessCommand(inCommand, inMenu, inItemIndex);
+			result = MDialog::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
 	}
 	
@@ -624,7 +625,7 @@ void MFindDialog::ReplaceAll(
 				{
 					MController* controller = doc->GetFirstController();
 					if (controller != nil)
-						controller->ProcessCommand(cmd_Close, nil, 0);
+						controller->ProcessCommand(cmd_Close, nil, 0, 0);
 					else
 						delete doc;
 				}

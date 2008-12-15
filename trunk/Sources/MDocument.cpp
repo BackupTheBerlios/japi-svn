@@ -386,7 +386,8 @@ bool MDocument::UpdateCommandStatus(
 bool MDocument::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	return false;
 }

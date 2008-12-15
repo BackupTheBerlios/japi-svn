@@ -4489,7 +4489,8 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 bool MTextDocument::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 	MProject* project = MProject::Instance();
@@ -4733,7 +4734,7 @@ bool MTextDocument::ProcessCommand(
 			break;
 	
 		case cmd_ApplyScript:
-			if (mTargetTextView != nil and (mTargetTextView->GetModifiers() & GDK_CONTROL_MASK) == 0)
+			if (inModifiers & GDK_CONTROL_MASK)
 				DoApplyScript(inMenu->GetItemLabel(inItemIndex));
 			else
 				result = false;

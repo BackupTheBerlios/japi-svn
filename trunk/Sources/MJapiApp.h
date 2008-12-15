@@ -72,7 +72,8 @@ class MJapieApp : public MHandler
 	virtual bool		ProcessCommand(
 							uint32				inCommand,
 							const MMenu*		inMenu,
-							uint32				inItemIndex);
+							uint32				inItemIndex,
+							uint32				inModifiers);
 
 	void				UpdateWindowMenu(
 							MMenu*				inMenu);
@@ -118,6 +119,8 @@ class MJapieApp : public MHandler
 	void				DoQuit();
 
 	void				DoNew();
+
+	void				DoNewProject();
 
 	void				DoOpen();
 

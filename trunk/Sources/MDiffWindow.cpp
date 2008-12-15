@@ -103,13 +103,14 @@ MDiffWindow::~MDiffWindow()
 void MDiffWindow::ValueChanged(
 	uint32			inID)
 {
-	ProcessCommand(inID, nil, 0);
+	ProcessCommand(inID, nil, 0, 0);
 }
 
 bool MDiffWindow::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 	
@@ -132,7 +133,7 @@ bool MDiffWindow::ProcessCommand(
 			break;
 		
 		default:
-			result = MDialog::ProcessCommand(inCommand, inMenu, inItemIndex);
+			result = MDialog::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
 	}
 	

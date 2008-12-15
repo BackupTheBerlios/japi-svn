@@ -6,6 +6,7 @@
 			<item label="-"/>
 			<!-- template items -->
 		</menu>
+		<item label="New Project…" cmd='NewP'/>
 		<item label="Open…" cmd='open'/>
 		<menu id='recentmenu' label="Open Recent" special="recent" />
 		<item label="Find and Open…" cmd='OInc'/>

@@ -234,9 +234,9 @@ bool MSaverMixin::OnSaveResponse(
 		case kAskSaveChanges_DontSave:
 			CloseAfterNavigationDialog();
 			if (mQuitPending)
-				gApp->ProcessCommand(cmd_Quit, nil, 0);
+				gApp->ProcessCommand(cmd_Quit, nil, 0, 0);
 			else if (mCloseAllPending)
-				gApp->ProcessCommand(cmd_CloseAll, nil, 0);
+				gApp->ProcessCommand(cmd_CloseAll, nil, 0, 0);
 			break;
 	}
 	

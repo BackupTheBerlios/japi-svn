@@ -59,6 +59,7 @@ enum MStdCommand {
 // private commands
 
 const uint32
+	cmd_NewProject =			'NewP',
 	cmd_Balance =				'Bala',
 	cmd_ShiftLeft =				'ShiL',
 	cmd_ShiftRight =			'ShiR',

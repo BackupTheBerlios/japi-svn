@@ -38,6 +38,7 @@
 #include "MJapi.h"
 
 #include <boost/filesystem/fstream.hpp>
+#include <glib.h>
 
 #include "MGlobals.h"
 #include "MPreferences.h"
@@ -95,12 +96,10 @@ void InitGlobals()
 	gPrefsDir = g_get_user_config_dir();
 	gPrefsDir /= "japi";
 	
-#if defined(G_USER_DIRECTORY_TEMPLATES)
 	const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
 	if (templatesDir != nil)
-		gTemplatesDir = fs::system_complete(templatesDir);
+		gTemplatesDir = fs::system_complete(templatesDir) / "japi";
 	else
-#endif
 		gTemplatesDir = gPrefsDir / "Templates";
 
 	gScriptsDir = gPrefsDir / "Scripts";

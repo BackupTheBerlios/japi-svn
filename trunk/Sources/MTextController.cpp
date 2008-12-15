@@ -82,7 +82,8 @@ void MTextController::RemoveTextView(MTextView* inTextView)
 bool MTextController::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = false;
 	
@@ -124,7 +125,7 @@ bool MTextController::ProcessCommand(
 	}
 			
 	if (result == false)
-		result = MController::ProcessCommand(inCommand, inMenu, inItemIndex);
+		result = MController::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 	
 	return result;
 }

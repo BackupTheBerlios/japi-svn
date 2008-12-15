@@ -141,12 +141,13 @@ MJapieApp::~MJapieApp()
 bool MJapieApp::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 
 //	MProject* project = MProject::Instance();
-//	if (project != nil and project->ProcessCommand(inCommand, inMenu, inItemIndex))
+//	if (project != nil and project->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers))
 //		return true;
 
 	switch (inCommand)
@@ -181,6 +182,10 @@ bool MJapieApp::ProcessCommand(
 			DoNew();
 			break;
 		
+		case cmd_NewProject:
+			DoNewProject();
+			break;
+		
 		case cmd_Open:
 			DoOpen();
 			break;
@@ -202,7 +207,10 @@ bool MJapieApp::ProcessCommand(
 //			break;
 		
 		case cmd_OpenTemplate:
-			DoOpenTemplate(inMenu->GetItemLabel(inItemIndex));
+			if (inModifiers & GDK_CONTROL_MASK)
+				OpenOneDocument(MUrl(gTemplatesDir / inMenu->GetItemLabel(inItemIndex)));
+			else
+				DoOpenTemplate(inMenu->GetItemLabel(inItemIndex));
 			break;
 		
 		case cmd_ApplyScript:
@@ -470,7 +478,7 @@ gint MJapieApp::Snooper(
 			
 			bool enabled = true, checked = false;
 			if (handler->UpdateCommandStatus(cmd, nil, 0, enabled, checked) and enabled)
-				result = handler->ProcessCommand(cmd, nil, 0);
+				result = handler->ProcessCommand(cmd, nil, 0, 0);
 		}
 	}
 	catch (exception& e)
@@ -624,6 +632,82 @@ void MJapieApp::DoNew()
 {
 	MDocument*	doc = new MTextDocument(nil);
 	DisplayDocument(doc);
+}
+
+void MJapieApp::DoNewProject()
+{
+	GtkWidget *dialog;
+	
+	dialog = gtk_file_chooser_dialog_new(_("Save File"),
+					      nil,
+					      GTK_FILE_CHOOSER_ACTION_SAVE,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      NULL);
+
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), true);
+	
+	gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), _("NewProject"));
+	gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), true);
+
+	if (mCurrentFolder.length() > 0)
+	{
+		gtk_file_chooser_set_current_folder_uri(
+			GTK_FILE_CHOOSER(dialog), mCurrentFolder.c_str());
+	}
+	
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+	{
+		char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
+		
+		THROW_IF_NIL((uri));
+		
+		MUrl url(uri);
+		g_free(uri);
+
+		mCurrentFolder = 
+			gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
+		
+		// get the path
+		fs::path p = url.GetPath();
+
+		// create a directory to store our project and the source files in it.		
+		fs::create_directories(p);
+		fs::create_directories(p / "src");
+		
+		// create the project path
+		fs::path projectFile = p / (p.leaf() + ".prj");
+		
+		// and file
+		fs::ofstream file(projectFile);
+		if (not file.is_open())
+			THROW(("Failed to create project file"));
+		
+		// write out a default project from our resources
+		const char* txt;
+		uint32 length;
+
+		if (not LoadResource(string("Templates/Projects/hello-cmdline.prj"), txt, length))
+			THROW(("Failed to load project resource"));
+		
+		file.write(txt, length);
+		file.close();
+		
+		// and write out a sample source file
+		fs::ofstream srcfile(p / "src" / "HelloWorld.cpp");
+		if (not srcfile.is_open())
+			THROW(("Failed to create project file"));
+		
+		if (not LoadResource(string("Templates/Projects/hello.cpp"), txt, length))
+			THROW(("Failed to load project sourcefile resource"));
+		
+		srcfile.write(txt, length);
+		srcfile.close();
+		
+		OpenProject(projectFile);
+	}
+	
+	gtk_widget_destroy(dialog);
 }
 
 void MJapieApp::SetCurrentFolder(

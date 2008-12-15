@@ -89,12 +89,13 @@ void MController::SetDocument(
 bool MController::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 	
 	if (mDocument == nil or
-		not mDocument->ProcessCommand(inCommand, inMenu, inItemIndex))
+		not mDocument->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers))
 	{
 		switch (inCommand)
 		{
@@ -115,7 +116,7 @@ bool MController::ProcessCommand(
 				break;
 				
 			default:
-				result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex);
+				result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 				break;
 		}
 	}

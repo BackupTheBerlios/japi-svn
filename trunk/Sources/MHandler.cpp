@@ -74,12 +74,13 @@ bool MHandler::UpdateCommandStatus(
 bool MHandler::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = false;
 	
 	if (mSuper != nil)
-		result = mSuper->ProcessCommand(inCommand, inMenu, inItemIndex);
+		result = mSuper->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 	
 	return result;
 }

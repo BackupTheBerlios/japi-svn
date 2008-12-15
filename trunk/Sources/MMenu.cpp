@@ -169,7 +169,10 @@ void MMenuItem::ItemCallback()
 				process = mChecked;
 			}
 
-			if (process and not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex))
+			GdkModifierType modifiers;
+			gdk_window_get_pointer(mGtkMenuItem->window, nil, nil, &modifiers);
+
+			if (process and not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex, modifiers))
 				PRINT(("Unhandled command: %s", (const char*)MCommandToString(mCommand)));
 		}
 	}

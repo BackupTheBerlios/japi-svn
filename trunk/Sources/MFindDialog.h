@@ -74,7 +74,8 @@ class MFindDialog : public MDialog
 	virtual bool	ProcessCommand(
 						uint32				inCommand,
 						const MMenu*		inMenu,
-						uint32				inItemIndex);
+						uint32				inItemIndex,
+							uint32			inModifiers);
 
 	void			FindNext();
 	void			FindAll(

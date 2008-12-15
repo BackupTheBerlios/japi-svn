@@ -951,7 +951,8 @@ bool MProjectWindow::UpdateCommandStatus(
 bool MProjectWindow::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
-	uint32			inItemIndex)
+	uint32			inItemIndex,
+	uint32			inModifiers)
 {
 	bool result = true;
 
@@ -997,7 +998,7 @@ bool MProjectWindow::ProcessCommand(
 			break;
 		
 		default:
-			result = MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex);
+			result = MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
 	}
 	
@@ -1227,53 +1228,40 @@ void MProjectWindow::CreateNewGroup(
 	const string&		inGroupName)
 {
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	auto_ptr<MGtkTreeView> treeView;
+	MTreeModelInterface* model;
+	MProjectGroup* group;
 	
 	if (notebook.GetPage() == ePanelFiles)
 	{
-		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-		
-		MProjectGroup* group = mProject->GetFiles();
-		int32 index = 0;
-		
-		GtkTreePath* path = nil;
-		GtkTreeIter iter;
-		
-		if (treeView.GetFirstSelectedRow(path) and
-			mFilesTree->GetIter(&iter, path))
-		{
-			MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-			group = item->GetParent();
-			index = item->GetPosition();
-		}
-			
-		mProject->CreateNewGroup(inGroupName, group, index);
-		
-		if (path != nil)
-			gtk_tree_path_free(path);
+		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
+		model = mFilesTree;
+		group = mProject->GetFiles();
 	}
 	else
 	{
-		MGtkTreeView treeView(GetWidget(kResourceViewID));
-		
-		MProjectGroup* group = mProject->GetResources();
-		int32 index = 0;
-		
-		GtkTreePath* path = nil;
-		GtkTreeIter iter;
-		
-		if (treeView.GetFirstSelectedRow(path) and
-			mFilesTree->GetIter(&iter, path))
-		{
-			MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-			group = item->GetParent();
-			index = item->GetPosition();
-		}
-			
-		mProject->CreateNewGroup(inGroupName, group, index);
-		
-		if (path != nil)
-			gtk_tree_path_free(path);
+		treeView.reset(new MGtkTreeView(GetWidget(kResourceViewID)));
+		model = mResourcesTree;
+		group = mProject->GetResources();
 	}
+		
+	int32 index = 0;
+	
+	GtkTreePath* path = nil;
+	GtkTreeIter iter;
+	
+	if (treeView->GetFirstSelectedRow(path) and
+		model->GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		group = item->GetParent();
+		index = item->GetPosition();
+	}
+		
+	mProject->CreateNewGroup(inGroupName, group, index);
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
 }
 
 // ---------------------------------------------------------------------------
