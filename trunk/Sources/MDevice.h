@@ -49,11 +49,16 @@ enum MAlignment {
 class MDevice
 {
   public:
+  					// create a dummy device
 					MDevice();
 
+					// a regular device, used for drawing in a view
+					// if inCreateOffscreen is true, drawing is done
+					// in a GdkPixmap instead.
 					MDevice(
 						MView*				inView,
-						MRect				inRect);
+						MRect				inRect,
+						bool				inCreateOffscreen = false);
 
 					~MDevice();
 
@@ -78,6 +83,12 @@ class MDevice
 
 	MColor			GetBackColor() const;
 	
+	void			ClipRect(
+						MRect				inRect);
+	
+	void			ClipRegion(
+						MRegion				inRegion);
+
 	void			EraseRect(
 						MRect				inRect);
 
@@ -95,13 +106,6 @@ class MDevice
 						MColor				inColor1,
 						MColor				inColor2);
 	
-	void			DrawListItemBackground(
-						MRect				inRect,
-						bool				inSelected,
-						bool				inActive,
-						bool				inOdd,
-						bool				inRoundEdges);
-
 	uint32			GetAscent() const;
 	
 	uint32			GetDescent() const;
@@ -143,10 +147,14 @@ class MDevice
 						bool				inTrailing,
 						int32&				outPosition);
 
+//	bool			PositionToIndex(
+//						int32				inPosition,
+//						uint32&				outIndex,
+//						bool&				outTrailing);
+
 	bool			PositionToIndex(
 						int32				inPosition,
-						uint32&				outIndex,
-						bool&				outTrailing);
+						uint32&				outIndex);
 	
 	uint32			GetTextWidth();
 	
@@ -162,6 +170,11 @@ class MDevice
 	bool			BreakLine(
 						uint32				inWidth,
 						uint32&				outBreak);
+
+	void			MakeTransparent(
+						float				inOpacity);
+
+	GdkPixmap*		GetPixmap() const;
 	
   private:
 

@@ -216,8 +216,8 @@ class MTextDocument : public MDocument
 	
 	MSelection			GetSelection() const				{ return mSelection; }
 
-	void				GetSelectionBounds(
-							MRect&			outBounds) const;
+	void				GetSelectionRegion(
+							MRegion&		outRegion) const;
 
 	void				GetSelectedText(
 							std::string&	outText) const;

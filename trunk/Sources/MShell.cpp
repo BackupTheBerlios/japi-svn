@@ -173,9 +173,9 @@ void MShellImp::Execute(
 	
 	int ifd[2], ofd[2], efd[2];
 	
-	pipe(ifd);
-	pipe(ofd);
-	pipe(efd);
+	(void)pipe(ifd);
+	(void)pipe(ofd);
+	(void)pipe(efd);
 	
 	int pid = fork();
 	
@@ -199,9 +199,9 @@ void MShellImp::Execute(
 			setpgid(0, 0);
 			
 			if (cwd.length() > 0)
-				chdir(cwd.c_str());
+				(void)chdir(cwd.c_str());
 			else if (home.length() > 0)
-				chdir(home.c_str());
+				(void)chdir(home.c_str());
 				
 			dup2(ifd[0], STDIN_FILENO);
 			close(ifd[0]);

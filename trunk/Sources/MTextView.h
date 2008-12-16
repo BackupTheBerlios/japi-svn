@@ -136,7 +136,8 @@ class MTextView : public MView
 
 	void				DrawLine(
 							uint32			inLineNr,
-							MDevice&		inDevice);
+							MDevice&		inDevice,
+							MRect			inLineRect);
 	
 	void				GetLine(
 							uint32			inLineNr,
@@ -229,14 +230,9 @@ class MTextView : public MView
 	MSlot<void()>							slOnVScrollBarValueChanged;
 	MSlot<void()>							slOnHScrollBarValueChanged;
 
-	bool				OnEvent(
-							GdkEvent*		inEvent);
-	
-	MSlot<bool(GdkEvent*)>					slOnEvent;
-
 	virtual void		DragEnter();
 	
-	virtual void		DragWithin(
+	virtual bool		DragWithin(
 							int32			inX,
 							int32			inY);
 	
@@ -254,6 +250,11 @@ class MTextView : public MView
 							std::string&	outData);
 
 	virtual void		DragDeleteData();
+
+	virtual void		DrawDragImage(
+							GdkPixmap*&		outPixmap,
+							int32&			outX,
+							int32&			outY);
 	
 	MController*		mController;
 	MTextDocument*		mDocument;
@@ -291,6 +292,7 @@ class MTextView : public MView
 	GtkIMContext*		mIMContext;
 	
 	uint32				mDragCaret;
+	bool				mDragIsAcceptable;
 	int32				mClickStartX, mClickStartY;
 };
 

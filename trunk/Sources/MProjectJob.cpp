@@ -81,9 +81,9 @@ void MProjectExecJob::Execute()
 
 	int ifd[2], ofd[2], efd[2];
 	
-	pipe(ifd);
-	pipe(ofd);
-	pipe(efd);
+	(void)pipe(ifd);
+	(void)pipe(ofd);
+	(void)pipe(efd);
 	
 	int pid = fork();
 	

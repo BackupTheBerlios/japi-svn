@@ -105,8 +105,6 @@ MTextView::MTextView(
 	, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
 	, slOnHScrollBarValueChanged(this, &MTextView::OnHScrollBarValueChanged)
 	
-	, slOnEvent(this, &MTextView::OnEvent)
-	
 	, mController(nil)
 	, mDocument(nil)
 	, mVScrollBar(inVScrollBar)
@@ -135,8 +133,6 @@ MTextView::MTextView(
 //	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
 	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
 	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
-
-	slOnEvent.Connect(GetGtkWidget(), "event");
 
 	mImageOriginX = mImageOriginY = 0;
 	
@@ -418,7 +414,7 @@ bool MTextView::OnExposeEvent(
 	{
 		MRect lr = GetLineRect(line);
 		if (update.Intersects(lr))
-			DrawLine(line, dev);
+			DrawLine(line, dev, lr);
 	}
 
 	if (IsWithinDrag())
@@ -429,7 +425,8 @@ bool MTextView::OnExposeEvent(
 
 void MTextView::DrawLine(
 	uint32				inLineNr,
-	MDevice&			inDevice)
+	MDevice&			inDevice,
+	MRect				inLineRect)
 {
 	assert(mDocument);
 	
@@ -441,8 +438,7 @@ void MTextView::DrawLine(
 	if (inLineNr < mDocument->CountLines() and mDocument->LineEnd(inLineNr) < mDocument->GetTextSize())
 		trailingNL = mDocument->GetTextBuffer().GetChar(mDocument->LineEnd(inLineNr)) == '\n';
 	
-	MRect lineRect = GetLineRect(inLineNr);
-	lineRect.x += kLeftMargin;
+	inLineRect.x += kLeftMargin;
 	
 	int32 indent = mDocument->GetLineIndentWidth(inLineNr);
 
@@ -450,8 +446,8 @@ void MTextView::DrawLine(
 
 	inDevice.SetOrigin(-mImageOriginX, 0);
 
-	int32 y = lineRect.y;
-	int32 x = lineRect.x + indent;
+	int32 y = inLineRect.y;
+	int32 x = inLineRect.x + indent;
 
 	MSelection selection = mDocument->GetSelection();
 
@@ -476,9 +472,9 @@ void MTextView::DrawLine(
 		
 		if (fill)
 		{
-			inDevice.FillRect(lineRect);
+			inDevice.FillRect(inLineRect);
 
-			MRect r2(lineRect);
+			MRect r2(inLineRect);
 			r2.x -= r2.height / 2;
 			r2.width = r2.height;
 			
@@ -517,8 +513,7 @@ void MTextView::DrawLine(
 		selection.GetMaxLine() < inLineNr or
 		selection.GetMinLine() > inLineNr)
 	{
-		if (not mDrawForDragImage)
-			inDevice.DrawText(x, y);
+		inDevice.DrawText(x, y);
 		
 		if (selection.IsEmpty())
 		{
@@ -576,12 +571,12 @@ void MTextView::DrawLine(
 		{
 			MColor selectionColor;
 			
-			if (IsActive())
+			if (IsActive() or mDrawForDragImage)
 				selectionColor = gHiliteColor;
 			else
 				selectionColor = gInactiveHiliteColor;
 		
-			MRect r = lineRect;
+			MRect r = inLineRect;
 			
 			uint32 c1, c2;
 			c1 = selection.GetMinColumn();
@@ -595,11 +590,11 @@ void MTextView::DrawLine(
 			inDevice.FillRect(r);
 			inDevice.Restore();
 		}
-		else if ((selectionEnd > selectionStart or fillBefore or fillAfter) and not mDrawForDragImage)
+		else if ((selectionEnd > selectionStart or fillBefore or fillAfter))
 		{
 			MColor selectionColor;
 			
-			if (IsActive())
+			if (IsActive() or mDrawForDragImage)
 				selectionColor = gHiliteColor;
 			else
 				selectionColor = gInactiveHiliteColor;
@@ -611,7 +606,7 @@ void MTextView::DrawLine(
 			
 			if (fillAfter)
 			{
-				MRect r = lineRect;
+				MRect r = inLineRect;
 				
 				if (text.length() > 0)
 					r.x += indent + inDevice.GetTextWidth();
@@ -642,6 +637,53 @@ void MTextView::DrawLine(
 
 		inDevice.DrawCaret(x, y, caretColumn);
 	}
+}
+
+void MTextView::DrawDragImage(
+	GdkPixmap*&		outPixmap,
+	int32&			outX,
+	int32&			outY)
+{
+	MRect bounds;
+	GetBounds(bounds);
+	
+	MValueChanger<bool> saveFlag(mDrawForDragImage, true);
+	
+	MSelection selection = mDocument->GetSelection();
+	
+	uint32 minLine = (mImageOriginY + bounds.y) / mLineHeight;
+	if (minLine < selection.GetMinLine())
+		minLine = selection.GetMinLine();
+
+	MRect lr = GetLineRect(minLine);
+	outX -= lr.x;
+	outY -= lr.y;
+	
+	uint32 maxLine = minLine + bounds.height / mLineHeight + 2;
+	if (maxLine > selection.GetMaxLine())
+		maxLine = selection.GetMaxLine();
+
+	bounds = MRect(0, 0, bounds.width, (maxLine - minLine + 1) * mLineHeight);
+	MDevice dev(this, bounds, true);
+	
+	dev.EraseRect(bounds);
+	
+	MRegion rgn;
+	mDocument->GetSelectionRegion(rgn);
+	rgn.OffsetBy(-mImageOriginX + kLeftMargin, -(minLine * mLineHeight));
+	dev.ClipRegion(rgn);
+
+	lr = bounds;
+	lr.height = mLineHeight;
+
+	for (uint32  line= minLine; line <= maxLine; ++line)
+	{
+		DrawLine(line, dev, lr);
+		lr.y += mLineHeight;
+	}
+	
+	dev.MakeTransparent(0.35);
+	outPixmap = dev.GetPixmap();
 }
 
 void MTextView::OnVScrollBarValueChanged()
@@ -735,8 +777,6 @@ void MTextView::DoScrollTo(
 	
 	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
 	gtk_range_set_value(GTK_RANGE(mHScrollBar), inX);
-
-//	UpdateNow();
 }
 
 void MTextView::ScrollToPosition(
@@ -817,7 +857,7 @@ void MTextView::Tick(
 	
 	MSelection sel = mDocument->GetSelection();
 
-	if (IsWithinDrag())
+	if (IsWithinDrag() and mDragIsAcceptable)
 	{
 		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
 		mCaretVisible = not mCaretVisible;
@@ -1046,16 +1086,16 @@ bool MTextView::ScrollToCaret()
 	top = mImageOriginY;
 	bottom = top + bounds.height;
 	
+	// scroll when mouse is in the top or bottom visible line
+	top += mLineHeight;
+	bottom -= mLineHeight;
+	
 	MSelection selection = mDocument->GetSelection();
 	
 	uint32 caret;
 	
 	if (IsWithinDrag())
-	{
 		caret = mDragCaret;
-		top += mLineHeight;
-		bottom -= mLineHeight;
-	}
 	else
 		caret = selection.GetCaret();
 	
@@ -1065,12 +1105,15 @@ bool MTextView::ScrollToCaret()
 	mDocument->OffsetToPosition(caret, line, x);
 	y = line * mLineHeight;
 	
-	if (selection.GetAnchor() < caret and
-		line < mDocument->CountLines() and
-		mDocument->LineStart(line) == caret)
+	if (not IsWithinDrag())
 	{
-		--line;
-		y -= mLineHeight;
+		if (selection.GetAnchor() < caret and
+			line < mDocument->CountLines() and
+			mDocument->LineStart(line) == caret)
+		{
+			--line;
+			y -= mLineHeight;
+		}
 	}
 	
 	int32 newX, newY;
@@ -1101,7 +1144,42 @@ bool MTextView::ScrollToCaret()
 	
 	if (newX != mImageOriginX or newY != mImageOriginY)
 	{
+		int32 dx = mImageOriginX - newX;
+		int32 dy = mImageOriginY - newY;
+		
+		if (IsWithinDrag())
+		{
+			if (dx)
+			{
+				MRect r(bounds);
+
+				if (dx < 0)
+					r.x += r.width - 4;
+				r.width = 4;
+
+				InvalidateRect(r);
+			}
+
+			if (dy)
+			{
+				MRect r(bounds);
+
+				if (dy < 0)
+					r.y += r.height - 4;
+				r.height = 4;
+
+				InvalidateRect(r);
+			}
+		}
+
 		DoScrollTo(newX, newY);
+
+		if (IsWithinDrag())
+		{
+			MDevice dev(this, bounds);
+			DrawDragHilite(dev);
+		}
+		
 		result = true;
 	}
 	
@@ -1299,8 +1377,6 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	}
 	else
 		Invalidate();
-//
-//	UpdateNow();
 }
 
 void MTextView::GetVisibleLineSpan(
@@ -1368,60 +1444,35 @@ void MTextView::DragEnter()
 	DrawDragHilite(dev);
 }
 
-void MTextView::DragWithin(
+bool MTextView::DragWithin(
 	int32			inX,
 	int32			inY)
 {
+	mDragIsAcceptable = true;
+	
 	uint32 caret;
 	mDocument->PositionToOffset(inX + mImageOriginX, inY + mImageOriginY, caret);
-	
-	MRect bounds;
-	GetBounds(bounds);
-	
-	if (mDragCaret != caret)
+
+	if (IsPointInSelection(inX + mImageOriginX, inY + mImageOriginY) or
+		mDocument->IsReadOnly())
+	{
+		mDragIsAcceptable = false;
+		if (mCaretVisible)
+			InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+		
+		mDragCaret = caret;
+	}
+	else if (mDragCaret != caret)
 	{
 		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
 		mDragCaret = caret;
 		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-
-//		while (ScrollToCaret())
-//		{
-//			MouseTrackingResult flags;
-//			OSStatus err = ::TrackMouseLocationWithOptions(
-//				::GetWindowPort(GetSysWindow()), 0, timeOut, &where, nil, &flags);
-//			
-//			if (err != noErr and err != kMouseTrackingTimedOut)
-//				THROW_IF_OSERROR(err);
-//			
-//			pt.x = where.h;
-//			pt.y = where.v;
-//			ConvertFromRoot(pt);
-//			
-//			if (not ::CGRectContainsPoint(bounds, pt))
-//				break;
-//			
-//			pt.x += bounds.x - kLeftMargin;
-//			pt.y += bounds.y;
-//
-//			mDocument->PositionToOffset(pt, caret);
-//
-//			if (mDragCaret != caret)
-//			{
-//				InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//				mDragCaret = caret;
-//				InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-//			}
-//	
-//			if (flags == kMouseTrackingMouseUp)
-//				break;
-//		}
 	}
 	
-//	if (mDragRef == nil)
-//	{
-//		mDragRef = dragRef;
-//		InvalidateAll();
-//	}
+	while (ScrollToCaret())
+		;
+	
+	return mDragIsAcceptable;
 }
 	
 void MTextView::DragLeave()
@@ -1512,9 +1563,9 @@ bool MTextView::IsPointInSelection(
 	int32			inX,
 	int32			inY)
 {
-	MRect bounds;
-	mDocument->GetSelectionBounds(bounds);
-	return bounds.ContainsPoint(inX, inY);
+	MRegion rgn;
+	mDocument->GetSelectionRegion(rgn);
+	return rgn.ContainsPoint(inX, inY);
 }
 
 void MTextView::DrawDragHilite(
@@ -1644,13 +1695,6 @@ bool MTextView::OnRetrieveSurrounding()
 {
 	cout << "OnRetrieveSurrounding" << endl;
 	return true;
-}
-
-bool MTextView::OnEvent(
-	GdkEvent*		inEvent)
-{
-//	cout << "Event: " << hex << uint32(inEvent->type) << dec << endl;
-	return false;
 }
 
 void MTextView::OnPopupMenu(

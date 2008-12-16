@@ -2,11 +2,14 @@
 
 Moet af:
 
-- project templates
-
-- Diff window, default mappen kan beter
-
 - printen
+
+- transparant drag&drop
+
+- Diff window
+	- default mappen kan beter
+	- mooie, met beziers?
+
 - utf-8 problemen bij lopen door tekst
 - utf-8 validatie voor het doorsturen naar pango
 
@@ -28,6 +31,8 @@ Moet af:
 	- resource items toevoegen
 
 Leuk om te hebben:
+
+- project templates
 
 - gio gaan gebruiken
 

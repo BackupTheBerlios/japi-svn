@@ -78,6 +78,69 @@ struct MRect
 	void		InsetBy(
 					int32				inDeltaX,
 					int32				inDeltaY);
+
+				operator GdkRectangle*()
+				{
+					return reinterpret_cast<GdkRectangle*>(this);
+				}
+
+				operator const GdkRectangle*() const
+				{
+					return reinterpret_cast<const GdkRectangle*>(this);
+				}
+};
+
+struct MRegion
+{
+				MRegion()
+					: mGdkRegion(gdk_region_new()) {}
+	
+				MRegion(
+					const MRegion&	inRegion)
+					: mGdkRegion(gdk_region_copy(inRegion.mGdkRegion))
+				{
+				}
+
+	MRegion&	operator=(
+					const MRegion&	inRegion)
+				{
+					gdk_region_destroy(mGdkRegion);
+					mGdkRegion = gdk_region_copy(inRegion.mGdkRegion);
+					return *this;
+				}
+	
+				~MRegion()
+				{
+					gdk_region_destroy(mGdkRegion);
+				}
+				
+	MRegion&	operator+=(const MRect& r)
+				{
+					gdk_region_union_with_rect(mGdkRegion, r);
+					return *this;
+				}
+
+	bool		ContainsPoint(
+					int32				inX,
+					int32				inY) const
+				{
+					return gdk_region_point_in(mGdkRegion, inX, inY);
+				}
+	
+	void		OffsetBy(
+					int32				inX,
+					int32				inY)
+				{
+					gdk_region_offset(mGdkRegion, inX, inY);
+				}
+	
+				operator const GdkRegion* () const
+				{
+					return mGdkRegion;
+				}
+
+  private:
+	GdkRegion*	mGdkRegion;	
 };
 
 enum MDirection

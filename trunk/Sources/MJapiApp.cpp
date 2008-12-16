@@ -73,7 +73,7 @@ int VERBOSE;
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9.5";
+	kVersionString[] = "0.9.6";
 
 MJapieApp* gApp;
 
@@ -1024,7 +1024,7 @@ bool ForkServer(
 	if (inReadStdin)
 	{
 		msg.msg = 'data';
-		write(sockfd, &msg, sizeof(msg));
+		(void)write(sockfd, &msg, sizeof(msg));
 	}
 	
 	if (inDocs.size() > 0)
@@ -1036,21 +1036,21 @@ bool ForkServer(
 			string url = d->second.str();
 			
 			msg.length = url.length() + sizeof(lineNr);
-			write(sockfd, &msg, sizeof(msg));
-			write(sockfd, &lineNr, sizeof(lineNr));
-			write(sockfd, url.c_str(), url.length());
+			(void)write(sockfd, &msg, sizeof(msg));
+			(void)write(sockfd, &lineNr, sizeof(lineNr));
+			(void)write(sockfd, url.c_str(), url.length());
 		}
 	}
 	
 	if (not inReadStdin and inDocs.size() == 0)
 	{
 		msg.msg = 'new ';
-		write(sockfd, &msg, sizeof(msg));
+		(void)write(sockfd, &msg, sizeof(msg));
 	}
 	
 	msg.msg = 'done';
 	msg.length = 0;
-	write(sockfd, &msg, sizeof(msg));
+	(void)write(sockfd, &msg, sizeof(msg));
 	
 	if (inReadStdin)
 	{
@@ -1194,7 +1194,7 @@ void install_locale(
 
 	cout << "Executing: " << cmd << endl;
 	
-	system(cmd.c_str());
+	(void)system(cmd.c_str());
 	
 	exit(0);
 }

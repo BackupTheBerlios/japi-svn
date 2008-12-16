@@ -39,6 +39,8 @@
 #include "MView.h"
 #include "MWindow.h"
 #include "MGlobals.h"
+#include "MError.h"
+#include "MUnicode.h"
 
 using namespace std;
 
@@ -74,6 +76,12 @@ class MDeviceImp
 
 	virtual MColor			GetBackColor() const;
 	
+	virtual void			ClipRect(
+								MRect				inRect);
+
+	virtual void			ClipRegion(
+								MRegion				inRegion);
+
 	virtual void			EraseRect(
 								MRect				inRect);
 
@@ -91,13 +99,6 @@ class MDeviceImp
 								MColor				inColor1,
 								MColor				inColor2);
 	
-	virtual void			DrawListItemBackground(
-								MRect				inRect,
-								bool				inSelected,
-								bool				inActive,
-								bool				inOdd,
-								bool				inRoundEdges);
-
 	PangoFontMetrics*		GetMetrics();
 
 	virtual uint32			GetAscent();
@@ -143,8 +144,7 @@ class MDeviceImp
 
 	virtual bool			PositionToIndex(
 								int32				inPosition,
-								uint32&				outIndex,
-								bool&				outTrailing);
+								uint32&				outIndex);
 	
 	virtual uint32			GetTextWidth();
 	
@@ -160,6 +160,11 @@ class MDeviceImp
 	virtual bool			BreakLine(
 								uint32				inWidth,
 								uint32&				outBreak);
+
+	virtual void			MakeTransparent(
+								float				inOpacity) {}
+
+	virtual GdkPixmap*		GetPixmap() const		{ return nil; }
 
   protected:
 
@@ -259,6 +264,16 @@ MColor MDeviceImp::GetBackColor() const
 	return kWhite;
 }
 
+void MDeviceImp::ClipRect(
+	MRect				inRect)
+{
+}
+
+void MDeviceImp::ClipRegion(
+	MRegion				inRegion)
+{
+}
+
 void MDeviceImp::EraseRect(
 	MRect				inRect)
 {
@@ -283,15 +298,6 @@ void MDeviceImp::FillEllipse(
 void MDeviceImp::CreateAndUsePattern(
 	MColor				inColor1,
 	MColor				inColor2)
-{
-}
-
-void MDeviceImp::DrawListItemBackground(
-	MRect				inRect,
-	bool				inSelected,
-	bool				inActive,
-	bool				inOdd,
-	bool				inRoundEdges)
 {
 }
 
@@ -475,25 +481,25 @@ void MDeviceImp::IndexToPosition(
 
 bool MDeviceImp::PositionToIndex(
 	int32				inPosition,
-	uint32&				outIndex,
-	bool&				outTrailing)
+	uint32&				outIndex)
 {
 	int index, trailing;
 	
 	bool result = pango_layout_xy_to_index(mPangoLayout,
 		inPosition * PANGO_SCALE, 0, &index, &trailing); 
 
-	outIndex = index;
-	outTrailing = trailing;
-	
-	if (not result)
+	MEncodingTraits<kEncodingUTF8> enc;
+	const char* text = pango_layout_get_text(mPangoLayout);	
+
+	while (trailing-- > 0)
 	{
-		int w;
-		pango_layout_get_pixel_size(mPangoLayout, &w, nil);
-		if (inPosition >= w)
-			outIndex = strlen(pango_layout_get_text(mPangoLayout));		
+		uint32 n = enc.GetNextCharLength(text); 
+		text += n;
+		index += n;
 	}
 	
+	outIndex = index;
+
 	return result;
 }
 
@@ -567,8 +573,9 @@ class MCairoDeviceImp : public MDeviceImp
   public:
 							MCairoDeviceImp(
 								MView*		inView,
-								MRect		inRect);
-						
+								MRect		inRect,
+								bool		inCreateOffscreen);
+
 							~MCairoDeviceImp();
 
 	virtual void			Save();
@@ -589,6 +596,12 @@ class MCairoDeviceImp : public MDeviceImp
 
 	virtual MColor			GetBackColor() const;
 	
+	virtual void			ClipRect(
+								MRect				inRect);
+
+	virtual void			ClipRegion(
+								MRegion				inRegion);
+
 	virtual void			EraseRect(
 								MRect				inRect);
 
@@ -606,16 +619,6 @@ class MCairoDeviceImp : public MDeviceImp
 								MColor				inColor1,
 								MColor				inColor2);
 	
-	void					SetRowBackColor(
-								bool				inOdd);
-	
-	virtual void			DrawListItemBackground(
-								MRect				inRect,
-								bool				inSelected,
-								bool				inActive,
-								bool				inOdd,
-								bool				inRoundEdges);
-
 	virtual void			DrawString(
 								const string&		inText,
 								float				inX,
@@ -632,27 +635,49 @@ class MCairoDeviceImp : public MDeviceImp
 								float				inY,
 								uint32				inOffset);
 
+	virtual void			MakeTransparent(
+								float				inOpacity);
+
+	virtual GdkPixmap*		GetPixmap() const;
+
   protected:
-	
-	MView*					mView;
 	MRect					mRect;
 	MColor					mForeColor;
 	MColor					mBackColor;
 	MColor					mEvenRowColor;
 	cairo_t*				mContext;
+	GdkPixmap*				mOffscreenPixmap;
 	uint32					mPatternData[8][8];
 };
 
 MCairoDeviceImp::MCairoDeviceImp(
 	MView*		inView,
-	MRect		inRect)
-	: mView(inView)
-	, mRect(inRect)
+	MRect		inRect,
+	bool		inCreateOffscreen)
+	: mRect(inRect)
+	, mOffscreenPixmap(nil)
 {
 	mForeColor = kBlack;
 	mBackColor = kWhite;
 
-	mContext = gdk_cairo_create(mView->GetGtkWidget()->window);
+	if (inCreateOffscreen)
+	{
+		GdkScreen* screen = gtk_widget_get_screen(inView->GetGtkWidget());
+		GdkColormap* colormap = nil;
+		
+		if (gdk_screen_is_composited(screen))
+			colormap = gdk_screen_get_rgba_colormap(screen);
+		else
+			colormap = gtk_widget_get_colormap(inView->GetGtkWidget());
+
+		mOffscreenPixmap = gdk_pixmap_new(nil, inRect.width, inRect.height,
+			gdk_colormap_get_visual(colormap)->depth);
+		gdk_drawable_set_colormap(mOffscreenPixmap, colormap);
+
+		mContext = gdk_cairo_create(mOffscreenPixmap);
+	}
+	else
+		mContext = gdk_cairo_create(inView->GetGtkWidget()->window);
 
 	cairo_rectangle(mContext, mRect.x, mRect.y, mRect.width, mRect.height);
 	cairo_clip(mContext);
@@ -661,6 +686,9 @@ MCairoDeviceImp::MCairoDeviceImp(
 MCairoDeviceImp::~MCairoDeviceImp()
 {
 	cairo_destroy(mContext);
+	
+	if (mOffscreenPixmap)
+		g_object_unref(mOffscreenPixmap);
 }
 
 void MCairoDeviceImp::Save()
@@ -707,6 +735,20 @@ MColor MCairoDeviceImp::GetBackColor() const
 	return mBackColor;
 }
 
+void MCairoDeviceImp::ClipRect(
+	MRect				inRect)
+{
+	cairo_rectangle(mContext, inRect.x, inRect.y, inRect.width, inRect.height);
+	cairo_clip(mContext);
+}
+
+void MCairoDeviceImp::ClipRegion(
+	MRegion				inRegion)
+{
+	gdk_cairo_region(mContext, inRegion);
+	cairo_clip(mContext);
+}
+
 void MCairoDeviceImp::EraseRect(
 	MRect				inRect)
 {
@@ -718,6 +760,10 @@ void MCairoDeviceImp::EraseRect(
 		mBackColor.red / 255.0,
 		mBackColor.green / 255.0,
 		mBackColor.blue / 255.0);
+
+	if (mOffscreenPixmap != nil)
+		cairo_set_operator(mContext, CAIRO_OPERATOR_CLEAR);
+
 	cairo_fill(mContext);
 	
 	cairo_restore(mContext);
@@ -794,51 +840,6 @@ void MCairoDeviceImp::CreateAndUsePattern(
 	}
 }
 
-void MCairoDeviceImp::DrawListItemBackground(
-	MRect				inRect,
-	bool				inSelected,
-	bool				inActive,
-	bool				inOdd,
-	bool				inRoundEdges)
-{
-	if (inSelected and not inRoundEdges)
-	{
-		if (inActive)
-			SetBackColor(gHiliteColor);
-		else
-			SetBackColor(gInactiveHiliteColor);
-	}
-	else
-		SetRowBackColor(inOdd);
-	
-	EraseRect(inRect);
-
-	if (inSelected and inRoundEdges)
-	{
-		MRect selectionRect = inRect;
-		selectionRect.InsetBy(2, 0);
-
-		if (inActive)
-			SetForeColor(gHiliteColor);
-		else
-			SetForeColor(gInactiveHiliteColor);
-		
-		MRect sr = selectionRect;
-		sr.InsetBy(sr.height / 2, 0);
-		FillRect(sr);
-		
-		sr = selectionRect;
-		sr.width = sr.height;
-		
-		FillEllipse(sr);
-		
-		sr = selectionRect;
-		sr.x += sr.width - sr.height;
-		sr.width = sr.height;
-		FillEllipse(sr);
-	}
-}
-
 void MCairoDeviceImp::DrawString(
 	const string&		inText,
 	float				inX,
@@ -906,21 +907,18 @@ void MCairoDeviceImp::DrawCaret(
 	Restore();
 }
 
-void MCairoDeviceImp::SetRowBackColor(
-	bool		inOdd)
+void MCairoDeviceImp::MakeTransparent(
+	float				inOpacity)
 {
-	const char* styleName = "even-row-color";
-	if (inOdd)
-		styleName = "odd-row-color";
+	cairo_set_operator(mContext, CAIRO_OPERATOR_DEST_OUT);
+	cairo_set_source_rgba(mContext, 1, 0, 0, inOpacity);
+	cairo_paint(mContext);
+}
 
-	mBackColor = kWhite;
-	
-	if (inOdd)
-	{
-		mBackColor.red = static_cast<uint16>(0.93 * mBackColor.red);
-		mBackColor.green = static_cast<uint16>(0.93 * mBackColor.green);
-		mBackColor.blue = static_cast<uint16>(0.93 * mBackColor.blue);
-	}
+GdkPixmap* MCairoDeviceImp::GetPixmap() const
+{
+	g_object_ref(mOffscreenPixmap);
+	return mOffscreenPixmap;
 }
 
 // -------------------------------------------------------------------
@@ -932,8 +930,9 @@ MDevice::MDevice()
 
 MDevice::MDevice(
 	MView*		inView,
-	MRect		inRect)
-	: mImpl(new MCairoDeviceImp(inView, inRect))
+	MRect		inRect,
+	bool		inCreateOffscreen)
+	: mImpl(new MCairoDeviceImp(inView, inRect, inCreateOffscreen))
 {
 }
 
@@ -987,6 +986,18 @@ MColor MDevice::GetBackColor() const
 	return mImpl->GetBackColor();
 }
 
+void MDevice::ClipRect(
+	MRect		inRect)
+{
+	mImpl->ClipRect(inRect);
+}
+
+void MDevice::ClipRegion(
+	MRegion		inRegion)
+{
+	mImpl->ClipRegion(inRegion);
+}
+
 void MDevice::EraseRect(
 	MRect		inRect)
 {
@@ -1017,16 +1028,6 @@ void MDevice::CreateAndUsePattern(
 	MColor		inColor2)
 {
 	mImpl->CreateAndUsePattern(inColor1, inColor2);
-}
-
-void MDevice::DrawListItemBackground(
-	MRect				inRect,
-	bool				inSelected,
-	bool				inActive,
-	bool				inOdd,
-	bool				inRoundEdges)
-{
-	mImpl->DrawListItemBackground(inRect, inSelected, inActive, inOdd, inRoundEdges);
 }
 
 uint32 MDevice::GetAscent() const
@@ -1103,10 +1104,9 @@ void MDevice::IndexToPosition(
 
 bool MDevice::PositionToIndex(
 	int32			inPosition,
-	uint32&			outIndex,
-	bool&			outTrailing)
+	uint32&			outIndex)
 {
-	return mImpl->PositionToIndex(inPosition, outIndex, outTrailing);
+	return mImpl->PositionToIndex(inPosition, outIndex);
 }
 
 void MDevice::DrawText(
@@ -1134,4 +1134,15 @@ void MDevice::DrawCaret(
 	uint32				inOffset)
 {
 	mImpl->DrawCaret(inX, inY, inOffset);
+}
+
+void MDevice::MakeTransparent(
+	float				inOpacity)
+{
+	mImpl->MakeTransparent(inOpacity);
+}
+
+GdkPixmap* MDevice::GetPixmap() const
+{
+	return mImpl->GetPixmap();
 }

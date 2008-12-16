@@ -1875,15 +1875,19 @@ void MTextDocument::UpdateDirtyLines()
 		mLineInfo[line].dirty = false;
 }
 
-void MTextDocument::GetSelectionBounds(
-	MRect&		outBounds) const
+void MTextDocument::GetSelectionRegion(
+	MRegion&		outRegion) const
 {
 	if (mSelection.IsBlock())
 	{
-		outBounds.y = mSelection.GetMinLine() * mLineHeight;
-		outBounds.height = mSelection.CountLines() * mLineHeight;
-		outBounds.x = mSelection.GetMinColumn() * mCharWidth;
-		outBounds.width = (mSelection.GetMaxColumn() - mSelection.GetMinColumn()) * mCharWidth;
+		MRect r;
+		
+		r.y = mSelection.GetMinLine() * mLineHeight;
+		r.height = mSelection.CountLines() * mLineHeight;
+		r.x = mSelection.GetMinColumn() * mCharWidth;
+		r.width = (mSelection.GetMaxColumn() - mSelection.GetMinColumn() + 1) * mCharWidth;
+		
+		outRegion += r;
 	}
 	else
 	{
@@ -1896,27 +1900,26 @@ void MTextDocument::GetSelectionBounds(
 		uint32 anchorLine = OffsetToLine(anchor);
 		uint32 caretLine = OffsetToLine(caret);
 		
-		if (anchorLine != caretLine)
+		for (uint32 line = anchorLine; line <= caretLine; ++line)
 		{
-			outBounds.y = anchorLine * mLineHeight;
-			outBounds.height = (caretLine - anchorLine + 1) * mLineHeight;
-			outBounds.x = 0;
-			outBounds.width = /*kMaxLineWidth*/100000;
-		}
-		else
-		{
-			outBounds.y = anchorLine * mLineHeight;
-			outBounds.height = mLineHeight;
+			MRect r;
 			
-			int32 anchorPos;
-			OffsetToPosition(anchor, anchorLine, anchorPos);
-
-			outBounds.x = anchorPos;
-
-			int32 caretPos;
-			OffsetToPosition(caret, caretLine, caretPos);
-
-			outBounds.width = caretPos - anchorPos + 1;
+			r.y = line * mLineHeight;
+			r.height = mLineHeight;
+			
+			int32 anchorPos = 0;
+			if (line == anchorLine)
+				OffsetToPosition(anchor, anchorLine, anchorPos);
+	
+			r.x = anchorPos;
+			
+			int32 caretPos = mTargetTextView->GetWrapWidth();
+			if (line == caretLine)
+				OffsetToPosition(caret, caretLine, caretPos);
+	
+			r.width = caretPos - anchorPos + 1;
+			
+			outRegion += r;
 		}
 	}
 }
@@ -2243,8 +2246,7 @@ void MTextDocument::PositionToOffset(
 		
 		if (inLocationX > 0)
 		{
-			bool trailing;
-			/*bool hit = */device.PositionToIndex(inLocationX, outOffset, trailing);
+			device.PositionToIndex(inLocationX, outOffset);
 			outOffset += mLineInfo[line].start;
 			if (outOffset > LineEnd(line))
 				outOffset = LineEnd(line);

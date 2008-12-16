@@ -63,8 +63,8 @@ enum MTreeDragKind {
 
 const GtkTargetEntry kTreeDragTargets[] =
 {
-	{ "application/x-japi-tree-item", GTK_TARGET_SAME_WIDGET, 0 },
-    { "text/uri-list", 0, 0 },
+	{ const_cast<gchar*>("application/x-japi-tree-item"), GTK_TARGET_SAME_WIDGET, 0 },
+    { const_cast<gchar*>("text/uri-list"), 0, 0 },
 };
 
 const GdkAtom kTreeDragTargetAtoms[] =
@@ -1272,7 +1272,7 @@ void MProjectWindow::AddFilesToProject()
 	vector<MUrl> urls;
 	if (ChooseFiles(true, urls))
 	{
-		MProjectGroup* group;
+		MProjectGroup* group = nil;
 		int32 index = 0;
 
 		MGtkNotebook notebook(GetWidget(kNoteBookID));

@@ -43,6 +43,7 @@
 #include "MView.h"
 #include "MError.h"
 #include "MUtils.h"
+#include "MDevice.h"
 
 using namespace std;
 
@@ -492,13 +493,15 @@ bool MView::OnDragMotion(
 		mDragWithin = true;
 	}
 	
-	bool copy =
-		IsModifierDown(GDK_SHIFT_MASK) or
-		mGtkWidget != gtk_drag_get_source_widget(inDragContext);
-	
-	DragWithin(inX, inY);
-	
-	gdk_drag_status(inDragContext, copy ? GDK_ACTION_COPY : GDK_ACTION_MOVE, inTime);
+	if (DragWithin(inX, inY))
+	{
+		bool copy =
+			IsModifierDown(GDK_SHIFT_MASK) or
+			mGtkWidget != gtk_drag_get_source_widget(inDragContext);
+		gdk_drag_status(inDragContext, copy ? GDK_ACTION_COPY : GDK_ACTION_MOVE, inTime);
+	}
+	else
+		gdk_drag_status(inDragContext, GdkDragAction(0), inTime);
 
 	return false;
 }
@@ -534,10 +537,11 @@ void MView::DragEnter()
 {
 }
 	
-void MView::DragWithin(
+bool MView::DragWithin(
 	int32			inX,
 	int32			inY)
 {
+	return false;
 }
 
 void MView::DragLeave()
@@ -572,7 +576,41 @@ void MView::DragBegin(
 		mGtkWidget, lst, GdkDragAction(GDK_ACTION_MOVE|GDK_ACTION_COPY),
 		button, (GdkEvent*)inEvent);
 
-	gtk_drag_set_icon_default(context);
+//	gtk_drag_set_icon_default(context);
+	MRect bounds;
+	GetBounds(bounds);
+	MDevice dev(this, bounds, true);
+	
+	GdkPixmap* pm = nil;
+	int32 x, y;
+	GdkModifierType state;
+
+	if (inEvent->is_hint)
+		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
+	else
+	{
+		x = static_cast<int32>(inEvent->x);
+		y = static_cast<int32>(inEvent->y);
+		state = GdkModifierType(inEvent->state);
+	}
+	
+	DrawDragImage(pm, x, y);
+	
+	if (pm != nil)
+	{
+		int32 w, h;
+		gdk_drawable_get_size(pm, &w, &h);
+		
+		GdkBitmap* bm = nil; //gdk_pixmap_new(nil, w, h, 1);
+
+		gtk_drag_set_icon_pixmap(context, gdk_drawable_get_colormap(pm),
+			pm, bm, x, y);
+		
+		g_object_unref(pm);
+//		g_object_unref(bm);
+	}
+	else
+		gtk_drag_set_icon_default(context);
 
 	gtk_target_list_unref(lst);
 }

@@ -41,6 +41,7 @@
 #include "MCallbacks.h"
 
 class MWindow;
+class MDevice;
 
 enum MCursor
 {
@@ -176,7 +177,7 @@ class MView
 
 	virtual void	DragEnter();
 	
-	virtual void	DragWithin(
+	virtual bool	DragWithin(
 						int32			inX,
 						int32			inY);
 	
@@ -225,6 +226,11 @@ class MView
 						guint			inTime);
 
 	bool			IsWithinDrag() const	{ return mDragWithin; }
+
+	virtual void	DrawDragImage(
+						GdkPixmap*&		outPixmap,
+						int32&			outX,
+						int32&			outY)	{  }
 
 	MSlot<bool(GdkEventFocus*)>			mFocusInEvent;
 	MSlot<bool(GdkEventFocus*)>			mFocusOutEvent;
