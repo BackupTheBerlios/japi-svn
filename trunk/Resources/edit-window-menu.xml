@@ -54,6 +54,7 @@
 			<item label="8" cmd="Tw_8" check="radio" />
 			<item label="16" cmd="Tw16" check="radio" />
 		</menu>
+		<item label="Show Whitespace" cmd='SWit' check="checkbox" />
 		<item label="-" />
 		<menu id='syntaxmenu' label="Syntax colour">
 			<item label="None" cmd='St_N' check='radio' />

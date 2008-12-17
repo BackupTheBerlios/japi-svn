@@ -175,6 +175,9 @@ class MDevice
 						float				inOpacity);
 
 	GdkPixmap*		GetPixmap() const;
+
+	void			SetDrawWhiteSpace(
+						bool				inDrawWhiteSpace);
 	
   private:
 

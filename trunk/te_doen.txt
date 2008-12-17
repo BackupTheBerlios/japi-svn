@@ -3,8 +3,12 @@
 Moet af:
 
 - printen
-
-- transparant drag&drop
+- keybinding prefs panel
+- link order aan de praat helpen
+- resources lib maken voor distributie/andere resources opslag?
+- upper/lower case menu maken
+- een 'normalize unicode' menu item
+- onzichtbare tekens tekenen
 
 - Diff window
 	- default mappen kan beter
@@ -62,12 +66,8 @@ Leuk om te hebben:
 - veralgemeniseren van pkg-config
 - configuratie van compiler, koppelen aan extensie(s)
 
-- upper/lower case menu maken
-- een 'normalize unicode' menu item
-
 - libp11 support?
 
-- onzichtbare tekens tekenen
 - Lange foutmeldingen wrappen in meldingen lijsten
 
 - accelerator-achtig iets

@@ -186,6 +186,7 @@ void MTextDocument::Init()
 	mIncludeFiles = nil;
 	mNeedReparse = false;
 	mSoftwrap = false;
+	mShowWhiteSpace = false;
 	mFastFindMode = false;
 	mCompletionIndex = -1;
 	mStdErrWindow = nil;
@@ -3345,11 +3346,11 @@ void MTextDocument::GetStyledText(
 	
 	mText.GetText(inOffset, inLength, outText);
 
+	inDevice.SetText(outText);
+	
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')
 		outText.erase(outText.length() - 1);
 
-	inDevice.SetText(outText);
-	
 	if (mLanguage)
 	{
 		uint32 styles[kMaxStyles] = { 0 };
@@ -4657,6 +4658,12 @@ bool MTextDocument::ProcessCommand(
 			DoSoftwrap();
 			break;
 
+		case cmd_ShowHideWhiteSpace:
+			mShowWhiteSpace = not mShowWhiteSpace;
+			if (mTargetTextView)
+				mTargetTextView->Invalidate();
+			break;
+
 		case cmd_ShowDocInfoDialog:
 //				if (mDocument != nil)
 //				{
@@ -4846,6 +4853,11 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_Softwrap:
 			outEnabled = true;
 			outChecked = GetSoftwrap();
+			break;
+		
+		case cmd_ShowHideWhiteSpace:
+			outEnabled = true;
+			outChecked = mShowWhiteSpace;
 			break;
 
 		case cmd_Preprocess:

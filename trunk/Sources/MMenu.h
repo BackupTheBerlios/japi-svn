@@ -63,6 +63,10 @@ class MMenu
 						const std::string&	inLabel,
 						uint32				inCommand);
 	
+	void			AppendRadioItem(
+						const std::string&	inLabel,
+						uint32				inCommand);
+	
 	void			AppendCheckItem(
 						const std::string&	inLabel,
 						uint32				inCommand);

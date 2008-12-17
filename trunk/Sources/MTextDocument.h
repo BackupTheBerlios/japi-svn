@@ -314,6 +314,8 @@ class MTextDocument : public MDocument
 
 	bool				GetSoftwrap() const;
 
+	bool				GetShowWhiteSpace() const			{ return mShowWhiteSpace; }
+
 	void				HandleFindDialogCommand(
 							uint32			inCommand);
 
@@ -582,6 +584,7 @@ class MTextDocument : public MDocument
 	MIncludeFileList*			mIncludeFiles;
 	bool						mNeedReparse;
 	bool						mSoftwrap;
+	bool						mShowWhiteSpace;
 	bool						mFastFindMode;
 	MDirection					mFastFindDirection;
 	bool						mFastFindInited;

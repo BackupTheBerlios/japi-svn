@@ -9,4 +9,6 @@
 	<item label="Clear" cmd='clea'/>
 	<item label="-" />
 	<item label="Select All" cmd='sall'/>
+	<item label="-" />
+	<item label="Show Whitespace" cmd='SWit' check="checkbox"/>
 </menu>

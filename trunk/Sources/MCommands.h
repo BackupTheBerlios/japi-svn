@@ -134,7 +134,9 @@ const uint32
 	
 	cmd_Stop =					'stop',
 	
-	cmd_ApplyScript =			'scri';
+	cmd_ApplyScript =			'scri',
+	
+	cmd_ShowHideWhiteSpace =	'SWit';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =					'Test';

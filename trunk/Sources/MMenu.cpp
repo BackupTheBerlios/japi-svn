@@ -85,6 +85,8 @@ struct MMenuItem
 	void			CreateWidget(
 						GSList*&		ioRadioGroup);
 
+	void			CreateCheckWidget();
+
 	void			SetChecked(
 						bool			inChecked);
 
@@ -151,6 +153,16 @@ void MMenuItem::CreateWidget(
 		mCallback.Connect(mGtkMenuItem, "toggled");
 
 	mCanCheck = true;
+}
+
+void MMenuItem::CreateCheckWidget()
+{
+	mGtkMenuItem = gtk_check_menu_item_new_with_label(_(mLabel.c_str()));
+
+	if (mCommand != 0)
+		mCallback.Connect(mGtkMenuItem, "toggled");
+
+//	mCanCheck = true;
 }
 
 void MMenuItem::ItemCallback()
@@ -328,6 +340,8 @@ MMenu* MMenu::Create(
 						cmd |= cs[i] << ((3 - i) * 8);
 					
 					if (item->property("check") == "radio")
+						menu->AppendRadioItem(label, cmd);
+					else if (item->property("check") == "checkbox")
 						menu->AppendCheckItem(label, cmd);
 					else
 						menu->AppendItem(label, cmd);
@@ -377,11 +391,24 @@ void MMenu::AppendItem(
 	CreateNewItem(inLabel, inCommand, nil);
 }
 
-void MMenu::AppendCheckItem(
+void MMenu::AppendRadioItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
 	CreateNewItem(inLabel, inCommand, &mRadioGroup);
+}
+
+void MMenu::AppendCheckItem(
+	const string&	inLabel,
+	uint32			inCommand)
+{
+	MMenuItem* item = new MMenuItem(this, inLabel, inCommand);
+
+	item->CreateCheckWidget();
+
+	item->mIndex = mItems.size();
+	mItems.push_back(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
 }
 
 void MMenu::AppendSeparator()
@@ -516,8 +543,7 @@ void MMenu::UpdateCommandStatus()
 					item->mEnabled = enabled;
 				}
 				
-				
-				if (item->mCanCheck)
+//				if (item->mCanCheck)
 					item->SetChecked(checked);
 			}
 		}
@@ -718,6 +744,8 @@ MMenu* MMenubar::CreateMenu(
 						cmd |= cs[i] << ((3 - i) * 8);
 					
 					if (item->property("check") == "radio")
+						menu->AppendRadioItem(label, cmd);
+					else if (item->property("check") == "checkbox")
 						menu->AppendCheckItem(label, cmd);
 					else
 						menu->AppendItem(label, cmd);

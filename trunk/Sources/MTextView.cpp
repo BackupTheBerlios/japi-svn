@@ -398,9 +398,10 @@ bool MTextView::OnExposeEvent(
 	MRect update(inEvent->area);
 	
 	MDevice dev(this, bounds);
+	dev.EraseRect(bounds);
 	
-	if (not mDrawForDragImage)
-		dev.EraseRect(bounds);
+	if (mDocument->GetShowWhiteSpace())
+		dev.SetDrawWhiteSpace(true);
 	
 	int32 minLine = (mImageOriginY + update.y) / mLineHeight - 1;
 	if (minLine < 0)
@@ -529,7 +530,6 @@ void MTextView::DrawLine(
 		uint32 selectionStart = selection.GetAnchor();
 		uint32 selectionEnd = selection.GetCaret();
 		
-		bool fillBefore = false;
 		bool fillAfter = false;
 		
 		if (selection.IsBlock())
@@ -548,10 +548,7 @@ void MTextView::DrawLine(
 		uint32 startOffset = mDocument->LineStart(inLineNr);
 
 		if (selectionStart < startOffset and not selection.IsBlock())
-		{
-			fillBefore = true;
 			selectionStart = 0;
-		}
 		else
 			selectionStart -= startOffset;
 
@@ -590,7 +587,7 @@ void MTextView::DrawLine(
 			inDevice.FillRect(r);
 			inDevice.Restore();
 		}
-		else if ((selectionEnd > selectionStart or fillBefore or fillAfter))
+		else if ((selectionEnd > selectionStart or fillAfter))
 		{
 			MColor selectionColor;
 			
@@ -600,9 +597,6 @@ void MTextView::DrawLine(
 				selectionColor = gInactiveHiliteColor;
 		
 			inDevice.SetTextSelection(selectionStart, selectionEnd - selectionStart, selectionColor);	
-			
-			if (fillBefore)
-				;
 			
 			if (fillAfter)
 			{
@@ -665,7 +659,6 @@ void MTextView::DrawDragImage(
 
 	bounds = MRect(0, 0, bounds.width, (maxLine - minLine + 1) * mLineHeight);
 	MDevice dev(this, bounds, true);
-	
 	dev.EraseRect(bounds);
 	
 	MRegion rgn;

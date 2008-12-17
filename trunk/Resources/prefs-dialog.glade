@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.1.5 on Thu Dec 20 14:17:43 2007 by maarten@zuinig-->
+<!--Generated with glade3 3.4.5 on Wed Dec 17 20:14:23 2008 -->
 <glade-interface>
   <widget class="GtkWindow" id="dialog">
     <property name="width_request">375</property>
@@ -94,6 +94,7 @@
                       <widget class="GtkCheckButton" id="stab">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Tab enters Spaces</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -209,6 +210,7 @@
                       <widget class="GtkCheckButton" id="bala">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Balance while typing</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -217,6 +219,7 @@
                       <widget class="GtkCheckButton" id="auto">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Auto indent</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -228,6 +231,7 @@
                       <widget class="GtkCheckButton" id="smar">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Smart indenting</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -329,6 +333,7 @@ MacOS Roman</property>
                       <widget class="GtkCheckButton" id="abom">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Add Byte Order Marker (BOM)</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -362,6 +367,40 @@ DOS (CR/LF)</property>
                       </widget>
                       <packing>
                         <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="GtkTable" id="table2">
+                        <property name="visible">True</property>
+                        <property name="n_columns">2</property>
+                        <property name="column_spacing">4</property>
+                        <property name="row_spacing">4</property>
+                        <child>
+                          <widget class="GtkLabel" id="label9">
+                            <property name="visible">True</property>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">White space colour</property>
+                          </widget>
+                        </child>
+                        <child>
+                          <widget class="GtkColorButton" id="witc">
+                            <property name="visible">True</property>
+                            <property name="response_id">0</property>
+                            <property name="color">#000000000000</property>
+                            <signal name="color_set" handler="on_changed"/>
+                          </widget>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="right_attach">2</property>
+                            <property name="x_options"></property>
+                            <property name="y_options"></property>
+                            <property name="x_padding">10</property>
+                          </packing>
+                        </child>
+                      </widget>
+                      <packing>
+                        <property name="padding">4</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                   </widget>
@@ -459,6 +498,7 @@ DOS (CR/LF)</property>
                         <child>
                           <widget class="GtkFontButton" id="font">
                             <property name="visible">True</property>
+                            <property name="response_id">0</property>
                             <signal name="font_set" handler="on_changed"/>
                           </widget>
                           <packing>
@@ -478,6 +518,7 @@ DOS (CR/LF)</property>
                         <child>
                           <widget class="GtkColorButton" id="cl10">
                             <property name="visible">True</property>
+                            <property name="response_id">0</property>
                             <property name="color">#000000000000</property>
                             <signal name="color_set" handler="on_changed"/>
                           </widget>
@@ -512,6 +553,7 @@ DOS (CR/LF)</property>
                         <child>
                           <widget class="GtkColorButton" id="clr8">
                             <property name="visible">True</property>
+                            <property name="response_id">0</property>
                             <property name="color">#000000000000</property>
                             <signal name="color_set" handler="on_changed"/>
                           </widget>
@@ -537,6 +579,7 @@ DOS (CR/LF)</property>
                         <child>
                           <widget class="GtkColorButton" id="clr9">
                             <property name="visible">True</property>
+                            <property name="response_id">0</property>
                             <property name="color">#000000000000</property>
                             <signal name="color_set" handler="on_changed"/>
                           </widget>
@@ -688,6 +731,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr7">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -704,6 +748,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr6">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -720,6 +765,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr5">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -736,6 +782,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr4">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -752,6 +799,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr3">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -768,6 +816,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr2">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -784,6 +833,7 @@ DOS (CR/LF)</property>
                     <child>
                       <widget class="GtkColorButton" id="clr1">
                         <property name="visible">True</property>
+                        <property name="response_id">0</property>
                         <property name="color">#000000000000</property>
                         <signal name="color_set" handler="on_changed"/>
                       </widget>
@@ -888,6 +938,7 @@ DOS (CR/LF)</property>
                       <widget class="GtkCheckButton" id="lstp">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Reopen Last Project</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -896,6 +947,7 @@ DOS (CR/LF)</property>
                       <widget class="GtkCheckButton" id="wrks">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Open Worksheet</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -970,6 +1022,7 @@ DOS (CR/LF)</property>
                       <widget class="GtkCheckButton" id="stat">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Save State</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>
@@ -978,6 +1031,7 @@ DOS (CR/LF)</property>
                       <widget class="GtkCheckButton" id="nlae">
                         <property name="visible">True</property>
                         <property name="label" translatable="yes">Force Newline at End of File</property>
+                        <property name="response_id">0</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="on_changed"/>
                       </widget>

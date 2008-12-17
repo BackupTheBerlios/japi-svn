@@ -166,7 +166,19 @@ class MDeviceImp
 
 	virtual GdkPixmap*		GetPixmap() const		{ return nil; }
 
+	virtual void			SetDrawWhiteSpace(
+								bool				inDrawWhiteSpace) {}
+
   protected:
+
+	PangoItem*				Itemize(
+								const char*			inText,
+								PangoAttrList*		inAttrs);
+
+	void					GetWhiteSpaceGlyphs(
+								uint32&				outSpace,
+								uint32&				outTab,
+								uint32&				outNL);
 
 	static PangoContext*	sPangoContext;
 	static PangoLanguage*	sPangoLanguage;
@@ -174,6 +186,8 @@ class MDeviceImp
 	PangoLayout*			mPangoLayout;
 	PangoFontDescription*	mFont;
 	PangoFontMetrics*		mMetrics;
+	bool					mTextEndsWithNewLine;
+	uint32					mSpaceGlyph, mTabGlyph, mNewLineGlyph;
 };
 
 PangoContext* MDeviceImp::sPangoContext;
@@ -241,7 +255,10 @@ void MDeviceImp::SetFont(
 	mFont = pango_font_description_from_string(inFont.c_str());
 
 	if (mFont != nil)
+	{
 		pango_layout_set_font_description(mPangoLayout, mFont);
+		GetWhiteSpaceGlyphs(mSpaceGlyph, mTabGlyph, mNewLineGlyph);
+	}
 }
 
 void MDeviceImp::SetForeColor(
@@ -382,11 +399,12 @@ void MDeviceImp::SetText(
 	const string&		inText)
 {
 	pango_layout_set_text(mPangoLayout, inText.c_str(), inText.length());
+	mTextEndsWithNewLine = inText.length() > 0 and inText[inText.length() - 1] == '\n';
 
 	// reset attributes
-	PangoAttrList* attrs = pango_attr_list_new ();
-	pango_layout_set_attributes (mPangoLayout, attrs);
-	pango_attr_list_unref (attrs);
+	PangoAttrList* attrs = pango_attr_list_new();
+	pango_layout_set_attributes(mPangoLayout, attrs);
+	pango_attr_list_unref(attrs);
 }
 
 void MDeviceImp::SetTabStops(
@@ -412,7 +430,7 @@ void MDeviceImp::SetTextColors(
 	uint32				inColors[],
 	uint32				inOffsets[])
 {
-	PangoAttrList* attrs = pango_attr_list_new ();
+	PangoAttrList* attrs = pango_attr_list_new();
 
 	for (uint32 ix = 0; ix < inColorCount; ++ix)
 	{
@@ -433,9 +451,9 @@ void MDeviceImp::SetTextColors(
 		pango_attr_list_insert(attrs, attr);
 	}
 	
-	pango_layout_set_attributes (mPangoLayout, attrs);
+	pango_layout_set_attributes(mPangoLayout, attrs);
 	
-	pango_attr_list_unref (attrs);
+	pango_attr_list_unref(attrs);
 }
 
 void MDeviceImp::SetTextSelection(
@@ -446,7 +464,7 @@ void MDeviceImp::SetTextSelection(
 	uint16 red = inSelectionColor.red << 8 | inSelectionColor.red;
 	uint16 green = inSelectionColor.green << 8 | inSelectionColor.green;
 	uint16 blue = inSelectionColor.blue << 8 | inSelectionColor.blue;
-		
+	
 	PangoAttribute* attr = pango_attr_background_new(red, green, blue);
 	attr->start_index = inStart;
 	attr->end_index = inStart + inLength;
@@ -564,6 +582,59 @@ bool MDeviceImp::BreakLine(
 	return result;
 }
 
+PangoItem* MDeviceImp::Itemize(
+	const char*			inText,
+	PangoAttrList*		inAttrs)
+{
+	GList* items = pango_itemize(sPangoContext, inText, 0, strlen(inText), inAttrs, nil);
+	PangoItem* item = static_cast<PangoItem*>(items->data);
+	g_list_free(items);
+	return item;
+}
+
+void MDeviceImp::GetWhiteSpaceGlyphs(
+	uint32&				outSpace,
+	uint32&				outTab,
+	uint32&				outNL)
+{
+	//	long kMiddleDot = 0x00B7, kRightChevron = 0x00BB, kNotSign = 0x00AC; 
+	
+	const char
+		not_sign[] = "\xc2\xac",		// 0x00AC
+		right_chevron[] = "\xc2\xbb",	// 0x00BB
+		middle_dot[] = "\xc2\xb7";		// 0x00B7
+	
+	PangoAttrList* attrs = pango_attr_list_new();
+	
+	PangoAttribute* attr = pango_attr_font_desc_new(mFont);
+	attr->start_index = 0;
+	attr->end_index = 2;
+	
+	pango_attr_list_insert(attrs, attr);
+	
+	PangoGlyphString* ts = pango_glyph_string_new();
+
+	PangoItem* item = Itemize(middle_dot, attrs);
+	assert(item->analysis.font);
+	pango_shape(middle_dot, strlen(middle_dot), &item->analysis, ts);
+	outSpace = ts->glyphs[0].glyph;
+
+	item = Itemize(right_chevron, attrs);
+	assert(item->analysis.font);
+	pango_shape(right_chevron, strlen(right_chevron), &item->analysis, ts);
+	outTab = ts->glyphs[0].glyph;
+
+	item = Itemize(not_sign, attrs);
+	assert(item->analysis.font);
+	pango_shape(not_sign, strlen(not_sign), &item->analysis, ts);
+	outNL = ts->glyphs[0].glyph;
+
+	pango_glyph_string_free(ts);
+	pango_attr_list_unref(attrs);
+}
+
+
+
 // --------------------------------------------------------------------
 // MCairoDeviceImp is derived from MDeviceImp
 // It provides the routines for drawing on a cairo surface
@@ -640,7 +711,11 @@ class MCairoDeviceImp : public MDeviceImp
 
 	virtual GdkPixmap*		GetPixmap() const;
 
+	virtual void			SetDrawWhiteSpace(
+								bool				inDrawWhiteSpace);
+
   protected:
+
 	MRect					mRect;
 	MColor					mForeColor;
 	MColor					mBackColor;
@@ -648,6 +723,7 @@ class MCairoDeviceImp : public MDeviceImp
 	cairo_t*				mContext;
 	GdkPixmap*				mOffscreenPixmap;
 	uint32					mPatternData[8][8];
+	bool					mDrawWhiteSpace;
 };
 
 MCairoDeviceImp::MCairoDeviceImp(
@@ -656,6 +732,7 @@ MCairoDeviceImp::MCairoDeviceImp(
 	bool		inCreateOffscreen)
 	: mRect(inRect)
 	, mOffscreenPixmap(nil)
+	, mDrawWhiteSpace(false)
 {
 	mForeColor = kBlack;
 	mBackColor = kWhite;
@@ -883,6 +960,89 @@ void MCairoDeviceImp::DrawText(
 	float				inX,
 	float				inY)
 {
+	Save();
+	
+	if (mDrawWhiteSpace)
+	{
+		int baseLine = pango_layout_get_baseline(mPangoLayout);
+		PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
+		
+		cairo_set_source_rgb(mContext,
+			gWhiteSpaceColor.red / 255.0,
+			gWhiteSpaceColor.green / 255.0,
+			gWhiteSpaceColor.blue / 255.0);
+		
+		int x_position = 0;
+		vector<cairo_glyph_t> cairo_glyphs;
+	
+		for (GSList* run = line->runs; run != nil; run = run->next)
+		{
+			PangoGlyphItem* glyphItem = reinterpret_cast<PangoGlyphItem*>(run->data);
+			
+			PangoFont* font = glyphItem->item->analysis.font;
+			cairo_scaled_font_t* scaledFont =
+				pango_cairo_font_get_scaled_font(reinterpret_cast<PangoCairoFont*>(font));
+		
+			if (scaledFont == nil or cairo_scaled_font_status(scaledFont) != CAIRO_STATUS_SUCCESS)
+				continue;
+		
+			cairo_set_scaled_font(mContext, scaledFont);
+			
+			PangoGlyphItemIter iter;
+			const char* text = pango_layout_get_text(mPangoLayout);
+			
+			for (bool more = pango_glyph_item_iter_init_start(&iter, glyphItem, text);
+					  more;
+					  more = pango_glyph_item_iter_next_cluster(&iter))
+			{
+				PangoGlyphString* gs = iter.glyph_item->glyphs;
+				char ch = text[iter.start_index];
+		
+				for (int i = iter.start_glyph; i < iter.end_glyph; ++i)
+				{
+					PangoGlyphInfo* gi = &gs->glyphs[i];
+					
+					if (ch == ' ' or ch == '\t')
+					{
+						double cx = inX + double(x_position + gi->geometry.x_offset) / PANGO_SCALE;
+						double cy = inY + double(baseLine + gi->geometry.y_offset) / PANGO_SCALE;
+						
+						cairo_glyph_t g;
+						if (ch == ' ')
+							g.index = mSpaceGlyph;
+						else
+							g.index = mTabGlyph;
+						g.x = cx;
+						g.y = cy;
+			
+						cairo_glyphs.push_back(g);
+					}
+					
+					x_position += gi->geometry.width;
+				}
+			}
+		}
+		
+		// and a trailing newline perhaps?
+		
+		if (mTextEndsWithNewLine)
+		{
+			double cx = inX + double(x_position) / PANGO_SCALE;
+			double cy = inY + double(baseLine) / PANGO_SCALE;
+			
+			cairo_glyph_t g;
+			g.index = mNewLineGlyph;
+			g.x = cx;
+			g.y = cy;
+
+			cairo_glyphs.push_back(g);
+		}
+		
+		cairo_show_glyphs(mContext, &cairo_glyphs[0], cairo_glyphs.size());	
+	}
+
+	Restore();
+
 	cairo_move_to(mContext, inX, inY);
 	pango_cairo_show_layout(mContext, mPangoLayout);
 }
@@ -919,6 +1079,12 @@ GdkPixmap* MCairoDeviceImp::GetPixmap() const
 {
 	g_object_ref(mOffscreenPixmap);
 	return mOffscreenPixmap;
+}
+
+void MCairoDeviceImp::SetDrawWhiteSpace(
+	bool				inDrawWhiteSpace)
+{
+	mDrawWhiteSpace = inDrawWhiteSpace;
 }
 
 // -------------------------------------------------------------------
@@ -1145,4 +1311,10 @@ void MDevice::MakeTransparent(
 GdkPixmap* MDevice::GetPixmap() const
 {
 	return mImpl->GetPixmap();
+}
+
+void MDevice::SetDrawWhiteSpace(
+	bool				inDrawWhiteSpace)
+{
+	mImpl->SetDrawWhiteSpace(inDrawWhiteSpace);
 }

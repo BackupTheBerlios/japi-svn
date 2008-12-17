@@ -54,6 +54,7 @@ const uint32
 	kBalanceWhileTypingCheckboxID	= 'bala',
 	kAutoIndentCheckboxID		= 'auto',
 	kSmartIndentCheckboxID		= 'smar',
+	kWhiteSpaceColorID			= 'witc',
 	kEncodingPopupID			= 'enco',
 	kBOMCheckboxID				= 'abom',
 	kNewlinePopupID				= 'newl',
@@ -105,6 +106,7 @@ MPrefsDialog::MPrefsDialog()
 	SetChecked(kAutoIndentCheckboxID, gAutoIndent);
 	SetChecked(kSmartIndentCheckboxID, gSmartIndent);
 	SetEnabled(kSmartIndentCheckboxID, gAutoIndent);
+	SetColor(kWhiteSpaceColorID, gWhiteSpaceColor);
 	
 	string s = Preferences::GetString("default encoding", "utf-8");
 	if (s == "utf-8")
@@ -329,6 +331,10 @@ void MPrefsDialog::ValueChanged(
 		
 		case kSmartIndentCheckboxID:
 			Preferences::SetInteger("smart indent", gSmartIndent = IsChecked(kSmartIndentCheckboxID));
+			break;
+
+		case kWhiteSpaceColorID:
+			Preferences::SetColor("whitespace color",  gWhiteSpaceColor = GetColor(kWhiteSpaceColorID));
 			break;
 
 		case kEncodingPopupID:

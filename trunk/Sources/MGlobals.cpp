@@ -68,7 +68,8 @@ const MColor
 	kCurrentLineColor("#ffffcc"),
 	kMarkedLineColor("#efff7f"),
 	kPCLineColor = MColor("#cce5ff"),
-	kBreakpointColor = MColor("#5ea50c");
+	kBreakpointColor = MColor("#5ea50c"),
+	kWhiteSpaceColor = MColor("#cf4c42");
 
 const MColor
 	kInactiveHighlightColor("#e5e5e5"),
@@ -88,6 +89,7 @@ MColor			gLanguageColors[kLStyleCount];
 MColor			gHiliteColor, gInactiveHiliteColor;
 MColor			gCurrentLineColor, gMarkedLineColor;
 MColor			gPCLineColor, gBreakpointColor;
+MColor			gWhiteSpaceColor;
 
 fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
@@ -132,6 +134,7 @@ void InitGlobals()
 	gMarkedLineColor = Preferences::GetColor("marked line color", kMarkedLineColor);
 	gPCLineColor = Preferences::GetColor("pc line color", kPCLineColor);
 	gBreakpointColor = Preferences::GetColor("breakpoint color", kBreakpointColor);
+	gWhiteSpaceColor = Preferences::GetColor("whitespace color", kWhiteSpaceColor);
 	
 	if (not fs::exists(gTemplatesDir))
 		fs::create_directory(gTemplatesDir);

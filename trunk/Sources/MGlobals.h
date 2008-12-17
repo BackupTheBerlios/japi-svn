@@ -62,6 +62,7 @@ extern MColor			gLanguageColors[];
 extern MColor			gHiliteColor, gInactiveHiliteColor;
 extern MColor			gCurrentLineColor, gMarkedLineColor;
 extern MColor			gPCLineColor, gBreakpointColor;
+extern MColor			gWhiteSpaceColor;
 
 void InitGlobals();
 void SaveGlobals();

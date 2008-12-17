@@ -594,20 +594,22 @@ void MView::DragBegin(
 		state = GdkModifierType(inEvent->state);
 	}
 	
-	DrawDragImage(pm, x, y);
+	// only draw a transparent bitmap to drag around
+	// if we're on a composited screen.
+
+	GdkScreen* screen = gtk_widget_get_screen(GetGtkWidget());
+	if (gdk_screen_is_composited(screen))
+		DrawDragImage(pm, x, y);
 	
 	if (pm != nil)
 	{
 		int32 w, h;
 		gdk_drawable_get_size(pm, &w, &h);
 		
-		GdkBitmap* bm = nil; //gdk_pixmap_new(nil, w, h, 1);
-
 		gtk_drag_set_icon_pixmap(context, gdk_drawable_get_colormap(pm),
-			pm, bm, x, y);
+			pm, nil, x, y);
 		
 		g_object_unref(pm);
-//		g_object_unref(bm);
 	}
 	else
 		gtk_drag_set_icon_default(context);
