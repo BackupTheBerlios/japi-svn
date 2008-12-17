@@ -716,6 +716,10 @@ class MCairoDeviceImp : public MDeviceImp
 
   protected:
 
+	void					DrawWhiteSpace(
+								float				inX,
+								float				inY);
+
 	MRect					mRect;
 	MColor					mForeColor;
 	MColor					mBackColor;
@@ -956,92 +960,99 @@ void MCairoDeviceImp::DrawString(
 	pango_cairo_show_layout(mContext, mPangoLayout);
 }
 
+void MCairoDeviceImp::DrawWhiteSpace(
+	float				inX,
+	float				inY)
+{
+	int baseLine = pango_layout_get_baseline(mPangoLayout);
+	PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
+	
+	cairo_set_source_rgb(mContext,
+		gWhiteSpaceColor.red / 255.0,
+		gWhiteSpaceColor.green / 255.0,
+		gWhiteSpaceColor.blue / 255.0);
+
+	// we're using one font anyway
+	PangoFontMap* fontMap = pango_cairo_font_map_get_default();
+	PangoFont* font = pango_font_map_load_font(fontMap, sPangoContext, mFont);
+	cairo_scaled_font_t* scaledFont =
+		pango_cairo_font_get_scaled_font(reinterpret_cast<PangoCairoFont*>(font));
+
+	if (scaledFont == nil or cairo_scaled_font_status(scaledFont) != CAIRO_STATUS_SUCCESS)
+		return;
+
+	cairo_set_scaled_font(mContext, scaledFont);
+	
+	int x_position = 0;
+	vector<cairo_glyph_t> cairo_glyphs;
+
+	for (GSList* run = line->runs; run != nil; run = run->next)
+	{
+		PangoGlyphItem* glyphItem = reinterpret_cast<PangoGlyphItem*>(run->data);
+		
+		PangoGlyphItemIter iter;
+		const char* text = pango_layout_get_text(mPangoLayout);
+		
+		for (bool more = pango_glyph_item_iter_init_start(&iter, glyphItem, text);
+				  more;
+				  more = pango_glyph_item_iter_next_cluster(&iter))
+		{
+			PangoGlyphString* gs = iter.glyph_item->glyphs;
+			char ch = text[iter.start_index];
+	
+			for (int i = iter.start_glyph; i < iter.end_glyph; ++i)
+			{
+				PangoGlyphInfo* gi = &gs->glyphs[i];
+				
+				if (ch == ' ' or ch == '\t')
+				{
+					double cx = inX + double(x_position + gi->geometry.x_offset) / PANGO_SCALE;
+					double cy = inY + double(baseLine + gi->geometry.y_offset) / PANGO_SCALE;
+					
+					cairo_glyph_t g;
+					if (ch == ' ')
+						g.index = mSpaceGlyph;
+					else
+						g.index = mTabGlyph;
+					g.x = cx;
+					g.y = cy;
+		
+					cairo_glyphs.push_back(g);
+				}
+				
+				x_position += gi->geometry.width;
+			}
+		}
+	}
+	
+	// and a trailing newline perhaps?
+	
+	if (mTextEndsWithNewLine)
+	{
+		double cx = inX + double(x_position) / PANGO_SCALE;
+		double cy = inY + double(baseLine) / PANGO_SCALE;
+		
+		cairo_glyph_t g;
+		g.index = mNewLineGlyph;
+		g.x = cx;
+		g.y = cy;
+
+		cairo_glyphs.push_back(g);
+	}
+	
+	cairo_show_glyphs(mContext, &cairo_glyphs[0], cairo_glyphs.size());	
+}
+
 void MCairoDeviceImp::DrawText(
 	float				inX,
 	float				inY)
 {
-	Save();
-	
 	if (mDrawWhiteSpace)
 	{
-		int baseLine = pango_layout_get_baseline(mPangoLayout);
-		PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
-		
-		cairo_set_source_rgb(mContext,
-			gWhiteSpaceColor.red / 255.0,
-			gWhiteSpaceColor.green / 255.0,
-			gWhiteSpaceColor.blue / 255.0);
-		
-		int x_position = 0;
-		vector<cairo_glyph_t> cairo_glyphs;
-	
-		for (GSList* run = line->runs; run != nil; run = run->next)
-		{
-			PangoGlyphItem* glyphItem = reinterpret_cast<PangoGlyphItem*>(run->data);
-			
-			PangoFont* font = glyphItem->item->analysis.font;
-			cairo_scaled_font_t* scaledFont =
-				pango_cairo_font_get_scaled_font(reinterpret_cast<PangoCairoFont*>(font));
-		
-			if (scaledFont == nil or cairo_scaled_font_status(scaledFont) != CAIRO_STATUS_SUCCESS)
-				continue;
-		
-			cairo_set_scaled_font(mContext, scaledFont);
-			
-			PangoGlyphItemIter iter;
-			const char* text = pango_layout_get_text(mPangoLayout);
-			
-			for (bool more = pango_glyph_item_iter_init_start(&iter, glyphItem, text);
-					  more;
-					  more = pango_glyph_item_iter_next_cluster(&iter))
-			{
-				PangoGlyphString* gs = iter.glyph_item->glyphs;
-				char ch = text[iter.start_index];
-		
-				for (int i = iter.start_glyph; i < iter.end_glyph; ++i)
-				{
-					PangoGlyphInfo* gi = &gs->glyphs[i];
-					
-					if (ch == ' ' or ch == '\t')
-					{
-						double cx = inX + double(x_position + gi->geometry.x_offset) / PANGO_SCALE;
-						double cy = inY + double(baseLine + gi->geometry.y_offset) / PANGO_SCALE;
-						
-						cairo_glyph_t g;
-						if (ch == ' ')
-							g.index = mSpaceGlyph;
-						else
-							g.index = mTabGlyph;
-						g.x = cx;
-						g.y = cy;
-			
-						cairo_glyphs.push_back(g);
-					}
-					
-					x_position += gi->geometry.width;
-				}
-			}
-		}
-		
-		// and a trailing newline perhaps?
-		
-		if (mTextEndsWithNewLine)
-		{
-			double cx = inX + double(x_position) / PANGO_SCALE;
-			double cy = inY + double(baseLine) / PANGO_SCALE;
-			
-			cairo_glyph_t g;
-			g.index = mNewLineGlyph;
-			g.x = cx;
-			g.y = cy;
-
-			cairo_glyphs.push_back(g);
-		}
-		
-		cairo_show_glyphs(mContext, &cairo_glyphs[0], cairo_glyphs.size());	
+		Save();
+		DrawWhiteSpace(inX, inY);
+		Restore();
 	}
-
-	Restore();
 
 	cairo_move_to(mContext, inX, inY);
 	pango_cairo_show_layout(mContext, mPangoLayout);

@@ -8,7 +8,6 @@ Moet af:
 - resources lib maken voor distributie/andere resources opslag?
 - upper/lower case menu maken
 - een 'normalize unicode' menu item
-- onzichtbare tekens tekenen
 
 - Diff window
 	- default mappen kan beter
@@ -18,6 +17,8 @@ Moet af:
 - utf-8 validatie voor het doorsturen naar pango
 
 - sound crash?
+
+- whitespace tekenen, nl bij verdana en lege regel gaat mis?
 
 - keyboard shortcuts voor alert dialogs
 
