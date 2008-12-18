@@ -1559,6 +1559,8 @@ bool MTextView::IsPointInSelection(
 	int32			inX,
 	int32			inY)
 {
+	mDocument->SetTargetTextView(this);
+	
 	MRegion rgn;
 	mDocument->GetSelectionRegion(rgn);
 	return rgn.ContainsPoint(inX, inY);

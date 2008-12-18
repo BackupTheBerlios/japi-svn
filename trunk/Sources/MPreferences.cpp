@@ -41,6 +41,7 @@
 #include <cerrno>
 #include <cstring>
 #include <boost/bind.hpp>
+#include <cstring>
 
 #include "MTypes.h"
 #include "MPreferences.h"

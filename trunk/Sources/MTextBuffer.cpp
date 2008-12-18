@@ -39,6 +39,7 @@
 
 #include <list>
 #include <set>
+#include <limits>
 #include <sstream>
 #include <unistd.h>
 

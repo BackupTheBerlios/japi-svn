@@ -33,6 +33,7 @@
 #include "MJapi.h"
 
 #include <sstream>
+#include <limits>
 
 #undef check
 #ifndef BOOST_DISABLE_ASSERTS

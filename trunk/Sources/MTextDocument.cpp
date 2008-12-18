@@ -1914,7 +1914,9 @@ void MTextDocument::GetSelectionRegion(
 	
 			r.x = anchorPos;
 			
-			int32 caretPos = mTargetTextView->GetWrapWidth();
+			int32 caretPos = 10000;
+			if (mTargetTextView != nil)
+				caretPos = mTargetTextView->GetWrapWidth();
 			if (line == caretLine)
 				OffsetToPosition(caret, caretLine, caretPos);
 	
@@ -4743,7 +4745,7 @@ bool MTextDocument::ProcessCommand(
 			break;
 	
 		case cmd_ApplyScript:
-			if (inModifiers & GDK_CONTROL_MASK)
+			if ((inModifiers & GDK_CONTROL_MASK) == 0)
 				DoApplyScript(inMenu->GetItemLabel(inItemIndex));
 			else
 				result = false;
