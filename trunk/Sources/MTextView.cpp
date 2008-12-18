@@ -1069,7 +1069,8 @@ void MTextView::ScrollMessage(MScrollMessage inCommand)
 // ---------------------------------------------------------------------------
 //	ScrollToCaret
 
-bool MTextView::ScrollToCaret()
+bool MTextView::ScrollToCaret(
+	bool			inScrollForDrag)
 {
 	assert(mDocument);
 	
@@ -1081,9 +1082,12 @@ bool MTextView::ScrollToCaret()
 	top = mImageOriginY;
 	bottom = top + bounds.height;
 	
-	// scroll when mouse is in the top or bottom visible line
-	top += mLineHeight;
-	bottom -= mLineHeight;
+	if (inScrollForDrag)
+	{
+		// scroll when mouse is in the top or bottom visible line
+		top += mLineHeight;
+		bottom -= mLineHeight;
+	}
 	
 	MSelection selection = mDocument->GetSelection();
 	
@@ -1382,12 +1386,9 @@ void MTextView::GetVisibleLineSpan(
 	GetBounds(bounds);
 	
 	outFirstLine = static_cast<uint32>(mImageOriginY / mLineHeight);
-	
-	uint32 cnt = static_cast<uint32>(bounds.height / mLineHeight);
-	if (cnt > 0)
-		--cnt;
-	
-	outLastLine = outFirstLine + cnt;
+	outLastLine = static_cast<uint32>((mImageOriginY + bounds.height) / mLineHeight);
+	if (outLastLine > 0)
+		--outLastLine;
 }
 
 bool MTextView::OnFocusInEvent(
@@ -1464,7 +1465,7 @@ bool MTextView::DragWithin(
 		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
 	}
 	
-	while (ScrollToCaret())
+	while (ScrollToCaret(true))
 		;
 	
 	return mDragIsAcceptable;

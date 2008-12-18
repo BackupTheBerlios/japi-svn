@@ -56,7 +56,8 @@ class MTextView : public MView
 						
 	virtual				~MTextView();
 	
-	bool				ScrollToCaret();
+	bool				ScrollToCaret(
+							bool				inScrollForDrag = false);
 
 	void				ScrollToSelection(
 							bool				inForceCenter);

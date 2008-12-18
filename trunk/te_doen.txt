@@ -3,7 +3,6 @@
 Moet af:
 
 - pagedown werkt niet goed meer
-- scroll tijdens vierkante selectie
 
 - printen
 - keybinding prefs panel
