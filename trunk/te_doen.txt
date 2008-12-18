@@ -2,6 +2,9 @@
 
 Moet af:
 
+- pagedown werkt niet goed meer
+- scroll tijdens vierkante selectie
+
 - printen
 - keybinding prefs panel
 - link order aan de praat helpen
@@ -17,8 +20,6 @@ Moet af:
 - utf-8 validatie voor het doorsturen naar pango
 
 - sound crash?
-
-- whitespace tekenen, nl bij verdana en lege regel gaat mis?
 
 - keyboard shortcuts voor alert dialogs
 

@@ -326,6 +326,8 @@ bool MTextView::ScrollToPointer(
 		selection.GetAnchorLineAndColumn(al, ac);
 		mDocument->PositionToLineColumn(inX, inY, cl, cc);
 		mDocument->Select(MSelection(mDocument, al, ac, cl, cc));
+
+		scrolled = ScrollToCaret();
 	}
 	else if (mClickMode == eSelectRegular)
 	{
