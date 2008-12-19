@@ -492,3 +492,191 @@ string::iterator next_cursor_position(
 	
 	return result;
 }
+
+enum MLineBreakClass
+{
+	kOP, kCL, kQU, kGL, kNS, kEX, kSY, kIS, kPR, kPO, kNU, kAL, kID, kIN, kHY, kBA,
+	kBB, kB2, kZW, kCM, kWJ, kH2, kH3, kJL, kJV, kJT,
+
+	kBK, kCR, kLF, kSG, kCB, kSP, kSA, kAI, kXX, kNL,
+};
+
+MLineBreakClass kLineBreakClassMapping[] =
+{
+	// G_UNICODE_BREAK_MANDATORY
+	kBK,
+	// G_UNICODE_BREAK_CARRIAGE_RETURN
+	kCR,
+	// G_UNICODE_BREAK_LINE_FEED
+	kLF,
+	// G_UNICODE_BREAK_COMBINING_MARK
+	kCM,
+	// G_UNICODE_BREAK_SURROGATE
+	kSG,
+	// G_UNICODE_BREAK_ZERO_WIDTH_SPACE
+	kZW,
+	// G_UNICODE_BREAK_INSEPARABLE
+	kIN,
+	// G_UNICODE_BREAK_NON_BREAKING_GLUE
+	kGL,
+	// G_UNICODE_BREAK_CONTINGENT
+	kCB,
+	// G_UNICODE_BREAK_SPACE
+	kSP,
+	// G_UNICODE_BREAK_AFTER
+	kBA,
+	// G_UNICODE_BREAK_BEFORE
+	kBB,
+	// G_UNICODE_BREAK_BEFORE_AND_AFTER
+	kB2,
+	// G_UNICODE_BREAK_HYPHEN
+	kHY,
+	// G_UNICODE_BREAK_NON_STARTER
+	kNS,
+	// G_UNICODE_BREAK_OPEN_PUNCTUATION
+	kOP,
+	// G_UNICODE_BREAK_CLOSE_PUNCTUATION
+	kCL,
+	// G_UNICODE_BREAK_QUOTATION
+	kQU,
+	// G_UNICODE_BREAK_EXCLAMATION
+	kEX,
+	// G_UNICODE_BREAK_IDEOGRAPHIC
+	kID,
+	// G_UNICODE_BREAK_NUMERIC
+	kNU,
+	// G_UNICODE_BREAK_INFIX_SEPARATOR
+	kIS,
+	// G_UNICODE_BREAK_SYMBOL
+	kSY,
+	// G_UNICODE_BREAK_ALPHABETIC
+	kAL,
+	// G_UNICODE_BREAK_PREFIX
+	kPR,
+	// G_UNICODE_BREAK_POSTFIX
+	kPO,
+	// G_UNICODE_BREAK_COMPLEX_CONTEXT
+	kSA,
+	// G_UNICODE_BREAK_AMBIGUOUS
+	kAI,
+	// G_UNICODE_BREAK_UNKNOWN
+	kXX,
+	// G_UNICODE_BREAK_NEXT_LINE
+	kNL,
+	// G_UNICODE_BREAK_WORD_JOINER
+	kWJ,
+	// G_UNICODE_BREAK_HANGUL_L_JAMO
+	kJL,
+	// G_UNICODE_BREAK_HANGUL_V_JAMO
+	kJV,
+	// G_UNICODE_BREAK_HANGUL_T_JAMO
+	kJT,
+	// G_UNICODE_BREAK_HANGUL_LV_SYLLABLE
+	kH2,
+	// G_UNICODE_BREAK_HANGUL_LVT_SYLLABLE
+	kH3,	
+};
+
+MLineBreakClass GetLineBreakClass(
+	uint32				inUnicode)
+{
+	MLineBreakClass result = kLineBreakClassMapping[g_unichar_break_type(inUnicode)];
+	
+	if (result > kBK and result != kSP)	// duh...
+		result = kAL;
+	
+	return result;
+}
+
+string::iterator next_line_break(
+	string::iterator	text,
+	string::iterator	end)
+{
+	if (text == end)
+		return text;
+	
+	enum break_action
+	{ 
+		DBK = 0, // direct break 	(blank in table)
+		IBK, 	// indirect break	(% in table)
+		PBK,	// prohibited break (^ in table)
+		CIB,	// combining indirect break
+		CPB		// combining prohibited break
+	};
+
+	const break_action brkTable[26][26] = {
+	//   	OP  	CL  	QU  	GL  	NS  	EX  	SY  	IS  	PR  	PO  	NU  	AL  	ID  	IN  	HY  	BA  	BB  	B2  	ZW  	CM  	WJ  	H2  	H3  	JL  	JV  	JT
+/* OP */ { 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	CPB, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK, 	PBK },
+/* CL */ { 	DBK, 	PBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* QU */ { 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK },
+/* GL */ { 	IBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK },
+/* NS */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* EX */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* SY */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* IS */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* PR */ { 	IBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK },
+/* PO */ { 	IBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* NU */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* AL */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* ID */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* IN */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* HY */ { 	DBK, 	PBK, 	IBK, 	DBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* BA */ { 	DBK, 	PBK, 	IBK, 	DBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* BB */ { 	IBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK },
+/* B2 */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	PBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* ZW */ { 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* CM */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	DBK, 	IBK, 	IBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	DBK },
+/* WJ */ { 	IBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	IBK },
+/* H2 */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK },
+/* H3 */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK },
+/* JL */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	IBK, 	IBK, 	IBK, 	IBK, 	DBK },
+/* JV */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK },
+/* JT */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK },
+		};
+
+	wchar_t uc;
+	uint32 cl;
+	
+	typedef MEncodingTraits<kEncodingUTF8> enc;
+
+	enc::ReadUnicode(text, cl, uc);
+
+	MLineBreakClass cls, ncls, lcls;
+	
+	if (uc == '\n' or uc == 0x2029)
+		cls = kBK;
+	else
+		cls = GetLineBreakClass(uc);
+
+	if (cls == kSP)
+		cls = kWJ;
+
+	ncls = cls;
+
+	while ((text += cl) != end and cls != kBK)
+	{
+		enc::ReadUnicode(text, cl, uc);
+		
+		lcls = ncls;
+		
+		if (uc == '\n' or uc == 0x2029 or uc == 0x2028)
+		{
+			text += cl;
+			break;
+		}
+
+		ncls = GetLineBreakClass(uc);
+	
+		if (ncls == kSP)
+			continue;
+		
+		break_action brk = brkTable[cls][ncls];
+		
+		if (brk == DBK or (brk == IBK and lcls == kSP))
+			break;
+		
+		cls = ncls;
+	}
+
+	return text;
+}

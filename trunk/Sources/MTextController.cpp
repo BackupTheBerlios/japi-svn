@@ -39,6 +39,7 @@
 #include "MGoToLineDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MMarkMatchingDialog.h"
+#include "MQuotedRewrapDialog.h"
 #include "MProject.h"
 #include "MSound.h"
 #include "MTextDocument.h"
@@ -112,6 +113,11 @@ bool MTextController::ProcessCommand(
 			
 			case cmd_ShowDocInfoDialog:
 //				new MDocInfoDialog(mDocument, mWindow);
+				break;
+
+			case cmd_QuotedRewrap:
+				new MQuotedRewrapDialog(
+					static_cast<MTextDocument*>(mDocument), GetWindow());
 				break;
 
 			case cmd_MarkMatching:

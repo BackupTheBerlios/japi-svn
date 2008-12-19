@@ -137,6 +137,11 @@ class MTextDocument : public MDocument
 	void				SetWrapWidth(
 							uint32			inWrapWidth);
 
+	void				QuotedRewrap(
+							const std::string&
+											inQuoteCharacters,
+							uint32			inWidth);
+
   protected:
 
 	virtual void		ReadFile(

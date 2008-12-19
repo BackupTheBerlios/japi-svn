@@ -141,6 +141,10 @@ std::string::iterator next_cursor_position(
 	std::string::iterator	inStart,
 	std::string::iterator	inEnd); 
 
+std::string::iterator next_line_break(
+	std::string::iterator	inStart,
+	std::string::iterator	inEnd); 
+
 // one byte character set utilities
 namespace MUnicodeMapping
 {

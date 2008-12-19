@@ -3316,6 +3316,110 @@ void MTextDocument::DoSoftwrap()
 	UpdateDirtyLines();
 }
 
+void MTextDocument::QuotedRewrap(
+	const string&	inQuoteCharacters,
+	uint32			inWidth)
+{
+	if (mSelection.IsEmpty())
+		SelectAll();
+	
+	string text;
+	GetSelectedText(text);
+	
+	StartAction(_("Quoted Rewrap"));
+	
+	string::iterator ch = text.begin();
+	string quote, line, result;
+	
+	result.reserve(text.length());
+	typedef MEncodingTraits<kEncodingUTF8> enc;
+
+	for (;;)
+	{
+		// collect the next quote and text string
+		string nextQuote, nextLine;
+		
+		while (ch != text.end() and 
+			(*ch == ' ' or inQuoteCharacters.find(*ch) != string::npos))
+		{
+			if (*ch != ' ')
+				nextQuote += *ch;
+			++ch;
+		}
+		
+		while (ch != text.end() and *ch != '\n')
+		{
+			if (*ch != ' ' or nextLine.empty() or nextLine[nextLine.length() - 1] != ' ')
+				nextLine += *ch;
+			++ch;
+		}
+		
+		if (ch != text.end())
+			++ch;
+		
+		// same as previous, add to line
+		if (nextQuote == quote and not nextLine.empty())
+		{
+			if (line.empty() or line[line.length() - 1] == ' ')
+				line += nextLine;
+			else
+				line = line + ' ' + nextLine;
+			continue;
+		}
+		
+		// detected new quote level, write out previous line
+		string::iterator lc = line.begin();
+		while (lc != line.end())
+		{
+			if (not quote.empty())
+				result += quote + ' ';
+			
+			uint32 width = inWidth - quote.length();
+			if (width < 8)
+				THROW(("Too much quote characters to rewrap"));
+			
+			string::iterator slc = lc;
+			while (lc != line.end())
+			{
+				string::iterator e = next_line_break(lc, line.end());
+				uint32 lcl = e - lc;
+				if (width < lcl + 1)
+					break;
+				width -= lcl;
+				while (lcl-- > 0)
+					result += *lc++;
+			}
+
+			if (slc == lc)	// could not break... force
+			{
+				result.append(line);
+				lc = line.end();
+			}
+			
+			result += '\n';
+		}
+		
+		line.clear();
+		
+		// flushed line, now reset. Perhaps we need to enter a newline
+		if (nextLine.empty())
+		{
+			if (not quote.empty())
+				result += quote;
+			result += '\n';
+		}
+		
+		if (ch == text.end())
+			break;
+		
+		quote = nextQuote;
+		line = nextLine;
+	}
+	
+	ReplaceSelectedText(result, false, true);
+	FinishAction();
+}
+
 void MTextDocument::DoApplyScript(const std::string& inScript)
 {
 	if (mShell.get() != nil and mShell->IsRunning())
@@ -4585,7 +4689,7 @@ bool MTextDocument::ProcessCommand(
 		case cmd_CutAppend:
 			DoCut(true);
 			break;
-
+		
 		case cmd_FastFind:
 			DoFastFind(kDirectionForward);
 			break;
@@ -4858,6 +4962,10 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_Uncomment:
 			outEnabled = GetLanguage() != nil and
 						not mSelection.IsBlock();
+			break;
+
+		case cmd_QuotedRewrap:
+			outEnabled = mSelection.IsEmpty() or mSelection.IsBlock() == false;
 			break;
 
 		case cmd_Replace:

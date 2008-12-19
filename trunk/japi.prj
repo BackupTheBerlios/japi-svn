@@ -40,6 +40,7 @@
 			<file>MPrinter.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
+				<file>MQuotedRewrapDialog.cpp</file>
 				<file>MDialog.cpp</file>
 				<file>MDiffWindow.cpp</file>
 				<file>MFindAndOpenDialog.cpp</file>
@@ -128,6 +129,7 @@
 			<resource>prefs-dialog.glade</resource>
 			<resource>diff-window.glade</resource>
 			<resource>project-info-dialog.glade</resource>
+			<resource>quoted-rewrap-dialog.glade</resource>
 		</group>
 		<group name="Menus">
 			<resource>text-view-context-menu.xml</resource>

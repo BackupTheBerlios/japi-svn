@@ -137,6 +137,7 @@ const uint32
 	cmd_Stop =					'stop',
 	
 	cmd_ApplyScript =			'scri',
+	cmd_QuotedRewrap =			'rewr',
 	
 	cmd_ShowHideWhiteSpace =	'SWit';
 
