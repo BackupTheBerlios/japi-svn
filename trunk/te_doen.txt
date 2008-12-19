@@ -2,9 +2,7 @@
 
 Moet af:
 
-- state opslaan gaat niet goed... duh
 - selection after voor replace&find, typen
-- find dialog, wijzigingen doorvoeren in find string
 - keybinding prefs panel
 - link order aan de praat helpen
 - resources lib maken voor distributie/andere resources opslag?

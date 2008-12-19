@@ -33,8 +33,10 @@
 #include "MJapi.h"
 
 #include "MPrinter.h"
-#include "MWindow.h"
+#include "MDocWindow.h"
+#include "MDocument.h"
 #include "MDevice.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -78,7 +80,10 @@ void MPrinter::DoPageSetup()
 
 void MPrinter::DoPrint()
 {
-	MWindow* w = mPrintedView->GetWindow();
+	MDocWindow* w = dynamic_cast<MDocWindow*>(mPrintedView->GetWindow());
+	
+	if (w == nil)
+		THROW(("No window!"));
 
 	if (sPageSetup)
 		gtk_print_operation_set_default_page_setup(mPrint, sPageSetup);
@@ -87,6 +92,14 @@ void MPrinter::DoPrint()
 		GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
 		GTK_WINDOW(w->GetGtkWidget()), nil);
 
+	MDocument* doc = w->GetDocument();
+	if (doc->IsSpecified())
+	{
+		string jobname = doc->GetURL().GetPath().leaf();
+		gtk_print_operation_set_job_name(mPrint, jobname.c_str());
+		gtk_print_operation_set_export_filename(mPrint, jobname.c_str());
+	}
+	
 	if (res == GTK_PRINT_OPERATION_RESULT_APPLY)
 	{
 		if (sSettings != nil)
@@ -99,8 +112,9 @@ void MPrinter::DoPrint()
 void MPrinter::OnBeginPrint(
 	GtkPrintContext*	inContext)
 {
-	MRect r = GetPrintBounds(inContext);
-	gtk_print_operation_set_n_pages(mPrint, mPrintedView->CountPages(r.width, r.height));
+	MRect update = GetPrintBounds(inContext);
+	MDevice dev(inContext, update, 0);
+	gtk_print_operation_set_n_pages(mPrint, mPrintedView->CountPages(dev));
 }
 
 void MPrinter::OnDrawPage(
@@ -108,7 +122,6 @@ void MPrinter::OnDrawPage(
 	int32				inPage)
 {
 	MRect update = GetPrintBounds(inContext);
-
 	MDevice dev(inContext, update, inPage);
 	mPrintedView->Draw(dev, update);
 }

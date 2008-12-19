@@ -122,6 +122,9 @@ void MAudioSocket::Play(
 void PlaySound(
 	const string&		inSoundName)
 {
+	if (not gPlaySounds)
+		return;
+	
 	try
 	{
 		StOKToThrow ok;

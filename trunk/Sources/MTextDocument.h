@@ -215,6 +215,8 @@ class MTextDocument : public MDocument
 							MDevice&		inDevice,
 							std::string&	outText) const;
 
+	std::string			GetFont() const						{ return mFont; }
+
 	void				HashLines(
 							std::vector<uint32>&
 											outHashes) const;

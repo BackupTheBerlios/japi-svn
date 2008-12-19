@@ -198,7 +198,7 @@ void MMenuItem::ItemCallback()
 void MMenuItem::SetChecked(
 	bool			inChecked)
 {
-	if (inChecked != mChecked)
+	if (inChecked != mChecked and GTK_IS_CHECK_MENU_ITEM(mGtkMenuItem))
 	{
 		mInhibitCallBack = true;
 		mChecked = inChecked;

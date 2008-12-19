@@ -81,6 +81,7 @@ bool			gKiss = true;
 bool			gSmoothFonts = false;
 bool			gShowInvisibles = true;
 bool			gTabEntersSpaces = false;
+bool			gPlaySounds = true;
 uint32			gCharsPerTab = 4;
 uint32			gSpacesPerTab = 4;
 uint32			gFontSize = 10;
@@ -106,6 +107,7 @@ void InitGlobals()
 
 	gScriptsDir = gPrefsDir / "Scripts";
 		
+	gPlaySounds = Preferences::GetInteger("play sounds", gPlaySounds);
 	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
 	gKiss = Preferences::GetInteger("kiss", gKiss);
@@ -190,6 +192,7 @@ void InitGlobals()
 
 void SaveGlobals()
 {
+	Preferences::SetInteger("play sounds", gPlaySounds);
 	Preferences::SetInteger("auto indent", gAutoIndent);
 	Preferences::SetInteger("smart indent", gSmartIndent);
 	Preferences::SetInteger("kiss", gKiss);

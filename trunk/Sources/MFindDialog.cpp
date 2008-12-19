@@ -122,9 +122,10 @@ MFindDialog& MFindDialog::Instance()
 MFindDialog::MFindDialog()
 	: MDialog("find-dialog")
 	, eIdle(this, &MFindDialog::Idle)
+	, mUpdatingComboBox(true)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
-{
+{	
 	RestorePosition("find dialog position");
 	
 	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
@@ -158,6 +159,8 @@ MFindDialog::MFindDialog()
 	
 //	SetVisible(kChasingArrowsID, false);
 	SetText(kStatusPanelID, "");
+	
+	mUpdatingComboBox = false;
 }
 
 bool MFindDialog::ProcessCommand(
@@ -418,6 +421,8 @@ string MFindDialog::GetReplaceString()
 void MFindDialog::ValueChanged(
 	uint32		inButonID)
 {
+	string s;
+	
 	switch (inButonID)
 	{
 		case kFindButtonID:
@@ -488,6 +493,28 @@ void MFindDialog::ValueChanged(
 			break;
 		}
 		
+		case kFindComboboxID:
+			if (not mUpdatingComboBox)
+			{
+				GetText(kFindComboboxID, s);
+				if (mFindStrings.empty())
+					mFindStrings.push_back(s);
+				else
+					mFindStrings.front() = s;
+			}
+			break;
+		
+		case kReplaceComboboxID:
+			if (not mUpdatingComboBox)
+			{
+				GetText(kReplaceComboboxID, s);
+				if (mReplaceStrings.empty())
+					mReplaceStrings.push_back(s);
+				else
+					mReplaceStrings.front() = s;
+			}
+			break;
+		
 		case kEnableFilterCheckboxID:
 			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
 			break;
@@ -529,7 +556,9 @@ void MFindDialog::StoreComboText(
 	if (inArray.size() > kMaxComboListSize)
 		inArray.erase(inArray.begin() + kMaxComboListSize, inArray.end());
 	
+	mUpdatingComboBox = true;
 	SetValues(inID, inArray);
+	mUpdatingComboBox = false;
 }
 
 void MFindDialog::FindNext()

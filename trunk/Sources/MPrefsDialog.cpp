@@ -59,6 +59,8 @@ const uint32
 	kBOMCheckboxID				= 'abom',
 	kNewlinePopupID				= 'newl',
 	
+	kPlaySoundsCheckboxID		= 'snds',
+	
 	kKeywordColorID				= 'clr1',
 	kPreprocessorColorID		= 'clr2',
 	kCharConstColorID			= 'clr3',
@@ -107,6 +109,7 @@ MPrefsDialog::MPrefsDialog()
 	SetChecked(kSmartIndentCheckboxID, gSmartIndent);
 	SetEnabled(kSmartIndentCheckboxID, gAutoIndent);
 	SetColor(kWhiteSpaceColorID, gWhiteSpaceColor);
+	SetChecked(kPlaySoundsCheckboxID, gPlaySounds);
 	
 	string s = Preferences::GetString("default encoding", "utf-8");
 	if (s == "utf-8")
@@ -378,6 +381,10 @@ void MPrefsDialog::ValueChanged(
 					break;
 				
 			}
+			break;
+		
+		case kPlaySoundsCheckboxID:
+			Preferences::SetInteger("play sounds", gPlaySounds = IsChecked(kPlaySoundsCheckboxID));
 			break;
 		
 		case kKeywordColorID:

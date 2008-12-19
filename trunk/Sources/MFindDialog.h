@@ -157,6 +157,7 @@ class MFindDialog : public MDialog
 	bool			mMultiMode;
 	bool			mInSelection;
 	bool			mStopFindAll;
+	bool			mUpdatingComboBox;
 	StringArray		mFindStrings;
 	StringArray		mReplaceStrings;
 	StringArray		mStartDirectories;

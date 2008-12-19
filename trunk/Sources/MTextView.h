@@ -110,8 +110,7 @@ class MTextView : public MView
 							MRect			inUpdate);
 
 	virtual uint32		CountPages(
-							uint32			inWidth,
-							uint32			inHeight);
+							MDevice&		inDevice);
 
 	virtual bool		OnFocusInEvent(
 							GdkEventFocus*	inEvent);

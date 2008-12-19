@@ -663,8 +663,7 @@ uint32 MView::GetModifiers() const
 }
 
 uint32 MView::CountPages(
-	uint32			inWidth,
-	uint32			inHeight)
+	MDevice&		inDevice)
 {
 	return 1;
 }

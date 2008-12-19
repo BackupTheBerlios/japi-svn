@@ -387,15 +387,20 @@ bool MTextView::OnButtonReleaseEvent(
 }
 
 uint32 MTextView::CountPages(
-	uint32			inWidth,
-	uint32			inHeight)
+	MDevice&		inDevice)
 {
+	MRect bounds = inDevice.GetBounds();
+
 	uint32 wrapWidth = mDocument->GetWrapWidth();
-	mDocument->SetWrapWidth(inWidth);
+	mDocument->SetWrapWidth(bounds.width);
 	uint32 lines = mDocument->CountLines();
 	mDocument->SetWrapWidth(wrapWidth);
+
+	inDevice.SetFont(mDocument->GetFont());
+
+	uint32 lineHeight = inDevice.GetAscent() + inDevice.GetDescent() + inDevice.GetLeading();
 	
-	uint32 linesPerPage = inHeight / mLineHeight;
+	uint32 linesPerPage = bounds.height / lineHeight;
 	if (linesPerPage == 0 or lines == 0)
 		THROW(("Invalid page height"));
 	
@@ -412,14 +417,24 @@ void MTextView::Draw(
 	MValueChanger<int32> saveXOrigin(mImageOriginX, mImageOriginX);
 	MValueChanger<int32> saveYOrigin(mImageOriginY, mImageOriginY);
 
+	MValueChanger<int32> saveDescent(mDescent, mDescent);
+	MValueChanger<int32> saveLineHeight(mLineHeight, mLineHeight);
+	MValueChanger<int32> saveCharWidth(mCharWidth, mCharWidth);
+
 	mNeedsDisplay = false;
 
 	MRect bounds = inDevice.GetBounds();
 
 	if (inDevice.IsPrinting())
 	{
-		uint32 linesPerPage = bounds.height / mLineHeight;
+		inDevice.SetFont(mDocument->GetFont());
 		
+		mDescent = inDevice.GetDescent();
+		mLineHeight = inDevice.GetAscent() + mDescent + inDevice.GetLeading();
+		mCharWidth = inDevice.GetStringWidth("          ") / 10;
+		
+		uint32 linesPerPage = bounds.height / mLineHeight;
+
 		mImageOriginX = 0;
 		mImageOriginY = linesPerPage * inDevice.GetPageNr() * mLineHeight;
 		

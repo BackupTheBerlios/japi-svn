@@ -50,6 +50,7 @@ extern bool				gKiss;
 extern bool				gSmoothFonts;
 extern bool				gShowInvisibles;
 extern bool				gTabEntersSpaces;
+extern bool				gPlaySounds;
 extern uint32			gCharsPerTab;
 extern uint32			gSpacesPerTab;
 

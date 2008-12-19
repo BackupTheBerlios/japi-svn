@@ -189,9 +189,6 @@ class MDeviceImp
 								uint32&				outTab,
 								uint32&				outNL);
 
-	static PangoContext*	sPangoContext;
-	static PangoLanguage*	sPangoLanguage;
-
 	PangoLayout*			mPangoLayout;
 	PangoFontDescription*	mFont;
 	PangoFontMetrics*		mMetrics;
@@ -199,14 +196,14 @@ class MDeviceImp
 	uint32					mSpaceGlyph, mTabGlyph, mNewLineGlyph;
 };
 
-PangoContext* MDeviceImp::sPangoContext;
-PangoLanguage* MDeviceImp::sPangoLanguage;
-
 MDeviceImp::MDeviceImp()
 	: mPangoLayout(nil)
 	, mFont(nil)
 	, mMetrics(nil)
 {
+	static PangoContext*	sPangoContext;
+	static PangoLanguage*	sPangoLanguage;
+
 	if (sPangoContext == nil)
 	{
 		sPangoContext = pango_cairo_font_map_create_context(
@@ -263,19 +260,29 @@ void MDeviceImp::SetOrigin(
 void MDeviceImp::SetFont(
 	const string&		inFont)
 {
-	if (mMetrics != nil)
-		pango_font_metrics_unref(mMetrics);
-	
-	if (mFont != nil)
-		pango_font_description_free(mFont);
-	
-	mFont = pango_font_description_from_string(inFont.c_str());
+	PangoFontDescription* newFontDesc = pango_font_description_from_string(inFont.c_str());
 
-	if (mFont != nil)
+	if (mFont == nil or newFontDesc == nil or
+		not pango_font_description_equal(mFont, newFontDesc))
 	{
-		pango_layout_set_font_description(mPangoLayout, mFont);
-		GetWhiteSpaceGlyphs(mSpaceGlyph, mTabGlyph, mNewLineGlyph);
+		if (mMetrics != nil)
+			pango_font_metrics_unref(mMetrics);
+		
+		if (mFont != nil)
+			pango_font_description_free(mFont);
+		
+		mFont = newFontDesc;
+	
+		if (mFont != nil)
+		{
+			mMetrics = GetMetrics();
+			
+			pango_layout_set_font_description(mPangoLayout, mFont);
+			GetWhiteSpaceGlyphs(mSpaceGlyph, mTabGlyph, mNewLineGlyph);
+		}
 	}
+	else
+		pango_font_description_free(newFontDesc);
 }
 
 void MDeviceImp::SetForeColor(
@@ -339,11 +346,21 @@ PangoFontMetrics* MDeviceImp::GetMetrics()
 {
 	if (mMetrics == nil)
 	{
-		if (mFont == nil)
-			mMetrics = pango_context_get_metrics(sPangoContext,
-				pango_context_get_font_description(sPangoContext), sPangoLanguage);
-		else
-			mMetrics = pango_context_get_metrics(sPangoContext, mFont, sPangoLanguage);
+		PangoContext* context = pango_layout_get_context(mPangoLayout);
+		
+		PangoFontDescription* fontDesc = mFont;
+		if (fontDesc == nil)
+		{
+			fontDesc = pango_context_get_font_description(context);
+			
+			// there's a bug in pango I guess
+			
+			int32 x;
+			if (IsPrinting(x))
+				fontDesc = pango_font_description_copy(fontDesc);
+		}
+		
+		mMetrics = pango_context_get_metrics(context, fontDesc, nil);
 	}
 	
 	return mMetrics;
@@ -569,13 +586,6 @@ bool MDeviceImp::BreakLine(
 	pango_layout_set_width(mPangoLayout, inWidth * PANGO_SCALE);
 	pango_layout_set_wrap(mPangoLayout, PANGO_WRAP_WORD_CHAR);
 
-#if defined(PANGO_VERSION_CHECK)
-#if PANGO_VERSION_CHECK(1,15,2)
-#define PANGO_OK	1
-#endif
-#endif
-
-#if defined(PANGO_OK)
 	if (pango_layout_is_wrapped(mPangoLayout))
 	{
 		PangoLayoutLine* line = pango_layout_get_line_readonly(mPangoLayout, 0);
@@ -586,15 +596,6 @@ bool MDeviceImp::BreakLine(
 			result = true;
 		}
 	}
-#else
-	PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
-	
-	if (line != nil)
-	{
-		outBreak = line->length;
-		result = true;
-	}
-#endif
 	
 	return result;
 }
@@ -603,7 +604,8 @@ PangoItem* MDeviceImp::Itemize(
 	const char*			inText,
 	PangoAttrList*		inAttrs)
 {
-	GList* items = pango_itemize(sPangoContext, inText, 0, strlen(inText), inAttrs, nil);
+	PangoContext* context = pango_layout_get_context(mPangoLayout);
+	GList* items = pango_itemize(context, inText, 0, strlen(inText), inAttrs, nil);
 	PangoItem* item = static_cast<PangoItem*>(items->data);
 	g_list_free(items);
 	return item;
@@ -649,8 +651,6 @@ void MDeviceImp::GetWhiteSpaceGlyphs(
 	pango_glyph_string_free(ts);
 	pango_attr_list_unref(attrs);
 }
-
-
 
 // --------------------------------------------------------------------
 // MCairoDeviceImp is derived from MDeviceImp
@@ -1027,7 +1027,8 @@ void MCairoDeviceImp::DrawWhiteSpace(
 
 	// we're using one font anyway
 	PangoFontMap* fontMap = pango_cairo_font_map_get_default();
-	PangoFont* font = pango_font_map_load_font(fontMap, sPangoContext, mFont);
+	PangoContext* context = pango_layout_get_context(mPangoLayout);
+	PangoFont* font = pango_font_map_load_font(fontMap, context, mFont);
 	cairo_scaled_font_t* scaledFont =
 		pango_cairo_font_get_scaled_font(reinterpret_cast<PangoCairoFont*>(font));
 

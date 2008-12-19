@@ -117,9 +117,9 @@ class MView
 
 	uint32			GetModifiers() const;
 
+	// called for printing
 	virtual uint32	CountPages(
-						uint32			inWidth,
-						uint32			inHeight);
+						MDevice&		inDevice);
 
   protected:
 

@@ -74,7 +74,7 @@ int VERBOSE;
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9.6";
+	kVersionString[] = "0.9.7";
 
 MJapieApp* gApp;
 
