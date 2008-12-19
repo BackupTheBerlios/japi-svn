@@ -67,7 +67,7 @@ class MDocument
 							const MUrl&			inFile);
 
 	virtual void		RevertDocument();
-
+	
 	bool				IsSpecified() const					{ return mSpecified; }
 
 	MUrl				GetURL() const						{ return mURL; }

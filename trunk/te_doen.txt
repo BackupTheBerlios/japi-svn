@@ -2,9 +2,9 @@
 
 Moet af:
 
-- pagedown werkt niet goed meer
-
-- printen
+- state opslaan gaat niet goed... duh
+- selection after voor replace&find, typen
+- find dialog, wijzigingen doorvoeren in find string
 - keybinding prefs panel
 - link order aan de praat helpen
 - resources lib maken voor distributie/andere resources opslag?
@@ -29,13 +29,14 @@ Moet af:
 	- connecten met NAS gaat mis
 
 - verbeteringen project
-	- bibliotheken toevoegen
 	- optional attribuut van bibliotheken kunnen wijzigen
 	- 'touchen' van source files mogelijk maken
 	- keyboard afhandeling
-	- resource items toevoegen
+	- configuratie van compiler, koppelen aan extensie(s)
 
 Leuk om te hebben:
+
+- print opties, print header
 
 - project templates
 
@@ -63,9 +64,6 @@ Leuk om te hebben:
 - rewrap, met kolom breedte, quoted en al
 
 - subversion support
-
-- veralgemeniseren van pkg-config
-- configuratie van compiler, koppelen aan extensie(s)
 
 - libp11 support?
 

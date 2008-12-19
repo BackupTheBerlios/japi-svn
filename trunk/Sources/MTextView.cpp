@@ -386,44 +386,72 @@ bool MTextView::OnButtonReleaseEvent(
 	return true;
 }
 
-bool MTextView::OnExposeEvent(
-	GdkEventExpose*		inEvent)
+uint32 MTextView::CountPages(
+	uint32			inWidth,
+	uint32			inHeight)
+{
+	uint32 wrapWidth = mDocument->GetWrapWidth();
+	mDocument->SetWrapWidth(inWidth);
+	uint32 lines = mDocument->CountLines();
+	mDocument->SetWrapWidth(wrapWidth);
+	
+	uint32 linesPerPage = inHeight / mLineHeight;
+	if (linesPerPage == 0 or lines == 0)
+		THROW(("Invalid page height"));
+	
+	return lines / linesPerPage + 1;
+}
+
+void MTextView::Draw(
+	MDevice&		inDevice,
+	MRect			inUpdate)
 {
 	if (mDocument == nil)
-		return false;
+		return;
+
+	MValueChanger<int32> saveXOrigin(mImageOriginX, mImageOriginX);
+	MValueChanger<int32> saveYOrigin(mImageOriginY, mImageOriginY);
 
 	mNeedsDisplay = false;
 
-	MRect bounds;
-	GetBounds(bounds);
+	MRect bounds = inDevice.GetBounds();
 
-	MRect update(inEvent->area);
-	
-	MDevice dev(this, bounds);
-	dev.EraseRect(bounds);
+	if (inDevice.IsPrinting())
+	{
+		uint32 linesPerPage = bounds.height / mLineHeight;
+		
+		mImageOriginX = 0;
+		mImageOriginY = linesPerPage * inDevice.GetPageNr() * mLineHeight;
+		
+		inDevice.SetOrigin(bounds.x, bounds.y);
+		inUpdate.x = 0;
+		inUpdate.y = 0;
+		
+		mDocument->SetWrapWidth(bounds.width);
+	}
+	else
+		inDevice.EraseRect(bounds);
 	
 	if (mDocument->GetShowWhiteSpace())
-		dev.SetDrawWhiteSpace(true);
+		inDevice.SetDrawWhiteSpace(true);
 	
-	int32 minLine = (mImageOriginY + update.y) / mLineHeight - 1;
+	int32 minLine = (mImageOriginY + inUpdate.y) / mLineHeight - 1;
 	if (minLine < 0)
 		minLine = 0;
 	
-	uint32 maxLine = minLine + update.height / mLineHeight + 2;
+	uint32 maxLine = minLine + inUpdate.height / mLineHeight + 2;
 	if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
 		maxLine = mDocument->CountLines() - 1;
 
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
-		MRect lr = GetLineRect(line);
-		if (update.Intersects(lr))
-			DrawLine(line, dev, lr);
+		MRect lineRect(0, line * mLineHeight - mImageOriginY, bounds.width + mImageOriginX, mLineHeight);
+		if (inUpdate.Intersects(lineRect))
+			DrawLine(line, inDevice, lineRect);
 	}
 
 	if (IsWithinDrag())
-		DrawDragHilite(dev);
-	
-	return true;
+		DrawDragHilite(inDevice);
 }
 
 void MTextView::DrawLine(
@@ -431,10 +459,7 @@ void MTextView::DrawLine(
 	MDevice&			inDevice,
 	MRect				inLineRect)
 {
-	assert(mDocument);
-	
 	string text;
-	
 	mDocument->GetStyledText(inLineNr, inDevice, text);
 	
 	bool trailingNL = false;
@@ -447,14 +472,15 @@ void MTextView::DrawLine(
 
 	MDeviceContextSaver save(inDevice);
 
-	inDevice.SetOrigin(-mImageOriginX, 0);
+	if (mImageOriginX != 0)
+		inDevice.SetOrigin(-mImageOriginX, 0);
 
 	int32 y = inLineRect.y;
 	int32 x = inLineRect.x + indent;
 
 	MSelection selection = mDocument->GetSelection();
 
-	if (not mDrawForDragImage)
+	if (not (mDrawForDragImage or inDevice.IsPrinting()))
 	{
 		MDeviceContextSaver save(inDevice);
 		
@@ -512,13 +538,14 @@ void MTextView::DrawLine(
 	bool drawCaret = false;
 	uint32 caretLine, caretColumn = 0;
 	
-	if (selection.IsEmpty() or
+	if (inDevice.IsPrinting() or
+		selection.IsEmpty() or
 		selection.GetMaxLine() < inLineNr or
 		selection.GetMinLine() > inLineNr)
 	{
 		inDevice.DrawText(x, y);
 		
-		if (selection.IsEmpty())
+		if (selection.IsEmpty() and not inDevice.IsPrinting())
 		{
 			caretLine = mDocument->OffsetToLine(mCaret);
 			caretColumn = mCaret - mDocument->LineStart(caretLine);

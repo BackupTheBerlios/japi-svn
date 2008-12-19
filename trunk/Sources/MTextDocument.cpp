@@ -71,6 +71,7 @@
 #include "MAlerts.h"
 #include "MDiffWindow.h"
 #include "MJapiApp.h"
+#include "MPrinter.h"
 
 using namespace std;
 
@@ -178,6 +179,7 @@ MTextDocument::MTextDocument()
 void MTextDocument::Init()
 {
 	mTargetTextView = nil;
+	mWrapWidth = 0;
 	mWalkOffset = 0;
 	mLastAction = kNoAction;
 	mCurrentAction = kNoAction;
@@ -1546,7 +1548,7 @@ void MTextDocument::SetSoftwrap(bool inSoftwrap)
 
 bool MTextDocument::GetSoftwrap() const
 {
-	return mSoftwrap and mTargetTextView != nil;
+	return mSoftwrap and mWrapWidth > 0;
 }
 
 uint32 MTextDocument::GetIndent(uint32 inOffset) const
@@ -1556,8 +1558,8 @@ uint32 MTextDocument::GetIndent(uint32 inOffset) const
 	MTextBuffer::const_iterator i(&mText, inOffset);
 	
 	uint32 maxWidth = numeric_limits<uint32>::max();
-	if (mTargetTextView)
-		maxWidth = mTargetTextView->GetWrapWidth();
+	if (mWrapWidth > 0)
+		maxWidth = mWrapWidth;
 
 	uint32 s = 0;
 	while (i != mText.end())
@@ -1632,9 +1634,9 @@ uint32 MTextDocument::FindLineBreak(
 	
 	uint32 result = (t - mText.begin()) + 1;
 	
-	if (GetSoftwrap() and mTargetTextView != nil and result > inFromOffset + 1)
+	if (GetSoftwrap() and mWrapWidth > 0 and result > inFromOffset + 1)
 	{
-		uint32 width = mTargetTextView->GetWrapWidth();
+		uint32 width = mWrapWidth;
 
 		width -= inIndent * mCharsPerTab * mCharWidth;
 
@@ -1795,8 +1797,20 @@ int32 MTextDocument::RewrapLines(
 
 void MTextDocument::BoundsChanged()
 {
+	mWrapWidth = mTargetTextView->GetWrapWidth();	
+	
 	if (GetSoftwrap())
 		Rewrap();
+}
+
+void MTextDocument::SetWrapWidth(
+	uint32			inWrapWidth)
+{
+	if (mWrapWidth != inWrapWidth)
+	{
+		mWrapWidth = inWrapWidth;
+		Rewrap();
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1915,8 +1929,8 @@ void MTextDocument::GetSelectionRegion(
 			r.x = anchorPos;
 			
 			int32 caretPos = 10000;
-			if (mTargetTextView != nil)
-				caretPos = mTargetTextView->GetWrapWidth();
+			if (mWrapWidth > 0)
+				caretPos = mWrapWidth;
 			if (line == caretLine)
 				OffsetToPosition(caret, caretLine, caretPos);
 	

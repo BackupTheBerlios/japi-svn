@@ -62,6 +62,7 @@
 #include "MDiffWindow.h"
 #include "MResources.h"
 #include "MProjectWindow.h"
+#include "MPrinter.h"
 
 #include <iostream>
 
@@ -168,6 +169,10 @@ bool MJapieApp::ProcessCommand(
 				nil);
 			break;
 		}
+		
+		case cmd_PageSetup:
+			MPrinter::DoPageSetup();
+			break;
 		
 		case cmd_Preferences:
 			MPrefsDialog::Create();
@@ -300,6 +305,7 @@ bool MJapieApp::UpdateCommandStatus(
 		case cmd_ClearRecent:
 		case cmd_CloseAll:
 		case cmd_SaveAll:
+		case cmd_PageSetup:
 		case cmd_Quit:
 		case cmd_Preferences:
 		case cmd_Find:

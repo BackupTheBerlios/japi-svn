@@ -43,6 +43,7 @@
 #include "MSound.h"
 #include "MTextDocument.h"
 #include "MJapiApp.h"
+#include "MPrinter.h"
 
 using namespace std;
 
@@ -342,4 +343,22 @@ bool MTextController::TryCloseDocument(
 	}
 
 	return MController::TryCloseDocument(inAction);
+}
+
+void MTextController::Print()
+{
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
+
+	if (doc == nil)
+		THROW(("No document?"));
+	
+	if (mTextViews.empty())
+		THROW(("No text view?"));
+	
+	uint32 wrapWidth = doc->GetWrapWidth();
+	
+	MPrinter printer(mTextViews.front());
+	printer.DoPrint();
+	
+	doc->SetWrapWidth(wrapWidth);
 }

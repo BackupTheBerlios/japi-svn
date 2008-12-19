@@ -37,6 +37,7 @@
 			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
 			<file>MDevice.cpp</file>
+			<file>MPrinter.cpp</file>
 			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MDialog.cpp</file>

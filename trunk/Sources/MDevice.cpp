@@ -53,11 +53,20 @@ class MDeviceImp
 {
   public:
 							MDeviceImp();
+
+							MDeviceImp(
+								PangoLayout*		inLayout);
+
 	virtual					~MDeviceImp();
 
 	virtual void			Save();
 	
 	virtual void			Restore();
+
+	virtual bool			IsPrinting(
+								int32&				outPage) const	{ return false; }
+
+	virtual MRect			GetBounds() const						{ return MRect(0, 0, 100, 100); }
 
 	virtual void			SetOrigin(
 								int32				inX,
@@ -215,6 +224,14 @@ MDeviceImp::MDeviceImp()
 	}
 
 	mPangoLayout = pango_layout_new(sPangoContext);
+}
+
+MDeviceImp::MDeviceImp(
+	PangoLayout*		inLayout)
+	: mPangoLayout(inLayout)
+	, mFont(nil)
+	, mMetrics(nil)
+{
 }
 
 MDeviceImp::~MDeviceImp()
@@ -643,15 +660,29 @@ class MCairoDeviceImp : public MDeviceImp
 {
   public:
 							MCairoDeviceImp(
-								MView*		inView,
-								MRect		inRect,
-								bool		inCreateOffscreen);
+								MView*				inView,
+								MRect				inRect,
+								bool				inCreateOffscreen);
+
+							MCairoDeviceImp(
+								GtkPrintContext*	inContext,
+								MRect				inRect,
+								int32				inPage);
 
 							~MCairoDeviceImp();
 
 	virtual void			Save();
 	
 	virtual void			Restore();
+
+	virtual bool			IsPrinting(
+								int32&				outPage) const
+							{
+								outPage = mPage;
+								return outPage >= 0;
+							}
+
+	virtual MRect			GetBounds() const						{ return mRect; }
 
 	virtual void			SetOrigin(
 								int32				inX,
@@ -727,6 +758,7 @@ class MCairoDeviceImp : public MDeviceImp
 	cairo_t*				mContext;
 	GdkPixmap*				mOffscreenPixmap;
 	uint32					mPatternData[8][8];
+	int32					mPage;
 	bool					mDrawWhiteSpace;
 };
 
@@ -736,6 +768,7 @@ MCairoDeviceImp::MCairoDeviceImp(
 	bool		inCreateOffscreen)
 	: mRect(inRect)
 	, mOffscreenPixmap(nil)
+	, mPage(-1)
 	, mDrawWhiteSpace(false)
 {
 	mForeColor = kBlack;
@@ -764,9 +797,29 @@ MCairoDeviceImp::MCairoDeviceImp(
 	cairo_clip(mContext);
 }
 
+MCairoDeviceImp::MCairoDeviceImp(
+	GtkPrintContext*	inPrintContext,
+	MRect				inRect,
+	int32				inPage)
+	: MDeviceImp(gtk_print_context_create_pango_layout(inPrintContext))
+	, mRect(inRect)
+	, mOffscreenPixmap(nil)
+	, mPage(inPage)
+	, mDrawWhiteSpace(false)
+{
+	mForeColor = kBlack;
+	mBackColor = kWhite;
+
+	mContext = gtk_print_context_get_cairo_context(inPrintContext);
+
+	cairo_rectangle(mContext, mRect.x, mRect.y, mRect.width, mRect.height);
+	cairo_clip(mContext);
+}
+
 MCairoDeviceImp::~MCairoDeviceImp()
 {
-	cairo_destroy(mContext);
+	if (mPage == -1)
+		cairo_destroy(mContext);
 	
 	if (mOffscreenPixmap)
 		g_object_unref(mOffscreenPixmap);
@@ -1113,6 +1166,14 @@ MDevice::MDevice(
 {
 }
 
+MDevice::MDevice(
+	GtkPrintContext*	inPrintContext,
+	MRect				inRect,
+	int32				inPage)
+	: mImpl(new MCairoDeviceImp(inPrintContext, inRect, inPage))
+{
+}
+
 MDevice::~MDevice()
 {
 	delete mImpl;
@@ -1126,6 +1187,25 @@ void MDevice::Save()
 void MDevice::Restore()
 {
 	mImpl->Restore();
+}
+
+bool MDevice::IsPrinting() const
+{
+	int32 page;
+	return mImpl->IsPrinting(page);
+}
+
+int32 MDevice::GetPageNr() const
+{
+	int32 page;
+	if (not mImpl->IsPrinting(page))
+		page = -1;
+	return page;
+}
+
+MRect MDevice::GetBounds() const
+{
+	return mImpl->GetBounds();
 }
 
 void MDevice::SetOrigin(

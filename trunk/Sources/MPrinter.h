@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2008, Maarten L. Hekkelman
+	Copyright (c) 2007, Maarten L. Hekkelman
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -30,73 +30,43 @@
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*
-	Model = MDocument
-	View = MTextView
-	Controller = MController
+#ifndef MPRINTER_H
+#define MPRINTER_H
 
-*/
+#include "MCallbacks.h"
 
+class MView;
 
-#ifndef MTEXTCONTROLLER_H
-#define MTEXTCONTROLLER_H
-
-#include "MController.h"
-#include <list>
-
-class MTextView;
-
-class MTextController : public MController
+class MPrinter
 {
   public:
-						MTextController(
-							MHandler*		inSuper);
+					MPrinter(
+						MView*				inView);
 
-						~MTextController();
+					~MPrinter();
 
-	MTextView*			GetTextView();
+	void			DoPrint();
 
-	void				AddTextView(
-							MTextView*		inTextView);
-
-	void				RemoveTextView(
-							MTextView*		inTextView);
-
-	virtual bool		UpdateCommandStatus(
-							uint32			inCommand,
-							MMenu*			inMenu,
-							uint32			inItemIndex,
-							bool&			outEnabled,
-							bool&			outChecked);
-
-	virtual bool		ProcessCommand(
-							uint32			inCommand,
-							const MMenu*	inMenu,
-							uint32			inItemIndex,
-							uint32			inModifiers);
-
-	bool				OpenInclude(
-							std::string		inFileName);
-
-	void				OpenCounterpart();
-
-  protected:
-
-	virtual void		Print();
-
-	virtual bool		TryCloseDocument(
-							MCloseReason	inAction);
+	static void		DoPageSetup();
 
   private:
 
-	void				DoGoToLine();
-	void				DoOpenIncludeFile();
-	void				DoOpenCounterpart();
-	void				DoMarkMatching();
+	MRect			GetPrintBounds(
+						GtkPrintContext*	inContext);
 
-	typedef std::list<MTextView*>	TextViewArray;
+	void			OnBeginPrint(
+						GtkPrintContext*	inContext);
+	MSlot<void(GtkPrintContext*)>			mBeginPrint;
 
-	TextViewArray		mTextViews;
+	void			OnDrawPage(
+						GtkPrintContext*	inContext,
+						int32				inPage);
+	MSlot<void(GtkPrintContext*,int32)>		mDrawPage;
+
+	GtkPrintOperation*			mPrint;
+	MView*						mPrintedView;
+	static GtkPrintSettings*	sSettings;
+	static GtkPageSetup*		sPageSetup;
 };
 
-#endif
+#endif // MPRINTER_H

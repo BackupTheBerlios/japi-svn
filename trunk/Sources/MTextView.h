@@ -105,8 +105,13 @@ class MTextView : public MView
 	
   protected:
 
-	virtual bool		OnExposeEvent(
-							GdkEventExpose*	inEvent);
+	virtual void		Draw(
+							MDevice&		inDevice,
+							MRect			inUpdate);
+
+	virtual uint32		CountPages(
+							uint32			inWidth,
+							uint32			inHeight);
 
 	virtual bool		OnFocusInEvent(
 							GdkEventFocus*	inEvent);

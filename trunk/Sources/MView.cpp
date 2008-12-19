@@ -40,7 +40,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "MView.h"
+#include "MWindow.h"
 #include "MError.h"
 #include "MUtils.h"
 #include "MDevice.h"
@@ -75,7 +75,6 @@ MView::MView(
 	, mDragDataDelete(this, &MView::OnDragDataDelete)
 	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
-	, mPangoContext(nil)
 {
 	SetWidget(inWidget, inCanActivate, inCanDraw);
 }
@@ -100,7 +99,6 @@ MView::MView(
 	, mDragDataDelete(this, &MView::OnDragDataDelete)
 	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
-	, mPangoContext(nil)
 {
 	SetWidget(gtk_drawing_area_new(), true, true);
 	
@@ -126,7 +124,6 @@ MView::MView()
 	, mDragDataDelete(this, &MView::OnDragDataDelete)
 	, mDragDataGet(this, &MView::OnDragDataGet)
 	, mGtkWidget(nil)
-	, mPangoContext(nil)
 {
 }
 
@@ -157,17 +154,27 @@ void MView::SetWidget(
 	
 	if (inCanDraw)
 		mExposeEvent.Connect(mGtkWidget, "expose-event");
+	
+	g_object_set_data(G_OBJECT(mGtkWidget), "m-view", this);
 }
 
 MView::~MView()
 {
-	if (mPangoContext != nil)
-		g_object_unref(mPangoContext);
 }
 
 MWindow* MView::GetWindow() const
 {
-	return nil;
+	GtkWidget* widget = mGtkWidget;
+	while (widget != nil and not GTK_IS_WINDOW(widget))
+		widget = gtk_widget_get_parent(widget);
+	
+	MView* view = reinterpret_cast<MView*>(g_object_get_data(G_OBJECT(widget), "m-view"));
+	
+	MWindow* result = nil;
+	if (view != nil)
+		result = dynamic_cast<MWindow*>(view);
+	
+	return result;
 }
 
 void MView::GetBounds(
@@ -433,7 +440,22 @@ bool MView::OnScrollEvent(
 bool MView::OnExposeEvent(
 	GdkEventExpose*	inEvent)
 {
-	return false;
+	MRect bounds;
+	GetBounds(bounds);
+
+	MRect update(inEvent->area);
+	
+	MDevice dev(this, bounds);
+	Draw(dev, update);
+
+	return true;
+}
+
+void MView::Draw(
+	MDevice&		inDevice,
+	MRect			inUpdate)
+{
+	// do nothing
 }
 
 // Drag and Drop support
@@ -638,6 +660,13 @@ uint32 MView::GetModifiers() const
 	GdkModifierType modifiers;
 	gdk_window_get_pointer(mGtkWidget->window, nil, nil, &modifiers);
 	return modifiers & gtk_accelerator_get_default_mod_mask();
+}
+
+uint32 MView::CountPages(
+	uint32			inWidth,
+	uint32			inHeight)
+{
+	return 1;
 }
 
 void MView::OnPopupMenu(

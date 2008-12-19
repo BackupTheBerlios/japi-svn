@@ -59,12 +59,24 @@ class MDevice
 						MView*				inView,
 						MRect				inRect,
 						bool				inCreateOffscreen = false);
+					
+					// create a device for drawing to a printer
+					MDevice(
+						GtkPrintContext*	inPrintContext,
+						MRect				inRect,
+						int32				inPage);
 
 					~MDevice();
 
 	void			Save();
 	
 	void			Restore();
+
+	bool			IsPrinting() const;
+	
+	int32			GetPageNr() const;
+
+	MRect			GetBounds() const;
 
 	void			SetOrigin(
 						int32				inX,

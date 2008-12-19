@@ -81,6 +81,10 @@ class MView
 						int32&			ioX,
 						int32&			ioY);
 
+	virtual void	Draw(
+						MDevice&		inDevice,
+						MRect			inUpdate);
+
 	bool			IsActive() const;
 
 	void			Invalidate();
@@ -112,6 +116,10 @@ class MView
 						int32&			outY) const;
 
 	uint32			GetModifiers() const;
+
+	virtual uint32	CountPages(
+						uint32			inWidth,
+						uint32			inHeight);
 
   protected:
 
@@ -268,7 +276,6 @@ class MView
 	
   private:
 	GtkWidget*		mGtkWidget;
-	PangoContext*	mPangoContext;
 	bool			mDragWithin;
 };
 

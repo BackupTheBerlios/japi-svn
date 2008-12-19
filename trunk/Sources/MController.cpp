@@ -114,6 +114,10 @@ bool MController::ProcessCommand(
 			case cmd_Revert:
 				TryDiscardChanges();
 				break;
+			
+			case cmd_Print:
+				Print();
+				break;
 				
 			default:
 				result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
@@ -143,6 +147,7 @@ bool MController::UpdateCommandStatus(
 			case cmd_Close:
 			case cmd_SaveAs:
 			case cmd_Find:
+			case cmd_Print:
 				outEnabled = true;
 				break;
 	
@@ -273,4 +278,8 @@ bool MController::DoSaveAs(
 void MController::CloseAfterNavigationDialog()
 {
 	SetDocument(nil);
+}
+
+void MController::Print()
+{
 }

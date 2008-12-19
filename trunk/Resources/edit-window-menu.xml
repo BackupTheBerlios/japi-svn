@@ -17,6 +17,9 @@
 		<item label="Save As…" cmd='sava'/>
 		<item label="Revert" cmd='reve'/>
 		<item label="-" />
+		<item label="Page Setup…" cmd='pgsu' />
+		<item label="Print…" cmd='prnt' />
+		<item label="-" />
 		<item label="Quit" cmd='quit'/>
 	</menu>
 	<menu id='editmenu' label="Edit">

@@ -85,7 +85,7 @@ class MController : public MHandler, public MSaverMixin
 							MCloseReason	inAction);
 
 	void				TryDiscardChanges();
-
+	
 	virtual bool		UpdateCommandStatus(
 							uint32			inCommand,
 							MMenu*			inMenu,
@@ -102,6 +102,8 @@ class MController : public MHandler, public MSaverMixin
 	MEventOut<void(MDocument*)>		eDocumentChanged;
 
   protected:
+
+	virtual void		Print();
 
 						MController(const MController&);
 	MController&		operator=(const MController&);

@@ -132,6 +132,11 @@ class MTextDocument : public MDocument
 							uint32			inItemIndex,
 							uint32			inModifiers);
 
+	uint32				GetWrapWidth() const					{ return mWrapWidth; }
+
+	void				SetWrapWidth(
+							uint32			inWrapWidth);
+
   protected:
 
 	virtual void		ReadFile(
@@ -569,6 +574,7 @@ class MTextDocument : public MDocument
 	int							mDataFD;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
+	uint32						mWrapWidth;
 	MLineInfoArray				mLineInfo;
 	std::string					mFont;
 	uint32						mLineHeight;

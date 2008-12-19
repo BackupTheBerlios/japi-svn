@@ -43,6 +43,8 @@ enum MStdCommand {
 	cmd_Save =					'save',
 	cmd_SaveAs =				'sava',
 	cmd_Revert =				'reve',
+	cmd_PageSetup =				'pgsu',
+	cmd_Print =					'prnt',
 	cmd_Undo =					'undo',
 	cmd_Redo =					'redo',
 	cmd_Cut =					'cut ',
