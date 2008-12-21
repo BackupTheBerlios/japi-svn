@@ -1146,8 +1146,8 @@ void MTextDocument::Type(
 	MSelection s = mText.GetSelectionAfter();
 	if (s.GetCaret() == offset)
 		s.SetCaret(offset + inLength);
-	mText.SetSelectionAfter(s);
 	ChangeSelection(MSelection(this, offset + inLength, offset + inLength));
+	mText.SetSelectionAfter(s);
 
 	if (gKiss and
 		inLength == 1 and
@@ -2137,7 +2137,8 @@ void MTextDocument::ChangeSelection(
 		}
 	}
 
-	mText.SetSelectionAfter(mSelection);
+	if (mCurrentAction != kTypeAction)
+		mText.SetSelectionAfter(mSelection);
 	SendSelectionChangedEvent();
 }
 
@@ -2919,8 +2920,10 @@ void MTextDocument::DoPaste()
 		MClipboard::Instance().GetData(text, isBlock);
 		
 		StartAction(kPasteAction);
-		ReplaceSelectedText(text, isBlock, false);
+		ReplaceSelectedText(text, isBlock, true);
 		FinishAction();
+		
+		Select(mSelection.GetCaret(), mSelection.GetCaret(), false);
 	}
 	else
 		assert(false);
@@ -3161,8 +3164,8 @@ void MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 				replace, replace);
 		}
 
-		DeleteSelectedText();
-		Insert(offset, replace);
+		ReplaceSelectedText(replace, false, true);
+		FinishAction();
 		
 		if (inFindNext)
 		{
@@ -3185,7 +3188,6 @@ void MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 			}
 	
 			eScroll(kScrollToSelection);
-			FinishAction();
 		}
 	}
 	else
