@@ -1,0 +1,9 @@
+<?xml version="1.0" standalone="yes" ?>
+<alert type="warning">
+	<message>Should I add the library '^0' as a reference to this file or as a link statement leaving the selection to the linker?</message>
+	<buttons>
+		<button title="File" cmd="1" default='true'/>
+		<button title="Link" cmd="2"/>
+		<button title="Cancel" cmd="3"/>
+	</buttons>
+</alert>

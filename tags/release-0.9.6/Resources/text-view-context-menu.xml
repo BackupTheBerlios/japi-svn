@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<menu id='context' label="Context Menu">
+	<item label="Undo" cmd='undo'/>
+	<item label="Redo" cmd='redo'/>
+	<item label="-" />
+	<item label="Cut" cmd='cut '/>
+	<item label="Copy" cmd='copy'/>
+	<item label="Paste" cmd='past'/>
+	<item label="Clear" cmd='clea'/>
+	<item label="-" />
+	<item label="Select All" cmd='sall'/>
+	<item label="-" />
+	<item label="Show Whitespace" cmd='SWit' check="checkbox"/>
+</menu>

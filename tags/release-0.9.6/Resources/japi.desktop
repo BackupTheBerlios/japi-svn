@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=japi
+GenericName=Japi Text Editor
+Exec=__EXE__ %U
+Terminal=false
+Type=Application
+StartupNotify=true
+MimeType=text/plain;application/x-shellscript;text/x-c;text/x-c++;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-makefile;text/x-tcl;text/x-tex;
+Icon=text-editor
+Categories=GNOME;GTK;Utility;TextEditor;
+
