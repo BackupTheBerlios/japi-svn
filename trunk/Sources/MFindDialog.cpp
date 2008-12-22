@@ -81,7 +81,6 @@ enum {
 	kMethodPopupID = 			'meth',
 	kRecursiveCheckboxID =		'recu',
 	kStartDirComboboxID =		'sdir',
-	kTextFilesOnlyCheckboxID =	'txto',
 	kEnableFilterCheckboxID =	'ffnm',
 	kNameFilterEditboxID =		'filt',
 	kBrowseStartDirButtonID =	'chdr',
@@ -123,6 +122,9 @@ MFindDialog::MFindDialog()
 	: MDialog("find-dialog")
 	, eIdle(this, &MFindDialog::Idle)
 	, mUpdatingComboBox(true)
+	, mFindStringChanged(false)
+	, mReplaceStringChanged(false)
+	, mStartDirectoriesChanged(false)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
 {	
@@ -134,7 +136,6 @@ MFindDialog::MFindDialog()
 	SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
 	SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
 	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
-	SetChecked(kTextFilesOnlyCheckboxID, Preferences::GetInteger("find only TEXT", 1));
 	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
 
 	SetChecked(kEnableFilterCheckboxID, Preferences::GetInteger("find name filter enabled", 1));
@@ -200,7 +201,6 @@ bool MFindDialog::DoClose()
 
 //	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
 	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
-	Preferences::SetInteger("find only TEXT", IsChecked(kTextFilesOnlyCheckboxID));
 	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
 
 	Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
@@ -240,30 +240,16 @@ void MFindDialog::DoFindCommand(
 	}
 	
 	mInSelection = IsChecked(kInSelectionCheckboxID);
-
-	string what;
-	GetText(kFindComboboxID, what);
-	StoreComboText(kFindComboboxID, what, mFindStrings);
-
-	string with;
-	GetText(kReplaceComboboxID, with);
-	StoreComboText(kReplaceComboboxID, with, mReplaceStrings);
-
-	string where;
-	GetText(kStartDirComboboxID, where);
-	StoreComboText(kStartDirComboboxID, where, mStartDirectories);
-
 	MTextDocument* doc = MTextDocument::GetFirstTextDocument();
 
 	if (IsExpanded(kMultiFileExpanderID))
 	{
 		fs::path dir;
-		bool recursive, textFilesOnly;
+		bool recursive;
 		string filter;
 		MMultiMethod method = eMMDirectory;
 
 		recursive = IsChecked(kRecursiveCheckboxID);
-		textFilesOnly = IsChecked(kTextFilesOnlyCheckboxID);
 		
 		if (IsChecked(kEnableFilterCheckboxID))
 			GetText(kNameFilterEditboxID, filter);
@@ -272,7 +258,7 @@ void MFindDialog::DoFindCommand(
 		{
 			case kMethodDirectory:
 			{
-				dir = where;
+				dir = GetStartDirectory();
 
 				if (not exists(dir) or not is_directory(dir))
 					THROW(("Start directory does not exist or is not a directory"));
@@ -293,10 +279,10 @@ void MFindDialog::DoFindCommand(
 		if (IsChecked(kBatchCheckboxID))
 		{
 			mFindAllThread = new boost::thread(
-				boost::bind(&MFindDialog::FindAll, this, what,
+				boost::bind(&MFindDialog::FindAll, this, GetFindString(),
 					IsChecked(kIgnoreCaseCheckboxID),
 					IsChecked(kRegexCheckboxID),
-					method, dir, recursive, textFilesOnly, filter));
+					method, dir, recursive, filter));
 		}
 		else
 		{
@@ -305,7 +291,7 @@ void MFindDialog::DoFindCommand(
 			FileSet files;
 			
 			GetFilesForFindAll(method, dir,
-				recursive, textFilesOnly, filter, files);
+				recursive, filter, files);
 				
 			copy(files.begin(), files.end(), back_inserter(mMultiFiles));
 
@@ -336,7 +322,7 @@ void MFindDialog::DoFindCommand(
 		{
 			MMessageList list;
 			
-			doc->FindAll(what, IsChecked(kIgnoreCaseCheckboxID),
+			doc->FindAll(GetFindString(), IsChecked(kIgnoreCaseCheckboxID),
 				IsChecked(kRegexCheckboxID), IsChecked(kInSelectionCheckboxID), list);
 
 			if (list.GetCount())
@@ -363,13 +349,24 @@ MFindDialog::SetFindString(
 {
 	string s = Escape(inString);
 	
-	if (s != GetFindString())
+	if (mFindStrings.empty() or mFindStrings.front() != s)
 	{
-		if (inReplaceFirst and mFindStrings.size() > 0)
-			mFindStrings.erase(mFindStrings.begin());
-		
-		StoreComboText(kFindComboboxID, s, mFindStrings);
+		if (inReplaceFirst and not mFindStrings.empty())
+			mFindStrings.front() = s;
+		else
+		{
+			mFindStrings.erase(
+				remove(mFindStrings.begin(), mFindStrings.end(), s),
+				mFindStrings.end());
 
+			mFindStrings.insert(mFindStrings.begin(), inString);
+
+			if (mFindStrings.size() > kMaxComboListSize)
+				mFindStrings.pop_back();
+		}
+
+		SetValues(kFindComboboxID, mFindStrings);
+		
 		SetChecked(kRegexCheckboxID, false);
 		SetChecked(kBatchCheckboxID, false);
 
@@ -381,8 +378,27 @@ MFindDialog::SetFindString(
 string MFindDialog::GetFindString()
 {
 	string result;
-	
-	if (not mFindStrings.empty())
+
+	if (mFindStringChanged)
+	{
+		GetText(kFindComboboxID, result);
+
+		// place in front of list, removing other occurrences if any
+		mFindStrings.erase(
+			remove(mFindStrings.begin(), mFindStrings.end(), result),
+			mFindStrings.end());
+
+		mFindStrings.insert(mFindStrings.begin(), result);
+
+		if (mFindStrings.size() > kMaxComboListSize)
+			mFindStrings.pop_back();
+
+		mUpdatingComboBox = true;
+		SetValues(kFindComboboxID, mFindStrings);
+		mUpdatingComboBox = false;
+		mFindStringChanged = false;
+	}
+	else if (not mFindStrings.empty())
 		result = mFindStrings.front();
 	
 	if (not GetRegex())
@@ -396,26 +412,106 @@ void MFindDialog::SetReplaceString(
 {
 	string s = Escape(inString);
 
-	if (s != GetReplaceString())
+	if (mReplaceStrings.empty() or mReplaceStrings.front() != s)
 	{
-		if (mReplaceStrings.size() > 10)
+		mReplaceStrings.erase(
+			remove(mReplaceStrings.begin(), mReplaceStrings.end(), inString),
+			mReplaceStrings.end());
+
+		mReplaceStrings.insert(mReplaceStrings.begin(), inString);
+
+		if (mReplaceStrings.size() > kMaxComboListSize)
 			mReplaceStrings.pop_back();
 
-		StoreComboText(kReplaceComboboxID, s, mReplaceStrings);
+		SetValues(kReplaceComboboxID, mReplaceStrings);
+		
+		SetChecked(kRegexCheckboxID, false);
+		SetChecked(kBatchCheckboxID, false);
+
+		mMultiMode = false;
+		SetExpanded(kMultiFileExpanderID, mMultiMode);
 	}
 }
 
 string MFindDialog::GetReplaceString()
 {
 	string result;
-	
-	if (not mReplaceStrings.empty())
+
+	if (mReplaceStringChanged)
+	{
+		GetText(kReplaceComboboxID, result);
+
+		// place in front of list, removing other occurrences if any
+		mReplaceStrings.erase(
+			remove(mReplaceStrings.begin(), mReplaceStrings.end(), result),
+			mReplaceStrings.end());
+
+		mReplaceStrings.insert(mReplaceStrings.begin(), result);
+
+		if (mReplaceStrings.size() > kMaxComboListSize)
+			mReplaceStrings.pop_back();
+
+		mUpdatingComboBox = true;
+		SetValues(kReplaceComboboxID, mReplaceStrings);
+		mUpdatingComboBox = false;
+		mFindStringChanged = false;
+	}
+	else if (not mReplaceStrings.empty())
 		result = mReplaceStrings.front();
 	
 	if (not GetRegex())
 		result = Unescape(result);
-
+	
 	return result;
+}
+
+string MFindDialog::GetStartDirectory()
+{
+	string result;
+
+	if (mStartDirectoriesChanged)
+	{
+		GetText(kStartDirComboboxID, result);
+
+		// place in front of list, removing other occurrences if any
+		mStartDirectories.erase(
+			remove(mStartDirectories.begin(), mStartDirectories.end(), result),
+			mStartDirectories.end());
+
+		mStartDirectories.insert(mStartDirectories.begin(), result);
+
+		if (mStartDirectories.size() > kMaxComboListSize)
+			mStartDirectories.pop_back();
+
+		mUpdatingComboBox = true;
+		SetValues(kStartDirComboboxID, mStartDirectories);
+		mUpdatingComboBox = false;
+		mStartDirectoriesChanged = false;
+	}
+	else if (not mStartDirectories.empty())
+		result = mStartDirectories.front();
+	
+	return result;
+}
+
+bool MFindDialog::GetInSelection() const
+{
+	return IsChecked(kInSelectionCheckboxID);
+}
+
+bool MFindDialog::GetWrap() const
+{
+	return IsChecked(kWrapCheckboxID);
+}
+
+bool MFindDialog::GetIgnoreCase() const
+{
+	return IsChecked(kIgnoreCaseCheckboxID);
+}
+
+bool MFindDialog::GetRegex() const
+{
+	return IsChecked(kRegexCheckboxID);
 }
 
 void MFindDialog::ValueChanged(
@@ -469,7 +565,6 @@ void MFindDialog::ValueChanged(
 					SetEnabled(kRecursiveCheckboxID, true);
 					SetEnabled(kEnableFilterCheckboxID, true);
 					SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
-					SetEnabled(kTextFilesOnlyCheckboxID, true);
 					break;
 				
 				case kMethodIncludeFiles:
@@ -478,7 +573,6 @@ void MFindDialog::ValueChanged(
 					SetEnabled(kRecursiveCheckboxID, true);
 					SetEnabled(kEnableFilterCheckboxID, true);
 					SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
-					SetEnabled(kTextFilesOnlyCheckboxID, true);
 					break;
 				
 				case kMethodOpenWindows:
@@ -487,7 +581,6 @@ void MFindDialog::ValueChanged(
 					SetEnabled(kRecursiveCheckboxID, false);
 					SetEnabled(kEnableFilterCheckboxID, false);
 					SetEnabled(kNameFilterEditboxID, false);
-					SetEnabled(kTextFilesOnlyCheckboxID, false);
 					break;
 			}
 			break;
@@ -495,24 +588,17 @@ void MFindDialog::ValueChanged(
 		
 		case kFindComboboxID:
 			if (not mUpdatingComboBox)
-			{
-				GetText(kFindComboboxID, s);
-				if (mFindStrings.empty())
-					mFindStrings.push_back(s);
-				else
-					mFindStrings.front() = s;
-			}
+				mFindStringChanged = true;
 			break;
 		
 		case kReplaceComboboxID:
 			if (not mUpdatingComboBox)
-			{
-				GetText(kReplaceComboboxID, s);
-				if (mReplaceStrings.empty())
-					mReplaceStrings.push_back(s);
-				else
-					mReplaceStrings.front() = s;
-			}
+				mReplaceStringChanged = true;
+			break;
+		
+		case kStartDirComboboxID:
+			if (not mUpdatingComboBox)
+				mStartDirectoriesChanged = true;
 			break;
 		
 		case kEnableFilterCheckboxID:
@@ -523,42 +609,6 @@ void MFindDialog::ValueChanged(
 			MDialog::ValueChanged(inButonID);
 			break;
 	}
-}
-
-bool MFindDialog::GetInSelection() const
-{
-	return IsChecked(kInSelectionCheckboxID);
-}
-
-bool MFindDialog::GetWrap() const
-{
-	return IsChecked(kWrapCheckboxID);
-}
-
-bool MFindDialog::GetIgnoreCase() const
-{
-	return IsChecked(kIgnoreCaseCheckboxID);
-}
-
-bool MFindDialog::GetRegex() const
-{
-	return IsChecked(kRegexCheckboxID);
-}
-
-void MFindDialog::StoreComboText(
-	uint32			inID,
-	const string&	inActiveString,
-	StringArray&	inArray)
-{
-	inArray.erase(remove(inArray.begin(), inArray.end(), inActiveString), inArray.end());
-	inArray.insert(inArray.begin(), inActiveString);
-	
-	if (inArray.size() > kMaxComboListSize)
-		inArray.erase(inArray.begin() + kMaxComboListSize, inArray.end());
-	
-	mUpdatingComboBox = true;
-	SetValues(inID, inArray);
-	mUpdatingComboBox = false;
 }
 
 void MFindDialog::FindNext()
@@ -676,7 +726,6 @@ void MFindDialog::FindAll(
 	MMultiMethod	inMethod,
 	fs::path			inDirectory,
 	bool			inRecursive,
-	bool			inTextFilesOnly,
 	const string&	inFileNameFilter)
 {
 	mStopFindAll = false;
@@ -687,7 +736,7 @@ void MFindDialog::FindAll(
 		auto_ptr<MMessageList> list(new MMessageList);
 		
 		GetFilesForFindAll(inMethod, inDirectory,
-			inRecursive, inTextFilesOnly, inFileNameFilter, files);
+			inRecursive, inFileNameFilter, files);
 		
 		for (FileSet::iterator file = files.begin(); file != files.end(); ++file)
 		{
@@ -732,7 +781,6 @@ void MFindDialog::GetFilesForFindAll(
 	MMultiMethod	inMethod,
 	const fs::path&	inDirectory,
 	bool			inRecursive,
-	bool			inTextFilesOnly,
 	const string&	inFileNameFilter,
 	FileSet&		outFiles)
 {
@@ -747,9 +795,6 @@ void MFindDialog::GetFilesForFindAll(
 			if (inRecursive)
 				flags |= kFileIter_Deep;
 			
-			if (inTextFilesOnly)
-				flags |= kFileIter_TEXTFilesOnly;
-			
 			MFileIterator iter(inDirectory, flags);
 		
 			if (inFileNameFilter.c_str())
@@ -757,7 +802,10 @@ void MFindDialog::GetFilesForFindAll(
 		
 			fs::path file;
 			while (iter.Next(file))
+{
+	cout << file.string() << endl;
 				outFiles.insert(file);
+}
 			break;
 		}
 		
@@ -787,7 +835,7 @@ void MFindDialog::GetFilesForFindAll(
 				includePaths.erase(unique(includePaths.begin(), includePaths.end()), includePaths.end());
 
 				for (vector<fs::path>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
-					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inTextFilesOnly, inFileNameFilter, outFiles);
+					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inFileNameFilter, outFiles);
 			}
 			break;
 		}
@@ -810,7 +858,21 @@ void MFindDialog::SelectSearchDir()
 {
 	fs::path dir;
 	if (ChooseDirectory(dir))
-		StoreComboText(kStartDirComboboxID, dir.string(), mStartDirectories);
+	{
+		mStartDirectories.erase(
+			remove(mStartDirectories.begin(), mStartDirectories.end(), dir.string()),
+			mStartDirectories.end());
+
+		mStartDirectories.insert(mStartDirectories.begin(), dir.string());
+
+		if (mStartDirectories.size() > kMaxComboListSize)
+			mStartDirectories.erase(mStartDirectories.end() - 1);
+		
+		mUpdatingComboBox = true;
+		SetValues(kStartDirComboboxID, mStartDirectories);
+		mUpdatingComboBox = false;
+		mStartDirectoriesChanged = false;
+	}
 }
 
 void MFindDialog::Idle(

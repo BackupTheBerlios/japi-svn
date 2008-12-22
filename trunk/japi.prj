@@ -11,6 +11,7 @@
 	<userpaths>
 		<path>Sources</path>
 		<path>NetSources</path>
+		<path>zeep</path>
 	</userpaths>
 	<libpaths/>
 	<files>
@@ -93,10 +94,15 @@
 				<file>MSshConnection.cpp</file>
 			</group>
 		</group>
+		<group name="zeep">
+			<file>exception.cpp</file>
+			<file>node.cpp</file>
+			<file>document.cpp</file>
+		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
 			<file optional="true">libattr.a</file>
-			<file>libmagic.a</file>
+			<file>libexpat.a</file>
 			<file>libboost_system-mt.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>

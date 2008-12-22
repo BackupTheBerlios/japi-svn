@@ -56,7 +56,8 @@ void LocateCommand(
 {
 	// Try to locate the executable
 	
-	outPath = fs::path(Preferences::GetString(inCommand.c_str(), inCommand));
+//	outPath = fs::path(Preferences::GetString(inCommand.c_str(), inCommand));
+	outPath = inCommand;
 	bool found = true;
 	
 	// If the path contains slashes we don't bother

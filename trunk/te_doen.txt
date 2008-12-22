@@ -2,12 +2,14 @@
 
 Moet af:
 
-- project, slepen van item naar laatste plek in map geeft problemen
 - resources lib maken voor distributie/andere resources opslag?
 - link order aan de praat helpen
 - upper/lower case menu maken
 - accelerator-achtig iets
 - keybinding prefs panel
+- andere preferences opslag
+- bestandsinfo dialoog venster
+- waarschuwen bij inconsistente einde regel tekens
 
 - xml parser
 	- pad in popup?

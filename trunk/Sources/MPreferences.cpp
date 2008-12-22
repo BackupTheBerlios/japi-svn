@@ -41,53 +41,101 @@
 #include <cerrno>
 #include <cstring>
 #include <boost/bind.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <cstring>
 
 #include "MTypes.h"
 #include "MPreferences.h"
 #include "MGlobals.h"
 
+#include "document.hpp"
+#include "node.hpp"
+#include "serialize.hpp"
+
 using namespace std;
+namespace fs = boost::filesystem;
 
 namespace Preferences
 {
 	
+struct preference
+{
+	string				name;
+	vector<string>		value;
+	
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar & BOOST_SERIALIZATION_NVP(name)
+		   & BOOST_SERIALIZATION_NVP(value);
+	}
+};
+
 class IniFile
 {
   public:
 
 	static IniFile&	Instance();
 	
-					operator GKeyFile*()		{ return mKeyFile; }	
+	void			SetString(
+						const char*				inName,
+						const string&			inValue);
 
+	string			GetString(
+						const char*				inName,
+						const string&			inDefault);
+
+	void			SetStrings(
+						const char*				inName,
+						const vector<string>&	inValues);
+
+	void			GetStrings(
+						const char*				inName,
+						vector<string>&			outStrings);
+	
   private:
 					IniFile();
 					~IniFile();
 	
-	GKeyFile*		mKeyFile;
-	fs::path			mIniFile;
+	fs::path		mPrefsFile;
+	map<string,vector<string> >
+					mPrefs;
 };
 
 IniFile::IniFile()
 {
-	mKeyFile = g_key_file_new();
-	
 	try
 	{
+		SOAP_XML_SET_STRUCT_NAME(preference);
+		
 		if (not fs::exists(gPrefsDir))
 			fs::create_directories(gPrefsDir);
 		
-		mIniFile = gPrefsDir / "settings";
-
-		GError *err = nil;
-		GKeyFileFlags flags =
-			GKeyFileFlags(G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS);
+		mPrefsFile = gPrefsDir / "settings.xml";
 		
-		if (not g_key_file_load_from_file(mKeyFile, mIniFile.string().c_str(),
-			flags, &err))
+		if (fs::exists(mPrefsFile))
 		{
-			g_error_free(err);
+			fs::ifstream data(mPrefsFile);
+			
+			if (data.is_open())
+			{
+				vector<preference> pref;
+				
+				xml::document doc(data);
+				xml::deserializer d(doc.root());
+				d & BOOST_SERIALIZATION_NVP(pref);
+				
+				for (vector<preference>::iterator p = pref.begin(); p != pref.end(); ++p)
+					mPrefs[p->name] = p->value;
+			}
 		}
+		
+//		GError *err = nil;
+//		if (not g_key_file_load_from_file(mKeyFile, mPrefsFile.string().c_str(),
+//			G_KEY_FILE_NONE, &err))
+//		{
+//			g_error_free(err);
+//		}
 	}
 	catch (exception& e)
 	{
@@ -99,36 +147,37 @@ IniFile::~IniFile()
 {
 	try
 	{
-		GError* err = nil;
-		gsize length;
+		if (not fs::exists(gPrefsDir))
+			fs::create_directories(gPrefsDir);
 		
-		char* data = g_key_file_to_data(mKeyFile, &length, &err);
+		mPrefsFile = gPrefsDir / "settings.xml";
 		
-		if (data == nil)
+		fs::ofstream data(mPrefsFile);
+		
+		if (data.is_open())
 		{
-			cerr << "Error writing preferences data" << endl;
-
-			if (err != nil)
+			xml::node_ptr root(new xml::node("japi-preferences"));
+			
+			for (map<string,vector<string> >::iterator p = mPrefs.begin(); p != mPrefs.end(); ++p)
 			{
-				cerr << err->message << endl;
-				g_error_free(err);
-			}
-		}
-		else
-		{
-			int fd = open(mIniFile.string().c_str(), O_CREAT|O_RDWR, 0600);
-			if (fd >= 0)
-			{
-				write(fd, data, length);
-				close(fd);
-			}
-			else
-			{
-				cerr << "Error writing preferences data to file: "
-					 << strerror(errno) << endl;
+				xml::node_ptr pref(new xml::node("pref"));
+				
+				xml::node_ptr name(new xml::node("name"));
+				name->content(p->first);
+				pref->add_child(name);
+				
+				for (vector<string>::iterator v = p->second.begin(); v != p->second.end(); ++v)
+				{
+					xml::node_ptr value(new xml::node("value"));
+					value->content(*v);
+					pref->add_child(value);
+				}
+				
+				root->add_child(pref);
 			}
 			
-			g_free(data);
+			xml::document doc(root);
+			data << doc;
 		}
 	}
 	catch (exception& e)
@@ -144,24 +193,49 @@ IniFile& IniFile::Instance()
 	return sInstance;
 }
 
+void IniFile::SetString(
+	const char*		inName,
+	const string&	inValue)
+{
+	vector<string> values;
+	values.push_back(inValue);
+	mPrefs[inName] = values;
+}
+
+string IniFile::GetString(
+	const char*		inName,
+	const string&	inDefault)
+{
+	if (mPrefs.find(inName) == mPrefs.end() or mPrefs[inName].size() == 0)
+		SetString(inName, inDefault);
+	vector<string>& values = mPrefs[inName];
+	assert(values.size() == 1);
+	if (values.size() != 1)
+		cerr << "Inconsistent use of preference array/value" << endl;
+	return mPrefs[inName].front();
+}
+
+void IniFile::SetStrings(
+	const char*				inName,
+	const vector<string>&	inValues)
+{
+	mPrefs[inName] = inValues;
+}
+
+void IniFile::GetStrings(
+	const char*				inName,
+	vector<string>&			outStrings)
+{
+	outStrings = mPrefs[inName];
+}
+
 int32
 GetInteger(
 	const char*	inName,
 	int32		inDefaultValue)
 {
-	GError* err = nil;
-	
-	int32 result = g_key_file_get_integer(IniFile::Instance(), "Settings", inName, &err);
-	
-	if (err != nil)
-	{
-		result = inDefaultValue;
-		g_error_free(err);
-		
-		SetInteger(inName, inDefaultValue);
-	}
-	
-	return result;
+	return boost::lexical_cast<int32>(GetString(
+		inName, boost::lexical_cast<string>(inDefaultValue)));
 }
 
 void
@@ -169,40 +243,21 @@ SetInteger(
 	const char*	inName,
 	int32		inValue)
 {
-	g_key_file_set_integer(IniFile::Instance(), "Settings", inName, inValue);
+	SetString(inName, boost::lexical_cast<string>(inValue));
 }
 
 string GetString(
 	const char*	inName,
 	string		inDefaultValue)
 {
-	GError* err = nil;
-	char* data = g_key_file_get_value(IniFile::Instance(), "Settings", inName, &err);
-	
-	string result;
-	
-	if (data == nil)
-	{
-		result = inDefaultValue;
-		SetString(inName, inDefaultValue);
-	}
-	else
-	{
-		result = data;
-		g_free(data);
-	}
-	
-	if (err != nil)
-		g_error_free(err);
-
-	return result;
+	return IniFile::Instance().GetString(inName, inDefaultValue);
 }
 
 void SetString(
 	const char*	inName,
 	string		inValue)
 {
-	g_key_file_set_value(IniFile::Instance(), "Settings", inName, inValue.c_str());
+	IniFile::Instance().SetString(inName, inValue);
 }
 
 void
@@ -210,22 +265,7 @@ GetArray(
 	const char*		inName,
 	vector<string>&	outArray)
 {
-	outArray.clear();
-	
-	GError* err = nil;
-	gsize length;
-	char** data = g_key_file_get_string_list(IniFile::Instance(), "Settings", inName, &length, &err);
-	
-	if (data != nil)
-	{
-		for (uint32 i = 0; i < length; ++i)
-			outArray.push_back(data[i]);
-
-		g_strfreev(data);
-	}
-	
-	if (err != nil)
-		g_error_free(err);
+	IniFile::Instance().GetStrings(inName, outArray);
 }
 
 void
@@ -233,13 +273,7 @@ SetArray(
 	const char*				inName,
 	const vector<string>&	inArray)
 {
-	const char** data = new const char*[inArray.size()];
-	
-	transform(inArray.begin(), inArray.end(), data, boost::bind(&string::c_str, _1));
-
-	g_key_file_set_string_list(IniFile::Instance(), "Settings", inName, data, inArray.size());
-	
-	delete[] data;
+	IniFile::Instance().SetStrings(inName, inArray);
 }
 
 MColor GetColor(const char* inName, MColor inDefaultValue)

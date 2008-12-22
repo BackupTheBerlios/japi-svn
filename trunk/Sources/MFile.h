@@ -47,8 +47,7 @@ namespace fs = boost::filesystem;
 
 enum {
 	kFileIter_Deep				= 1 << 0,
-	kFileIter_TEXTFilesOnly		= 1 << 1,
-	kFileIter_ReturnDirectories	= 1 << 2
+	kFileIter_ReturnDirectories	= 1 << 1
 };
 
 class MFileIterator

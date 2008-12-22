@@ -579,10 +579,8 @@ void MProjectGroup::AddProjectItem(
 {
 	if (inPosition >= 0 and inPosition <= static_cast<int32>(mItems.size()))
 		mItems.insert(mItems.begin() + inPosition, inItem);
-	else if (inPosition == -1)
-		mItems.insert(mItems.end(), inItem);
 	else
-		THROW(("Index out or range"));
+		mItems.insert(mItems.end(), inItem);
 
 	inItem->SetParent(this);
 }

@@ -97,14 +97,15 @@ class MFindDialog : public MDialog
 	void			SetReplaceString(
 						const std::string&	inString);
 
+	std::string		GetStartDirectory();
+
 	virtual bool	DoClose();
 
   private:
 
-
 	typedef std::vector<std::string>		StringArray;
-	typedef std::deque<fs::path>				FileArray;
-	typedef std::set<fs::path>					FileSet;
+	typedef std::deque<fs::path>			FileArray;
+	typedef std::set<fs::path>				FileSet;
 
 	virtual bool	OKClicked();
 
@@ -114,11 +115,6 @@ class MFindDialog : public MDialog
 	virtual void	ValueChanged(
 						uint32				inButonID);
 
-	void			StoreComboText(
-						uint32				inID,
-						const std::string&	inActiveString,
-						StringArray&		inArray);
-	
 	void			DoFindCommand(
 						uint32				inCommand);
 
@@ -130,16 +126,14 @@ class MFindDialog : public MDialog
 						bool				inIgnoreCase,
 						bool				inRegex,
 						MMultiMethod		inMethod,
-						fs::path				inDirectory,
+						fs::path			inDirectory,
 						bool				inRecursive,
-						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter);
 	
 	void			GetFilesForFindAll(
 						MMultiMethod		inMethod,
-						const fs::path&			inDirectory,
+						const fs::path&		inDirectory,
 						bool				inRecursive,
-						bool				inTextFilesOnly,
 						const std::string&	inFileNameFilter,
 						FileSet&			outFiles);
 	
@@ -158,6 +152,7 @@ class MFindDialog : public MDialog
 	bool			mInSelection;
 	bool			mStopFindAll;
 	bool			mUpdatingComboBox;
+	bool			mFindStringChanged, mReplaceStringChanged, mStartDirectoriesChanged;
 	StringArray		mFindStrings;
 	StringArray		mReplaceStrings;
 	StringArray		mStartDirectories;

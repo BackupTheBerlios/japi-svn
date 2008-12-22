@@ -1315,8 +1315,11 @@ int main(int argc, char* argv[])
 	
 			gApp = new MJapieApp(fork);
 
-			gApp->RunEventLoop();
+			if (fork == false and MDocument::GetFirstDocument() == nil)
+				gApp->ProcessCommand(cmd_New, nil, 0, 0);
 	
+			gApp->RunEventLoop();
+			
 			// we're done, clean up
 			MFindDialog::Instance().Close();
 			

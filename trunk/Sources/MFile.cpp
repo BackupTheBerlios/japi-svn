@@ -41,7 +41,6 @@
 #include <fstream>
 #include <cassert>
 #include <cerrno>
-#include <magic.h>
 
 #include "MFile.h"
 #include "MUrl.h"
@@ -52,69 +51,6 @@
 #include "MJapiApp.h"
 
 using namespace std;
-
-// ------------------------------------------------------------------
-//
-//  libmagic support
-//
-
-class MLibMagic
-{
-  public:
-	static MLibMagic&	Instance();
-	
-	bool		IsText(
-					const fs::path&	inPath);
-	
-  private:
-
-				MLibMagic();
-				~MLibMagic();
-
-	magic_t		mCookie;
-};
-
-MLibMagic::MLibMagic()
-{
-	int flags = MAGIC_MIME | MAGIC_SYMLINK;
-#if defined(MAGIC_NO_CHECK_COMPRESS)
-	flags |= MAGIC_NO_CHECK_COMPRESS;
-	flags |= MAGIC_NO_CHECK_TAR;
-	flags |= MAGIC_NO_CHECK_SOFT;
-	flags |= MAGIC_NO_CHECK_APPTYPE;
-	flags |= MAGIC_NO_CHECK_ELF;
-	flags |= MAGIC_NO_CHECK_TROFF;
-	flags |= MAGIC_NO_CHECK_TOKENS;
-#endif
-	
-	mCookie = magic_open(flags);
-	
-	if (mCookie != nil)
-		magic_load(mCookie, nil);
-}
-
-MLibMagic::~MLibMagic()
-{
-	magic_close(mCookie);
-}
-
-MLibMagic& MLibMagic::Instance()
-{
-	static MLibMagic sInstance;
-	return sInstance;
-}
-
-bool MLibMagic::IsText(
-	const fs::path&	inPath)
-{
-	bool result = false;
-	const char* t;
-	
-	if (mCookie != nil and (t = magic_file(mCookie, inPath.string().c_str())) != nil)
-		result = strncmp(t, "text/", 5) == 0;
-	
-	return result;
-}
 
 // ------------------------------------------------------------------
 //
@@ -306,8 +242,7 @@ struct MFileIteratorImp
 	};
 	
 						MFileIteratorImp()
-							: mOnlyTEXT(false)
-							, mReturnDirs(false) {}
+							: mReturnDirs(false) {}
 	virtual				~MFileIteratorImp() {}
 	
 	virtual	bool		Next(fs::path& outFile) = 0;
@@ -315,14 +250,8 @@ struct MFileIteratorImp
 							const fs::path&	inFile);
 	
 	string				mFilter;
-	bool				mOnlyTEXT;
 	bool				mReturnDirs;
 };
-
-bool MFileIteratorImp::IsTEXT(const fs::path& inFile)
-{
-	return MLibMagic::Instance().IsText(inFile);
-}
 
 struct MSingleFileIteratorImp : public MFileIteratorImp
 {
@@ -371,18 +300,7 @@ bool MSingleFileIteratorImp::Next(
 
 		outFile = mInfo.mParent / e->d_name;
 
-//		struct stat statb;
-//		
-//		if (stat(outFile.string().c_str(), &statb) != 0)
-//			continue;
-//		
-//		if (S_ISDIR(statb.st_mode) != mReturnDirs)
-//			continue;
-
 		if (is_directory(outFile) and not mReturnDirs)
-			continue;
-		
-		if (mOnlyTEXT and not IsTEXT(outFile))
 			continue;
 		
 		if (mFilter.length() == 0 or
@@ -470,9 +388,6 @@ bool MDeepFileIteratorImp::Next(
 				continue;
 			}
 
-			if (mOnlyTEXT and not IsTEXT(outFile))
-				continue;
-
 			if (mFilter.length() and not FileNameMatches(mFilter.c_str(), outFile))
 				continue;
 
@@ -493,7 +408,6 @@ MFileIterator::MFileIterator(
 		mImpl = new MSingleFileIteratorImp(inDirectory);
 	
 	mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
-	mImpl->mOnlyTEXT = (inFlags & kFileIter_TEXTFilesOnly) != 0;
 }
 
 MFileIterator::~MFileIterator()
