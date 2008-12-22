@@ -1,34 +1,7 @@
-/*
-	Copyright (c) 2006, Maarten L. Hekkelman
-	All rights reserved.
-
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions
-	are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
-    * Neither the name of the Maarten L. Hekkelman nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-	STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-	OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+//          Copyright Maarten L. Hekkelman 2006-2008
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
 /*	$Id: MFindDialog.cpp 170 2007-06-12 20:55:53Z maarten $
 	Copyright Maarten L. Hekkelman
@@ -289,10 +262,7 @@ void MFindDialog::DoFindCommand(
 			mMultiFiles.clear();
 			
 			FileSet files;
-			
-			GetFilesForFindAll(method, dir,
-				recursive, filter, files);
-				
+			GetFilesForFindAll(method, dir, recursive, filter, files);
 			copy(files.begin(), files.end(), back_inserter(mMultiFiles));
 
 			switch (inCommand)
@@ -359,7 +329,7 @@ MFindDialog::SetFindString(
 				remove(mFindStrings.begin(), mFindStrings.end(), s),
 				mFindStrings.end());
 
-			mFindStrings.insert(mFindStrings.begin(), inString);
+			mFindStrings.insert(mFindStrings.begin(), s);
 
 			if (mFindStrings.size() > kMaxComboListSize)
 				mFindStrings.pop_back();
@@ -415,10 +385,10 @@ void MFindDialog::SetReplaceString(
 	if (mReplaceStrings.empty() or mReplaceStrings.front() != s)
 	{
 		mReplaceStrings.erase(
-			remove(mReplaceStrings.begin(), mReplaceStrings.end(), inString),
+			remove(mReplaceStrings.begin(), mReplaceStrings.end(), s),
 			mReplaceStrings.end());
 
-		mReplaceStrings.insert(mReplaceStrings.begin(), inString);
+		mReplaceStrings.insert(mReplaceStrings.begin(), s);
 
 		if (mReplaceStrings.size() > kMaxComboListSize)
 			mReplaceStrings.pop_back();
@@ -611,12 +581,12 @@ void MFindDialog::ValueChanged(
 	}
 }
 
-void MFindDialog::FindNext()
+bool MFindDialog::FindNext()
 {
 	if (mMultiFiles.size() == 0)
 	{
 		PlaySound("warning");
-		return;
+		return false;
 	}
 	
 	bool found = false;
@@ -663,6 +633,8 @@ void MFindDialog::FindNext()
 	
 	if (not found)
 		PlaySound("warning");
+
+	return found;
 }
 
 void MFindDialog::ReplaceAll(

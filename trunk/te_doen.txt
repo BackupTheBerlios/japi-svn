@@ -7,7 +7,6 @@ Moet af:
 - upper/lower case menu maken
 - accelerator-achtig iets
 - keybinding prefs panel
-- andere preferences opslag
 - bestandsinfo dialoog venster
 - waarschuwen bij inconsistente einde regel tekens
 
