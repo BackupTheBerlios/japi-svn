@@ -92,6 +92,10 @@ MProjectInfoDialog::MProjectInfoDialog()
 	wdgt = GetWidget('defs');
 	if (wdgt)
 		eDefinesChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
+
+	wdgt = GetWidget('warn');
+	if (wdgt)
+		eWarningsChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
 }
 
 MProjectInfoDialog::~MProjectInfoDialog()
