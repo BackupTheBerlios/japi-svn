@@ -430,12 +430,6 @@ void MDecoder::GetText(wstring& outText)
 		outText += uc;
 }
 
-string tolower(
-	string		inText)
-{
-	return inText;
-}
-
 string::iterator next_cursor_position(
 	string::iterator	inStart,
 	string::iterator	inEnd)

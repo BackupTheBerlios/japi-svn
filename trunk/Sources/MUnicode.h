@@ -108,8 +108,6 @@ bool IsNum(wchar_t inChar);
 bool IsAlnum(wchar_t inChar);
 bool IsCombining(wchar_t inChar);
 
-std::string tolower(std::string inString);
-
 std::string::iterator next_cursor_position(
 	std::string::iterator	inStart,
 	std::string::iterator	inEnd); 

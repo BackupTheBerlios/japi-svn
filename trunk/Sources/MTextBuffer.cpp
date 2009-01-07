@@ -21,6 +21,8 @@
 #define BOOST_DISABLE_ASSERTS 1
 #endif
 
+#include <boost/algorithm/string.hpp>
+
 #include <pcre.h>
 
 #include "MTextBuffer.h"
@@ -29,6 +31,7 @@
 #include "MPreferences.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 namespace
 {
@@ -1723,9 +1726,12 @@ bool MTextBuffer::CanReplace(
 			inSelection.GetMaxOffset() - inSelection.GetMinOffset(), s);
 
 		if (inIgnoreCase)
-			result = tolower(inWhat) == tolower(s);
-		else
-			result = inWhat == s;
+		{
+			ba::to_lower(inWhat);
+			ba::to_lower(s);
+		}
+
+		result = inWhat == s;
 	}
 	
 	return result;
