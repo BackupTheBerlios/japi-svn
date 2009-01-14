@@ -106,7 +106,8 @@ class MDiffWindow : public MDialog
 	MTextDocument*		mDoc1;
 	MTextDocument*		mDoc2;
 	
-	fs::path				mDir1, mDir2;
+	fs::path			mDir1, mDir2;
+	bool				mDir1Inited, mDir2Inited;
 	
 	MDiffScript			mScript;
 	

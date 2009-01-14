@@ -455,10 +455,18 @@ bool ChooseDirectory(
 		
 		THROW_IF_NIL(dialog);
 	
-		if (gApp->GetCurrentFolder().length() > 0)
+		string currentFolder = gApp->GetCurrentFolder();
+	
+		if (currentFolder.length() > 0)
 		{
 			gtk_file_chooser_set_current_folder_uri(
-				GTK_FILE_CHOOSER(dialog), gApp->GetCurrentFolder().c_str());
+				GTK_FILE_CHOOSER(dialog), currentFolder.c_str());
+		}
+		
+		if (fs::exists(outDirectory) and outDirectory != fs::path())
+		{
+			gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(dialog),
+				outDirectory.string().c_str());
 		}
 		
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
@@ -471,9 +479,9 @@ bool ChooseDirectory(
 			g_free(uri);
 
 			result = true;
-
-			gApp->SetCurrentFolder(
-				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
+//
+//			gApp->SetCurrentFolder(
+//				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
 		}
 	}
 	catch (exception& e)
@@ -511,8 +519,8 @@ bool ChooseOneFile(
 		
 		if (ioFile.IsValid())
 		{
-			gtk_file_chooser_set_uri(
-				GTK_FILE_CHOOSER(dialog), ioFile.str().c_str());
+			gtk_file_chooser_select_uri(GTK_FILE_CHOOSER(dialog),
+				ioFile.str().c_str());
 		}
 		else if (gApp->GetCurrentFolder().length() > 0)
 		{

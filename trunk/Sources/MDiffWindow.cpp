@@ -46,6 +46,8 @@ MDiffWindow::MDiffWindow(
 	, mSelected(this, &MDiffWindow::DiffSelected)
 	, mDoc1(nil)
 	, mDoc2(nil)
+	, mDir1Inited(false)
+	, mDir2Inited(false)
 	, mInvokeRow(this, &MDiffWindow::InvokeRow)
 {
 	GtkWidget* treeView = GetWidget(kListViewID);
@@ -138,37 +140,52 @@ bool MDiffWindow::UpdateCommandStatus(
 
 void MDiffWindow::ChooseFile(int inFileNr)
 {
+	string currentFolder = gApp->GetCurrentFolder();
 	MUrl url;
 	
 	if (inFileNr == 1)
 	{
 		if (mDoc1 != nil)
 			url = mDoc1->GetURL();
-		else
+		else if (mDir1Inited)
 			url = MUrl(mDir1);
 	}
 	else if (inFileNr == 2)
 	{
 		if (mDoc2 != nil)
 			url = mDoc2->GetURL();
-		else
+		else if (mDir2Inited)
 			url = MUrl(mDir2);
 	}
-	
-	if (GetModifiers() != 0)
-	{
-		fs::path dir;
 
-		if (ChooseDirectory(dir) and is_directory(dir))
-			SetDirectory(inFileNr, dir);
-	}
-	else if (ChooseOneFile(url))
+	try
 	{
-		MTextDocument* doc = dynamic_cast<MTextDocument*>(
-			gApp->OpenOneDocument(url));
-		
-		if (doc != nil)
-			SetDocument(inFileNr, doc);
+		uint32 modifiers = GetModifiers();
+
+		if (modifiers != 0)
+		{
+			fs::path dir = url.GetPath();
+			
+			if (ChooseDirectory(dir) and is_directory(dir))
+				SetDirectory(inFileNr, dir);
+			else
+				gApp->SetCurrentFolder(currentFolder);
+		}
+		else if (ChooseOneFile(url))
+		{
+			MTextDocument* doc = dynamic_cast<MTextDocument*>(
+				gApp->OpenOneDocument(url));
+			
+			if (doc != nil)
+				SetDocument(inFileNr, doc);
+		}
+		else
+			gApp->SetCurrentFolder(currentFolder);
+	}
+	catch (...)
+	{
+		gApp->SetCurrentFolder(currentFolder);
+		throw;
 	}
 }
 
@@ -252,11 +269,13 @@ void MDiffWindow::SetDirectory(
 	if (inDirNr == 1)
 	{
 		mDir1 = inDir;
+		mDir1Inited = true;
 		SetButtonTitle(1, mDir1.leaf());
 	}
 	else
 	{
 		mDir2 = inDir;
+		mDir2Inited = true;
 		SetButtonTitle(2, mDir2.leaf());
 	}
 	

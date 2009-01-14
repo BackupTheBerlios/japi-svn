@@ -78,6 +78,9 @@ class MJapieApp : public MHandler
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
 	void				SetCurrentFolder(
+							const std::string&	inFolder)		{ SetCurrentFolder(inFolder.c_str()); }
+
+	void				SetCurrentFolder(
 							const char*			inFolder);
 
 	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
