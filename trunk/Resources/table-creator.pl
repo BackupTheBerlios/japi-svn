@@ -1,5 +1,8 @@
 #!perl
 
+# stripped down version. Only table we need is the character break class table
+# and so we dumped the previous, extended tables.
+
 use strict;
 use warnings;
 use Data::Dumper;
@@ -15,10 +18,7 @@ print STDERR "Initializing array...";
 
 for (my $uc = 0; $uc < $kUC_COUNT; ++$uc) {
 	my %ucd = (
-		'prop'	=> 'kOTHER',
-		'cbc'	=> 'kCBC_Other',
-		'upper' => 0,
-		'lower'	=> 0
+		'cbc'	=> 'kCBC_Other'
 	);
 	
 	push @data, \%ucd;
@@ -64,75 +64,6 @@ close IN;
 
 print STDERR " done\n";
 
-# Character Property Table
-
-print STDERR "Reading UnicodeData.txt ...";
-
-open IN, "<UnicodeData.txt" or die "Could not open UnicodeData.txt\n";
-while (my $line = <IN>)
-{
-	chomp($line);
-	my @v = split(m/;/, $line);
-	
-	next unless scalar(@v) > 3;
-	
-	my $uc = hex($v[0]);
-
-	my $c1 = substr($v[2], 0, 1);
-	my $c2 = substr($v[2], 1, 1);
-	
-	# character class
-
-	if ($c1 eq 'L') {
-		$data[$uc]->{'prop'} = 'kLETTER';
-	}
-	elsif ($c1 eq 'N') {
-		$data[$uc]->{'prop'} = 'kNUMBER';
-	}
-	elsif ($c1 eq 'M') {
-		$data[$uc]->{'prop'} = 'kCOMBININGMARK';
-	}
-	elsif ($c1 eq 'P') {
-		$data[$uc]->{'prop'} = 'kPUNCTUATION';
-	}
-	elsif ($c1 eq 'S') {
-		$data[$uc]->{'prop'} = 'kSYMBOL';
-	}
-	elsif ($c1 eq 'Z') {
-		$data[$uc]->{'prop'} = 'kSEPARATOR';
-	}
-	elsif ($c1 eq 'C') {
-		$data[$uc]->{'prop'} = 'kCONTROL';
-	}
-	
-	# upper case/lower case mapping
-	
-	$data[$uc]->{'upper'} = hex($v[13]) if defined $v[13];
-	$data[$uc]->{'lower'} = hex($v[14]) if defined $v[14];
-}
-close IN;
-
-print STDERR " done\n";
-
-for (my $uc = hex('0x3400'); $uc <= hex('0x4DB5'); ++$uc) {
-	$data[$uc]->{'prop'} = 'kLETTER';
-}
-
-for (my $uc = hex('0x4E00'); $uc <= hex('0x09FA5'); ++$uc) {
-	$data[$uc]->{'prop'} = 'kLETTER';
-}
-
-for (my $uc = hex('0x0Ac00'); $uc <= hex('0x0D7A3'); ++$uc) {
-	$data[$uc]->{'prop'} = 'kLETTER';
-}
-
-for (my $uc = hex('0x20000'); $uc <= hex('0x2A6D6'); ++$uc) {
-	$data[$uc]->{'prop'} = 'kLETTER';
-}
-
-# we treat an underscore as a letter
-$data[95]->{'prop'} = 'kLETTER';
-
 # now build a table
 
 my $table = new Table();
@@ -142,9 +73,7 @@ foreach my $pageNr (0 .. $kUC_PAGE_COUNT - 1)
 	my $page = "\t\t{\n";
 	
 	foreach my $uc ($pageNr * 256 .. ($pageNr + 1) * 256 - 1) {
-		$page .= sprintf("\t\t\t{ 0x%5.5x, 0x%5.5x, %s, %s },\n",
-			$data[$uc]->{'upper'}, $data[$uc]->{'lower'},
-			$data[$uc]->{'cbc'}, $data[$uc]->{'prop'});
+		$page .= sprintf("\t\t\t %s,\n", $data[$uc]->{'cbc'});
 	}
 	
 	$page .= "\t\t},\n";
@@ -205,14 +134,7 @@ sub print_out
 	
 	print<<EOF;
 
-struct MUnicodeInfoAtom {
-	uint32			upper;
-	uint32			lower;
-	CharBreakClass	cbc;
-	uint8			prop;
-};
-
-typedef MUnicodeInfoAtom	MUnicodeInfoPage[256];
+typedef CharBreakClass	MUnicodeInfoPage[256];
 
 struct MUnicodeInfo {
 	int16				page_index[$pageIndexSize];

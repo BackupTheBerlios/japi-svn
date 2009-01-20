@@ -774,10 +774,7 @@ void MFindDialog::GetFilesForFindAll(
 		
 			fs::path file;
 			while (iter.Next(file))
-{
-	cout << file.string() << endl;
 				outFiles.insert(file);
-}
 			break;
 		}
 		

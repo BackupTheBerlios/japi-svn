@@ -100,8 +100,6 @@ extern const bool kCharBreakTable[10][10];
 
 CharBreakClass GetCharBreakClass(wchar_t inUnicode);
 
-wchar_t ToLower(wchar_t inChar);
-wchar_t ToUpper(wchar_t inChar);
 bool IsSpace(wchar_t inChar);
 bool IsAlpha(wchar_t inChar);
 bool IsNum(wchar_t inChar);

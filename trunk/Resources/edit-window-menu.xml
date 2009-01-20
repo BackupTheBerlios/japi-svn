@@ -41,7 +41,7 @@
 	</menu>
 	<menu id='textmenu' label="Text">
 		<item label="Balance" cmd='Bala'/>
-		<item label="Wrap Text" cmd='SftW'/>
+		<item label="Wrap Text" cmd='SftW' check="checkbox" />
 		<item label="Quoted Rewrap…" cmd='rewr' />
 		<item label="-" />
 		<item label="Shift Left" cmd='ShiL'/>

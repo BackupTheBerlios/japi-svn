@@ -112,24 +112,6 @@ char GetChar(MEncoding inEncoding, wchar_t inChar)
 
 }
 
-
-uint8 GetProperty(
-	wchar_t		inUnicode)
-{
-	uint8 result = 0;
-	
-	if (inUnicode < 0x110000)
-	{
-		uint32 ix = inUnicode >> 8;
-		uint32 p_ix = inUnicode & 0x00FF;
-		
-		ix = kUnicodeInfo.page_index[ix];
-		result = kUnicodeInfo.data[ix][p_ix].prop;
-	}
-	
-	return result;
-}
-
 WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 {
 	WordBreakClass result = eWB_Other;
@@ -148,28 +130,68 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 			result = eWB_Tab;
 			break;
 		
+		case '_':	// our special case, we're a programmers editor, right?
+			result = eWB_Let;
+			break;
+		
 		default:
 		{
-			uint8 prop = GetProperty(inUnicode);
-			if (prop == kLETTER or prop == kNUMBER)
+			switch (g_unichar_type(inUnicode))
 			{
-				if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
-					result = eWB_Hira;
-				else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
-					result = eWB_Kata;
-				else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
-					result = eWB_Han;
-				else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
-					result = eWB_Han;
-				else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
-					result = eWB_Han;
-				else
-					result = eWB_Let;
+				case G_UNICODE_LOWERCASE_LETTER: // General category "Letter, Lowercase" (Ll)
+				case G_UNICODE_MODIFIER_LETTER: // General category "Letter, Modifier" (Lm)
+				case G_UNICODE_OTHER_LETTER: // General category "Letter, Other" (Lo)
+				case G_UNICODE_TITLECASE_LETTER: // General category "Letter, Titlecase" (Lt)
+				case G_UNICODE_UPPERCASE_LETTER: // General category "Letter, Uppercase" (Lu)
+				case G_UNICODE_DECIMAL_NUMBER: // General category "Number, Decimal Digit" (Nd)
+				case G_UNICODE_LETTER_NUMBER: // General category "Number, Letter" (Nl)
+				case G_UNICODE_OTHER_NUMBER: // General category "Number, Other" (No)
+				{
+					if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
+						result = eWB_Hira;
+					else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
+						result = eWB_Kata;
+					else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
+						result = eWB_Han;
+					else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
+						result = eWB_Han;
+					else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
+						result = eWB_Han;
+					else
+						result = eWB_Let;
+					break;
+				}
+
+				case G_UNICODE_COMBINING_MARK: // General category "Mark, Spacing Combining" (Mc)
+					result = eWB_Com;
+					break;
+
+				case G_UNICODE_LINE_SEPARATOR: // General category "Separator, Line" (Zl)
+				case G_UNICODE_PARAGRAPH_SEPARATOR: // General category "Separator, Paragraph" (Zp)
+				case G_UNICODE_SPACE_SEPARATOR: // General category "Separator, Space" (Zs)
+					result = eWB_Sep;
+					break;
+				
+				case G_UNICODE_CONTROL: // General category "Other, Control" (Cc)
+				case G_UNICODE_FORMAT: // General category "Other, Format" (Cf)
+				case G_UNICODE_UNASSIGNED: // General category "Other, Not Assigned" (Cn)
+				case G_UNICODE_PRIVATE_USE: // General category "Other, Private Use" (Co)
+				case G_UNICODE_SURROGATE: // General category "Other, Surrogate" (Cs)
+				case G_UNICODE_ENCLOSING_MARK: // General category "Mark, Enclosing" (Me)
+				case G_UNICODE_NON_SPACING_MARK: // General category "Mark, Nonspacing" (Mn)
+				case G_UNICODE_CONNECT_PUNCTUATION: // General category "Punctuation, Connector" (Pc)
+				case G_UNICODE_DASH_PUNCTUATION: // General category "Punctuation, Dash" (Pd)
+				case G_UNICODE_CLOSE_PUNCTUATION: // General category "Punctuation, Close" (Pe)
+				case G_UNICODE_FINAL_PUNCTUATION: // General category "Punctuation, Final quote" (Pf)
+				case G_UNICODE_INITIAL_PUNCTUATION: // General category "Punctuation, Initial quote" (Pi)
+				case G_UNICODE_OTHER_PUNCTUATION: // General category "Punctuation, Other" (Po)
+				case G_UNICODE_OPEN_PUNCTUATION: // General category "Punctuation, Open" (Ps)
+				case G_UNICODE_CURRENCY_SYMBOL: // General category "Symbol, Currency" (Sc)
+				case G_UNICODE_MODIFIER_SYMBOL: // General category "Symbol, Modifier" (Sk)
+				case G_UNICODE_MATH_SYMBOL: // General category "Symbol, Math" (Sm)
+				case G_UNICODE_OTHER_SYMBOL: // General category "Symbol, Other" (So)
+					break;
 			}
-			else if (prop == kCOMBININGMARK)
-				result = eWB_Com;
-			else if (prop == kSEPARATOR)
-				result = eWB_Sep;
 		}
 	}
 	
@@ -187,41 +209,7 @@ CharBreakClass GetCharBreakClass(
 		uint32 p_ix = inUnicode & 0x00FF;
 		
 		ix = kUnicodeInfo.page_index[ix];
-		result = kUnicodeInfo.data[ix][p_ix].cbc;
-	}
-	
-	return result;
-}
-
-wchar_t ToLower(
-	wchar_t		inUnicode)
-{
-	wchar_t result = 0;
-	
-	if (inUnicode < 0x110000)
-	{
-		uint32 ix = inUnicode >> 8;
-		uint32 p_ix = inUnicode & 0x00FF;
-		
-		ix = kUnicodeInfo.page_index[ix];
-		result = kUnicodeInfo.data[ix][p_ix].lower;
-	}
-	
-	return result;
-}
-
-wchar_t ToUpper(
-	wchar_t		inUnicode)
-{
-	wchar_t result = 0;
-	
-	if (inUnicode < 0x110000)
-	{
-		uint32 ix = inUnicode >> 8;
-		uint32 p_ix = inUnicode & 0x00FF;
-		
-		ix = kUnicodeInfo.page_index[ix];
-		result = kUnicodeInfo.data[ix][p_ix].upper;
+		result = CharBreakClass(kUnicodeInfo.data[ix][p_ix]);
 	}
 	
 	return result;
@@ -230,43 +218,29 @@ wchar_t ToUpper(
 bool IsSpace(
 	wchar_t		inUnicode)
 {
-	return
-		(inUnicode >= 0x0009 and inUnicode <= 0x000D) or
-		inUnicode == 0x0020 or
-		inUnicode == 0x0085 or
-		inUnicode == 0x00A0 or
-		inUnicode == 0x1680 or
-		inUnicode == 0x180E or
-		(inUnicode >= 0x2000 and inUnicode <= 0x200A) or
-		inUnicode == 0x2028 or
-		inUnicode == 0x2029 or
-		inUnicode == 0x202f or
-		inUnicode == 0x205f or
-		inUnicode == 0x3000;
+	return g_unichar_isspace(inUnicode);
 }
 
 bool IsAlpha(
 	wchar_t		inUnicode)
 {
-	return GetProperty(inUnicode) == kLETTER;
+	return inUnicode == '_' or g_unichar_isalpha(inUnicode);
 }
 
 bool IsNum(
 	wchar_t		inUnicode)
 {
-	return GetProperty(inUnicode) == kNUMBER;
+	return g_unichar_isdigit(inUnicode);
 }
 
 bool IsAlnum(wchar_t inUnicode)
 {
-	uint8 prop = GetProperty(inUnicode);
-	
-	return prop == kLETTER or prop == kNUMBER;
+	return inUnicode == '_' or g_unichar_isalnum(inUnicode);
 }
 
 bool IsCombining(wchar_t inUnicode)
 {
-	return GetProperty(inUnicode) == kCOMBININGMARK;
+	return g_unichar_type(inUnicode) == G_UNICODE_COMBINING_MARK;
 }
 
 template<MEncoding ENCODING>
