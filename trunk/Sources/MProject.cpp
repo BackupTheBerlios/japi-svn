@@ -1658,8 +1658,11 @@ void MProject::SelectTarget(
 
 	for (target = mProjectInfo.mTargets.begin(); target != mProjectInfo.mTargets.end(); ++target)
 	{
-		SelectTarget(target - mProjectInfo.mTargets.begin());
-		break;
+		if (inTarget == target->mName)
+		{
+			SelectTarget(target - mProjectInfo.mTargets.begin());
+			break;
+		}
 	}
 	
 	if (target == mProjectInfo.mTargets.end())

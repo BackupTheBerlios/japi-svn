@@ -1,6 +1,6 @@
 # New ports collection makefile for:	japi
 # Date created:						30 January 2009
-# Whom:								maarten
+# Whom:								Maarten L. Hekkelman
 #
 # $FreeBSD$
 #

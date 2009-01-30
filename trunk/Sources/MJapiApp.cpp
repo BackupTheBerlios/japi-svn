@@ -1191,31 +1191,12 @@ void install_locale(
 
 int main(int argc, char* argv[])
 {
-	struct sigaction act, oact;
-	act.sa_handler = my_signal_handler;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-	::sigaction(SIGTERM, &act, &oact);
-	::sigaction(SIGUSR1, &act, &oact);
-	::sigaction(SIGPIPE, &act, &oact);
-	::sigaction(SIGINT, &act, &oact);
-
 	try
 	{
 		bool fork = true, readStdin = false;
 		string target;
 
 		fs::path::default_name_check(fs::no_check);
-
-		/* init threads */	
-		g_thread_init(nil);
-		gdk_threads_init();
-
-		gtk_init(&argc, &argv);
-
-		gtk_window_set_default_icon_name ("accessories-text-editor");
-
-//		gdk_set_show_events(true);
 
 		vector<pair<int32,MUrl> > docs;
 		
@@ -1250,8 +1231,11 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-		if (not target.empty() and optind < argc)
+		if (not target.empty())
 		{
+			if (optind >= argc)
+				THROW(("You should specify a project file to use for building"));
+			
 			MProject project(fs::system_complete(argv[optind]));
 			project.SelectTarget(target);
 			if (project.Make(false))
@@ -1295,6 +1279,23 @@ int main(int argc, char* argv[])
 		
 		if (fork == false or ForkServer(docs, readStdin))
 		{
+			/* init threads */	
+			g_thread_init(nil);
+			gdk_threads_init();
+	
+			gtk_init(&argc, &argv);
+	
+			gtk_window_set_default_icon_name ("accessories-text-editor");
+	
+			struct sigaction act, oact;
+			act.sa_handler = my_signal_handler;
+			sigemptyset(&act.sa_mask);
+			act.sa_flags = 0;
+			::sigaction(SIGTERM, &act, &oact);
+			::sigaction(SIGUSR1, &act, &oact);
+			::sigaction(SIGPIPE, &act, &oact);
+			::sigaction(SIGINT, &act, &oact);
+
 			InitGlobals();
 	
 			gApp = new MJapieApp(fork);
