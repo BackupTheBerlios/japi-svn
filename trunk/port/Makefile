@@ -6,7 +6,7 @@
 #
 
 PORTNAME=		japi
-PORTVERSION=	0.9.6
+PORTVERSION=	0.9.6a
 CATEGORIES=		editors
 MASTER_SITES=	http://www.xs4all.nl/~hekkel2/
 
