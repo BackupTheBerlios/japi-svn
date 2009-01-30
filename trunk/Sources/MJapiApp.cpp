@@ -1302,6 +1302,8 @@ int main(int argc, char* argv[])
 			if (fork == false and MDocument::GetFirstDocument() == nil)
 				gApp->ProcessCommand(cmd_New, nil, 0, 0);
 	
+			gdk_notify_startup_complete();
+	
 			gApp->RunEventLoop();
 			
 			// we're done, clean up

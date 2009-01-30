@@ -4,8 +4,10 @@
 #
 # This makefile needs GNU make.
 
+PREFIX		= /usr/local
+
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
-LIBS		= z cryptopp boost_thread boost_filesystem boost_system gthread-2.0 expat
+LIBS		= z cryptopp boost_thread boost_filesystem gthread-2.0 expat
 WARNINGS	= all no-multichar no-unknown-pragmas
 SOURCES		= $(wildcard Sources/*.cpp NetSources/*.cpp zeep/*.cpp)
 OBJDIR		= Obj.temp/
@@ -15,8 +17,7 @@ LDFLAGS		= -g $(shell pkg-config --libs libglade-2.0 gstreamer-0.10) $(LIBPATHS:
 CC			= c++
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8 -pipe $(WARNINGS:%=-W%) $(DEFINES:%=-D%)
 CFLAGS		+= $(shell pkg-config --cflags libglade-2.0 gstreamer-0.10)
-CFLAGS		+= $(addprefix -iquote, Sources NetSources) -I/usr/local/include/boost-1_36/
-INCLUDES	+= -Izeep
+CFLAGS		+= $(addprefix -iquote, Sources NetSources zeep)
 
 all: japi
 
@@ -30,11 +31,15 @@ japi-temp: $(OBJDIR) $(OBJECTS)
 japi: japi-temp
 	@ echo "Rebuilding japi using japi"
 	./japi-temp -m 'Japi-Release' japi.prj
-	rm -rf japi-temp Obj.temp
 	@ echo "Done"
+
+#	rm -rf japi-temp Obj.temp
 	
 clean: FORCE
 	rm -rf $(OBJDIR)
+
+install: japi
+	./japi -i $(PREFIX)/bin/japi
 
 $(OBJDIR):
 	@ test -d $(OBJDIR) || mkdir -p $(OBJDIR)

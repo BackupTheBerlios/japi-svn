@@ -1,0 +1,5 @@
+This is a port of japi, the text editor and IDE. It is an easy
+to use text editor based on Gtk2 that inherits many of the features
+first seen in the editors Pepper and Pe.
+
+www: http://www.hekkelman.com/japi/

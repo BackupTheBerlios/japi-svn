@@ -13,7 +13,9 @@
 		<path>NetSources</path>
 		<path>zeep</path>
 	</userpaths>
-	<libpaths/>
+	<libpaths>
+		<path>/usr/local/lib</path>
+	</libpaths>
 	<files>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
@@ -103,9 +105,8 @@
 			<file>libpcre.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libexpat.a</file>
-			<file>libboost_system-mt.a</file>
-			<file>libboost_thread-mt.a</file>
-			<file>libboost_filesystem-mt.a</file>
+			<file>libboost_thread.a</file>
+			<file>libboost_filesystem.a</file>
 			<file>libgthread-2.0.a</file>
 			<link>z</link>
 			<link>cryptopp</link>
