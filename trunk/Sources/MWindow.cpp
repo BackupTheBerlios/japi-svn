@@ -159,10 +159,9 @@ void MWindow::Hide()
 
 void MWindow::Select()
 {
-	TakeFocus();
-	
-	gtk_widget_show(GetGtkWidget());
 	gtk_window_present(GTK_WINDOW(GetGtkWidget()));
+
+	TakeFocus();
 	
 	// trick learned from EEL
 	gdk_error_trap_push();

@@ -5,6 +5,8 @@
 
 #include "MJapi.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include "MQuotedRewrapDialog.h"
 #include "MTextDocument.h"
 #include "MPreferences.h"

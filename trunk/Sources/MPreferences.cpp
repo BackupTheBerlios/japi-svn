@@ -13,8 +13,11 @@
 #include <sstream>
 #include <cerrno>
 #include <cstring>
+#include <map>
+
 #include <boost/bind.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/serialization/serialization.hpp>
 #include <cstring>
 
 #include "MTypes.h"

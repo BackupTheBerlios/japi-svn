@@ -14,8 +14,6 @@
 #include "MP2PEvents.h"
 #include "MController.h"
 
-#define nil NULL
-
 extern const char kAppName[], kVersionString[];
 
 class MWindow;

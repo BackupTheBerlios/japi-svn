@@ -317,7 +317,7 @@ bool LoadResource(
 
 #ifndef NDEBUG
 	string::size_type p;
-	if (not result and (p = inName.rfind('/')) != string::npos)
+	if (result == false and (p = inName.rfind('/')) != string::npos)
 	{
 		result = dir.GetData(inName.substr(p + 1).c_str(), offset, outSize);
 	}

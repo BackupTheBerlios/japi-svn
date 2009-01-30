@@ -13,6 +13,8 @@
 #include <boost/filesystem/fstream.hpp>
 #include <glib.h>
 
+#include <sys/stat.h>
+
 #include "MGlobals.h"
 #include "MPreferences.h"
 #include "MLanguage.h"
