@@ -1159,7 +1159,7 @@ fs::path MProject::GetObjectPathForFile(
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	
 	if (file == nil)
-		THROW(("File is not in project"));
+		THROW(("File %s is not in project", inFile.string().c_str()));
 	
 	return file->GetObjectPath();
 }
@@ -1236,7 +1236,7 @@ MProjectJob* MProject::CreateCompileJob(
 	
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	if (file == nil)
-		THROW(("File is not part of the target project"));
+		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
 	vector<string> argv;
 	
@@ -1412,7 +1412,7 @@ void MProject::Preprocess(
 	
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	if (file == nil)
-		THROW(("File is not part of the target project"));
+		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
 	vector<string> argv;
 	
@@ -1447,7 +1447,7 @@ void MProject::Disassemble(
 	
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	if (file == nil)
-		THROW(("File is not part of the target project"));
+		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
 	vector<string> argv;
 	
@@ -1485,7 +1485,7 @@ void MProject::CheckSyntax(
 	
 	MProjectFile* file = GetProjectFileForPath(inFile);
 	if (file == nil)
-		THROW(("File is not part of the target project"));
+		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
 	vector<string> argv;
 	
