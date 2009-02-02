@@ -32,14 +32,16 @@ japi: japi-temp
 	@ echo "Rebuilding japi using japi"
 	./japi-temp -m 'Japi-Release' japi.prj
 	@ echo "Done"
-
-#	rm -rf japi-temp Obj.temp
 	
 clean: FORCE
 	rm -rf $(OBJDIR)
 
 install: japi
-	./japi -i $(PREFIX)/bin/japi
+	install japi $(PREFIX)/bin/japi
+	msgfmt -o $(PREFIX)/share/locale/nl/LC_MESSAGES/japi.mo Resources/Dutch/japi.po
+	sed -e 's|__EXE__|$(PREFIX)/bin/japi|' Resources/japi.desktop > japi.desktop_tmp && \
+		install japi.desktop_tmp $(PREFIX)/share/applications/japi.desktop &&
+		rm japi.desktop_tmp
 
 $(OBJDIR):
 	@ test -d $(OBJDIR) || mkdir -p $(OBJDIR)
