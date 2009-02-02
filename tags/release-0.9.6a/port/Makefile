@@ -25,6 +25,7 @@ LIB_DEPENDS+=	glade-2.0:${PORTSDIR}/devel/libglade2 \
 USE_GMAKE=		yes
 
 PLIST_FILES=	bin/japi \
+				share/locale/nl/LC_MESSAGES/japi.mo \
 				share/applications/japi.desktop
 
 .include <bsd.port.mk>
