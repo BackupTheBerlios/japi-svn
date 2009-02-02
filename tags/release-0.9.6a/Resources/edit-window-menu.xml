@@ -1,0 +1,127 @@
+<?xml version="1.0" standalone="yes"?>
+<menubar>
+	<menu id='filemenu' label="File">
+		<menu id='newmenu' label="New" special="template">
+			<item label="New" cmd='new '/>
+			<item label="-"/>
+			<!-- template items -->
+		</menu>
+		<item label="New Project…" cmd='NewP'/>
+		<item label="Open…" cmd='open'/>
+		<menu id='recentmenu' label="Open Recent" special="recent" />
+		<item label="Find and Open…" cmd='OInc'/>
+		<item label="Open Source/Header" cmd='SHdS'/>
+		<item label="-" />
+		<item label="Close" cmd='clos'/>
+		<item label="Save" cmd='save'/>
+		<item label="Save As…" cmd='sava'/>
+		<item label="Revert" cmd='reve'/>
+		<item label="-" />
+		<item label="Page Setup…" cmd='pgsu' />
+		<item label="Print…" cmd='prnt' />
+		<item label="-" />
+		<item label="Quit" cmd='quit'/>
+	</menu>
+	<menu id='editmenu' label="Edit">
+		<item label="Undo" cmd='undo'/>
+		<item label="Redo" cmd='redo'/>
+		<item label="-" />
+		<item label="Cut" cmd='cut '/>
+		<item label="Cut and Append" cmd='CutA'/>
+		<item label="Copy" cmd='copy'/>
+		<item label="Copy and Append" cmd='CopA'/>
+		<item label="Paste" cmd='past'/>
+		<item label="Paste Next" cmd='PstN'/>
+		<item label="Clear" cmd='clea'/>
+		<item label="-" />
+		<item label="Select All" cmd='sall'/>
+		<item label="-"/>
+		<item label="Preferences" cmd='pref' />
+<!--		<item label="Test" cmd='test'/>-->
+	</menu>
+	<menu id='textmenu' label="Text">
+		<item label="Balance" cmd='Bala'/>
+		<item label="Wrap Text" cmd='SftW' check="checkbox" />
+		<item label="Quoted Rewrap…" cmd='rewr' />
+		<item label="-" />
+		<item label="Shift Left" cmd='ShiL'/>
+		<item label="Shift Right" cmd='ShiR'/>
+		<item label="-" />
+		<item label="Comment" cmd='Comm'/>
+		<item label="Uncomment" cmd='Unco'/>
+		<item label="-" />
+		<item label="Entab" cmd='Enta'/>
+		<item label="Detab" cmd='Deta'/>
+		<menu id='tabs' label="Tab Width">
+			<item label="2" cmd="Tw_2" check="radio" />
+			<item label="4" cmd="Tw_4" check="radio" />
+			<item label="8" cmd="Tw_8" check="radio" />
+			<item label="16" cmd="Tw16" check="radio" />
+		</menu>
+		<item label="Show Whitespace" cmd='SWit' check="checkbox" />
+		<item label="-" />
+		<menu id='syntaxmenu' label="Syntax colour">
+			<item label="None" cmd='St_N' check='radio' />
+			<item label="-" />
+			<item label="C++" cmd='St_L' check='radio' />
+			<item label="HTML" cmd='St_L' check='radio' />
+			<item label="Perl" cmd='St_L' check='radio' />
+			<item label="Python" cmd='St_L' check='radio' />
+			<item label="TeX" cmd='St_L' check='radio' />
+			<item label="XML" cmd='St_L' check='radio' />
+		</menu>
+		<!--item label="Bestandsinfo…" cmd='DocI'/-->
+	</menu>
+	<menu id='' label="Find">
+		<item label="Fast Find" cmd='FFnd'/>
+		<item label="Fast Find Backward" cmd='FFnb'/>
+		<item label="-" />
+		<item label="Find" cmd='Find'/>
+		<item label="Find Next" cmd='FndN'/>
+		<item label="Find Previous" cmd='FndP'/>
+		<item label="Find in Next File" cmd='FnND'/>
+		<item label="Enter Search String" cmd='EntF'/>
+		<item label="Enter Replace String" cmd='EntR'/>
+		<item label="-" />
+		<item label="Replace" cmd='Repl'/>
+		<item label="Replace All" cmd='RplA'/>
+		<item label="Replace and Find Next" cmd='RpFN'/>
+		<item label="Replace and Find Previous" cmd='RpFP'/>
+		<item label="-" />
+		<item label="Complete" cmd='ComB'/>
+		<item label="Complete Looking Forward" cmd='ComF'/>
+		<item label="-" />
+		<item label="Go to Line" cmd='GoTo'/>
+		<item label="-"/>
+		<item label="Find Differences…" cmd='diff' />
+	</menu>
+	<menu id='' label="Mark">
+		<item label="Next Mark" cmd='NxtM'/>
+		<item label="Previous Mark" cmd='PrvM'/>
+		<item label="-" />
+		<item label="Clear All Marks" cmd='ClML'/>
+		<item label="Mark Line" cmd='Mark'/>
+		<item label="Find and Mark…" cmd='F&amp;Mk'/>
+		<item label="-" />
+		<item label="Copy Marked Lines" cmd='CoML'/>
+		<item label="Cut Marked Lines" cmd='CuML'/>
+		<item label="Clear Marked Lines" cmd='ClML'/>
+	</menu>
+	<menu id='' label="Project">
+		<item label="Add to Project" cmd='Padd'/>
+		<item label="-" />
+		<item label="Preprocess" cmd='Ppre'/>
+		<item label="Check Syntax" cmd='Psyn'/>
+		<item label="Compile" cmd='Pcmp'/>
+		<item label="Dissassemble" cmd='Pdis'/>
+	</menu>
+	<menu id='' label="Window" special="window">
+		<item label="Worksheet" cmd='Wrks'/>	
+		<item label="-" />
+	</menu>
+	<menu id='' label="#!" special="scripts">
+	</menu>
+	<menu id='' label="Help">
+		<item label="About…" cmd='abou'/>
+	</menu>
+</menubar>
