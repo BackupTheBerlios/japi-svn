@@ -908,6 +908,8 @@ void MCairoDeviceImp::CreateAndUsePattern(
 {
 	uint32 c1 = 0, c2 = 0;
 	
+	assert(cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, 8) == 32);
+	
 	c1 |= inColor1.red << 16;
 	c1 |= inColor1.green << 8;
 	c1 |= inColor1.blue << 0;
@@ -925,7 +927,7 @@ void MCairoDeviceImp::CreateAndUsePattern(
 	}
 	
 	cairo_surface_t* s = cairo_image_surface_create_for_data(
-		reinterpret_cast<uint8*>(mPatternData), CAIRO_FORMAT_RGB24, 8, 8, 0);
+		reinterpret_cast<uint8*>(mPatternData), CAIRO_FORMAT_RGB24, 8, 8, 32);
 
 	if (s != nil)
 	{
