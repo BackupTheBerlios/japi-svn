@@ -300,7 +300,7 @@ void MTextDocument::RevertDocument()
 {
 	MDocument::RevertDocument();
 	
-	MDocState state;
+	MDocState state = {};
 	if (not ReadDocState(state))
 		Rewrap();
 }

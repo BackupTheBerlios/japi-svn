@@ -161,7 +161,23 @@ void MePubDocument::ReadFile(
 		}
 
 		for (map<fs::path,string>::iterator file = mContent.begin(); file != mContent.end(); ++file)
-			cout << file->first << endl;
+			cout << file->first << ' ' << file->second.length() << endl;
+		
+		xml::document opf(mContent[mRootFile]);
+		
+		cout << opf << endl;
+		
+		cout << mContent[mRootFile] << endl;
+		
+//		cout << endl;
+//		cout << mContent["META-INF/encryption.xml"] << endl;
+//
+//		cout << endl;
+//		cout << mContent["OEBPS/page-template.xpgt"] << endl;
+//
+//		cout << endl;
+//		cout << mContent["OEBPS/toc.ncx"] << endl;
+
 		
 		if (err != ARCHIVE_EOF)
 			THROW(("Error reading archive: %s", archive_error_string(archive)));
