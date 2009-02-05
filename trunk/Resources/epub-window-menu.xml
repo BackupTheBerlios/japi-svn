@@ -1,0 +1,34 @@
+<?xml version="1.0" standalone="yes"?>
+<menubar>
+	<menu id='filemenu' label="File">
+		<menu id='newmenu' label="New" special="template">
+			<item label="New" cmd='new '/>
+			<item label="-"/>
+			<!-- template items -->
+		</menu>
+		<item label="New ePub…" cmd='NewE'/>
+		<item label="Open…" cmd='open'/>
+		<menu id='recentmenu' label="Open Recent" special="recent" />
+		<item label="Find and Open…" cmd='OInc'/>
+		<item label="-" />
+		<item label="Close" cmd='clos'/>
+		<item label="Save" cmd='save'/>
+		<item label="Save As…" cmd='sava'/>
+		<item label="Revert" cmd='reve'/>
+		<item label="-" />
+		<item label="Quit" cmd='quit'/>
+	</menu>
+	<menu id='' label="ePub">
+		<item label="Add File" cmd='Padd'/>
+		<item label="New Group" cmd='Pnwg'/>
+		<item label="-" />
+		<item label="Validate" cmd='ePva'/>
+	</menu>
+	<menu id='' label="Window" special="window">
+		<item label="Worksheet" cmd='Wrks'/>	
+		<item label="-" />
+	</menu>
+	<menu id='' label="Help">
+		<item label="About…" cmd='abou'/>
+	</menu>
+</menubar>

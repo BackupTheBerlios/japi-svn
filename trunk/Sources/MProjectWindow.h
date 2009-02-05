@@ -11,7 +11,7 @@
 
 class MProject;
 class MProjectItem;
-class MTreeModelInterface;
+class MProjectTree;
 
 class MProjectWindow : public MDocWindow
 {
@@ -104,10 +104,8 @@ class MProjectWindow : public MDocWindow
 	MSlot<void()>	eMakeClicked;
 
 	MProject*		mProject;
-	MTreeModelInterface*
-					mFilesTree;
-	MTreeModelInterface*
-					mResourcesTree;
+	MProjectTree*	mFilesTree;
+	MProjectTree*	mResourcesTree;
 	GtkWidget*		mStatusPanel;
 	bool			mBusy;
 };

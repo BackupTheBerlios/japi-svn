@@ -515,3 +515,5 @@ msgstr "Dit bestand is gemarkeerd als alleen lezen, wijzigingen kunnen niet word
 msgid "Failed to open file %s for writing"
 msgstr "Kan niet schrijven naar bestand '%s'"
 
+msgid "Size"
+mststr "Grootte"

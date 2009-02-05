@@ -60,9 +60,11 @@
 			<file>MSound.cpp</file>
 			<group name="ePub">
 				<file>MePubDocument.cpp</file>
+				<file>MePubWindow.cpp</file>
 			</group>
 			<group name="Project">
 				<file>MProject.cpp</file>
+				<file>MProjectTree.cpp</file>
 				<file>MProjectItem.cpp</file>
 				<file>MProjectJob.cpp</file>
 				<file>MObjectFile.cpp</file>
@@ -142,11 +144,13 @@
 			<resource>quoted-rewrap-dialog.glade</resource>
 		</group>
 		<group name="Menus">
+			<resource>epub-window-menu.xml</resource>
 			<resource>text-view-context-menu.xml</resource>
 			<resource>edit-window-menu.xml</resource>
 			<resource>project-window-menu.xml</resource>
 		</group>
 		<group name="Windows">
+			<resource>epub-window.glade</resource>
 			<resource>message-list-window.glade</resource>
 			<resource>edit-window.glade</resource>
 			<resource>project-window.glade</resource>

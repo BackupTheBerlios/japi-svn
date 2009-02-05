@@ -116,11 +116,17 @@ class MProject : public MDocument
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
+	MEventIn<void(std::vector<std::string>&, MProjectGroup*, int32)>
+											eProjectAddFiles;
+	
+	MEventIn<void(MProjectItem*, MProjectGroup*, int32)>
+											eProjectMoveItem;
+
 	void				AddFiles(
 							std::vector<std::string>&
 												inFiles,
 							MProjectGroup*		inGroup,
-							uint32				inIndex);
+							int32				inIndex);
 
 	void				RemoveItem(
 							MProjectItem*		inItem);
@@ -135,7 +141,7 @@ class MProject : public MDocument
 	void				MoveItem(
 							MProjectItem*		inItem,
 							MProjectGroup*		inGroup,
-							uint32				inIndex);
+							int32				inIndex);
 
 	static void			RecheckFiles();
 

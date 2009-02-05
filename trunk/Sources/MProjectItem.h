@@ -6,6 +6,8 @@
 #ifndef MPROJECTITEM_H
 #define MPROJECTITEM_H
 
+#include <vector>
+
 #include "MPatriciaTree.h"
 #include "MP2PEvents.h"
 

@@ -38,6 +38,7 @@
 #include "MPrinter.h"
 #include "MSound.h"
 #include "MePubDocument.h"
+#include "MePubWindow.h"
 
 #include <iostream>
 
@@ -773,11 +774,11 @@ void MJapieApp::OpenEPub(
 	const fs::path&		inPath)
 {
 	auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
-//	auto_ptr<MProjectWindow> w(new MProjectWindow());
-//	w->Initialize(project.get());
-//	project.release();
-//	w->Show();
-//	w.release();
+	auto_ptr<MePubWindow> w(new MePubWindow());
+	w->Initialize(epub.get());
+	epub.release();
+	w->Show();
+	w.release();
 
 	AddToRecentMenu(MUrl(inPath));
 }

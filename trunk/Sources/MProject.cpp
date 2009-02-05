@@ -88,6 +88,8 @@ MProject* MProject::Instance()
 MProject::MProject(
 	const fs::path&		inProjectFile)
 	: MDocument(inProjectFile)
+	, eProjectAddFiles(this, &MProject::AddFiles)
+	, eProjectMoveItem(this, &MProject::MoveItem)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile)
@@ -1913,7 +1915,7 @@ bool MProject::ProcessCommand(
 void MProject::AddFiles(
 	vector<string>&		inFiles,
 	MProjectGroup*		inGroup,
-	uint32				inIndex)
+	int32				inIndex)
 {
 	MProjectGroup* root = inGroup;
 	THROW_IF_NIL(root);
@@ -2075,7 +2077,7 @@ bool MProject::IsValidItem(
 void MProject::MoveItem(
 	MProjectItem*		inItem,
 	MProjectGroup*		inGroup,
-	uint32				inIndex)
+	int32				inIndex)
 {
 	THROW_IF_NIL(inItem);
 	

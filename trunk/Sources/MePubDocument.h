@@ -8,6 +8,10 @@
 
 #include <map>
 #include "MDocument.h"
+#include "MProjectItem.h"
+
+class MProjectGroup;
+class MProjectItem;
 
 class MePubDocument : public MDocument
 {
@@ -23,23 +27,28 @@ class MePubDocument : public MDocument
 	virtual				~MePubDocument();
 
 	virtual bool		UpdateCommandStatus(
-							uint32			inCommand,
-							MMenu*			inMenu,
-							uint32			inItemIndex,
-							bool&			outEnabled,
-							bool&			outChecked);
+							uint32				inCommand,
+							MMenu*				inMenu,
+							uint32				inItemIndex,
+							bool&				outEnabled,
+							bool&				outChecked);
 
 	virtual bool		ProcessCommand(
-							uint32			inCommand,
-							const MMenu*	inMenu,
-							uint32			inItemIndex,
-							uint32			inModifiers);
+							uint32				inCommand,
+							const MMenu*		inMenu,
+							uint32				inItemIndex,
+							uint32				inModifiers);
 
 	virtual void		ReadFile(
 							std::istream&		inFile);
 
 	virtual void		WriteFile(
 							std::ostream&		inFile);
+
+	MProjectGroup*		GetFiles() const;
+
+	MEventOut<void(MProjectItem*)>				eInsertedFile;
+	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
 
   private:
 
@@ -83,6 +92,7 @@ class MePubDocument : public MDocument
 	std::string			mRootFile;
 	std::map<fs::path,std::string>
 						mContent;
+	MProjectGroup		mRoot;
 };
 
 #endif

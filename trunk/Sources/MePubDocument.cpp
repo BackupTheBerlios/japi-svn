@@ -27,6 +27,7 @@ MePubDocument::MePubDocument(
 	const fs::path&		inProjectFile)
 	: MDocument(inProjectFile)
 	, mInputFileStream(nil)
+	, mRoot("", nil)
 {
 	RevertDocument();
 }
@@ -254,3 +255,7 @@ int MePubDocument::archive_close_callback(
 	return ARCHIVE_OK;
 }
 
+MProjectGroup* MePubDocument::GetFiles() const
+{
+	return const_cast<MProjectGroup*>(&mRoot);
+}
