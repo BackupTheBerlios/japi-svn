@@ -58,10 +58,6 @@
 			<file>MStrings.cpp</file>
 			<file>MResources.cpp</file>
 			<file>MSound.cpp</file>
-			<group name="ePub">
-				<file>MePubDocument.cpp</file>
-				<file>MePubWindow.cpp</file>
-			</group>
 			<group name="Project">
 				<file>MProject.cpp</file>
 				<file>MProjectTree.cpp</file>
@@ -73,6 +69,10 @@
 				<file>MProjectInfoDialog.cpp</file>
 				<file>MProjectWindow.cpp</file>
 			</group>
+			<group name="ePub">
+				<file>MePubDocument.cpp</file>
+				<file>MePubWindow.cpp</file>
+			</group>
 			<group name="Language">
 				<file>MLanguage.cpp</file>
 				<file>MLanguageCpp.cpp</file>
@@ -82,8 +82,8 @@
 				<file>MLanguageTeX.cpp</file>
 				<file>MLanguageXML.cpp</file>
 			</group>
-			<file>MFile.cpp</file>
 			<file>MUrl.cpp</file>
+			<file>MFile.cpp</file>
 			<file>MError.cpp</file>
 			<file>MClipboard.cpp</file>
 			<file>MSaverMixin.cpp</file>
@@ -119,41 +119,41 @@
 	</files>
 	<resources resource-dir="Resources">
 		<group name="Alerts">
-			<resource>Alerts/ask-add-lib-as-link.xml</resource>
-			<resource>ask-add-include-path-alert.xml</resource>
-			<resource>unknown-host-alert.xml</resource>
-			<resource>host-key-changed-alert.xml</resource>
-			<resource>make-clean-alert.xml</resource>
-			<resource>save-changes-alert.xml</resource>
-			<resource>discard-changes-alert.xml</resource>
-			<resource>replace-all-alert.xml</resource>
-			<resource>read-only-alert.xml</resource>
-			<resource>exception-alert.xml</resource>
-			<resource>stop-building-alert.xml</resource>
+			<resource>Alerts/Alerts/ask-add-lib-as-link.xml</resource>
+			<resource>Alerts/ask-add-include-path-alert.xml</resource>
+			<resource>Alerts/unknown-host-alert.xml</resource>
+			<resource>Alerts/host-key-changed-alert.xml</resource>
+			<resource>Alerts/make-clean-alert.xml</resource>
+			<resource>Alerts/save-changes-alert.xml</resource>
+			<resource>Alerts/discard-changes-alert.xml</resource>
+			<resource>Alerts/replace-all-alert.xml</resource>
+			<resource>Alerts/read-only-alert.xml</resource>
+			<resource>Alerts/exception-alert.xml</resource>
+			<resource>Alerts/stop-building-alert.xml</resource>
 		</group>
 		<group name="Dialogs">
-			<resource>find-dialog.glade</resource>
-			<resource>find-and-open-dialog.glade</resource>
-			<resource>mark-matching-dialog.glade</resource>
-			<resource>go-to-line-dialog.glade</resource>
-			<resource>new-group-dialog.glade</resource>
-			<resource>auth-dialog.glade</resource>
-			<resource>prefs-dialog.glade</resource>
-			<resource>diff-window.glade</resource>
-			<resource>project-info-dialog.glade</resource>
-			<resource>quoted-rewrap-dialog.glade</resource>
+			<resource>Dialogs/find-dialog.glade</resource>
+			<resource>Dialogs/find-and-open-dialog.glade</resource>
+			<resource>Dialogs/mark-matching-dialog.glade</resource>
+			<resource>Dialogs/go-to-line-dialog.glade</resource>
+			<resource>Dialogs/new-group-dialog.glade</resource>
+			<resource>Dialogs/auth-dialog.glade</resource>
+			<resource>Dialogs/prefs-dialog.glade</resource>
+			<resource>Dialogs/diff-window.glade</resource>
+			<resource>Dialogs/project-info-dialog.glade</resource>
+			<resource>Dialogs/quoted-rewrap-dialog.glade</resource>
 		</group>
 		<group name="Menus">
-			<resource>epub-window-menu.xml</resource>
-			<resource>text-view-context-menu.xml</resource>
-			<resource>edit-window-menu.xml</resource>
-			<resource>project-window-menu.xml</resource>
+			<resource>Menus/epub-window-menu.xml</resource>
+			<resource>Menus/text-view-context-menu.xml</resource>
+			<resource>Menus/edit-window-menu.xml</resource>
+			<resource>Menus/project-window-menu.xml</resource>
 		</group>
 		<group name="Windows">
-			<resource>epub-window.glade</resource>
-			<resource>message-list-window.glade</resource>
-			<resource>edit-window.glade</resource>
-			<resource>project-window.glade</resource>
+			<resource>Windows/epub-window.glade</resource>
+			<resource>Windows/message-list-window.glade</resource>
+			<resource>Windows/edit-window.glade</resource>
+			<resource>Windows/project-window.glade</resource>
 		</group>
 		<group name="Templates">
 			<resource>Templates/empty.c</resource>
