@@ -2350,15 +2350,18 @@ void MTextDocument::StartAction(
 
 void MTextDocument::FinishAction()
 {
-	mText.ActionFinished();
-
-	mLastAction = mCurrentAction;
-	mCurrentAction = kNoAction;
-
-	UpdateDirtyLines();
-	mCompletionStrings.clear();
-
-	mCompletionIndex = -1;
+	if (mCurrentAction != kNoAction)
+	{
+		mText.ActionFinished();
+	
+		mLastAction = mCurrentAction;
+		mCurrentAction = kNoAction;
+	
+		UpdateDirtyLines();
+		mCompletionStrings.clear();
+	
+		mCompletionIndex = -1;
+	}
 }
 
 void MTextDocument::Insert(
