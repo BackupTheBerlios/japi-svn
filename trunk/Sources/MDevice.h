@@ -86,6 +86,12 @@ class MDevice
 
 	void			FillEllipse(
 						MRect				inRect);
+
+	void			DrawImage(
+						cairo_surface_t*	inImage,
+						float				inX,
+						float				inY,
+						float				inShear);
 	
 	void			CreateAndUsePattern(
 						MColor				inColor1,

@@ -70,6 +70,9 @@ class MJapieApp : public MHandler
 	void				OpenProject(
 							const fs::path&		inPath);
 
+	void				OpenEPub(
+							const fs::path&		inPath);
+
 	void				AddToRecentMenu(
 							const MUrl&			inFileRef);
 

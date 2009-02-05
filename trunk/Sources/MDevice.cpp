@@ -76,6 +76,12 @@ class MDeviceImp
 
 	virtual void			FillEllipse(
 								MRect				inRect);
+
+	virtual void			DrawImage(
+								cairo_surface_t*	inImage,
+								float				inX,
+								float				inY,
+								float				inShear);
 	
 	virtual void			CreateAndUsePattern(
 								MColor				inColor1,
@@ -307,6 +313,14 @@ void MDeviceImp::StrokeRect(
 void MDeviceImp::FillEllipse(
 	MRect				inRect)
 {
+}
+
+void MDeviceImp::DrawImage(
+	cairo_surface_t*	inImage,
+	float				inX,
+	float				inY,
+	float				inShear)
+{	
 }
 
 void MDeviceImp::CreateAndUsePattern(
@@ -690,6 +704,12 @@ class MCairoDeviceImp : public MDeviceImp
 	virtual void			FillEllipse(
 								MRect				inRect);
 	
+	virtual void			DrawImage(
+								cairo_surface_t*	inImage,
+								float				inX,
+								float				inY,
+								float				inShear);
+	
 	virtual void			CreateAndUsePattern(
 								MColor				inColor1,
 								MColor				inColor2);
@@ -899,6 +919,48 @@ void MCairoDeviceImp::FillEllipse(
 	cairo_scale(mContext, inRect.width / 2., inRect.height / 2.);
 	cairo_arc(mContext, 0., 0., 1., 0., 2 * M_PI);
 	cairo_fill(mContext);
+	cairo_restore(mContext);
+}
+
+void MCairoDeviceImp::DrawImage(
+	cairo_surface_t*	inImage,
+	float				inX,
+	float				inY,
+	float				inShear)
+{
+	cairo_save(mContext);
+
+//	cairo_set_source_surface(mContext, inImage, inX, inY);
+//
+//	int w = cairo_image_surface_get_width(inImage);
+//	int h = cairo_image_surface_get_height(inImage);
+//
+//	cairo_rectangle(mContext, inX, inY, w, h);
+//	cairo_fill(mContext);
+
+	cairo_surface_set_device_offset(inImage, -inX, -inY);
+
+	cairo_pattern_t* p = cairo_pattern_create_for_surface(inImage);
+	
+	if (p != nil)
+	{
+		cairo_matrix_t m;
+		cairo_matrix_init_translate(&m, -inX, -inY);
+//		cairo_matrix_init_rotate(&m, 2.356);
+		cairo_matrix_init(&m, 1, inShear, inShear, 1, 0, 0);
+		cairo_pattern_set_matrix(p, &m);
+		
+		cairo_set_source(mContext, p);
+		
+		cairo_pattern_destroy(p);
+		
+		int w = cairo_image_surface_get_width(inImage);
+		int h = cairo_image_surface_get_height(inImage);
+		
+		cairo_rectangle(mContext, inX, inY, w, h);
+		cairo_fill(mContext);
+	}
+
 	cairo_restore(mContext);
 }
 
@@ -1384,4 +1446,13 @@ void MDevice::SetDrawWhiteSpace(
 	bool				inDrawWhiteSpace)
 {
 	mImpl->SetDrawWhiteSpace(inDrawWhiteSpace);
+}
+
+void MDevice::DrawImage(
+	cairo_surface_t*	inImage,
+	float				inX,
+	float				inY,
+	float				inShear)
+{
+	mImpl->DrawImage(inImage, inX, inY, inShear);
 }

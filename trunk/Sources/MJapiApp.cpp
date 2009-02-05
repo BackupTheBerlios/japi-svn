@@ -37,6 +37,7 @@
 #include "MProjectWindow.h"
 #include "MPrinter.h"
 #include "MSound.h"
+#include "MePubDocument.h"
 
 #include <iostream>
 
@@ -248,12 +249,8 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
-		{
-			MProjectWindow* w = new MProjectWindow();
-			w->Initialize(new MTextDocument(nil));
-			w->Select();
+//			new MCoverFlowWindow();
 			break;
-		}
 		
 		case cmd_ShowDiffWindow:
 			new MDiffWindow;
@@ -738,6 +735,8 @@ MDocument* MJapieApp::OpenOneDocument(
 	{
 		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
 			OpenProject(inFileRef.GetPath());
+		else if (inFileRef.IsLocal() and FileNameMatches("*.epub", inFileRef.GetPath()))
+			OpenEPub(inFileRef.GetPath());
 		else
 			doc = new MTextDocument(&inFileRef);
 	}
@@ -763,6 +762,22 @@ void MJapieApp::OpenProject(
 	project.release();
 	w->Show();
 	w.release();
+
+	AddToRecentMenu(MUrl(inPath));
+}
+
+// ---------------------------------------------------------------------------
+//	OpenEPub
+
+void MJapieApp::OpenEPub(
+	const fs::path&		inPath)
+{
+	auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
+//	auto_ptr<MProjectWindow> w(new MProjectWindow());
+//	w->Initialize(project.get());
+//	project.release();
+//	w->Show();
+//	w.release();
 
 	AddToRecentMenu(MUrl(inPath));
 }
@@ -1191,6 +1206,8 @@ void install_locale(
 
 int main(int argc, char* argv[])
 {
+	bool test = false;
+
 	try
 	{
 		bool fork = true, readStdin = false;
@@ -1201,7 +1218,7 @@ int main(int argc, char* argv[])
 		vector<pair<int32,MUrl> > docs;
 		
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:v")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:vt")) != -1)
 		{
 			switch (c)
 			{
@@ -1224,6 +1241,12 @@ int main(int argc, char* argv[])
 				case 'v':
 					++VERBOSE;
 					break;
+
+#if DEBUG
+				case 't':
+					test = true;
+					break;
+#endif
 				
 				default:
 					usage();
@@ -1299,9 +1322,26 @@ int main(int argc, char* argv[])
 			InitGlobals();
 	
 			gApp = new MJapieApp(fork);
+			
+			if (fork == false and not docs.empty())
+			{
+				for (vector<pair<int32,MUrl> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
+				{
+					try
+					{
+						gApp->OpenOneDocument(doc->second);
+					}
+					catch (...) {}
+				}
+			}
 
 			if (fork == false and MDocument::GetFirstDocument() == nil)
 				gApp->ProcessCommand(cmd_New, nil, 0, 0);
+
+#if DEBUG
+			if (test)
+				gApp->ProcessCommand('test', nil, 0, 0);
+#endif
 	
 			gdk_notify_startup_complete();
 	
