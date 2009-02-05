@@ -119,7 +119,7 @@
 	</files>
 	<resources resource-dir="Resources">
 		<group name="Alerts">
-			<resource>Alerts/Alerts/ask-add-lib-as-link.xml</resource>
+			<resource>Alerts/ask-add-lib-as-link.xml</resource>
 			<resource>Alerts/ask-add-include-path-alert.xml</resource>
 			<resource>Alerts/unknown-host-alert.xml</resource>
 			<resource>Alerts/host-key-changed-alert.xml</resource>
