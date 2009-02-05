@@ -103,8 +103,11 @@ void MKnownHosts::CheckHost(
 
 	string fingerprint;
 	
+#if CRYPTOPP_VERSION >= 552
+	CryptoPP::Weak::MD5 hash;
+#else
 	CryptoPP::MD5 hash;
-//	CryptoPP::Weak::MD5 hash;
+#endif
 	uint32 dLen = hash.DigestSize();
 	vector<char>	H(dLen);
 	
