@@ -1336,8 +1336,13 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			if (fork == false and MDocument::GetFirstDocument() == nil)
-				gApp->ProcessCommand(cmd_New, nil, 0, 0);
+			if (fork == false)
+			{
+				if (MDocument::GetFirstDocument() == nil)
+					gApp->ProcessCommand(cmd_New, nil, 0, 0);
+//				else
+//					exit(1);
+			}
 
 #if DEBUG
 			if (test)

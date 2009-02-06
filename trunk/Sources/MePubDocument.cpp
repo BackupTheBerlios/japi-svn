@@ -6,10 +6,13 @@
 #include "MJapi.h"
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <archive.h>
 #include <archive_entry.h>
 #include <cstring>
+#include <zlib.h>
+#include <endian.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
@@ -20,10 +23,294 @@
 #include "MePubDocument.h"
 #include "MePubItem.h"
 
+#ifndef __BYTE_ORDER
+#error "Please specify byte order"
+#endif
+
 using namespace std;
 namespace ba = boost::algorithm;
 
 // --------------------------------------------------------------------
+
+namespace {
+
+const char
+	kEPubMimeType[] = "application/epub+zip",
+	kMagicMT[] = "mimetypeapplication/epub+zip",
+	kContainerNS[] = "urn:oasis:names:tc:opendocument:xmlns:container";
+
+struct ZIPLocalFileHeader
+{
+						ZIPLocalFileHeader()
+						{
+							struct tm tm;
+							gmtime_r(nil, &tm);
+							
+							file_mod_date =
+								(((tm.tm_year - 80) & 0x7f) << 9) |
+								(((tm.tm_mon + 1)   & 0x0f) << 5) |
+								( (tm.tm_mday       & 0x1f) << 0);
+							
+							file_mod_time =
+								((tm.tm_hour & 0x1f) << 11) |
+								((tm.tm_min  & 0x3f) << 5)  |
+								((tm.tm_sec  & 0x3e) >> 1);
+						}
+
+	bool				deflated;
+	uint32				crc;
+	uint32				compressed_size;
+	uint32				uncompressed_size;
+	uint16				file_mod_time, file_mod_date;
+	string				filename;
+	string				data;
+};
+
+struct ZIPCentralDirectory
+{
+	ZIPLocalFileHeader	file;
+	uint32				offset;
+};
+
+struct ZIPEndOfCentralDirectory
+{
+	uint16				entries;
+	uint32				directory_size;
+	uint32				directory_offset;
+};
+
+inline char* write(uint16 value, char* buffer)
+{
+#if __BYTE_ORDER == __BIG_ENDIAN
+	value = static_cast<uint16>(
+			((((uint16)value)<< 8) & 0xFF00)  |
+			((((uint16)value)>> 8) & 0x00FF));
+#endif
+	memcpy(buffer, &value, sizeof(value));
+	return buffer + sizeof(value);
+}
+
+inline char* write(uint32 value, char* buffer)
+{
+#if __BYTE_ORDER == __BIG_ENDIAN
+	value = static_cast<uint32>(
+			((((uint32)value)<<24) & 0xFF000000)  |
+			((((uint32)value)<< 8) & 0x00FF0000)  |
+			((((uint32)value)>> 8) & 0x0000FF00)  |
+			((((uint32)value)>>24) & 0x000000FF));
+#endif
+	memcpy(buffer, &value, sizeof(value));
+	return buffer + sizeof(value);
+}
+
+const uint32
+	kLocalFileHeaderSignature = 0x04034b50UL,
+	kCentralDirectorySignature = 0x02014b50,
+	kEndOfCentralDirectorySignature = 0x06054b50;
+
+const uint16
+	kVersionMadeBy = 0x0017;
+
+ostream& operator<<(ostream& lhs, ZIPLocalFileHeader& rhs)
+{
+	char b[30];
+	char* p;
+	
+	uint16 versionNeededToExtract = 0x000a, bitFlag = 0, compressionMethod = 0;
+
+	if (rhs.deflated)
+	{
+		versionNeededToExtract = 0x0014;
+		compressionMethod = 0x0008;
+	}
+	
+	uint16 fileNameLength = rhs.filename.length(), extraFieldLength = 0;
+	
+	p = write(kLocalFileHeaderSignature, b);
+	p = write(versionNeededToExtract, p);
+	p = write(bitFlag, p);
+	p = write(compressionMethod, p);
+	p = write(rhs.file_mod_time, p);
+	p = write(rhs.file_mod_date, p);
+	p = write(rhs.crc, p);
+	p = write(rhs.compressed_size, p);
+	p = write(rhs.uncompressed_size, p);
+	p = write(fileNameLength, p);
+	p = write(extraFieldLength, p);
+	
+	assert(p == b + sizeof(b));
+	
+	lhs.write(b, sizeof(b));
+	lhs.write(rhs.filename.c_str(), fileNameLength);
+	
+	if (rhs.data.length() > 0)
+		lhs.write(rhs.data.c_str(), rhs.data.length());
+	
+	rhs.data.clear();
+	
+	return lhs;
+}
+
+ostream& operator<<(ostream& lhs, ZIPCentralDirectory& rhs)
+{
+	char b[46];
+	char* p;
+	
+	uint16 versionNeededToExtract = 0x000a, bitFlag = 0, compressionMethod = 0;
+
+	if (rhs.file.deflated)
+	{
+		versionNeededToExtract = 0x0014;
+		compressionMethod = 0x0008;
+	}
+	
+	uint16 fileNameLength = rhs.file.filename.length(),
+		extraFieldLength = 0, fileCommentLength = 0,
+		diskStartNumber = 0, internalFileAttributes = 0;
+	
+	uint32 externalFileAttributes = 0;
+	
+	p = write(kCentralDirectorySignature, b);
+	p = write(kVersionMadeBy, p);
+	p = write(versionNeededToExtract, p);
+	p = write(bitFlag, p);
+	p = write(compressionMethod, p);
+	p = write(rhs.file.file_mod_time, p);
+	p = write(rhs.file.file_mod_date, p);
+	p = write(rhs.file.crc, p);
+	p = write(rhs.file.compressed_size, p);
+	p = write(rhs.file.uncompressed_size, p);
+	p = write(fileNameLength, p);
+	p = write(extraFieldLength, p);
+	p = write(fileCommentLength, p);
+	p = write(diskStartNumber, p);
+	p = write(internalFileAttributes, p);
+	p = write(externalFileAttributes, p);
+	p = write(rhs.offset, p);
+
+	assert(p == b + sizeof(b));
+	
+	lhs.write(b, sizeof(b));
+	lhs.write(rhs.file.filename.c_str(), fileNameLength);
+
+	return lhs;
+}
+
+ostream& operator<<(ostream& lhs, ZIPEndOfCentralDirectory& rhs)
+{
+	char b[22];
+	char* p;
+	
+	uint16 nul = 0;
+	
+	p = write(kEndOfCentralDirectorySignature, b);
+	p = write(nul, p);	
+	p = write(nul, p);
+	p = write(rhs.entries, p);
+	p = write(rhs.entries, p);
+	p = write(rhs.directory_size, p);
+	p = write(rhs.directory_offset, p);
+	p = write(nul, p);
+
+	lhs.write(b, sizeof(b));
+
+	return lhs;
+}
+
+void deflate(
+	xml::node_ptr		inXML,
+	ZIPLocalFileHeader&	outFileHeader)
+{
+	xml::document doc(inXML);
+	
+	outFileHeader.data.clear();
+	
+	stringstream s;
+	s << doc;
+	string xml = s.str();
+	
+	const uint32 kBufferSize = 4096;
+	vector<uint8> b(kBufferSize);
+	unsigned char* buffer = &b[0];
+	
+	z_stream_s z_stream = {};
+
+	int err = deflateInit(&z_stream, Z_DEFAULT_COMPRESSION);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", z_stream.msg));
+
+	z_stream.avail_in = xml.length();
+	z_stream.next_in = const_cast<unsigned char*>(
+		reinterpret_cast<const unsigned char*>(xml.c_str()));
+	z_stream.total_in = 0;
+	
+	z_stream.next_out = buffer;
+	z_stream.avail_out = kBufferSize;
+	z_stream.total_out = 0;
+	
+	int action = Z_FINISH;
+
+	for (;;)
+	{
+		err = deflate(&z_stream, action);
+		
+		if (z_stream.avail_out < kBufferSize)
+			outFileHeader.data.append(buffer, buffer + (kBufferSize - z_stream.avail_out));
+		
+		if (err == Z_OK)
+		{
+			z_stream.next_out = buffer;
+			z_stream.avail_out = kBufferSize;
+			continue;
+		}
+		
+		break;
+	}
+	
+	if (err != Z_STREAM_END)
+		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
+	
+	assert(z_stream.total_out == outFileHeader.data.length());
+	
+	outFileHeader.crc = crc32(0, reinterpret_cast<const uint8*>(xml.c_str()), xml.length());
+	outFileHeader.compressed_size = outFileHeader.data.length();
+	outFileHeader.uncompressed_size = xml.length();
+	outFileHeader.deflated = true;
+	
+	deflateEnd(&z_stream);
+
+#if 1
+	vector<uint8> b2(xml.length());
+	
+	inflateInit(&z_stream);
+	
+	z_stream.avail_in = outFileHeader.data.length();
+	z_stream.next_in = (uint8*)outFileHeader.data.c_str();
+	z_stream.total_in = 0;
+	
+	z_stream.avail_out = xml.length();
+	z_stream.next_out = &b2[0];
+	z_stream.total_out = 0;
+	
+	err = inflate(&z_stream, Z_FINISH);
+	if (err != Z_OK and err != Z_STREAM_END)
+		THROW(("inflate failed: %s (%d)", z_stream.msg, err));
+
+	if (xml != (char*)&b2[0])
+		THROW(("inflate failed, not the same"));
+
+cout << "inflate was ok, result is :" << endl
+	 << xml << endl << endl;
+
+cout << hex << xml.length() << endl
+	 << hex << outFileHeader.data.length() << endl
+	 << hex << outFileHeader.crc << endl;
+	
+	inflateEnd(&z_stream);
+#endif
+}	
+
+}
 
 MePubDocument::MePubDocument(
 	const fs::path&		inProjectFile)
@@ -76,7 +363,6 @@ void MePubDocument::ReadFile(
 	// TODO: check the magic number of the file
 	
 	const char kMagicPK[] = "PK";
-	const char kMagicMT[] = "mimetypeapplication/epub+zip";
 	
 	char pk[sizeof(kMagicPK)] = "";
 	char mt[sizeof(kMagicMT)] = "";
@@ -136,6 +422,9 @@ void MePubDocument::ReadFile(
 				l += r;
 			}
 			
+			if (r < 0)
+				THROW(("Error reading archive: %s", archive_error_string(archive)));
+			
 			if (path == "mimetype")
 			{
 				if (not ba::starts_with(s, "application/epub+zip"))
@@ -146,8 +435,8 @@ void MePubDocument::ReadFile(
 				xml::document container(s);
 				xml::node_ptr root = container.root();
 				
-				if (root->name() != "container")
-					THROW(("Invalid container.xml file, root should be <container>"));
+				if (root->name() != "container" or root->ns() != kContainerNS)
+					THROW(("Invalid or unsupported container.xml file"));
 				
 				xml::node_ptr n = root->find_first_child("rootfiles");
 				if (not n)
@@ -217,7 +506,83 @@ void MePubDocument::ReadFile(
 void MePubDocument::WriteFile(
 	std::ostream&		inFile)
 {
+	try
+	{
+		ZIPLocalFileHeader fh;
+		vector<ZIPCentralDirectory> dir;
+		ZIPCentralDirectory cd;
+		
+		// first write out the mimetype, uncompressed
+		
+		fh.deflated = false;
+		fh.data = kEPubMimeType;
+		fh.compressed_size = fh.uncompressed_size = fh.data.length();
+		fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
+		fh.filename = "mimetype";
+		
+		cd.offset = inFile.tellp();
+		inFile << fh;
+		cd.file = fh;
+		dir.push_back(cd);
+		
+		// write META-INF/ directory
+		
+		fh.filename = "META-INF/";
+		fh.deflated = false;
+		fh.compressed_size = fh.uncompressed_size = 0;
+		fh.data.clear();
+		fh.crc = 0;
+
+		cd.offset = inFile.tellp();
+		inFile << fh;
+		cd.file = fh;
+		dir.push_back(cd);
+		
+		// write META-INF/container.xml
+		
+		fh.filename = "META-INF/container.xml";
+		
+		xml::node_ptr container(new xml::node("container"));
+		container->add_attribute("version", "1.0");
+		container->add_attribute("xmlns", kContainerNS);
+		xml::node_ptr rootfiles(new xml::node("rootfiles"));
+		container->add_child(rootfiles);
+		xml::node_ptr rootfile(new xml::node("rootfile"));
+		rootfile->add_attribute("full-path", mRootFile.string());
+		rootfile->add_attribute("media-type", "application/oebps-package+xml");
+		rootfiles->add_child(rootfile);
+		deflate(container, fh);
+
+		cd.offset = inFile.tellp();
+		inFile << fh;
+		cd.file = fh;
+		dir.push_back(cd);
+		
+		// rest of the items
+		
+		vector<MProjectItem*> items;
+		mRoot.Flatten(items);
+		
+		
+		
+		// now write out directory
+		
+		ZIPEndOfCentralDirectory end;
+		
+		end.entries = dir.size();
+		end.directory_offset = inFile.tellp();
+		
+		for (vector<ZIPCentralDirectory>::iterator e = dir.begin(); e != dir.end(); ++e)
+			inFile << *e;
+		
+		end.directory_size = inFile.tellp() - static_cast<streamoff>(end.directory_offset);
+		inFile << end;
+	}
+	catch (...)
+	{
 	
+		throw;	
+	}
 }
 
 ssize_t MePubDocument::archive_read_callback_cb(
