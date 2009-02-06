@@ -608,6 +608,47 @@ MProjectItem* MProjectGroup::GetItem(
 	return mItems.at(inIndex);
 }
 
+// ---------------------------------------------------------------------------
+//	MProjectGroup::GetItem
+
+MProjectItem* MProjectGroup::GetItem(
+	const fs::path&		inPath) const
+{
+	const MProjectItem* result;
+	
+	fs::path::iterator pi = inPath.begin();
+	
+	if (pi == inPath.end())
+		result = this;
+	else
+	{
+		const MProjectGroup* group = this;
+		
+		while (group != nil and pi != inPath.end())
+		{
+			vector<MProjectItem*>::const_iterator item = find_if(
+				group->mItems.begin(), group->mItems.end(), boost::bind(&MProjectItem::GetName, _1) == *pi);
+		
+			if (item == group->mItems.end())
+			{
+				result = nil;
+				break;
+			}
+		
+			++pi;
+		
+			group = dynamic_cast<MProjectGroup*>(*item);
+			if (group != nil)
+				result = group;
+			else if (pi != inPath.end())
+				THROW(("Item/group mismatch for %s", (*item)->GetName().c_str()));
+			else
+				result = *item;
+		}
+	}
+	
+	return const_cast<MProjectItem*>(result);
+}
 
 // ---------------------------------------------------------------------------
 //	MProjectGroup::Contains
@@ -618,6 +659,39 @@ bool MProjectGroup::Contains(
 	return this == inItem or
 		accumulate(mItems.begin(), mItems.end(), false,
 			boost::bind(logical_or<bool>(), _1, boost::bind(&MProjectItem::Contains, _2, inItem)));
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectGroup::GetGroupForPath
+
+MProjectGroup* MProjectGroup::GetGroupForPath(
+	const fs::path&		inPath)
+{
+	MProjectGroup* result = const_cast<MProjectGroup*>(this);
+	
+	fs::path::iterator pi = inPath.begin();
+	while (pi != inPath.end() and not pi->empty())
+	{
+		vector<MProjectItem*>::iterator item = find_if(
+			result->mItems.begin(), result->mItems.end(), boost::bind(&MProjectItem::GetName, _1) == *pi);
+		
+		if (item == result->mItems.end())
+		{
+			MProjectGroup* group = new MProjectGroup(*pi, this);
+			result->AddProjectItem(group);
+			result = group;
+		}
+		else
+		{
+			result = dynamic_cast<MProjectGroup*>(*item);
+			if (result == nil)
+				THROW(("Item %s already exists as non group item", pi->c_str()));
+		}
+
+		++pi;
+	}
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------

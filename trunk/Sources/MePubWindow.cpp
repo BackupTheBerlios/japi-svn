@@ -1,7 +1,7 @@
-/* 
-   Created by: Maarten L. Hekkelman
-   Date: donderdag 05 februari, 2009
-*/
+//          Copyright Maarten L. Hekkelman 2006-2008
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
 #include "MJapi.h"
 
@@ -21,12 +21,22 @@ using namespace std;
 namespace {
 
 enum {
-	kFilesListViewID	= 'tre1',
-	kMetaInfoViewID		= 'tre2',
+	kFilesListViewID		= 'tre1',
 	
-	kRenditionPopupID	= 'targ',
+	kDCIDViewID				= 'dcID',
+	kDCTitleViewID			= 'dcTI',
+	kDCLanguageViewID		= 'dcLA',
+	kDCCreatorViewID		= 'dcCR',
+	kDCPublisherViewID		= 'dcPU',
+	kDCDescriptionViewID	= 'dcDE',
+	kDCCoverageViewID		= 'dcCO',
+	kDCSourceViewID			= 'dcSO',
+	kDCRightsViewID			= 'dcRI',
+	kDCSubjectViewID		= 'dcSU',
 	
-	kNoteBookID			= 'note'
+	kTOCViewID				= 'tre3',
+	
+	kNoteBookID				= 'note'
 };
 	
 }
@@ -46,6 +56,8 @@ MePubWindow::MePubWindow()
 
 MePubWindow::~MePubWindow()
 {
+	delete mFilesTree;
+	mFilesTree = nil;
 }
 
 void MePubWindow::Initialize(
@@ -69,6 +81,35 @@ void MePubWindow::Initialize(
 	filesTree.SetModel(mFilesTree->GetModel());
 	filesTree.ExpandAll();
 
+	// fill in the information fields
+	
+	SetText(kDCIDViewID,			mEPub->GetDocumentID());
+	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
+	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
+	SetText(kDCCreatorViewID,		mEPub->GetDublinCoreValue("creator"));
+	SetText(kDCPublisherViewID,		mEPub->GetDublinCoreValue("publisher"));
+	SetText(kDCDescriptionViewID,	mEPub->GetDublinCoreValue("description"));
+	SetText(kDCCoverageViewID,		mEPub->GetDublinCoreValue("coverage"));
+	SetText(kDCSourceViewID,		mEPub->GetDublinCoreValue("source"));
+	SetText(kDCRightsViewID,		mEPub->GetDublinCoreValue("rights"));
+	SetText(kDCSubjectViewID,		mEPub->GetDublinCoreValue("subject"));
+}
+
+bool MePubWindow::DoClose()
+{
+	bool result = false;
+	
+	if (MDocWindow::DoClose())
+	{
+		// need to do this here, otherwise we crash in destructor code
+		
+		delete mFilesTree;
+		mFilesTree = nil;
+		
+		result = true;
+	}
+	
+	return result;
 }
 
 bool MePubWindow::UpdateCommandStatus(
@@ -212,3 +253,53 @@ void MePubWindow::InvokeFileRow(
 	}
 }
 
+// ---------------------------------------------------------------------------
+//	MProjectWindow::ValueChanged
+
+void MePubWindow::ValueChanged(
+	uint32			inID)
+{
+	switch (inID)
+	{
+		case kDCIDViewID:
+			mEPub->SetDocumentID(GetText(inID));
+			break;
+
+		case kDCTitleViewID:
+			mEPub->SetDublinCoreValue("title", GetText(inID));
+			break;
+
+		case kDCLanguageViewID:
+			mEPub->SetDublinCoreValue("language", GetText(inID));
+			break;
+
+		case kDCCreatorViewID:
+			mEPub->SetDublinCoreValue("creator", GetText(inID));
+			break;
+
+		case kDCPublisherViewID:
+			mEPub->SetDublinCoreValue("publisher", GetText(inID));
+			break;
+
+		case kDCDescriptionViewID:
+			mEPub->SetDublinCoreValue("description", GetText(inID));
+			break;
+
+		case kDCCoverageViewID:
+			mEPub->SetDublinCoreValue("coverage", GetText(inID));
+			break;
+
+		case kDCSourceViewID:
+			mEPub->SetDublinCoreValue("source", GetText(inID));
+			break;
+
+		case kDCRightsViewID:
+			mEPub->SetDublinCoreValue("rights", GetText(inID));
+			break;
+
+		case kDCSubjectViewID:
+			mEPub->SetDublinCoreValue("subject", GetText(inID));
+			break;
+
+	}
+}

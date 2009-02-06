@@ -71,6 +71,7 @@
 			</group>
 			<group name="ePub">
 				<file>MePubDocument.cpp</file>
+				<file>MePubItem.cpp</file>
 				<file>MePubWindow.cpp</file>
 			</group>
 			<group name="Language">

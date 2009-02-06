@@ -228,8 +228,6 @@ void document_imp::StartElementHandler(
 
 	node_ptr n;
 	
-cout << "name: " << element << " ns: " << ns << " prefix: " << prefix << endl;
-
 	n.reset(new node(element, ns, prefix));
 
 	if (cur.empty())

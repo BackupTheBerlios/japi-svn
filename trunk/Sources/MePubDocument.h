@@ -1,7 +1,7 @@
-/* 
-   Created by: Maarten L. Hekkelman
-   Date: donderdag 05 februari, 2009
-*/
+//          Copyright Maarten L. Hekkelman 2006-2008
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef MEPUBDOCUMENT_H
 #define MEPUBDOCUMENT_H
@@ -12,6 +12,9 @@
 
 class MProjectGroup;
 class MProjectItem;
+namespace xml {
+class node;
+}
 
 class MePubDocument : public MDocument
 {
@@ -50,7 +53,23 @@ class MePubDocument : public MDocument
 	MEventOut<void(MProjectItem*)>				eInsertedFile;
 	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
 
+	std::string			GetDocumentID() const;
+	
+	void				SetDocumentID(
+							const std::string&	inID);
+
+	std::string			GetDublinCoreValue(
+							const std::string&	inName) const;
+
+	void				SetDublinCoreValue(
+							const std::string&	inName,
+							const std::string&	inValue);
+
   private:
+	
+	void				ParseOPF(
+							const fs::path&		inDirectory,
+							xml::node&			inOPF);
 
 	static ssize_t		archive_read_callback_cb(
 							struct archive*		inArchive,
@@ -89,10 +108,11 @@ class MePubDocument : public MDocument
 	std::istream*		mInputFileStream;
 	char				mBuffer[1024];
 
-	std::string			mRootFile;
-	std::map<fs::path,std::string>
-						mContent;
+	fs::path			mRootFile;
 	MProjectGroup		mRoot;
+	std::string			mDocumentID, mDocumentIDScheme;
+	std::map<std::string,std::string>
+						mDublinCore;
 };
 
 #endif

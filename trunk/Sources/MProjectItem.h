@@ -196,8 +196,14 @@ class MProjectGroup : public MProjectItem
 	MProjectItem*	GetItem(
 						uint32				inIndex) const;
 
+	MProjectItem*	GetItem(
+						const fs::path&		inPath) const;
+
 	virtual bool	Contains(
 						MProjectItem*		inItem) const;
+
+	MProjectGroup*	GetGroupForPath(
+						const fs::path&		inPath);
 
   private:
 	std::vector<MProjectItem*>

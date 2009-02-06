@@ -12,6 +12,7 @@
 #define MWINDOW_H
 
 #include "MView.h"
+#include "MColor.h"
 #include "MHandler.h"
 
 #include "MCallbacks.h"
@@ -70,6 +71,87 @@ class MWindow : public MView, public MHandler
 
 	void					GetMaxPosition(
 								MRect&			outRect) const;
+	
+	// Glade support, views should have a name consisting of four characters
+	// and so they are accessible by ID which is a uint32.
+	
+	void			SetFocus(
+						uint32				inID);
+	
+	void			GetText(
+						uint32				inID,
+						std::string&		outText) const	{ outText = GetText(inID); }
+
+	std::string		GetText(
+						uint32				inID) const;
+
+	void			SetText(
+						uint32				inID,
+						const std::string&	inText);
+
+	void			SetPasswordField(
+						uint32				inID,
+						bool				isVisible);
+
+	int32			GetValue(
+						uint32				inID) const;
+
+	void			SetValue(
+						uint32				inID,
+						int32				inValue);
+
+	// for comboboxes
+	void			GetValues(
+						uint32				inID,
+						std::vector<std::string>& 
+											outValues) const;
+
+	void			SetValues(
+						uint32				inID,
+						const std::vector<std::string>&
+											inValues);
+
+	void			SetColor(
+						uint32				inID,
+						MColor				inColor);
+
+	MColor			GetColor(
+						uint32				inID) const;
+
+	bool			IsChecked(
+						uint32				inID) const;
+
+	void			SetChecked(
+						uint32				inID,
+						bool				inOn);
+
+	bool			IsVisible(
+						uint32				inID) const;
+
+	void			SetVisible(
+						uint32				inID,
+						bool				inVisible);
+
+	bool			IsEnabled(
+						uint32				inID) const;
+	
+	void			SetEnabled(
+						uint32				inID,
+						bool				inEnabled);
+
+	bool			IsExpanded(
+						uint32				inID) const;
+	
+	void			SetExpanded(
+						uint32				inID,
+						bool				inExpanded);
+
+	void			SetProgressFraction(
+						uint32				inID,
+						float				inFraction);
+
+	virtual void	ValueChanged(
+						uint32				inID);
 
   protected:
 
@@ -105,6 +187,7 @@ class MWindow : public MView, public MHandler
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
 
+
 	std::string				mTitle;
 	bool					mModified;
 	boost::thread*			mTransitionThread;
@@ -132,6 +215,10 @@ class MWindow : public MView, public MHandler
 
 	virtual void			FocusChanged(
 								uint32			inFocussedID);
+
+	static void				ChangedCallBack(
+								GtkWidget*		inWidget,
+								gpointer		inUserData);
 
 	static MWindow*			sFirst;
 	MWindow*				mNext;
