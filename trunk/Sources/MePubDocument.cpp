@@ -235,7 +235,8 @@ void deflate(
 	
 	z_stream_s z_stream = {};
 
-	int err = deflateInit(&z_stream, Z_DEFAULT_COMPRESSION);
+	int err = deflateInit2(&z_stream, Z_BEST_COMPRESSION,
+		Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 	if (err != Z_OK)
 		THROW(("Compressor error: %s", z_stream.msg));
 
@@ -278,36 +279,6 @@ void deflate(
 	outFileHeader.deflated = true;
 	
 	deflateEnd(&z_stream);
-
-#if 1
-	vector<uint8> b2(xml.length());
-	
-	inflateInit(&z_stream);
-	
-	z_stream.avail_in = outFileHeader.data.length();
-	z_stream.next_in = (uint8*)outFileHeader.data.c_str();
-	z_stream.total_in = 0;
-	
-	z_stream.avail_out = xml.length();
-	z_stream.next_out = &b2[0];
-	z_stream.total_out = 0;
-	
-	err = inflate(&z_stream, Z_FINISH);
-	if (err != Z_OK and err != Z_STREAM_END)
-		THROW(("inflate failed: %s (%d)", z_stream.msg, err));
-
-	if (xml != (char*)&b2[0])
-		THROW(("inflate failed, not the same"));
-
-cout << "inflate was ok, result is :" << endl
-	 << xml << endl << endl;
-
-cout << hex << xml.length() << endl
-	 << hex << outFileHeader.data.length() << endl
-	 << hex << outFileHeader.crc << endl;
-	
-	inflateEnd(&z_stream);
-#endif
 }	
 
 }
