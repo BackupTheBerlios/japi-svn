@@ -6,6 +6,8 @@
 #include "MJapi.h"
 
 #include <boost/filesystem/fstream.hpp>
+#include <cstring>
+#include <boost/algorithm/string.hpp>
 
 #include "MDocument.h"
 #include "MUtils.h"
@@ -15,6 +17,7 @@
 #include "MJapiApp.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 MDocument* MDocument::sFirst;
 
@@ -110,7 +113,7 @@ MDocument::~MDocument()
 		}
 	}
 	
-	eDocumentClosed();
+	eDocumentClosed(this);
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +124,7 @@ void MDocument::SetFileNameHint(
 {
 	mSpecified = false;
 	mURL.SetFileName(inNameHint);
-	eFileSpecChanged(mURL);
+	eFileSpecChanged(this, mURL);
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +178,7 @@ bool MDocument::DoSaveAs(
 		mSpecified = true;
 		mReadOnly = false;
 	
-		eFileSpecChanged(mURL);
+		eFileSpecChanged(this, mURL);
 		
 		result = true;
 	}
@@ -317,7 +320,7 @@ void MDocument::CloseDocument()
 {
 	try
 	{
-		eDocumentClosed();
+		eDocumentClosed(this);
 	}
 	catch (...) {}
 	
@@ -349,4 +352,28 @@ bool MDocument::ProcessCommand(
 	return false;
 }
 
+// ---------------------------------------------------------------------------
+//	GetWindowTitle
 
+string MDocument::GetWindowTitle() const
+{
+	string result;
+
+	if (mURL.IsLocal())
+	{
+		result = mURL.GetPath().string();
+		
+		// strip off HOME, if any
+		
+		const char* HOME = getenv("HOME");
+		if (HOME != nil and ba::starts_with(result, HOME))
+		{
+			result.erase(0, strlen(HOME));
+			result.insert(0, "~");
+		}
+	}
+	else
+		result = mURL.str();
+	
+	return result;
+}

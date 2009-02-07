@@ -18,8 +18,7 @@ class MDiffWindow : public MDialog
 
 	virtual				~MDiffWindow();
 
-	MEventIn<void()>	eDocument1Closed;
-	MEventIn<void()>	eDocument2Closed;
+	MEventIn<void(MDocument*)>	eDocumentClosed;
 	
   protected:
 
@@ -39,9 +38,8 @@ class MDiffWindow : public MDialog
 	virtual void		ValueChanged(
 							uint32			inID);
 
-	void				Document1Closed();
-
-	void				Document2Closed();
+	void				DocumentClosed(
+							MDocument*		inDocument);
 
 	void				ChooseFile(
 							int				inFileNr);

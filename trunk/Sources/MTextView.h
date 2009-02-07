@@ -64,7 +64,7 @@ class MTextView : public MView
 	MEventIn<void()>					eInvalidateAll;
 	MEventIn<void()>					eStylesChanged;
 
-	MEventIn<void()>					eDocumentClosed;
+	MEventIn<void(MDocument*)>			eDocumentClosed;
 	MEventIn<void(MDocument*)>			eDocumentChanged;
 	
 	MEventIn<void(double)>				eIdle;
@@ -74,7 +74,8 @@ class MTextView : public MView
 	void				SetDocument(
 							MDocument*		inDocument);
 
-	void				DocumentClosed();
+	void				DocumentClosed(
+							MDocument*		inDocument);
 	
   protected:
 

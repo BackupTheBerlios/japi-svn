@@ -215,7 +215,7 @@ MTextDocument::~MTextDocument()
 	delete mNamedRange;
 	delete mIncludeFiles;
 	
-	eDocumentClosed();
+	eDocumentClosed(this);
 }
 
 MTextDocument* MTextDocument::GetFirstTextDocument()
@@ -233,7 +233,7 @@ void MTextDocument::SetFileNameHint(
 {
 	mSpecified = false;
 	mURL.SetFileName(inNameHint);
-	eFileSpecChanged(mURL);
+	eFileSpecChanged(this, mURL);
 
 	delete mNamedRange;
 	mNamedRange = nil;
@@ -249,6 +249,22 @@ void MTextDocument::SetFileNameHint(
 	}
 	
 	Rewrap();
+}
+
+string MTextDocument::GetWindowTitle() const
+{
+	string result;
+	
+	if (mEPub != nil)
+	{
+		stringstream s;
+		s << '[' << mEPub->GetURL().GetPath().leaf() << ']' << mEPubFile;
+		result = s.str();
+	}
+	else
+		result = MDocument::GetWindowTitle();
+
+	return result;
 }
 
 bool MTextDocument::DoSave()
@@ -4426,6 +4442,12 @@ void MTextDocument::PrefsChanged()
 void MTextDocument::ShellStatusIn(bool inActive)
 {
 	eShellStatus(inActive);
+	
+	if (not inActive)
+	{
+		string cwd = mShell->GetCWD();
+		eBaseDirChanged(MUrl(fs::path(cwd)));
+	}
 }
 
 void MTextDocument::StdOut(const char* inText, uint32 inSize)

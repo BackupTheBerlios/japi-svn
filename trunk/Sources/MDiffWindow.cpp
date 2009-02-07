@@ -41,8 +41,7 @@ enum {
 MDiffWindow::MDiffWindow(
 	MTextDocument*		inDocument)
 	: MDialog("diff-window")
-	, eDocument1Closed(this, &MDiffWindow::Document1Closed)
-	, eDocument2Closed(this, &MDiffWindow::Document2Closed)
+	, eDocumentClosed(this, &MDiffWindow::DocumentClosed)
 	, mSelected(this, &MDiffWindow::DiffSelected)
 	, mDoc1(nil)
 	, mDoc2(nil)
@@ -192,18 +191,21 @@ void MDiffWindow::ChooseFile(int inFileNr)
 // ----------------------------------------------------------------------------
 // DocumentClosed
 
-void MDiffWindow::Document1Closed()
+void MDiffWindow::DocumentClosed(
+	MDocument*		inDocument)
 {
 	ClearList();
-	mDoc1 = nil;
-	SetButtonTitle(1, _("File 1"));
-}
 
-void MDiffWindow::Document2Closed()
-{
-	ClearList();
-	mDoc2 = nil;
-	SetButtonTitle(2, _("File 2"));
+	if (inDocument == mDoc1)
+	{
+		mDoc1 = nil;
+		SetButtonTitle(1, _("File 1"));
+	}
+	else if (inDocument == mDoc2)
+	{
+		mDoc2 = nil;
+		SetButtonTitle(2, _("File 2"));
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -214,13 +216,13 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 	if (inDocNr == 1)
 	{
 		if (mDoc1 != nil)
-			RemoveRoute(eDocument1Closed, mDoc1->eDocumentClosed);
+			RemoveRoute(eDocumentClosed, mDoc1->eDocumentClosed);
 		
 		mDoc1 = inDocument;
 
 		if (mDoc1 != nil)
 		{
-			AddRoute(eDocument1Closed, mDoc1->eDocumentClosed);
+			AddRoute(eDocumentClosed, mDoc1->eDocumentClosed);
 			SetButtonTitle(1, inDocument->GetURL().GetFileName());
 		}
 		else
@@ -229,13 +231,13 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 	else
 	{
 		if (mDoc2 != nil)
-			RemoveRoute(eDocument2Closed, mDoc2->eDocumentClosed);
+			RemoveRoute(eDocumentClosed, mDoc2->eDocumentClosed);
 		
 		mDoc2 = inDocument;
 
 		if (mDoc2 != nil)
 		{
-			AddRoute(eDocument2Closed, mDoc2->eDocumentClosed);
+			AddRoute(eDocumentClosed, mDoc2->eDocumentClosed);
 			SetButtonTitle(2, inDocument->GetURL().GetFileName());
 		}
 		else

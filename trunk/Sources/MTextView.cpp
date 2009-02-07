@@ -1622,7 +1622,8 @@ void MTextView::StylesChanged()
 	}
 }
 
-void MTextView::DocumentClosed()
+void MTextView::DocumentClosed(
+	MDocument*		inDocument)
 {
 	SetDocument(nil);
 }

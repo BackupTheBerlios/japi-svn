@@ -119,7 +119,7 @@ void MDocWindow::DocumentChanged(
 		// set title
 		
 		if (inDocument->IsSpecified())
-			FileSpecChanged(inDocument->GetURL());
+			FileSpecChanged(inDocument, inDocument->GetURL());
 		else
 			SetTitle(GetUntitledTitle());
 
@@ -136,15 +136,16 @@ void MDocWindow::ModifiedChanged(
 }
 
 void MDocWindow::FileSpecChanged(
+	MDocument*		inDocument,
 	const MUrl&		inFile)
 {
-	if (not inFile.IsLocal() or fs::exists(inFile.GetPath()))
+	MDocument* doc = mController->GetDocument();
+
+	if (doc != nil)
 	{
-		MDocument* doc = mController->GetDocument();
-		
-		string title = inFile.str();
-		
-		if (doc != nil and doc->IsReadOnly())
+		string title = doc->GetWindowTitle();;
+
+		if (doc->IsReadOnly())
 			title += _(" [Read Only]");
 		
 		SetTitle(title);

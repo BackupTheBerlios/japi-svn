@@ -10,6 +10,7 @@
 
 class MProjectItem;
 class MProjectTree;
+class MTextDocument;
 
 class MePubWindow : public MDocWindow
 {
@@ -66,8 +67,21 @@ class MePubWindow : public MDocWindow
 	virtual void	ValueChanged(
 						uint32			inID);
 
+	MEventIn<void(MDocument*)>		eDocumentClosed;	// doc closed
+	MEventIn<void(MDocument*, const MUrl&)>
+									eFileSpecChanged;	// doc was saved as
+	
+	void			TextDocClosed(
+						MDocument*		inDocument);
+	void			TextDocFileSpecChanged(
+						MDocument*		inDocument,
+						const MUrl&		inURL);
+
 	MePubDocument*	mEPub;
 	MProjectTree*	mFilesTree;
+	
+	typedef std::map<fs::path,MTextDocument*>	MEPubTextDocMap;
+	MEPubTextDocMap	mOpenFiles;
 };
 
 #endif

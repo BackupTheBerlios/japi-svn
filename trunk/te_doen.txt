@@ -1,7 +1,7 @@
 ﻿Te doen
 
 - ePub
-	- editen files
+	- sluiten text docs bij sluiten epub
 	- adobe page dinges
 	- toc
 	- dublin core opties

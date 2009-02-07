@@ -74,6 +74,8 @@ MePubWindow::MePubWindow()
 	: MDocWindow("epub-window")
 	, eKeyPressEvent(this, &MePubWindow::OnKeyPressEvent)
 	, eInvokeFileRow(this, &MePubWindow::InvokeFileRow)
+	, eDocumentClosed(this, &MePubWindow::TextDocClosed)
+	, eFileSpecChanged(this, &MePubWindow::TextDocFileSpecChanged)
 {
 	mController = new MController(this);
 	
@@ -159,8 +161,16 @@ void MePubWindow::Initialize(
 bool MePubWindow::DoClose()
 {
 	bool result = false;
+
+	while (not mOpenFiles.empty())
+	{
+		MDocument* doc = mOpenFiles.begin()->second;
+		MController* controller = doc->GetFirstController();
+		if (not controller->TryCloseController(kSaveChangesClosingDocument))
+			break;
+	}
 	
-	if (MDocWindow::DoClose())
+	if (mOpenFiles.empty() and MDocWindow::DoClose())
 	{
 		// need to do this here, otherwise we crash in destructor code
 		
@@ -339,9 +349,48 @@ void MePubWindow::InvokeFileRow(
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
 		if (ePubItem != nil)
 		{
-			auto_ptr<MTextDocument> doc(new MTextDocument(mEPub, ePubItem->GetPath()));
-			gApp->DisplayDocument(doc.get());
-			doc.release();
+			fs::path path = ePubItem->GetPath();
+			
+			MTextDocument* doc = mOpenFiles[path];
+
+			if (doc == nil)
+			{
+				doc = new MTextDocument(mEPub, path);
+				AddRoute(doc->eDocumentClosed, eDocumentClosed);
+				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
+				mOpenFiles[path] = doc;
+			}
+
+			gApp->DisplayDocument(doc);
+		}
+	}
+}
+
+void MePubWindow::TextDocClosed(
+	MDocument*			inDocument)
+{
+	MEPubTextDocMap::iterator i;
+	for (i = mOpenFiles.begin(); i != mOpenFiles.end(); ++i)
+	{
+		if (i->second == inDocument)
+		{
+			mOpenFiles.erase(i);
+			break;
+		}
+	}
+}
+
+void MePubWindow::TextDocFileSpecChanged(
+	MDocument*			inDocument,
+	const MUrl&			inURL)
+{
+	MEPubTextDocMap::iterator i;
+	for (i = mOpenFiles.begin(); i != mOpenFiles.end(); ++i)
+	{
+		if (i->second == inDocument)
+		{
+			mOpenFiles.erase(i);
+			break;
 		}
 	}
 }

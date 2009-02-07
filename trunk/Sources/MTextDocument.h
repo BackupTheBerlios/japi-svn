@@ -80,6 +80,8 @@ class MTextDocument : public MDocument
 	virtual void		SetFileNameHint(
 							const std::string&	inName);
 
+	virtual std::string	GetWindowTitle() const;
+
 	virtual bool		DoSave();
 
 	virtual bool		DoSaveAs(

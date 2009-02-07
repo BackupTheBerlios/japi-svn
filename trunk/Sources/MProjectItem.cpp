@@ -727,18 +727,21 @@ void MProjectGroup::iterator::increment()
 		mGroup = group;
 		mOffset = 0;
 	}
-	else if (mOffset < mGroup->mItems.size())
-		++mOffset;
-	else if (mGroup != mBegin)
+	else
 	{
-		MProjectGroup* parent = mGroup->mParent;
-		vector<MProjectItem*>::iterator i =
-			find(parent->mItems.begin(), parent->mItems.end(), mGroup);
-		if (i == parent->mItems.end())
-			THROW(("internal error in MProjectItem::iterator"));
+		++mOffset;
 		
-		mGroup = parent;
-		mOffset = (i - parent->mItems.begin()) + 1;
+		while (mOffset >= mGroup->mItems.size() and mGroup != mBegin)
+		{
+			MProjectGroup* parent = mGroup->mParent;
+			vector<MProjectItem*>::iterator i =
+				find(parent->mItems.begin(), parent->mItems.end(), mGroup);
+			if (i == parent->mItems.end())
+				THROW(("internal error in MProjectItem::iterator"));
+			
+			mGroup = parent;
+			mOffset = (i - parent->mItems.begin()) + 1;
+		}
 	}
 }
 

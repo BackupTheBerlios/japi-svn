@@ -83,6 +83,8 @@ class MDocument
 	virtual void		SetModified(
 							bool				inModified);
 
+	virtual std::string	GetWindowTitle() const;
+
 	// note that MDocument is NOT a MHandler, but does 
 	// implement the UpdateCommandStatus and ProcessCommand methods
 	
@@ -100,8 +102,9 @@ class MDocument
 							uint32			inModifiers);
 
 	MEventOut<void(bool)>				eModifiedChanged;
-	MEventOut<void()>					eDocumentClosed;
-	MEventOut<void(const MUrl&)>		eFileSpecChanged;
+	MEventOut<void(MDocument*)>			eDocumentClosed;
+	MEventOut<void(MDocument*, const MUrl&)>
+										eFileSpecChanged;
 	MEventOut<void(const MUrl&)>		eBaseDirChanged;
 
   protected:
