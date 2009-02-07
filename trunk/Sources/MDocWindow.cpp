@@ -107,6 +107,10 @@ MDocument* MDocWindow::GetDocument()
 	return mController->GetDocument();
 }
 
+void MDocWindow::SaveState()
+{
+}
+
 void MDocWindow::DocumentChanged(
 	MDocument*		inDocument)
 {

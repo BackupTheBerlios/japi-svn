@@ -188,6 +188,27 @@ class MProjectGroup : public MProjectItem
 						std::vector<MProjectItem*>&
 											outItems);
 
+	class iterator : public boost::iterator_facade<iterator, MProjectItem, boost::forward_traversal_tag>
+	{
+	  public:
+						iterator(const iterator& inOther);
+						iterator(MProjectGroup& inGroup, uint32 inOffset);
+		
+	  private:
+		friend class boost::iterator_core_access;
+
+		void			increment();
+		MProjectItem&	dereference() const;
+		bool			equal(const iterator& inOther) const;
+		
+		MProjectGroup*	mBegin;
+		MProjectGroup*	mGroup;
+		uint32			mOffset;
+	};
+	
+	iterator		begin()									{ return iterator(*this, 0); }
+	iterator		end()									{ return iterator(*this, mItems.size()); }
+
 	virtual int32	Count() const							{ return mItems.size(); }
 
 	std::vector<MProjectItem*>&

@@ -9,16 +9,45 @@
 
 #include "MePubDocument.h"
 #include "MePubWindow.h"
-
+#include "MePubItem.h"
+#include "MTextDocument.h"
 #include "MGtkWrappers.h"
 #include "MProjectTree.h"
 #include "MStrings.h"
+#include "MUtils.h"
+#include "MPreferences.h"
 
 #include "MError.h"
 
 using namespace std;
 
 namespace {
+
+struct MePubState
+{
+	uint16			mWindowPosition[2];
+	uint16			mWindowSize[2];
+	uint8			mSelectedPanel;
+	uint8			mFillers[3];
+	
+	void			Swap();
+};
+
+const char
+	kJapieePubState[] = "com.hekkelman.japi.ePubState";
+
+const uint32
+	kMePubStateSize = sizeof(MePubState);
+
+void MePubState::Swap()
+{
+	net_swapper swap;
+	
+	mWindowPosition[0] = swap(mWindowPosition[0]);
+	mWindowPosition[1] = swap(mWindowPosition[1]);
+	mWindowSize[0] = swap(mWindowSize[0]);
+	mWindowSize[1] = swap(mWindowSize[1]);
+}
 
 enum {
 	kFilesListViewID		= 'tre1',
@@ -93,6 +122,38 @@ void MePubWindow::Initialize(
 	SetText(kDCSourceViewID,		mEPub->GetDublinCoreValue("source"));
 	SetText(kDCRightsViewID,		mEPub->GetDublinCoreValue("rights"));
 	SetText(kDCSubjectViewID,		mEPub->GetDublinCoreValue("subject"));
+
+	bool useState = false;
+	MePubState state = {};
+	
+	if (Preferences::GetInteger("save state", 1))
+	{
+		fs::path file = inDocument->GetURL().GetPath();
+		
+		ssize_t r = read_attribute(file, kJapieePubState, &state, kMePubStateSize);
+		
+		useState = static_cast<uint32>(r) == kMePubStateSize;
+	}
+	
+	if (useState)
+	{
+		state.Swap();
+
+		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+		{
+			MRect r(
+				state.mWindowPosition[0], state.mWindowPosition[1],
+				state.mWindowSize[0], state.mWindowSize[1]);
+		
+			SetWindowPosition(r);
+		}
+		
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		book.SetPage(state.mSelectedPanel);
+	}
+	
+	mEPub->SetModified(false);
 }
 
 bool MePubWindow::DoClose()
@@ -110,6 +171,37 @@ bool MePubWindow::DoClose()
 	}
 	
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	SaveState
+
+void MePubWindow::SaveState()
+{
+	try
+	{
+		fs::path file = mEPub->GetURL().GetPath();
+		MePubState state = { };
+
+		(void)read_attribute(file, kJapieePubState, &state, kMePubStateSize);
+		
+		state.Swap();
+
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		state.mSelectedPanel = book.GetPage();
+
+		MRect r;
+		GetWindowPosition(r);
+		state.mWindowPosition[0] = r.x;
+		state.mWindowPosition[1] = r.y;
+		state.mWindowSize[0] = r.width;
+		state.mWindowSize[1] = r.height;
+
+		state.Swap();
+		
+		write_attribute(file, kJapieePubState, &state, kMePubStateSize);
+	}
+	catch (...) {}
 }
 
 bool MePubWindow::UpdateCommandStatus(
@@ -244,11 +336,12 @@ void MePubWindow::InvokeFileRow(
 	if (gtk_tree_model_get_iter(mFilesTree->GetModel(), &iter, inPath))
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
-		if (file != nil)
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
+		if (ePubItem != nil)
 		{
-			fs::path p = file->GetPath();
-			gApp->OpenOneDocument(MUrl(p));
+			auto_ptr<MTextDocument> doc(new MTextDocument(mEPub, ePubItem->GetPath()));
+			gApp->DisplayDocument(doc.get());
+			doc.release();
 		}
 	}
 }

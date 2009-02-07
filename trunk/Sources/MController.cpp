@@ -7,6 +7,7 @@
 
 #include "MDocWindow.h"
 #include "MDocument.h"
+#include "MPreferences.h"
 
 using namespace std;
 
@@ -43,6 +44,13 @@ void MController::SetDocument(
 	{
 		if (mDocument != nil)
 		{
+			try
+			{
+				if (mDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
+					mDocWindow->SaveState();
+			}
+			catch (...) {}
+			
 			mDocWindow->RemoveRoutes(mDocument);
 			mDocument->RemoveController(this);
 		}

@@ -218,17 +218,9 @@ ostream& operator<<(ostream& lhs, ZIPEndOfCentralDirectory& rhs)
 }
 
 void deflate(
-	xml::node_ptr		inXML,
+	const string&		inText,	
 	ZIPLocalFileHeader&	outFileHeader)
 {
-	xml::document doc(inXML);
-	
-	outFileHeader.data.clear();
-	
-	stringstream s;
-	s << doc;
-	string xml = s.str();
-	
 	const uint32 kBufferSize = 4096;
 	vector<uint8> b(kBufferSize);
 	unsigned char* buffer = &b[0];
@@ -240,9 +232,9 @@ void deflate(
 	if (err != Z_OK)
 		THROW(("Compressor error: %s", z_stream.msg));
 
-	z_stream.avail_in = xml.length();
+	z_stream.avail_in = inText.length();
 	z_stream.next_in = const_cast<unsigned char*>(
-		reinterpret_cast<const unsigned char*>(xml.c_str()));
+		reinterpret_cast<const unsigned char*>(inText.c_str()));
 	z_stream.total_in = 0;
 	
 	z_stream.next_out = buffer;
@@ -273,13 +265,26 @@ void deflate(
 	
 	assert(z_stream.total_out == outFileHeader.data.length());
 	
-	outFileHeader.crc = crc32(0, reinterpret_cast<const uint8*>(xml.c_str()), xml.length());
+	outFileHeader.crc = crc32(0, reinterpret_cast<const uint8*>(inText.c_str()), inText.length());
 	outFileHeader.compressed_size = outFileHeader.data.length();
-	outFileHeader.uncompressed_size = xml.length();
+	outFileHeader.uncompressed_size = inText.length();
 	outFileHeader.deflated = true;
 	
 	deflateEnd(&z_stream);
 }	
+
+void deflate(
+	xml::node_ptr		inXML,
+	ZIPLocalFileHeader&	outFileHeader)
+{
+	xml::document doc(inXML);
+	
+	outFileHeader.data.clear();
+	
+	stringstream s;
+	s << doc;
+	deflate(s.str(), outFileHeader);
+}
 
 }
 
@@ -448,8 +453,6 @@ void MePubDocument::ReadFile(
 			epi->SetData(item->second);
 		}
 		
-//		cout << mContent[mRootFile] << endl;
-		
 		if (err != ARCHIVE_EOF)
 			THROW(("Error reading archive: %s", archive_error_string(archive)));
 	}
@@ -477,83 +480,218 @@ void MePubDocument::ReadFile(
 void MePubDocument::WriteFile(
 	std::ostream&		inFile)
 {
-	try
-	{
-		ZIPLocalFileHeader fh;
-		vector<ZIPCentralDirectory> dir;
-		ZIPCentralDirectory cd;
-		
-		// first write out the mimetype, uncompressed
-		
-		fh.deflated = false;
-		fh.data = kEPubMimeType;
-		fh.compressed_size = fh.uncompressed_size = fh.data.length();
-		fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
-		fh.filename = "mimetype";
-		
-		cd.offset = inFile.tellp();
-		inFile << fh;
-		cd.file = fh;
-		dir.push_back(cd);
-		
-		// write META-INF/ directory
-		
-		fh.filename = "META-INF/";
-		fh.deflated = false;
-		fh.compressed_size = fh.uncompressed_size = 0;
-		fh.data.clear();
-		fh.crc = 0;
-
-		cd.offset = inFile.tellp();
-		inFile << fh;
-		cd.file = fh;
-		dir.push_back(cd);
-		
-		// write META-INF/container.xml
-		
-		fh.filename = "META-INF/container.xml";
-		
-		xml::node_ptr container(new xml::node("container"));
-		container->add_attribute("version", "1.0");
-		container->add_attribute("xmlns", kContainerNS);
-		xml::node_ptr rootfiles(new xml::node("rootfiles"));
-		container->add_child(rootfiles);
-		xml::node_ptr rootfile(new xml::node("rootfile"));
-		rootfile->add_attribute("full-path", mRootFile.string());
-		rootfile->add_attribute("media-type", "application/oebps-package+xml");
-		rootfiles->add_child(rootfile);
-		deflate(container, fh);
-
-		cd.offset = inFile.tellp();
-		inFile << fh;
-		cd.file = fh;
-		dir.push_back(cd);
-		
-		// rest of the items
-		
-		vector<MProjectItem*> items;
-		mRoot.Flatten(items);
-		
-		
-		
-		// now write out directory
-		
-		ZIPEndOfCentralDirectory end;
-		
-		end.entries = dir.size();
-		end.directory_offset = inFile.tellp();
-		
-		for (vector<ZIPCentralDirectory>::iterator e = dir.begin(); e != dir.end(); ++e)
-			inFile << *e;
-		
-		end.directory_size = inFile.tellp() - static_cast<streamoff>(end.directory_offset);
-		inFile << end;
-	}
-	catch (...)
-	{
+	ZIPLocalFileHeader fh;
+	vector<ZIPCentralDirectory> dir;
+	ZIPCentralDirectory cd;
 	
-		throw;	
+	// first write out the mimetype, uncompressed
+	
+	fh.deflated = false;
+	fh.data = kEPubMimeType;
+	fh.compressed_size = fh.uncompressed_size = fh.data.length();
+	fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
+	fh.filename = "mimetype";
+	
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+	
+	// write META-INF/ directory
+	
+	fh.filename = "META-INF/";
+	fh.deflated = false;
+	fh.compressed_size = fh.uncompressed_size = 0;
+	fh.data.clear();
+	fh.crc = 0;
+
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+	
+	// write META-INF/container.xml
+	
+	fh.filename = "META-INF/container.xml";
+	
+	xml::node_ptr container(new xml::node("container"));
+	container->add_attribute("version", "1.0");
+	container->add_attribute("xmlns", kContainerNS);
+	xml::node_ptr rootfiles(new xml::node("rootfiles"));
+	container->add_child(rootfiles);
+	xml::node_ptr rootfile(new xml::node("rootfile"));
+	rootfile->add_attribute("full-path", mRootFile.string());
+	rootfile->add_attribute("media-type", "application/oebps-package+xml");
+	rootfiles->add_child(rootfile);
+	deflate(container, fh);
+
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+
+	// write reditions root directory (typically OEBPS)
+
+	fh.filename = mRootFile.branch_path().string() + '/';
+	fh.deflated = false;
+	fh.compressed_size = fh.uncompressed_size = 0;
+	fh.data.clear();
+	fh.crc = 0;
+
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+	
+	// the OPF... ouch
+	
+	fh.filename = mRootFile.string();
+	
+	xml::node_ptr opf = CreateOPF();
+	deflate(opf, fh);
+
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+	
+	// rest of the items
+	
+	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
+	{
+		MProjectGroup* group = dynamic_cast<MProjectGroup*>(&*item);
+		if (group != nil)
+		{
+			fs::path path(group->GetName());
+			while (group->GetParent() != nil)
+			{
+				group = group->GetParent();
+				if (not group->GetName().empty())
+					path = group->GetName() / path;
+			}
+			
+			if (path == "META-INF" or path == mRootFile.branch_path())
+				continue;
+			
+			fh.filename = path.string() + '/';
+			fh.deflated = false;
+			fh.compressed_size = fh.uncompressed_size = 0;
+			fh.data.clear();
+			fh.crc = 0;
+	
+			cd.offset = inFile.tellp();
+			inFile << fh;
+			cd.file = fh;
+			dir.push_back(cd);
+
+			continue;
+		}
+		
+		MePubItem* file = dynamic_cast<MePubItem*>(&*item);
+		if (file != nil)
+		{
+			fh.filename = file->GetPath().string();
+			
+			deflate(file->GetData(), fh);
+	
+			cd.offset = inFile.tellp();
+			inFile << fh;
+			cd.file = fh;
+			dir.push_back(cd);
+			
+			continue;
+		}
 	}
+	
+	// now write out directory
+	
+	ZIPEndOfCentralDirectory end;
+	
+	end.entries = dir.size();
+	end.directory_offset = inFile.tellp();
+	
+	for (vector<ZIPCentralDirectory>::iterator e = dir.begin(); e != dir.end(); ++e)
+		inFile << *e;
+	
+	end.directory_size = inFile.tellp() - static_cast<streamoff>(end.directory_offset);
+	inFile << end;
+}
+
+xml::node_ptr MePubDocument::CreateOPF()
+{
+	xml::node_ptr opf(new xml::node("package"));
+	opf->add_attribute("version", "2.0");
+	opf->add_attribute("unique-identifier", "BookID");
+	opf->add_attribute("xmlns", "http://www.idpf.org/2007/opf");
+	
+	// metadata block
+	xml::node_ptr metadata(new xml::node("metadata"));
+	metadata->add_attribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
+	metadata->add_attribute("xmlns:opf", "http://www.idpf.org/2007/opf");
+	opf->add_child(metadata);
+	
+	// the identifier
+	xml::node_ptr identifier(new xml::node("identifier", "dc"));
+	identifier->add_attribute("id", "BookID");
+	identifier->add_attribute("opf:scheme", mDocumentIDScheme);
+	identifier->content(mDocumentID);
+	metadata->add_child(identifier);
+	
+	// other dublin core data
+	for (map<string,string>::iterator dc = mDublinCore.begin(); dc != mDublinCore.end(); ++dc)
+	{
+		xml::node_ptr dcn(new xml::node(dc->first, "dc"));
+		if (dc->first == "creator")
+			dcn->add_attribute("opf:role", "aut");
+		dcn->content(dc->second);
+		metadata->add_child(dcn);
+	}
+	
+	// manifest
+	string ncx;	// the id of our ncx file. collect it while processing the manifest
+	
+	xml::node_ptr manifest(new xml::node("manifest"));
+	opf->add_child(manifest);
+
+	vector<MProjectItem*> items;
+	mRoot.Flatten(items);
+	
+	for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+	{
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(*item);
+		
+		if (ePubItem == nil)
+			continue;
+		
+		xml::node_ptr item_node(new xml::node("item"));
+		item_node->add_attribute("id", ePubItem->GetID());
+		item_node->add_attribute("href", relative_path(mRootFile.branch_path(), ePubItem->GetPath()).string());
+		item_node->add_attribute("media-type", ePubItem->GetMediaType());
+		manifest->add_child(item_node);
+		
+		if (ePubItem->GetPath() == mTOCFile)
+			ncx = ePubItem->GetID();
+	}
+	
+	// spine. For now we simply write out all file ID's for files having media-type application/xhtml+xml 
+
+	xml::node_ptr spine(new xml::node("spine"));
+	spine->add_attribute("toc", ncx);
+	opf->add_child(spine);
+	
+	for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+	{
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(*item);
+		
+		if (ePubItem == nil or ePubItem->GetMediaType() != "application/xhtml+xml")
+			continue;
+		
+		xml::node_ptr itemref(new xml::node("itemref"));
+		itemref->add_attribute("idref", ePubItem->GetID());
+		spine->add_child(itemref);
+	}
+	
+	return opf;
 }
 
 ssize_t MePubDocument::archive_read_callback_cb(
@@ -563,16 +701,6 @@ ssize_t MePubDocument::archive_read_callback_cb(
 {
 	MePubDocument* epub = reinterpret_cast<MePubDocument*>(inClientData);
 	return epub->archive_read_callback(inArchive, _buffer);
-}
-
-ssize_t MePubDocument::archive_write_callback_cb(
-	struct archive*		inArchive,
-	void*				inClientData,
-	const void*			_buffer,
-	size_t				_length)
-{
-	MePubDocument* epub = reinterpret_cast<MePubDocument*>(inClientData);
-	return epub->archive_write_callback(inArchive, _buffer, _length);
 }
 
 int MePubDocument::archive_open_callback_cb(
@@ -598,15 +726,6 @@ ssize_t MePubDocument::archive_read_callback(
 	ssize_t r = mInputFileStream->readsome(mBuffer, sizeof(mBuffer));
 	*_buffer = mBuffer;
 	return r;
-}
-
-ssize_t MePubDocument::archive_write_callback(
-	struct archive*		inArchive,
-	const void*			_buffer,
-	size_t				_length)
-{
-	cout << "write callback" << endl;
-	return 0;
 }
 
 int MePubDocument::archive_open_callback(
@@ -681,7 +800,25 @@ void MePubDocument::ParseOPF(
 		eItem->SetID(item->get_attribute("id"));
 		eItem->SetMediaType(item->get_attribute("media-type"));
 		
+		if (mTOCFile.empty() and eItem->GetMediaType() == "application/x-dtbncx+xml")
+			mTOCFile = eItem->GetPath();
+		
 		group->AddProjectItem(eItem.release());
+	}
+	
+	// the spine
+	
+	xml::node_ptr spine = inOPF.find_first_child("spine");
+	if (not spine)
+		THROW(("Spine missing from OPF document"));
+	
+	for (xml::node_ptr item = spine->children(); item; item = item->next())
+	{
+		if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
+			continue;
+		
+		string idref = item->get_attribute("idref");
+		mSpine.push_back(idref);
 	}
 
 	// sanity checks
@@ -721,4 +858,45 @@ void MePubDocument::SetDublinCoreValue(
 {
 	mDublinCore[inName] = inValue;
 	SetModified(true);
+}
+
+string MePubDocument::GetFileData(
+	const fs::path&		inFile)
+{
+	MProjectItem* pi = mRoot.GetItem(inFile);
+	if (pi == nil)
+		THROW(("ePub item %s does not exist", inFile.string().c_str()));
+
+	MePubItem* epi = dynamic_cast<MePubItem*>(pi);
+	if (epi == nil)
+		THROW(("Error, item is not an editable file"));
+
+	return epi->GetData();
+}
+
+void MePubDocument::SetFileData(
+	const fs::path&		inFile,
+	const string&		inText)
+{
+	MProjectItem* pi = mRoot.GetItem(inFile);
+	if (pi == nil)
+		THROW(("ePub item %s does not exist", inFile.string().c_str()));
+
+	MePubItem* epi = dynamic_cast<MePubItem*>(pi);
+	if (epi == nil)
+		THROW(("Error, item is not an editable file"));
+
+	epi->SetData(inText);
+	
+	epi->SetOutOfDate(true);
+	SetModified(true);
+}
+
+void MePubDocument::SetModified(
+	bool				inModified)
+{
+	if (inModified == false)
+		mRoot.SetOutOfDate(false);
+	
+	MDocument::SetModified(inModified);
 }

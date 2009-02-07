@@ -276,6 +276,12 @@ void MEditWindow::Initialize(
 	}
 }
 
+void MEditWindow::SaveState()
+{
+	MTextDocument* doc = dynamic_cast<MTextDocument*>(mController->GetDocument());
+	doc->SaveState();
+}
+
 MEditWindow* MEditWindow::FindWindowForDocument(MDocument* inDocument)
 {
 	MWindow* w = MWindow::GetFirstWindow();

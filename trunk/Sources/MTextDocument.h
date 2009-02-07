@@ -29,6 +29,7 @@ class MMessageList;
 class MMenu;
 class MDevice;
 class MSftpChannel;
+class MePubDocument;
 
 struct MTextInputAreaInfo
 {
@@ -66,6 +67,10 @@ class MTextDocument : public MDocument
   	
 	explicit			MTextDocument(
 							const MUrl*			inURL);
+
+						MTextDocument(
+							MePubDocument*		inEPub,
+							const fs::path&		inFile);
 
 	virtual				~MTextDocument();
 
@@ -115,6 +120,8 @@ class MTextDocument : public MDocument
 											inQuoteCharacters,
 							uint32			inWidth);
 
+	virtual void		SaveState();
+
   protected:
 
 	virtual void		ReadFile(
@@ -122,8 +129,6 @@ class MTextDocument : public MDocument
 
 	virtual void		WriteFile(
 							std::ostream&		inFile);
-
-	virtual void		SaveState();
 
 	// and now the MTextDocument specific methods
 
@@ -552,6 +557,8 @@ class MTextDocument : public MDocument
 							double			inSystemTime);
 	
 	int							mDataFD;
+	MePubDocument*				mEPub;		// for files that are part of an ePub
+	fs::path					mEPubFile;	
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	uint32						mWrapWidth;

@@ -116,8 +116,6 @@ class MDocument
 	virtual void		WriteFile(
 							std::ostream&		inFile) = 0;
 
-	virtual void		SaveState();
-	
 	typedef std::list<MController*>			MControllerList;
 	typedef std::list<MDocClosedNotifier>	MDocClosedNotifierList;
 	

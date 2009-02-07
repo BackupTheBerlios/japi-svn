@@ -45,6 +45,7 @@
 #include "MDiffWindow.h"
 #include "MJapiApp.h"
 #include "MPrinter.h"
+#include "MePubDocument.h"
 
 using namespace std;
 
@@ -102,6 +103,7 @@ MTextDocument::MTextDocument(
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
 	, eIdle(this, &MTextDocument::Idle)
+	, mEPub(nil)
 	, mSelection(this)
 {
 	Init();
@@ -137,6 +139,35 @@ MTextDocument::MTextDocument(
 		ReadFile(file);
 		mNeedReparse = true;
 	}
+}
+
+MTextDocument::MTextDocument(
+	MePubDocument*		inEPub,
+	const fs::path&		inFile)
+	: MDocument(inEPub->GetURL().GetPath() / inFile)
+	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
+	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
+	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
+	, eIdle(this, &MTextDocument::Idle)
+	, mEPub(inEPub)
+	, mEPubFile(inFile)
+	, mSelection(this)
+{
+	Init();
+	
+	mSpecified = true;
+
+	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	AddRoute(eIdle, gApp->eIdle);
+	
+	ReInit();
+	
+	// clumsy...
+	
+	stringstream file(mEPub->GetFileData(mEPubFile));
+	ReadFile(file);
+
+	mNeedReparse = true;
 }
 
 MTextDocument::MTextDocument()
@@ -223,8 +254,14 @@ void MTextDocument::SetFileNameHint(
 bool MTextDocument::DoSave()
 {
 	bool result = false;
-
-	if (mURL.IsLocal())
+	
+	if (mEPub != nil)
+	{
+		mEPub->SetFileData(mEPubFile, mText.GetText());
+		SetModified(false);
+		result = true;
+	}
+	else if (mURL.IsLocal())
 	{
 		result = MDocument::DoSave();
 		MProject::RecheckFiles();
@@ -257,6 +294,11 @@ bool MTextDocument::DoSaveAs(
 	bool specified = mSpecified;
 	mSpecified = true;
 	
+	MePubDocument* epub = mEPub;
+	mEPub = nil;
+	
+	fs::path epubfile = mEPubFile;
+	
 	MUrl url(mURL);
 	mURL = inFile;
 	
@@ -286,7 +328,14 @@ bool MTextDocument::DoSaveAs(
 	{
 		mSpecified = specified;
 		
-		if (mURL.IsLocal())
+		if (epub)
+		{
+			mEPub = epub;
+			mEPubFile = epubfile;
+			
+//			mURL = mEPub->GetURL() / m
+		}
+		else if (mURL.IsLocal())
 			mURL = url;
 	}
 	

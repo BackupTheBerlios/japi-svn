@@ -9,12 +9,10 @@
 #include <map>
 #include "MDocument.h"
 #include "MProjectItem.h"
+#include "node.hpp"
 
 class MProjectGroup;
 class MProjectItem;
-namespace xml {
-class node;
-}
 
 class MePubDocument : public MDocument
 {
@@ -65,22 +63,28 @@ class MePubDocument : public MDocument
 							const std::string&	inName,
 							const std::string&	inValue);
 
+	std::string			GetFileData(
+							const fs::path&		inFile);
+
+	void				SetFileData(
+							const fs::path&		inFile,
+							const std::string&	inText);
+
+	virtual void		SetModified(
+							bool				inModified);
+
   private:
 	
 	void				ParseOPF(
 							const fs::path&		inDirectory,
 							xml::node&			inOPF);
 
+	xml::node_ptr		CreateOPF();
+
 	static ssize_t		archive_read_callback_cb(
 							struct archive*		inArchive,
 							void*				inClientData,
 							const void**		_buffer);
-
-	static ssize_t		archive_write_callback_cb(
-							struct archive*		inArchive,
-							void*				inClientData,
-							const void*			_buffer,
-							size_t				_length);
 
 	static int			archive_open_callback_cb(
 							struct archive*		inArchive,
@@ -94,11 +98,6 @@ class MePubDocument : public MDocument
 							struct archive*		inArchive,
 							const void**		_buffer);
 
-	ssize_t				archive_write_callback(
-							struct archive*		inArchive,
-							const void*			_buffer,
-							size_t				_length);
-
 	int					archive_open_callback(
 							struct archive*		inArchive);
 
@@ -108,7 +107,9 @@ class MePubDocument : public MDocument
 	std::istream*		mInputFileStream;
 	char				mBuffer[1024];
 
-	fs::path			mRootFile;
+	fs::path			mRootFile, mTOCFile;
+	std::vector<std::string>
+						mSpine;
 	MProjectGroup		mRoot;
 	std::string			mDocumentID, mDocumentIDScheme;
 	std::map<std::string,std::string>

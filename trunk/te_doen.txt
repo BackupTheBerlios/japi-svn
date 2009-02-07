@@ -1,5 +1,15 @@
 ﻿Te doen
 
+- ePub
+	- editen files
+	- adobe page dinges
+	- toc
+	- dublin core opties
+	- verwijderen libarchive
+	- ePub item attributen
+	- drag&drop
+	- zoeken in alle ePub items
+
 Moet af:
 
 - resources lib maken voor distributie/andere resources opslag?

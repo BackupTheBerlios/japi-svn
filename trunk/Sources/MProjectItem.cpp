@@ -695,6 +695,68 @@ MProjectGroup* MProjectGroup::GetGroupForPath(
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectGroup::iterator
+
+//MProjectGroup::iterator::iterator()
+//{
+//}
+
+MProjectGroup::iterator::iterator(
+	const iterator&		inOther)
+	: mBegin(inOther.mBegin)
+	, mGroup(inOther.mGroup)
+	, mOffset(inOther.mOffset)
+{
+}
+
+MProjectGroup::iterator::iterator(
+	MProjectGroup&		inGroup,
+	uint32				inOffset)
+	: mBegin(&inGroup)
+	, mGroup(&inGroup)
+	, mOffset(inOffset)
+{
+}
+
+void MProjectGroup::iterator::increment()
+{
+	assert(mOffset <= mGroup->mItems.size());
+	MProjectGroup* group = dynamic_cast<MProjectGroup*>(mGroup->mItems[mOffset]);
+	if (group != nil)
+	{
+		mGroup = group;
+		mOffset = 0;
+	}
+	else if (mOffset < mGroup->mItems.size())
+		++mOffset;
+	else if (mGroup != mBegin)
+	{
+		MProjectGroup* parent = mGroup->mParent;
+		vector<MProjectItem*>::iterator i =
+			find(parent->mItems.begin(), parent->mItems.end(), mGroup);
+		if (i == parent->mItems.end())
+			THROW(("internal error in MProjectItem::iterator"));
+		
+		mGroup = parent;
+		mOffset = (i - parent->mItems.begin()) + 1;
+	}
+}
+
+MProjectItem& MProjectGroup::iterator::dereference() const
+{
+	assert(mOffset < mGroup->mItems.size());
+	return *mGroup->mItems[mOffset];
+}
+
+bool MProjectGroup::iterator::equal(const iterator& inOther) const
+{
+	return
+		mBegin == inOther.mBegin and
+		mGroup == inOther.mGroup and
+		mOffset == inOther.mOffset;
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectCpFile::GetDestPath
 
 fs::path MProjectCpFile::GetDestPath(

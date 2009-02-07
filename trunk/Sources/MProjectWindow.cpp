@@ -498,38 +498,28 @@ bool MProjectWindow::DoClose()
 
 void MProjectWindow::SaveState()
 {
-	try
-	{
-		fs::path file = mProject->GetURL().GetPath();
-		MProjectState state = { };
+	fs::path file = mProject->GetURL().GetPath();
+	MProjectState state = { };
 
-		(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-		
-		state.Swap();
+	(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+	
+	state.Swap();
 
-		state.mSelectedTarget = mProject->GetSelectedTarget();
+	state.mSelectedTarget = mProject->GetSelectedTarget();
 
-		MGtkNotebook book(GetWidget(kNoteBookID));
-		state.mSelectedPanel = book.GetPage();
+	MGtkNotebook book(GetWidget(kNoteBookID));
+	state.mSelectedPanel = book.GetPage();
 
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		state.mScrollPosition[ePanelFiles] = treeView.GetScrollPosition();
-//
-//		treeView = MGtkTreeView(GetWidget(kResourceViewID));
-//		state.mScrollPosition[ePanelPackage] = treeView.GetScrollPosition();
+	MRect r;
+	GetWindowPosition(r);
+	state.mWindowPosition[0] = r.x;
+	state.mWindowPosition[1] = r.y;
+	state.mWindowSize[0] = r.width;
+	state.mWindowSize[1] = r.height;
 
-		MRect r;
-		GetWindowPosition(r);
-		state.mWindowPosition[0] = r.x;
-		state.mWindowPosition[1] = r.y;
-		state.mWindowSize[0] = r.width;
-		state.mWindowSize[1] = r.height;
-
-		state.Swap();
-		
-		write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-	}
-	catch (...) {}
+	state.Swap();
+	
+	write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
 }
 
 // ---------------------------------------------------------------------------

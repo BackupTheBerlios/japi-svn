@@ -26,6 +26,9 @@ class MDocWindow : public MWindow
 
 	MDocument*			GetDocument();
 
+						// document is about to be closed
+	virtual void		SaveState();
+
 	virtual void		AddRoutes(
 							MDocument*		inDocument);
 	

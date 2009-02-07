@@ -38,6 +38,8 @@ class MePubWindow : public MDocWindow
 
   private:
 
+	void			SaveState();
+
 	void			GetSelectedItems(
 						std::vector<MProjectItem*>&
 										outItems);

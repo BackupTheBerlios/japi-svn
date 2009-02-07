@@ -28,6 +28,8 @@ class MEditWindow : public MDocWindow
 
 	virtual void		Initialize(
 							MDocument*		inDocument);
+
+	virtual void		SaveState();
 	
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
 	MEventIn<void(bool)>					eShellStatus;

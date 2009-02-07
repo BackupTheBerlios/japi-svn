@@ -317,27 +317,11 @@ void MDocument::CloseDocument()
 {
 	try
 	{
-		if (mSpecified and Preferences::GetInteger("save state", 1))
-		{
-			try
-			{
-				SaveState();
-			}
-			catch (...) {}
-		}
-		
 		eDocumentClosed();
 	}
 	catch (...) {}
 	
 	delete this;
-}
-
-// ---------------------------------------------------------------------------
-//	CloseDocument
-
-void MDocument::SaveState()
-{
 }
 
 // ---------------------------------------------------------------------------
