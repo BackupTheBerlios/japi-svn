@@ -8,18 +8,16 @@
 
 #include "MDialog.h"
 
-class MProjectWindow;
-
 class MNewGroupDialog : public MDialog
 {
   public:
 					MNewGroupDialog(
-						MProjectWindow*		inParentWindow);
+						MWindow*		inParentWindow);
 
 	virtual bool	OKClicked();
 	
-  private:
-	MProjectWindow*	mProject;
+	MEventOut<void(const std::string&)>
+					eCreateNewGroup;
 };
 
 #endif // MNEWGROUPDIALOG_H

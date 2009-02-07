@@ -14,6 +14,7 @@
 #include "MUrl.h"
 #include "MColor.h"
 #include "MUtils.h"
+#include "MError.h"
 #include "MProjectTree.h"
 
 using namespace std;
@@ -457,7 +458,7 @@ bool MProjectTree::DragDataReceived(
 	
 		if (files.size() and group != nil)
 		{
-			eProjectAddFiles(files, group, index);
+			AddFiles(files, group, index);
 			result = true;
 		}
 	}
@@ -468,8 +469,19 @@ bool MProjectTree::DragDataReceived(
 		GtkTreeIter iter;
 		if (GetIter(&iter, path))
 		{
-			eProjectMoveItem(reinterpret_cast<MProjectItem*>(iter.user_data),
-				group, index);
+			MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+
+			if (item->GetParent() == group and index > item->GetPosition() and index > 0)
+				--index;
+
+			RemoveRecursive(item);
+			item->GetParent()->RemoveProjectItem(item);
+			
+			group->AddProjectItem(item, index);
+			InsertRecursive(item);
+		
+			eProjectItemMoved();
+
 			result = true;
 		}
 		
@@ -478,6 +490,61 @@ bool MProjectTree::DragDataReceived(
 	}
 	
 	return result;
+}
+
+void MProjectTree::AddFiles(
+	vector<string>&		inFiles,
+	MProjectGroup*		inGroup,
+	int32				inIndex)
+{
+	for (vector<string>::iterator file = inFiles.begin(); file != inFiles.end(); ++file)
+	{
+		ba::trim(*file);
+		if (file->length() == 0)
+			continue;
+
+		MProjectItem* item = nil;
+		eProjectCreateItem(*file, inGroup, item);
+	
+		if (item != nil)
+		{
+			inGroup->AddProjectItem(item, inIndex);
+			InsertRecursive(item);
+			++inIndex;
+		}
+	}
+}
+
+void MProjectTree::RemoveRecursive(
+	MProjectItem*		inItem)
+{
+	MProjectGroup* group = dynamic_cast<MProjectGroup*>(inItem);
+	if (group != nil)
+	{
+		vector<MProjectItem*>& items = group->GetItems();
+		for (int32 ix = items.size() - 1; ix >= 0; --ix)
+			RemoveRecursive(items[ix]);
+	}
+
+	MProjectGroup* parent = inItem->GetParent();
+	uint32 index = inItem->GetPosition();
+	ProjectItemRemoved(parent, index);
+}
+
+void MProjectTree::InsertRecursive(
+	MProjectItem*		inItem)
+{
+	ProjectItemInserted(inItem);
+
+	MProjectGroup* group = dynamic_cast<MProjectGroup*>(inItem);
+	if (group != nil)
+	{
+		MProjectGroup* group = static_cast<MProjectGroup*>(inItem);
+		vector<MProjectItem*>& items = group->GetItems();
+		
+		for (int32 ix = items.size() - 1; ix >= 0; --ix)
+			InsertRecursive(items[ix]);
+	}
 }
 
 bool MProjectTree::RowDropPossible(
@@ -502,6 +569,6 @@ bool MProjectTree::RowDropPossible(
 		else
 			break;
 	}
-	
+
 	return group != nil and index <= group->Count();
 }

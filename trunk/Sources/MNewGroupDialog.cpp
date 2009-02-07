@@ -6,10 +6,6 @@
 #include "MJapi.h"
 
 #include "MNewGroupDialog.h"
-#include "MProjectWindow.h"
-#include "MPreferences.h"
-#include "MView.h"
-#include "MUnicode.h"
 
 using namespace std;
 
@@ -22,9 +18,8 @@ enum {
 }
 
 MNewGroupDialog::MNewGroupDialog(
-	MProjectWindow*	inProject)
+	MWindow*	inProject)
 	: MDialog("new-group-dialog")
-	, mProject(inProject)
 {
 	Show(inProject);
 	SetFocus(kTextBoxControlID);
@@ -35,8 +30,7 @@ bool MNewGroupDialog::OKClicked()
 	string s;
 	GetText(kTextBoxControlID, s);
 
-	if (mProject != nil)
-		mProject->CreateNewGroup(s);
+	eCreateNewGroup(s);
 	
 	return true;
 }

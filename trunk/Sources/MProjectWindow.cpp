@@ -78,6 +78,7 @@ enum {
 MProjectWindow::MProjectWindow()
 	: MDocWindow("project-window")
 	, eStatus(this, &MProjectWindow::SetStatus)
+	, eCreateNewGroup(this, &MProjectWindow::CreateNewGroup)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
@@ -157,6 +158,8 @@ void MProjectWindow::Initialize(
 
 	AddRoute(mProject->eInsertedFile, mFilesTree->eProjectItemInserted);
 	AddRoute(mProject->eRemovedFile, mFilesTree->eProjectItemRemoved);
+	AddRoute(mProject->eProjectItemMoved, mFilesTree->eProjectItemMoved);
+	AddRoute(mProject->eProjectCreateFileItem, mFilesTree->eProjectCreateItem);
 	
 	filesTree.SetModel(mFilesTree->GetModel());
 	filesTree.ExpandAll();
@@ -172,6 +175,8 @@ void MProjectWindow::Initialize(
 
 	AddRoute(mProject->eInsertedResource, mResourcesTree->eProjectItemInserted);
 	AddRoute(mProject->eRemovedResource, mResourcesTree->eProjectItemRemoved);
+	AddRoute(mProject->eProjectItemMoved, mResourcesTree->eProjectItemMoved);
+	AddRoute(mProject->eProjectCreateResourceItem, mResourcesTree->eProjectCreateItem);
 
 	// read the project's state, if any
 	
@@ -373,8 +378,11 @@ bool MProjectWindow::ProcessCommand(
 			break;
 		
 		case cmd_NewGroup:
-			new MNewGroupDialog(this);
+		{
+			MNewGroupDialog* dlog = new MNewGroupDialog(this);
+			AddRoute(dlog->eCreateNewGroup, eCreateNewGroup);
 			break;
+		}
 		
 		case cmd_OpenIncludeFile:
 			new MFindAndOpenDialog(mProject, this);
@@ -645,6 +653,7 @@ void MProjectWindow::AddFilesToProject()
 	vector<MUrl> urls;
 	if (ChooseFiles(true, urls))
 	{
+		MProjectTree* tree;
 		MProjectGroup* group = nil;
 		int32 index = 0;
 
@@ -652,6 +661,7 @@ void MProjectWindow::AddFilesToProject()
 		
 		if (notebook.GetPage() == ePanelFiles)
 		{
+			tree = mFilesTree;
 			group = mProject->GetFiles();
 			
 			MGtkTreeView treeView(GetWidget(kFilesListViewID));
@@ -674,6 +684,7 @@ void MProjectWindow::AddFilesToProject()
 		}
 		else if (notebook.GetPage() == ePanelPackage)
 		{
+			tree = mResourcesTree;
 			group = mProject->GetResources();
 
 			MGtkTreeView treeView(GetWidget(kResourceViewID));
@@ -699,7 +710,7 @@ void MProjectWindow::AddFilesToProject()
 		transform(urls.begin(), urls.end(), back_inserter(files),
 			boost::bind(&MUrl::str, _1, false));
 		
-		mProject->AddFiles(files, group, index);
+		tree->AddFiles(files, group, index);
 	}
 }
 

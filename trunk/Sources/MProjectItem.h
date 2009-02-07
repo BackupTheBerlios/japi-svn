@@ -226,6 +226,8 @@ class MProjectGroup : public MProjectItem
 	MProjectGroup*	GetGroupForPath(
 						const fs::path&		inPath);
 
+	fs::path		GetGroupPath() const;
+
   private:
 	std::vector<MProjectItem*>
 					mItems;

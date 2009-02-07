@@ -90,15 +90,20 @@ class MProjectTree : public MTreeModelInterface
 						GtkTreePath*		inPath,
 						GtkSelectionData*	inData);
 
+	virtual void	AddFiles(
+						std::vector<std::string>&
+											inFiles,
+						MProjectGroup*		inGroup,
+						int32				inIndex);
+
 	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
 	MEventIn<void(MProjectItem*)>			eProjectItemInserted;
 	MEventIn<void(MProjectGroup*,int32)>	eProjectItemRemoved;
 	
-	MEventOut<void(std::vector<std::string>&, MProjectGroup*, int32)>
-											eProjectAddFiles;
+	MEventOut<void(const std::string&, MProjectGroup*, MProjectItem*&)>
+											eProjectCreateItem;
 	
-	MEventOut<void(MProjectItem*, MProjectGroup*, int32)>
-											eProjectMoveItem;
+	MEventOut<void()>						eProjectItemMoved;
 
   private:
 
@@ -111,6 +116,12 @@ class MProjectTree : public MTreeModelInterface
 	void			ProjectItemRemoved(
 						MProjectGroup*	inGroup,
 						int32			inIndex);
+
+	void			RemoveRecursive(
+						MProjectItem*	inItem);
+						
+	void			InsertRecursive(
+						MProjectItem*	inItem);
 
 //	MProject*		mProject;
 	MProjectGroup*	mItems;

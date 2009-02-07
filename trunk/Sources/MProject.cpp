@@ -88,8 +88,9 @@ MProject* MProject::Instance()
 MProject::MProject(
 	const fs::path&		inProjectFile)
 	: MDocument(inProjectFile)
-	, eProjectAddFiles(this, &MProject::AddFiles)
-	, eProjectMoveItem(this, &MProject::MoveItem)
+	, eProjectCreateFileItem(this, &MProject::CreateFileItem)
+	, eProjectCreateResourceItem(this, &MProject::CreateResourceItem)
+	, eProjectItemMoved(this, &MProject::ProjectItemMoved)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile)
@@ -1912,126 +1913,136 @@ bool MProject::ProcessCommand(
 	return result;
 }
 
-void MProject::AddFiles(
-	vector<string>&		inFiles,
+void MProject::CreateFileItem(
+	const string&		inFile,
 	MProjectGroup*		inGroup,
-	int32				inIndex)
+	MProjectItem*&		outItem)
 {
-	MProjectGroup* root = inGroup;
-	THROW_IF_NIL(root);
+	MUrl url(inFile);
+	if (not url.IsLocal())
+		THROW(("You can only add local files to a project"));
 	
-	while (root->GetParent() != nil)
-		root = root->GetParent();
+	fs::path p = url.GetPath();
+	string name = p.leaf();
 	
-	try
+	if (fs::is_directory(p))
 	{
-		for (vector<string>::iterator file = inFiles.begin(); file != inFiles.end(); ++file)
+		SetModified(true);
+
+		MProjectGroup* group = new MProjectGroup(name, inGroup);
+		int32 index = 0;
+		
+		vector<string> files;
+		MFileIterator iter(p, kFileIter_ReturnDirectories);
+		while (iter.Next(p))
 		{
-			ba::trim(*file);
-			if (file->length() == 0)
-				continue;
-			
-			MUrl url(*file);
-			if (not url.IsLocal())
-				THROW(("You can only add local files to a project"));
-			
-			fs::path p = url.GetPath();
-			string name = p.leaf();
-			
-			if (fs::is_directory(p))
+			MProjectItem* item = nil;
+			CreateFileItem(MUrl(p).str(), group, item);
+			if (item != nil)
 			{
-				SetModified(true);
-
-				MProjectGroup* group = new MProjectGroup(name, inGroup);
-				inGroup->AddProjectItem(group, inIndex);
-				
-				if (root == &mProjectItems)
-					eInsertedFile(group);
-				else
-					eInsertedResource(group);
-				
-				vector<string> files;
-				MFileIterator iter(p, kFileIter_ReturnDirectories);
-				while (iter.Next(p))
-					files.push_back(MUrl(p).str());
-				
-				AddFiles(files, group, 0);
-			}
-			else if (root == &mProjectItems or root == &mPackageItems)
-			{
-				auto_ptr<MProjectItem> projectFile;
-				fs::path filePath;
-				
-				if (root == &mPackageItems)
-				{
-					fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
-					filePath = relative_path(rsrcDir, p);
-					projectFile.reset(
-						new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path()));
-				}
-				else if (LocateFile(name, true, filePath))
-				{
-					if (p == filePath)
-					{
-						if (FileNameMatches("lib*.a;lib*.so;lib*.dylib", p))
-						{
-							int r = DisplayAlert("ask-add-lib-as-link", p.leaf());
-							
-							if (r == 1)
-								projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
-							else if (r == 2)
-							{
-								string linkName = p.leaf().substr(3);
-								if (ba::ends_with(linkName, ".a"))
-									linkName.erase(linkName.end() - 2, linkName.end());
-								else if (ba::ends_with(linkName, ".so"))
-									linkName.erase(linkName.end() - 3, linkName.end());
-								else
-									linkName.erase(linkName.end() - 6, linkName.end());
-								
-								projectFile.reset(new MProjectLib(linkName, inGroup));
-							}
-						}
-						else
-							projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
-					}
-					else
-						THROW(("Cannot add file %s since another file with that name but in another location is already present.",
-							name.c_str()));
-				}
-				else
-				{
-					fs::path dir = relative_path(mProjectDir, p.branch_path());
-					
-					if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
-					{
-						mProjectInfo.mUserSearchPaths.push_back(dir);
-
-						if (not LocateFile(name, true, filePath))
-							THROW(("Cannot find file, something is wrong, sorry..."));
-						
-						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
-					}
-				}
-				
-				MProjectItem* item = projectFile.release();
-				if (item != nil)
-				{
-					SetModified(true);
-	
-					inGroup->AddProjectItem(item, inIndex);
-
-					if (root == &mProjectItems)
-						eInsertedFile(item);
-					else
-						eInsertedResource(item);
-				}
+				group->AddProjectItem(item, index);
+				++index;
 			}
 		}
+
+		outItem = group;
 	}
-	catch (exception& e)
+	else
 	{
-		DisplayError(e);
+		auto_ptr<MProjectItem> projectFile;
+		fs::path filePath;
+		
+		if (LocateFile(name, true, filePath))
+		{
+			if (p == filePath)
+			{
+				if (FileNameMatches("lib*.a;lib*.so;lib*.dylib", p))
+				{
+					int r = DisplayAlert("ask-add-lib-as-link", p.leaf());
+					
+					if (r == 1)
+						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					else if (r == 2)
+					{
+						string linkName = p.leaf().substr(3);
+						if (ba::ends_with(linkName, ".a"))
+							linkName.erase(linkName.end() - 2, linkName.end());
+						else if (ba::ends_with(linkName, ".so"))
+							linkName.erase(linkName.end() - 3, linkName.end());
+						else
+							linkName.erase(linkName.end() - 6, linkName.end());
+						
+						projectFile.reset(new MProjectLib(linkName, inGroup));
+					}
+				}
+				else
+					projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+			}
+			else
+				THROW(("Cannot add file %s since another file with that name but in another location is already present.",
+					name.c_str()));
+		}
+		else
+		{
+			fs::path dir = relative_path(mProjectDir, p.branch_path());
+			
+			if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
+			{
+				mProjectInfo.mUserSearchPaths.push_back(dir);
+
+				if (not LocateFile(name, true, filePath))
+					THROW(("Cannot find file, something is wrong, sorry..."));
+				
+				projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+			}
+		}
+		
+		outItem = projectFile.release();
+	}
+}
+
+void MProject::CreateResourceItem(
+	const string&		inFile,
+	MProjectGroup*		inGroup,
+	MProjectItem*&		outItem)
+{
+	MUrl url(inFile);
+	if (not url.IsLocal())
+		THROW(("You can only add local files to a project"));
+	
+	fs::path p = url.GetPath();
+	string name = p.leaf();
+	
+	if (fs::is_directory(p))
+	{
+		SetModified(true);
+
+		MProjectGroup* group = new MProjectGroup(name, inGroup);
+		int32 index = 0;
+		
+		vector<string> files;
+		MFileIterator iter(p, kFileIter_ReturnDirectories);
+		while (iter.Next(p))
+		{
+			MProjectItem* item = nil;
+			CreateResourceItem(MUrl(p).str(), group, item);
+			if (item != nil)
+			{
+				group->AddProjectItem(item, index);
+				++index;
+			}
+		}
+
+		outItem = group;
+	}
+	else
+	{
+		auto_ptr<MProjectItem> projectFile;
+		fs::path filePath;
+		
+		fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
+		filePath = relative_path(rsrcDir, p);
+		outItem = new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path());
 	}
 }
 
@@ -2074,87 +2085,21 @@ bool MProject::IsValidItem(
 	return mProjectItems.Contains(inItem) or mPackageItems.Contains(inItem);
 }
 
-void MProject::MoveItem(
-	MProjectItem*		inItem,
-	MProjectGroup*		inGroup,
-	int32				inIndex)
+void MProject::ProjectItemMoved()
 {
-	THROW_IF_NIL(inItem);
-	
-	MProjectGroup* group = inItem->GetParent();
-	int32 index = inItem->GetPosition();
-	
-	MProjectGroup* root = group;
-	THROW_IF_NIL(root);
-	
-	while (root->GetParent() != nil)
-		root = root->GetParent();
-	
-	if (root == &mProjectItems)
-		EmitRemovedRecursive(eRemovedFile, inItem, group, index);
-	else
-		EmitRemovedRecursive(eRemovedResource, inItem, group, index);
-
-	group->RemoveProjectItem(inItem);
-	SetModified(true);
-	
-	inGroup->AddProjectItem(inItem, inIndex);
-			
-	if (root == &mProjectItems)
-		EmitInsertedRecursive(eInsertedFile, inItem);
-	else
-		EmitInsertedRecursive(eInsertedResource, inItem);
-	
 	ResearchForFiles();
 	
 	MModDateCache modDateCache;
 	
-	if (root == &mProjectItems)
-	{
-		mProjectItems.UpdatePaths(mObjectDir);
-		mProjectItems.CheckCompilationResult();
-		mProjectItems.CheckIsOutOfDate(modDateCache);
-	}
-	else
-	{
-		mPackageItems.UpdatePaths(mObjectDir);
-		mPackageItems.CheckCompilationResult();
-		mPackageItems.CheckIsOutOfDate(modDateCache);
-	}
-}
+	mProjectItems.UpdatePaths(mObjectDir);
+	mProjectItems.CheckCompilationResult();
+	mProjectItems.CheckIsOutOfDate(modDateCache);
 
-void MProject::EmitRemovedRecursive(
-	MEventOut<void(MProjectGroup*,int32)>&	inEvent,
-	MProjectItem*							inItem,
-	MProjectGroup*							inParent,
-	int32									inIndex)
-{
-	if (dynamic_cast<MProjectGroup*>(inItem) != nil)
-	{
-		MProjectGroup* group = static_cast<MProjectGroup*>(inItem);
-		vector<MProjectItem*>& items = group->GetItems();
-		
-		for (int32 ix = items.size() - 1; ix >= 0; --ix)
-			EmitRemovedRecursive(inEvent, items[ix], group, ix);
-	}
-
-	inEvent(inParent, inIndex);
-}
-
-void MProject::EmitInsertedRecursive(
-	MEventOut<void(MProjectItem*)>&			inEvent,
-	MProjectItem*							inItem)
-{
-	inEvent(inItem);
-
-	if (dynamic_cast<MProjectGroup*>(inItem) != nil)
-	{
-		MProjectGroup* group = static_cast<MProjectGroup*>(inItem);
-		vector<MProjectItem*>& items = group->GetItems();
-		
-		for (int32 ix = items.size() - 1; ix >= 0; --ix)
-			EmitInsertedRecursive(inEvent, items[ix]);
-	}
+	mPackageItems.UpdatePaths(mObjectDir);
+	mPackageItems.CheckCompilationResult();
+	mPackageItems.CheckIsOutOfDate(modDateCache);
+	
+	SetModified(true);
 }
 
 void MProject::GetInfo(

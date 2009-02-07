@@ -16,6 +16,7 @@
 #include "MStrings.h"
 #include "MUtils.h"
 #include "MPreferences.h"
+#include "MNewGroupDialog.h"
 
 #include "MError.h"
 
@@ -67,7 +68,11 @@ enum {
 	
 	kNoteBookID				= 'note'
 };
-	
+
+enum {
+	kFilesPageNr = 1
+};
+
 }
 
 MePubWindow::MePubWindow()
@@ -76,6 +81,7 @@ MePubWindow::MePubWindow()
 	, eInvokeFileRow(this, &MePubWindow::InvokeFileRow)
 	, eDocumentClosed(this, &MePubWindow::TextDocClosed)
 	, eFileSpecChanged(this, &MePubWindow::TextDocFileSpecChanged)
+	, eCreateNewGroup(this, &MePubWindow::CreateNewGroup)
 {
 	mController = new MController(this);
 	
@@ -108,6 +114,8 @@ void MePubWindow::Initialize(
 
 	AddRoute(mEPub->eInsertedFile, mFilesTree->eProjectItemInserted);
 	AddRoute(mEPub->eRemovedFile, mFilesTree->eProjectItemRemoved);
+	AddRoute(mEPub->eItemMoved, mFilesTree->eProjectItemMoved);
+	AddRoute(mEPub->eCreateItem, mFilesTree->eProjectCreateItem);
 	
 	filesTree.SetModel(mFilesTree->GetModel());
 	filesTree.ExpandAll();
@@ -221,7 +229,21 @@ bool MePubWindow::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	return MDocWindow::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	bool result = true;
+	
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+
+	switch (inCommand)
+	{
+		case cmd_NewGroup:
+			outEnabled = notebook.GetPage() == kFilesPageNr;
+			break;
+		
+		default:
+			result = MDocWindow::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	}
+	
+	return result;
 }
 
 bool MePubWindow::ProcessCommand(
@@ -230,7 +252,26 @@ bool MePubWindow::ProcessCommand(
 	uint32			inItemIndex,
 	uint32			inModifiers)
 {
-	return MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+	bool result = true;
+
+//	vector<MProjectItem*> selectedItems;
+//	GetSelectedItems(selectedItems);
+
+	switch (inCommand)
+	{
+		case cmd_NewGroup:
+		{
+			MNewGroupDialog* dlog = new MNewGroupDialog(this);
+			AddRoute(dlog->eCreateNewGroup, eCreateNewGroup);
+			break;
+		}
+		
+		default:
+			result = MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+			break;
+	}
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -445,3 +486,33 @@ void MePubWindow::ValueChanged(
 
 	}
 }
+
+// ---------------------------------------------------------------------------
+//	CreateNewGroup
+
+void MePubWindow::CreateNewGroup(
+	const string&		inGroupName)
+{
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	auto_ptr<MGtkTreeView> treeView(new MGtkTreeView(GetWidget(kFilesListViewID)));
+	MProjectGroup* group = mEPub->GetFiles();
+	
+	int32 index = 0;
+	
+	GtkTreePath* path = nil;
+	GtkTreeIter iter;
+	
+	if (treeView->GetFirstSelectedRow(path) and
+		mFilesTree->GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		group = item->GetParent();
+		index = item->GetPosition();
+	}
+		
+	mEPub->CreateNewGroup(inGroupName, group, index);
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+}
+

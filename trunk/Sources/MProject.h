@@ -116,17 +116,22 @@ class MProject : public MDocument
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
-	MEventIn<void(std::vector<std::string>&, MProjectGroup*, int32)>
-											eProjectAddFiles;
+	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
+											eProjectCreateFileItem;
+	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
+											eProjectCreateResourceItem;
 	
-	MEventIn<void(MProjectItem*, MProjectGroup*, int32)>
-											eProjectMoveItem;
+	MEventIn<void()>						eProjectItemMoved;
 
-	void				AddFiles(
-							std::vector<std::string>&
-												inFiles,
+	void				CreateFileItem(
+							const std::string&	inFile,
 							MProjectGroup*		inGroup,
-							int32				inIndex);
+							MProjectItem*&		outItem);
+
+	void				CreateResourceItem(
+							const std::string&	inFile,
+							MProjectGroup*		inGroup,
+							MProjectItem*&		outItem);
 
 	void				RemoveItem(
 							MProjectItem*		inItem);
@@ -138,10 +143,7 @@ class MProject : public MDocument
 	bool				IsValidItem(
 							MProjectItem*		inItem);
 
-	void				MoveItem(
-							MProjectItem*		inItem,
-							MProjectGroup*		inGroup,
-							int32				inIndex);
+	void				ProjectItemMoved();
 
 	static void			RecheckFiles();
 
@@ -313,18 +315,6 @@ class MProject : public MDocument
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedFile;
 	MEventOut<void(MProjectGroup*,int32)>	eRemovedResource;
 	MEventOut<void()>						eTargetsChanged;	// notify window
-
-	void				EmitRemovedRecursive(
-							MEventOut<void(MProjectGroup*,int32)>&
-												inEvent,
-							MProjectItem*		inItem,
-							MProjectGroup*		inParent,
-							int32				inIndex);
-
-	void				EmitInsertedRecursive(
-							MEventOut<void(MProjectItem*)>&
-												inEvent,
-							MProjectItem*		inItem);
 
 	std::string					mName;
 	fs::path					mProjectFile;

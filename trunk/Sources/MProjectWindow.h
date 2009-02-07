@@ -41,6 +41,8 @@ class MProjectWindow : public MDocWindow
 	void			CreateNewGroup(
 						const std::string&
 										inGroupName);
+
+	MEventIn<void(const std::string&)>	eCreateNewGroup;
 	
   protected:
 

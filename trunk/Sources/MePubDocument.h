@@ -51,6 +51,23 @@ class MePubDocument : public MDocument
 	MEventOut<void(MProjectItem*)>				eInsertedFile;
 	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
 
+	void				CreateNewGroup(
+							const std::string&	inGroupName,
+							MProjectGroup*		inGroup,
+							int32				inIndex);
+
+	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
+											eCreateItem;
+	
+	MEventIn<void()>						eItemMoved;
+
+	void				CreateItem(
+							const std::string&	inFile,
+							MProjectGroup*		inGroup,
+							MProjectItem*&		outItem);
+
+	void				ItemMoved();
+
 	std::string			GetDocumentID() const;
 	
 	void				SetDocumentID(

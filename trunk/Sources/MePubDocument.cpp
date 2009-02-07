@@ -15,6 +15,7 @@
 #include <endian.h>
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include "document.hpp"
@@ -22,6 +23,8 @@
 #include "MError.h"
 #include "MePubDocument.h"
 #include "MePubItem.h"
+#include "MTextBuffer.h"
+#include "MFile.h"
 
 #ifndef __BYTE_ORDER
 #error "Please specify byte order"
@@ -291,6 +294,8 @@ void deflate(
 MePubDocument::MePubDocument(
 	const fs::path&		inProjectFile)
 	: MDocument(inProjectFile)
+	, eCreateItem(this, &MePubDocument::CreateItem)
+	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, mInputFileStream(nil)
 	, mRoot("", nil)
 {
@@ -900,3 +905,122 @@ void MePubDocument::SetModified(
 	
 	MDocument::SetModified(inModified);
 }
+
+// ---------------------------------------------------------------------------
+//	MePubDocument::CreateNewGroup
+
+void MePubDocument::CreateNewGroup(
+	const string&		inGroupName,
+	MProjectGroup*		inGroup,
+	int32				inIndex)
+{
+	MProjectGroup* newGroup = new MProjectGroup(inGroupName, inGroup);
+	inGroup->AddProjectItem(newGroup, inIndex);
+	SetModified(true);
+	eInsertedFile(newGroup);
+}
+
+void MePubDocument::CreateItem(
+	const string&		inFile,
+	MProjectGroup*		inGroup,
+	MProjectItem*&		outItem)
+{
+	fs::path path(MUrl(inFile).GetPath());
+	string name = path.leaf();
+	
+	if (not fs::exists(path))
+		THROW(("File %s does not exist?", inFile.c_str()));
+	
+	if (fs::is_directory(path))
+	{
+		SetModified(true);
+
+		MProjectGroup* group = new MProjectGroup(name, inGroup);
+		int32 index = 0;
+		
+		vector<string> files;
+		MFileIterator iter(path, kFileIter_ReturnDirectories);
+		while (iter.Next(path))
+		{
+			MProjectItem* item = nil;
+			CreateItem(path.string(), group, item);
+			if (item != nil)
+			{
+				group->AddProjectItem(item, index);
+				++index;
+			}
+		}
+
+		outItem = group;
+	}
+	else
+	{
+		auto_ptr<MePubItem> item(new MePubItem(name, inGroup, inGroup->GetGroupPath()));
+		
+		bool isText = false;
+		
+		if (FileNameMatches("*.css", name))
+		{
+			item->SetMediaType("text/css");
+			isText = true;
+		}
+		else if (FileNameMatches("*.xml;*.html", name))
+		{
+			item->SetMediaType("application/xhtml+xml");
+			isText = true;
+		}
+		else if (FileNameMatches("*.ncx", name))
+		{
+			item->SetMediaType("application/x-dtbncx+xml");
+			isText = true;
+		}
+		else if (FileNameMatches("*.ttf", name))
+			item->SetMediaType("application/x-font-ttf");
+		else if (FileNameMatches("*.xpgt", name))
+			item->SetMediaType("application/vnd.adobe-page-template+xml");
+		else if (FileNameMatches("*.png", name))
+			item->SetMediaType("image/png");
+		else if (FileNameMatches("*.jpg", name))
+			item->SetMediaType("image/jpeg");
+		else 
+			item->SetMediaType("application/xhtml+xml");
+
+		fs::ifstream file(path);
+
+		if (isText)
+		{
+			MTextBuffer buffer;
+			buffer.ReadFromFile(file);
+			item->SetData(buffer.GetText());
+		}
+		else
+		{
+			// First read the data into a buffer
+			streambuf* b = file.rdbuf();
+			
+			int64 len = b->pubseekoff(0, ios::end);
+			b->pubseekpos(0);
+		
+			if (len < 0)
+				THROW(("File is not open?"));
+		
+			if (len > numeric_limits<uint32>::max())
+				THROW(("File too large to open"));
+		
+			vector<char> data(len);
+			b->sgetn(&data[0], len);
+			
+			item->SetData(string(&data[0], len));
+		}
+
+		item->SetID(fs::basename(name));
+
+		outItem = item.release();
+	}
+}
+
+void MePubDocument::ItemMoved()
+{
+	SetModified(true);
+}
+

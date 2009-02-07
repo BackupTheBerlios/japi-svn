@@ -695,6 +695,17 @@ MProjectGroup* MProjectGroup::GetGroupForPath(
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectGroup::GetGroupPath
+
+fs::path MProjectGroup::GetGroupPath() const
+{
+	fs::path result;
+	if (mParent != nil)
+		result = mParent->GetGroupPath();
+	return result / GetName();
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectGroup::iterator
 
 //MProjectGroup::iterator::iterator()
@@ -728,20 +739,18 @@ void MProjectGroup::iterator::increment()
 		mOffset = 0;
 	}
 	else
-	{
 		++mOffset;
 		
-		while (mOffset >= mGroup->mItems.size() and mGroup != mBegin)
-		{
-			MProjectGroup* parent = mGroup->mParent;
-			vector<MProjectItem*>::iterator i =
-				find(parent->mItems.begin(), parent->mItems.end(), mGroup);
-			if (i == parent->mItems.end())
-				THROW(("internal error in MProjectItem::iterator"));
-			
-			mGroup = parent;
-			mOffset = (i - parent->mItems.begin()) + 1;
-		}
+	while (mOffset >= mGroup->mItems.size() and mGroup != mBegin)
+	{
+		MProjectGroup* parent = mGroup->mParent;
+		vector<MProjectItem*>::iterator i =
+			find(parent->mItems.begin(), parent->mItems.end(), mGroup);
+		if (i == parent->mItems.end())
+			THROW(("internal error in MProjectItem::iterator"));
+		
+		mGroup = parent;
+		mOffset = (i - parent->mItems.begin()) + 1;
 	}
 }
 
