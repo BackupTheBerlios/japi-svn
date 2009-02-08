@@ -66,7 +66,7 @@ enum {
 	kDCRightsViewID			= 'dcRI',
 	kDCSubjectViewID		= 'dcSU',
 	
-	kTOCViewID				= 'tre3',
+	kTOCListViewID			= 'tre3',
 	
 	kNoteBookID				= 'note'
 };
@@ -138,15 +138,15 @@ class MePubFileTree : public MProjectTree
 						uint32			inColumn,
 						GValue*			outValue) const;
 
-	void			EditedItemID(
+	bool			EditedItemID(
 						gchar*			path,
 						gchar*			new_text);
 
-	void			EditedItemName(
+	bool			EditedItemName(
 						gchar*			path,
 						gchar*			new_text);
 
-	void			EditedItemMediaType(
+	bool			EditedItemMediaType(
 						gchar*			path,
 						gchar*			new_text);
 };
@@ -237,10 +237,11 @@ void MePubFileTree::GetValue(
 // ---------------------------------------------------------------------------
 //	EditedItemName
 
-void MePubFileTree::EditedItemName(
+bool MePubFileTree::EditedItemName(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
+	bool result = false;
 	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
 	
 	GtkTreeIter iter;
@@ -248,21 +249,29 @@ void MePubFileTree::EditedItemName(
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
 
-		item->SetName(inNewValue);
-		RowChanged(path, &iter);
+		if (item->GetName() != inNewValue)
+		{
+			item->SetName(inNewValue);
+			RowChanged(path, &iter);
+			result = true;
+		}
 	}
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------
 //	EditedItemID
 
-void MePubFileTree::EditedItemID(
+bool MePubFileTree::EditedItemID(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
+	bool result = false;
+	
 	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
 	
 	GtkTreeIter iter;
@@ -271,24 +280,28 @@ void MePubFileTree::EditedItemID(
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
 		
-		if (ePubItem != nil)
+		if (ePubItem != nil and ePubItem->GetID() != inNewValue)
 		{
 			ePubItem->SetID(inNewValue);
 			RowChanged(path, &iter);
+			result = true;
 		}
 	}
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
+	
+	return result;
 }
 
 // ---------------------------------------------------------------------------
 //	EditedItemMediaType
 
-void MePubFileTree::EditedItemMediaType(
+bool MePubFileTree::EditedItemMediaType(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
+	bool result = false;
 	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
 	
 	GtkTreeIter iter;
@@ -297,16 +310,192 @@ void MePubFileTree::EditedItemMediaType(
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
 		
-		if (ePubItem != nil)
+		if (ePubItem != nil and ePubItem->GetMediaType() != inNewValue)
 		{
 			ePubItem->SetMediaType(inNewValue);
 			RowChanged(path, &iter);
+			result = true;
 		}
 	}
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
+	
+	return result;
 }
+
+// ---------------------------------------------------------------------------
+
+enum {
+	kTOCTitleColumn,
+	kTOCSrcColumn,
+	kTOCClassColumn,
+
+	kTOCColumnCount
+};
+
+class MTOCTree : public MProjectTree
+{
+  public:
+					MTOCTree(
+						MProjectGroup*	inItems)
+						: MProjectTree(inItems)	{}
+	
+	virtual uint32	GetColumnCount() const;
+
+	virtual GType	GetColumnType(
+						uint32			inColumn) const;
+
+	virtual void	GetValue(
+						GtkTreeIter*	inIter,
+						uint32			inColumn,
+						GValue*			outValue) const;
+
+	bool			EditedTOCTitle(
+						gchar*			path,
+						gchar*			new_text);
+
+	bool			EditedTOCSrc(
+						gchar*			path,
+						gchar*			new_text);
+
+	bool			EditedTOCClass(
+						gchar*			path,
+						gchar*			new_text);
+};
+
+uint32 MTOCTree::GetColumnCount() const
+{
+	return kTOCColumnCount;
+}
+
+GType MTOCTree::GetColumnType(
+	uint32			inColumn) const
+{
+	return G_TYPE_STRING;
+}
+
+void MTOCTree::GetValue(
+	GtkTreeIter*	inIter,
+	uint32			inColumn,
+	GValue*			outValue) const
+{
+	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
+	MePubTOCItem* tocItem = dynamic_cast<MePubTOCItem*>(item);
+
+	if (tocItem != nil)
+	{
+		switch (inColumn)
+		{
+			case kTOCTitleColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				g_value_set_string(outValue, tocItem->GetName().c_str());
+				break;
+			
+			case kTOCSrcColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				g_value_set_string(outValue, tocItem->GetSrc().c_str());
+				break;
+			
+			case kTOCClassColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				g_value_set_string(outValue, tocItem->GetClass().c_str());
+				break;
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	EditedTOCTitle
+
+bool MTOCTree::EditedTOCTitle(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	bool result = false;
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+
+		if (item->GetName() != inNewValue)
+		{
+			item->SetName(inNewValue);
+			RowChanged(path, &iter);
+			result = true;
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	EditedTOCSrc
+
+bool MTOCTree::EditedTOCSrc(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	bool result = false;
+	
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MePubTOCItem* tocItem = dynamic_cast<MePubTOCItem*>(item);
+		
+		if (tocItem != nil and tocItem->GetSrc() != inNewValue)
+		{
+			tocItem->SetSrc(inNewValue);
+			RowChanged(path, &iter);
+			result = true;
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	EditedTOCClass
+
+bool MTOCTree::EditedTOCClass(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	bool result = false;
+	
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MePubTOCItem* tocItem = dynamic_cast<MePubTOCItem*>(item);
+		
+		if (tocItem != nil and tocItem->GetClass() != inNewValue)
+		{
+			tocItem->SetClass(inNewValue);
+			RowChanged(path, &iter);
+			result = true;
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
+}
+
 
 // ---------------------------------------------------------------------------
 
@@ -320,6 +509,9 @@ MePubWindow::MePubWindow()
 	, mEditedItemName(this, &MePubWindow::EditedItemName)
 	, mEditedItemID(this, &MePubWindow::EditedItemID)
 	, mEditedItemMediaType(this, &MePubWindow::EditedItemMediaType)
+	, mEditedTOCTitle(this, &MePubWindow::EditedTOCTitle)
+	, mEditedTOCSrc(this, &MePubWindow::EditedTOCSrc)
+	, mEditedTOCClass(this, &MePubWindow::EditedTOCClass)
 {
 	mController = new MController(this);
 	
@@ -333,6 +525,9 @@ MePubWindow::~MePubWindow()
 {
 	delete mFilesTree;
 	mFilesTree = nil;
+	
+	delete mTOCTree;
+	mTOCTree = nil;
 }
 
 void MePubWindow::Initialize(
@@ -357,6 +552,18 @@ void MePubWindow::Initialize(
 	
 	filesTree.SetModel(mFilesTree->GetModel());
 	filesTree.ExpandAll();
+
+	MGtkTreeView tocTree(GetWidget(kTOCListViewID));
+	InitializeTOCTreeView(tocTree);
+	mTOCTree = new MTOCTree(mEPub->GetTOC());
+
+//	AddRoute(mEPub->eInsertedFile, mFilesTree->eProjectItemInserted);
+//	AddRoute(mEPub->eRemovedFile, mFilesTree->eProjectItemRemoved);
+//	AddRoute(mEPub->eItemMoved, mFilesTree->eProjectItemMoved);
+//	AddRoute(mEPub->eCreateItem, mFilesTree->eProjectCreateItem);
+	
+	tocTree.SetModel(mTOCTree->GetModel());
+	tocTree.ExpandAll();
 
 	// fill in the information fields
 	
@@ -428,6 +635,9 @@ bool MePubWindow::DoClose()
 		
 		delete mFilesTree;
 		mFilesTree = nil;
+		
+		delete mTOCTree;
+		mTOCTree = nil;
 		
 		result = true;
 	}
@@ -580,6 +790,53 @@ void MePubWindow::InitializeTreeView(
 		_(" "), renderer, "pixbuf", kePubFileDirtyColumn, nil);
 	gtk_tree_view_append_column(inGtkTreeView, column);
 
+	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
+	
+	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
+}
+
+// ---------------------------------------------------------------------------
+//	InitializeTOCTreeView
+
+void MePubWindow::InitializeTOCTreeView(
+	GtkTreeView*		inGtkTreeView)
+{
+	THROW_IF_NIL(inGtkTreeView);
+
+	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
+		kTreeDragTargets, kTreeDragTargetCount,
+		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
+		kTreeDragTargets, kTreeDragTargetCount,
+		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+	
+	// Add the columns and renderers
+
+	// the title column
+	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
+		_("Title"), renderer, "text", kTOCTitleColumn, nil);
+	g_object_set(G_OBJECT(column), "expand", true, nil);
+	g_object_set(G_OBJECT(renderer), "editable", true, nil);
+	mEditedTOCTitle.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the src column
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Source"), renderer, "text", kTOCSrcColumn, nil);
+	g_object_set(G_OBJECT(renderer), "editable", true, nil);
+	mEditedTOCSrc.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the class column
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Class"), renderer, "text", kTOCClassColumn, nil);
+	g_object_set(G_OBJECT(renderer), "editable", true, nil);
+	mEditedTOCClass.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
 	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
 	
 	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
@@ -786,22 +1043,46 @@ void MePubWindow::EditedItemName(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
-	mFilesTree->EditedItemName(inPath, inNewValue);
-	mEPub->SetModified(true);
+	if (mFilesTree->EditedItemName(inPath, inNewValue))
+		mEPub->SetModified(true);
 }
 
 void MePubWindow::EditedItemID(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
-	mFilesTree->EditedItemID(inPath, inNewValue);
-	mEPub->SetModified(true);
+	if (mFilesTree->EditedItemID(inPath, inNewValue))
+		mEPub->SetModified(true);
 }
 
 void MePubWindow::EditedItemMediaType(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
-	mFilesTree->EditedItemMediaType(inPath, inNewValue);
-	mEPub->SetModified(true);
+	if (mFilesTree->EditedItemMediaType(inPath, inNewValue))
+		mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedTOCTitle(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	if (mTOCTree->EditedTOCTitle(inPath, inNewValue))
+		mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedTOCSrc(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	if (mTOCTree->EditedTOCSrc(inPath, inNewValue))
+		mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedTOCClass(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	if (mTOCTree->EditedTOCClass(inPath, inNewValue))
+		mEPub->SetModified(true);
 }

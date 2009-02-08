@@ -72,6 +72,8 @@ class MProjectItem
 	virtual bool	Contains(
 						MProjectItem*		inItem) const	{ return this == inItem; }
 
+	virtual uint32	GetDepth() const						{ return 1; }
+
   protected:
 					
 	std::string		mName;
@@ -229,6 +231,8 @@ class MProjectGroup : public MProjectItem
 						const fs::path&		inPath);
 
 	fs::path		GetGroupPath() const;
+	
+	virtual uint32	GetDepth() const;
 
   private:
 	std::vector<MProjectItem*>

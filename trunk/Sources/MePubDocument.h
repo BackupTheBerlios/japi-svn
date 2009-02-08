@@ -47,6 +47,7 @@ class MePubDocument : public MDocument
 							std::ostream&		inFile);
 
 	MProjectGroup*		GetFiles() const;
+	MProjectGroup*		GetTOC() const;
 
 	MEventOut<void(MProjectItem*)>				eInsertedFile;
 	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
@@ -99,6 +100,20 @@ class MePubDocument : public MDocument
 	xml::node_ptr		CreateOPF(
 							const fs::path&		inOEBPS);
 
+	void				ParseNCX(
+							xml::node&			inNCX);
+
+	void				ParseNavPoint(
+							MProjectGroup*		inGroup,
+							xml::node_ptr		inNavPoint);
+
+	xml::node_ptr		CreateNCX();
+
+	void				CreateNavMap(
+							MProjectGroup*		inGroup,
+							xml::node_ptr		inNavPoint,
+							uint32&				ioID);
+
 	static ssize_t		archive_read_callback_cb(
 							struct archive*		inArchive,
 							void*				inClientData,
@@ -129,7 +144,7 @@ class MePubDocument : public MDocument
 	fs::path			mTOCFile;
 	std::vector<std::string>
 						mSpine;
-	MProjectGroup		mRoot;
+	MProjectGroup		mRoot, mTOC;
 	std::string			mDocumentID, mDocumentIDScheme;
 	std::map<std::string,std::string>
 						mDublinCore;

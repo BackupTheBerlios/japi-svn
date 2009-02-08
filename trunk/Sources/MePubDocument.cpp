@@ -298,6 +298,7 @@ MePubDocument::MePubDocument(
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, mInputFileStream(nil)
 	, mRoot("", nil)
+	, mTOC("", nil)
 {
 	RevertDocument();
 }
@@ -442,11 +443,16 @@ void MePubDocument::ReadFile(
 		
 		ParseOPF(rootFile.branch_path(), *opf.root());
 		
+		fs::path tocFile = rootFile.branch_path() / mTOCFile;
+		xml::document ncx(content[tocFile]);
+		
+		ParseNCX(*ncx.root());
+		
 		// and now fill in the data for the items we've found
 		
 		for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
 		{
-			if (item->first == rootFile)
+			if (item->first == rootFile or item->first == tocFile)
 				continue;
 			
 			MProjectItem* pi = mRoot.GetItem(item->first);
@@ -496,6 +502,7 @@ void MePubDocument::WriteFile(
 	fs::path oebpsPath(oebps->GetName());
 
 	fs::path rootFile = oebpsPath / mRootFile;
+	fs::path tocFile = oebpsPath / mTOCFile;
 	
 	// OK, write the file
 	
@@ -567,6 +574,17 @@ void MePubDocument::WriteFile(
 	fh.filename = rootFile.string();
 	xml::node_ptr opf = CreateOPF(oebpsPath);
 	deflate(opf, fh);
+
+	cd.offset = inFile.tellp();
+	inFile << fh;
+	cd.file = fh;
+	dir.push_back(cd);
+	
+	// the NCX...
+	
+	fh.filename = tocFile.string();
+	xml::node_ptr ncx = CreateNCX();
+	deflate(ncx, fh);
 
 	cd.offset = inFile.tellp();
 	inFile << fh;
@@ -667,8 +685,6 @@ xml::node_ptr MePubDocument::CreateOPF(
 	}
 	
 	// manifest
-	string ncx;	// the id of our ncx file. collect it while processing the manifest
-	
 	xml::node_ptr manifest(new xml::node("manifest"));
 	opf->add_child(manifest);
 
@@ -684,15 +700,20 @@ xml::node_ptr MePubDocument::CreateOPF(
 		item_node->add_attribute("href", relative_path(inOEBPS, ePubItem->GetPath()).string());
 		item_node->add_attribute("media-type", ePubItem->GetMediaType());
 		manifest->add_child(item_node);
-		
-		if (ePubItem->GetPath() == inOEBPS / mTOCFile)
-			ncx = ePubItem->GetID();
 	}
+	
+	// add the ncx to the manifest too
+	
+	xml::node_ptr item_node(new xml::node("item"));
+	item_node->add_attribute("id", "ncx");
+	item_node->add_attribute("href", mTOCFile.string());
+	item_node->add_attribute("media-type", "application/x-dtbncx+xml");
+	manifest->add_child(item_node);
 	
 	// spine. For now we simply write out all file ID's for files having media-type application/xhtml+xml 
 
 	xml::node_ptr spine(new xml::node("spine"));
-	spine->add_attribute("toc", ncx);
+	spine->add_attribute("toc", "ncx");
 	opf->add_child(spine);
 	
 	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
@@ -709,6 +730,89 @@ xml::node_ptr MePubDocument::CreateOPF(
 	
 	return opf;
 }
+
+xml::node_ptr MePubDocument::CreateNCX()
+{
+	xml::node_ptr ncx(new xml::node("ncx"));
+	ncx->add_attribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
+	ncx->add_attribute("version", "2005-1");
+	ncx->add_attribute("xml:lang", mDublinCore["language"]);
+
+	// the required head values
+	xml::node_ptr head(new xml::node("head"));
+	ncx->add_child(head);
+	
+	xml::node_ptr meta(new xml::node("meta"));
+	meta->add_attribute("name", "dtb:uid");
+	meta->add_attribute("content", mDocumentID);
+	head->add_child(meta);
+	
+	meta.reset(new xml::node("meta"));
+	meta->add_attribute("name", "dtb:depth");
+	meta->add_attribute("content", boost::lexical_cast<string>(mTOC.GetDepth() - 1));
+	head->add_child(meta);
+	
+	meta.reset(new xml::node("meta"));
+	meta->add_attribute("name", "dtb:totalPageCount");
+	meta->add_attribute("content", "0");
+	head->add_child(meta);
+	
+	meta.reset(new xml::node("meta"));
+	meta->add_attribute("name", "dtb:maxPageNumber");
+	meta->add_attribute("content", "0");
+	head->add_child(meta);
+	
+	// the title
+	
+	xml::node_ptr docTitle(new xml::node("docTitle"));
+	xml::node_ptr text(new xml::node("text"));
+	text->content(mDublinCore["title"]);
+	docTitle->add_child(text);
+	ncx->add_child(docTitle);
+	
+	// the navMap
+	
+	xml::node_ptr navMap(new xml::node("navMap"));
+	ncx->add_child(navMap);
+	
+	uint32 id = 0;
+	CreateNavMap(&mTOC, navMap, id);
+	
+	return ncx;
+}
+
+void MePubDocument::CreateNavMap(
+	MProjectGroup*		inGroup,
+	xml::node_ptr		inNavPoint,
+	uint32&				ioID)
+{
+	for (int32 ix = 0; ix < inGroup->Count(); ++ix)
+	{
+		MePubTOCItem* tocItem = dynamic_cast<MePubTOCItem*>(inGroup->GetItem(ix));
+		THROW_IF_NIL(tocItem);
+		
+		xml::node_ptr navPoint(new xml::node("navPoint"));
+		navPoint->add_attribute("id", string("id-") + boost::lexical_cast<string>(ioID));
+		navPoint->add_attribute("class", tocItem->GetClass());
+		navPoint->add_attribute("playOrder", boost::lexical_cast<string>(ioID));
+		++ioID;
+		
+		xml::node_ptr navLabel(new xml::node("navLabel"));
+		xml::node_ptr text(new xml::node("text"));
+		text->content(tocItem->GetName());
+		navLabel->add_child(text);
+		navPoint->add_child(navLabel);
+		
+		xml::node_ptr content(new xml::node("content"));
+		content->add_attribute("src", tocItem->GetSrc());
+		navPoint->add_child(content);
+		
+		if (tocItem->Count() > 0)
+			CreateNavMap(tocItem, navPoint, ioID);
+		
+		inNavPoint->add_child(navPoint);
+	}	
+}	
 
 ssize_t MePubDocument::archive_read_callback_cb(
 	struct archive*		inArchive,
@@ -761,6 +865,11 @@ MProjectGroup* MePubDocument::GetFiles() const
 	return const_cast<MProjectGroup*>(&mRoot);
 }
 
+MProjectGroup* MePubDocument::GetTOC() const
+{
+	return const_cast<MProjectGroup*>(&mTOC);
+}
+
 void MePubDocument::ParseOPF(
 	const fs::path&		inDirectory,
 	xml::node&			inOPF)
@@ -806,8 +915,14 @@ void MePubDocument::ParseOPF(
 	{
 		if (item->name() != "item" or item->ns() != "http://www.idpf.org/2007/opf")
 			continue;
-		
+
 		fs::path href = inDirectory / item->get_attribute("href");
+		
+		if (mTOCFile.empty() and item->get_attribute("media-type") == "application/x-dtbncx+xml")
+		{
+			mTOCFile = relative_path(inDirectory, href);
+			continue;
+		}
 		
 		MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
 		
@@ -815,9 +930,6 @@ void MePubDocument::ParseOPF(
 		
 		eItem->SetID(item->get_attribute("id"));
 		eItem->SetMediaType(item->get_attribute("media-type"));
-		
-		if (mTOCFile.empty() and eItem->GetMediaType() == "application/x-dtbncx+xml")
-			mTOCFile = relative_path(inDirectory, eItem->GetPath());
 		
 		group->AddProjectItem(eItem.release());
 	}
@@ -840,6 +952,53 @@ void MePubDocument::ParseOPF(
 	// sanity checks
 	if (mDocumentID.empty())
 		THROW(("Missing document identifier in metadata section"));
+}
+
+void MePubDocument::ParseNCX(
+	xml::node&			inNCX)
+{
+	xml::node_ptr navMap = inNCX.find_first_child("navMap");
+	if (not navMap)
+		THROW(("Missing navMap element in NCX file"));
+
+	for (xml::node_ptr n = navMap->children(); n; n = n->next())
+	{
+		if (n->name() == "navPoint")
+			ParseNavPoint(&mTOC, n);
+	}
+}
+
+void MePubDocument::ParseNavPoint(
+	MProjectGroup*		inGroup,
+	xml::node_ptr		inNavPoint)
+{
+	assert(inNavPoint->name() == "navPoint");
+	
+	xml::node_ptr label = inNavPoint->find_first_child("navLabel");
+	if (not label)
+		THROW(("Missing navLabel in navPoint"));
+
+	xml::node_ptr name = label->find_first_child("text");
+	if (not name)
+		THROW(("Missing text in navLabel"));
+	
+	auto_ptr<MePubTOCItem> np(new MePubTOCItem(name->content(), inGroup));
+
+	xml::node_ptr content = inNavPoint->find_first_child("content");
+	if (not content)
+		THROW(("Missing content in navPoint"));
+	
+	np->SetSrc(content->get_attribute("src"));
+
+	np->SetClass(inNavPoint->get_attribute("class"));
+	
+	for (xml::node_ptr n = inNavPoint->children(); n; n = n->next())
+	{
+		if (n->name() == "navPoint")
+			ParseNavPoint(np.get(), n);
+	}
+	
+	inGroup->AddProjectItem(np.release());
 }
 
 string MePubDocument::GetDocumentID() const

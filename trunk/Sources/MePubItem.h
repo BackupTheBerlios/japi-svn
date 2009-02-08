@@ -42,5 +42,25 @@ class MePubItem : public MProjectItem
 	std::string		mMediaType;
 };
 
+class MePubTOCItem : public MProjectGroup
+{
+  public:
+					MePubTOCItem(
+						const std::string&	inName,
+						MProjectGroup*		inParent)
+						: MProjectGroup(inName, inParent) {}
+	
+	std::string		GetClass() const						{ return mClass; }
+	void			SetClass(
+						const std::string&	inClass)		{ mClass = inClass; }
+
+	std::string		GetSrc() const							{ return mSrc; }
+	void			SetSrc(
+						const std::string&	inSrc)			{ mSrc = inSrc; }
+
+  protected:
+	std::string		mClass, mSrc;
+};
+
 #endif
 

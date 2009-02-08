@@ -10,6 +10,7 @@
 
 class MProjectItem;
 class MePubFileTree;
+class MTOCTree;
 class MTextDocument;
 
 class MePubWindow : public MDocWindow
@@ -64,6 +65,9 @@ class MePubWindow : public MDocWindow
 	void			InitializeTreeView(
 						GtkTreeView*	inGtkTreeView);
 
+	void			InitializeTOCTreeView(
+						GtkTreeView*	inGtkTreeView);
+
 	virtual void	ValueChanged(
 						uint32			inID);
 
@@ -104,8 +108,30 @@ class MePubWindow : public MDocWindow
 	MSlot<void(gchar*,gchar*)>
 					mEditedItemMediaType;
 
+	void			EditedTOCTitle(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedTOCTitle;
+
+	void			EditedTOCSrc(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedTOCSrc;
+
+	void			EditedTOCClass(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedTOCClass;
+
 	MePubDocument*	mEPub;
 	MePubFileTree*	mFilesTree;
+	MTOCTree*		mTOCTree;
 	
 	typedef std::map<fs::path,MTextDocument*>	MEPubTextDocMap;
 	MEPubTextDocMap	mOpenFiles;

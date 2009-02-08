@@ -706,6 +706,23 @@ fs::path MProjectGroup::GetGroupPath() const
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectGroup::GetDepth
+
+uint32 MProjectGroup::GetDepth() const
+{
+	uint32 result = 1;
+	
+	for (vector<MProjectItem*>::const_iterator i = mItems.begin(); i != mItems.end(); ++i)
+	{
+		uint32 d = (*i)->GetDepth();
+		if (result < d + 1)
+			result = d + 1;
+	}
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectGroup::iterator
 
 //MProjectGroup::iterator::iterator()
