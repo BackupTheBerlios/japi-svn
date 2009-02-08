@@ -382,6 +382,7 @@ void MePubDocument::ReadFile(
 		// Next thing is to walk the contents and store all the data.
 		
 		map<fs::path,string> content;
+		fs::path rootFile;
 		
 		for (;;)
 		{
@@ -430,21 +431,22 @@ void MePubDocument::ReadFile(
 				if (n->get_attribute("media-type") != "application/oebps-package+xml")
 					THROW(("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
 				
-				mRootFile = n->get_attribute("full-path");
+				rootFile = n->get_attribute("full-path");
+				mRootFile = rootFile.leaf();
 			}
 			else if (S_ISREG(archive_entry_filetype(entry)))
 				content[path] = s;
 		}
 
-		xml::document opf(content[mRootFile]);
+		xml::document opf(content[rootFile]);
 		
-		ParseOPF(mRootFile.branch_path(), *opf.root());
+		ParseOPF(rootFile.branch_path(), *opf.root());
 		
 		// and now fill in the data for the items we've found
 		
 		for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
 		{
-			if (item->first == mRootFile)
+			if (item->first == rootFile)
 				continue;
 			
 			MProjectItem* pi = mRoot.GetItem(item->first);
@@ -485,6 +487,18 @@ void MePubDocument::ReadFile(
 void MePubDocument::WriteFile(
 	std::ostream&		inFile)
 {
+	// sanity check first
+	
+	if (mRoot.Count() != 1 or dynamic_cast<MProjectGroup*>(mRoot.GetItem(0)) == nil)
+		THROW(("An ePub file should have a single directory in the root directory"));
+	
+	MProjectGroup* oebps = static_cast<MProjectGroup*>(mRoot.GetItem(0));
+	fs::path oebpsPath(oebps->GetName());
+
+	fs::path rootFile = oebpsPath / mRootFile;
+	
+	// OK, write the file
+	
 	ZIPLocalFileHeader fh;
 	vector<ZIPCentralDirectory> dir;
 	ZIPCentralDirectory cd;
@@ -525,7 +539,7 @@ void MePubDocument::WriteFile(
 	xml::node_ptr rootfiles(new xml::node("rootfiles"));
 	container->add_child(rootfiles);
 	xml::node_ptr rootfile(new xml::node("rootfile"));
-	rootfile->add_attribute("full-path", mRootFile.string());
+	rootfile->add_attribute("full-path", rootFile.string());
 	rootfile->add_attribute("media-type", "application/oebps-package+xml");
 	rootfiles->add_child(rootfile);
 	deflate(container, fh);
@@ -535,9 +549,9 @@ void MePubDocument::WriteFile(
 	cd.file = fh;
 	dir.push_back(cd);
 
-	// write reditions root directory (typically OEBPS)
+	// write renditions root directory (typically OEBPS)
 
-	fh.filename = mRootFile.branch_path().string() + '/';
+	fh.filename = oebps->GetName() + '/';
 	fh.deflated = false;
 	fh.compressed_size = fh.uncompressed_size = 0;
 	fh.data.clear();
@@ -548,11 +562,10 @@ void MePubDocument::WriteFile(
 	cd.file = fh;
 	dir.push_back(cd);
 	
-	// the OPF... ouch
+	// the OPF...
 	
-	fh.filename = mRootFile.string();
-	
-	xml::node_ptr opf = CreateOPF();
+	fh.filename = rootFile.string();
+	xml::node_ptr opf = CreateOPF(oebpsPath);
 	deflate(opf, fh);
 
 	cd.offset = inFile.tellp();
@@ -575,7 +588,7 @@ void MePubDocument::WriteFile(
 					path = group->GetName() / path;
 			}
 			
-			if (path == "META-INF" or path == mRootFile.branch_path())
+			if (path == "META-INF" or path == rootFile.branch_path())
 				continue;
 			
 			fh.filename = path.string() + '/';
@@ -622,7 +635,8 @@ void MePubDocument::WriteFile(
 	inFile << end;
 }
 
-xml::node_ptr MePubDocument::CreateOPF()
+xml::node_ptr MePubDocument::CreateOPF(
+	const fs::path&		inOEBPS)
 {
 	xml::node_ptr opf(new xml::node("package"));
 	opf->add_attribute("version", "2.0");
@@ -658,23 +672,20 @@ xml::node_ptr MePubDocument::CreateOPF()
 	xml::node_ptr manifest(new xml::node("manifest"));
 	opf->add_child(manifest);
 
-	vector<MProjectItem*> items;
-	mRoot.Flatten(items);
-	
-	for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
-		MePubItem* ePubItem = dynamic_cast<MePubItem*>(*item);
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(&*item);
 		
 		if (ePubItem == nil)
 			continue;
 		
 		xml::node_ptr item_node(new xml::node("item"));
 		item_node->add_attribute("id", ePubItem->GetID());
-		item_node->add_attribute("href", relative_path(mRootFile.branch_path(), ePubItem->GetPath()).string());
+		item_node->add_attribute("href", relative_path(inOEBPS, ePubItem->GetPath()).string());
 		item_node->add_attribute("media-type", ePubItem->GetMediaType());
 		manifest->add_child(item_node);
 		
-		if (ePubItem->GetPath() == mTOCFile)
+		if (ePubItem->GetPath() == inOEBPS / mTOCFile)
 			ncx = ePubItem->GetID();
 	}
 	
@@ -684,9 +695,9 @@ xml::node_ptr MePubDocument::CreateOPF()
 	spine->add_attribute("toc", ncx);
 	opf->add_child(spine);
 	
-	for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
-		MePubItem* ePubItem = dynamic_cast<MePubItem*>(*item);
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(&*item);
 		
 		if (ePubItem == nil or ePubItem->GetMediaType() != "application/xhtml+xml")
 			continue;
@@ -800,13 +811,13 @@ void MePubDocument::ParseOPF(
 		
 		MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
 		
-		auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group, href.branch_path()));
+		auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
 		
 		eItem->SetID(item->get_attribute("id"));
 		eItem->SetMediaType(item->get_attribute("media-type"));
 		
 		if (mTOCFile.empty() and eItem->GetMediaType() == "application/x-dtbncx+xml")
-			mTOCFile = eItem->GetPath();
+			mTOCFile = relative_path(inDirectory, eItem->GetPath());
 		
 		group->AddProjectItem(eItem.release());
 	}
@@ -955,7 +966,7 @@ void MePubDocument::CreateItem(
 	}
 	else
 	{
-		auto_ptr<MePubItem> item(new MePubItem(name, inGroup, inGroup->GetGroupPath()));
+		auto_ptr<MePubItem> item(new MePubItem(name, inGroup));
 		
 		bool isText = false;
 		

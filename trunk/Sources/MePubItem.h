@@ -13,17 +13,13 @@ class MePubItem : public MProjectItem
   public:
 					MePubItem(
 						const std::string&	inName,
-						MProjectGroup*		inParent,
-						const fs::path&		inParentDir);
+						MProjectGroup*		inParent);
 	
-	void			SetParentDir(
-						const fs::path&		inParentDir)	{ mParentDir = inParentDir; }
-
 	virtual bool	IsOutOfDate() const						{ return mIsOutOfDate; }
 	virtual void	SetOutOfDate(
 						bool				inIsOutOfDate);
 
-	fs::path		GetPath() const							{ return mParentDir / mName; }
+	fs::path		GetPath() const							{ return mParent->GetGroupPath() / mName; }
 
 	virtual uint32	GetDataSize() const						{ return mData.length(); }
 
@@ -40,7 +36,6 @@ class MePubItem : public MProjectItem
 						const std::string&	inMediaType)	{ mMediaType = inMediaType; }
 
   protected:
-	fs::path		mParentDir;
 	bool			mIsOutOfDate;
 	std::string		mID;
 	std::string		mData;

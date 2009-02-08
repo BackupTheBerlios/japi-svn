@@ -1228,10 +1228,12 @@ int main(int argc, char* argv[])
 					break;
 				
 				case 'i':
+					gtk_init(&argc, &argv);
 					install(optarg);
 					break;
 				
 				case 'l':
+					gtk_init(&argc, &argv);
 					install_locale(optarg);
 					break;
 				

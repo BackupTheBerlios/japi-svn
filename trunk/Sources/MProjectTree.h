@@ -105,7 +105,7 @@ class MProjectTree : public MTreeModelInterface
 	
 	MEventOut<void()>						eProjectItemMoved;
 
-  private:
+  protected:
 
 	void			ProjectItemStatusChanged(
 						MProjectItem*	inItem);

@@ -9,7 +9,7 @@
 #include "MDocWindow.h"
 
 class MProjectItem;
-class MProjectTree;
+class MePubFileTree;
 class MTextDocument;
 
 class MePubWindow : public MDocWindow
@@ -83,8 +83,29 @@ class MePubWindow : public MDocWindow
 
 	MEventIn<void(const std::string&)>	eCreateNewGroup;
 
+	void			EditedItemName(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedItemName;
+
+	void			EditedItemID(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedItemID;
+
+	void			EditedItemMediaType(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>
+					mEditedItemMediaType;
+
 	MePubDocument*	mEPub;
-	MProjectTree*	mFilesTree;
+	MePubFileTree*	mFilesTree;
 	
 	typedef std::map<fs::path,MTextDocument*>	MEPubTextDocMap;
 	MEPubTextDocMap	mOpenFiles;

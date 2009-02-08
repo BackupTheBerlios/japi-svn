@@ -60,6 +60,8 @@ class MProjectItem
 	virtual uint32	GetDataSize() const						{ return 0; }
 
 	std::string		GetName() const							{ return mName; }
+	void			SetName(
+						const std::string&	inName)			{ mName = inName; }
 	
 	uint32			GetLevel() const;
 

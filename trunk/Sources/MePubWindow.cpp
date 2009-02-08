@@ -22,6 +22,8 @@
 
 using namespace std;
 
+// ---------------------------------------------------------------------------
+
 namespace {
 
 struct MePubState
@@ -73,7 +75,240 @@ enum {
 	kFilesPageNr = 1
 };
 
+GtkListStore* CreateListStoreForMediaTypes()
+{
+	GtkListStore* model = gtk_list_store_new(1, G_TYPE_STRING);
+	GtkTreeIter iter;
+	
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "application/x-dtbncx+xml", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "application/x-dtbook+xml", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "application/xhtml+xml", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "application/xml", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "image/gif", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "image/jpeg", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "image/png", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "image/svg+xml", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "text/css", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "text/x-oeb1-css", -1);
+	gtk_list_store_append(model, &iter);
+	gtk_list_store_set(model, &iter, 0, "text/x-oeb1-document", -1);
+	
+	return model;
 }
+
+}
+
+// ---------------------------------------------------------------------------
+
+enum {
+	kePubFileNameColumn,
+	kePubFileIDColumn,
+	kePubFileMediaTypeColumn,
+	kePubFileDataSizeColumn,
+	kePubFileDirtyColumn,
+
+	kePubFileColumnCount
+};
+
+
+class MePubFileTree : public MProjectTree
+{
+  public:
+					MePubFileTree(
+						MProjectGroup*	inItems)
+						: MProjectTree(inItems)	{}
+	
+	virtual uint32	GetColumnCount() const;
+
+	virtual GType	GetColumnType(
+						uint32			inColumn) const;
+
+	virtual void	GetValue(
+						GtkTreeIter*	inIter,
+						uint32			inColumn,
+						GValue*			outValue) const;
+
+	void			EditedItemID(
+						gchar*			path,
+						gchar*			new_text);
+
+	void			EditedItemName(
+						gchar*			path,
+						gchar*			new_text);
+
+	void			EditedItemMediaType(
+						gchar*			path,
+						gchar*			new_text);
+};
+
+uint32 MePubFileTree::GetColumnCount() const
+{
+	return kePubFileColumnCount;
+}
+
+GType MePubFileTree::GetColumnType(
+	uint32			inColumn) const
+{
+	GType result = G_TYPE_STRING;
+	
+	if (inColumn == kePubFileDirtyColumn)
+		result = GDK_TYPE_PIXMAP;
+	
+	return result;
+}
+
+void MePubFileTree::GetValue(
+	GtkTreeIter*	inIter,
+	uint32			inColumn,
+	GValue*			outValue) const
+{
+	// dots
+	
+	const uint32 kDotSize = 6;
+	const MColor
+		kDirtyColor = MColor("#ff664c");
+	
+	static GdkPixbuf* kDirtyDot = CreateDot(kDirtyColor, kDotSize);
+	
+	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
+	MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
+
+	if (item != nil)
+	{
+		switch (inColumn)
+		{
+			case kePubFileNameColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				g_value_set_string(outValue, item->GetName().c_str());
+				break;
+			
+			case kePubFileIDColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				if (ePubItem != nil)
+					g_value_set_string(outValue, ePubItem->GetID().c_str());
+				break;
+			
+			case kePubFileMediaTypeColumn:
+				g_value_init(outValue, G_TYPE_STRING);
+				if (ePubItem != nil)
+					g_value_set_string(outValue, ePubItem->GetMediaType().c_str());
+				break;
+			
+			case kePubFileDataSizeColumn:
+			{
+				g_value_init(outValue, G_TYPE_STRING);
+				uint32 size = item->GetDataSize();
+				
+				stringstream s;
+				if (size >= 1024 * 1024 * 1024)
+					s << (size / (1024 * 1024 * 1024)) << 'G';
+				else if (size >= 1024 * 1024)
+					s << (size / (1024 * 1024)) << 'M';
+				else if (size >= 1024)
+					s << (size / (1024)) << 'K';
+				else if (size > 0)
+					s << size;
+				
+				g_value_set_string(outValue, s.str().c_str());
+				break;
+			}
+
+			case kePubFileDirtyColumn:
+				g_value_init(outValue, G_TYPE_OBJECT);
+				if (item->IsOutOfDate())
+					g_value_set_object(outValue, kDirtyDot);
+				break;
+			
+		}
+	}
+	
+}
+
+// ---------------------------------------------------------------------------
+//	EditedItemName
+
+void MePubFileTree::EditedItemName(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+
+		item->SetName(inNewValue);
+		RowChanged(path, &iter);
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+}
+
+// ---------------------------------------------------------------------------
+//	EditedItemID
+
+void MePubFileTree::EditedItemID(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
+		
+		if (ePubItem != nil)
+		{
+			ePubItem->SetID(inNewValue);
+			RowChanged(path, &iter);
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+}
+
+// ---------------------------------------------------------------------------
+//	EditedItemMediaType
+
+void MePubFileTree::EditedItemMediaType(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
+		
+		if (ePubItem != nil)
+		{
+			ePubItem->SetMediaType(inNewValue);
+			RowChanged(path, &iter);
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+}
+
+// ---------------------------------------------------------------------------
 
 MePubWindow::MePubWindow()
 	: MDocWindow("epub-window")
@@ -82,6 +317,9 @@ MePubWindow::MePubWindow()
 	, eDocumentClosed(this, &MePubWindow::TextDocClosed)
 	, eFileSpecChanged(this, &MePubWindow::TextDocFileSpecChanged)
 	, eCreateNewGroup(this, &MePubWindow::CreateNewGroup)
+	, mEditedItemName(this, &MePubWindow::EditedItemName)
+	, mEditedItemID(this, &MePubWindow::EditedItemID)
+	, mEditedItemMediaType(this, &MePubWindow::EditedItemMediaType)
 {
 	mController = new MController(this);
 	
@@ -110,7 +348,7 @@ void MePubWindow::Initialize(
 	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
 	InitializeTreeView(filesTree);
 	eInvokeFileRow.Connect(filesTree, "row-activated");
-	mFilesTree = new MProjectTree(mEPub->GetFiles());
+	mFilesTree = new MePubFileTree(mEPub->GetFiles());
 
 	AddRoute(mEPub->eInsertedFile, mFilesTree->eProjectItemInserted);
 	AddRoute(mEPub->eRemovedFile, mFilesTree->eProjectItemRemoved);
@@ -173,6 +411,12 @@ bool MePubWindow::DoClose()
 	while (not mOpenFiles.empty())
 	{
 		MDocument* doc = mOpenFiles.begin()->second;
+		if (doc == nil)
+		{
+			mOpenFiles.erase(mOpenFiles.begin());
+			continue;
+		}
+		
 		MController* controller = doc->GetFirstController();
 		if (not controller->TryCloseController(kSaveChangesClosingDocument))
 			break;
@@ -298,15 +542,34 @@ void MePubWindow::InitializeTreeView(
 	// the name column
 	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
 	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-		_("File"), renderer, "text", kFilesNameColumn, nil);
+		_("File"), renderer, "text", kePubFileNameColumn, nil);
 	g_object_set(G_OBJECT(column), "expand", true, nil);
+	g_object_set(G_OBJECT(renderer), "editable", true, "editable-set", false, nil);
+	mEditedItemName.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the ID column
+	renderer = gtk_cell_renderer_text_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("ID"), renderer, "text", kePubFileIDColumn, nil);
+	g_object_set(G_OBJECT(renderer), "editable", true, nil);
+	mEditedItemID.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the MediaType column
+	renderer = gtk_cell_renderer_combo_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Media-Type"), renderer, "text", kePubFileMediaTypeColumn, nil);
+	g_object_set(G_OBJECT(renderer), "text-column", 0, "editable", true,
+		"has-entry", true, "model", CreateListStoreForMediaTypes(), nil);
+	mEditedItemMediaType.Connect(G_OBJECT(renderer), "edited");
 	gtk_tree_view_append_column(inGtkTreeView, column);
 	
 	// the data size column
 	
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes (
-		_("Size"), renderer, "text", kFilesDataSizeColumn, nil);
+		_("Size"), renderer, "text", kePubFileDataSizeColumn, nil);
 	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
 	gtk_tree_view_column_set_alignment(column, 1.0f);
 	gtk_tree_view_append_column(inGtkTreeView, column);
@@ -314,7 +577,7 @@ void MePubWindow::InitializeTreeView(
 	// at last the dirty mark	
 	renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(
-		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
+		_(" "), renderer, "pixbuf", kePubFileDirtyColumn, nil);
 	gtk_tree_view_append_column(inGtkTreeView, column);
 
 	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
@@ -392,9 +655,12 @@ void MePubWindow::InvokeFileRow(
 		{
 			fs::path path = ePubItem->GetPath();
 			
-			MTextDocument* doc = mOpenFiles[path];
+			MEPubTextDocMap::iterator di = mOpenFiles.find(path);
+			MTextDocument* doc;
 
-			if (doc == nil)
+			if (di != mOpenFiles.end())
+				doc = di->second;
+			else
 			{
 				doc = new MTextDocument(mEPub, path);
 				AddRoute(doc->eDocumentClosed, eDocumentClosed);
@@ -516,3 +782,26 @@ void MePubWindow::CreateNewGroup(
 		gtk_tree_path_free(path);
 }
 
+void MePubWindow::EditedItemName(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	mFilesTree->EditedItemName(inPath, inNewValue);
+	mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedItemID(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	mFilesTree->EditedItemID(inPath, inNewValue);
+	mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedItemMediaType(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	mFilesTree->EditedItemMediaType(inPath, inNewValue);
+	mEPub->SetModified(true);
+}

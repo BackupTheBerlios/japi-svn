@@ -96,7 +96,8 @@ class MePubDocument : public MDocument
 							const fs::path&		inDirectory,
 							xml::node&			inOPF);
 
-	xml::node_ptr		CreateOPF();
+	xml::node_ptr		CreateOPF(
+							const fs::path&		inOEBPS);
 
 	static ssize_t		archive_read_callback_cb(
 							struct archive*		inArchive,
@@ -124,7 +125,8 @@ class MePubDocument : public MDocument
 	std::istream*		mInputFileStream;
 	char				mBuffer[1024];
 
-	fs::path			mRootFile, mTOCFile;
+	std::string			mRootFile;
+	fs::path			mTOCFile;
 	std::vector<std::string>
 						mSpine;
 	MProjectGroup		mRoot;

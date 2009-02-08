@@ -13,10 +13,8 @@
 
 MePubItem::MePubItem(
 	const std::string&	inName,
-	MProjectGroup*		inParent,
-	const fs::path&		inParentDir)
+	MProjectGroup*		inParent)
 	: MProjectItem(inName, inParent)
-	, mParentDir(inParentDir)
 	, mIsOutOfDate(false)
 {
 }
