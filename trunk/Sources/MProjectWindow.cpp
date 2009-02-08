@@ -156,8 +156,7 @@ void MProjectWindow::Initialize(
 	eInvokeFileRow.Connect(filesTree, "row-activated");
 	mFilesTree = new MProjectTree(mProject->GetFiles());
 
-	AddRoute(mProject->eInsertedFile, mFilesTree->eProjectItemInserted);
-	AddRoute(mProject->eRemovedFile, mFilesTree->eProjectItemRemoved);
+	AddRoute(mProject->eProjectItemRemoved, mFilesTree->eProjectItemRemoved);
 	AddRoute(mProject->eProjectItemMoved, mFilesTree->eProjectItemMoved);
 	AddRoute(mProject->eProjectCreateFileItem, mFilesTree->eProjectCreateItem);
 	
@@ -173,8 +172,7 @@ void MProjectWindow::Initialize(
 	resourcesTree.SetModel(mResourcesTree->GetModel());
 	resourcesTree.ExpandAll();
 
-	AddRoute(mProject->eInsertedResource, mResourcesTree->eProjectItemInserted);
-	AddRoute(mProject->eRemovedResource, mResourcesTree->eProjectItemRemoved);
+	AddRoute(mProject->eProjectItemRemoved, mResourcesTree->eProjectItemRemoved);
 	AddRoute(mProject->eProjectItemMoved, mResourcesTree->eProjectItemMoved);
 	AddRoute(mProject->eProjectCreateResourceItem, mResourcesTree->eProjectCreateItem);
 
@@ -760,7 +758,17 @@ void MProjectWindow::DeleteSelectedItems()
 	
 	GetSelectedItems(items);
 	
-	mProject->RemoveItems(items);
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	if (notebook.GetPage() == ePanelFiles)
+	{
+		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+			mFilesTree->RemoveItem(*item);
+	}
+	else
+	{
+		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+			mResourcesTree->RemoveItem(*item);
+	}
 }
 
 // ---------------------------------------------------------------------------

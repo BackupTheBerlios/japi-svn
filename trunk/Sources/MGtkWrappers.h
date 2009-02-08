@@ -129,6 +129,22 @@ class MGtkTreeView : public MGtkWidget
 //				{
 //					gtk_tree_view_scroll_to_point(GTK_TREE_VIEW(mGtkWidget), -1, inPosition);
 //				}
+//	
+//	void		ScrollToCell(
+//					GtkTreePath*		inPath,
+//					GtkTreeViewColumn*	inColumn)
+//				{
+//				}
+
+	void		SetCursor(
+					GtkTreePath*		inPath,
+					GtkTreeViewColumn*	inColumn)
+				{
+					gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(mGtkWidget),
+						nil, inColumn, true, 0, 0);
+					gtk_tree_view_set_cursor(GTK_TREE_VIEW(mGtkWidget),
+						inPath, inColumn, true);
+				}	
 };
 
 class MGtkComboBox : public MGtkWidget

@@ -112,10 +112,12 @@ const uint32
 	cmd_ApplyScript =			'scri',
 	cmd_QuotedRewrap =			'rewr',
 	
-	cmd_ShowHideWhiteSpace =	'SWit';
+	cmd_ShowHideWhiteSpace =	'SWit',
+	
+	cmd_RenameItem =			'RenI';
 
 #ifndef NDEBUG
-const uint32 cmd_Test =					'Test';
+const uint32 cmd_Test =			'Test';
 #endif
 
 // ---------------------------------------------------------------------------

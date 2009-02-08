@@ -38,8 +38,7 @@ MProjectTree::MProjectTree(
 	MProjectGroup*		inItems)
 	: MTreeModelInterface(GTK_TREE_MODEL_ITERS_PERSIST)
 	, eProjectItemStatusChanged(this, &MProjectTree::ProjectItemStatusChanged)
-	, eProjectItemInserted(this, &MProjectTree::ProjectItemInserted)
-	, eProjectItemRemoved(this, &MProjectTree::ProjectItemRemoved)
+//	, eProjectItemRemoved(this, &MProjectTree::ProjectItemRemoved)
 	, mItems(inItems)
 {
 	vector<MProjectItem*> items;
@@ -335,25 +334,36 @@ void MProjectTree::ProjectItemInserted(
 	catch (...) {}
 }
 
-void MProjectTree::ProjectItemRemoved(
-	MProjectGroup*	inGroup,
-	int32			inIndex)
+//void MProjectTree::ProjectItemRemoved(
+//	MProjectGroup*	inGroup,
+//	int32			inIndex)
+//{
+//	try
+//	{
+//		GtkTreeIter iter = {};
+//		
+//		iter.user_data = inGroup;
+//		
+//		GtkTreePath* path = GetPath(&iter);
+//		if (path != nil)
+//		{
+//			gtk_tree_path_append_index(path, inIndex);
+//			DoRowDeleted(path);
+//			gtk_tree_path_free(path);
+//		}
+//	}
+//	catch (...) {}
+//}
+
+void MProjectTree::RemoveItem(
+	MProjectItem*		inItem)
 {
-	try
+	if (inItem != mItems and mItems->Contains(inItem))
 	{
-		GtkTreeIter iter = {};
-		
-		iter.user_data = inGroup;
-		
-		GtkTreePath* path = GetPath(&iter);
-		if (path != nil)
-		{
-			gtk_tree_path_append_index(path, inIndex);
-			DoRowDeleted(path);
-			gtk_tree_path_free(path);
-		}
+		RemoveRecursive(inItem);
+		inItem->GetParent()->RemoveProjectItem(inItem);
+		eProjectItemRemoved();
 	}
-	catch (...) {}
 }
 
 bool MProjectTree::RowDraggable(
@@ -528,7 +538,17 @@ void MProjectTree::RemoveRecursive(
 
 	MProjectGroup* parent = inItem->GetParent();
 	uint32 index = inItem->GetPosition();
-	ProjectItemRemoved(parent, index);
+
+	GtkTreeIter iter = {};
+	iter.user_data = parent;
+	GtkTreePath* path = GetPath(&iter);
+
+	if (path != nil)
+	{
+		gtk_tree_path_append_index(path, index);
+		DoRowDeleted(path);
+		gtk_tree_path_free(path);
+	}
 }
 
 void MProjectTree::InsertRecursive(

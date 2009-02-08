@@ -296,6 +296,7 @@ MePubDocument::MePubDocument(
 	: MDocument(inProjectFile)
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
+	, eItemRemoved(this, &MePubDocument::ItemMoved)
 	, mInputFileStream(nil)
 	, mRoot("", nil)
 	, mTOC("", nil)

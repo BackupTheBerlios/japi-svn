@@ -61,6 +61,7 @@ class MePubDocument : public MDocument
 											eCreateItem;
 	
 	MEventIn<void()>						eItemMoved;
+	MEventIn<void()>						eItemRemoved;
 
 	void				CreateItem(
 							const std::string&	inFile,

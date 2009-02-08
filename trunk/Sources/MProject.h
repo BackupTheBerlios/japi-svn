@@ -122,6 +122,7 @@ class MProject : public MDocument
 											eProjectCreateResourceItem;
 	
 	MEventIn<void()>						eProjectItemMoved;
+	MEventIn<void()>						eProjectItemRemoved;
 
 	void				CreateFileItem(
 							const std::string&	inFile,
@@ -132,13 +133,6 @@ class MProject : public MDocument
 							const std::string&	inFile,
 							MProjectGroup*		inGroup,
 							MProjectItem*&		outItem);
-
-	void				RemoveItem(
-							MProjectItem*		inItem);
-
-	void				RemoveItems(
-							std::vector<MProjectItem*>&
-												inItems);
 
 	bool				IsValidItem(
 							MProjectItem*		inItem);

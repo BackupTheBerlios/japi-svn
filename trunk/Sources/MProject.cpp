@@ -91,6 +91,7 @@ MProject::MProject(
 	, eProjectCreateFileItem(this, &MProject::CreateFileItem)
 	, eProjectCreateResourceItem(this, &MProject::CreateResourceItem)
 	, eProjectItemMoved(this, &MProject::ProjectItemMoved)
+	, eProjectItemRemoved(this, &MProject::ProjectItemMoved)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile)
@@ -2043,39 +2044,6 @@ void MProject::CreateResourceItem(
 		fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
 		filePath = relative_path(rsrcDir, p);
 		outItem = new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path());
-	}
-}
-
-void MProject::RemoveItem(
-	MProjectItem*		inItem)
-{
-	THROW_IF_NIL(inItem);
-	
-	MProjectGroup* group = inItem->GetParent();
-	int32 index = inItem->GetPosition();
-	
-	group->RemoveProjectItem(inItem);
-	SetModified(true);
-	
-	MProjectGroup* root = group;
-	THROW_IF_NIL(root);
-	
-	while (root->GetParent() != nil)
-		root = root->GetParent();
-	
-	if (root == &mProjectItems)
-		eRemovedFile(group, index);
-	else
-		eRemovedResource(group, index);
-}
-
-void MProject::RemoveItems(
-	vector<MProjectItem*>&	inItems)
-{
-	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
-	{
-		if (IsValidItem(*item))
-			RemoveItem(*item);
 	}
 }
 

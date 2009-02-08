@@ -21,6 +21,7 @@
 	<menu id='' label="ePub">
 		<item label="Add File" cmd='Padd'/>
 		<item label="New Group" cmd='Pnwg'/>
+		<item label="Rename" cmd='RenI' />
 		<item label="-" />
 		<item label="Validate" cmd='ePva'/>
 	</menu>

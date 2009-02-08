@@ -42,17 +42,11 @@ class MePubWindow : public MDocWindow
 
 	void			SaveState();
 
-	void			GetSelectedItems(
-						std::vector<MProjectItem*>&
-										outItems);
-	
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);
 
 	MSlot<bool(GdkEventKey*)>
 					eKeyPressEvent;
-
-	void			DeleteSelectedItems();
 
 	void			InvokeFileRow(
 						GtkTreePath*	inPath,
@@ -129,9 +123,21 @@ class MePubWindow : public MDocWindow
 	MSlot<void(gchar*,gchar*)>
 					mEditedTOCClass;
 
+	void			RenameItem();
+
+	MProjectItem*	GetSelectedItem();
+
+	void			DeleteSelectedItem();
+
 	MePubDocument*	mEPub;
 	MePubFileTree*	mFilesTree;
 	MTOCTree*		mTOCTree;
+
+	bool				mEditingName;
+	GtkCellRenderer*	mFileNameCell;
+	GtkTreeViewColumn*	mFileNameColumn;
+	GtkCellRenderer*	mTOCTitleCell;
+	GtkTreeViewColumn*	mTOCTitleColumn;
 	
 	typedef std::map<fs::path,MTextDocument*>	MEPubTextDocMap;
 	MEPubTextDocMap	mOpenFiles;
