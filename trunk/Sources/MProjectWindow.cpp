@@ -19,7 +19,6 @@
 #include "MPreferences.h"
 #include "MAlerts.h"
 #include "MJapiApp.h"
-#include "MNewGroupDialog.h"
 #include "MProjectInfoDialog.h"
 #include "MGtkWrappers.h"
 #include "MProjectTree.h"
@@ -78,7 +77,6 @@ enum {
 MProjectWindow::MProjectWindow()
 	: MDocWindow("project-window")
 	, eStatus(this, &MProjectWindow::SetStatus)
-	, eCreateNewGroup(this, &MProjectWindow::CreateNewGroup)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
@@ -86,6 +84,8 @@ MProjectWindow::MProjectWindow()
 	, eTargetsChanged(this, &MProjectWindow::TargetsChanged)
 	, eInfoClicked(this, &MProjectWindow::InfoClicked)
 	, eMakeClicked(this, &MProjectWindow::MakeClicked)
+	, mEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
+	, mEditedResourceGroupName(this, &MProjectWindow::EditedResourceGroupName)
 	, mProject(nil)
 	, mFilesTree(nil)
 	, mResourcesTree(nil)
@@ -376,11 +376,8 @@ bool MProjectWindow::ProcessCommand(
 			break;
 		
 		case cmd_NewGroup:
-		{
-			MNewGroupDialog* dlog = new MNewGroupDialog(this);
-			AddRoute(dlog->eCreateNewGroup, eCreateNewGroup);
+			CreateNewGroup();
 			break;
-		}
 		
 		case cmd_OpenIncludeFile:
 			new MFindAndOpenDialog(mProject, this);
@@ -559,6 +556,10 @@ void MProjectWindow::InitializeTreeView(
 	
 	if (inPanel == ePanelFiles or inPanel == ePanelLinkOrder)
 	{
+		mFileNameColumn = column;
+		mFileNameCell = renderer;
+		mEditedFileGroupName.Connect(G_OBJECT(renderer), "edited");
+
 		// the text size column
 		
 		renderer = gtk_cell_renderer_text_new();
@@ -579,6 +580,10 @@ void MProjectWindow::InitializeTreeView(
 	}
 	else if (inPanel == ePanelPackage)
 	{
+		mResourceNameColumn = column;
+		mResourceNameCell = renderer;
+		mEditedResourceGroupName.Connect(G_OBJECT(renderer), "edited");
+		
 		// the data size column
 		
 		renderer = gtk_cell_renderer_text_new();
@@ -603,25 +608,30 @@ void MProjectWindow::InitializeTreeView(
 // ---------------------------------------------------------------------------
 //	CreateNewGroup
 
-void MProjectWindow::CreateNewGroup(
-	const string&		inGroupName)
+void MProjectWindow::CreateNewGroup()
 {
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
 	auto_ptr<MGtkTreeView> treeView;
-	MTreeModelInterface* model;
+	MProjectTree* model;
 	MProjectGroup* group;
+	GtkTreeViewColumn* column;
+	GtkCellRenderer* cell;
 	
 	if (notebook.GetPage() == ePanelFiles)
 	{
 		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
 		model = mFilesTree;
 		group = mProject->GetFiles();
+		column = mFileNameColumn;
+		cell = mFileNameCell;
 	}
 	else
 	{
 		treeView.reset(new MGtkTreeView(GetWidget(kResourceViewID)));
 		model = mResourcesTree;
 		group = mProject->GetResources();
+		column = mResourceNameColumn;
+		cell = mResourceNameCell;
 	}
 		
 	int32 index = 0;
@@ -636,11 +646,70 @@ void MProjectWindow::CreateNewGroup(
 		group = item->GetParent();
 		index = item->GetPosition();
 	}
-		
-	mProject->CreateNewGroup(inGroupName, group, index);
+	
+	MProjectGroup* newGroup = new MProjectGroup(_("New Folder"), group);
+	group->AddProjectItem(newGroup, index);
+	model->ProjectItemInserted(newGroup);
+	g_object_set(G_OBJECT(cell), "editable", true, nil);
+	treeView->SetCursor(path, column, true);
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
+	
+	mProject->SetModified(true);
+}
+
+//void MProjectWindow::RenameGroup()
+//{
+//	if (mEditingName)
+//		return;
+//	
+//	MGtkNotebook notebook(GetWidget(kNoteBookID));
+//
+//	GtkTreePath* path = nil;
+//
+//	if (notebook.GetPage() == kFilesPageNr)
+//	{
+//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+//		treeView.GetFirstSelectedRow(path);
+//		if (path != nil)
+//		{
+//			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
+//			treeView.SetCursor(path, mFileNameColumn);
+//			mEditingName = true;
+//		}
+//	}
+//	else if (notebook.GetPage() == kTOCPageNr)
+//	{
+//		MGtkTreeView treeView(GetWidget(kTOCListViewID));
+//		treeView.GetFirstSelectedRow(path);
+//		if (path != nil)
+//		{
+//			g_object_set(G_OBJECT(mTOCTitleCell), "editable", true, nil);
+//			treeView.SetCursor(path, mTOCTitleColumn);
+//			mEditingName = true;
+//		}
+//	}
+//}
+
+void MProjectWindow::EditedFileGroupName(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	mEditingName = false;
+	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
+	if (mFilesTree->ProjectItemNameEdited(inPath, inNewValue))
+		mProject->SetModified(true);
+}
+
+void MProjectWindow::EditedResourceGroupName(
+	gchar*				inPath,
+	gchar*				inNewValue)
+{
+	mEditingName = false;
+	g_object_set(G_OBJECT(mResourceNameCell), "editable", false, nil);
+	if (mResourcesTree->ProjectItemNameEdited(inPath, inNewValue))
+		mProject->SetModified(true);
 }
 
 // ---------------------------------------------------------------------------

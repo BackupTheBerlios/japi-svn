@@ -38,15 +38,13 @@ class MProjectWindow : public MDocWindow
 
 	MEventIn<void(std::string,bool)>	eStatus;
 
-	void			CreateNewGroup(
-						const std::string&
-										inGroupName);
-
-	MEventIn<void(const std::string&)>	eCreateNewGroup;
-	
   protected:
 
 	bool			DoClose();
+	
+	void			CreateNewGroup();
+
+	void			RenameGroup();
 	
 	void			AddFilesToProject();
 	
@@ -105,11 +103,27 @@ class MProjectWindow : public MDocWindow
 	void			MakeClicked();
 	MSlot<void()>	eMakeClicked;
 
+	void			EditedFileGroupName(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>			mEditedFileGroupName;
+
+	void			EditedResourceGroupName(
+						gchar*			path,
+						gchar*			new_text);
+
+	MSlot<void(gchar*,gchar*)>			mEditedResourceGroupName;
+
 	MProject*		mProject;
 	MProjectTree*	mFilesTree;
 	MProjectTree*	mResourcesTree;
 	GtkWidget*		mStatusPanel;
-	bool			mBusy;
+	GtkTreeViewColumn*	mFileNameColumn;
+	GtkCellRenderer*	mFileNameCell;
+	GtkTreeViewColumn*	mResourceNameColumn;
+	GtkCellRenderer*	mResourceNameCell;
+	bool			mBusy, mEditingName;
 };
 
 #endif

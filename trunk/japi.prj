@@ -48,7 +48,6 @@
 				<file>MFindDialog.cpp</file>
 				<file>MGoToLineDialog.cpp</file>
 				<file>MMarkMatchingDialog.cpp</file>
-				<file>MNewGroupDialog.cpp</file>
 				<file>MPrefsDialog.cpp</file>
 			</group>
 			<file>MUnicode.cpp</file>

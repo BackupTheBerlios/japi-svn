@@ -96,8 +96,15 @@ class MProjectTree : public MTreeModelInterface
 						MProjectGroup*		inGroup,
 						int32				inIndex);
 
+	void			ProjectItemInserted(
+						MProjectItem*		inItem);
+
 	virtual void	RemoveItem(
 						MProjectItem*		inItem);
+
+	virtual bool	ProjectItemNameEdited(
+						const char*			inPath,
+						const char*			inNewName);
 
 	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
 	
@@ -109,20 +116,17 @@ class MProjectTree : public MTreeModelInterface
   protected:
 
 	void			ProjectItemStatusChanged(
-						MProjectItem*	inItem);
-
-	void			ProjectItemInserted(
-						MProjectItem*	inItem);
+						MProjectItem*		inItem);
 
 //	void			ProjectItemRemoved(
-//						MProjectGroup*	inGroup,
-//						int32			inIndex);
+//						MProjectGroup*		inGroup,
+//						int32				inIndex);
 
 	void			RemoveRecursive(
-						MProjectItem*	inItem);
+						MProjectItem*		inItem);
 						
 	void			InsertRecursive(
-						MProjectItem*	inItem);
+						MProjectItem*		inItem);
 
 //	MProject*		mProject;
 	MProjectGroup*	mItems;

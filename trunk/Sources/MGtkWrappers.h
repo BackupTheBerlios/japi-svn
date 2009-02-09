@@ -138,12 +138,13 @@ class MGtkTreeView : public MGtkWidget
 
 	void		SetCursor(
 					GtkTreePath*		inPath,
-					GtkTreeViewColumn*	inColumn)
+					GtkTreeViewColumn*	inColumn,
+					bool				inEdit = true)
 				{
 					gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(mGtkWidget),
 						nil, inColumn, true, 0, 0);
 					gtk_tree_view_set_cursor(GTK_TREE_VIEW(mGtkWidget),
-						inPath, inColumn, true);
+						inPath, inColumn, inEdit);
 				}	
 };
 

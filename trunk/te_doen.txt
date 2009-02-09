@@ -2,11 +2,8 @@
 
 - ePub
 	- adobe page dinges
-	- toc
 	- dublin core opties
 	- verwijderen libarchive
-	- ePub item attributen
-	- verwijderen van ePubItems
 	- zoeken in alle ePub items
 
 Moet af:

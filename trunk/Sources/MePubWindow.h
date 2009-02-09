@@ -75,11 +75,7 @@ class MePubWindow : public MDocWindow
 						MDocument*		inDocument,
 						const MUrl&		inURL);
 
-	void			CreateNewGroup(
-						const std::string&
-										inGroupName);
-
-	MEventIn<void(const std::string&)>	eCreateNewGroup;
+	void			CreateNewGroup();
 
 	void			EditedItemName(
 						gchar*			path,

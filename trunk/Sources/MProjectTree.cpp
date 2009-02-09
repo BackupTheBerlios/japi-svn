@@ -334,27 +334,6 @@ void MProjectTree::ProjectItemInserted(
 	catch (...) {}
 }
 
-//void MProjectTree::ProjectItemRemoved(
-//	MProjectGroup*	inGroup,
-//	int32			inIndex)
-//{
-//	try
-//	{
-//		GtkTreeIter iter = {};
-//		
-//		iter.user_data = inGroup;
-//		
-//		GtkTreePath* path = GetPath(&iter);
-//		if (path != nil)
-//		{
-//			gtk_tree_path_append_index(path, inIndex);
-//			DoRowDeleted(path);
-//			gtk_tree_path_free(path);
-//		}
-//	}
-//	catch (...) {}
-//}
-
 void MProjectTree::RemoveItem(
 	MProjectItem*		inItem)
 {
@@ -420,6 +399,8 @@ bool MProjectTree::DragDataDelete(
 {
 	bool result = false;
 	
+	PRINT(("DragDataDelete"));
+	
 //	GtkTreeIter iter;
 //	if (GetIter(&iter, inPath))
 //	{
@@ -483,7 +464,14 @@ bool MProjectTree::DragDataReceived(
 
 			if (item->GetParent() == group and index > item->GetPosition() and index > 0)
 				--index;
-
+			
+			if (group == item or 
+				(dynamic_cast<MProjectGroup*>(item) != nil and
+				 static_cast<MProjectGroup*>(item)->Contains(group)))
+			{
+				THROW(("Cannot move item into itself"));
+			}	
+			
 			RemoveRecursive(item);
 			item->GetParent()->RemoveProjectItem(item);
 			
@@ -591,4 +579,30 @@ bool MProjectTree::RowDropPossible(
 	}
 
 	return group != nil and index <= group->Count();
+}
+
+bool MProjectTree::ProjectItemNameEdited(
+	const char*			inPath,
+	const char*			inNewName)
+{
+	bool result = false;
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+
+		if (item->GetName() != inNewName)
+		{
+			item->SetName(inNewName);
+			RowChanged(path, &iter);
+			result = true;
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
 }
