@@ -21,6 +21,7 @@
 	<menu id='' label="Project">
 		<item label="Add File" cmd='Padd'/>
 		<item label="New Group" cmd='Pnwg'/>
+		<item label="Rename Group" cmd='RenI'/>
 		<item label="-" />
 		<item label="Preprocess" cmd='Ppre'/>
 		<item label="Check Syntax" cmd='Psyn'/>

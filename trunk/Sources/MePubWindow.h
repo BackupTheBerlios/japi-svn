@@ -75,7 +75,8 @@ class MePubWindow : public MDocWindow
 						MDocument*		inDocument,
 						const MUrl&		inURL);
 
-	void			CreateNewGroup();
+	void			CreateNew(
+						bool			inNewDirectory);
 
 	void			EditedItemName(
 						gchar*			path,

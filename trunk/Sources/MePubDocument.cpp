@@ -8,11 +8,8 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <archive.h>
-#include <archive_entry.h>
 #include <cstring>
 #include <zlib.h>
-#include <endian.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -26,16 +23,14 @@
 #include "MTextBuffer.h"
 #include "MFile.h"
 
-#ifndef __BYTE_ORDER
-#error "Please specify byte order"
-#endif
-
 using namespace std;
 namespace ba = boost::algorithm;
 
 // --------------------------------------------------------------------
 
 namespace {
+	
+const uint32	kZipLengthAtEndMask	= 8;
 
 const char
 	kEPubMimeType[] = "application/epub+zip",
@@ -46,13 +41,15 @@ struct ZIPLocalFileHeader
 {
 						ZIPLocalFileHeader()
 						{
-							struct tm tm;
-							gmtime_r(nil, &tm);
+							time_t now = time(nil);
 							
+							struct tm tm = {};
+							gmtime_r(&now, &tm);
+						
 							file_mod_date =
-								(((tm.tm_year - 80) & 0x7f) << 9) |
-								(((tm.tm_mon + 1)   & 0x0f) << 5) |
-								( (tm.tm_mday       & 0x1f) << 0);
+								(((tm.tm_year - 1980) & 0x7f) << 9) |
+								(((tm.tm_mon + 1)     & 0x0f) << 5) |
+								( (tm.tm_mday         & 0x1f) << 0);
 							
 							file_mod_time =
 								((tm.tm_hour & 0x1f) << 11) |
@@ -84,25 +81,41 @@ struct ZIPEndOfCentralDirectory
 
 inline char* write(uint16 value, char* buffer)
 {
-#if __BYTE_ORDER == __BIG_ENDIAN
-	value = static_cast<uint16>(
-			((((uint16)value)<< 8) & 0xFF00)  |
-			((((uint16)value)>> 8) & 0x00FF));
-#endif
-	memcpy(buffer, &value, sizeof(value));
-	return buffer + sizeof(value);
+	*buffer++ = value & 0x0FF; value >>= 8;
+	*buffer++ = value & 0x0FF;
+
+	return buffer;
 }
 
 inline char* write(uint32 value, char* buffer)
 {
-#if __BYTE_ORDER == __BIG_ENDIAN
-	value = static_cast<uint32>(
-			((((uint32)value)<<24) & 0xFF000000)  |
-			((((uint32)value)<< 8) & 0x00FF0000)  |
-			((((uint32)value)>> 8) & 0x0000FF00)  |
-			((((uint32)value)>>24) & 0x000000FF));
-#endif
-	memcpy(buffer, &value, sizeof(value));
+	*buffer++ = value & 0x0FF; value >>= 8;
+	*buffer++ = value & 0x0FF; value >>= 8;
+	*buffer++ = value & 0x0FF; value >>= 8;
+	*buffer++ = value & 0x0FF;
+
+	return buffer;
+}
+
+inline char* read(uint16& value, char* buffer)
+{
+	char* p = buffer + sizeof(value);
+	
+	value <<= 8; value |= static_cast<uint8>(*--p);
+	value <<= 8; value |= static_cast<uint8>(*--p);
+	
+	return buffer + sizeof(value);
+}
+
+inline char* read(uint32& value, char* buffer)
+{
+	char* p = buffer + sizeof(value);
+
+	value <<= 8; value |= static_cast<uint8>(*--p);
+	value <<= 8; value |= static_cast<uint8>(*--p);
+	value <<= 8; value |= static_cast<uint8>(*--p);
+	value <<= 8; value |= static_cast<uint8>(*--p);
+
 	return buffer + sizeof(value);
 }
 
@@ -152,6 +165,178 @@ ostream& operator<<(ostream& lhs, ZIPLocalFileHeader& rhs)
 	rhs.data.clear();
 	
 	return lhs;
+}
+
+bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
+{
+	char b[30];
+	
+	if (s.readsome(b, 4) != 4)
+		THROW(("Truncated ePub file"));
+
+	if (b[0] != 'P' or b[1] != 'K')
+		THROW(("Invalid ePub file"));
+	
+	if (b[2] == '0' and b[3] == '0')			// split
+		THROW(("Split ePub archives are not supported"));
+	
+	if ((b[2] == '\001' and b[3] == '\002') or	// central directory
+		(b[2] == '\005' and b[3] == '\006'))	// end of archive record
+	{
+		return false;
+	}
+
+	// now it must be a regular file entry, otherwise we bail out
+	if (not (b[2] == '\003' and b[3] == '\004'))
+		THROW(("Invalid ePub file, perhaps it is damaged"));
+
+	if (s.readsome(b + 4, sizeof(b) - 4) != sizeof(b) - 4)
+		THROW(("Truncated ePub file"));
+
+	uint16 versionNeededToExtract, bitFlag, compressionMethod, fileNameLength, extraFieldLength;
+	
+	char* p = read(versionNeededToExtract, b + 4);
+	p = read(bitFlag, p);
+	p = read(compressionMethod, p);
+	p = read(fh.file_mod_time, p);
+	p = read(fh.file_mod_date, p);
+	p = read(fh.crc, p);
+	p = read(fh.compressed_size, p);
+	p = read(fh.uncompressed_size, p);
+	p = read(fileNameLength, p);
+	p = read(extraFieldLength, p);
+
+	// sanity checks
+	if (compressionMethod != 0 and compressionMethod != 8)
+		THROW(("Unsupported compression method used in ePub file"));
+
+	assert(p == b + sizeof(b));
+	
+	// read file name
+	
+	vector<char> fn(fileNameLength);
+	if (s.readsome(&fn[0], fileNameLength) != fileNameLength)
+		THROW(("Truncated ePub file"));
+	
+	fh.filename.assign(&fn[0], fileNameLength);
+	
+	// skip over the extra data
+	
+	s.seekg(extraFieldLength, ios::cur);
+	
+	// OK, now read in the data and inflate if required
+
+	fh.data.clear();
+	
+	if (compressionMethod == 0) // no compression
+	{
+		if (fh.compressed_size > 0)
+		{
+			vector<char> b(fh.compressed_size);
+			if (s.readsome(&b[0], fh.compressed_size) != fh.compressed_size)
+				THROW(("Truncated ePub file"));
+			
+			fh.data.assign(&b[0], fh.compressed_size);
+		}
+	}
+	else	 // inflate
+	{
+		if (fh.compressed_size == 0 and not (bitFlag & kZipLengthAtEndMask))
+			THROW(("Invalid ePub file, missing compressed size"));
+		
+		uint32 inputBufferSize = fh.compressed_size;
+		if (inputBufferSize == 0)
+			inputBufferSize = 1;
+		
+		vector<uint8> b_in(inputBufferSize);
+		
+		const uint32 kOutputBufferSize = 4096;
+		vector<uint8> b_out(kOutputBufferSize);
+		
+		z_stream_s z_stream = {};
+	
+		int err = inflateInit2(&z_stream, -15);	// don't check for zlib header
+		if (err != Z_OK)
+			THROW(("Decompressor error: %s", z_stream.msg));
+	
+		char* readBuffer = reinterpret_cast<char*>(&b_in[0]);
+		if (s.readsome(readBuffer, inputBufferSize) != inputBufferSize)
+			THROW(("Truncated ePub file"));
+		
+		z_stream.avail_in = inputBufferSize;
+		z_stream.next_in = &b_in[0];
+		z_stream.total_in = 0;
+		
+		z_stream.next_out = &b_out[0];
+		z_stream.avail_out = kOutputBufferSize;
+		z_stream.total_out = 0;
+		
+		bool done = false;
+		while (not done and err >= Z_OK)
+		{
+				// shift remaining unread bytes to the beginning of our buffer
+			if (z_stream.next_in > &b_in[0] and z_stream.avail_in > 0)
+				memmove(&b_in[0], z_stream.next_in, z_stream.avail_in);
+	
+			z_stream.next_in = &b_in[0];
+	
+			if (fh.compressed_size == 0)
+			{
+				if (s.readsome(readBuffer + z_stream.avail_in, 1) != 1)
+					THROW(("Truncated ePub file"));
+
+				z_stream.avail_in = 1;
+			}
+	
+			err = inflate(&z_stream, 0);
+	
+			if (err == Z_STREAM_END)
+				done = true;
+			
+			if (kOutputBufferSize - z_stream.avail_out > 0)
+			{
+				fh.data.append(reinterpret_cast<char*>(&b_out[0]),
+					kOutputBufferSize - z_stream.avail_out);
+				z_stream.avail_out = kOutputBufferSize;
+				z_stream.next_out = &b_out[0];
+			}
+		}
+		
+		if (err != Z_STREAM_END)
+			THROW(("Inflate error: %s (%d)", z_stream.msg, err));
+		
+		fh.compressed_size = z_stream.total_in;
+		fh.uncompressed_size = z_stream.total_out;
+		fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
+		
+		// now read the trailing length if needed
+		
+		if (bitFlag & kZipLengthAtEndMask)
+		{
+			char b2[16];
+			if (s.readsome(b2, sizeof(b2)) != sizeof(b2))
+				THROW(("Truncated ePub file"));
+
+			uint32 signature, crc, compressed_size, uncompressed_size;
+			char* p = read(signature, b2);
+			p = read(crc, p);
+			p = read(compressed_size, p);
+			p = read(uncompressed_size, p);
+
+			if (compressed_size != fh.compressed_size)
+				THROW(("ePub data, compressed data is wrong size"));
+
+			if (uncompressed_size != fh.uncompressed_size)
+				THROW(("ePub data, uncompressed data is wrong size"));
+			
+			if (crc != fh.crc)
+				THROW(("ePub data, bad crc"));
+		}
+		
+		inflateEnd(&z_stream);
+	}
+	
+	return true;
 }
 
 ostream& operator<<(ostream& lhs, ZIPCentralDirectory& rhs)
@@ -297,7 +482,6 @@ MePubDocument::MePubDocument(
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
-	, mInputFileStream(nil)
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
@@ -337,156 +521,89 @@ bool MePubDocument::ProcessCommand(
 void MePubDocument::ReadFile(
 	std::istream&		inFile)
 {
-	archive* archive = archive_read_new();
-	if (archive == nil)
-		THROW(("Failed to create archive object"));
+	ZIPLocalFileHeader fh;
 	
-	mInputFileStream = &inFile;
+	// read first file, should be the mimetype file
+	if (not read_next_file(inFile, fh))
+		THROW(("Empty ePub file"));
 	
-	// TODO: check the magic number of the file
-	
-	const char kMagicPK[] = "PK";
-	
-	char pk[sizeof(kMagicPK)] = "";
-	char mt[sizeof(kMagicMT)] = "";
+	if (fh.filename != "mimetype" or not ba::starts_with(fh.data, "application/epub+zip"))
+		THROW(("Invalid ePub file, mimetype missing"));
 
-	streamsize r = inFile.readsome(pk, strlen(kMagicPK));
-	if (r != static_cast<streamsize>(strlen(kMagicPK)) or strcmp(kMagicPK, pk) != 0)
-		THROW(("File is not an ePub"));
+	map<fs::path,string> content;
+	fs::path rootFile;
 	
-	inFile.seekg(30, ios_base::beg);
-	r = inFile.readsome(mt, strlen(kMagicMT));
-	if (r != static_cast<streamsize>(strlen(kMagicMT)) or strcmp(kMagicMT, mt) != 0)
-		THROW(("File is not an ePub"));
-	
-	// reset the pointer
-	
-	inFile.seekg(0, ios_base::beg);
-	
-	try
+	while (read_next_file(inFile, fh))
 	{
-		int err = archive_read_support_compression_none(archive);
-		if (err == ARCHIVE_OK)
-			err = archive_read_support_compression_gzip(archive);
-		if (err == ARCHIVE_OK)
-			err = archive_read_support_format_zip(archive);
+		if (ba::ends_with(fh.filename, "/"))
+			continue;
 		
-		if (err != ARCHIVE_OK)
-			THROW(("Error initializing libarchive: %s", 
-				archive_error_string(archive)));
+		fs::path path(fh.filename);
 		
-		err = archive_read_open(archive, this,
-			&MePubDocument::archive_open_callback_cb,
-			&MePubDocument::archive_read_callback_cb,
-			&MePubDocument::archive_close_callback_cb);
-		
-		// OK, so we've opened our epub file successfully by now.
-		// Next thing is to walk the contents and store all the data.
-		
-		map<fs::path,string> content;
-		fs::path rootFile;
-		
-		for (;;)
+		if (path == "META-INF/container.xml")
 		{
-			archive_entry* entry;
+			xml::document container(fh.data);
+			xml::node_ptr root = container.root();
 			
-			err = archive_read_next_header(archive, &entry);
-			if (err != ARCHIVE_OK)	// done
-				break;
+			if (root->name() != "container" or root->ns() != kContainerNS)
+				THROW(("Invalid or unsupported container.xml file"));
 			
-			fs::path path(archive_entry_pathname(entry));
+			xml::node_ptr n = root->find_first_child("rootfiles");
+			if (not n)
+				THROW(("Invalid container.xml file, <rootfiles> missing."));
 			
-			uint32 l = 0;
-			char buffer[1024];
-			string s;
+			n = n->find_first_child("rootfile");
+			if (not n)
+				THROW(("Invalid container.xml file, <rootfile> missing."));
 			
-			while ((r = archive_read_data(archive, buffer, sizeof(buffer))) > 0)
-			{
-				s.append(buffer, buffer + r);
-				l += r;
-			}
+			if (n->get_attribute("media-type") != "application/oebps-package+xml")
+				THROW(("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
 			
-			if (r < 0)
-				THROW(("Error reading archive: %s", archive_error_string(archive)));
-			
-			if (path == "mimetype")
-			{
-				if (not ba::starts_with(s, "application/epub+zip"))
-					THROW(("Invalid ePub file, mimetype is not correct"));
-			}
-			else if (path == "META-INF/container.xml")
-			{
-				xml::document container(s);
-				xml::node_ptr root = container.root();
-				
-				if (root->name() != "container" or root->ns() != kContainerNS)
-					THROW(("Invalid or unsupported container.xml file"));
-				
-				xml::node_ptr n = root->find_first_child("rootfiles");
-				if (not n)
-					THROW(("Invalid container.xml file, <rootfiles> missing."));
-				
-				n = n->find_first_child("rootfile");
-				if (not n)
-					THROW(("Invalid container.xml file, <rootfile> missing."));
-				
-				if (n->get_attribute("media-type") != "application/oebps-package+xml")
-					THROW(("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
-				
-				rootFile = n->get_attribute("full-path");
-				mRootFile = rootFile.leaf();
-			}
-			else if (S_ISREG(archive_entry_filetype(entry)))
-				content[path] = s;
+			rootFile = n->get_attribute("full-path");
+			mRootFile = rootFile.leaf();
 		}
-
-		xml::document opf(content[rootFile]);
-		
-		ParseOPF(rootFile.branch_path(), *opf.root());
-		
-		fs::path tocFile = rootFile.branch_path() / mTOCFile;
-		xml::document ncx(content[tocFile]);
-		
-		ParseNCX(*ncx.root());
-		
-		// and now fill in the data for the items we've found
-		
-		for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
-		{
-			if (item->first == rootFile or item->first == tocFile)
-				continue;
-			
-			MProjectItem* pi = mRoot.GetItem(item->first);
-			if (pi == nil)
-//				THROW(("Missing item in manifest for %s", item->first.string().c_str()));
-				continue;
-
-			MePubItem* epi = dynamic_cast<MePubItem*>(pi);
-			if (epi == nil)
-				THROW(("Internal error, item is not an ePub item"));
-			epi->SetData(item->second);
-		}
-		
-		if (err != ARCHIVE_EOF)
-			THROW(("Error reading archive: %s", archive_error_string(archive)));
+		else
+			content[path] = fh.data;
 	}
-	catch (...)
-	{
-		if (archive != nil)
-		{
-			archive_read_close(archive);
-			archive_read_finish(archive);
-		}
 
-		mInputFileStream = nil;
-		
-		throw;
-	}	
+	xml::document opf(content[rootFile]);
 	
-	mInputFileStream = nil;
+	ParseOPF(rootFile.branch_path(), *opf.root());
+	
+	fs::path tocFile = rootFile.branch_path() / mTOCFile;
+	xml::document ncx(content[tocFile]);
+	
+	ParseNCX(*ncx.root());
+	
+	// and now fill in the data for the items we've found
+	
+	for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
+	{
+		if (item->first == rootFile or item->first == tocFile)
+			continue;
+		
+		MProjectItem* pi = mRoot.GetItem(item->first);
+		MePubItem* epi;
+		
+		if (pi == nil)
+		{
+			if (item->first.leaf() == ".DS_Store")
+				continue;
+			
+			// this item was not mentioned in the spine, add it here
+			MProjectGroup* group = mRoot.GetGroupForPath(item->first.branch_path());
+			epi = new MePubItem(item->first.leaf(), group);
+			group->AddProjectItem(epi);
+			epi->GuessMediaType();
+		}
+		else
+			epi = dynamic_cast<MePubItem*>(pi);
 
-	archive_read_close(archive);
-	archive_read_finish(archive);
+		if (epi == nil)
+			THROW(("Internal error, item is not an ePub item"));
+
+		epi->SetData(item->second);
+	}
 	
 	SetModified(false);
 }
@@ -711,7 +828,7 @@ xml::node_ptr MePubDocument::CreateOPF(
 	item_node->add_attribute("media-type", "application/x-dtbncx+xml");
 	manifest->add_child(item_node);
 	
-	// spine. For now we simply write out all file ID's for files having media-type application/xhtml+xml 
+	// spine. For now we write out all items having a file ID and a media-type application/xhtml+xml 
 
 	xml::node_ptr spine(new xml::node("spine"));
 	spine->add_attribute("toc", "ncx");
@@ -721,8 +838,12 @@ xml::node_ptr MePubDocument::CreateOPF(
 	{
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(&*item);
 		
-		if (ePubItem == nil or ePubItem->GetMediaType() != "application/xhtml+xml")
+		if (ePubItem == nil or
+			ePubItem->GetMediaType() != "application/xhtml+xml" or
+			ePubItem->GetID().empty())
+		{
 			continue;
+		}
 		
 		xml::node_ptr itemref(new xml::node("itemref"));
 		itemref->add_attribute("idref", ePubItem->GetID());
@@ -814,52 +935,6 @@ void MePubDocument::CreateNavMap(
 		inNavPoint->add_child(navPoint);
 	}	
 }	
-
-ssize_t MePubDocument::archive_read_callback_cb(
-	struct archive*		inArchive,
-	void*				inClientData,
-	const void**		_buffer)
-{
-	MePubDocument* epub = reinterpret_cast<MePubDocument*>(inClientData);
-	return epub->archive_read_callback(inArchive, _buffer);
-}
-
-int MePubDocument::archive_open_callback_cb(
-	struct archive*		inArchive,
-	void*				inClientData)
-{
-	MePubDocument* epub = reinterpret_cast<MePubDocument*>(inClientData);
-	return epub->archive_open_callback(inArchive);
-}
-
-int MePubDocument::archive_close_callback_cb(
-	struct archive*		inArchive,
-	void*				inClientData)
-{
-	MePubDocument* epub = reinterpret_cast<MePubDocument*>(inClientData);
-	return epub->archive_close_callback(inArchive);
-}
-
-ssize_t MePubDocument::archive_read_callback(
-	struct archive*		inArchive,
-	const void**		_buffer)
-{
-	ssize_t r = mInputFileStream->readsome(mBuffer, sizeof(mBuffer));
-	*_buffer = mBuffer;
-	return r;
-}
-
-int MePubDocument::archive_open_callback(
-	struct archive*		inArchive)
-{
-	return ARCHIVE_OK;
-}
-
-int MePubDocument::archive_close_callback(
-	struct archive*		inArchive)
-{
-	return ARCHIVE_OK;
-}
 
 MProjectGroup* MePubDocument::GetFiles() const
 {
@@ -1128,61 +1203,26 @@ void MePubDocument::CreateItem(
 	{
 		auto_ptr<MePubItem> item(new MePubItem(name, inGroup));
 		
-		bool isText = false;
+		item->GuessMediaType();
 		
-		if (FileNameMatches("*.css", name))
-		{
-			item->SetMediaType("text/css");
-			isText = true;
-		}
-		else if (FileNameMatches("*.xml;*.html", name))
-		{
-			item->SetMediaType("application/xhtml+xml");
-			isText = true;
-		}
-		else if (FileNameMatches("*.ncx", name))
-		{
-			item->SetMediaType("application/x-dtbncx+xml");
-			isText = true;
-		}
-		else if (FileNameMatches("*.ttf", name))
-			item->SetMediaType("application/x-font-ttf");
-		else if (FileNameMatches("*.xpgt", name))
-			item->SetMediaType("application/vnd.adobe-page-template+xml");
-		else if (FileNameMatches("*.png", name))
-			item->SetMediaType("image/png");
-		else if (FileNameMatches("*.jpg", name))
-			item->SetMediaType("image/jpeg");
-		else 
-			item->SetMediaType("application/xhtml+xml");
-
 		fs::ifstream file(path);
 
-		if (isText)
-		{
-			MTextBuffer buffer;
-			buffer.ReadFromFile(file);
-			item->SetData(buffer.GetText());
-		}
-		else
-		{
-			// First read the data into a buffer
-			streambuf* b = file.rdbuf();
-			
-			int64 len = b->pubseekoff(0, ios::end);
-			b->pubseekpos(0);
+		// First read the data into a buffer
+		streambuf* b = file.rdbuf();
 		
-			if (len < 0)
-				THROW(("File is not open?"));
+		int64 len = b->pubseekoff(0, ios::end);
+		b->pubseekpos(0);
+	
+		if (len < 0)
+			THROW(("File is not open?"));
+	
+		if (len > numeric_limits<uint32>::max())
+			THROW(("File too large to open"));
+	
+		vector<char> data(len);
+		b->sgetn(&data[0], len);
 		
-			if (len > numeric_limits<uint32>::max())
-				THROW(("File too large to open"));
-		
-			vector<char> data(len);
-			b->sgetn(&data[0], len);
-			
-			item->SetData(string(&data[0], len));
-		}
+		item->SetData(string(&data[0], len));
 
 		item->SetID(fs::basename(name));
 

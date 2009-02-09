@@ -14,13 +14,13 @@
 		<item label="Close" cmd='clos'/>
 		<item label="Save" cmd='save'/>
 		<item label="Save As…" cmd='sava'/>
-		<item label="Revert" cmd='reve'/>
+<!--	not implemented yet:	<item label="Revert" cmd='reve'/>-->
 		<item label="-" />
 		<item label="Quit" cmd='quit'/>
 	</menu>
 	<menu id='' label="ePub">
-		<item label="Add File" cmd='Padd'/>
-		<item label="New Group" cmd='Pnwg'/>
+		<item label="Add Item" cmd='Padd'/>
+		<item label="New Directory" cmd='Pnwg'/>
 		<item label="Rename" cmd='RenI' />
 		<item label="-" />
 		<item label="Validate" cmd='ePva'/>

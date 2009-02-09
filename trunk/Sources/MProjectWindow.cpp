@@ -90,6 +90,7 @@ MProjectWindow::MProjectWindow()
 	, mFilesTree(nil)
 	, mResourcesTree(nil)
 	, mBusy(false)
+	, mEditingName(false)
 {
 	mController = new MController(this);
 	
@@ -321,6 +322,18 @@ bool MProjectWindow::UpdateCommandStatus(
 		case cmd_NewGroup:
 			outEnabled = notebook.GetPage() != ePanelLinkOrder;
 			break;
+		
+		case cmd_RenameItem:
+			if (notebook.GetPage() != ePanelLinkOrder)
+			{
+				vector<MProjectItem*> selectedItems;
+				GetSelectedItems(selectedItems);
+				
+				outEnabled = 
+					selectedItems.size() == 1 and
+					dynamic_cast<MProjectGroup*>(selectedItems.front());
+			}
+			break;
 
 		default:
 			result = MDocWindow::UpdateCommandStatus(
@@ -377,6 +390,10 @@ bool MProjectWindow::ProcessCommand(
 		
 		case cmd_NewGroup:
 			CreateNewGroup();
+			break;
+		
+		case cmd_RenameItem:
+			RenameGroup();
 			break;
 		
 		case cmd_OpenIncludeFile:
@@ -652,6 +669,7 @@ void MProjectWindow::CreateNewGroup()
 	model->ProjectItemInserted(newGroup);
 	g_object_set(G_OBJECT(cell), "editable", true, nil);
 	treeView->SetCursor(path, column, true);
+	mEditingName = true;
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
@@ -659,38 +677,38 @@ void MProjectWindow::CreateNewGroup()
 	mProject->SetModified(true);
 }
 
-//void MProjectWindow::RenameGroup()
-//{
-//	if (mEditingName)
-//		return;
-//	
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//
-//	GtkTreePath* path = nil;
-//
-//	if (notebook.GetPage() == kFilesPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
-//			treeView.SetCursor(path, mFileNameColumn);
-//			mEditingName = true;
-//		}
-//	}
-//	else if (notebook.GetPage() == kTOCPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kTOCListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mTOCTitleCell), "editable", true, nil);
-//			treeView.SetCursor(path, mTOCTitleColumn);
-//			mEditingName = true;
-//		}
-//	}
-//}
+void MProjectWindow::RenameGroup()
+{
+	if (mEditingName)
+		return;
+	
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+
+	GtkTreePath* path = nil;
+
+	if (notebook.GetPage() == ePanelFiles)
+	{
+		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+		treeView.GetFirstSelectedRow(path);
+		if (path != nil)
+		{
+			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
+			treeView.SetCursor(path, mFileNameColumn);
+			mEditingName = true;
+		}
+	}
+	else if (notebook.GetPage() == ePanelPackage)
+	{
+		MGtkTreeView treeView(GetWidget(kResourceViewID));
+		treeView.GetFirstSelectedRow(path);
+		if (path != nil)
+		{
+			g_object_set(G_OBJECT(mResourceNameCell), "editable", true, nil);
+			treeView.SetCursor(path, mResourceNameColumn);
+			mEditingName = true;
+		}
+	}
+}
 
 void MProjectWindow::EditedFileGroupName(
 	gchar*				inPath,

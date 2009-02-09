@@ -115,30 +115,6 @@ class MePubDocument : public MDocument
 							xml::node_ptr		inNavPoint,
 							uint32&				ioID);
 
-	static ssize_t		archive_read_callback_cb(
-							struct archive*		inArchive,
-							void*				inClientData,
-							const void**		_buffer);
-
-	static int			archive_open_callback_cb(
-							struct archive*		inArchive,
-							void*				inClientData);
-
-	static int			archive_close_callback_cb(
-							struct archive*		inArchive,
-							void*				inClientData);
-
-	ssize_t				archive_read_callback(
-							struct archive*		inArchive,
-							const void**		_buffer);
-
-	int					archive_open_callback(
-							struct archive*		inArchive);
-
-	int					archive_close_callback(
-							struct archive*		inArchive);
-	
-	std::istream*		mInputFileStream;
 	char				mBuffer[1024];
 
 	std::string			mRootFile;

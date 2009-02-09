@@ -624,6 +624,11 @@ bool MePubWindow::UpdateCommandStatus(
 	{
 		case cmd_NewGroup:
 			outEnabled =
+				notebook.GetPage() == kFilesPageNr;
+			break;
+		
+		case cmd_AddFileToProject:
+			outEnabled =
 				notebook.GetPage() == kFilesPageNr or
 				notebook.GetPage() == kTOCPageNr;
 			break;
@@ -650,7 +655,11 @@ bool MePubWindow::ProcessCommand(
 	switch (inCommand)
 	{
 		case cmd_NewGroup:
-			CreateNewGroup();
+			CreateNew(true);
+			break;
+
+		case cmd_AddFileToProject:
+			CreateNew(false);
 			break;
 		
 		case cmd_RenameItem:
@@ -914,9 +923,10 @@ void MePubWindow::ValueChanged(
 }
 
 // ---------------------------------------------------------------------------
-//	CreateNewGroup
+//	CreateNew
 
-void MePubWindow::CreateNewGroup()
+void MePubWindow::CreateNew(
+	bool 		inDirectory)
 {
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
 	auto_ptr<MGtkTreeView> treeView;
@@ -925,7 +935,7 @@ void MePubWindow::CreateNewGroup()
 	GtkTreeViewColumn* column;
 	GtkCellRenderer* cell;
 
-	auto_ptr<MProjectGroup> newGroup;
+	auto_ptr<MProjectItem> newItem;
 	
 	if (notebook.GetPage() == kFilesPageNr)
 	{
@@ -934,7 +944,10 @@ void MePubWindow::CreateNewGroup()
 		group = mEPub->GetFiles();
 		column = mFileNameColumn;
 		cell = mFileNameCell;
-		newGroup.reset(new MProjectGroup(_("New Folder"), group));
+		if (inDirectory)
+			newItem.reset(new MProjectGroup(_("New Directory"), group));
+		else
+			newItem.reset(new MePubItem(_("New File"), group));
 	}
 	else if (notebook.GetPage() == kTOCPageNr)
 	{
@@ -943,7 +956,7 @@ void MePubWindow::CreateNewGroup()
 		group = mEPub->GetTOC();
 		column = mTOCTitleColumn;
 		cell = mTOCTitleCell;
-		newGroup.reset(new MePubTOCItem(_("New TOC Entry"), group));
+		newItem.reset(new MePubTOCItem(_("New TOC Entry"), group));
 	}
 	else
 		return;
@@ -953,18 +966,21 @@ void MePubWindow::CreateNewGroup()
 	GtkTreePath* path = nil;
 	GtkTreeIter iter;
 	
-	if (treeView->GetFirstSelectedRow(path) and
-		model->GetIter(&iter, path))
+	if (not treeView->GetFirstSelectedRow(path))
+		path = gtk_tree_path_new_from_indices(0, -1);
+	
+	if (model->GetIter(&iter, path))
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
 		group = item->GetParent();
 		index = item->GetPosition();
 	}
 	
-	group->AddProjectItem(newGroup.get(), index);
-	model->ProjectItemInserted(newGroup.release());
+	group->AddProjectItem(newItem.get(), index);
+	model->ProjectItemInserted(newItem.release());
 	g_object_set(G_OBJECT(cell), "editable", true, nil);
 	treeView->SetCursor(path, column, true);
+	mEditingName = true;
 	
 	if (path != nil)
 		gtk_tree_path_free(path);
@@ -1073,7 +1089,15 @@ void MePubWindow::EditedItemName(
 	mEditingName = false;
 	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
 	if (mFilesTree->ProjectItemNameEdited(inPath, inNewValue))
+	{
+		MePubItem* item = dynamic_cast<MePubItem*>(
+			mFilesTree->GetProjectItemForPath(inPath));
+
+		if (item != nil and item->GetMediaType().empty())
+			item->GuessMediaType();
+
 		mEPub->SetModified(true);
+	}
 }
 
 void MePubWindow::EditedItemID(

@@ -71,7 +71,6 @@ class MProjectTree : public MTreeModelInterface
 						GtkTreeIter*	outIter,
 						GtkTreeIter*	inChild);
 
-
 	virtual bool	RowDraggable(
 						GtkTreePath*		inPath);
 
@@ -101,10 +100,15 @@ class MProjectTree : public MTreeModelInterface
 
 	virtual void	RemoveItem(
 						MProjectItem*		inItem);
+	
+	virtual void	RemoveAll();
 
 	virtual bool	ProjectItemNameEdited(
 						const char*			inPath,
 						const char*			inNewName);
+
+	MProjectItem*	GetProjectItemForPath(
+						const char*			inPath);
 
 	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
 	

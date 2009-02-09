@@ -1,10 +1,11 @@
 ﻿Te doen
 
 - ePub
-	- adobe page dinges
 	- dublin core opties
-	- verwijderen libarchive
 	- zoeken in alle ePub items
+	- revert
+
+	? adobe page dinges
 
 Moet af:
 

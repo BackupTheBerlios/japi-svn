@@ -35,6 +35,8 @@ class MePubItem : public MProjectItem
 	void			SetMediaType(
 						const std::string&	inMediaType)	{ mMediaType = inMediaType; }
 
+	void			GuessMediaType();
+
   protected:
 	bool			mIsOutOfDate;
 	std::string		mID;

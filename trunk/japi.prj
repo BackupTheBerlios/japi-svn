@@ -106,7 +106,6 @@
 		</group>
 		<group name="Libraries">
 			<file>libpcre.a</file>
-			<file>libarchive.a</file>
 			<file optional="true">libattr.a</file>
 			<file>libexpat.a</file>
 			<file>libboost_system-mt.a</file>

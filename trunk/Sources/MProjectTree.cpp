@@ -334,6 +334,12 @@ void MProjectTree::ProjectItemInserted(
 	catch (...) {}
 }
 
+void MProjectTree::RemoveAll()
+{
+	while (mItems->Count() > 0)
+		RemoveItem(mItems->GetItem(0));
+}
+
 void MProjectTree::RemoveItem(
 	MProjectItem*		inItem)
 {
@@ -579,6 +585,22 @@ bool MProjectTree::RowDropPossible(
 	}
 
 	return group != nil and index <= group->Count();
+}
+
+MProjectItem* MProjectTree::GetProjectItemForPath(
+	const char*			inPath)
+{
+	MProjectItem* result = nil;
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+		result = reinterpret_cast<MProjectItem*>(iter.user_data);
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
 }
 
 bool MProjectTree::ProjectItemNameEdited(
