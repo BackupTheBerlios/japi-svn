@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <cstring>
 #include <zlib.h>
+#include <uuid/uuid.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -22,6 +23,7 @@
 #include "MePubItem.h"
 #include "MTextBuffer.h"
 #include "MFile.h"
+#include "MResources.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -488,15 +490,38 @@ MePubDocument::MePubDocument(
 	RevertDocument();
 }
 
-//MePubDocument::MePubDocument(
-//	const fs::path&		inParentDir,
-//	const std::string&	inName)
-//{
-//}
+MePubDocument::MePubDocument()
+	: MDocument(nil)
+	, eCreateItem(this, &MePubDocument::CreateItem)
+	, eItemMoved(this, &MePubDocument::ItemMoved)
+	, eItemRemoved(this, &MePubDocument::ItemMoved)
+	, mRoot("", nil)
+	, mTOC("", nil)
+{
+	mRootFile = "book.opf";
+	mTOCFile = "book.ncx";
+	
+	MProjectGroup* oebps = new MProjectGroup("OEBPS", &mRoot);
+	mRoot.AddProjectItem(oebps);
+	
+	MePubItem* item = new MePubItem("main.xhtml", oebps);
+	item->SetData(LoadResource("empty_xhtml_file.xhtml"));
+	item->GuessMediaType();
+	item->SetID("main");
+	oebps->AddProjectItem(item);
+	
+	MePubTOCItem* toc = new MePubTOCItem("Main", &mTOC);
+	toc->SetSrc("main.xhtml");
+	mTOC.AddProjectItem(toc);
+	
+	GenerateNewDocumentID();
+	
+	mDublinCore["title"] = "Untitled";
+	mDublinCore["language"] = "en";
+}
 
 MePubDocument::~MePubDocument()
 {
-	
 }
 
 bool MePubDocument::UpdateCommandStatus(
@@ -897,7 +922,7 @@ xml::node_ptr MePubDocument::CreateNCX()
 	xml::node_ptr navMap(new xml::node("navMap"));
 	ncx->add_child(navMap);
 	
-	uint32 id = 0;
+	uint32 id = 1;
 	CreateNavMap(&mTOC, navMap, id);
 	
 	return ncx;
@@ -1088,6 +1113,29 @@ void MePubDocument::SetDocumentID(
 	mDocumentID = inID;
 	// TODO: check scheme and modify mDocumentIDScheme
 	SetModified(true);
+}
+
+void MePubDocument::SetDocumentIDScheme(
+	const string&	inScheme)
+{
+	mDocumentIDScheme = inScheme;
+}
+
+string MePubDocument::GetDocumentIDScheme() const
+{
+	return mDocumentIDScheme;
+}
+
+void MePubDocument::GenerateNewDocumentID()
+{
+	uuid_t id;
+	uuid_generate(id);
+	
+	char b[32] = "";
+	uuid_unparse_lower(id, b);
+	mDocumentID = "uuid:";
+	mDocumentID += b;
+	mDocumentIDScheme = "uuid";	
 }
 
 string MePubDocument::GetDublinCoreValue(

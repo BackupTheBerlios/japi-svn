@@ -2,11 +2,12 @@
 <menubar>
 	<menu id='filemenu' label="File">
 		<menu id='newmenu' label="New" special="template">
-			<item label="New" cmd='new '/>
+			<item label="Text Document" cmd='new '/>
+			<item label="ePub Document" cmd='NewE'/>
+			<item label="Project" cmd='NewE'/>
 			<item label="-"/>
 			<!-- template items -->
 		</menu>
-		<item label="New Project…" cmd='NewP'/>
 		<item label="Open…" cmd='open'/>
 		<menu id='recentmenu' label="Open Recent" special="recent" />
 		<item label="Find and Open…" cmd='OInc'/>

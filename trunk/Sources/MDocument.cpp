@@ -170,7 +170,11 @@ bool MDocument::DoSaveAs(
 	const MUrl&		inFile)
 {
 	bool result = false;
+
+	bool specified = mSpecified;
+	mSpecified = true;
 	
+	MUrl url(mURL);
 	mURL = inFile;
 
 	if (DoSave())
@@ -181,6 +185,12 @@ bool MDocument::DoSaveAs(
 		eFileSpecChanged(this, mURL);
 		
 		result = true;
+	}
+	else
+	{
+		mSpecified = specified;
+		if (mURL.IsLocal())
+			mURL = url;
 	}
 	
 	return result;

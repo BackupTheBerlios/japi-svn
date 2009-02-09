@@ -27,7 +27,6 @@
 #include "MSound.h"
 #include "MProjectItem.h"
 #include "MProjectJob.h"
-#include "MNewGroupDialog.h"
 #include "MProjectInfoDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MPkgConfig.h"

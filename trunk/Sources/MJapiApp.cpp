@@ -167,6 +167,10 @@ bool MJapieApp::ProcessCommand(
 			DoNewProject();
 			break;
 		
+		case cmd_NewEPub:
+			DoNewEPub();
+			break;
+		
 		case cmd_Open:
 			DoOpen();
 			break;
@@ -346,7 +350,10 @@ void MJapieApp::UpdateWindowMenu(
 void MJapieApp::UpdateTemplateMenu(
 	MMenu*				inMenu)
 {
-	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
+	const uint32 kStandardNewMenuItems = 4;
+	
+	inMenu->RemoveItems(
+		kStandardNewMenuItems, inMenu->CountItems() - kStandardNewMenuItems);
 
 	fs::path templatesDir = gTemplatesDir;
 	if (fs::exists(templatesDir) and fs::is_directory(templatesDir))
@@ -696,6 +703,16 @@ void MJapieApp::DoNewProject()
 	}
 	
 	gtk_widget_destroy(dialog);
+}
+
+void MJapieApp::DoNewEPub()
+{
+	auto_ptr<MePubDocument> epub(new MePubDocument());
+	auto_ptr<MePubWindow> w(new MePubWindow());
+	w->Initialize(epub.get());
+	epub.release();
+	w->Show();
+	w.release();
 }
 
 void MJapieApp::SetCurrentFolder(

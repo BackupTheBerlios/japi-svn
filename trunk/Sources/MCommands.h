@@ -35,6 +35,7 @@ enum MStdCommand {
 
 const uint32
 	cmd_NewProject =			'NewP',
+	cmd_NewEPub =				'NewE',
 	cmd_Balance =				'Bala',
 	cmd_ShiftLeft =				'ShiL',
 	cmd_ShiftRight =			'ShiR',

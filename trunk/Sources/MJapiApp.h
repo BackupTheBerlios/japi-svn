@@ -99,6 +99,8 @@ class MJapieApp : public MHandler
 
 	void				DoNewProject();
 
+	void				DoNewEPub();
+
 	void				DoOpen();
 
 	void				DoSaveAll();

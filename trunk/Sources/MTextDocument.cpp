@@ -307,9 +307,6 @@ bool MTextDocument::DoSaveAs(
 {
 	bool result = false;
 
-	bool specified = mSpecified;
-	mSpecified = true;
-	
 	MePubDocument* epub = mEPub;
 	mEPub = nil;
 	
@@ -342,8 +339,6 @@ bool MTextDocument::DoSaveAs(
 	}
 	else
 	{
-		mSpecified = specified;
-		
 		if (epub)
 		{
 			mEPub = epub;

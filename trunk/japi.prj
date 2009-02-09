@@ -112,6 +112,7 @@
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>
 			<file>libgthread-2.0.a</file>
+			<file>libuuid.a</file>
 			<link>z</link>
 			<link>cryptopp</link>
 		</group>
@@ -173,6 +174,7 @@
 			<resource>Dutch/japi.po</resource>
 		</group>
 		<resource>japi.desktop</resource>
+		<resource>empty_xhtml_file.xhtml</resource>
 	</resources>
 	<targets>
 		<target kind="Executable">

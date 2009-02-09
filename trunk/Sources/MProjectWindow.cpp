@@ -738,7 +738,7 @@ void MProjectWindow::AddFilesToProject()
 	vector<MUrl> urls;
 	if (ChooseFiles(true, urls))
 	{
-		MProjectTree* tree;
+		MProjectTree* tree = nil;
 		MProjectGroup* group = nil;
 		int32 index = 0;
 
@@ -791,11 +791,16 @@ void MProjectWindow::AddFilesToProject()
 			}
 		}
 		
-		vector<string> files;
-		transform(urls.begin(), urls.end(), back_inserter(files),
-			boost::bind(&MUrl::str, _1, false));
-		
-		tree->AddFiles(files, group, index);
+		if (tree != nil)
+		{
+			vector<string> files;
+			transform(urls.begin(), urls.end(), back_inserter(files),
+				boost::bind(&MUrl::str, _1, false));
+			
+			tree->AddFiles(files, group, index);
+			
+			mProject->SetModified(true);
+		}
 	}
 }
 

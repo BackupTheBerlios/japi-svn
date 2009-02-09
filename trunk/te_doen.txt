@@ -3,6 +3,8 @@
 - ePub
 	- dublin core opties
 	- zoeken in alle ePub items
+	- 'Nieuwe ePub' menu item
+	- revert op ePub werkt nog niet?
 	- revert
 
 	? adobe page dinges

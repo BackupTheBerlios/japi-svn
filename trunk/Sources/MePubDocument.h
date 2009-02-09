@@ -18,6 +18,8 @@ class MePubDocument : public MDocument
 {
   public:
 
+						MePubDocument();
+
 	explicit			MePubDocument(
 							const fs::path&		inProjectFile);
 
@@ -72,9 +74,16 @@ class MePubDocument : public MDocument
 
 	std::string			GetDocumentID() const;
 	
+	std::string			GetDocumentIDScheme() const;
+	
 	void				SetDocumentID(
 							const std::string&	inID);
 
+	void				SetDocumentIDScheme(
+							const std::string&	inScheme);
+
+	void				GenerateNewDocumentID();
+	
 	std::string			GetDublinCoreValue(
 							const std::string&	inName) const;
 

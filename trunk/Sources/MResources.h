@@ -27,6 +27,20 @@ bool LoadResource(
 		const char*&		outData,
 		uint32&				outSize);
 
+inline std::string LoadResource(
+		const std::string&	inName)
+{
+	std::string result;
+	
+	const char* data;
+	uint32 size;
+
+	if (LoadResource(inName, data, size))
+		result.assign(data, size);
+
+	return result;
+}
+
 class MResourceFile
 {
   public:
