@@ -59,6 +59,7 @@ enum {
 	kDCLanguageViewID		= 'dcLA',
 	kDCCreatorViewID		= 'dcCR',
 	kDCPublisherViewID		= 'dcPU',
+	kDCDateViewID			= 'dcDT',
 	kDCDescriptionViewID	= 'dcDE',
 	kDCCoverageViewID		= 'dcCO',
 	kDCSourceViewID			= 'dcSO',
@@ -443,6 +444,8 @@ MePubWindow::MePubWindow()
 	, eInvokeFileRow(this, &MePubWindow::InvokeFileRow)
 	, eDocumentClosed(this, &MePubWindow::TextDocClosed)
 	, eFileSpecChanged(this, &MePubWindow::TextDocFileSpecChanged)
+	, eSubjectChanged(this, &MePubWindow::SubjectChanged)
+	, eDateChanged(this, &MePubWindow::DateChanged)
 	, mEditedItemName(this, &MePubWindow::EditedItemName)
 	, mEditedItemID(this, &MePubWindow::EditedItemID)
 	, mEditedItemMediaType(this, &MePubWindow::EditedItemMediaType)
@@ -457,6 +460,14 @@ MePubWindow::MePubWindow()
 	mMenubar.SetTarget(mController);
 
 	ConnectChildSignals();
+
+	GtkWidget* wdgt = GetWidget(kDCSubjectViewID);
+	if (wdgt)
+		eSubjectChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
+
+	wdgt = GetWidget(kDCDateViewID);
+	if (wdgt)
+		eDateChanged.Connect(G_OBJECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(wdgt))), "changed");
 }
 
 MePubWindow::~MePubWindow()
@@ -504,19 +515,13 @@ void MePubWindow::Initialize(
 	// fill in the information fields
 	
 	SetText(kDCIDViewID,			mEPub->GetDocumentID());
-//	SetText(kDocIDSchemePopupID,	mEPub->GetDocumentIDScheme());
-	string scheme = mEPub->GetDocumentIDScheme();
-	if (scheme == "uuid")
-		SetValue(kDocIDSchemePopupID, 1);
-	else if (scheme == "isbn")
-		SetValue(kDocIDSchemePopupID, 2);
-	else
-		SetValue(kDocIDSchemePopupID, 3);	
+	SetText(kDocIDSchemePopupID,	mEPub->GetDocumentIDScheme());
 
 	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
 	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
 	SetText(kDCCreatorViewID,		mEPub->GetDublinCoreValue("creator"));
 	SetText(kDCPublisherViewID,		mEPub->GetDublinCoreValue("publisher"));
+	SetText(kDCDateViewID,			mEPub->GetDublinCoreValue("date"));
 	SetText(kDCDescriptionViewID,	mEPub->GetDublinCoreValue("description"));
 	SetText(kDCCoverageViewID,		mEPub->GetDublinCoreValue("coverage"));
 	SetText(kDCSourceViewID,		mEPub->GetDublinCoreValue("source"));
@@ -911,6 +916,10 @@ void MePubWindow::ValueChanged(
 			mEPub->SetDublinCoreValue("publisher", GetText(inID));
 			break;
 
+		case kDCDateViewID:
+			mEPub->SetDublinCoreValue("date", GetText(inID));
+			break;
+
 		case kDCDescriptionViewID:
 			mEPub->SetDublinCoreValue("description", GetText(inID));
 			break;
@@ -934,7 +943,7 @@ void MePubWindow::ValueChanged(
 		case kDocIDGenerateButtonID:
 			mEPub->GenerateNewDocumentID();
 			SetText(kDCIDViewID, mEPub->GetDocumentID());
-			SetValue(kDocIDSchemePopupID, 1);
+			SetText(kDocIDSchemePopupID, mEPub->GetDocumentIDScheme());
 			break;
 
 		case kDocIDSchemePopupID:
@@ -1165,3 +1174,12 @@ void MePubWindow::EditedTOCClass(
 		mEPub->SetModified(true);
 }
 
+void MePubWindow::SubjectChanged()
+{
+	ValueChanged(kDCSubjectViewID);
+}
+
+void MePubWindow::DateChanged()
+{
+	ValueChanged(kDCDateViewID);
+}

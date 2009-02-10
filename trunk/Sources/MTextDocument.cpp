@@ -3619,9 +3619,6 @@ void MTextDocument::OnKeyPressEvent(
 			char s[8] = {};
 			char* sp = s;
 			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
-
-cout << "Writing a result from gdk_keyval_to_unicode: " << s << endl;
-
 			Type(s, length);
 		}
 	}

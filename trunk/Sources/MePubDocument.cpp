@@ -518,6 +518,15 @@ MePubDocument::MePubDocument()
 	
 	mDublinCore["title"] = "Untitled";
 	mDublinCore["language"] = "en";
+	
+	time_t now = time(nil);
+	
+	struct tm tm = {};
+	gmtime_r(&now, &tm);
+	
+	char s[11] = "";
+	strftime(s, sizeof(s), "%Y-%M-%d", &tm);
+	mDublinCore["date"] = s;
 }
 
 MePubDocument::~MePubDocument()
@@ -820,11 +829,34 @@ xml::node_ptr MePubDocument::CreateOPF(
 	// other dublin core data
 	for (map<string,string>::iterator dc = mDublinCore.begin(); dc != mDublinCore.end(); ++dc)
 	{
-		xml::node_ptr dcn(new xml::node(dc->first, "dc"));
-		if (dc->first == "creator")
-			dcn->add_attribute("opf:role", "aut");
-		dcn->content(dc->second);
-		metadata->add_child(dcn);
+		vector<string> values;
+		ba::split(values, dc->second, ba::is_any_of("\n\r"));
+		
+		for (vector<string>::iterator value = values.begin(); value != values.end(); ++value)
+		{
+			xml::node_ptr dcn(new xml::node(dc->first, "dc"));
+			if (dc->first == "creator")
+				dcn->add_attribute("opf:role", "aut");
+			
+			if (dc->first == "date")
+			{
+				string::size_type p;
+				if ((p = value->find(':')) != string::npos)
+				{
+					dcn->add_attribute("opf:event", value->substr(0, p));
+
+					string date = value->substr(p + 1);
+					ba::trim(date);
+					dcn->content(date);
+				}
+				else
+					dcn->content(*value);
+			}
+			else
+				dcn->content(*value);
+
+			metadata->add_child(dcn);
+		}
 	}
 	
 	// manifest
@@ -839,9 +871,11 @@ xml::node_ptr MePubDocument::CreateOPF(
 			continue;
 		
 		xml::node_ptr item_node(new xml::node("item"));
-		item_node->add_attribute("id", ePubItem->GetID());
+		if (not ePubItem->GetID().empty())
+			item_node->add_attribute("id", ePubItem->GetID());
 		item_node->add_attribute("href", relative_path(inOEBPS, ePubItem->GetPath()).string());
-		item_node->add_attribute("media-type", ePubItem->GetMediaType());
+		if (not ePubItem->GetMediaType().empty())
+			item_node->add_attribute("media-type", ePubItem->GetMediaType());
 		manifest->add_child(item_node);
 	}
 	
@@ -997,15 +1031,32 @@ void MePubDocument::ParseOPF(
 			if (dc->get_attribute("id") == uid)
 			{
 				mDocumentID = dc->content();
-				mDocumentIDScheme = dc->get_attribute("scheme");
+				mDocumentIDScheme = dc->get_attribute("opf:scheme");
+				ba::to_lower(mDocumentIDScheme);
 			}
+		}
+		else if (dc->name() == "date")
+		{
+			string date = mDublinCore[dc->name()];
+			if (not date.empty())
+				date += '\n';
+			
+			string dt = dc->content();
+			
+			
+			if (dc->get_attribute("opf:event").empty())
+				date += dc->content();
+			else
+				date += dc->get_attribute("opf:event") + ": " + dc->content();
+
+			mDublinCore[dc->name()] = date;
 		}
 		else if (mDublinCore[dc->name()].empty())
 			mDublinCore[dc->name()] = dc->content();
 		else
-			mDublinCore[dc->name()] = mDublinCore[dc->name()] + "; " + dc->content();
+			mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + dc->content();
 	}
-	
+
 	// collect the items from the manifest
 	
 	xml::node_ptr manifest = inOPF.find_first_child("manifest");

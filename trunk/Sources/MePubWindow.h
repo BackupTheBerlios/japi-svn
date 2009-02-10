@@ -78,6 +78,12 @@ class MePubWindow : public MDocWindow
 	void			CreateNew(
 						bool			inNewDirectory);
 
+	void			SubjectChanged();
+	MSlot<void()>	eSubjectChanged;
+
+	void			DateChanged();
+	MSlot<void()>	eDateChanged;
+
 	void			EditedItemName(
 						gchar*			path,
 						gchar*			new_text);
