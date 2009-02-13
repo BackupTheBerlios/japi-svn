@@ -78,6 +78,9 @@ void __m_debug_str(const char* inStr, ...);
 #define THROW_ON_MACH_ERR(x)		\
 	do { kern_return_t err = (x); if (err != KERN_SUCCESS) { SIGNAL_THROW(#x) throw MException("mach error %d: ('%s') calling %s", err, mach_error_string(err), #x); } } while (false)
 
+#define THROW_EXCEPTION(e) \
+	do { exception _e(e); SIGNAL_THROW(_e.what()) throw _e; } while (false)
+
 #define ASSERT(x, m)		if (not (x)) { SIGNAL_THROW(#x " => " #m); throw MException m; }
 
 #endif

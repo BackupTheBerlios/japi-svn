@@ -15,6 +15,8 @@
 #include "document.hpp"
 #include "exception.hpp"
 
+#include "MError.h"
+
 using namespace std;
 namespace ba = boost::algorithm;
 
@@ -276,7 +278,7 @@ void document_imp::EndElementHandler(
 	const XML_Char*		name)
 {
 	if (cur.empty())
-		throw exception("Empty stack");
+		THROW_EXCEPTION(("Empty stack"));
 	
 	cur.pop();
 }
@@ -286,7 +288,7 @@ void document_imp::CharacterDataHandler(
 	int					len)
 {
 	if (cur.empty())
-		throw exception("Empty stack");
+		THROW_EXCEPTION(("Empty stack"));
 	
 	cur.top()->add_content(s, len);
 }
@@ -337,7 +339,7 @@ void document_imp::parse(
 	XML_Parser p = XML_ParserCreateNS(NULL, '=');
 	
 	if (p == NULL)
-		throw exception("failed to create expat parser object");
+		THROW_EXCEPTION(("failed to create expat parser object"));
 	
 	try
 	{
@@ -362,7 +364,7 @@ void document_imp::parse(
 
 			XML_Status err = XML_Parse(p, line.c_str(), line.length(), data.eof() or line.empty());
 			if (err != XML_STATUS_OK)
-				throw exception(p);
+				THROW_EXCEPTION((p));
 		}
 	}
 	catch (std::exception& e)

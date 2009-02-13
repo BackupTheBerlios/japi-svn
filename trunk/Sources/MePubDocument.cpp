@@ -11,11 +11,13 @@
 #include <cstring>
 #include <zlib.h>
 #include <uuid/uuid.h>
+#include <set>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
@@ -31,6 +33,8 @@
 #include "MTextBuffer.h"
 #include "MFile.h"
 #include "MResources.h"
+#include "MStrings.h"
+#include "MAlerts.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -272,6 +276,8 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 		io::filtering_ostream out(io::back_inserter(fh.data));
 		io::copy(in, out);
 		
+		s.seekg(offset + z_stream.filter().total_in(), ios::beg);
+		
 		// now read the trailing length if needed
 		
 		if (bitFlag & kZipLengthAtEndMask)
@@ -282,8 +288,15 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 
 			uint32 signature;
 			char* p = read(signature, b2);
-
-			p = read(fh.crc, p);
+			
+			if (signature == 0x08074b50UL)
+				p = read(fh.crc, p);
+			else
+			{
+				fh.crc = signature;
+				s.seekg(-4, ios::cur);
+			}
+			
 			p = read(fh.compressed_size, p);
 			p = read(fh.uncompressed_size, p);
 		}
@@ -299,9 +312,6 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 		if (z_stream.crc() != fh.crc)
 			THROW(("ePub data, bad crc"));
 	}
-	
-	if (s.tellg() != offset + fh.compressed_size)
-		s.seekg(offset + fh.compressed_size, ios::beg);
 	
 	return true;
 }
@@ -492,12 +502,15 @@ void MePubDocument::ReadFile(
 {
 	ZIPLocalFileHeader fh;
 	
+	vector<string> problems;
+	set<fs::path> encrypted;
+	
 	// read first file, should be the mimetype file
 	if (not read_next_file(inFile, fh))
 		THROW(("Empty ePub file"));
 	
 	if (fh.filename != "mimetype" or not ba::starts_with(fh.data, "application/epub+zip"))
-		THROW(("Invalid ePub file, mimetype missing"));
+		problems.push_back(_("Invalid ePub file, mimetype missing"));
 
 	map<fs::path,string> content;
 	fs::path rootFile;
@@ -515,7 +528,7 @@ void MePubDocument::ReadFile(
 			xml::node_ptr root = container.root();
 			
 			if (root->name() != "container" or root->ns() != kContainerNS)
-				THROW(("Invalid or unsupported container.xml file"));
+				problems.push_back(_("Invalid or unsupported container.xml file"));
 			
 			xml::node_ptr n = root->find_first_child("rootfiles");
 			if (not n)
@@ -526,10 +539,37 @@ void MePubDocument::ReadFile(
 				THROW(("Invalid container.xml file, <rootfile> missing."));
 			
 			if (n->get_attribute("media-type") != "application/oebps-package+xml")
-				THROW(("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
+				problems.push_back(_("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
 			
 			rootFile = n->get_attribute("full-path");
 			mRootFile = rootFile.leaf();
+		}
+		else if (path == "META-INF/encryption.xml")
+		{
+			xml::document encryption(fh.data);
+			xml::node_ptr root = encryption.root();
+			
+			if (root->name() != "encryption" or root->ns() != kContainerNS)
+				problems.push_back(_("Invalid or unsupported encryption.xml file"));
+			
+			for (xml::node_ptr n = root->children(); n; n = n->next())
+			{
+				if (n->name() != "EncryptedData")
+					continue;
+				
+				xml::node_ptr cd = n->find_first_child("CipherData");
+				if (not cd)
+					continue;
+				
+				xml::node_ptr cr = cd->find_first_child("CipherReference");
+				if (not cr)
+					continue;
+				
+				fs::path uri = cr->get_attribute("URI");
+				encrypted.insert(uri);
+			}
+
+			content[path] = fh.data;
 		}
 		else
 			content[path] = fh.data;
@@ -537,18 +577,28 @@ void MePubDocument::ReadFile(
 
 	xml::document opf(content[rootFile]);
 	
-	ParseOPF(rootFile.branch_path(), *opf.root());
+	ParseOPF(rootFile.branch_path(), *opf.root(), problems);
 	
 	fs::path tocFile = rootFile.branch_path() / mTOCFile;
-	xml::document ncx(content[tocFile]);
 	
-	ParseNCX(*ncx.root());
+	if (encrypted.count(tocFile) == 0)
+	{
+		try
+		{
+			xml::document ncx(content[tocFile]);
+			ParseNCX(*ncx.root());
+		}
+		catch (exception& e)
+		{
+			problems.push_back(_(e.what()));
+		}
+	}
 	
 	// and now fill in the data for the items we've found
 	
 	for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
 	{
-		if (item->first == rootFile or item->first == tocFile)
+		if (item->first == rootFile or (item->first == tocFile and encrypted.count(tocFile) == 0))
 			continue;
 		
 		MProjectItem* pi = mRoot.GetItem(item->first);
@@ -572,7 +622,16 @@ void MePubDocument::ReadFile(
 			THROW(("Internal error, item is not an ePub item"));
 
 		epi->SetData(item->second);
+		
+		if (encrypted.count(item->first))
+			epi->SetEncrypted(true);
 	}
+	
+	if (not encrypted.empty())
+		problems.push_back(_("This ePub contains encrypted files"));
+	
+	if (not problems.empty())
+		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
 	
 	SetModified(false);
 }
@@ -942,103 +1001,110 @@ MProjectGroup* MePubDocument::GetTOC() const
 
 void MePubDocument::ParseOPF(
 	const fs::path&		inDirectory,
-	xml::node&			inOPF)
+	xml::node&			inOPF,
+	vector<string>&		outProblems)
 {
 	// fetch the unique-identifier
 	string uid = inOPF.get_attribute("unique-identifier");
 	if (uid.empty())
-		THROW(("Unique Identifier is missing in OPF"));
+		outProblems.push_back(_("Unique Identifier is missing in OPF"));
 	
 	// fetch the meta data
 	xml::node_ptr metadata = inOPF.find_first_child("metadata");
 	if (not metadata)
-		THROW(("Metadata is missing from OPF"));
-
-	// collect all the Dublin Core information
-	
-	for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
+		outProblems.push_back(_("Metadata is missing from OPF"));
+	else
 	{
-		if (dc->ns() != "http://purl.org/dc/elements/1.1/")
-			continue;
+		// collect all the Dublin Core information
 		
-		if (dc->name() == "identifier")
+		for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
 		{
-			if (dc->get_attribute("id") == uid)
+			if (dc->ns() != "http://purl.org/dc/elements/1.1/")
+				continue;
+			
+			if (dc->name() == "identifier")
 			{
-				mDocumentID = dc->content();
-				mDocumentIDScheme = dc->get_attribute("opf:scheme");
-				ba::to_lower(mDocumentIDScheme);
+				if (dc->get_attribute("id") == uid)
+				{
+					mDocumentID = dc->content();
+					mDocumentIDScheme = dc->get_attribute("opf:scheme");
+					ba::to_lower(mDocumentIDScheme);
+				}
 			}
-		}
-		else if (dc->name() == "date")
-		{
-			string date = mDublinCore[dc->name()];
-			if (not date.empty())
-				date += '\n';
-			
-			string dt = dc->content();
-			
-			
-			if (dc->get_attribute("opf:event").empty())
-				date += dc->content();
+			else if (dc->name() == "date")
+			{
+				string date = mDublinCore[dc->name()];
+				if (not date.empty())
+					date += '\n';
+				
+				string dt = dc->content();
+				
+				
+				if (dc->get_attribute("opf:event").empty())
+					date += dc->content();
+				else
+					date += dc->get_attribute("opf:event") + ": " + dc->content();
+	
+				mDublinCore[dc->name()] = date;
+			}
+			else if (mDublinCore[dc->name()].empty())
+				mDublinCore[dc->name()] = dc->content();
 			else
-				date += dc->get_attribute("opf:event") + ": " + dc->content();
-
-			mDublinCore[dc->name()] = date;
+				mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + dc->content();
 		}
-		else if (mDublinCore[dc->name()].empty())
-			mDublinCore[dc->name()] = dc->content();
-		else
-			mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + dc->content();
 	}
 
 	// collect the items from the manifest
 	
 	xml::node_ptr manifest = inOPF.find_first_child("manifest");
 	if (not manifest)
-		THROW(("Manifest missing from OPF document"));
-	
-	for (xml::node_ptr item = manifest->children(); item; item = item->next())
+		outProblems.push_back(_("Manifest missing from OPF document"));
+	else
 	{
-		if (item->name() != "item" or item->ns() != "http://www.idpf.org/2007/opf")
-			continue;
-
-		fs::path href = inDirectory / item->get_attribute("href");
-		
-		if (mTOCFile.empty() and item->get_attribute("media-type") == "application/x-dtbncx+xml")
+		for (xml::node_ptr item = manifest->children(); item; item = item->next())
 		{
-			mTOCFile = relative_path(inDirectory, href);
-			continue;
+			if (item->name() != "item" or item->ns() != "http://www.idpf.org/2007/opf")
+				continue;
+	
+			fs::path href = inDirectory / item->get_attribute("href");
+			
+			if (mTOCFile.empty() and item->get_attribute("media-type") == "application/x-dtbncx+xml")
+			{
+				mTOCFile = relative_path(inDirectory, href);
+				continue;
+			}
+			
+			MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
+			
+			auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
+			
+			eItem->SetID(item->get_attribute("id"));
+			eItem->SetMediaType(item->get_attribute("media-type"));
+			
+			group->AddProjectItem(eItem.release());
 		}
-		
-		MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
-		
-		auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
-		
-		eItem->SetID(item->get_attribute("id"));
-		eItem->SetMediaType(item->get_attribute("media-type"));
-		
-		group->AddProjectItem(eItem.release());
 	}
 	
 	// the spine
 	
 	xml::node_ptr spine = inOPF.find_first_child("spine");
 	if (not spine)
-		THROW(("Spine missing from OPF document"));
-	
-	for (xml::node_ptr item = spine->children(); item; item = item->next())
+		outProblems.push_back(_("Spine missing from OPF document"));
+	else
 	{
-		if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
-			continue;
-		
-		string idref = item->get_attribute("idref");
-		mSpine.push_back(idref);
+		for (xml::node_ptr item = spine->children(); item; item = item->next())
+		{
+			if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
+				continue;
+			
+			string idref = item->get_attribute("idref");
+			mSpine.push_back(idref);
+		}
 	}
 
 	// sanity checks
 	if (mDocumentID.empty())
-		THROW(("Missing document identifier in metadata section"));
+		outProblems.push_back(_("Missing document identifier in metadata section"));
 }
 
 void MePubDocument::ParseNCX(

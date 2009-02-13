@@ -790,14 +790,21 @@ void MJapieApp::OpenProject(
 void MJapieApp::OpenEPub(
 	const fs::path&		inPath)
 {
-	auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
-	auto_ptr<MePubWindow> w(new MePubWindow());
-	w->Initialize(epub.get());
-	epub.release();
-	w->Show();
-	w.release();
-
-	AddToRecentMenu(MUrl(inPath));
+	try
+	{
+		auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
+		auto_ptr<MePubWindow> w(new MePubWindow());
+		w->Initialize(epub.get());
+		epub.release();
+		w->Show();
+		w.release();
+	
+		AddToRecentMenu(MUrl(inPath));
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)

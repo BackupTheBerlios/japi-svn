@@ -201,16 +201,9 @@ bool MDocument::DoSaveAs(
 
 void MDocument::RevertDocument()
 {
-	try
-	{
-		fs::ifstream file(mURL.GetPath(), ios::binary);
-		ReadFile(file);
-		SetModified(false);
-	}
-	catch (exception& err)
-	{
-		DisplayError(err);
-	}
+	fs::ifstream file(mURL.GetPath(), ios::binary);
+	ReadFile(file);
+	SetModified(false);
 }
 
 // ---------------------------------------------------------------------------

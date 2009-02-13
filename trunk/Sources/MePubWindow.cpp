@@ -839,6 +839,9 @@ void MePubWindow::InvokeFileRow(
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
 		if (ePubItem != nil)
 		{
+			if (ePubItem->IsEncrypted())
+				THROW(("Cannot open an encrypted ePub item"));
+			
 			fs::path path = ePubItem->GetPath();
 			
 			MEPubTextDocMap::iterator di = mOpenFiles.find(path);

@@ -16,6 +16,7 @@ MePubItem::MePubItem(
 	MProjectGroup*		inParent)
 	: MProjectItem(inName, inParent)
 	, mIsOutOfDate(false)
+	, mEncrypted(false)
 {
 }
 

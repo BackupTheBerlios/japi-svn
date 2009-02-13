@@ -105,7 +105,9 @@ class MePubDocument : public MDocument
 	
 	void				ParseOPF(
 							const fs::path&		inDirectory,
-							xml::node&			inOPF);
+							xml::node&			inOPF,
+							std::vector<std::string>&
+												outProblems);
 
 	xml::node_ptr		CreateOPF(
 							const fs::path&		inOEBPS);

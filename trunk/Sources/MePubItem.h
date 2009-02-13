@@ -35,10 +35,14 @@ class MePubItem : public MProjectItem
 	void			SetMediaType(
 						const std::string&	inMediaType)	{ mMediaType = inMediaType; }
 
+	bool			IsEncrypted() const						{ return mEncrypted; }
+	void			SetEncrypted(
+						bool				inEncrypted)	{ mEncrypted = inEncrypted; }
+
 	void			GuessMediaType();
 
   protected:
-	bool			mIsOutOfDate;
+	bool			mIsOutOfDate, mEncrypted;
 	std::string		mID;
 	std::string		mData;
 	std::string		mMediaType;
