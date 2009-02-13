@@ -866,12 +866,11 @@ xml::node_ptr MePubDocument::CreateOPF(
 	{
 		MePubItem* ePubItem = dynamic_cast<MePubItem*>(&*item);
 		
-		if (ePubItem == nil)
+		if (ePubItem == nil or ePubItem->GetID().empty())
 			continue;
 		
 		xml::node_ptr item_node(new xml::node("item"));
-		if (not ePubItem->GetID().empty())
-			item_node->add_attribute("id", ePubItem->GetID());
+		item_node->add_attribute("id", ePubItem->GetID());
 		item_node->add_attribute("href", relative_path(inOEBPS, ePubItem->GetPath()).string());
 		if (not ePubItem->GetMediaType().empty())
 			item_node->add_attribute("media-type", ePubItem->GetMediaType());
