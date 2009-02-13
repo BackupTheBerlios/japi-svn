@@ -90,6 +90,7 @@
 			<file>MShell.cpp</file>
 			<file>MPkgConfig.cpp</file>
 			<file>MSelection.cpp</file>
+			<file>MFileLoader.cpp</file>
 			<group name="SFTP">
 				<file>MAuthDialog.cpp</file>
 				<file>MKnownHosts.cpp</file>

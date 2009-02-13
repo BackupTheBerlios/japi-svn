@@ -30,6 +30,7 @@ class MMenu;
 class MDevice;
 class MSftpChannel;
 class MePubDocument;
+class MFileLoader;
 
 struct MTextInputAreaInfo
 {
@@ -155,7 +156,16 @@ class MTextDocument : public MDocument
 	void				SFTPChannelMessage(
 							std::string 	inMessage);
 
+	// GIO support
 	
+	MEventIn<void(float)>				eGIOProgress;
+	MEventIn<void(std::string)>			eGIOError;
+	MEventIn<void(const char*,uint32)>	eGIOLoaded;
+
+	void				GIOProgress(float inProgress);
+	void				GIOError(std::string inError);
+	void				GIOLoaded(const char* inText, uint32 inLength);
+
 	MTextBuffer&		GetTextBuffer()						{ return mText; }
 
 	static void			SetWorksheet(
@@ -598,6 +608,8 @@ class MTextDocument : public MDocument
 	std::auto_ptr<MSftpChannel>	mSFTPChannel;
 	std::string					mSFTPData;
 	uint32						mSFTPSize, mSFTPOffset;
+
+	std::auto_ptr<MFileLoader>	mFileLoader;
 	
 	static MTextDocument*		sWorksheet;
 };

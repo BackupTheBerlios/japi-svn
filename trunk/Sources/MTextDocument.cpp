@@ -46,6 +46,7 @@
 #include "MJapiApp.h"
 #include "MPrinter.h"
 #include "MePubDocument.h"
+#include "MFileLoader.h"
 
 using namespace std;
 
@@ -99,6 +100,9 @@ void MDocState::Swap()
 MTextDocument::MTextDocument(
 	const MUrl*			inURL)
 	: MDocument(inURL)
+	, eGIOProgress(this, &MTextDocument::GIOProgress)
+	, eGIOError(this, &MTextDocument::GIOError)
+	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -110,16 +114,22 @@ MTextDocument::MTextDocument(
 	
 	if (mSpecified and not mURL.IsLocal())
 	{
-		mSFTPChannel.reset(new MSftpChannel(mURL));
-
-		SetCallBack(mSFTPChannel->eChannelEvent,
-			this, &MTextDocument::SFTPGetChannelEvent);
-		SetCallBack(mSFTPChannel->eChannelMessage,
-			this, &MTextDocument::SFTPChannelMessage);
+		mFileLoader.reset(new MFileLoader(mURL.str().c_str()));
 		
-		mSFTPSize = 0;
-		mSFTPOffset = 0;
-		mSFTPData.clear();
+		AddRoute(eGIOProgress, mFileLoader->eProgress);
+		AddRoute(eGIOError, mFileLoader->eError);
+		AddRoute(eGIOLoaded, mFileLoader->eLoaded);
+		
+//		mSFTPChannel.reset(new MSftpChannel(mURL));
+//
+//		SetCallBack(mSFTPChannel->eChannelEvent,
+//			this, &MTextDocument::SFTPGetChannelEvent);
+//		SetCallBack(mSFTPChannel->eChannelMessage,
+//			this, &MTextDocument::SFTPChannelMessage);
+//		
+//		mSFTPSize = 0;
+//		mSFTPOffset = 0;
+//		mSFTPData.clear();
 	}
 
 	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
@@ -145,6 +155,9 @@ MTextDocument::MTextDocument(
 	MePubDocument*		inEPub,
 	const fs::path&		inFile)
 	: MDocument(inEPub->GetURL().GetPath() / inFile)
+	, eGIOProgress(this, &MTextDocument::GIOProgress)
+	, eGIOError(this, &MTextDocument::GIOError)
+	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -171,7 +184,10 @@ MTextDocument::MTextDocument(
 }
 
 MTextDocument::MTextDocument()
-	: eBoundsChanged(this, &MTextDocument::BoundsChanged)
+	: eGIOProgress(this, &MTextDocument::GIOProgress)
+	, eGIOError(this, &MTextDocument::GIOError)
+	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
+	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
 	, eIdle(this, &MTextDocument::Idle)
@@ -5075,4 +5091,35 @@ bool MTextDocument::UpdateCommandStatus(
 	}
 	
 	return result;
+}
+
+void MTextDocument::GIOProgress(float inProgress)
+{
+	eSSHProgress(inProgress, _("Receiving data"));
+}
+
+void MTextDocument::GIOError(std::string inError)
+{
+	DisplayError(MException(inError.c_str()));
+//	ProcessCommand(cmd_Close, nil, 0, 0);
+}
+
+void MTextDocument::GIOLoaded(const char* inText, uint32 inLength)
+{
+	eSSHProgress(1.0f, _("Data received"));
+	mText.SetText(inText, inLength);
+
+	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	if (mLanguage != nil)
+	{
+		mNamedRange = new MNamedRange;
+		mIncludeFiles = new MIncludeFileList;
+	}
+
+	Rewrap();
+	UpdateDirtyLines();
+	
+	mFileLoader.reset();
+
+	eSSHProgress(-1.f, _("done"));
 }
