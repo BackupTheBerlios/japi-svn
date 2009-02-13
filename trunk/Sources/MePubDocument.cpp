@@ -14,7 +14,14 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
+
 #include <boost/algorithm/string.hpp>
+
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/copy.hpp>
 
 #include "document.hpp"
 
@@ -27,12 +34,14 @@
 
 using namespace std;
 namespace ba = boost::algorithm;
+namespace io = boost::iostreams;
 
 // --------------------------------------------------------------------
 
 namespace {
 	
-const uint32	kZipLengthAtEndMask	= 8;
+const uint32
+	kZipLengthAtEndMask	= 8;
 
 const char
 	kEPubMimeType[] = "application/epub+zip",
@@ -229,6 +238,9 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 	// OK, now read in the data and inflate if required
 
 	fh.data.clear();
+
+	// save the offset in the stream to be able to seek back if needed
+	std::streamsize offset = s.tellg();
 	
 	if (compressionMethod == 0) // no compression
 	{
@@ -246,70 +258,19 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 		if (fh.compressed_size == 0 and not (bitFlag & kZipLengthAtEndMask))
 			THROW(("Invalid ePub file, missing compressed size"));
 		
-		uint32 inputBufferSize = fh.compressed_size;
-		if (inputBufferSize == 0)
-			inputBufferSize = 1;
+		// setup a boost::iostreams pair to read the compressed data
+		io::zlib_params params;
+		params.noheader = true;	// don't read header, i.e. true deflate compression
+		params.calculate_crc = true;
 		
-		vector<uint8> b_in(inputBufferSize);
+		io::zlib_decompressor z_stream(params);
 		
-		const uint32 kOutputBufferSize = 4096;
-		vector<uint8> b_out(kOutputBufferSize);
+		io::filtering_streambuf<io::input> in;
+		in.push(z_stream);
+		in.push(s);
 		
-		z_stream_s z_stream = {};
-	
-		int err = inflateInit2(&z_stream, -15);	// don't check for zlib header
-		if (err != Z_OK)
-			THROW(("Decompressor error: %s", z_stream.msg));
-	
-		char* readBuffer = reinterpret_cast<char*>(&b_in[0]);
-		if (s.readsome(readBuffer, inputBufferSize) != inputBufferSize)
-			THROW(("Truncated ePub file"));
-		
-		z_stream.avail_in = inputBufferSize;
-		z_stream.next_in = &b_in[0];
-		z_stream.total_in = 0;
-		
-		z_stream.next_out = &b_out[0];
-		z_stream.avail_out = kOutputBufferSize;
-		z_stream.total_out = 0;
-		
-		bool done = false;
-		while (not done and err >= Z_OK)
-		{
-				// shift remaining unread bytes to the beginning of our buffer
-			if (z_stream.next_in > &b_in[0] and z_stream.avail_in > 0)
-				memmove(&b_in[0], z_stream.next_in, z_stream.avail_in);
-	
-			z_stream.next_in = &b_in[0];
-	
-			if (fh.compressed_size == 0)
-			{
-				if (s.readsome(readBuffer + z_stream.avail_in, 1) != 1)
-					THROW(("Truncated ePub file"));
-
-				z_stream.avail_in = 1;
-			}
-	
-			err = inflate(&z_stream, 0);
-	
-			if (err == Z_STREAM_END)
-				done = true;
-			
-			if (kOutputBufferSize - z_stream.avail_out > 0)
-			{
-				fh.data.append(reinterpret_cast<char*>(&b_out[0]),
-					kOutputBufferSize - z_stream.avail_out);
-				z_stream.avail_out = kOutputBufferSize;
-				z_stream.next_out = &b_out[0];
-			}
-		}
-		
-		if (err != Z_STREAM_END)
-			THROW(("Inflate error: %s (%d)", z_stream.msg, err));
-		
-		fh.compressed_size = z_stream.total_in;
-		fh.uncompressed_size = z_stream.total_out;
-		fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
+		io::filtering_ostream out(io::back_inserter(fh.data));
+		io::copy(in, out);
 		
 		// now read the trailing length if needed
 		
@@ -319,24 +280,28 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 			if (s.readsome(b2, sizeof(b2)) != sizeof(b2))
 				THROW(("Truncated ePub file"));
 
-			uint32 signature, crc, compressed_size, uncompressed_size;
+			uint32 signature;
 			char* p = read(signature, b2);
-			p = read(crc, p);
-			p = read(compressed_size, p);
-			p = read(uncompressed_size, p);
 
-			if (compressed_size != fh.compressed_size)
-				THROW(("ePub data, compressed data is wrong size"));
-
-			if (uncompressed_size != fh.uncompressed_size)
-				THROW(("ePub data, uncompressed data is wrong size"));
-			
-			if (crc != fh.crc)
-				THROW(("ePub data, bad crc"));
+			p = read(fh.crc, p);
+			p = read(fh.compressed_size, p);
+			p = read(fh.uncompressed_size, p);
 		}
 		
-		inflateEnd(&z_stream);
+		// OK, so decompression succeeded, now validate the data
+
+//		if (compressed_size != fh.compressed_size)
+//			THROW(("ePub data, compressed data is wrong size"));
+
+		if (static_cast<uint32>(z_stream.total_out()) != fh.uncompressed_size)
+			THROW(("ePub data, uncompressed data is wrong size"));
+		
+		if (z_stream.crc() != fh.crc)
+			THROW(("ePub data, bad crc"));
 	}
+	
+	if (s.tellg() != offset + fh.compressed_size)
+		s.seekg(offset + fh.compressed_size, ios::beg);
 	
 	return true;
 }
@@ -411,56 +376,26 @@ void deflate(
 	const string&		inText,	
 	ZIPLocalFileHeader&	outFileHeader)
 {
-	const uint32 kBufferSize = 4096;
-	vector<uint8> b(kBufferSize);
-	unsigned char* buffer = &b[0];
+	io::zlib_params params;
+	params.noheader = true;			// don't read header, i.e. true deflate compression
+	params.calculate_crc = true;
 	
-	z_stream_s z_stream = {};
+	outFileHeader.data.clear();
+	
+	io::zlib_compressor z_stream(params);
 
-	int err = deflateInit2(&z_stream, Z_BEST_COMPRESSION,
-		Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
-	if (err != Z_OK)
-		THROW(("Compressor error: %s", z_stream.msg));
-
-	z_stream.avail_in = inText.length();
-	z_stream.next_in = const_cast<unsigned char*>(
-		reinterpret_cast<const unsigned char*>(inText.c_str()));
-	z_stream.total_in = 0;
+	stringstream in(inText);
 	
-	z_stream.next_out = buffer;
-	z_stream.avail_out = kBufferSize;
-	z_stream.total_out = 0;
+	io::filtering_streambuf<io::output> out;
+	out.push(z_stream);
+	out.push(io::back_inserter(outFileHeader.data));
 	
-	int action = Z_FINISH;
-
-	for (;;)
-	{
-		err = deflate(&z_stream, action);
-		
-		if (z_stream.avail_out < kBufferSize)
-			outFileHeader.data.append(buffer, buffer + (kBufferSize - z_stream.avail_out));
-		
-		if (err == Z_OK)
-		{
-			z_stream.next_out = buffer;
-			z_stream.avail_out = kBufferSize;
-			continue;
-		}
-		
-		break;
-	}
+	io::copy(in, out);
 	
-	if (err != Z_STREAM_END)
-		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
-	
-	assert(z_stream.total_out == outFileHeader.data.length());
-	
-	outFileHeader.crc = crc32(0, reinterpret_cast<const uint8*>(inText.c_str()), inText.length());
+	outFileHeader.crc = z_stream.crc();
 	outFileHeader.compressed_size = outFileHeader.data.length();
 	outFileHeader.uncompressed_size = inText.length();
 	outFileHeader.deflated = true;
-	
-	deflateEnd(&z_stream);
 }	
 
 void deflate(

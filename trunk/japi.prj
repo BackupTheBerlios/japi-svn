@@ -111,6 +111,7 @@
 			<file>libboost_system-mt.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>
+			<file>libboost_iostreams-mt.a</file>
 			<file>libgthread-2.0.a</file>
 			<file>libuuid.a</file>
 			<link>z</link>
