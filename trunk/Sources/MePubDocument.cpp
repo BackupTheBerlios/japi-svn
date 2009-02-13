@@ -521,7 +521,7 @@ void MePubDocument::ReadFile(
 			continue;
 		
 		fs::path path(fh.filename);
-		
+
 		if (path == "META-INF/container.xml")
 		{
 			xml::document container(fh.data);
@@ -579,18 +579,23 @@ void MePubDocument::ReadFile(
 	
 	ParseOPF(rootFile.branch_path(), *opf.root(), problems);
 	
-	fs::path tocFile = rootFile.branch_path() / mTOCFile;
+	fs::path tocFile;
 	
-	if (encrypted.count(tocFile) == 0)
+	if (not mTOCFile.empty())
 	{
-		try
+		tocFile = rootFile.branch_path() / mTOCFile;
+		
+		if (encrypted.count(tocFile) == 0)
 		{
-			xml::document ncx(content[tocFile]);
-			ParseNCX(*ncx.root());
-		}
-		catch (exception& e)
-		{
-			problems.push_back(_(e.what()));
+			try
+			{
+				xml::document ncx(content[tocFile]);
+				ParseNCX(*ncx.root());
+			}
+			catch (exception& e)
+			{
+				problems.push_back(_(e.what()));
+			}
 		}
 	}
 	
@@ -1015,6 +1020,12 @@ void MePubDocument::ParseOPF(
 		outProblems.push_back(_("Metadata is missing from OPF"));
 	else
 	{
+		// now I've found a weird file containing a dc-metadata inside metadata
+		
+		xml::node_ptr n = metadata->find_first_child("dc-metadata");
+		if (n)
+			metadata = n;
+		
 		// collect all the Dublin Core information
 		
 		for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
