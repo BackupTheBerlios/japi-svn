@@ -14,6 +14,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #include "MTextDocument.h"
 #include "MTextView.h"
@@ -40,15 +41,14 @@
 #include "MStrings.h"
 #include "MAcceleratorTable.h"
 #include "MSound.h"
-#include "MSftpChannel.h"
 #include "MAlerts.h"
 #include "MDiffWindow.h"
 #include "MJapiApp.h"
 #include "MPrinter.h"
 #include "MePubDocument.h"
-#include "MFileLoader.h"
 
 using namespace std;
+namespace io = boost::iostreams;
 
 MTextDocument* MTextDocument::sWorksheet;
 
@@ -98,11 +98,8 @@ void MDocState::Swap()
 //	MTextDocument
 
 MTextDocument::MTextDocument(
-	const MUrl*			inURL)
-	: MDocument(inURL)
-	, eGIOProgress(this, &MTextDocument::GIOProgress)
-	, eGIOError(this, &MTextDocument::GIOError)
-	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
+	const MFile&		inFile)
+	: MDocument(inFile)
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -112,81 +109,14 @@ MTextDocument::MTextDocument(
 {
 	Init();
 	
-	if (mSpecified and not mURL.IsLocal())
-	{
-		mFileLoader.reset(new MFileLoader(mURL.str().c_str()));
-		
-		AddRoute(eGIOProgress, mFileLoader->eProgress);
-		AddRoute(eGIOError, mFileLoader->eError);
-		AddRoute(eGIOLoaded, mFileLoader->eLoaded);
-		
-//		mSFTPChannel.reset(new MSftpChannel(mURL));
-//
-//		SetCallBack(mSFTPChannel->eChannelEvent,
-//			this, &MTextDocument::SFTPGetChannelEvent);
-//		SetCallBack(mSFTPChannel->eChannelMessage,
-//			this, &MTextDocument::SFTPChannelMessage);
-//		
-//		mSFTPSize = 0;
-//		mSFTPOffset = 0;
-//		mSFTPData.clear();
-	}
-
 	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
-	
-	if (mSpecified and mURL.IsLocal() and fs::exists(mURL.GetPath()))
-	{
-		fs::path p = mURL.GetPath();
-
-		fs::ifstream file(p, ios::binary);
-		
-		if (not file.is_open())
-			THROW(("Could not open file '%' for reading", p.string().c_str()));
-		
-		ReadFile(file);
-		mNeedReparse = true;
-	}
-}
-
-MTextDocument::MTextDocument(
-	MePubDocument*		inEPub,
-	const fs::path&		inFile)
-	: MDocument(inEPub->GetURL().GetPath() / inFile)
-	, eGIOProgress(this, &MTextDocument::GIOProgress)
-	, eGIOError(this, &MTextDocument::GIOError)
-	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
-	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
-	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
-	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
-	, eIdle(this, &MTextDocument::Idle)
-	, mEPub(inEPub)
-	, mEPubFile(inFile)
-	, mSelection(this)
-{
-	Init();
-	
-	mSpecified = true;
-
-	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
-	AddRoute(eIdle, gApp->eIdle);
-	
-	ReInit();
-	
-	// clumsy...
-	
-	stringstream file(mEPub->GetFileData(mEPubFile));
-	ReadFile(file);
-
-	mNeedReparse = true;
 }
 
 MTextDocument::MTextDocument()
-	: eGIOProgress(this, &MTextDocument::GIOProgress)
-	, eGIOError(this, &MTextDocument::GIOError)
-	, eGIOLoaded(this, &MTextDocument::GIOLoaded)
+	: MDocument(MFile())
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -247,10 +177,8 @@ MTextDocument* MTextDocument::GetFirstTextDocument()
 void MTextDocument::SetFileNameHint(
 	const string&	inNameHint)
 {
-	mSpecified = false;
-	mURL.SetFileName(inNameHint);
-	eFileSpecChanged(this, mURL);
-
+	MDocument::SetFileNameHint(inNameHint);
+	
 	delete mNamedRange;
 	mNamedRange = nil;
 	
@@ -274,7 +202,7 @@ string MTextDocument::GetWindowTitle() const
 	if (mEPub != nil)
 	{
 		stringstream s;
-		s << '[' << mEPub->GetURL().GetPath().leaf() << ']' << mEPubFile;
+		s << '[' << mEPub->GetFile().GetPath().leaf() << ']' << mEPubFile;
 		result = s.str();
 	}
 	else
@@ -285,58 +213,22 @@ string MTextDocument::GetWindowTitle() const
 
 bool MTextDocument::DoSave()
 {
-	bool result = false;
-	
-	if (mEPub != nil)
-	{
-		mEPub->SetFileData(mEPubFile, mText.GetText());
-		SetModified(false);
-		result = true;
-	}
-	else if (mURL.IsLocal())
-	{
-		result = MDocument::DoSave();
-		MProject::RecheckFiles();
-	}
-	else
-	{
-		mSFTPChannel.reset(new MSftpChannel(mURL));
-
-		SetCallBack(mSFTPChannel->eChannelEvent,
-			this, &MTextDocument::SFTPPutChannelEvent);
-		SetCallBack(mSFTPChannel->eChannelMessage,
-			this, &MTextDocument::SFTPChannelMessage);
-
-		mSFTPOffset = 0;
-
-		mSFTPData = mText.GetText();
-		mSFTPSize = mSFTPData.length();
-
-		gApp->AddToRecentMenu(mURL);
-	}
-	
+	bool result = MDocument::DoSave();
+	MProject::RecheckFiles();
 	return result;
 }
 
 bool MTextDocument::DoSaveAs(
-	const MUrl&		inFile)
+	const MFile&		inFile)
 {
 	bool result = false;
 
-	MePubDocument* epub = mEPub;
-	mEPub = nil;
-	
-	fs::path epubfile = mEPubFile;
-	
-	MUrl url(mURL);
-	mURL = inFile;
-	
 	if (MDocument::DoSaveAs(inFile))
 	{
 		if (mLanguage == nil)
 		{
 			mLanguage = MLanguage::GetLanguageForDocument(
-							mURL.GetFileName(), mText);
+							mFile.GetFileName(), mText);
 	
 			if (mLanguage != nil)
 			{
@@ -352,18 +244,6 @@ bool MTextDocument::DoSaveAs(
 		}
 		
 		result = true;
-	}
-	else
-	{
-		if (epub)
-		{
-			mEPub = epub;
-			mEPubFile = epubfile;
-			
-//			mURL = mEPub->GetURL() / m
-		}
-		else if (mURL.IsLocal())
-			mURL = url;
 	}
 	
 	return result;
@@ -429,7 +309,7 @@ void MTextDocument::ReadFile(
 {
 	mText.ReadFromFile(inFile);
 	
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mFile.GetFileName(), mText);
 	
 	if (mLanguage != nil)
 	{
@@ -442,9 +322,13 @@ void MTextDocument::ReadFile(
 			mIncludeFiles = new MIncludeFileList;
 	}
 
+	mNeedReparse = true;
+
 	ReInit();
 	Rewrap();
 	UpdateDirtyLines();
+	
+	eSSHProgress(-1.f, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -472,61 +356,61 @@ void MTextDocument::WriteFile(
 //	SaveState
 
 void MTextDocument::SaveState()
-{
-	MDocState state = { };
-
-	(void)read_attribute(mURL.GetPath(), kJapieDocState, &state, kMDocStateSize);
-	
-	state.Swap();
-	
-	if (mSelection.IsBlock())
-	{
-		mSelection.GetAnchorLineAndColumn(
-			state.mSelection[0], state.mSelection[1]);
-		mSelection.GetCaretLineAndColumn(
-			state.mSelection[2], state.mSelection[3]);
-		state.mFlags.mSelectionIsBlock = true;
-	}
-	else
-	{
-		state.mSelection[0] = mSelection.GetAnchor();
-		state.mSelection[1] = mSelection.GetCaret();
-	}
-	
-	if (mTargetTextView != nil)
-	{
-		int32 x, y;
-		mTargetTextView->GetScrollPosition(x, y);
-		state.mScrollPosition[0] = static_cast<uint32>(x);
-		state.mScrollPosition[1] = static_cast<uint32>(y);
-	}
-
-	if (MWindow* w = MDocWindow::FindWindowForDocument(this))
-	{
-		MRect r;
-		w->GetWindowPosition(r);
-		state.mWindowPosition[0] = r.x;
-		state.mWindowPosition[1] = r.y;
-		state.mWindowSize[0] = r.width;
-		state.mWindowSize[1] = r.height;
-	}
-
-	state.mFlags.mSoftwrap = mSoftwrap;
-	state.mFlags.mTabWidth = mCharsPerTab;
-	
-	state.Swap();
-	
-	write_attribute(mURL.GetPath(), kJapieDocState, &state, kMDocStateSize);
-	
-	if (mShell.get() != nil)
-	{
-		string cwd = mShell->GetCWD();
-		
-		write_attribute(mURL.GetPath(), kJapieCWD, cwd.c_str(), cwd.length());
-			
-		if (IsWorksheet())
-			Preferences::SetString("worksheet wd", cwd);
-	}
+{//
+//	MDocState state = { };
+//
+//	(void)read_attribute(mFile.GetPath(), kJapieDocState, &state, kMDocStateSize);
+//	
+//	state.Swap();
+//	
+//	if (mSelection.IsBlock())
+//	{
+//		mSelection.GetAnchorLineAndColumn(
+//			state.mSelection[0], state.mSelection[1]);
+//		mSelection.GetCaretLineAndColumn(
+//			state.mSelection[2], state.mSelection[3]);
+//		state.mFlags.mSelectionIsBlock = true;
+//	}
+//	else
+//	{
+//		state.mSelection[0] = mSelection.GetAnchor();
+//		state.mSelection[1] = mSelection.GetCaret();
+//	}
+//	
+//	if (mTargetTextView != nil)
+//	{
+//		int32 x, y;
+//		mTargetTextView->GetScrollPosition(x, y);
+//		state.mScrollPosition[0] = static_cast<uint32>(x);
+//		state.mScrollPosition[1] = static_cast<uint32>(y);
+//	}
+//
+//	if (MWindow* w = MDocWindow::FindWindowForDocument(this))
+//	{
+//		MRect r;
+//		w->GetWindowPosition(r);
+//		state.mWindowPosition[0] = r.x;
+//		state.mWindowPosition[1] = r.y;
+//		state.mWindowSize[0] = r.width;
+//		state.mWindowSize[1] = r.height;
+//	}
+//
+//	state.mFlags.mSoftwrap = mSoftwrap;
+//	state.mFlags.mTabWidth = mCharsPerTab;
+//	
+//	state.Swap();
+//	
+//	write_attribute(mFile.GetPath(), kJapieDocState, &state, kMDocStateSize);
+//	
+//	if (mShell.get() != nil)
+//	{
+//		string cwd = mShell->GetCWD();
+//		
+//		write_attribute(mFile.GetPath(), kJapieCWD, cwd.c_str(), cwd.length());
+//			
+//		if (IsWorksheet())
+//			Preferences::SetString("worksheet wd", cwd);
+//	}
 }
 
 void MTextDocument::SetText(
@@ -537,7 +421,7 @@ void MTextDocument::SetText(
 	
 	ReInit();
 
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+	mLanguage = MLanguage::GetLanguageForDocument(mFile.GetFileName(), mText);
 	if (mLanguage != nil)
 	{
 		mNamedRange = new MNamedRange;
@@ -564,125 +448,6 @@ void MTextDocument::SetTargetTextView(
 
 		BoundsChanged();
 	}
-}
-
-// --------------------------------------------------------------------
-
-void MTextDocument::SFTPGetChannelEvent(
-	int				inMessage)
-{
-	switch (inMessage)
-	{
-		case SFTP_INIT_DONE:
-			eSSHProgress(0.f, _("Connected"));
-			mSFTPChannel->ReadFile(mURL.GetPath().string(),
-				Preferences::GetInteger("text transfer", true));
-			break;
-		
-		case SFTP_FILE_SIZE_KNOWN:
-			eSSHProgress(0.f, _("File size known"));
-			mSFTPSize = mSFTPChannel->GetFileSize();
-			break;
-		
-		case SFTP_DATA_AVAILABLE:
-			mSFTPData += mSFTPChannel->GetData();
-			if (mSFTPSize > 0)
-			{
-				eSSHProgress(
-					float(mSFTPData.length()) / mSFTPSize,
-					_("Receiving data"));
-			}
-			break;
-		
-		case SFTP_DATA_DONE:
-			eSSHProgress(1.0f, _("Data received"));
-			mText.SetText(mSFTPData.c_str(), mSFTPData.length());
-			mSFTPData.clear();
-
-			mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
-			if (mLanguage != nil)
-			{
-				mNamedRange = new MNamedRange;
-				mIncludeFiles = new MIncludeFileList;
-			}
-
-			Rewrap();
-			UpdateDirtyLines();
-			mSFTPChannel->CloseFile();
-			break;
-		
-		case SFTP_FILE_CLOSED:
-			eSSHProgress(-1.f, _("done"));
-			mSFTPChannel->Close();
-			break;
-
-		case SSH_CHANNEL_TIMEOUT:
-			eSSHProgress(0, _("Timeout"));
-			break;
-	}
-}
-
-// --------------------------------------------------------------------
-
-void MTextDocument::SFTPPutChannelEvent(
-	int				inMessage)
-{
-	const uint32 kBufferSize = 1024;
-	
-	switch (inMessage)
-	{
-		case SFTP_INIT_DONE:
-			eSSHProgress(0.f, _("Connected"));
-			mSFTPChannel->WriteFile(mURL.GetPath().string(),
-				Preferences::GetInteger("text transfer", true));
-			break;
-		
-		case SFTP_CAN_SEND_DATA:
-			if (mSFTPOffset < mSFTPSize)
-			{
-				uint32 k = mSFTPSize - mSFTPOffset;
-				if (k > kBufferSize)
-					k = kBufferSize;
-
-				eSSHProgress(
-					float(mSFTPData.length()) / mSFTPSize,
-					_("Sending data"));
-
-				mSFTPChannel->SendData(mSFTPData.substr(mSFTPOffset, k));
-				mSFTPOffset += k;
-			}
-			else
-			{
-				eSSHProgress(1.0f, _("Closing file"));
-
-				mSFTPChannel->CloseFile();
-				SetModified(false);
-//
-//				if (Preferences::GetInteger("loguploads", false) != 0)
-//					LogUpload();
-			}
-			break;
-
-		case SFTP_FILE_CLOSED:
-			eSSHProgress(-1.f, _("done"));
-			mSFTPChannel->Close();
-			break;
-
-		case SSH_CHANNEL_TIMEOUT:
-			eSSHProgress(0, _("Timeout"));
-			break;
-	}
-}
-
-// --------------------------------------------------------------------
-
-void MTextDocument::SFTPChannelMessage(
-	std::string 	inMessage)
-{
-	float fraction = 0;
-	if (mSFTPSize > 0)
-		fraction = float(mSFTPData.size()) / mSFTPSize;
-	eSSHProgress(fraction, inMessage);
 }
 
 // --------------------------------------------------------------------
@@ -718,9 +483,9 @@ void MTextDocument::SetWorksheet(
 
 			inDocument->mShell->SetCWD(cwd);
 
-			SetCallBack(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
-			SetCallBack(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
-			SetCallBack(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
+			SetCallback(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
+			SetCallback(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
+			SetCallback(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
 		}
 	}		
 }
@@ -732,17 +497,17 @@ const char* MTextDocument::GetCWD() const
 	const char* result = nil;
 	if (mShell.get() != nil)
 		result = mShell->GetCWD().c_str();
-	else if (mSpecified)
-	{
-		static auto_array<char> cwd(new char[PATH_MAX]);
-
-		int32 r = read_attribute(mURL.GetPath(), kJapieCWD, cwd.get(), PATH_MAX);
-		if (r > 0 and r < PATH_MAX)
-		{
-			cwd.get()[r] = 0;
-			result = cwd.get();
-		}
-	}
+//	else if (mFile.IsValid())
+//	{
+//		static auto_array<char> cwd(new char[PATH_MAX]);
+//
+//		int32 r = read_attribute(mFile.GetPath(), kJapieCWD, cwd.get(), PATH_MAX);
+//		if (r > 0 and r < PATH_MAX)
+//		{
+//			cwd.get()[r] = 0;
+//			result = cwd.get();
+//		}
+//	}
 	return result;
 }
 
@@ -836,40 +601,40 @@ bool MTextDocument::ReadDocState(
 {
 	bool result = false;
 	
-	if (IsSpecified() and Preferences::GetInteger("save state", 1))
-	{
-		ssize_t r = read_attribute(mURL.GetPath(), kJapieDocState, &ioDocState, kMDocStateSize);
-		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
-		{
-			ioDocState.Swap();
-
-			if (ioDocState.mFlags.mSelectionIsBlock)
-			{
-				if (ioDocState.mSelection[0] <= mLineInfo.size() and
-					ioDocState.mSelection[2] <= mLineInfo.size() and
-					ioDocState.mSelection[1] <= 1000 and
-					ioDocState.mSelection[3] <= 1000)
-				{
-					mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
-						ioDocState.mSelection[2], ioDocState.mSelection[3]);
-				}
-			}
-			else
-				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1]);
-		
-			mSoftwrap = ioDocState.mFlags.mSoftwrap;
-			
-			if (mCharsPerTab != ioDocState.mFlags.mTabWidth and
-				ioDocState.mFlags.mTabWidth != 0)
-			{
-				mCharsPerTab = ioDocState.mFlags.mTabWidth;
-				ReInit();
-				Rewrap();
-			}
-
-			result = true;
-		}
-	}
+//	if (IsSpecified() and Preferences::GetInteger("save state", 1))
+//	{
+//		ssize_t r = read_attribute(mFile.GetPath(), kJapieDocState, &ioDocState, kMDocStateSize);
+//		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
+//		{
+//			ioDocState.Swap();
+//
+//			if (ioDocState.mFlags.mSelectionIsBlock)
+//			{
+//				if (ioDocState.mSelection[0] <= mLineInfo.size() and
+//					ioDocState.mSelection[2] <= mLineInfo.size() and
+//					ioDocState.mSelection[1] <= 1000 and
+//					ioDocState.mSelection[3] <= 1000)
+//				{
+//					mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
+//						ioDocState.mSelection[2], ioDocState.mSelection[3]);
+//				}
+//			}
+//			else
+//				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1]);
+//		
+//			mSoftwrap = ioDocState.mFlags.mSoftwrap;
+//			
+//			if (mCharsPerTab != ioDocState.mFlags.mTabWidth and
+//				ioDocState.mFlags.mTabWidth != 0)
+//			{
+//				mCharsPerTab = ioDocState.mFlags.mTabWidth;
+//				ReInit();
+//				Rewrap();
+//			}
+//
+//			result = true;
+//		}
+//	}
 	
 	return result;
 }
@@ -1781,7 +1546,7 @@ int32 MTextDocument::RewrapLines(
 	lineInfoEnd = lineInfoStart + 1;
 	
 	if (mLanguage and lineInfoStart == mLineInfo.begin())
-		lineInfoStart->state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
+		lineInfoStart->state = mLanguage->GetInitialState(mFile.GetFileName(), mText);
 	
 	uint16 state = lineInfoStart->state;
 	uint32 start = lineInfoStart->start;
@@ -1885,7 +1650,7 @@ void MTextDocument::RestyleDirtyLines(
 		{
 			uint16 state;
 			if (line == 0)
-				state = mLanguage->GetInitialState(mURL.GetFileName(), mText);
+				state = mLanguage->GetInitialState(mFile.GetFileName(), mText);
 			else
 				state = mLineInfo[line].state;
 			
@@ -2445,7 +2210,7 @@ void MTextDocument::Insert(
 	const char*		inText,
 	uint32			inLength)
 {
-	if (mReadOnly and not mWarnedReadOnly)
+	if (mFile.ReadOnly() and not mWarnedReadOnly)
 	{
 		DisplayAlert("read-only-alert");
 		mWarnedReadOnly = true;
@@ -2488,7 +2253,7 @@ void MTextDocument::Delete(
 	uint32			inOffset,
 	uint32			inLength)
 {
-	if (mReadOnly and not mWarnedReadOnly)
+	if (mFile.ReadOnly() and not mWarnedReadOnly)
 	{
 		DisplayAlert("read-only-alert");
 		mWarnedReadOnly = true;
@@ -3176,7 +2941,7 @@ void MTextDocument::FindAll(string inWhat, bool inIgnoreCase,
 		GetLine(lineNr, s);
 		boost::trim_right(s);
 		
-		outHits.AddMessage(kMsgKindNone, mURL.GetPath(), lineNr + 1,
+		outHits.AddMessage(kMsgKindNone, mFile.GetPath(), lineNr + 1,
 			sel.GetMinOffset(), sel.GetMaxOffset(), s);
 		
 		minOffset = sel.GetMaxOffset();
@@ -3194,7 +2959,7 @@ void MTextDocument::FindAll(
 	MTextDocument doc;
 	fs::ifstream file(inPath, ios::binary);
 
-	doc.mURL = MUrl(inPath);
+	doc.mFile = MFile(inPath);
 	doc.mText.ReadFromFile(file);
 	doc.Rewrap();
 	doc.FindAll(inWhat, inIgnoreCase, inRegex, inSelection, outHits);
@@ -3483,9 +3248,9 @@ void MTextDocument::DoApplyScript(const std::string& inScript)
 	{
 		mShell.reset(new MShell(true));
 
-		SetCallBack(mShell->eStdOut, this, &MTextDocument::StdOut);
-		SetCallBack(mShell->eStdErr, this, &MTextDocument::StdErr);
-		SetCallBack(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
 	}
 	
 	string text;
@@ -4454,7 +4219,7 @@ void MTextDocument::ShellStatusIn(bool inActive)
 	if (not inActive)
 	{
 		string cwd = mShell->GetCWD();
-		eBaseDirChanged(MUrl(fs::path(cwd)));
+		eBaseDirChanged(fs::path(cwd));
 	}
 }
 
@@ -4480,7 +4245,7 @@ void MTextDocument::StdOut(const char* inText, uint32 inSize)
 	
 	if (findLanguage)
 	{
-		mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
+		mLanguage = MLanguage::GetLanguageForDocument(mFile.GetFileName(), mText);
 		if (mLanguage != nil)
 		{
 			mNamedRange = new MNamedRange;
@@ -4530,22 +4295,22 @@ void MTextDocument::Execute()
 	{
 		mShell.reset(new MShell(true));
 
-		if (IsSpecified())
-		{
-			char cwd[1024] = { 0 };
-			ssize_t size = read_attribute(mURL.GetPath(), kJapieCWD, cwd, sizeof(cwd));
-			if (size > 0)
-			{
-				string d(cwd, size);
-				mShell->SetCWD(d);
-			}
-			else
-				mShell->SetCWD(mURL.GetPath().branch_path().string());
-		}
+//		if (IsSpecified())
+//		{
+//			char cwd[1024] = { 0 };
+//			ssize_t size = read_attribute(mFile.GetPath(), kJapieCWD, cwd, sizeof(cwd));
+//			if (size > 0)
+//			{
+//				string d(cwd, size);
+//				mShell->SetCWD(d);
+//			}
+//			else
+//				mShell->SetCWD(mFile.GetPath().branch_path().string());
+//		}
 		
-		SetCallBack(mShell->eStdOut, this, &MTextDocument::StdOut);
-		SetCallBack(mShell->eStdErr, this, &MTextDocument::StdErr);
-		SetCallBack(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
 	}
 
 	mPreparedForStdOut = false;
@@ -4648,18 +4413,18 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem);
 
-		if (mSpecified and mURL.IsLocal())
-		{
-			fs::path path = mURL.GetPath().branch_path() / file.name;
-			if (fs::exists(path))
-				gApp->OpenOneDocument(MUrl(path));
-		}
+//		if (mSpecified and mFile.IsLocal())
+//		{
+//			MFile path = mFile.GetParent() / file.name;
+//			if (path.Exists())
+//				gApp->OpenOneDocument(path);
+//		}
 
 		MProject* project = MProject::Instance();
 		fs::path p;
 		
 		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			gApp->OpenOneDocument(MUrl(p));
+			gApp->OpenOneDocument(MFile(p));
 	}
 }
 
@@ -4860,22 +4625,22 @@ bool MTextDocument::ProcessCommand(
 	
 		case cmd_Preprocess:
 			if (project != nil)
-				project->Preprocess(GetURL().GetPath());
+				project->Preprocess(GetFile().GetPath());
 			break;
 			
 		case cmd_CheckSyntax:
 			if (project != nil)
-				project->CheckSyntax(GetURL().GetPath());
+				project->CheckSyntax(GetFile().GetPath());
 			break;
 			
 		case cmd_Compile:
 			if (project != nil)
-				project->Compile(GetURL().GetPath());
+				project->Compile(GetFile().GetPath());
 			break;
 
 		case cmd_Disassemble:
 			if (project != nil)
-				project->Disassemble(GetURL().GetPath());
+				project->Disassemble(GetFile().GetPath());
 			break;
 
 		case cmd_2CharsPerTab:
@@ -5047,8 +4812,8 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_Disassemble:
 			outEnabled =
 				project != nil and
-				GetURL().IsLocal() and
-				project->IsFileInProject(GetURL().GetPath());
+				GetFile().IsLocal() and
+				project->IsFileInProject(GetFile().GetPath());
 			break;
 		
 		case cmd_2CharsPerTab:
@@ -5093,33 +4858,10 @@ bool MTextDocument::UpdateCommandStatus(
 	return result;
 }
 
-void MTextDocument::GIOProgress(float inProgress)
+void MTextDocument::IOProgress(
+	float			inProgress,
+	const string&	inMessage)
 {
 	eSSHProgress(inProgress, _("Receiving data"));
-}
-
-void MTextDocument::GIOError(std::string inError)
-{
-	DisplayError(MException(inError.c_str()));
-//	ProcessCommand(cmd_Close, nil, 0, 0);
-}
-
-void MTextDocument::GIOLoaded(const char* inText, uint32 inLength)
-{
-	eSSHProgress(1.0f, _("Data received"));
-	mText.SetText(inText, inLength);
-
-	mLanguage = MLanguage::GetLanguageForDocument(mURL.GetFileName(), mText);
-	if (mLanguage != nil)
-	{
-		mNamedRange = new MNamedRange;
-		mIncludeFiles = new MIncludeFileList;
-	}
-
-	Rewrap();
-	UpdateDirtyLines();
-	
-	mFileLoader.reset();
-
-	eSSHProgress(-1.f, _("done"));
+	MDocument::IOProgress(inProgress, inMessage);
 }

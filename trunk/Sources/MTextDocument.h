@@ -28,9 +28,7 @@ class MMessageWindow;
 class MMessageList;
 class MMenu;
 class MDevice;
-class MSftpChannel;
 class MePubDocument;
-class MFileLoader;
 
 struct MTextInputAreaInfo
 {
@@ -67,11 +65,7 @@ class MTextDocument : public MDocument
   	// first the implementation of / overrides for MDocument
   	
 	explicit			MTextDocument(
-							const MUrl*			inURL);
-
-						MTextDocument(
-							MePubDocument*		inEPub,
-							const fs::path&		inFile);
+							const MFile&		inURI);
 
 	virtual				~MTextDocument();
 
@@ -86,7 +80,7 @@ class MTextDocument : public MDocument
 	virtual bool		DoSave();
 
 	virtual bool		DoSaveAs(
-							const MUrl&			inFile);
+							const MFile&			inFile);
 
 	virtual void		RevertDocument();
 
@@ -125,6 +119,8 @@ class MTextDocument : public MDocument
 
 	virtual void		SaveState();
 
+	MEventOut<void(float,std::string)>			eSSHProgress;
+
   protected:
 
 	virtual void		ReadFile(
@@ -132,6 +128,10 @@ class MTextDocument : public MDocument
 
 	virtual void		WriteFile(
 							std::ostream&		inFile);
+
+	virtual void		IOProgress(
+							float				inProgress,
+							const std::string&	inMessage);
 
 	// and now the MTextDocument specific methods
 
@@ -143,29 +143,6 @@ class MTextDocument : public MDocument
 	
 	void				SetTargetTextView(MTextView* inTextView);
 	
-	// SFTP support
-	
-	MEventOut<void(float,std::string)>		eSSHProgress;
-	
-	void				SFTPGetChannelEvent(
-							int				inMessage);
-
-	void				SFTPPutChannelEvent(
-							int				inMessage);
-
-	void				SFTPChannelMessage(
-							std::string 	inMessage);
-
-	// GIO support
-	
-	MEventIn<void(float)>				eGIOProgress;
-	MEventIn<void(std::string)>			eGIOError;
-	MEventIn<void(const char*,uint32)>	eGIOLoaded;
-
-	void				GIOProgress(float inProgress);
-	void				GIOError(std::string inError);
-	void				GIOLoaded(const char* inText, uint32 inLength);
-
 	MTextBuffer&		GetTextBuffer()						{ return mText; }
 
 	static void			SetWorksheet(
@@ -570,7 +547,7 @@ class MTextDocument : public MDocument
 	
 	int							mDataFD;
 	MePubDocument*				mEPub;		// for files that are part of an ePub
-	fs::path					mEPubFile;	
+	MFile						mEPubFile;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	uint32						mWrapWidth;
@@ -604,12 +581,6 @@ class MTextDocument : public MDocument
 	bool						mStdErrWindowSelected;
 	bool						mPreparedForStdOut;
 	uint32						mPCLine;
-	
-	std::auto_ptr<MSftpChannel>	mSFTPChannel;
-	std::string					mSFTPData;
-	uint32						mSFTPSize, mSFTPOffset;
-
-	std::auto_ptr<MFileLoader>	mFileLoader;
 	
 	static MTextDocument*		sWorksheet;
 };

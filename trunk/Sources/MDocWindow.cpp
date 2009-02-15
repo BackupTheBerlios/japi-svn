@@ -119,7 +119,7 @@ void MDocWindow::DocumentChanged(
 		// set title
 		
 		if (inDocument->IsSpecified())
-			FileSpecChanged(inDocument, inDocument->GetURL());
+			FileSpecChanged(inDocument, inDocument->GetFile());
 		else
 			SetTitle(GetUntitledTitle());
 
@@ -137,7 +137,7 @@ void MDocWindow::ModifiedChanged(
 
 void MDocWindow::FileSpecChanged(
 	MDocument*		inDocument,
-	const MUrl&		inFile)
+	const MFile&		inFile)
 {
 	MDocument* doc = mController->GetDocument();
 

@@ -18,7 +18,7 @@ extern const char kAppName[], kVersionString[];
 
 class MWindow;
 class MDocument;
-class MUrl;
+class MFile;
 
 // ===========================================================================
 
@@ -57,10 +57,10 @@ class MJapieApp : public MHandler
 
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
-							fs::path&				outFile);
+							MFile&				outFile);
 
 	MDocument*			OpenOneDocument(
-							const MUrl&			inFileRef);
+							const MFile&		inFileRef);
 
 	MDocument*			AskOpenOneDocument();
 
@@ -68,13 +68,13 @@ class MJapieApp : public MHandler
 							MDocument*			inDocument);
 
 	void				OpenProject(
-							const fs::path&		inPath);
+							const MFile&		inPath);
 
 	void				OpenEPub(
-							const fs::path&		inPath);
+							const MFile&		inPath);
 
 	void				AddToRecentMenu(
-							const MUrl&			inFileRef);
+							const MFile&		inFileRef);
 
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
@@ -86,7 +86,7 @@ class MJapieApp : public MHandler
 
 	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
 	
-	MEventOut<void(double)>					eIdle;
+	MEventOut<void(double)>						eIdle;
 
 	void				RunEventLoop();
 

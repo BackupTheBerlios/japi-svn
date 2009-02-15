@@ -32,9 +32,9 @@ class MShell
 
 	std::string				GetCWD() const;
 
-	MCallBack<void(const char*, uint32)>	eStdOut;
-	MCallBack<void(const char*, uint32)>	eStdErr;
-	MCallBack<void(bool)>					eShellStatus;
+	MCallback<void(const char*, uint32)>	eStdOut;
+	MCallback<void(const char*, uint32)>	eStdErr;
+	MCallback<void(bool)>					eShellStatus;
 
   private:
 	struct MShellImp*		mImpl;

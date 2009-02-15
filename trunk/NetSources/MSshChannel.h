@@ -80,10 +80,10 @@ class MSshChannel
 
 	void					Close();
 
-	MCallBack<void(int)>	eChannelEvent;		// events in the enum range above
-	MCallBack<void(std::string)>
+	MCallback<void(int)>	eChannelEvent;		// events in the enum range above
+	MCallback<void(std::string)>
 							eChannelMessage;	// for error strings and such
-	MCallBack<void(std::string)>
+	MCallback<void(std::string)>
 							eChannelBanner;		// sent by the authentication protocol
 
 	MEventIn<void(int)>		eConnectionEvent;

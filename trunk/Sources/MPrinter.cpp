@@ -68,7 +68,7 @@ void MPrinter::DoPrint()
 	MDocument* doc = w->GetDocument();
 	if (doc->IsSpecified())
 	{
-		string jobname = doc->GetURL().GetPath().leaf();
+		string jobname = doc->GetFile().GetPath().leaf();
 		gtk_print_operation_set_job_name(mPrint, jobname.c_str());
 		gtk_print_operation_set_export_filename(mPrint, jobname.c_str());
 	}

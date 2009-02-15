@@ -21,7 +21,7 @@ class MDocWindow : public MWindow
 							MDocument*		inDocument);
 	
 	MEventIn<void(bool)>					eModifiedChanged;
-	MEventIn<void(MDocument*, const MUrl&)>	eFileSpecChanged;
+	MEventIn<void(MDocument*, const MFile&)>	eFileSpecChanged;
 	MEventIn<void(MDocument*)>				eDocumentChanged;
 
 	MDocument*			GetDocument();
@@ -67,7 +67,7 @@ class MDocWindow : public MWindow
 
 	virtual void		FileSpecChanged(
 							MDocument*		inDocument,
-							const MUrl&		inFile);
+							const MFile&		inFile);
 	
   protected:
 

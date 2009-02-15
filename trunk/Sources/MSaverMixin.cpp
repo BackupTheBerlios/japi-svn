@@ -13,6 +13,7 @@
 #include "MCommands.h"
 #include "MAlerts.h"
 #include "MError.h"
+#include "MFile.h"
 #include "MJapiApp.h"
 
 using namespace std;
@@ -157,8 +158,8 @@ void MSaverMixin::SaveDocumentAs(
 		
 		THROW_IF_NIL((uri));
 		
-		MUrl url(uri);
-		DoSaveAs(url);
+		MFile file(uri);
+		DoSaveAs(file);
 		g_free(uri);
 		
 		gApp->SetCurrentFolder(

@@ -54,9 +54,9 @@ typedef map<string,string>		Env;
 struct MShellImp
 {
 			MShellImp(
-				MCallBack<void(const char*, uint32)>&	inStdOut,
-				MCallBack<void(const char*, uint32)>&	inStdErr,
-				MCallBack<void(bool)>&					inShellStatus);
+				MCallback<void(const char*, uint32)>&	inStdOut,
+				MCallback<void(const char*, uint32)>&	inStdErr,
+				MCallback<void(bool)>&					inShellStatus);
 
 			~MShellImp();
 	
@@ -82,9 +82,9 @@ struct MShellImp
 
 	MEventIn<void(double)>			ePoll;
 	
-	MCallBack<void(const char*, uint32)>&	eStdOut;
-	MCallBack<void(const char*, uint32)>&	eStdErr;
-	MCallBack<void(bool)>&					eShellStatus;
+	MCallback<void(const char*, uint32)>&	eStdOut;
+	MCallback<void(const char*, uint32)>&	eStdErr;
+	MCallback<void(bool)>&					eShellStatus;
 
 	Env		mENV;
 	int		mPID;
@@ -95,9 +95,9 @@ struct MShellImp
 };
 
 MShellImp::MShellImp(
-	MCallBack<void(const char*, uint32)>&	inStdOut,
-	MCallBack<void(const char*, uint32)>&	inStdErr,
-	MCallBack<void(bool)>&					inShellStatus)
+	MCallback<void(const char*, uint32)>&	inStdOut,
+	MCallback<void(const char*, uint32)>&	inStdErr,
+	MCallback<void(bool)>&					inShellStatus)
 	: ePoll(this, &MShellImp::Poll)
 	, eStdOut(inStdOut)
 	, eStdErr(inStdErr)

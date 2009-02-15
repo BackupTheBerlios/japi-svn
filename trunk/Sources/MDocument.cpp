@@ -5,7 +5,6 @@
 
 #include "MJapi.h"
 
-#include <boost/filesystem/fstream.hpp>
 #include <cstring>
 #include <boost/algorithm/string.hpp>
 
@@ -25,70 +24,16 @@ MDocument* MDocument::sFirst;
 //	MDocument
 
 MDocument::MDocument(
-	const MUrl*			inURL)
-	: mFileModDate(0)
-	, mSpecified(false)
-	, mReadOnly(false)
+	const MFile&	inFile)
+	: mFile(inFile)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
+	, mFileLoader(nil)
+	, mFileSaver(nil)
 	, mNext(nil)
 {
-	if (inURL != nil)
-	{
-		mURL = *inURL;
-
-		if (mURL.IsLocal() and fs::exists(mURL.GetPath()))
-		{
-			fs::path path = mURL.GetPath();
-			
-			mFileModDate = fs::last_write_time(path);
-			mReadOnly = access(path.string().c_str(), W_OK) != 0;
-		}
-		else
-			mFileModDate = GetLocalTime();
-
-		mSpecified = true;
-	}
-
 	mNext = sFirst;
 	sFirst = this;
-}
-
-MDocument::MDocument(
-	const fs::path&		inPath)
-	: mURL(inPath)
-	, mFileModDate(0)
-	, mSpecified(false)
-	, mReadOnly(false)
-	, mWarnedReadOnly(false)
-	, mDirty(false)
-	, mNext(nil)
-{
-	if (fs::exists(inPath))
-	{
-		mFileModDate = fs::last_write_time(inPath);
-		mReadOnly = access(inPath.string().c_str(), W_OK) != 0;
-	}
-	else
-		mFileModDate = GetLocalTime();
-
-	mSpecified = true;
-
-	mNext = sFirst;
-	sFirst = this;
-}
-
-// ---------------------------------------------------------------------------
-//	MDocument
-
-MDocument::MDocument()
-	: mFileModDate(0)
-	, mSpecified(false)
-	, mReadOnly(false)
-	, mWarnedReadOnly(false)
-	, mDirty(false)
-	, mNext(nil)
-{
 }
 
 // ---------------------------------------------------------------------------
@@ -122,9 +67,30 @@ MDocument::~MDocument()
 void MDocument::SetFileNameHint(
 	const string&	inNameHint)
 {
-	mSpecified = false;
-	mURL.SetFileName(inNameHint);
-	eFileSpecChanged(this, mURL);
+	mFile = MFile();
+	
+	mFileNameHint = inNameHint;
+	eFileSpecChanged(this, mFile);
+}
+
+// ---------------------------------------------------------------------------
+//	MDocument::DoLoad
+
+void MDocument::DoLoad()
+{
+	if (not mFile.IsValid())
+		THROW(("File is not specified"));
+	
+	if (mFileLoader != nil)
+		THROW(("File is already being loaded"));
+	
+	mFileLoader = mFile.Load();
+	
+	SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
+	SetCallback(mFileLoader->eError, this, &MDocument::IOError);
+	SetCallback(mFileLoader->eReadFile, this, &MDocument::ReadFile);
+	
+	mFileLoader->DoLoad();
 }
 
 // ---------------------------------------------------------------------------
@@ -132,66 +98,45 @@ void MDocument::SetFileNameHint(
 
 bool MDocument::DoSave()
 {
-	bool result = false;
-	bool specified = mSpecified;
-	
-	assert(specified);
-	assert(mURL.IsLocal());
-	
-	try
-	{
-		fs::ofstream file(mURL.GetPath(), ios::trunc | ios::binary);
-		
-		if (not file.is_open())
-			THROW(("Failed to open file %s for writing", mURL.GetPath().string().c_str()));
-		
-		WriteFile(file);
-		SetModified(false);
+	assert(IsSpecified());
 
-		gApp->AddToRecentMenu(mURL);
-		
-		result = true;
-	}
-	catch (exception& inErr)
-	{
-		DisplayError(inErr);
-		
-		mSpecified = specified;
-		result = false;
-	}
+	if (not mFile.IsValid())
+		THROW(("File is not specified"));
 	
-	return result;
+	if (mFileSaver != nil)
+		THROW(("File is already being loaded"));
+	
+	mFileSaver = mFile.Save();
+	
+	SetCallback(mFileSaver->eProgress, this, &MDocument::IOProgress);
+	SetCallback(mFileSaver->eError, this, &MDocument::IOError);
+	SetCallback(mFileSaver->eWriteFile, this, &MDocument::WriteFile);
+
+	mFileSaver->DoSave();
+
+	gApp->AddToRecentMenu(mFile);
+		
+	return true;
 }
 
 // ---------------------------------------------------------------------------
 //	DoSaveAs
 
 bool MDocument::DoSaveAs(
-	const MUrl&		inFile)
+	const MFile&		inFile)
 {
 	bool result = false;
-
-	bool specified = mSpecified;
-	mSpecified = true;
 	
-	MUrl url(mURL);
-	mURL = inFile;
+	MFile savedFile = mFile;
+	mFile = inFile;
 
 	if (DoSave())
 	{
-		mSpecified = true;
-		mReadOnly = false;
-	
-		eFileSpecChanged(this, mURL);
-		
+		eFileSpecChanged(this, mFile);
 		result = true;
 	}
 	else
-	{
-		mSpecified = specified;
-		if (mURL.IsLocal())
-			mURL = url;
-	}
+		mFile = savedFile;
 	
 	return result;
 }
@@ -201,22 +146,20 @@ bool MDocument::DoSaveAs(
 
 void MDocument::RevertDocument()
 {
-	fs::ifstream file(mURL.GetPath(), ios::binary);
-	ReadFile(file);
-	SetModified(false);
+	DoLoad();
 }
 
 // ---------------------------------------------------------------------------
 //	UsesFile
 
 bool MDocument::UsesFile(
-	const MUrl&	inFileRef) const
+	const MFile&	inFile) const
 {
-	return mSpecified and mURL == inFileRef;
+	return mFile.IsValid() and mFile == inFile;
 }
 
-MDocument* MDocument::GetDocumentForURL(
-	const MUrl&		inFile)
+MDocument* MDocument::GetDocumentForFile(
+	const MFile&	inFile)
 {
 	MDocument* doc = sFirst;
 
@@ -362,9 +305,9 @@ string MDocument::GetWindowTitle() const
 {
 	string result;
 
-	if (mURL.IsLocal())
+	if (mFile.IsLocal())
 	{
-		result = mURL.GetPath().string();
+		result = mFile.GetPath().string();
 		
 		// strip off HOME, if any
 		
@@ -376,7 +319,30 @@ string MDocument::GetWindowTitle() const
 		}
 	}
 	else
-		result = mURL.str();
+		result = mFile.GetURI();
 	
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	IOProgress
+
+void MDocument::IOProgress(float inProgress, const string& inMessage)
+{
+	if (inProgress == -1)	// we're done
+	{
+		mFileLoader = nil;
+		mFileSaver = nil;
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	IOError
+
+void MDocument::IOError(const std::string& inError)
+{
+	DisplayError(inError);
+
+	mFileLoader = nil;
+	mFileSaver = nil;
 }

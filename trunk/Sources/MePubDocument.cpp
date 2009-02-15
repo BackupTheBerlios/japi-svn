@@ -424,19 +424,18 @@ void deflate(
 }
 
 MePubDocument::MePubDocument(
-	const fs::path&		inProjectFile)
-	: MDocument(inProjectFile)
+	const MFile&		inFile)
+	: MDocument(inFile)
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
-	RevertDocument();
 }
 
 MePubDocument::MePubDocument()
-	: MDocument(nil)
+	: MDocument(MFile())
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
@@ -1281,7 +1280,7 @@ void MePubDocument::CreateItem(
 	MProjectGroup*		inGroup,
 	MProjectItem*&		outItem)
 {
-	fs::path path(MUrl(inFile).GetPath());
+	fs::path path(MFile(inFile).GetPath());
 	string name = path.leaf();
 	
 	if (not fs::exists(path))

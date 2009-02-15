@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-/*	$Id: MCallBacks.h 119 2007-04-25 08:26:21Z maarten $
+/*	$Id: MCallbacks.h 119 2007-04-25 08:26:21Z maarten $
 	
 	copyright Maarten L. Hekkelman
 	
@@ -23,7 +23,7 @@ typedef struct _GladeXML GladeXML;
 
 // shield implementation details in our namespace
 
-namespace MCallBackNS
+namespace MCallbackNS
 {
 
 // HandlerBase is a templated pure virtual base class. This is needed to declare
@@ -80,10 +80,10 @@ struct HandlerBase<R(T1,T2,T3,T4,T5,T6)>
 	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6) = 0;
 };
 
-// Handler is a base class that delivers the actual callback to the owner of MCallBackIn
+// Handler is a base class that delivers the actual callback to the owner of MCallbackIn
 // as stated above, it is derived from HandlerBase.
 // We use the Curiously Recurring Template Pattern to capture all the needed info from the
-// MCallBackInHandler class. 
+// MCallbackInHandler class. 
 
 template<class Derived, class Owner, typename Function> struct Handler;
 
@@ -401,17 +401,17 @@ struct Handler<Derived, Owner, void(T1, T2, T3, T4, T5, T6)> : public HandlerBas
 										}
 };
 
-// MCallBackInHandler is the complete handler object that has all the type info
+// MCallbackInHandler is the complete handler object that has all the type info
 // needed to deliver the callback.
 
 template<class C, typename Function>
-struct MCallBackInHandler : public Handler<MCallBackInHandler<C, Function>, C, Function>
+struct MCallbackInHandler : public Handler<MCallbackInHandler<C, Function>, C, Function>
 {
-	typedef Handler<MCallBackInHandler,C,Function>	base;
+	typedef Handler<MCallbackInHandler,C,Function>	base;
 	typedef typename base::Callback					CallBackProc;
 	typedef C										Owner;
 	
-										MCallBackInHandler(Owner* inOwner, CallBackProc inHandler)
+										MCallbackInHandler(Owner* inOwner, CallBackProc inHandler)
 											: fOwner(inOwner)
 											, fHandler(inHandler)
 										{
@@ -421,14 +421,14 @@ struct MCallBackInHandler : public Handler<MCallBackInHandler<C, Function>, C, F
 	CallBackProc						fHandler;
 };
 
-// MCallBackOutHandler objects. Again we use the Curiously Recurring Template Pattern
+// MCallbackOutHandler objects. Again we use the Curiously Recurring Template Pattern
 // to pull in type info we don't yet know.
 
 template<class CallBackIn, typename Function>
-struct MCallBackOutHandler {};
+struct MCallbackOutHandler {};
 
 template<class CallBackIn, typename R>
-struct MCallBackOutHandler<CallBackIn, R()>
+struct MCallbackOutHandler<CallBackIn, R()>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 	
@@ -445,7 +445,7 @@ struct MCallBackOutHandler<CallBackIn, R()>
 				{
 					R result = R();
 					
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						result = handler.mHandler->DoCallBack();
@@ -455,7 +455,7 @@ struct MCallBackOutHandler<CallBackIn, R()>
 };
 
 template<class CallBackIn>
-struct MCallBackOutHandler<CallBackIn, void()>
+struct MCallbackOutHandler<CallBackIn, void()>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 	
@@ -463,7 +463,7 @@ struct MCallBackOutHandler<CallBackIn, void()>
 					GObject*		inWidget,
 					gpointer		inData)
 				{
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						handler.mHandler->DoCallBack();
@@ -471,7 +471,7 @@ struct MCallBackOutHandler<CallBackIn, void()>
 };
 
 template<class CallBackIn, typename R, typename T1>
-struct MCallBackOutHandler<CallBackIn, R(T1)>
+struct MCallbackOutHandler<CallBackIn, R(T1)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -489,7 +489,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1)>
 				{
 					R result = R();
 					
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						result = handler.mHandler->DoCallBack(inArg1);
@@ -499,7 +499,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1)>
 };
 
 template<class CallBackIn, typename T1>
-struct MCallBackOutHandler<CallBackIn, void(T1)>
+struct MCallbackOutHandler<CallBackIn, void(T1)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -514,7 +514,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1)>
 					T1				inArg1,
 					gpointer		inData)
 				{
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						handler.mHandler->DoCallBack(inArg1);
@@ -522,7 +522,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1)>
 };
 
 template<class CallBackIn, typename R, typename T1, typename T2>
-struct MCallBackOutHandler<CallBackIn, R(T1, T2)>
+struct MCallbackOutHandler<CallBackIn, R(T1, T2)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -541,7 +541,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2)>
 				{
 					R result = R();
 					
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						result = handler.mHandler->DoCallBack(inArg1, inArg2);
@@ -551,7 +551,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2)>
 };
 
 template<class CallBackIn, typename T1, typename T2>
-struct MCallBackOutHandler<CallBackIn, void(T1, T2)>
+struct MCallbackOutHandler<CallBackIn, void(T1, T2)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -567,7 +567,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2)>
 					T2				inArg2,
 					gpointer		inData)
 				{
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						handler.mHandler->DoCallBack(inArg1, inArg2);
@@ -575,7 +575,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2)>
 };
 
 template<class CallBackIn, typename R, typename T1, typename T2, typename T3>
-struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3)>
+struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -588,7 +588,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3)>
 };
 
 template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4>
-struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
+struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -609,7 +609,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
 				{
 					R result = R();
 					
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						result = handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
@@ -619,7 +619,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
 };
 
 template<class CallBackIn, typename T1, typename T2, typename T3, typename T4>
-struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
+struct MCallbackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -637,7 +637,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
 					T4				inArg4,
 					gpointer		inData)
 				{
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
@@ -645,7 +645,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
 };
 
 template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
-struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5)>
+struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -658,7 +658,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5)>
 };
 
 template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5, T6)>
+struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5, T6)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -671,7 +671,7 @@ struct MCallBackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5, T6)>
 };
 
 template<class CallBackIn, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
+struct MCallbackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
 
@@ -691,7 +691,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
 					T6				inArg6,
 					gpointer		inData)
 				{
-					MCallBackOutHandler& handler = *reinterpret_cast<MCallBackOutHandler*>(inData);
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
 					
 					if (handler.mHandler.get() != nil)
 						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4, inArg5, inArg6);
@@ -703,7 +703,7 @@ struct MCallBackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
 template<typename Function>
 struct MakeCallBackHandler
 {
-	typedef MCallBackOutHandler<
+	typedef MCallbackOutHandler<
 		HandlerBase<Function>,
 		Function> type;
 };
@@ -711,19 +711,19 @@ struct MakeCallBackHandler
 } // namespace
 
 template<typename Function>
-class MCallBack : public MCallBackNS::MakeCallBackHandler<Function>::type
+class MCallback : public MCallbackNS::MakeCallBackHandler<Function>::type
 {
-	typedef typename		MCallBackNS::MakeCallBackHandler<Function>::type	base_class;
+	typedef typename		MCallbackNS::MakeCallBackHandler<Function>::type	base_class;
   public:
-							MCallBack()		{}
-							~MCallBack()	{}
+							MCallback()		{}
+							~MCallback()	{}
 	
 	template<class C>
 	void					SetProc(C* inOwner,
-								typename MCallBackNS::MCallBackInHandler<C, Function>::CallBackProc	inProc)
+								typename MCallbackNS::MCallbackInHandler<C, Function>::CallBackProc	inProc)
 							{
 								base_class* self = static_cast<base_class*>(this);
-								typedef typename MCallBackNS::MCallBackInHandler<C,Function> Handler;
+								typedef typename MCallbackNS::MCallbackInHandler<C,Function> Handler;
 								
 								if (inOwner != nil and inProc != nil)
 									self->mHandler.reset(new Handler(inOwner, inProc));
@@ -732,31 +732,31 @@ class MCallBack : public MCallBackNS::MakeCallBackHandler<Function>::type
 							}
 
   private:
-							MCallBack(const MCallBack&);
-	MCallBack&				operator=(const MCallBack&);
+							MCallback(const MCallback&);
+	MCallback&				operator=(const MCallback&);
 };
 
 template<typename Function, class C>
-void SetCallBack(MCallBack<Function>& inCallBack, C* inObject,
-	typename MCallBackNS::MCallBackInHandler<C,Function>::CallBackProc inProc)
+void SetCallback(MCallback<Function>& inCallBack, C* inObject,
+	typename MCallbackNS::MCallbackInHandler<C,Function>::CallBackProc inProc)
 {
 	inCallBack.SetProc(inObject, inProc);
 }
 
 template<typename Function>
-class MSlot : public MCallBackNS::MakeCallBackHandler<Function>::type
+class MSlot : public MCallbackNS::MakeCallBackHandler<Function>::type
 {
-	typedef typename		MCallBackNS::MakeCallBackHandler<Function>::type	base_class;
+	typedef typename		MCallbackNS::MakeCallBackHandler<Function>::type	base_class;
   public:
 	
 	template<class C>
 							MSlot(
 								C*				inOwner,
-								typename MCallBackNS::MCallBackInHandler<C, Function>::CallBackProc
+								typename MCallbackNS::MCallbackInHandler<C, Function>::CallBackProc
 												inProc)
 							{
 								base_class* self = static_cast<base_class*>(this);
-								typedef typename MCallBackNS::MCallBackInHandler<C,Function> Handler;
+								typedef typename MCallbackNS::MCallbackInHandler<C,Function> Handler;
 								
 								self->mHandler.reset(new Handler(inOwner, inProc));
 							}

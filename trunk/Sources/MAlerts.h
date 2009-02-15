@@ -12,6 +12,9 @@
 void DisplayError(
 	const std::exception&	inException);
 
+void DisplayError(
+	const std::string&		inError);
+
 GtkWidget* CreateAlertWithArgs(
 	const char* 				inResourceName,
 	std::vector<std::string>&	inArgs);

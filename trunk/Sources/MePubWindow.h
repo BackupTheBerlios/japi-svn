@@ -66,14 +66,14 @@ class MePubWindow : public MDocWindow
 						uint32			inID);
 
 	MEventIn<void(MDocument*)>		eDocumentClosed;	// doc closed
-	MEventIn<void(MDocument*, const MUrl&)>
+	MEventIn<void(MDocument*, const MFile&)>
 									eFileSpecChanged;	// doc was saved as
 	
 	void			TextDocClosed(
 						MDocument*		inDocument);
 	void			TextDocFileSpecChanged(
 						MDocument*		inDocument,
-						const MUrl&		inURL);
+						const MFile&		inURL);
 
 	void			CreateNew(
 						bool			inNewDirectory);

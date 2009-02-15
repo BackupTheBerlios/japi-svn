@@ -161,20 +161,17 @@ bool MTextController::OpenInclude(
 	string		inFileName)
 {
 	MProject* project = MProject::Instance();
-	MUrl url;
+	MFile url;
 
 	if (mDocument != nil)
-	{
-		url = mDocument->GetURL();
-		url.SetPath(url.GetPath().branch_path() / inFileName);
-	}
+		url = mDocument->GetFile().GetParent() / inFileName;
 	
 	bool result = false;
 	
 	if (url.IsValid())
 	{
 		if (url.IsLocal())
-			result = fs::exists(url.GetPath());
+			result = url.Exists();
 		else
 			result = true;
 	}
@@ -183,7 +180,7 @@ bool MTextController::OpenInclude(
 	if (not result and project != nil and project->LocateFile(inFileName, true, p))
 	{
 		result = true;
-		url = MUrl(p);
+		url = MFile(p);
 	}
 	
 	if (result)
@@ -264,7 +261,7 @@ void MTextController::DoOpenCounterpart()
 
 	if (doc->IsSpecified())
 	{
-		string name = doc->GetURL().GetFileName();
+		string name = doc->GetFile().GetFileName();
 		fs::path p;
 	
 		const char** ext = nil;
@@ -285,7 +282,7 @@ void MTextController::DoOpenCounterpart()
 					result = project->LocateFile(name + *e, true, p);
 
 				if (result)
-					gApp->OpenOneDocument(MUrl(p));
+					gApp->OpenOneDocument(MFile(p));
 			}
 
 			if (not result)

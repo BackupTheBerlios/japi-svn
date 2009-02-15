@@ -595,17 +595,17 @@ bool MFindDialog::FindNext()
 	{
 		try
 		{
-			MUrl file(mMultiFiles.front());
+			MFile file(mMultiFiles.front());
 			mMultiFiles.pop_front();
 		
 			MTextDocument* doc = dynamic_cast<MTextDocument*>(
-				MDocument::GetDocumentForURL(file));
+				MDocument::GetDocumentForFile(file));
 			
 			if (doc != nil)
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(new MTextDocument(&file));
+				auto_ptr<MTextDocument> newDoc(new MTextDocument(file));
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
@@ -646,21 +646,21 @@ void MFindDialog::ReplaceAll(
 	{
 		while (not mStopFindAll and mMultiFiles.size() > 0)
 		{
-			MUrl file(mMultiFiles.front());
+			MFile file(mMultiFiles.front());
 			mMultiFiles.pop_front();
 		
-			SetStatusString(file.str());
+			SetStatusString(file.GetPath().string());
 			
 			bool found = false;
 			
 			MTextDocument* doc = dynamic_cast<MTextDocument*>(
-				MDocument::GetDocumentForURL(file));
+				MDocument::GetDocumentForFile(file));
 			
 			if (doc != nil)
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(new MTextDocument(&file));
+				auto_ptr<MTextDocument> newDoc(new MTextDocument(file));
 
 				if (newDoc->DoFindFirst())
 				{
@@ -716,12 +716,12 @@ void MFindDialog::FindAll(
 				break;
 			
 			SetStatusString(file->string());
-			MUrl url(*file);
+			MFile url(*file);
 			
 			bool searched = false;
 			
 			gdk_threads_enter();
-			MTextDocument* doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(url));
+			MTextDocument* doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForFile(url));
 
 			if (doc != nil)
 			{
@@ -783,7 +783,7 @@ void MFindDialog::GetFilesForFindAll(
 			MDocument* doc = MDocument::GetFirstDocument();
 			while (doc != nil)
 			{
-				fs::path file = doc->GetURL().GetPath();
+				fs::path file = doc->GetFile().GetPath();
 				if (exists(file))
 					outFiles.insert(file);
 				doc = doc->GetNextDocument();

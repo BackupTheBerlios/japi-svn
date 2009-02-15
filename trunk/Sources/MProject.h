@@ -83,12 +83,7 @@ class MProject : public MDocument
   public:
 
 	explicit			MProject(
-							const fs::path&		inProjectFile);
-
-						MProject(
-							const fs::path&		inParentDir,
-							const std::string&	inName,
-							const std::string&	inTemplate);
+							const MFile&		inProjectFile);
 
 	virtual				~MProject();
 

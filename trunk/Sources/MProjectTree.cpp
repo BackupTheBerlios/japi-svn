@@ -11,7 +11,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "MFile.h"
-#include "MUrl.h"
+#include "MFile.h"
 #include "MColor.h"
 #include "MUtils.h"
 #include "MError.h"
@@ -379,7 +379,7 @@ bool MProjectTree::DragDataGet(
 			{
 				MProjectFile* file = dynamic_cast<MProjectFile*>(*i);
 				if (file != nil)
-					s << MUrl(file->GetPath()).str(true) << endl;
+					s << file->GetPath() << endl;
 			}
 			
 			string data = s.str();

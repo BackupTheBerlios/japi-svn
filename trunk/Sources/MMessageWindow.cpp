@@ -328,7 +328,7 @@ void MMessageWindow::SelectItem(
 //	
 //	if (item.mFileNr > 0)
 //	{
-//		MUrl url(mList.GetFile(item.mFileNr - 1));
+//		MFile url(mList.GetFile(item.mFileNr - 1));
 //		
 //		MTextDocument* doc = MTextDocument::GetDocumentForURL(url, false);
 //		if (doc == nil)
@@ -357,7 +357,7 @@ void MMessageWindow::InvokeItem(
 	if (item.mFileNr > 0)
 	{
 		fs::path file = mList.GetFile(item.mFileNr - 1);
-		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(file)));
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MFile(file)));
 		
 		if (doc != nil)
 		{

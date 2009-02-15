@@ -56,8 +56,8 @@ struct MProjectExecJob : public MProjectJob
 	virtual void			Kill();
 	virtual bool			IsDone();
 
-	MCallBack<void(const char* inText, uint32 inSize)>	eStdOut;
-	MCallBack<void(const char* inText, uint32 inSize)>	eStdErr;
+	MCallback<void(const char* inText, uint32 inSize)>	eStdOut;
+	MCallback<void(const char* inText, uint32 inSize)>	eStdErr;
 
 	std::vector<std::string>
 							mArgv;

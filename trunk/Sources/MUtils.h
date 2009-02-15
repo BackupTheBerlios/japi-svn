@@ -227,6 +227,20 @@ class XMLNode
 	xmlNodePtr		mNode;
 };
 
+class MGdkThreadBlock
+{
+  public:
+	MGdkThreadBlock()
+	{
+		gdk_threads_enter();
+	}
+	
+	~MGdkThreadBlock()
+	{
+		gdk_threads_leave();
+	}
+};
+
 uint16 CalculateCRC(
 	const void*		inData,
 	uint32			inLength,

@@ -27,7 +27,8 @@ class MePubItem : public MProjectItem
 	void			SetID(
 						const std::string&	inID)			{ mID = inID; }
 
-	std::string		GetData() const							{ return mData; }
+	const std::string&
+					GetData() const							{ return mData; }
 	void			SetData(
 						const std::string&	inData)			{ mData = inData; }
 

@@ -18,7 +18,7 @@
 #include "MView.h"
 #include "MUnicode.h"
 #include "MUtils.h"
-#include "MUrl.h"
+#include "MFile.h"
 #include "MSound.h"
 #include "MJapiApp.h"
 
@@ -83,7 +83,7 @@ bool MFindAndOpenDialog::OKClicked()
 		fs::path p(s);
 		
 		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
-			gApp->OpenOneDocument(MUrl(p));
+			gApp->OpenOneDocument(MFile(p));
 	}
 	
 	return true;

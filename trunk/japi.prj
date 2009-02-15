@@ -15,34 +15,46 @@
 	</userpaths>
 	<libpaths/>
 	<files>
+		<group name="MLib">
+			<file>MAlerts.cpp</file>
+			<file>MClipboard.cpp</file>
+			<file>MColor.cpp</file>
+			<file>MController.cpp</file>
+			<file>MDevice.cpp</file>
+			<file>MDialog.cpp</file>
+			<file>MDocument.cpp</file>
+			<file>MDocWindow.cpp</file>
+			<file>MError.cpp</file>
+			<file>MFile.cpp</file>
+			<file>MHandler.cpp</file>
+			<file>MMenu.cpp</file>
+			<file>MPreferences.cpp</file>
+			<file>MPrinter.cpp</file>
+			<file>MResources.cpp</file>
+			<file>MSaverMixin.cpp</file>
+			<file>MStrings.cpp</file>
+			<file>MSound.cpp</file>
+			<file>MTreeModelInterface.cpp</file>
+			<file>MUnicode.cpp</file>
+			<file>MUtils.cpp</file>
+			<file>MView.cpp</file>
+			<file>MWindow.cpp</file>
+		</group>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
 			<file>MAcceleratorTable.cpp</file>
-			<file>MController.cpp</file>
 			<file>MDocClosedNotifier.cpp</file>
-			<file>MDocument.cpp</file>
 			<file>MTextBuffer.cpp</file>
 			<file>MTextController.cpp</file>
 			<file>MTextDocument.cpp</file>
 			<file>MTextView.cpp</file>
-			<file>MMenu.cpp</file>
-			<file>MHandler.cpp</file>
 			<group name="Windows">
 				<file>MEditWindow.cpp</file>
-				<file>MDocWindow.cpp</file>
-				<file>MWindow.cpp</file>
 				<file>MMessageWindow.cpp</file>
 			</group>
-			<file>MView.cpp</file>
-			<file>MTreeModelInterface.cpp</file>
-			<file>MColor.cpp</file>
 			<file>MGlobals.cpp</file>
-			<file>MDevice.cpp</file>
-			<file>MPrinter.cpp</file>
-			<file>MPreferences.cpp</file>
 			<group name="Dialogs">
 				<file>MQuotedRewrapDialog.cpp</file>
-				<file>MDialog.cpp</file>
 				<file>MDiffWindow.cpp</file>
 				<file>MFindAndOpenDialog.cpp</file>
 				<file>MFindDialog.cpp</file>
@@ -50,13 +62,7 @@
 				<file>MMarkMatchingDialog.cpp</file>
 				<file>MPrefsDialog.cpp</file>
 			</group>
-			<file>MUnicode.cpp</file>
-			<file>MUtils.cpp</file>
 			<file>MDiff.cpp</file>
-			<file>MAlerts.cpp</file>
-			<file>MStrings.cpp</file>
-			<file>MResources.cpp</file>
-			<file>MSound.cpp</file>
 			<group name="Project">
 				<file>MProject.cpp</file>
 				<file>MProjectTree.cpp</file>
@@ -82,23 +88,9 @@
 				<file>MLanguageTeX.cpp</file>
 				<file>MLanguageXML.cpp</file>
 			</group>
-			<file>MUrl.cpp</file>
-			<file>MFile.cpp</file>
-			<file>MError.cpp</file>
-			<file>MClipboard.cpp</file>
-			<file>MSaverMixin.cpp</file>
 			<file>MShell.cpp</file>
 			<file>MPkgConfig.cpp</file>
 			<file>MSelection.cpp</file>
-			<file>MFileLoader.cpp</file>
-			<group name="SFTP">
-				<file>MAuthDialog.cpp</file>
-				<file>MKnownHosts.cpp</file>
-				<file>MSftpChannel.cpp</file>
-				<file>MSshAgent.cpp</file>
-				<file>MSshChannel.cpp</file>
-				<file>MSshConnection.cpp</file>
-			</group>
 		</group>
 		<group name="zeep">
 			<file>exception.cpp</file>
@@ -116,7 +108,6 @@
 			<file>libgthread-2.0.a</file>
 			<file>libuuid.a</file>
 			<link>z</link>
-			<link>cryptopp</link>
 		</group>
 	</files>
 	<resources resource-dir="Resources">
@@ -130,6 +121,7 @@
 			<resource>Alerts/discard-changes-alert.xml</resource>
 			<resource>Alerts/replace-all-alert.xml</resource>
 			<resource>Alerts/read-only-alert.xml</resource>
+			<resource>Alerts/error-alert.xml</resource>
 			<resource>Alerts/exception-alert.xml</resource>
 			<resource>Alerts/stop-building-alert.xml</resource>
 			<resource>Alerts/unknown-host-alert.xml</resource>

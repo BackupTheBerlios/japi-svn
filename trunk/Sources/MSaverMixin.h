@@ -6,9 +6,9 @@
 #ifndef MSAVERMIXIN_H
 #define MSAVERMIXIN_H
 
-#include "MUrl.h"
 #include "MCallbacks.h"
 
+class MFile;
 class MWindow;
 
 enum MCloseReason {
@@ -43,7 +43,7 @@ class MSaverMixin
 	virtual bool		SaveDocument() = 0;
 	virtual void		RevertDocument() = 0;
 	virtual bool		DoSaveAs(
-							const MUrl&			inPath) = 0;
+							const MFile&		inPath) = 0;
 	virtual void		CloseAfterNavigationDialog() = 0;
 
 	virtual bool		OnClose();

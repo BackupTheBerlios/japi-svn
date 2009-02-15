@@ -182,14 +182,14 @@ void MProjectWindow::Initialize(
 	bool useState = false;
 	MProjectState state = {};
 	
-	if (Preferences::GetInteger("save state", 1))
-	{
-		fs::path file = inDocument->GetURL().GetPath();
-		
-		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-		
-		useState = static_cast<uint32>(r) == kMProjectStateSize;
-	}
+//	if (Preferences::GetInteger("save state", 1))
+//	{
+//		fs::path file = inDocument->GetFile().GetPath();
+//		
+//		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+//		
+//		useState = static_cast<uint32>(r) == kMProjectStateSize;
+//	}
 	
 	if (useState)
 	{
@@ -240,7 +240,7 @@ void MProjectWindow::InvokeFileRow(
 		if (file != nil)
 		{
 			fs::path p = file->GetPath();
-			gApp->OpenOneDocument(MUrl(p));
+			gApp->OpenOneDocument(MFile(p));
 		}
 	}
 }
@@ -272,7 +272,7 @@ void MProjectWindow::InvokeResourceRow(
 				system(cmd.c_str());
 			}
 			else
-				gApp->OpenOneDocument(MUrl(p));
+				gApp->OpenOneDocument(MFile(p));
 		}
 	}
 }
@@ -517,29 +517,29 @@ bool MProjectWindow::DoClose()
 //	SaveState
 
 void MProjectWindow::SaveState()
-{
-	fs::path file = mProject->GetURL().GetPath();
-	MProjectState state = { };
-
-	(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-	
-	state.Swap();
-
-	state.mSelectedTarget = mProject->GetSelectedTarget();
-
-	MGtkNotebook book(GetWidget(kNoteBookID));
-	state.mSelectedPanel = book.GetPage();
-
-	MRect r;
-	GetWindowPosition(r);
-	state.mWindowPosition[0] = r.x;
-	state.mWindowPosition[1] = r.y;
-	state.mWindowSize[0] = r.width;
-	state.mWindowSize[1] = r.height;
-
-	state.Swap();
-	
-	write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+{//
+//	fs::path file = mProject->GetFile().GetPath();
+//	MProjectState state = { };
+//
+//	(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+//	
+//	state.Swap();
+//
+//	state.mSelectedTarget = mProject->GetSelectedTarget();
+//
+//	MGtkNotebook book(GetWidget(kNoteBookID));
+//	state.mSelectedPanel = book.GetPage();
+//
+//	MRect r;
+//	GetWindowPosition(r);
+//	state.mWindowPosition[0] = r.x;
+//	state.mWindowPosition[1] = r.y;
+//	state.mWindowSize[0] = r.width;
+//	state.mWindowSize[1] = r.height;
+//
+//	state.Swap();
+//	
+//	write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
 }
 
 // ---------------------------------------------------------------------------
@@ -735,7 +735,7 @@ void MProjectWindow::EditedResourceGroupName(
 
 void MProjectWindow::AddFilesToProject()
 {
-	vector<MUrl> urls;
+	vector<MFile> urls;
 	if (ChooseFiles(true, urls))
 	{
 		MProjectTree* tree = nil;
@@ -795,7 +795,7 @@ void MProjectWindow::AddFilesToProject()
 		{
 			vector<string> files;
 			transform(urls.begin(), urls.end(), back_inserter(files),
-				boost::bind(&MUrl::str, _1, false));
+				boost::bind(&MFile::GetURI, _1));
 			
 			tree->AddFiles(files, group, index);
 			

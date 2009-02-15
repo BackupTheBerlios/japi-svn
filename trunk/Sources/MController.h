@@ -21,6 +21,7 @@
 class MDocument;
 class MWindow;
 class MDocWindow;
+class MFile;
 
 class MController : public MHandler, public MSaverMixin
 {
@@ -45,7 +46,7 @@ class MController : public MHandler, public MSaverMixin
 	void				RevertDocument();
 
 	bool				DoSaveAs(
-							const MUrl&		inURL);
+							const MFile&	inURL);
 
 	void				CloseAfterNavigationDialog();
 

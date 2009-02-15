@@ -2,19 +2,22 @@
 #define MFILELOADER_H
 
 #include <string>
-#include "MP2PEvents.h"
+#include "MCallbacks.h"
 
 class MFileLoader
 {
   public:
 					MFileLoader(
-						const char*		inURI);
+						GFile*					inFile);
 
 	virtual			~MFileLoader();
 	
-	MEventOut<void(float)>				eProgress;
-	MEventOut<void(std::string)>		eError;
-	MEventOut<void(const char*,uint32)>	eLoaded;
+	MCallback<void(float, const std::string&)>	eProgress;
+	MCallback<void(const std::string&)>			eError;
+	MCallback<void(const char*,uint32)>			eLoaded;
+	
+	double			GetModDate() const;
+	bool			ReadOnly() const;
 
   private:
 	struct MFileLoaderImpl*				mImpl;

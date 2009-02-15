@@ -140,21 +140,21 @@ bool MDiffWindow::UpdateCommandStatus(
 void MDiffWindow::ChooseFile(int inFileNr)
 {
 	string currentFolder = gApp->GetCurrentFolder();
-	MUrl url;
+	MFile url;
 	
 	if (inFileNr == 1)
 	{
 		if (mDoc1 != nil)
-			url = mDoc1->GetURL();
+			url = mDoc1->GetFile();
 		else if (mDir1Inited)
-			url = MUrl(mDir1);
+			url = MFile(mDir1);
 	}
 	else if (inFileNr == 2)
 	{
 		if (mDoc2 != nil)
-			url = mDoc2->GetURL();
+			url = mDoc2->GetFile();
 		else if (mDir2Inited)
-			url = MUrl(mDir2);
+			url = MFile(mDir2);
 	}
 
 	try
@@ -165,7 +165,7 @@ void MDiffWindow::ChooseFile(int inFileNr)
 		{
 			fs::path dir = url.GetPath();
 			
-			if (ChooseDirectory(dir) and is_directory(dir))
+			if (ChooseDirectory(dir) and fs::is_directory(dir))
 				SetDirectory(inFileNr, dir);
 			else
 				gApp->SetCurrentFolder(currentFolder);
@@ -223,7 +223,7 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 		if (mDoc1 != nil)
 		{
 			AddRoute(eDocumentClosed, mDoc1->eDocumentClosed);
-			SetButtonTitle(1, inDocument->GetURL().GetFileName());
+			SetButtonTitle(1, inDocument->GetFile().GetFileName());
 		}
 		else
 			SetButtonTitle(1, _("File 1"));
@@ -238,7 +238,7 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 		if (mDoc2 != nil)
 		{
 			AddRoute(eDocumentClosed, mDoc2->eDocumentClosed);
-			SetButtonTitle(2, inDocument->GetURL().GetFileName());
+			SetButtonTitle(2, inDocument->GetFile().GetFileName());
 		}
 		else
 			SetButtonTitle(2, _("File 2"));
@@ -432,7 +432,7 @@ void MDiffWindow::RecalculateDiffsForDirs()
 	{
 		if (ai->leaf() == bi->leaf())
 		{
-			if (FilesDiffer(MUrl(*ai), MUrl(*bi)))
+			if (FilesDiffer(MFile(*ai), MFile(*bi)))
 				AddDirDiff(ai->leaf(), 0);
 
 			++ai;
@@ -499,26 +499,28 @@ void MDiffWindow::AddDirDiff(
 //	MDiffWindow::FilesDiffer
 
 bool MDiffWindow::FilesDiffer(
-	const MUrl&		inA,
-	const MUrl&		inB) const
+	const MFile&		inA,
+	const MFile&		inB) const
 {
 	vector<uint32> a, b;
 	
 	MTextDocument* doc;
 	
-	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(inA))) != nil)
+	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForFile(inA))) != nil)
 		doc->HashLines(a);
 	else
 	{
-		auto_ptr<MTextDocument> d(new MTextDocument(&inA));
+		auto_ptr<MTextDocument> d(new MTextDocument(inA));
+		d->DoLoad();
 		d->HashLines(a);
 	}
 	
-	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForURL(inB))) != nil)
+	if ((doc = dynamic_cast<MTextDocument*>(MDocument::GetDocumentForFile(inB))) != nil)
 		doc->HashLines(b);
 	else
 	{
-		auto_ptr<MTextDocument> d(new MTextDocument(&inB));
+		auto_ptr<MTextDocument> d(new MTextDocument(inB));
+		d->DoLoad();
 		d->HashLines(b);
 	}
 	
@@ -575,9 +577,9 @@ void MDiffWindow::DiffInvoked(
 				auto_ptr<MDiffWindow> w(new MDiffWindow);
 				
 				w->SetDocument(1,
-					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(mDir1 / diff.name))));
+					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MFile(mDir1 / diff.name))));
 				w->SetDocument(2,
-					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MUrl(mDir2 / diff.name))));
+					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MFile(mDir2 / diff.name))));
 				
 				w->Select();
 				
@@ -586,11 +588,11 @@ void MDiffWindow::DiffInvoked(
 			}
 			
 			case 1:
-				gApp->OpenOneDocument(MUrl(mDir1 / diff.name));
+				gApp->OpenOneDocument(MFile(mDir1 / diff.name));
 				break;
 			
 			case 2:
-				gApp->OpenOneDocument(MUrl(mDir2 / diff.name));
+				gApp->OpenOneDocument(MFile(mDir2 / diff.name));
 				break;
 		}
 	}

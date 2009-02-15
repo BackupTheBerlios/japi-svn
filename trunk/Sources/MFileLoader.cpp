@@ -110,7 +110,7 @@ MFileLoaderImpl::MFileLoaderImpl(
 {
 	mFile = g_file_new_for_uri(inURI);
 	
-	mLoader->eProgress(0.f);
+	mLoader->eProgress(0.f, "start");
 
 	mCancellable = g_cancellable_new();
 	
@@ -261,7 +261,7 @@ void MFileLoaderImpl::AsyncRead(
 		
 		mBytesRead += read;
 		
-		mLoader->eProgress(float(mBytesRead) / mExpectedFileSize);
+		mLoader->eProgress(float(mBytesRead) / mExpectedFileSize, "Receiving data");
 		
 		ReadChunk();
 	}
@@ -278,4 +278,25 @@ MFileLoader::MFileLoader(
 MFileLoader::~MFileLoader()
 {
 	delete mImpl;
+}
+
+double MFileLoader::GetModDate() const
+{
+	GTimeVal tv = {};
+	
+	if (mImpl->mFileInfo != nil)
+		g_file_info_get_modification_time(mImpl->mFileInfo, &tv);
+		
+	return double(tv.tv_sec) + tv.tv_usec / 1e6;
+}
+
+bool MFileLoader::ReadOnly() const
+{
+	bool result = true;
+
+	if (mImpl->mFileInfo != nil)
+		result = g_file_info_get_attribute_boolean(mImpl->mFileInfo,
+			G_FILE_ATTRIBUTE_FILESYSTEM_READONLY);
+	
+	return result;
 }

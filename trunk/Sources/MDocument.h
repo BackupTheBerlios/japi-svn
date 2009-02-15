@@ -13,7 +13,7 @@
 #define MDOCUMENT_H
 
 #include "MP2PEvents.h"
-#include "MUrl.h"
+#include "MFile.h"
 
 class MDocClosedNotifier;
 class MController;
@@ -24,34 +24,33 @@ class MDocument
 {
   public:
 	explicit			MDocument(
-							const MUrl*			inURL);
-
-	explicit			MDocument(
-							const fs::path&		inPath);
+							const MFile&		inFile);
 
 	virtual				~MDocument();
 
 	virtual void		SetFileNameHint(
 							const std::string&	inName);
 
+	virtual void		DoLoad();
+
 	virtual bool		DoSave();
 
 	virtual bool		DoSaveAs(
-							const MUrl&			inFile);
+							const MFile&		inFile);
 
 	virtual void		RevertDocument();
 	
-	bool				IsSpecified() const					{ return mSpecified; }
+	bool				IsSpecified() const					{ return mFile.IsValid(); }
 
-	MUrl				GetURL() const						{ return mURL; }
+	const MFile&		GetFile() const						{ return mFile; }
 
 	bool				UsesFile(
-							const MUrl&			inFileRef) const;
+							const MFile&		inFile) const;
 	
-	static MDocument*	GetDocumentForURL(
-							const MUrl&			inURL);
+	static MDocument*	GetDocumentForFile(
+							const MFile&		inFile);
 
-	bool				IsReadOnly() const					{ return mReadOnly; }
+	bool				IsReadOnly() const					{ return mFile.ReadOnly(); }
 	
 	virtual void		AddNotifier(
 							MDocClosedNotifier&	inNotifier,
@@ -101,23 +100,25 @@ class MDocument
 							uint32			inItemIndex,
 							uint32			inModifiers);
 
-	MEventOut<void(bool)>				eModifiedChanged;
-	MEventOut<void(MDocument*)>			eDocumentClosed;
-	MEventOut<void(MDocument*, const MUrl&)>
-										eFileSpecChanged;
-	MEventOut<void(const MUrl&)>		eBaseDirChanged;
+	MEventOut<void(bool)>					eModifiedChanged;
+	MEventOut<void(MDocument*)>				eDocumentClosed;
+	MEventOut<void(MDocument*, const MFile&)>
+											eFileSpecChanged;
+	MEventOut<void(const fs::path&)>		eBaseDirChanged;
 
   protected:
 
-						MDocument();
-
 	virtual void		CloseDocument();
 
+	// Asynchronous IO support
 	virtual void		ReadFile(
 							std::istream&		inFile) = 0;
 
 	virtual void		WriteFile(
 							std::ostream&		inFile) = 0;
+
+	virtual void		IOProgress(float inProgress, const std::string&);
+	virtual void		IOError(const std::string& inError);
 
 	typedef std::list<MController*>			MControllerList;
 	typedef std::list<MDocClosedNotifier>	MDocClosedNotifierList;
@@ -125,14 +126,15 @@ class MDocument
 	MControllerList		mControllers;
 	MDocClosedNotifierList
 						mNotifiers;
-	MUrl				mURL;
-	double				mFileModDate;
-	bool				mSpecified;
-	bool				mReadOnly;
+	MFile				mFile;
+	std::string			mFileNameHint;
 	bool				mWarnedReadOnly;
 	bool				mDirty;
 
   private:
+	MFileLoader*		mFileLoader;
+	MFileSaver*			mFileSaver;
+
 	MDocument*			mNext;
 	static MDocument*	sFirst;
 };

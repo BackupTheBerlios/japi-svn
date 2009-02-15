@@ -13,7 +13,7 @@
 #include "MCallbacks.h"
 
 class MHandler;
-class MUrl;
+class MFile;
 
 struct MMenuItem;
 typedef std::list<MMenuItem*>	MMenuItemList;
@@ -60,7 +60,7 @@ class MMenu
 
 	bool			GetRecentItem(
 						uint32				inIndex,
-						MUrl&				outURL) const;
+						MFile&				outURL) const;
 
 	void			SetTarget(
 						MHandler*			inHandler);

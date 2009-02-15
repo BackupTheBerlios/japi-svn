@@ -21,11 +21,11 @@ class MePubDocument : public MDocument
 						MePubDocument();
 
 	explicit			MePubDocument(
-							const fs::path&		inProjectFile);
+							const MFile&		inProjectFile);
 
-						MePubDocument(
-							const fs::path&		inParentDir,
-							const std::string&	inName);
+//						MePubDocument(
+//							const fs::path&		inParentDir,
+//							const std::string&	inName);
 
 	virtual				~MePubDocument();
 

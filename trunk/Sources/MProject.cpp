@@ -85,7 +85,7 @@ MProject* MProject::Instance()
 }
 
 MProject::MProject(
-	const fs::path&		inProjectFile)
+	const MFile&		inProjectFile)
 	: MDocument(inProjectFile)
 	, eProjectCreateFileItem(this, &MProject::CreateFileItem)
 	, eProjectCreateResourceItem(this, &MProject::CreateResourceItem)
@@ -93,7 +93,7 @@ MProject::MProject(
 	, eProjectItemRemoved(this, &MProject::ProjectItemMoved)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
-	, mProjectFile(inProjectFile)
+	, mProjectFile(inProjectFile.GetPath())
 	, mProjectDir(mProjectFile.branch_path())
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
@@ -106,42 +106,10 @@ MProject::MProject(
 
 	if (gApp != nil)
 		AddRoute(gApp->eIdle, ePoll);
-	
-	fs::ifstream file(mProjectFile, ios::binary);
-	if (not file.is_open())
-		THROW(("Could not open project file %s", mProjectFile.string().c_str()));
-	ReadFile(file);
 }
 
-//MProject::MProject(
-//	const fs::path&		inParentDir,
-//	const std::string&	inName,
-//	const std::string&	inTemplate)
-//	: MDocument(inProjectFile)
-//	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
-//	, ePoll(this, &MProject::Poll)
-//	, mProjectFile(inProjectFile->GetPath())
-//	, mProjectDir(mProjectFile.branch_path())
-//	, mProjectItems("", nil)
-//	, mPackageItems("", nil)
-//	, mStdErrWindow(nil)
-//	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
-//	, mCurrentJob(nil)
-//{
-//    LIBXML_TEST_VERSION
-//
-//	AddRoute(gApp->eIdle, ePoll);
-//	
-//	
-//	
-//	fs::ifstream file(mProjectFile, ios::binary);
-//	if (not file.is_open())
-//		THROW(("Could not open project file %s", mProjectFile.string().c_str()));
-//	ReadFile(file);
-//}
-
 // ---------------------------------------------------------------------------
-//	MProject::MProject
+//	MProject::~MProject
 
 MProject::~MProject()
 {
@@ -1431,10 +1399,10 @@ void MProject::Preprocess(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = new MTextDocument(nil);
+	MTextDocument* output = new MTextDocument(MFile());
 	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
 	
-	SetCallBack(job->eStdOut, output, &MTextDocument::StdOut);
+	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
 
 	StartJob(job);
@@ -1469,10 +1437,10 @@ void MProject::Disassemble(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = new MTextDocument(nil);
+	MTextDocument* output = new MTextDocument(MFile());
 	output->SetFileNameHint(inFile.leaf() + " # disassembled");
 	
-	SetCallBack(job->eStdOut, output, &MTextDocument::StdOut);
+	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
 
 	StartJob(job);
@@ -1918,7 +1886,7 @@ void MProject::CreateFileItem(
 	MProjectGroup*		inGroup,
 	MProjectItem*&		outItem)
 {
-	MUrl url(inFile);
+	MFile url(inFile);
 	if (not url.IsLocal())
 		THROW(("You can only add local files to a project"));
 	
@@ -1937,7 +1905,7 @@ void MProject::CreateFileItem(
 		while (iter.Next(p))
 		{
 			MProjectItem* item = nil;
-			CreateFileItem(MUrl(p).str(), group, item);
+			CreateFileItem(p.string(), group, item);
 			if (item != nil)
 			{
 				group->AddProjectItem(item, index);
@@ -2006,7 +1974,7 @@ void MProject::CreateResourceItem(
 	MProjectGroup*		inGroup,
 	MProjectItem*&		outItem)
 {
-	MUrl url(inFile);
+	MFile url(inFile);
 	if (not url.IsLocal())
 		THROW(("You can only add local files to a project"));
 	
@@ -2025,7 +1993,7 @@ void MProject::CreateResourceItem(
 		while (iter.Next(p))
 		{
 			MProjectItem* item = nil;
-			CreateResourceItem(MUrl(p).str(), group, item);
+			CreateResourceItem(p.string(), group, item);
 			if (item != nil)
 			{
 				group->AddProjectItem(item, index);

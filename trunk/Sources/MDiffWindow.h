@@ -80,8 +80,8 @@ class MDiffWindow : public MDialog
 							uint32			inStatus);
 
 	bool				FilesDiffer(
-							const MUrl&		inA,
-							const MUrl&		inB) const;
+							const MFile&		inA,
+							const MFile&		inB) const;
 	
 	void				ArrangeWindows();
 

@@ -193,14 +193,14 @@ bool MJapieApp::ProcessCommand(
 		
 		case cmd_OpenTemplate:
 			if (inModifiers & GDK_CONTROL_MASK)
-				OpenOneDocument(MUrl(gTemplatesDir / inMenu->GetItemLabel(inItemIndex)));
+				OpenOneDocument(MFile(gTemplatesDir / inMenu->GetItemLabel(inItemIndex)));
 			else
 				DoOpenTemplate(inMenu->GetItemLabel(inItemIndex));
 			break;
 		
 		case cmd_ApplyScript:
 		{
-			MUrl url(gScriptsDir / inMenu->GetItemLabel(inItemIndex));
+			MFile url(gScriptsDir / inMenu->GetItemLabel(inItemIndex));
 			OpenOneDocument(url);
 			break;
 		}
@@ -324,7 +324,7 @@ void MJapieApp::UpdateWindowMenu(
 			
 			if (doc->IsSpecified())
 			{
-				const MUrl& url = doc->GetURL();
+				const MFile& url = doc->GetFile();
 				
 				if (not url.IsLocal())
 					label += url.GetScheme() + ':';
@@ -406,8 +406,8 @@ void MJapieApp::RunEventLoop()
 	
 	if (Preferences::GetInteger("reopen project", 1))
 	{
-		fs::path pp = Preferences::GetString("last project", "");
-		if (fs::exists(pp))
+		MFile pp(Preferences::GetString("last project", ""));
+		if (pp.IsLocal() and pp.Exists())
 			OpenProject(pp);
 	}
 	
@@ -546,7 +546,7 @@ void MJapieApp::DoCloseAll(
 			if (controller != nil)
 				(void)controller->TryCloseDocument(inAction);
 			else
-				cerr << _("Weird, document without controller: ") << doc->GetURL() << endl;
+				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
 		}
 		
 		doc = next;
@@ -625,7 +625,7 @@ MDocWindow* MJapieApp::DisplayDocument(
 
 void MJapieApp::DoNew()
 {
-	MDocument*	doc = new MTextDocument(nil);
+	MDocument*	doc = new MTextDocument(MFile());
 	DisplayDocument(doc);
 }
 
@@ -657,8 +657,11 @@ void MJapieApp::DoNewProject()
 		
 		THROW_IF_NIL((uri));
 		
-		MUrl url(uri);
+		MFile url(uri);
 		g_free(uri);
+		
+		if (not url.IsLocal())
+			THROW(("Projects can only be created on local file systems, sorry"));
 
 		mCurrentFolder = 
 			gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
@@ -699,7 +702,7 @@ void MJapieApp::DoNewProject()
 		srcfile.write(txt, length);
 		srcfile.close();
 		
-		OpenProject(projectFile);
+		OpenProject(MFile(projectFile));
 	}
 	
 	gtk_widget_destroy(dialog);
@@ -724,13 +727,13 @@ void MJapieApp::SetCurrentFolder(
 
 void MJapieApp::DoOpen()
 {
-	vector<MUrl> urls;
+	vector<MFile> urls;
 	
 	MDocument* doc = nil;
 	
 	if (ChooseFiles(false, urls))
 	{
-		for (vector<MUrl>::iterator url = urls.begin(); url != urls.end(); ++url)
+		for (vector<MFile>::iterator url = urls.begin(); url != urls.end(); ++url)
 			doc = OpenOneDocument(*url);
 	}
 	
@@ -742,21 +745,24 @@ void MJapieApp::DoOpen()
 //	OpenOneDocument
 
 MDocument* MJapieApp::OpenOneDocument(
-	const MUrl&			inFileRef)
+	const MFile&			inFileRef)
 {
 	if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
 		THROW(("Cannot open a directory"));
 	
-	MDocument* doc = MDocument::GetDocumentForURL(inFileRef);
+	MDocument* doc = MDocument::GetDocumentForFile(inFileRef);
 	
 	if (doc == nil)
 	{
-		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef.GetPath()))
-			OpenProject(inFileRef.GetPath());
-		else if (inFileRef.IsLocal() and FileNameMatches("*.epub", inFileRef.GetPath()))
-			OpenEPub(inFileRef.GetPath());
+		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef))
+			OpenProject(inFileRef);
+		else if (inFileRef.IsLocal() and FileNameMatches("*.epub", inFileRef))
+			OpenEPub(inFileRef);
 		else
-			doc = new MTextDocument(&inFileRef);
+		{
+			doc = new MTextDocument(inFileRef);
+			doc->DoLoad();
+		}
 	}
 	
 	if (doc != nil)
@@ -772,7 +778,7 @@ MDocument* MJapieApp::OpenOneDocument(
 //	OpenProject
 
 void MJapieApp::OpenProject(
-	const fs::path&		inPath)
+	const MFile&		inPath)
 {
 	auto_ptr<MProject> project(new MProject(inPath));
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
@@ -781,14 +787,14 @@ void MJapieApp::OpenProject(
 	w->Show();
 	w.release();
 
-	AddToRecentMenu(MUrl(inPath));
+	AddToRecentMenu(MFile(inPath));
 }
 
 // ---------------------------------------------------------------------------
 //	OpenEPub
 
 void MJapieApp::OpenEPub(
-	const fs::path&		inPath)
+	const MFile&		inPath)
 {
 	try
 	{
@@ -799,7 +805,7 @@ void MJapieApp::OpenEPub(
 		w->Show();
 		w.release();
 	
-		AddToRecentMenu(MUrl(inPath));
+		AddToRecentMenu(MFile(inPath));
 	}
 	catch (exception& e)
 	{
@@ -807,12 +813,12 @@ void MJapieApp::OpenEPub(
 	}
 }
 
-void MJapieApp::AddToRecentMenu(const MUrl& inFileRef)
+void MJapieApp::AddToRecentMenu(const MFile& inFileRef)
 {
-	if (gtk_recent_manager_has_item(mRecentMgr, inFileRef.str().c_str()))
-		gtk_recent_manager_remove_item(mRecentMgr, inFileRef.str().c_str(), nil);
+	if (gtk_recent_manager_has_item(mRecentMgr, inFileRef.GetURI().c_str()))
+		gtk_recent_manager_remove_item(mRecentMgr, inFileRef.GetURI().c_str(), nil);
 	
-	gtk_recent_manager_add_item(mRecentMgr, inFileRef.str().c_str());
+	gtk_recent_manager_add_item(mRecentMgr, inFileRef.GetURI().c_str());
 }
 
 void MJapieApp::DoOpenTemplate(
@@ -829,7 +835,7 @@ void MJapieApp::DoOpenTemplate(
 	boost::algorithm::replace_all(text, "$name$", GetUserName(false));
 	boost::algorithm::replace_all(text, "$shortname$", GetUserName(true));
 	
-	MTextDocument* doc = new MTextDocument(nil);
+	MTextDocument* doc = new MTextDocument(MFile());
 	doc->SetText(text.c_str(), text.length());
 	doc->SetFileNameHint(inTemplate);
 	DisplayDocument(doc);
@@ -851,7 +857,7 @@ void MJapieApp::ShowWorksheet()
 		file.write(default_text.c_str(), default_text.length());
 	}
 		
-	MDocument* doc = OpenOneDocument(MUrl(worksheet));
+	MDocument* doc = OpenOneDocument(MFile(worksheet));
 	if (doc != nil and dynamic_cast<MTextDocument*>(doc) != nil)
 		MTextDocument::SetWorksheet(static_cast<MTextDocument*>(doc));
 }
@@ -965,16 +971,16 @@ void MJapieApp::ProcessSocketMessages()
 				{
 					case 'open':
 						memcpy(&lineNr, buffer, sizeof(lineNr));
-						doc = gApp->OpenOneDocument(MUrl(buffer + sizeof(lineNr)));
+						doc = gApp->OpenOneDocument(MFile(buffer + sizeof(lineNr)));
 						break;
 					
 					case 'new ':
-						doc = new MTextDocument(nil);
+						doc = new MTextDocument(MFile());
 						break;
 					
 					case 'data':
 						readStdin = true;
-						doc = new MTextDocument(nil);
+						doc = new MTextDocument(MFile());
 						break;
 				}
 				
@@ -1024,7 +1030,7 @@ int OpenSocketToServer()
 }
 
 bool ForkServer(
-	const vector<pair<int32,MUrl> >&
+	const vector<pair<int32,MFile> >&
 						inDocs,
 	bool				inReadStdin)
 {
@@ -1060,10 +1066,10 @@ bool ForkServer(
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (vector<pair<int32,MUrl> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (vector<pair<int32,MFile> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
 			int32 lineNr = d->first;
-			string url = d->second.str();
+			string url = d->second.GetURI();
 			
 			msg.length = url.length() + sizeof(lineNr);
 			(void)write(sockfd, &msg, sizeof(msg));
@@ -1240,7 +1246,7 @@ int main(int argc, char* argv[])
 
 		fs::path::default_name_check(fs::no_check);
 
-		vector<pair<int32,MUrl> > docs;
+		vector<pair<int32,MFile> > docs;
 		
 		int c;
 		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:vt")) != -1)
@@ -1286,7 +1292,7 @@ int main(int argc, char* argv[])
 			if (optind >= argc)
 				THROW(("You should specify a project file to use for building"));
 			
-			MProject project(fs::system_complete(argv[optind]));
+			MProject project(MFile(g_file_new_for_commandline_arg(argv[optind])));
 			project.SelectTarget(target);
 			if (project.Make(false))
 				cout << "Build successful, " << target << " is up-to-date" << endl;
@@ -1312,17 +1318,17 @@ int main(int argc, char* argv[])
 				a.substr(0, 7) == "sftp://" or
 				a.substr(0, 6) == "ssh://")
 			{
-				MUrl url(a);
+				MFile url(a);
 				
-				if (url.GetScheme() == "ssh")
-					url.SetScheme("sftp");
+//				if (url.GetScheme() == "ssh")
+//					url.SetScheme("sftp");
 				
 				docs.push_back(make_pair(lineNr, url));
 				lineNr = -1;
 			}
 			else
 			{
-				docs.push_back(make_pair(lineNr, MUrl(fs::system_complete(a))));
+				docs.push_back(make_pair(lineNr, MFile(fs::system_complete(a))));
 				lineNr = -1;
 			}
 		}
@@ -1352,7 +1358,7 @@ int main(int argc, char* argv[])
 			
 			if (fork == false and not docs.empty())
 			{
-				for (vector<pair<int32,MUrl> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
+				for (vector<pair<int32,MFile> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
 				{
 					try
 					{

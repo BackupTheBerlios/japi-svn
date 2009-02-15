@@ -531,14 +531,14 @@ void MePubWindow::Initialize(
 	bool useState = false;
 	MePubState state = {};
 	
-	if (Preferences::GetInteger("save state", 1))
-	{
-		fs::path file = inDocument->GetURL().GetPath();
-		
-		ssize_t r = read_attribute(file, kJapieePubState, &state, kMePubStateSize);
-		
-		useState = static_cast<uint32>(r) == kMePubStateSize;
-	}
+//	if (Preferences::GetInteger("save state", 1))
+//	{
+//		fs::path file = inDocument->GetFile().GetPath();
+//		
+//		ssize_t r = read_attribute(file, kJapieePubState, &state, kMePubStateSize);
+//		
+//		useState = static_cast<uint32>(r) == kMePubStateSize;
+//	}
 	
 	if (useState)
 	{
@@ -600,30 +600,30 @@ bool MePubWindow::DoClose()
 
 void MePubWindow::SaveState()
 {
-	try
-	{
-		fs::path file = mEPub->GetURL().GetPath();
-		MePubState state = { };
-
-		(void)read_attribute(file, kJapieePubState, &state, kMePubStateSize);
-		
-		state.Swap();
-
-		MGtkNotebook book(GetWidget(kNoteBookID));
-		state.mSelectedPanel = book.GetPage();
-
-		MRect r;
-		GetWindowPosition(r);
-		state.mWindowPosition[0] = r.x;
-		state.mWindowPosition[1] = r.y;
-		state.mWindowSize[0] = r.width;
-		state.mWindowSize[1] = r.height;
-
-		state.Swap();
-		
-		write_attribute(file, kJapieePubState, &state, kMePubStateSize);
-	}
-	catch (...) {}
+//	try
+//	{
+//		fs::path file = mEPub->GetFile().GetPath();
+//		MePubState state = { };
+//
+//		(void)read_attribute(file, kJapieePubState, &state, kMePubStateSize);
+//		
+//		state.Swap();
+//
+//		MGtkNotebook book(GetWidget(kNoteBookID));
+//		state.mSelectedPanel = book.GetPage();
+//
+//		MRect r;
+//		GetWindowPosition(r);
+//		state.mWindowPosition[0] = r.x;
+//		state.mWindowPosition[1] = r.y;
+//		state.mWindowSize[0] = r.width;
+//		state.mWindowSize[1] = r.height;
+//
+//		state.Swap();
+//		
+//		write_attribute(file, kJapieePubState, &state, kMePubStateSize);
+//	}
+//	catch (...) {}
 }
 
 bool MePubWindow::UpdateCommandStatus(
@@ -851,7 +851,8 @@ void MePubWindow::InvokeFileRow(
 				doc = di->second;
 			else
 			{
-				doc = new MTextDocument(mEPub, path);
+				doc = new MTextDocument(MFile());
+//				doc->SetEPubDoc(mEPub, path);
 				AddRoute(doc->eDocumentClosed, eDocumentClosed);
 				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
 				mOpenFiles[path] = doc;
@@ -878,7 +879,7 @@ void MePubWindow::TextDocClosed(
 
 void MePubWindow::TextDocFileSpecChanged(
 	MDocument*			inDocument,
-	const MUrl&			inURL)
+	const MFile&			inURL)
 {
 	MEPubTextDocMap::iterator i;
 	for (i = mOpenFiles.begin(); i != mOpenFiles.end(); ++i)

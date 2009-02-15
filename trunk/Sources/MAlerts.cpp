@@ -169,3 +169,24 @@ void DisplayError(
 	}
 }
 
+void DisplayError(
+	const string&		inErr)
+{
+	{
+		StOKToThrow ok;
+		PlaySound("error");
+	}
+	
+	try
+	{
+		DisplayAlert("error-alert", inErr.c_str());
+	}
+	catch (...)
+	{
+		GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+			GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, "%s", inErr.c_str());
+		gtk_dialog_run(GTK_DIALOG(dlg));
+		gtk_widget_destroy(dlg);
+	}
+}
+

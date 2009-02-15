@@ -168,7 +168,7 @@ bool MController::TryCloseDocument(
 			string name;	
 			
 			if (mDocument->IsSpecified())
-				name = mDocument->GetURL().GetFileName();
+				name = mDocument->GetFile().GetFileName();
 			else
 				name = mDocWindow->GetTitle();
 			
@@ -204,7 +204,7 @@ void MController::SaveDocumentAs()
 	string name;	
 	
 	if (mDocument->IsSpecified())
-		name = mDocument->GetURL().GetFileName();
+		name = mDocument->GetFile().GetFileName();
 	else
 		name = mDocWindow->GetTitle();
 	
@@ -216,7 +216,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	MSaverMixin::TryDiscardChanges(mDocument->GetURL().GetFileName(), mDocWindow);
+	MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mDocWindow);
 }
 
 bool MController::SaveDocument()
@@ -251,7 +251,7 @@ void MController::RevertDocument()
 }
 
 bool MController::DoSaveAs(
-	const MUrl&				inPath)
+	const MFile&				inPath)
 {
 	return mDocument->DoSaveAs(inPath);
 }

@@ -16,7 +16,7 @@
 #include "MMenu.h"
 #include "MWindow.h"
 #include "MAcceleratorTable.h"
-#include "MUrl.h"
+#include "MFile.h"
 #include "MStrings.h"
 #include "MResources.h"
 #include "MUtils.h"
@@ -189,7 +189,7 @@ void MMenuItem::RecentItemActivated()
 	
 	if (uri != nil)
 	{
-		MUrl url(uri);
+		MFile url(uri);
 
 		g_free(uri);
 
@@ -454,7 +454,7 @@ string MMenu::GetItemLabel(
 
 bool MMenu::GetRecentItem(
 	uint32				inIndex,
-	MUrl&				outURL) const
+	MFile&				outURL) const
 {
 	if (inIndex >= mItems.size())
 		THROW(("Item index out of range"));
@@ -472,7 +472,7 @@ bool MMenu::GetRecentItem(
 	
 	if (uri != nil)
 	{
-		outURL = MUrl(uri);
+		outURL = MFile(uri);
 		g_free(uri);
 		
 		result = true;

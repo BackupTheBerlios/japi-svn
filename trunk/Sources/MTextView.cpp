@@ -103,7 +103,7 @@ MTextView::MTextView(
 	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
 	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
 	
-//	SetCallBack(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
+//	SetCallback(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
 	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
 	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
 
@@ -1529,7 +1529,7 @@ bool MTextView::DragAccept(
 				if (file->length() == 0)
 					continue;
 				
-				MUrl url(*file);
+				MFile url(*file);
 				gApp->OpenOneDocument(url);
 			}
 			
