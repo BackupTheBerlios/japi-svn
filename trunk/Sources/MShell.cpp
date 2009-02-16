@@ -277,7 +277,7 @@ void MShellImp::ExecuteScript(
 void MShellImp::Poll(
 	double				inTime)
 {
-	char buffer[1024];
+	char buffer[10240];
 	int r;
 	
 	while (mStdOutFD >= 0)

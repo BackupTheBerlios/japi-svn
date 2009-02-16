@@ -3,7 +3,6 @@
 - ePub
 	- dublin core opties
 	- zoeken in alle ePub items
-	- 'Nieuwe ePub' menu item
 	- revert op ePub werkt nog niet?
 	- revert
 
@@ -42,10 +41,6 @@ Moet af:
 
 - clean up code na leaks test
 
-- SSH/SFTP afronden
-	- bug vissen uit 'hangen' van connectie
-	- connecten met NAS gaat mis
-
 - verbeteringen project
 	- optional attribuut van bibliotheken kunnen wijzigen
 	- 'touchen' van source files mogelijk maken
@@ -59,8 +54,6 @@ Leuk om te hebben:
 - print opties, print header
 
 - project templates
-
-- gio gaan gebruiken
 
 - overnemen muisklik afhandeling van
 	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c

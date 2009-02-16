@@ -41,6 +41,53 @@ const char kRemoteQueryAttributes[] = \
 	G_FILE_ATTRIBUTE_TIME_MODIFIED "," \
 	G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE;
 
+// reserved characters in URL's
+
+unsigned char kURLAcceptable[96] =
+{/* 0 1 2 3 4 5 6 7 8 9 A B C D E F */
+    0,0,0,0,0,0,0,0,0,0,7,6,0,7,7,4,		/* 2x   !"#$%&'()*+,-./	 */
+    7,7,7,7,7,7,7,7,7,7,0,0,0,0,0,0,		/* 3x  0123456789:;<=>?	 */
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,		/* 4x  @ABCDEFGHIJKLMNO  */
+    7,7,7,7,7,7,7,7,7,7,7,0,0,0,0,7,		/* 5X  PQRSTUVWXYZ[\]^_	 */
+    0,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,		/* 6x  `abcdefghijklmno	 */
+    7,7,7,7,7,7,7,7,7,7,7,0,0,0,0,0			/* 7X  pqrstuvwxyz{\}~	DEL */
+};
+
+inline char ConvertHex(
+	char		inChar)
+{
+	int	value = inChar - '0';
+
+	if (inChar >= 'A' and inChar <= 'F') {
+		value = inChar - 'A' + 10;
+	} else if (inChar >= 'a' and inChar <= 'f') {
+		value = inChar - 'a' + 10;
+	}
+
+	return char(value);
+}
+
+void URLEncode(
+	string&		ioPath)
+{
+	string path;
+	
+	swap(path, ioPath);
+	
+	for (unsigned int i = 0; i < path.length(); ++i)
+	{
+		unsigned char a = (unsigned char)path[i];
+		if (not (a >= 32 and a < 128 and (kURLAcceptable[a - 32] & 4)))
+		{
+			ioPath += '%';
+			ioPath += kHexChars[a >> 4];
+			ioPath += kHexChars[a & 15];
+		}
+		else
+			ioPath += path[i];
+	}
+}
+
 // ------------------------------------------------------------------
 //
 //  Three different implementations of extended attributes...
@@ -180,7 +227,7 @@ void MLocalFileLoader::DoLoad()
 	fs::path path(mFile.GetPath());
 
 	if (not fs::exists(path))
-		THROW(("File does not exist")); 
+		THROW(("File %s does not exist", path.string().c_str())); 
 	
 	double modTime = fs::last_write_time(path);
 	bool readOnly = false;
@@ -907,7 +954,9 @@ struct MPathImp : public MFileImp
 							
 	virtual std::string		GetURI() const
 							{
-								return GetScheme() + "://" + mPath.string();
+								string path = mPath.string();
+								URLEncode(path);
+								return GetScheme() + "://" + path;
 							}
 							
 	virtual fs::path		GetPath() const
@@ -995,48 +1044,72 @@ MFile::MFile(
 {
 }
 
-MFile::MFile(
-	const char*			inURI)
-	: mImpl(nil)
-	, mReadOnly(false)
-	, mModDate(0)
+namespace
 {
-	if (strncmp(inURI, "file://", 7) == 0)
-		mImpl = new MPathImp(fs::system_complete(inURI + 7));
-	else
-	{
-		GFile* file = g_file_new_for_uri(inURI);
-		if (g_file_has_uri_scheme(file, "file"))
-		{
-			fs::path path(g_file_get_path(file));
-			mImpl = new MPathImp(path);
-			g_object_unref(file);
-		}
-		else
-			mImpl = new MGFileImp(file);
-	}
-}
 
-MFile::MFile(
-	const string&		inURI)
-	: mImpl(nil)
-	, mReadOnly(false)
-	, mModDate(0)
+MFileImp* CreateFileImpForURI(
+	const std::string&	inURI)
 {
+	MFileImp* result = nil;
+	
 	if (ba::starts_with(inURI, "file://"))
-		mImpl = new MPathImp(fs::system_complete(inURI.substr(7)));
+	{
+		string path = inURI.substr(7);
+
+		vector<char> buf(path.length() + 1);
+		char* r = &buf[0];
+		
+		for (string::iterator p = path.begin(); p != path.end(); ++p)
+		{
+			char q = *p;
+	
+			if (q == '%' and ++p != path.end())
+			{
+				q = (char) (ConvertHex(*p) * 16);
+	
+				if (++p != path.end())
+					q = (char) (q + ConvertHex(*p));
+			}
+	
+			*r++ = q;
+		}
+		
+		path.assign(&buf[0], r);
+	
+		result = new MPathImp(fs::system_complete(path));
+	}
 	else
 	{
 		GFile* file = g_file_new_for_uri(inURI.c_str());
 		if (g_file_has_uri_scheme(file, "file"))
 		{
 			fs::path path(g_file_get_path(file));
-			mImpl = new MPathImp(path);
+			result = new MPathImp(path);
 			g_object_unref(file);
 		}
 		else
-			mImpl = new MGFileImp(file);
+			result = new MGFileImp(file);
 	}
+	
+	return result;
+}
+	
+}
+
+MFile::MFile(
+	const char*			inURI)
+	: mImpl(CreateFileImpForURI(inURI))
+	, mReadOnly(false)
+	, mModDate(0)
+{
+}
+
+MFile::MFile(
+	const string&		inURI)
+	: mImpl(CreateFileImpForURI(inURI))
+	, mReadOnly(false)
+	, mModDate(0)
+{
 }
 
 MFile::MFile(

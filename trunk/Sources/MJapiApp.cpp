@@ -791,7 +791,7 @@ void MJapieApp::OpenProject(
 	w->Show();
 	w.release();
 
-	AddToRecentMenu(MFile(inPath));
+	AddToRecentMenu(inPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -812,7 +812,7 @@ void MJapieApp::OpenEPub(
 		w->Show();
 		w.release();
 	
-		AddToRecentMenu(MFile(inPath));
+		AddToRecentMenu(inPath);
 	}
 	catch (exception& e)
 	{

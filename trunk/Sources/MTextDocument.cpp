@@ -1339,37 +1339,26 @@ bool MTextDocument::GetSoftwrap() const
 uint32 MTextDocument::GetIndent(uint32 inOffset) const
 {
 	uint32 indent = 0;
-
-	MTextBuffer::const_iterator i(&mText, inOffset);
 	
 	uint32 maxWidth = numeric_limits<uint32>::max();
 	if (mWrapWidth > 0)
 		maxWidth = mWrapWidth;
 
-	uint32 s = 0;
-	while (i != mText.end())
+	for (MTextBuffer::const_iterator i(&mText, inOffset); i != mText.end(); ++i)
 	{
-		if (*i == '\t')
+		char ch = *i;
+		
+		if (ch == '\t')
 		{
-			++i;
+			uint32 d = mCharsPerTab - (indent % mCharsPerTab);
+			indent += d;
+		}
+		else if (ch == ' ')
 			++indent;
-			s = 0;
-		}
-		else if (*i == ' ')
-		{
-			++i;
-			if (++s == mCharsPerTab)
-			{
-				s = 0;
-				++indent;
-			}
-			else
-				continue;
-		}
 		else
 			break;
 
-		if ((indent + 1) * mTabWidth >= maxWidth)
+		if ((indent + 1) * mCharWidth >= maxWidth)
 		{
 			indent = 0;
 			break;
@@ -1389,11 +1378,12 @@ uint32 MTextDocument::GetLineIndent(uint32 inLine) const
 		--inLine;
 	
 	return GetIndent(mLineInfo[inLine].start);
+//	return OffsetToColumn(mLineInfo[inLine].start);
 }
 
 uint32 MTextDocument::GetLineIndentWidth(uint32 inLine) const
 {
-	return GetLineIndent(inLine) * mCharsPerTab * mCharWidth;
+	return GetLineIndent(inLine) * mCharWidth;
 }
 
 // ---------------------------------------------------------------------------
@@ -1423,7 +1413,7 @@ uint32 MTextDocument::FindLineBreak(
 	{
 		uint32 width = mWrapWidth;
 
-		width -= inIndent * mCharsPerTab * mCharWidth;
+		width -= inIndent * mCharWidth;
 
 		if (tabCount * mTabWidth > width)
 		{
@@ -3224,10 +3214,10 @@ void MTextDocument::DoApplyScript(const std::string& inScript)
 		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
 	}
 	
-	string text;
 	if (mSelection.IsEmpty())
 		SelectAll();
 
+	string text;
 	GetSelectedText(text);
 	
 	mPreparedForStdOut = true;

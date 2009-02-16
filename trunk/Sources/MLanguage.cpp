@@ -526,7 +526,7 @@ MLanguage::SetStyle(
 {
 	if (mStyles != nil and mOffsets != nil)
 	{
-		if (mLastStyleIndex < kMaxStyles and inStyle != mStyles[mLastStyleIndex])
+		if (mLastStyleIndex + 1 < kMaxStyles and inStyle != mStyles[mLastStyleIndex])
 		{
 			if (inOffset > mOffsets[mLastStyleIndex])
 				++mLastStyleIndex;
