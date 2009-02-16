@@ -9,6 +9,7 @@
 #include <deque>
 #include <cerrno>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include "MResources.h"
 

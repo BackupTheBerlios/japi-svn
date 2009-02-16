@@ -98,16 +98,14 @@
 			<file>document.cpp</file>
 		</group>
 		<group name="Libraries">
-			<file>libpcre.a</file>
 			<file optional="true">libattr.a</file>
-			<file>libexpat.a</file>
 			<file>libboost_system-mt.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>
 			<file>libboost_iostreams-mt.a</file>
-			<file>libgthread-2.0.a</file>
+			<file>libexpat.a</file>
+			<file>libpcre.a</file>
 			<file>libuuid.a</file>
-			<link>z</link>
 		</group>
 	</files>
 	<resources resource-dir="Resources">

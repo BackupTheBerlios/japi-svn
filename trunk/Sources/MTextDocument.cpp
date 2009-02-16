@@ -7,6 +7,7 @@
 
 #include <limits>
 #include <cmath>
+#include <fcntl.h>
 #include <iostream>
 
 #include <gdk/gdkkeysyms.h>

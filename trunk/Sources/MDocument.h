@@ -37,20 +37,21 @@ class MDocument
 
 	virtual void		RevertDocument();
 	
-	bool				IsSpecified() const					{ return mFile.IsValid(); }
+	virtual bool		IsSpecified() const					{ return mFile.IsValid(); }
 
 	virtual void		SetFile(
 							const MFile&		inNewFile);
 
-	const MFile&		GetFile() const						{ return mFile; }
+	virtual const MFile&
+						GetFile() const						{ return mFile; }
 
-	bool				UsesFile(
+	virtual bool		UsesFile(
 							const MFile&		inFile) const;
 	
 	static MDocument*	GetDocumentForFile(
 							const MFile&		inFile);
 
-	bool				IsReadOnly() const					{ return mFile.ReadOnly(); }
+	virtual bool		IsReadOnly() const					{ return mFile.ReadOnly(); }
 	
 	virtual void		AddNotifier(
 							MDocClosedNotifier&	inNotifier,

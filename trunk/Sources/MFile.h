@@ -6,8 +6,6 @@
 #ifndef MFILE
 #define MFILE
 
-#include <fcntl.h>
-#include <cassert>
 #include <vector>
 
 #include <boost/filesystem/path.hpp>
@@ -16,20 +14,25 @@
 
 #include "MCallbacks.h"
 
-#include "MTypes.h"
-
 namespace fs = boost::filesystem;
 
 class MFileLoader;
 class MFileSaver;
 
 // --------------------------------------------------------------------
-// MFile, something like a path or URI. 
+// MFile, something like a path or URI.
+
+struct MFileImp;
 
 class MFile
 {
   public:
 						MFile();
+						
+						~MFile();
+						
+						MFile(
+							MFileImp*			impl);
 						
 						MFile(
 							const MFile&		rhs);
@@ -59,9 +62,6 @@ class MFile
 							const std::string&	rhs);
 
 	bool				operator==(
-							const MFile&		rhs) const;
-
-	bool				operator!=(
 							const MFile&		rhs) const;
 
 	MFile&				operator/=(
@@ -116,8 +116,7 @@ class MFile
 	friend class MFileLoader;
 	friend class MFileSaver;
 
-	GFile*				mFile;
-	bool				mLoaded;
+	MFileImp*			mImpl;
 	bool				mReadOnly;
 	double				mModDate;
 };
@@ -130,7 +129,6 @@ std::ostream& operator<<(std::ostream& lhs, const MFile& rhs);
 
 // --------------------------------------------------------------------
 // MFileLoader, used to load the contents of a file.
-// This works strictly asynchronous. 
 
 class MFileLoader
 {

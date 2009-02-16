@@ -9,6 +9,7 @@
 
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <cerrno>
 #include <signal.h>
 #include <libintl.h>

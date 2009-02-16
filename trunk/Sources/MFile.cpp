@@ -22,7 +22,6 @@
 #include <boost/range/iterator_range.hpp>
 
 #include "MFile.h"
-#include "MFile.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MUtils.h"
@@ -790,29 +789,208 @@ void MGIOFileSaver::WriteChunk()
 // --------------------------------------------------------------------
 // MFile, something like a path or URI. 
 
+// first we start with two implementations of the Impl
+
+#include "MFileImp.h"
+
+struct MGFileImp : public MFileImp
+{
+						MGFileImp(GFile* inFile) : mGFile(inFile) {}
+
+						~MGFileImp()
+						{
+							g_object_unref(mGFile);
+						}
+	
+	virtual bool		Equivalent(const MFileImp* rhs) const
+						{
+							const MGFileImp* grhs = dynamic_cast<const MGFileImp*>(rhs);
+							return grhs != nil and g_file_equal(mGFile, grhs->mGFile);
+						}
+							
+	virtual string		GetURI() const
+						{
+							string result;
+							char* s = g_file_get_uri(mGFile);
+							if (s != nil)
+							{
+								result = s;
+								g_free(s);
+							}
+							return result;
+						}
+						
+	virtual fs::path	GetPath() const
+						{
+							string result;
+							char* s = g_file_get_path(mGFile);
+							if (s != nil)
+							{
+								result = s;
+								g_free(s);
+							}
+							return result;
+						}
+							
+	virtual string		GetScheme() const
+						{
+							string result;
+							char* s = g_file_get_uri_scheme(mGFile);
+							if (s != nil)
+							{
+								result = s;
+								g_free(s);
+							}
+							return result;
+						}
+							
+	virtual string		GetFileName() const
+						{
+							string result;
+							char* s = g_file_get_basename(mGFile);
+							if (s != nil)
+							{
+								result = s;
+								g_free(s);
+							}
+							return result;
+						}
+							
+	virtual bool		IsLocal() const
+						{
+							return false;
+						}
+							
+	virtual MFileImp*	GetParent() const
+						{
+							return new MGFileImp(g_file_get_parent(mGFile));
+						}
+	
+	virtual MFileImp*	GetChild(const fs::path& inSubPath) const
+						{
+							GFile* file = G_FILE(g_object_ref(mGFile));
+							
+							for (fs::path::iterator p = inSubPath.begin(); p != inSubPath.end(); ++p)
+							{
+								GFile* child = g_file_get_child(mGFile, p->c_str());
+								g_object_unref(file);
+								file = child;
+							}
+							
+							return new MGFileImp(file);
+						}
+	
+	virtual MFileLoader* Load(MFile& inFile)
+						{
+							return new MGIOFileLoader(inFile);
+						}
+							
+	virtual MFileSaver*	Save(MFile& inFile)
+						{
+							return new MGIOFileSaver(inFile);
+						}
+
+	GFile*				mGFile;					
+};
+
+struct MPathImp : public MFileImp
+{
+							MPathImp(const fs::path& inPath) : mPath(inPath) {}
+
+	virtual bool			Equivalent(const MFileImp* rhs) const
+							{
+								const MPathImp* prhs = dynamic_cast<const MPathImp*>(rhs);
+								return prhs != nil and fs::equivalent(mPath, prhs->mPath);
+							}
+							
+	virtual std::string		GetURI() const
+							{
+								GFile* file = g_file_new_for_path(mPath.string().c_str());
+								string result = g_file_get_uri(file);
+								g_object_unref(file);
+								return result;
+							}
+							
+	virtual fs::path		GetPath() const
+							{
+								return mPath;
+							}
+
+	virtual std::string		GetScheme() const
+							{
+								return "file";
+							}
+							
+	virtual std::string		GetFileName() const
+							{
+								return mPath.leaf();
+							}
+							
+	virtual bool			IsLocal() const
+							{
+								return true;
+							}
+							
+	virtual MFileImp*		GetParent() const
+							{
+								return new MPathImp(mPath.branch_path());
+							}
+	
+	virtual MFileImp*		GetChild(const fs::path& inSubPath) const
+							{
+								return new MPathImp(mPath / inSubPath);
+							}
+	
+	virtual MFileLoader*	Load(MFile& inFile)
+							{
+								return new MLocalFileLoader(inFile);
+							}
+							
+	virtual MFileSaver*		Save(MFile& inFile)
+							{
+								return new MLocalFileSaver(inFile);
+							}
+
+  private:
+	fs::path				mPath;
+};
+
+// --------------------------------------------------------------------
+
 MFile::MFile()
-	: mFile(nil)
-	, mLoaded(false)
+	: mImpl(nil)
 	, mReadOnly(false)
 	, mModDate(0)
 {
 }
 
 MFile::MFile(
+	MFileImp*			impl)
+	: mImpl(impl)
+	, mReadOnly(false)
+	, mModDate(0)
+{
+}
+
+MFile::~MFile()
+{
+	if (mImpl != nil)
+		mImpl->Release();
+}
+
+MFile::MFile(
 	const MFile&		rhs)
-	: mFile(nil)
-	, mLoaded(rhs.mLoaded)
+	: mImpl(rhs.mImpl)
 	, mReadOnly(rhs.mReadOnly)
 	, mModDate(rhs.mModDate)
 {
-	if (rhs.mFile != nil)
-		mFile = static_cast<GFile*>(g_object_ref(rhs.mFile));
+	if (mImpl != nil)
+		mImpl->Reference();
 }
 
 MFile::MFile(
 	const fs::path&		inPath)
-	: mFile(g_file_new_for_path(inPath.string().c_str()))
-	, mLoaded(false)
+	: mImpl(new MPathImp(inPath))
 	, mReadOnly(false)
 	, mModDate(0)
 {
@@ -820,26 +998,41 @@ MFile::MFile(
 
 MFile::MFile(
 	const char*			inURI)
-	: mFile(g_file_new_for_uri(inURI))
-	, mLoaded(false)
+	: mImpl(nil)
 	, mReadOnly(false)
 	, mModDate(0)
 {
+	GFile* file = g_file_new_for_uri(inURI);
+	if (g_file_has_uri_scheme(file, "file"))
+	{
+		fs::path path(g_file_get_path(file));
+		mImpl = new MPathImp(path);
+		g_object_unref(file);
+	}
+	else
+		mImpl = new MGFileImp(file);
 }
 
 MFile::MFile(
 	const string&		inURI)
-	: mFile(g_file_new_for_uri(inURI.c_str()))
-	, mLoaded(false)
+	: mImpl(nil)
 	, mReadOnly(false)
 	, mModDate(0)
 {
+	GFile* file = g_file_new_for_uri(inURI.c_str());
+	if (g_file_has_uri_scheme(file, "file"))
+	{
+		fs::path path(g_file_get_path(file));
+		mImpl = new MPathImp(path);
+		g_object_unref(file);
+	}
+	else
+		mImpl = new MGFileImp(file);
 }
 
 MFile::MFile(
 	GFile*				inFile)
-	: mFile(inFile)
-	, mLoaded(false)
+	: mImpl(new MGFileImp(inFile))
 	, mReadOnly(false)
 	, mModDate(0)
 {
@@ -848,15 +1041,14 @@ MFile::MFile(
 MFile& MFile::operator=(
 	const MFile&		rhs)
 {
-	if (mFile != nil)
-		g_object_unref(mFile);
+	if (mImpl != nil)
+		mImpl->Release();
 	
-	mFile = rhs.mFile;
+	mImpl = rhs.mImpl;
 	
-	if (mFile != nil)
-		mFile = static_cast<GFile*>(g_object_ref(mFile));
+	if (mImpl != nil)
+		mImpl->Reference();
 
-	mLoaded = rhs.mLoaded;
 	mReadOnly = rhs.mReadOnly;
 	mModDate = rhs.mModDate;
 
@@ -866,15 +1058,14 @@ MFile& MFile::operator=(
 MFile& MFile::operator=(
 	GFile*				rhs)
 {
-	if (mFile != nil)
-		g_object_unref(mFile);
+	if (mImpl != nil)
+		mImpl->Release();
 	
-	mFile = rhs;
-	
-	if (mFile != nil)
-		mFile = static_cast<GFile*>(g_object_ref(mFile));
+	if (rhs == nil)
+		mImpl = nil;
+	else
+		mImpl = new MGFileImp(rhs);
 
-	mLoaded = false;
 	mReadOnly = false;
 	mModDate = 0;
 
@@ -884,12 +1075,11 @@ MFile& MFile::operator=(
 MFile& MFile::operator=(
 	const fs::path&		rhs)
 {
-	if (mFile != nil)
-		g_object_unref(mFile);
+	if (mImpl != nil)
+		mImpl->Release();
 	
-	mFile = g_file_new_for_path(rhs.string().c_str());
+	mImpl = new MPathImp(rhs);
 
-	mLoaded = false;
 	mReadOnly = false;
 	mModDate = 0;
 
@@ -899,29 +1089,19 @@ MFile& MFile::operator=(
 bool MFile::operator==(
 	const MFile&		rhs) const
 {
-	bool result;
-	
-	if (IsLocal() and rhs.IsLocal())
-		result = fs::equivalent(GetPath(), rhs.GetPath());
-	else
-		result = g_file_equal(mFile, rhs.mFile);
-	
-	return result;
-}
-
-bool MFile::operator!=(
-	const MFile&		rhs) const
-{
-	return g_file_equal(mFile, rhs.mFile) == false;
+	return mImpl == rhs.mImpl or
+		(mImpl != nil and rhs.mImpl != nil and mImpl->Equivalent(rhs.mImpl));
 }
 
 MFile& MFile::operator/=(
 	const char*			inSubPath)
 {
-	assert(strchr(inSubPath, '/') == nil);
-	GFile* child = g_file_get_child(mFile, inSubPath);
-	g_object_unref(mFile);
-	mFile = child;
+	if (mImpl == nil)
+		THROW(("Invalid file for /="));
+	
+	MFileImp* imp = mImpl->GetChild(inSubPath);
+	mImpl->Release();
+	mImpl = imp;
 
 	return *this;
 }
@@ -929,12 +1109,12 @@ MFile& MFile::operator/=(
 MFile& MFile::operator/=(
 	const fs::path&		inSubPath)
 {
-	for (fs::path::iterator p = inSubPath.begin(); p != inSubPath.end(); ++p)
-	{
-		GFile* child = g_file_get_child(mFile, p->c_str());
-		g_object_unref(mFile);
-		mFile = child;
-	}
+	if (mImpl == nil)
+		THROW(("Invalid file for /="));
+	
+	MFileImp* imp = mImpl->GetChild(inSubPath);
+	mImpl->Release();
+	mImpl = imp;
 
 	return *this;
 }
@@ -949,93 +1129,54 @@ void MFile::SetFileInfo(
 
 fs::path MFile::GetPath() const
 {
-	if (mFile == nil)
-		THROW(("Runtime error, file not specified"));
-	
-	char* path = g_file_get_path(mFile);
-	if (path == nil)
-		THROW(("Error getting path from file"));
-	
-	fs::path result(path);
-	g_free(path);
-	return result;
+	return mImpl->GetPath();
 }
 
 string MFile::GetURI() const
 {
-	char* uri = g_file_get_uri(mFile);
-	if (uri == nil)
-		THROW(("Failed to get uri"));
-
-	string result(uri);
-	g_free(uri);
-	return result;
+	return mImpl->GetURI();
 }
 
 string MFile::GetScheme() const
 {
-	char* scheme = g_file_get_uri_scheme(mFile);
-	if (scheme == nil)
-		THROW(("Failed to get scheme"));
-
-	string result(scheme);
-	g_free(scheme);
-	return result;
+	return mImpl->GetScheme();
 }
 
 string MFile::GetFileName() const
 {
-	char* name = g_file_get_basename(mFile);
-	if (name == nil)
-		THROW(("Failed to get basename"));
-
-	string result(name);
-	g_free(name);
-	return result;
+	return mImpl->GetFileName();
 }
 
 MFile MFile::GetParent() const
 {
-	return MFile(g_file_get_parent(mFile));
+	return MFile(mImpl->GetParent());
 }
 
 MFile::operator GFile*() const
 {
-	return const_cast<GFile*>(mFile);
+	const MGFileImp* imp = dynamic_cast<const MGFileImp*>(mImpl);
+	THROW_IF_NIL(imp);
+	return imp->mGFile;
 }
 
 MFileLoader* MFile::Load()
 {
-	MFileLoader* result;
-
-	if (IsLocal())
-		result = new MLocalFileLoader(*this);
-	else
-		result = new MGIOFileLoader(*this);
-	
-	return result;
+	return mImpl->Load(*this);
 }
 
 MFileSaver* MFile::Save()
 {
-	MFileSaver* result;
-
-	if (IsLocal())
-		result = new MLocalFileSaver(*this);
-	else
-		result = new MGIOFileSaver(*this);
-	
-	return result;
+	return mImpl->Save(*this);
 }
 
 bool MFile::IsValid() const
 {
-	return mFile != nil;
+	return mImpl != nil;
 }
 
 bool MFile::IsLocal() const
 {
-	return mFile != nil and g_file_has_uri_scheme(mFile, "file");
+	return mImpl != nil and mImpl->IsLocal();
 }
 
 bool MFile::Exists() const
@@ -1046,17 +1187,11 @@ bool MFile::Exists() const
 
 double MFile::GetModDate() const
 {
-//	if (not mLoaded)
-//		THROW(("Runtime error, file not loaded yet"));
-	
 	return mModDate;
 }
 
 bool MFile::ReadOnly() const
 {
-//	if (mFile != nil and not mLoaded)
-//		THROW(("Runtime error, file not loaded yet"));
-	
 	return mReadOnly;
 }
 
@@ -1096,16 +1231,16 @@ MFile operator/(const MFile& lhs, const fs::path& rhs)
 	return result;
 }
 
-fs::path RelativePath(const MFile& lhs, const MFile& rhs)
-{
-	char* p = g_file_get_relative_path(lhs.mFile, rhs.mFile);
-	if (p == nil)
-		THROW(("Failed to get relative path"));
-	
-	fs::path result(p);
-	g_free(p);
-	return result;
-}
+//fs::path RelativePath(const MFile& lhs, const MFile& rhs)
+//{
+//	char* p = g_file_get_relative_path(lhs.mFile, rhs.mFile);
+//	if (p == nil)
+//		THROW(("Failed to get relative path"));
+//	
+//	fs::path result(p);
+//	g_free(p);
+//	return result;
+//}
 
 ostream& operator<<(ostream& lhs, const MFile& rhs)
 {

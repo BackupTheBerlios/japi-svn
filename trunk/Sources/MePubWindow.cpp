@@ -16,6 +16,7 @@
 #include "MStrings.h"
 #include "MUtils.h"
 #include "MPreferences.h"
+#include "MePubContentFile.h"
 
 #include "MError.h"
 
@@ -110,122 +111,6 @@ GtkListStore* CreateListStoreForMediaTypes()
 	
 	return model;
 }
-
-//class MePubContentFile : public MFile
-//{
-//  public:
-//						MePubContentFile(
-//							MePubDocument*	inEPub,
-//							fs::path		inPath)
-//							: mEPub(inEPub)
-//							, mPath(inPath)
-//						{
-//						}
-//
-//	virtual bool		operator==(
-//							const MFile&		rhs) const
-//						{
-//							bool result = false;
-//							const MePubContentFile* file = dynamic_cast<const MePubContentFile*>(&rhs);
-//							if (file != nil)
-//								result = mEPub == file->mEPub and mPath == file->mPath;
-//							return result;
-//						}
-//
-//	virtual bool		operator!=(
-//							const MFile&		rhs) const
-//						{
-//							return not operator==(rhs);
-//						}
-//						
-//	virtual fs::path	GetPath() const		{ return mPath; }
-//
-//	virtual std::string	GetURI() const		{ return string("epub:"); }
-//		
-//	virtual std::string	GetScheme() const	{ return "epub"; }
-//
-//	virtual std::string	GetFileName() const	{ return mPath.leaf(); }
-//
-//	virtual MFileLoader*	
-//						Load();
-//
-//	virtual MFileSaver*	Save();
-//
-//	virtual bool		IsValid() const		{ return true; }
-//
-//	virtual bool		IsLocal() const		{ return false; }
-//	
-//	virtual bool		Exists() const		{ return true; }
-//
-//	MePubDocument*		mEPub;
-//	fs::path			mPath;
-//};
-//
-//class MePubFileLoader : public MFileLoader
-//{
-//  public:
-//						MePubFileLoader(
-//							MFile&			inFile,
-//							const string&	inData)
-//							: MFileLoader(inFile)
-//							, data(inData)
-//						{
-//						}
-//
-//	void				DoLoad()
-//						{
-//							stringstream s(data);
-//							eReadFile(s);
-//							
-////							SetFileInfo(false, modTime);
-//							
-//							eFileLoaded();
-//							
-//							delete this;
-//						}
-//
-//	string				data;
-//};
-//
-//class MePubFileSaver : public MFileSaver
-//{
-//  public:
-//						MePubFileSaver(
-//							MFile&			inFile,
-//							MePubDocument*	inEPub,
-//							fs::path		inPath)
-//							: MFileSaver(inFile)
-//							, mEPub(inEPub)
-//							, mPath(inPath)
-//						{
-//						}
-//
-//	void				DoSave()
-//						{
-//							stringstream s;
-//							eWriteFile(s);
-//							mEPub->SetFileData(mPath, s.str());
-//							
-////							SetFileInfo(false, modTime);
-//							
-//							eFileWritten();
-//							
-//							delete this;
-//						}
-//
-//	MePubDocument*		mEPub;
-//	fs::path			mPath;
-//};
-//
-//MFileLoader* MePubContentFile::Load()
-//{
-//	return new MePubFileLoader(*this, mEPub->GetFileData(mPath));
-//}
-//
-//MFileSaver* MePubContentFile::Save()
-//{
-//	return new MePubFileSaver(*this, mEPub, mPath);
-//}
 
 }
 
@@ -964,8 +849,8 @@ void MePubWindow::InvokeFileRow(
 			{
 				doc = new MTextDocument(MFile());
 				
-//				doc->SetFile(new MePubContentFile(mEPub, path));
-//				doc->DoLoad();
+				doc->SetFile(new MePubContentFile(mEPub, path));
+				doc->DoLoad();
 
 				AddRoute(doc->eDocumentClosed, eDocumentClosed);
 				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
