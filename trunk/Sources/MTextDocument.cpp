@@ -46,7 +46,6 @@
 #include "MDiffWindow.h"
 #include "MJapiApp.h"
 #include "MPrinter.h"
-#include "MePubDocument.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -105,7 +104,6 @@ MTextDocument::MTextDocument(
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
 	, eIdle(this, &MTextDocument::Idle)
-	, mEPub(nil)
 	, mSelection(this)
 {
 	Init();
@@ -194,22 +192,6 @@ void MTextDocument::SetFileNameHint(
 	}
 	
 	Rewrap();
-}
-
-string MTextDocument::GetWindowTitle() const
-{
-	string result;
-	
-	if (mEPub != nil)
-	{
-		stringstream s;
-		s << '[' << mEPub->GetFile().GetPath().leaf() << ']' << mEPubFile;
-		result = s.str();
-	}
-	else
-		result = MDocument::GetWindowTitle();
-
-	return result;
 }
 
 bool MTextDocument::DoSave()

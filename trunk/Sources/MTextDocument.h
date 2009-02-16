@@ -28,7 +28,6 @@ class MMessageWindow;
 class MMessageList;
 class MMenu;
 class MDevice;
-class MePubDocument;
 
 struct MTextInputAreaInfo
 {
@@ -74,8 +73,6 @@ class MTextDocument : public MDocument
 
 	virtual void		SetFileNameHint(
 							const std::string&	inName);
-
-	virtual std::string	GetWindowTitle() const;
 
 	virtual bool		DoSave();
 
@@ -548,8 +545,6 @@ class MTextDocument : public MDocument
 							double			inSystemTime);
 	
 	int							mDataFD;
-	MePubDocument*				mEPub;		// for files that are part of an ePub
-	fs::path					mEPubFile;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	uint32						mWrapWidth;

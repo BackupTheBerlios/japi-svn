@@ -1299,7 +1299,10 @@ int main(int argc, char* argv[])
 			if (optind >= argc)
 				THROW(("You should specify a project file to use for building"));
 			
-			MProject project(MFile(g_file_new_for_commandline_arg(argv[optind])));
+			MFile file(fs::system_complete(argv[optind]));
+			
+			MProject project(file);
+			project.DoLoad();
 			project.SelectTarget(target);
 			if (project.Make(false))
 				cout << "Build successful, " << target << " is up-to-date" << endl;
