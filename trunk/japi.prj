@@ -160,8 +160,9 @@
 		</group>
 		<group name="Scripts">
 			<resource>Scripts/run-perl-script.pl</resource>
-			<resource>Scripts/strip-tags.pl</resource>
 			<resource>Scripts/sort.pl</resource>
+			<resource>Scripts/strip-tags.pl</resource>
+			<resource>Scripts/tidy.sh</resource>
 		</group>
 		<group name="Dutch">
 			<resource>Dutch/japi.po</resource>
