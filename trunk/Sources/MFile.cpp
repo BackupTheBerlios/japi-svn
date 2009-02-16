@@ -35,10 +35,9 @@ namespace io = boost::iostreams;
 namespace {
 
 const char kRemoteQueryAttributes[] = \
-	G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE "," \
+	G_FILE_ATTRIBUTE_STANDARD_SIZE "," \
 	G_FILE_ATTRIBUTE_STANDARD_TYPE "," \
 	G_FILE_ATTRIBUTE_TIME_MODIFIED "," \
-	G_FILE_ATTRIBUTE_STANDARD_SIZE "," \
 	G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE;
 	
 }
@@ -99,84 +98,46 @@ class MGIOFileLoader : public MFileLoader
 
 	virtual void		DoLoad();
 	
-	static void			AsyncReadyCallback(
+	static void			AsyncCallback(
 							GObject*		source_object,
 							GAsyncResult*	res,
 							gpointer		user_data)
 						{
 							MGIOFileLoader* self = reinterpret_cast<MGIOFileLoader*>(user_data);
-							self->AsyncReady(source_object, res);
+							self->Async(source_object, res);
 						}
 
-	void				AsyncReady(
-							GObject*		inSourceObject,
+	void				Async(
+							GObject*		inObject,
 							GAsyncResult*	inResult);
 
-	static void			MountReadyCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileLoader* self = reinterpret_cast<MGIOFileLoader*>(user_data);
-							self->MountReady(source_object, res);
-						}
+	void				ProcessFileInfo(
+							GFileInfo*		inFileInfo);
 
-	void				MountReady(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			RemoteGetInfoCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileLoader* self = reinterpret_cast<MGIOFileLoader*>(user_data);
-							self->RemoteGetInfo(source_object, res);
-						}
-
-	void				RemoteGetInfo(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			RemoteGetFileInfoCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileLoader* self = reinterpret_cast<MGIOFileLoader*>(user_data);
-							self->RemoteGetFileInfo(source_object, res);
-						}
-
-	void				RemoteGetFileInfo(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	void				FinishQueryInfo();
-	
-	void				ReadChunk();
-
-	static void			AsyncReadCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileLoader* self = reinterpret_cast<MGIOFileLoader*>(user_data);
-							self->AsyncRead(source_object, res);
-						}
-
-	void				AsyncRead(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	GFileInfo*			mFileInfo;
 	uint32				mBytesRead;
 	uint32				mExpectedFileSize;
 	GCancellable*		mCancellable;
 	GFileInputStream*	mStream;
 	string				mBuffer;
-	GError*				mError;
+
+	bool				mReadOnly;
+	double				mModDate;
 	
 	char				mBufferBlock[4096];		// read 4 k blocks
+	
+	enum ELoadingState
+	{
+		eStateNone,
+		eStateCancelled,
+		eStateError,
+		eStateBegin,
+		eWaitAsyncReady,
+		eWaitMountReady,
+		eWaitGetInfoReady,
+		eWaitGetFileInfoReady,
+		eWaitReadReady,
+		eWaitCloseReady
+	}					mState;
 	
 	bool				mTriedMount;
 };
@@ -184,11 +145,10 @@ class MGIOFileLoader : public MFileLoader
 MGIOFileLoader::MGIOFileLoader(
 	const MFile&		inFile)
 	: MFileLoader(inFile)
-	, mFileInfo(nil)
 	, mBytesRead(0)
 	, mCancellable(nil)
 	, mStream(nil)
-	, mError(nil)
+	, mState(eStateNone)
 	, mTriedMount(false)
 {
 }
@@ -201,14 +161,8 @@ MGIOFileLoader::~MGIOFileLoader()
 		g_object_unref(mCancellable);
 	}
 	
-	if (mFileInfo != nil)
-		g_object_unref(mFileInfo);
-	
 	if (mStream != nil)
 		g_object_unref(mStream);
-	
-	if (mError != nil)
-		g_error_free(mError);
 }
 
 void MGIOFileLoader::DoLoad()
@@ -217,189 +171,180 @@ void MGIOFileLoader::DoLoad()
 
 	mCancellable = g_cancellable_new();
 	
-	g_file_read_async(mFile, G_PRIORITY_HIGH, mCancellable,
-		&MGIOFileLoader::AsyncReadyCallback, this);
+	mState = eWaitAsyncReady;
+	g_file_read_async(mFile, G_PRIORITY_HIGH, mCancellable, &MGIOFileLoader::AsyncCallback, this);
 }
 
-void MGIOFileLoader::AsyncReady(
-	GObject*		inSourceObject,
+void MGIOFileLoader::Async(
+	GObject*		inObject,
 	GAsyncResult*	inResult)
 {
 	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-	
-	mStream = g_file_read_finish(mFile, inResult, &mError);
-	
-	if (mStream == nil)
 	{
-		// maybe we need to mount?
-		if (not mTriedMount)
-		{
-			g_error_free(mError);
-			mError = nil;
-			mTriedMount = true;
-
-			GMountOperation* mountOperation = g_mount_operation_new();
-			
-			g_file_mount_enclosing_volume(mFile, G_MOUNT_MOUNT_NONE,
-				mountOperation, mCancellable,
-				&MGIOFileLoader::MountReadyCallback, this);
-
-			g_object_unref(mountOperation);
-		}
-		else
-		{
-			MGdkThreadBlock block;
-			
-			if (mError != nil)
+		mState = eStateCancelled;
+		return;
+	}
+	
+	GError* error = nil;
+	
+	switch (mState)
+	{
+		case eWaitAsyncReady:
+			mStream = g_file_read_finish(mFile, inResult, &error);
+			if (mStream == nil)
 			{
-				eError(mError->message);
-				g_error_free(mError);
-				mError = nil;
+				// maybe we need to mount?
+				if (error->code == G_IO_ERROR_NOT_MOUNTED and not mTriedMount)
+				{
+					g_error_free(error);
+					error = nil;
+					mTriedMount = true;
+		
+					GMountOperation* mountOperation = g_mount_operation_new();
+					
+					mState = eWaitMountReady;
+					g_file_mount_enclosing_volume(mFile, G_MOUNT_MOUNT_NONE,
+						mountOperation, mCancellable, &MGIOFileLoader::AsyncCallback, this);
+		
+					g_object_unref(mountOperation);
+				}
 			}
 			else
-				eError("Unknown error reading file");
-		}
-	}
-	else
-		g_file_input_stream_query_info_async(mStream,
-			const_cast<char*>(kRemoteQueryAttributes), G_PRIORITY_HIGH,
-			mCancellable, &MGIOFileLoader::RemoteGetInfoCallback, this);
-}
+			{
+				mState = eWaitGetInfoReady;
+				g_file_input_stream_query_info_async(mStream,
+					const_cast<char*>(kRemoteQueryAttributes), G_PRIORITY_HIGH,
+					mCancellable, &MGIOFileLoader::AsyncCallback, this);
+			}
+			break;
 
-void MGIOFileLoader::MountReady(
-	GObject*		inFile,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-
-	bool mounted = g_file_mount_enclosing_volume_finish((GFile*)inFile, inResult, &mError);
-	
-	if (not mounted)
-	{
-		MGdkThreadBlock block;
-		eError("Failed to mount volume");
-	}
-	else
-		g_file_read_async(mFile, G_PRIORITY_HIGH, mCancellable,
-			&MGIOFileLoader::AsyncReadyCallback, this);
-}
-
-void MGIOFileLoader::RemoteGetInfo(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-	
-	mFileInfo = g_file_input_stream_query_info_finish(mStream, inResult, &mError);
-	
-	if (mFileInfo == nil)
-	{
-		MGdkThreadBlock block;
+		case eWaitMountReady:
+			if (g_file_mount_enclosing_volume_finish(mFile, inResult, &error))
+			{
+				mState = eWaitAsyncReady;
+				g_file_read_async(mFile, G_PRIORITY_HIGH, mCancellable,
+					&MGIOFileLoader::AsyncCallback, this);
+			}
+			break;
 		
-		if (mError and mError->code == G_IO_ERROR_NOT_SUPPORTED)
+		case eWaitGetInfoReady:
 		{
-			g_file_query_info_async(mFile, kRemoteQueryAttributes,
-				G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH,
-				mCancellable, &MGIOFileLoader::RemoteGetFileInfoCallback, this);
+			GFileInfo* fileInfo = g_file_input_stream_query_info_finish(mStream, inResult, &error);
+			if (fileInfo == nil)
+			{
+				if (error and error->code == G_IO_ERROR_NOT_SUPPORTED)
+				{
+					g_error_free(error);
+					error = nil;
+					
+					mState = eWaitGetFileInfoReady;
+					g_file_query_info_async(mFile, kRemoteQueryAttributes,
+						G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH,
+						mCancellable, &MGIOFileLoader::AsyncCallback, this);
+				}
+			}
+			else
+				ProcessFileInfo(fileInfo);
+			break;
 		}
-		else if (mError != nil)
-			eError(mError->message);
-		else
-			eError("Unknown error retrieving information");
+		
+		case eWaitGetFileInfoReady:
+		{
+			GFileInfo* fileInfo = g_file_query_info_finish(mFile, inResult, &error);
+			if (fileInfo != nil)
+				ProcessFileInfo(fileInfo);
+			break;
+		}
+		
+		case eWaitReadReady:
+		{
+			int32 read = g_input_stream_read_finish(G_INPUT_STREAM(mStream), inResult, &error);
+			
+			if (read == 0)
+			{
+				mState = eWaitCloseReady;
+				g_input_stream_close_async(G_INPUT_STREAM(mStream), G_PRIORITY_HIGH,
+					mCancellable, &MGIOFileLoader::AsyncCallback, this);
+				
+				MGdkThreadBlock block;
+				stringstream in(mBuffer);
+				eReadFile(in);
+			}
+			else
+			{
+				mBuffer.append(mBufferBlock, read);
+				
+				mBytesRead += read;
+				
+				eProgress(float(mBytesRead) / mExpectedFileSize, "Receiving data");
+				
+				mState = eWaitReadReady;
+				g_input_stream_read_async(G_INPUT_STREAM(mStream),
+					mBufferBlock, sizeof(mBufferBlock),
+					G_PRIORITY_HIGH, mCancellable, &MGIOFileLoader::AsyncCallback, this);
+			}
+			break;
+		}
+		
+		case eWaitCloseReady:
+			g_object_unref(mStream);
+			mStream = nil;
+			mState = eStateNone;
+			break;
+		
+		default:
+		{
+			MGdkThreadBlock block;
+			eError("Invalid state!");
+			mState = eStateError;
+		}
 	}
-	else
-		FinishQueryInfo();
-}
-
-void MGIOFileLoader::RemoteGetFileInfo(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
 	
-	mFileInfo = g_file_query_info_finish(mFile, inResult, &mError);
-	
-	if (mFileInfo == nil)
+	if (error != nil)
 	{
 		MGdkThreadBlock block;
+		eError(error->message);
+		mState = eStateError;
 		
-		if (mError != nil)
-			eError(mError->message);
-		else
-			eError("Unknown error retrieving information");
+		g_error_free(error);
 	}
-	else
-		FinishQueryInfo();
 }
 
-void MGIOFileLoader::FinishQueryInfo()
+void MGIOFileLoader::ProcessFileInfo(
+	GFileInfo*		inFileInfo)
 {
-	if (g_file_info_has_attribute(mFileInfo, G_FILE_ATTRIBUTE_STANDARD_TYPE) and
-		g_file_info_get_file_type(mFileInfo) != G_FILE_TYPE_REGULAR)
+	try
 	{
-		MGdkThreadBlock block;
+		if (g_file_info_has_attribute(inFileInfo, G_FILE_ATTRIBUTE_STANDARD_TYPE) and
+			g_file_info_get_file_type(inFileInfo) != G_FILE_TYPE_REGULAR)
+		{
+			THROW(("Not a regular file"));
+		}
 		
-		eError("Not a regular file");
-	}
-	else
-	{
-		int64 size = g_file_info_get_size(mFileInfo);
+		int64 size = g_file_info_get_size(inFileInfo);
 		if (size > numeric_limits<uint32>::max())
-		{
-			MGdkThreadBlock block;	
-			eError("File is too large to load");
-		}
-		else
-		{
-			mExpectedFileSize = size;
-			ReadChunk();
-		}
+			THROW(("File too large"));
+		mExpectedFileSize = size;
+
+		mState = eWaitReadReady;
+		g_input_stream_read_async(G_INPUT_STREAM(mStream), mBufferBlock, sizeof(mBufferBlock),
+			G_PRIORITY_HIGH, mCancellable, &MGIOFileLoader::AsyncCallback, this);
+		
+		mReadOnly =
+			g_file_info_get_attribute_boolean(inFileInfo, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE) == false;
+		
+		GTimeVal tv;
+		g_file_info_get_modification_time(inFileInfo, &tv);
+		mModDate = tv.tv_sec + tv.tv_usec / 1e6;
 	}
-}
-
-void MGIOFileLoader::ReadChunk()
-{
-	g_input_stream_read_async(G_INPUT_STREAM(mStream),
-		mBufferBlock, sizeof(mBufferBlock),
-		G_PRIORITY_HIGH, mCancellable, &MGIOFileLoader::AsyncReadCallback, this);
-}
-
-void MGIOFileLoader::AsyncRead(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
+	catch (exception& e)
 	{
-		g_input_stream_close_async(G_INPUT_STREAM(mStream), G_PRIORITY_HIGH, nil, nil, nil);
-		return;
+		MGdkThreadBlock block;
+		eError(e.what());
+		mState = eStateError;
 	}
 	
-	int32 read = g_input_stream_read_finish(G_INPUT_STREAM(mStream), inResult, &mError);
-	
-	MGdkThreadBlock block;
-
-	if (read < 0)
-		eError(mError->message);
-	else if (read == 0)
-	{
-//		io::filtering_istream in(boost::make_iterator_range(mBuffer));
-		stringstream in(mBuffer);
-		eReadFile(in);
-	}
-	else
-	{
-		mBuffer.append(mBufferBlock, read);
-		
-		mBytesRead += read;
-		
-		eProgress(float(mBytesRead) / mExpectedFileSize, "Receiving data");
-		
-		ReadChunk();
-	}
+	g_object_unref(inFileInfo);
 }
 
 // --------------------------------------------------------------------
@@ -452,109 +397,47 @@ class MGIOFileSaver : public MFileSaver
 
 	virtual void		DoSave();
 
-	static void			CheckModifiedCallback(
+	static void			AsyncCallback(
 							GObject*		source_object,
 							GAsyncResult*	res,
 							gpointer		user_data)
 						{
 							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->CheckModified(source_object, res);
+							self->Async(source_object, res);
 						}
 
-	void				CheckModified(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			AsyncReplaceReadyCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->AsyncReplaceReady(source_object, res);
-						}
-
-	void				AsyncReplaceReady(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			MountReadyCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->MountReady(source_object, res);
-						}
-
-	void				MountReady(
-							GObject*		inSourceObject,
+	void				Async(
+							GObject*		inObject,
 							GAsyncResult*	inResult);
 
 	void				WriteChunk();
 
-	static void			AsyncWriteCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->AsyncWrite(source_object, res);
-						}
-
-	void				AsyncWrite(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			RemoteGetInfoCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->RemoteGetInfo(source_object, res);
-						}
-
-	void				RemoteGetInfo(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	static void			CloseAsyncCallback(
-							GObject*		source_object,
-							GAsyncResult*	res,
-							gpointer		user_data)
-						{
-							MGIOFileSaver* self = reinterpret_cast<MGIOFileSaver*>(user_data);
-							self->CloseAsync(source_object, res);
-						}
-
-	void				CloseAsync(
-							GObject*		inSourceObject,
-							GAsyncResult*	inResult);
-
-	void				Error(
-							const string&	inMessage)
-						{
-							eError(inMessage);
-							delete this;
-						}
-
-	GFileInfo*			mFileInfo;
 	GCancellable*		mCancellable;
 	GFileOutputStream*	mStream;
 	string				mBuffer;
-	GError*				mError;
-	uint32				mOffset;	
+	uint32				mOffset;
+	
+	enum
+	{
+		eStateNone,
+		eStateCancelled,
+		eStateError,
+		eStateBegin,
+		eWaitGetFileInfoReady,
+		eWaitAsyncReady,
+		eWaitMountReady,
+		eWaitWriteReady,
+		eWaitCloseReady
+	}					mState;
+	
 	bool				mTriedMount;
 };
 
 MGIOFileSaver::MGIOFileSaver(
 	const MFile&		inFile)
 	: MFileSaver(inFile)
-	, mFileInfo(nil)
 	, mCancellable(nil)
 	, mStream(nil)
-	, mError(nil)
 	, mOffset(0)
 	, mTriedMount(false)
 {
@@ -568,14 +451,8 @@ MGIOFileSaver::~MGIOFileSaver()
 		g_object_unref(mCancellable);
 	}
 	
-	if (mFileInfo != nil)
-		g_object_unref(mFileInfo);
-	
 	if (mStream != nil)
 		g_object_unref(mStream);
-	
-	if (mError != nil)
-		g_error_free(mError);
 }
 
 void MGIOFileSaver::DoSave()
@@ -584,125 +461,149 @@ void MGIOFileSaver::DoSave()
 
 	mCancellable = g_cancellable_new();
 
-	g_file_query_info_async (mFile, G_FILE_ATTRIBUTE_TIME_MODIFIED,
+	mState = eWaitGetFileInfoReady;
+	g_file_query_info_async(mFile, G_FILE_ATTRIBUTE_TIME_MODIFIED,
 		G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH, mCancellable,
-		&MGIOFileSaver::CheckModifiedCallback, this);
+		&MGIOFileSaver::AsyncCallback, this);
 }
 
-
-void MGIOFileSaver::CheckModified(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	io::filtering_ostream out(io::back_inserter(mBuffer));
-	eWriteFile(out);
-
-	mFileInfo = g_file_query_info_finish(mFile, inResult, &mError);
-	
-	if (mFileInfo == nil)
-	{
-		// maybe we need to mount?
-		if (not mTriedMount)
-		{
-			g_error_free(mError);
-			mError = nil;
-			mTriedMount = true;
-
-			GMountOperation* mountOperation = g_mount_operation_new();
-			
-			g_file_mount_enclosing_volume(mFile, G_MOUNT_MOUNT_NONE,
-				mountOperation, mCancellable,
-				&MGIOFileSaver::MountReadyCallback, this);
-
-			g_object_unref(mountOperation);
-		}
-		else
-		{
-			MGdkThreadBlock block;
-			
-			if (mError != nil)
-			{
-				Error(mError->message);
-				g_error_free(mError);
-				mError = nil;
-			}
-			else
-				Error("Unknown error reading file");
-		}
-	}
-	else
-		g_file_replace_async(mFile, nil, false, G_FILE_CREATE_NONE,
-			G_PRIORITY_HIGH, mCancellable,
-			&MGIOFileSaver::AsyncReplaceReadyCallback, this);
-}
-
-void MGIOFileSaver::AsyncReplaceReady(
+void MGIOFileSaver::Async(
 	GObject*		inSourceObject,
 	GAsyncResult*	inResult)
 {
 	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-	
-	mStream = g_file_replace_finish(mFile, inResult, &mError);
-	
-	if (mStream == nil)
 	{
-		// maybe we need to mount?
-		if (not mTriedMount)
+		mState = eStateCancelled;
+		return;
+	}
+	
+	GError* error = nil;
+	
+	switch (mState)
+	{
+		case eWaitGetFileInfoReady:
 		{
-			g_error_free(mError);
-			mError = nil;
-			mTriedMount = true;
-
-			GMountOperation* mountOperation = g_mount_operation_new();
-			
-			g_file_mount_enclosing_volume(mFile, G_MOUNT_MOUNT_NONE,
-				mountOperation, mCancellable,
-				&MGIOFileSaver::MountReadyCallback, this);
-
-			g_object_unref(mountOperation);
-		}
-		else
-		{
-			MGdkThreadBlock block;
-			
-			if (mError != nil)
+			bool doSave = true;
+			GFileInfo* fileInfo = g_file_query_info_finish(mFile, inResult, &error);
+			if (fileInfo == nil)
 			{
-				Error(mError->message);
-				g_error_free(mError);
-				mError = nil;
+				doSave = false;
+				
+				// maybe we need to mount?
+				if (error->code == G_IO_ERROR_NOT_MOUNTED and not mTriedMount)
+				{
+					g_error_free(error);
+					error = nil;
+					mTriedMount = true;
+		
+					GMountOperation* mountOperation = g_mount_operation_new();
+					
+					mState = eWaitMountReady;
+					g_file_mount_enclosing_volume(mFile, G_MOUNT_MOUNT_NONE,
+						mountOperation, mCancellable, &MGIOFileSaver::AsyncCallback, this);
+		
+					g_object_unref(mountOperation);
+				}
+				
+				// file does not exist yet, not an error
+				if (error->code == G_IO_ERROR_NOT_FOUND)
+				{
+					g_error_free(error);
+					error = nil;
+					
+					doSave = true;
+				}
 			}
 			else
-				Error("Unknown error reading file");
+			{
+				// check modification time
+				GTimeVal tv;
+				g_file_info_get_modification_time(fileInfo, &tv);
+				double modDate = tv.tv_sec + tv.tv_usec / 1e6;
+				
+//				doSave = modDate <= mFile.GetModDate() or
+//					DisplayAlert("") == 1;
+			}
+			
+			if (doSave)
+			{
+				mState = eWaitAsyncReady;
+				g_file_replace_async(mFile, nil, false, G_FILE_CREATE_NONE,
+					G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::AsyncCallback, this);
+			}
+			break;
+		}
+		
+		case eWaitMountReady:
+			if (g_file_mount_enclosing_volume_finish(mFile, inResult, &error))
+			{
+				mState = eWaitGetFileInfoReady;
+				g_file_query_info_async(mFile, G_FILE_ATTRIBUTE_TIME_MODIFIED,
+					G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH, mCancellable,
+					&MGIOFileSaver::AsyncCallback, this);
+			}
+			break;
+		
+		case eWaitAsyncReady:
+			mStream = g_file_replace_finish(mFile, inResult, &error);
+			if (mStream != nil)
+			{
+				MGdkThreadBlock block;
+				
+				io::filtering_ostream out(io::back_inserter(mBuffer));
+				eWriteFile(out);
+
+				WriteChunk();
+			}
+			break;
+		
+		case eWaitWriteReady:
+		{
+			int32 written = g_output_stream_write_finish(G_OUTPUT_STREAM(mStream), inResult, &error);
+			if (written >= 0)
+			{
+				MGdkThreadBlock block;
+
+				mOffset += written;
+				eProgress(float(mOffset) / mBuffer.length(), "Writing data");
+				
+				if (mOffset < mBuffer.length())
+					WriteChunk();
+				else
+				{
+					mState = eWaitCloseReady;
+					g_output_stream_close_async(G_OUTPUT_STREAM(mStream),
+						G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::AsyncCallback, this);
+				}
+			}
+			break;
+		}
+		
+		case eWaitCloseReady:
+			mState = eStateNone;
+			g_output_stream_close_finish(G_OUTPUT_STREAM(mStream), inResult, &error);
+			g_object_unref(mStream);
+			mStream = nil;
+			break;
+		
+		default:
+		{
+			MGdkThreadBlock block;
+			eError("Invalid state!");
+			mState = eStateError;
 		}
 	}
-	else
-		WriteChunk();
-}
-
-void MGIOFileSaver::MountReady(
-	GObject*		inFile,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-
-	bool mounted = g_file_mount_enclosing_volume_finish((GFile*)inFile, inResult, &mError);
 	
-	if (not mounted)
+	if (error != nil)
 	{
 		MGdkThreadBlock block;
-		Error("Failed to mount volume");
+		eError(error->message);
+		mState = eStateError;
+		
+		g_error_free(error);
 	}
-	else
-		g_file_query_info_async (mFile, G_FILE_ATTRIBUTE_TIME_MODIFIED,
-			G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH, mCancellable,
-			&MGIOFileSaver::CheckModifiedCallback, this);
-//		g_file_replace_async(mFile, nil, false, G_FILE_CREATE_NONE,
-//			G_PRIORITY_HIGH, mCancellable,
-//			&MGIOFileSaver::AsyncReplaceReadyCallback, this);
 }
-
+			
 void MGIOFileSaver::WriteChunk()
 {
 	const uint32		kBlockSize = 4096;
@@ -710,99 +611,11 @@ void MGIOFileSaver::WriteChunk()
 	uint32 k = mBuffer.length() - mOffset;
 	if (k > kBlockSize)
 		k = kBlockSize;
-
-PRINT(("Writing %d bytes", k));
 	
+	mState = eWaitWriteReady;
 	g_output_stream_write_async(G_OUTPUT_STREAM(mStream),
 		mBuffer.c_str() + mOffset, k,
-		G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::AsyncWriteCallback, this);
-}
-
-void MGIOFileSaver::AsyncWrite(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-	{
-		g_output_stream_close_async(G_OUTPUT_STREAM(mStream), G_PRIORITY_HIGH, nil, nil, nil);
-		return;
-	}
-	
-	int32 written = g_output_stream_write_finish(G_OUTPUT_STREAM(mStream), inResult, &mError);
-	
-	MGdkThreadBlock block;
-
-	if (written < 0)
-		Error(mError->message);
-	else
-	{
-		mOffset += written;
-		eProgress(float(mOffset) / mBuffer.length(), "Writing data");
-		
-		if (mOffset < mBuffer.length())
-			WriteChunk();
-		else
-		{
-//			g_output_stream_close_async(G_OUTPUT_STREAM(mStream),
-//				G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::CloseAsyncCallback, this);
-			g_file_output_stream_query_info_async(mStream,
-				const_cast<char*>(kRemoteQueryAttributes), G_PRIORITY_HIGH,
-				mCancellable, &MGIOFileSaver::RemoteGetInfoCallback, this);
-		}
-	}
-}
-
-void MGIOFileSaver::RemoteGetInfo(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-	
-	mFileInfo = g_file_output_stream_query_info_finish(mStream, inResult, &mError);
-	
-	if (mFileInfo == nil)
-	{
-		if (mError->code == G_IO_ERROR_NOT_SUPPORTED or mError->code == G_IO_ERROR_CLOSED)
-		{
-PRINT(("Query not supported?"));
-//			g_error_free(mError);
-//			mError = nil;
-			
-			cout << mError->message << endl;
-		}
-
-//		MGdkThreadBlock block;
-//		
-//		Error(mError->message);
-		
-		g_error_free(mError);
-		mError = nil;
-	}
-
-	g_output_stream_close_async(G_OUTPUT_STREAM(mStream),
-		G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::CloseAsyncCallback, this);
-}
-
-void MGIOFileSaver::CloseAsync(
-	GObject*		inSourceObject,
-	GAsyncResult*	inResult)
-{
-	if (g_cancellable_is_cancelled(mCancellable))
-		return;
-	
-	if (not g_output_stream_close_finish(G_OUTPUT_STREAM(inSourceObject), inResult, &mError))
-	{
-PRINT(("Error closing stream: %d = %s", mError->code, mError->message));
-		MGdkThreadBlock block;
-		
-		Error(mError->message);
-	}
-	else
-	{
-		eProgress(-1.f, "");
-		delete this;
-	}
+		G_PRIORITY_HIGH, mCancellable, &MGIOFileSaver::AsyncCallback, this);
 }
 
 // --------------------------------------------------------------------
