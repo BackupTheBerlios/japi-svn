@@ -10,7 +10,6 @@
 	</syspaths>
 	<userpaths>
 		<path>Sources</path>
-		<path>NetSources</path>
 		<path>zeep</path>
 	</userpaths>
 	<libpaths/>
