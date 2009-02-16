@@ -1837,43 +1837,7 @@ bool MProject::ProcessCommand(
 			StopBuilding();
 			break;
 		
-//		case cmd_EditProjectInfo:
-//		{
-//			auto_ptr<MProjectInfoDialog> dlog(new MProjectInfoDialog);
-//			dlog->Initialize(this, mCurrentTarget);
-//			dlog.release();
-//			break;
-//		}
-		
-//		case cmd_EditProjectPaths:
-//		{
-//			auto_ptr<MProjectPathsDialog> dlog(new MProjectPathsDialog);
-//			dlog->Initialize(this, mUserSearchPaths, mSysSearchPaths,
-//				mLibSearchPaths, mFrameworkPaths);
-//			dlog.release();
-//			break;
-//		}
-		
-//		case cmd_ChangePanel:
-//			switch (::GetControl32BitValue(mPanelSegmentRef))
-//			{
-//				case 1:	SelectPanel(ePanelFiles); break;
-//				case 2: SelectPanel(ePanelLinkOrder); break;
-//				case 3: SelectPanel(ePanelPackage); break;
-//			}
-//			break;
-		
 		default:
-//			if ((inCommand & 0xFFFFFF00) == cmd_SwitchTarget)
-//			{
-//				uint32 target = inCommand & 0x000000FF;
-//				SelectTarget(target);
-////				Invalidate();
-//				mFileList->Invalidate();
-////				mLinkOrderList->Invalidate();
-////				mPackageList->Invalidate();
-//			}
-
 			result = MDocument::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
 	}

@@ -39,6 +39,94 @@ const char kRemoteQueryAttributes[] = \
 	G_FILE_ATTRIBUTE_STANDARD_TYPE "," \
 	G_FILE_ATTRIBUTE_TIME_MODIFIED "," \
 	G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE;
+
+// ------------------------------------------------------------------
+//
+//  Three different implementations of extended attributes...
+//
+
+// ------------------------------------------------------------------
+//  FreeBSD
+
+#if defined(__FreeBSD__) and (__FreeBSD__ > 0)
+
+#include <sys/extattr.h>
+
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+{
+	string path = inPath.string();
+	
+	return extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER,
+		inName, outData, inDataSize);
+}
+
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+{
+	string path = inPath.string();
+	
+	time_t t = last_write_time(inPath);
+
+	int r = extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER,
+		inName, inData, inDataSize);
+	
+	last_write_time(inPath, t);
+}
+
+#endif
+
+// ------------------------------------------------------------------
+//  Linux
+
+#if defined(__linux__)
+
+#include <attr/attributes.h>
+
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+{
+	string path = inPath.string();
+
+	int length = inDataSize;
+	int err = ::attr_get(path.c_str(), inName,
+		reinterpret_cast<char*>(outData), &length, 0);
+	
+	if (err != 0)
+		length = 0;
+	
+	return length;
+}
+
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+{
+	string path = inPath.string();
+	
+	(void)::attr_set(path.c_str(), inName,
+		reinterpret_cast<const char*>(inData), inDataSize, 0);
+}
+
+#endif
+
+// ------------------------------------------------------------------
+//  MacOS X
+
+#if defined(__APPLE__)
+
+#include <sys/xattr.h>
+
+ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+{
+	string path = inPath.string();
+
+	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
+}
+
+void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+{
+	string path = inPath.string();
+
+	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
+}
+
+#endif
 	
 }
 
@@ -47,7 +135,7 @@ const char kRemoteQueryAttributes[] = \
 // This works strictly asynchronous. 
 
 MFileLoader::MFileLoader(
-	const MFile&		inFile)
+	MFile&				inFile)
 	: mFile(inFile)
 {
 }
@@ -56,13 +144,24 @@ MFileLoader::~MFileLoader()
 {
 }
 
+void MFileLoader::Cancel()
+{
+}
+
+void MFileLoader::SetFileInfo(
+	bool				inReadOnly,
+	double				inModDate)
+{
+	mFile.SetFileInfo(inReadOnly, inModDate);
+}
+
 // --------------------------------------------------------------------
 
 class MLocalFileLoader : public MFileLoader
 {
   public:
 					MLocalFileLoader(
-						const MFile&	inFile);
+						MFile&			inFile);
 
 	virtual void	DoLoad();
 };
@@ -70,7 +169,7 @@ class MLocalFileLoader : public MFileLoader
 // --------------------------------------------------------------------
 
 MLocalFileLoader::MLocalFileLoader(
-	const MFile&	inFile)
+	MFile&			inFile)
 	: MFileLoader(inFile)
 {
 }
@@ -82,8 +181,17 @@ void MLocalFileLoader::DoLoad()
 	if (not fs::exists(path))
 		THROW(("File does not exist")); 
 	
+	double modTime = fs::last_write_time(path);
+	bool readOnly = false;
+	
 	fs::ifstream file(path);
 	eReadFile(file);
+	
+	SetFileInfo(readOnly, modTime);
+	
+	eFileLoaded();
+	
+	delete this;
 }
 
 // --------------------------------------------------------------------
@@ -92,11 +200,13 @@ class MGIOFileLoader : public MFileLoader
 {
   public:
 						MGIOFileLoader(
-							const MFile&	inFile);
+							MFile&			inFile);
 	
 						~MGIOFileLoader();
 
 	virtual void		DoLoad();
+	
+	virtual void		Cancel();
 	
 	static void			AsyncCallback(
 							GObject*		source_object,
@@ -119,18 +229,12 @@ class MGIOFileLoader : public MFileLoader
 	GCancellable*		mCancellable;
 	GFileInputStream*	mStream;
 	string				mBuffer;
-
-	bool				mReadOnly;
-	double				mModDate;
 	
 	char				mBufferBlock[4096];		// read 4 k blocks
 	
 	enum ELoadingState
 	{
 		eStateNone,
-		eStateCancelled,
-		eStateError,
-		eStateBegin,
 		eWaitAsyncReady,
 		eWaitMountReady,
 		eWaitGetInfoReady,
@@ -143,7 +247,7 @@ class MGIOFileLoader : public MFileLoader
 };
 
 MGIOFileLoader::MGIOFileLoader(
-	const MFile&		inFile)
+	MFile&				inFile)
 	: MFileLoader(inFile)
 	, mBytesRead(0)
 	, mCancellable(nil)
@@ -165,6 +269,12 @@ MGIOFileLoader::~MGIOFileLoader()
 		g_object_unref(mStream);
 }
 
+void MGIOFileLoader::Cancel()
+{
+	if (mCancellable != nil)
+		g_cancellable_cancel(mCancellable);
+}
+
 void MGIOFileLoader::DoLoad()
 {
 	eProgress(0.f, "start");
@@ -181,7 +291,7 @@ void MGIOFileLoader::Async(
 {
 	if (g_cancellable_is_cancelled(mCancellable))
 	{
-		mState = eStateCancelled;
+		delete this;
 		return;
 	}
 	
@@ -189,6 +299,9 @@ void MGIOFileLoader::Async(
 	
 	switch (mState)
 	{
+		case eStateNone:
+			assert(false);
+		
 		case eWaitAsyncReady:
 			mStream = g_file_read_finish(mFile, inResult, &error);
 			if (mStream == nil)
@@ -289,24 +402,21 @@ void MGIOFileLoader::Async(
 		case eWaitCloseReady:
 			g_object_unref(mStream);
 			mStream = nil;
-			mState = eStateNone;
+			
+			eFileLoaded();
+
+			delete this;
 			break;
-		
-		default:
-		{
-			MGdkThreadBlock block;
-			eError("Invalid state!");
-			mState = eStateError;
-		}
 	}
 	
 	if (error != nil)
 	{
 		MGdkThreadBlock block;
 		eError(error->message);
-		mState = eStateError;
 		
 		g_error_free(error);
+		
+		delete this;
 	}
 }
 
@@ -330,18 +440,22 @@ void MGIOFileLoader::ProcessFileInfo(
 		g_input_stream_read_async(G_INPUT_STREAM(mStream), mBufferBlock, sizeof(mBufferBlock),
 			G_PRIORITY_HIGH, mCancellable, &MGIOFileLoader::AsyncCallback, this);
 		
-		mReadOnly =
+		bool readOnly =
+			g_file_info_has_attribute(inFileInfo, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE) and
 			g_file_info_get_attribute_boolean(inFileInfo, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE) == false;
 		
 		GTimeVal tv;
 		g_file_info_get_modification_time(inFileInfo, &tv);
-		mModDate = tv.tv_sec + tv.tv_usec / 1e6;
+		double modDate = tv.tv_sec + tv.tv_usec / 1e6;
+		
+		SetFileInfo(readOnly, modDate);
 	}
 	catch (exception& e)
 	{
 		MGdkThreadBlock block;
 		eError(e.what());
-		mState = eStateError;
+		
+		delete this;
 	}
 	
 	g_object_unref(inFileInfo);
@@ -351,7 +465,7 @@ void MGIOFileLoader::ProcessFileInfo(
 // MFileSaver, used to save data to a file.
 
 MFileSaver::MFileSaver(
-	const MFile&		inFile)
+	MFile&				inFile)
 	: mFile(inFile)
 {
 }
@@ -360,13 +474,24 @@ MFileSaver::~MFileSaver()
 {
 }
 
+void MFileSaver::Cancel()
+{
+}
+
+void MFileSaver::SetFileInfo(
+	bool				inReadOnly,
+	double				inModDate)
+{
+	mFile.SetFileInfo(inReadOnly, inModDate);
+}
+
 // --------------------------------------------------------------------
 
 class MLocalFileSaver : public MFileSaver
 {
   public:
 					MLocalFileSaver(
-						const MFile&			inFile);
+						MFile&					inFile);
 
 	virtual void	DoSave();
 };
@@ -374,15 +499,28 @@ class MLocalFileSaver : public MFileSaver
 // --------------------------------------------------------------------
 
 MLocalFileSaver::MLocalFileSaver(
-	const MFile&	inFile)
+	MFile&			inFile)
 	: MFileSaver(inFile)
 {
 }
 
 void MLocalFileSaver::DoSave()
 {
-	fs::ofstream file(mFile.GetPath(), ios::trunc|ios::binary);
+	fs::path path = mFile.GetPath();
+	
+	bool save = true;
+	
+	if (fs::exists(path) and fs::last_write_time(path) > mFile.GetModDate())
+		save = eAskOverwriteNewer();
+
+	fs::ofstream file(path, ios::trunc|ios::binary);
 	eWriteFile(file);
+	
+	eFileWritten();
+	
+	SetFileInfo(false, fs::last_write_time(path));
+	
+	delete this;
 }
 
 // --------------------------------------------------------------------
@@ -391,11 +529,13 @@ class MGIOFileSaver : public MFileSaver
 {
   public:
 						MGIOFileSaver(
-							const MFile&	inFile);
+							MFile&			inFile);
 	
 						~MGIOFileSaver();
 
 	virtual void		DoSave();
+	
+	virtual void		Cancel();
 
 	static void			AsyncCallback(
 							GObject*		source_object,
@@ -420,25 +560,24 @@ class MGIOFileSaver : public MFileSaver
 	enum
 	{
 		eStateNone,
-		eStateCancelled,
-		eStateError,
-		eStateBegin,
 		eWaitGetFileInfoReady,
 		eWaitAsyncReady,
 		eWaitMountReady,
 		eWaitWriteReady,
-		eWaitCloseReady
+		eWaitCloseReady,
+		eWaitGetFileInfoReady2
 	}					mState;
 	
 	bool				mTriedMount;
 };
 
 MGIOFileSaver::MGIOFileSaver(
-	const MFile&		inFile)
+	MFile&				inFile)
 	: MFileSaver(inFile)
 	, mCancellable(nil)
 	, mStream(nil)
 	, mOffset(0)
+	, mState(eStateNone)
 	, mTriedMount(false)
 {
 }
@@ -453,6 +592,12 @@ MGIOFileSaver::~MGIOFileSaver()
 	
 	if (mStream != nil)
 		g_object_unref(mStream);
+}
+
+void MGIOFileSaver::Cancel()
+{
+	if (mCancellable != nil)
+		g_cancellable_cancel(mCancellable);
 }
 
 void MGIOFileSaver::DoSave()
@@ -473,7 +618,7 @@ void MGIOFileSaver::Async(
 {
 	if (g_cancellable_is_cancelled(mCancellable))
 	{
-		mState = eStateCancelled;
+		delete this;
 		return;
 	}
 	
@@ -481,6 +626,9 @@ void MGIOFileSaver::Async(
 	
 	switch (mState)
 	{
+		case eStateNone:
+			assert(false);
+		
 		case eWaitGetFileInfoReady:
 		{
 			bool doSave = true;
@@ -521,8 +669,13 @@ void MGIOFileSaver::Async(
 				g_file_info_get_modification_time(fileInfo, &tv);
 				double modDate = tv.tv_sec + tv.tv_usec / 1e6;
 				
-//				doSave = modDate <= mFile.GetModDate() or
-//					DisplayAlert("") == 1;
+				if (modDate > mFile.GetModDate())
+				{
+					MGdkThreadBlock block;
+					doSave = eAskOverwriteNewer();
+				}
+				else
+					doSave = true;
 			}
 			
 			if (doSave)
@@ -580,17 +733,32 @@ void MGIOFileSaver::Async(
 		}
 		
 		case eWaitCloseReady:
-			mState = eStateNone;
-			g_output_stream_close_finish(G_OUTPUT_STREAM(mStream), inResult, &error);
+			if (g_output_stream_close_finish(G_OUTPUT_STREAM(mStream), inResult, &error))
+			{
+				mState = eWaitGetFileInfoReady2;
+				g_file_query_info_async(mFile, G_FILE_ATTRIBUTE_TIME_MODIFIED,
+					G_FILE_QUERY_INFO_NONE, G_PRIORITY_HIGH, mCancellable,
+					&MGIOFileSaver::AsyncCallback, this);
+			}
 			g_object_unref(mStream);
 			mStream = nil;
 			break;
 		
-		default:
+		case eWaitGetFileInfoReady2:
 		{
-			MGdkThreadBlock block;
-			eError("Invalid state!");
-			mState = eStateError;
+			GFileInfo* fileInfo = g_file_query_info_finish(mFile, inResult, &error);
+			if (fileInfo != nil)
+			{
+				GTimeVal tv;
+				g_file_info_get_modification_time(fileInfo, &tv);
+				double modDate = tv.tv_sec + tv.tv_usec / 1e6;
+				
+				SetFileInfo(false, modDate);
+				eFileWritten();
+			
+				delete this;
+			}
+			break;
 		}
 	}
 	
@@ -598,9 +766,10 @@ void MGIOFileSaver::Async(
 	{
 		MGdkThreadBlock block;
 		eError(error->message);
-		mState = eStateError;
 		
 		g_error_free(error);
+		
+		delete this;
 	}
 }
 			
@@ -730,7 +899,14 @@ MFile& MFile::operator=(
 bool MFile::operator==(
 	const MFile&		rhs) const
 {
-	return g_file_equal(mFile, rhs.mFile);
+	bool result;
+	
+	if (IsLocal() and rhs.IsLocal())
+		result = fs::equivalent(GetPath(), rhs.GetPath());
+	else
+		result = g_file_equal(mFile, rhs.mFile);
+	
+	return result;
 }
 
 bool MFile::operator!=(
@@ -761,6 +937,14 @@ MFile& MFile::operator/=(
 	}
 
 	return *this;
+}
+
+void MFile::SetFileInfo(
+	bool				inReadOnly,
+	double				inModDate)
+{
+	mReadOnly = inReadOnly;
+	mModDate = inModDate;
 }
 
 fs::path MFile::GetPath() const
@@ -820,7 +1004,7 @@ MFile::operator GFile*() const
 	return const_cast<GFile*>(mFile);
 }
 
-MFileLoader* MFile::Load() const
+MFileLoader* MFile::Load()
 {
 	MFileLoader* result;
 
@@ -832,7 +1016,7 @@ MFileLoader* MFile::Load() const
 	return result;
 }
 
-MFileSaver* MFile::Save() const
+MFileSaver* MFile::Save()
 {
 	MFileSaver* result;
 
@@ -851,7 +1035,7 @@ bool MFile::IsValid() const
 
 bool MFile::IsLocal() const
 {
-	return g_file_has_uri_scheme(mFile, "file");
+	return mFile != nil and g_file_has_uri_scheme(mFile, "file");
 }
 
 bool MFile::Exists() const
@@ -876,16 +1060,33 @@ bool MFile::ReadOnly() const
 	return mReadOnly;
 }
 
-void MFile::ReadAttribute(
+ssize_t MFile::ReadAttribute(
 	const char*			inName,
-	std::string&		outData)
+	void*				outData,
+	size_t				inDataSize) const
 {
+	ssize_t result = 0;
+	
+	if (IsLocal())
+		result = read_attribute(GetPath(), inName, outData, inDataSize);
+	
+	return result;
 }
 
-void MFile::WriteAttribute(
+size_t MFile::WriteAttribute(
 	const char*			inName,
-	const std::string&	inData)
+	const void*			inData,
+	size_t				inDataSize) const
 {
+	size_t result = 0;
+	
+	if (IsLocal())
+	{
+		write_attribute(GetPath(), inName, inData, inDataSize);
+		result = inDataSize;
+	}
+	
+	return result;
 }
 
 MFile operator/(const MFile& lhs, const fs::path& rhs)
@@ -911,95 +1112,6 @@ ostream& operator<<(ostream& lhs, const MFile& rhs)
 	lhs << rhs.GetURI();
 	return lhs;
 }
-
-// ------------------------------------------------------------------
-//
-//  Three different implementations of extended attributes...
-//
-
-// ------------------------------------------------------------------
-//  FreeBSD
-
-#if defined(__FreeBSD__) and (__FreeBSD__ > 0)
-
-#include <sys/extattr.h>
-
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
-{
-	string path = inPath.string();
-	
-	return extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER,
-		inName, outData, inDataSize);
-}
-
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
-{
-	string path = inPath.string();
-	
-	time_t t = last_write_time(inPath);
-
-	int r = extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER,
-		inName, inData, inDataSize);
-	
-	last_write_time(inPath, t);
-}
-
-#endif
-
-// ------------------------------------------------------------------
-//  Linux
-
-#if defined(__linux__)
-
-#include <attr/attributes.h>
-
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
-{
-	string path = inPath.string();
-
-	int length = inDataSize;
-	int err = ::attr_get(path.c_str(), inName,
-		reinterpret_cast<char*>(outData), &length, 0);
-	
-	if (err != 0)
-		length = 0;
-	
-	return length;
-}
-
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
-{
-	string path = inPath.string();
-	
-	(void)::attr_set(path.c_str(), inName,
-		reinterpret_cast<const char*>(inData), inDataSize, 0);
-}
-
-#endif
-
-// ------------------------------------------------------------------
-//  MacOS X
-
-#if defined(__APPLE__)
-
-#include <sys/xattr.h>
-
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
-{
-	string path = inPath.string();
-
-	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
-}
-
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
-{
-	string path = inPath.string();
-
-	(void)::setxattr(path.c_str(), inName, inData, inDataSize, 0, 0);
-}
-
-#endif
-
 
 
 

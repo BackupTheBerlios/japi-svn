@@ -406,7 +406,7 @@ void MJapieApp::RunEventLoop()
 	
 	if (Preferences::GetInteger("reopen project", 1))
 	{
-		MFile pp(Preferences::GetString("last project", ""));
+		MFile pp(fs::path(Preferences::GetString("last project", "")));
 		if (pp.IsLocal() and pp.Exists())
 			OpenProject(pp);
 	}
@@ -781,6 +781,9 @@ void MJapieApp::OpenProject(
 	const MFile&		inPath)
 {
 	auto_ptr<MProject> project(new MProject(inPath));
+	
+	project->DoLoad();
+	
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();
@@ -799,6 +802,9 @@ void MJapieApp::OpenEPub(
 	try
 	{
 		auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
+		
+		epub->DoLoad();
+		
 		auto_ptr<MePubWindow> w(new MePubWindow());
 		w->Initialize(epub.get());
 		epub.release();

@@ -82,8 +82,6 @@ class MTextDocument : public MDocument
 	virtual bool		DoSaveAs(
 							const MFile&			inFile);
 
-	virtual void		RevertDocument();
-
 	virtual void		AddNotifier(
 							MDocClosedNotifier&	inNotifier,
 							bool				inRead);
@@ -132,6 +130,10 @@ class MTextDocument : public MDocument
 	virtual void		IOProgress(
 							float				inProgress,
 							const std::string&	inMessage);
+
+	virtual void		IOFileLoaded();
+
+	virtual void		IOFileWritten();
 
 	// and now the MTextDocument specific methods
 
@@ -547,7 +549,7 @@ class MTextDocument : public MDocument
 	
 	int							mDataFD;
 	MePubDocument*				mEPub;		// for files that are part of an ePub
-	MFile						mEPubFile;
+	fs::path					mEPubFile;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	uint32						mWrapWidth;

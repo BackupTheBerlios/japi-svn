@@ -458,6 +458,12 @@ template<class CallBackIn>
 struct MCallbackOutHandler<CallBackIn, void()>
 {
 	std::auto_ptr<CallBackIn>		mHandler;
+
+	void		operator() ()
+				{
+					if (mHandler.get() != nil)
+						return mHandler->DoCallBack();
+				}
 	
 	static void	GCallback(
 					GObject*		inWidget,

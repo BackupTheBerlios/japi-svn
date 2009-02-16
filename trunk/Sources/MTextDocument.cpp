@@ -177,7 +177,7 @@ MTextDocument* MTextDocument::GetFirstTextDocument()
 void MTextDocument::SetFileNameHint(
 	const string&	inNameHint)
 {
-	MDocument::SetFileNameHint(inNameHint);
+	MDocument::SetFile(MFile(fs::path(inNameHint)));
 	
 	delete mNamedRange;
 	mNamedRange = nil;
@@ -247,18 +247,6 @@ bool MTextDocument::DoSaveAs(
 	}
 	
 	return result;
-}
-
-// ---------------------------------------------------------------------------
-//	RevertDocument
-
-void MTextDocument::RevertDocument()
-{
-	MDocument::RevertDocument();
-	
-	MDocState state = {};
-	if (not ReadDocState(state))
-		Rewrap();
 }
 
 void MTextDocument::AddNotifier(
@@ -356,61 +344,61 @@ void MTextDocument::WriteFile(
 //	SaveState
 
 void MTextDocument::SaveState()
-{//
-//	MDocState state = { };
-//
-//	(void)read_attribute(mFile.GetPath(), kJapieDocState, &state, kMDocStateSize);
-//	
-//	state.Swap();
-//	
-//	if (mSelection.IsBlock())
-//	{
-//		mSelection.GetAnchorLineAndColumn(
-//			state.mSelection[0], state.mSelection[1]);
-//		mSelection.GetCaretLineAndColumn(
-//			state.mSelection[2], state.mSelection[3]);
-//		state.mFlags.mSelectionIsBlock = true;
-//	}
-//	else
-//	{
-//		state.mSelection[0] = mSelection.GetAnchor();
-//		state.mSelection[1] = mSelection.GetCaret();
-//	}
-//	
-//	if (mTargetTextView != nil)
-//	{
-//		int32 x, y;
-//		mTargetTextView->GetScrollPosition(x, y);
-//		state.mScrollPosition[0] = static_cast<uint32>(x);
-//		state.mScrollPosition[1] = static_cast<uint32>(y);
-//	}
-//
-//	if (MWindow* w = MDocWindow::FindWindowForDocument(this))
-//	{
-//		MRect r;
-//		w->GetWindowPosition(r);
-//		state.mWindowPosition[0] = r.x;
-//		state.mWindowPosition[1] = r.y;
-//		state.mWindowSize[0] = r.width;
-//		state.mWindowSize[1] = r.height;
-//	}
-//
-//	state.mFlags.mSoftwrap = mSoftwrap;
-//	state.mFlags.mTabWidth = mCharsPerTab;
-//	
-//	state.Swap();
-//	
-//	write_attribute(mFile.GetPath(), kJapieDocState, &state, kMDocStateSize);
-//	
-//	if (mShell.get() != nil)
-//	{
-//		string cwd = mShell->GetCWD();
-//		
-//		write_attribute(mFile.GetPath(), kJapieCWD, cwd.c_str(), cwd.length());
-//			
-//		if (IsWorksheet())
-//			Preferences::SetString("worksheet wd", cwd);
-//	}
+{
+	MDocState state = { };
+
+	mFile.ReadAttribute(kJapieDocState, &state, kMDocStateSize);
+	
+	state.Swap();
+	
+	if (mSelection.IsBlock())
+	{
+		mSelection.GetAnchorLineAndColumn(
+			state.mSelection[0], state.mSelection[1]);
+		mSelection.GetCaretLineAndColumn(
+			state.mSelection[2], state.mSelection[3]);
+		state.mFlags.mSelectionIsBlock = true;
+	}
+	else
+	{
+		state.mSelection[0] = mSelection.GetAnchor();
+		state.mSelection[1] = mSelection.GetCaret();
+	}
+	
+	if (mTargetTextView != nil)
+	{
+		int32 x, y;
+		mTargetTextView->GetScrollPosition(x, y);
+		state.mScrollPosition[0] = static_cast<uint32>(x);
+		state.mScrollPosition[1] = static_cast<uint32>(y);
+	}
+
+	if (MWindow* w = MDocWindow::FindWindowForDocument(this))
+	{
+		MRect r;
+		w->GetWindowPosition(r);
+		state.mWindowPosition[0] = r.x;
+		state.mWindowPosition[1] = r.y;
+		state.mWindowSize[0] = r.width;
+		state.mWindowSize[1] = r.height;
+	}
+
+	state.mFlags.mSoftwrap = mSoftwrap;
+	state.mFlags.mTabWidth = mCharsPerTab;
+	
+	state.Swap();
+	
+	mFile.WriteAttribute(kJapieDocState, &state, kMDocStateSize);
+	
+	if (mShell.get() != nil)
+	{
+		string cwd = mShell->GetCWD();
+		
+		mFile.WriteAttribute(kJapieCWD, cwd.c_str(), cwd.length());
+			
+		if (IsWorksheet())
+			Preferences::SetString("worksheet wd", cwd);
+	}
 }
 
 void MTextDocument::SetText(
@@ -497,17 +485,17 @@ const char* MTextDocument::GetCWD() const
 	const char* result = nil;
 	if (mShell.get() != nil)
 		result = mShell->GetCWD().c_str();
-//	else if (mFile.IsValid())
-//	{
-//		static auto_array<char> cwd(new char[PATH_MAX]);
-//
-//		int32 r = read_attribute(mFile.GetPath(), kJapieCWD, cwd.get(), PATH_MAX);
-//		if (r > 0 and r < PATH_MAX)
-//		{
-//			cwd.get()[r] = 0;
-//			result = cwd.get();
-//		}
-//	}
+	else if (mFile.IsValid())
+	{
+		static auto_array<char> cwd(new char[PATH_MAX]);
+
+		int32 r = mFile.ReadAttribute(kJapieCWD, cwd.get(), PATH_MAX);
+		if (r > 0 and r < PATH_MAX)
+		{
+			cwd.get()[r] = 0;
+			result = cwd.get();
+		}
+	}
 	return result;
 }
 
@@ -601,40 +589,40 @@ bool MTextDocument::ReadDocState(
 {
 	bool result = false;
 	
-//	if (IsSpecified() and Preferences::GetInteger("save state", 1))
-//	{
-//		ssize_t r = read_attribute(mFile.GetPath(), kJapieDocState, &ioDocState, kMDocStateSize);
-//		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
-//		{
-//			ioDocState.Swap();
-//
-//			if (ioDocState.mFlags.mSelectionIsBlock)
-//			{
-//				if (ioDocState.mSelection[0] <= mLineInfo.size() and
-//					ioDocState.mSelection[2] <= mLineInfo.size() and
-//					ioDocState.mSelection[1] <= 1000 and
-//					ioDocState.mSelection[3] <= 1000)
-//				{
-//					mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
-//						ioDocState.mSelection[2], ioDocState.mSelection[3]);
-//				}
-//			}
-//			else
-//				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1]);
-//		
-//			mSoftwrap = ioDocState.mFlags.mSoftwrap;
-//			
-//			if (mCharsPerTab != ioDocState.mFlags.mTabWidth and
-//				ioDocState.mFlags.mTabWidth != 0)
-//			{
-//				mCharsPerTab = ioDocState.mFlags.mTabWidth;
-//				ReInit();
-//				Rewrap();
-//			}
-//
-//			result = true;
-//		}
-//	}
+	if (IsSpecified() and Preferences::GetInteger("save state", 1))
+	{
+		ssize_t r = mFile.ReadAttribute(kJapieDocState, &ioDocState, kMDocStateSize);
+		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
+		{
+			ioDocState.Swap();
+
+			if (ioDocState.mFlags.mSelectionIsBlock)
+			{
+				if (ioDocState.mSelection[0] <= mLineInfo.size() and
+					ioDocState.mSelection[2] <= mLineInfo.size() and
+					ioDocState.mSelection[1] <= 1000 and
+					ioDocState.mSelection[3] <= 1000)
+				{
+					mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1],
+						ioDocState.mSelection[2], ioDocState.mSelection[3]);
+				}
+			}
+			else
+				mSelection.Set(ioDocState.mSelection[0], ioDocState.mSelection[1]);
+		
+			mSoftwrap = ioDocState.mFlags.mSoftwrap;
+			
+			if (mCharsPerTab != ioDocState.mFlags.mTabWidth and
+				ioDocState.mFlags.mTabWidth != 0)
+			{
+				mCharsPerTab = ioDocState.mFlags.mTabWidth;
+				ReInit();
+				Rewrap();
+			}
+
+			result = true;
+		}
+	}
 	
 	return result;
 }
@@ -2959,7 +2947,7 @@ void MTextDocument::FindAll(
 	MTextDocument doc;
 	fs::ifstream file(inPath, ios::binary);
 
-	doc.mFile = MFile(inPath);
+	doc.SetFile(MFile(inPath));
 	doc.mText.ReadFromFile(file);
 	doc.Rewrap();
 	doc.FindAll(inWhat, inIgnoreCase, inRegex, inSelection, outHits);
@@ -3422,83 +3410,6 @@ void MTextDocument::OnCommit(
 	
 	UpdateDirtyLines();
 }
-
-//OSStatus MTextDocument::DoTextInputUnicodeForKeyEvent(EventRef ioEvent)
-//{
-//	uint32 dataSize; 
-//	auto_array<UniChar> buffer;
-//	
-//	OSStatus status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-//		typeUnicodeText, nil, 0, &dataSize, nil);
-//	
-//	if (status == noErr and dataSize > 0) 
-//	{ 
-//		buffer.reset(new UniChar[dataSize / sizeof(UniChar)]);
-//		
-//		status = ::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-//			typeUnicodeText, nil, dataSize, nil, buffer.get());
-//	}
-//	
-//	UniChar* chars = buffer.get();
-//	uint32 charCount = dataSize / sizeof(UniChar);
-//	
-//	THROW_IF_OSERROR(status); 
-//	
-//	bool handled = false;
-//	mCompletionStrings.clear();
-//
-//	EventRef origEvent;
-//	if (::GetEventParameter(ioEvent, kEventParamTextInputSendKeyboardEvent,
-//	    typeEventRef, nil, sizeof(EventRef), nil, &origEvent) == noErr)
-//	{
-//	    uint32 modifiers, keyCode;
-//
-//	    ::GetEventParameter(origEvent, kEventParamKeyModifiers,
-//	        typeuint32, nil, sizeof(uint32), nil, &modifiers);
-//	    ::GetEventParameter(origEvent, kEventParamKeyCode,
-//			typeuint32, nil, sizeof(uint32), nil, &keyCode);
-//
-//		uint32 state = 0;    // we don't want to save the state
-//		void* transData = (void*)::GetScriptManagerVariable(smKCHRCache);
-//		uint32 charCode = static_cast<uint32>(
-//			toupper(static_cast<int>(::KeyTranslate(transData,
-//			static_cast<uint32>(keyCode & 0x000000FF), &state))));
-//		
-//		handled = HandleRawKeydown(keyCode, charCode, modifiers);
-//		
-//		if (modifiers & cmdKey)
-//		{
-//			handled = true;		// don't type command key's
-//			mCompletionIndex = -1;
-//		}
-//	}
-//	
-//	if (not handled and dataSize > 0)
-//	{
-//		for (UniChar* text = chars; text != chars + charCount; ++text)
-//		{
-//			if (*text == '\r')
-//				*text = '\n';
-//		}
-//		
-//		if (mFastFindMode)
-//			FastFindType(chars, charCount);
-//		else
-//		{
-//			Type(chars, charCount);
-//			mCompletionIndex = -1;
-//		}
-//		
-//		handled = true;
-//	}
-//	
-//	UpdateDirtyLines();
-//	
-//	OSStatus err = noErr;
-//	if (not handled)
-//		err = eventNotHandledErr;
-//	return err;
-//}
 
 bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 {
@@ -4075,136 +3986,6 @@ bool MTextDocument::HandleRawKeydown(
 	return handled;
 }
 
-//OSStatus MTextDocument::DoTextInputOffsetToPos(EventRef ioEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//
-//	SInt32 textOffset;
-//	::GetEventParameter(ioEvent, kEventParamTextInputSendTextOffset,
-//		typeSInt32, nil, sizeof(textOffset), nil, &textOffset);
-//	
-//	if (textOffset == 0)
-//	{
-//		uint32 line;
-//		int32 x;
-//		OffsetToPosition(mSelection.GetCaret(), line, x);
-//		
-//		HIPoint pt;
-//		pt.x = x;
-//		pt.y = mLineHeight * line;
-//		
-//		mTargetTextView->ConvertToGlobal(pt);
-//		
-//		err = ::SetEventParameter(ioEvent, kEventParamTextInputReplyPoint,
-//			typeHIPoint, sizeof(pt), &pt);
-//	}
-//	
-//	return err;
-//}
-//
-//OSStatus MTextDocument::DoTextInputUpdateActiveInputArea(EventRef ioEvent)
-//{
-//	OSStatus err = eventNotHandledErr;
-//	
-//	try
-//	{
-//		uint32 size;
-//		int32 fix = 0;
-//		UniChar buf[256];
-//
-//		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendFixLen,
-//				typeLongInteger, nil, sizeof(long), nil, &fix);
-//		fix /= 2;
-//
-//		THROW_IF_OSERROR(::GetEventParameter(ioEvent, kEventParamTextInputSendText,
-//			typeUnicodeText, nil, sizeof(buf), &size, buf));
-//		size /= 2;
-//		
-//		struct MyTextRangeArray
-//		{
-//		    short		fNumOfRanges;	/* specify the size of the fRange array */
-//		    TextRange	fRange[9];		/* when fNumOfRanges > 1, the size of this array has to be calculated */
-//		};
-//
-//		MyTextRangeArray tra;
-//		tra.fNumOfRanges = 0;
-//
-//		(void)::GetEventParameter(ioEvent, kEventParamTextInputSendHiliteRng, typeTextRangeArray,
-//			nil, sizeof(MyTextRangeArray), nil, &tra);
-//
-////		StHideCaret hide(fTargetTextView);
-////	
-//		for (int i = kCaretPosition; i <= kSelectedText; ++i)
-//			mTextInputAreaInfo.fOffset[i] = -1;
-//
-//		StartAction(kTypeAction);
-//	
-//		if (mTextInputAreaInfo.fOffset[kActiveInputArea] >= 0)
-//		{
-//			Delete(mTextInputAreaInfo.fOffset[kActiveInputArea],
-//				mTextInputAreaInfo.fLength[kActiveInputArea]);
-//		}
-//	
-//		int insertAt = mSelection.GetCaret();
-//	
-//		if (size > 0)
-//		{
-//			Insert(insertAt, buf, size);
-//
-//			MSelection s = mText.GetSelectionAfter();
-//			s.SetCaret(mSelection.GetCaret());
-//			mText.SetSelectionAfter(s);
-//	
-//			if (fix == -1 or fix == static_cast<int32>(size))
-//				mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
-//			else
-//			{
-//				mTextInputAreaInfo.fOffset[kActiveInputArea] = insertAt;
-//				mTextInputAreaInfo.fLength[kActiveInputArea] = size;
-//		
-//				for (int i = 0; i < tra.fNumOfRanges; ++i)
-//				{
-//					TextRangePtr trp = &tra.fRange[i];
-//					if (trp->fStart >= 0)
-//					{
-//						mTextInputAreaInfo.fOffset[trp->fHiliteStyle] = insertAt + trp->fStart / 2;
-//						mTextInputAreaInfo.fLength[trp->fHiliteStyle] = (trp->fEnd - trp->fStart) / 2;
-//					}
-//				}
-//		
-//				if (mTextInputAreaInfo.fOffset[kSelectedText] >= 0)
-//				{
-//					ChangeSelection(mTextInputAreaInfo.fOffset[kSelectedText],
-//						mTextInputAreaInfo.fOffset[kSelectedText] +
-//						mTextInputAreaInfo.fLength[kSelectedText]);
-//				}
-//				else if (mTextInputAreaInfo.fOffset[kCaretPosition] >= 0)
-//				{
-//					ChangeSelection(mTextInputAreaInfo.fOffset[kCaretPosition],
-//						mTextInputAreaInfo.fOffset[kCaretPosition]);
-//				}
-//			}
-//		}
-//		else
-//			mTextInputAreaInfo.fOffset[kActiveInputArea] = -1;
-//
-//		TouchLine(OffsetToLine(insertAt));
-//		UpdateDirtyLines();
-//		eScroll(kScrollToCaret);
-//		
-//		uint32 line;
-//		OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
-//		
-//		err = noErr;
-//	}
-//	catch (exception& e)
-//	{
-//		DisplayError(e);
-//	}
-//
-//	return err;
-//}
-
 void MTextDocument::PrefsChanged()
 {
 	ReInit();
@@ -4295,18 +4076,18 @@ void MTextDocument::Execute()
 	{
 		mShell.reset(new MShell(true));
 
-//		if (IsSpecified())
-//		{
-//			char cwd[1024] = { 0 };
-//			ssize_t size = read_attribute(mFile.GetPath(), kJapieCWD, cwd, sizeof(cwd));
-//			if (size > 0)
-//			{
-//				string d(cwd, size);
-//				mShell->SetCWD(d);
-//			}
-//			else
-//				mShell->SetCWD(mFile.GetPath().branch_path().string());
-//		}
+		if (IsSpecified())
+		{
+			char cwd[1024] = { 0 };
+			ssize_t size = mFile.ReadAttribute(kJapieCWD, cwd, sizeof(cwd));
+			if (size > 0)
+			{
+				string d(cwd, size);
+				mShell->SetCWD(d);
+			}
+			else
+				mShell->SetCWD(mFile.GetPath().branch_path().string());
+		}
 		
 		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
 		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
@@ -4413,18 +4194,25 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem);
 
-//		if (mSpecified and mFile.IsLocal())
-//		{
-//			MFile path = mFile.GetParent() / file.name;
-//			if (path.Exists())
-//				gApp->OpenOneDocument(path);
-//		}
-
-		MProject* project = MProject::Instance();
-		fs::path p;
-		
-		if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			gApp->OpenOneDocument(MFile(p));
+		if (mFile.IsLocal())
+		{
+			MFile path = mFile.GetParent() / file.name;
+			if (path.Exists())
+				gApp->OpenOneDocument(path);
+		}
+		else
+		{
+			MProject* project = MProject::Instance();
+			fs::path p;
+			
+			if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
+				gApp->OpenOneDocument(MFile(p));
+			else if (mFile.IsValid())
+			{
+				MFile path = mFile.GetParent() / file.name;
+				gApp->OpenOneDocument(path);
+			}
+		}
 	}
 }
 
@@ -4864,4 +4652,19 @@ void MTextDocument::IOProgress(
 {
 	eSSHProgress(inProgress, _("Receiving data"));
 	MDocument::IOProgress(inProgress, inMessage);
+}
+
+void MTextDocument::IOFileLoaded()
+{
+	MDocument::IOFileLoaded();
+	
+	MDocState state = {};
+	if (not ReadDocState(state))
+		Rewrap();
+}
+
+void MTextDocument::IOFileWritten()
+{
+	MDocument::IOFileWritten();
+	eSSHProgress(-1.f, "");
 }

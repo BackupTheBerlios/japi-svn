@@ -115,6 +115,7 @@
 			<resource>Alerts/problems-in-epub.xml</resource>
 			<resource>Alerts/ask-add-lib-as-link.xml</resource>
 			<resource>Alerts/ask-add-include-path-alert.xml</resource>
+			<resource>Alerts/ask-overwrite-newer.xml</resource>
 			<resource>Alerts/host-key-changed-alert.xml</resource>
 			<resource>Alerts/make-clean-alert.xml</resource>
 			<resource>Alerts/save-changes-alert.xml</resource>

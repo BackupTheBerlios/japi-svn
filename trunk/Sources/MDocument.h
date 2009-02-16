@@ -28,9 +28,6 @@ class MDocument
 
 	virtual				~MDocument();
 
-	virtual void		SetFileNameHint(
-							const std::string&	inName);
-
 	virtual void		DoLoad();
 
 	virtual bool		DoSave();
@@ -41,6 +38,9 @@ class MDocument
 	virtual void		RevertDocument();
 	
 	bool				IsSpecified() const					{ return mFile.IsValid(); }
+
+	virtual void		SetFile(
+							const MFile&		inNewFile);
 
 	const MFile&		GetFile() const						{ return mFile; }
 
@@ -119,6 +119,10 @@ class MDocument
 
 	virtual void		IOProgress(float inProgress, const std::string&);
 	virtual void		IOError(const std::string& inError);
+	virtual bool		IOAskOverwriteNewer();
+	
+	virtual void		IOFileLoaded();
+	virtual void		IOFileWritten();
 
 	typedef std::list<MController*>			MControllerList;
 	typedef std::list<MDocClosedNotifier>	MDocClosedNotifierList;
@@ -127,7 +131,6 @@ class MDocument
 	MDocClosedNotifierList
 						mNotifiers;
 	MFile				mFile;
-	std::string			mFileNameHint;
 	bool				mWarnedReadOnly;
 	bool				mDirty;
 

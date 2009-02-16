@@ -29,88 +29,97 @@ class MFileSaver;
 class MFile
 {
   public:
-					MFile();
+						MFile();
+						
+						MFile(
+							const MFile&		rhs);
 					
-					MFile(
-						const MFile&		rhs);
+	explicit			MFile(
+							const fs::path&		inPath);
 					
-	explicit		MFile(
-						const fs::path&		inPath);
+	explicit			MFile(
+							const std::string&	inURI);
 					
-	explicit		MFile(
-						const std::string&	inURI);
+	explicit			MFile(
+							const char*			inURI);
 					
-	explicit		MFile(
-						const char*			inURI);
-					
-	explicit		MFile(
-						GFile*				inFile);
+	explicit			MFile(
+							GFile*				inFile);
 	
-	MFile&			operator=(
-						const MFile&		rhs);
+	MFile&				operator=(
+							const MFile&		rhs);
 
-	MFile&			operator=(
-						GFile*				rhs);
+	MFile&				operator=(
+							GFile*				rhs);
 
-	MFile&			operator=(
-						const fs::path&		rhs);
+	MFile&				operator=(
+							const fs::path&		rhs);
 
-	MFile&			operator=(
-						const std::string&	rhs);
+	MFile&				operator=(
+							const std::string&	rhs);
 
-	bool			operator==(
-						const MFile&		rhs) const;
+	bool				operator==(
+							const MFile&		rhs) const;
 
-	bool			operator!=(
-						const MFile&		rhs) const;
+	bool				operator!=(
+							const MFile&		rhs) const;
 
-	MFile&			operator/=(
-						const char*			inSubPath);
+	MFile&				operator/=(
+							const char*			inSubPath);
 
-	MFile&			operator/=(
-						const fs::path&		inSubPath);
+	MFile&				operator/=(
+							const fs::path&		inSubPath);
 
-	fs::path		GetPath() const;
+	fs::path			GetPath() const;
 
-	std::string		GetURI() const;
+	std::string			GetURI() const;
+		
+	std::string			GetScheme() const;
+
+	std::string			GetFileName() const;
 	
-	std::string		GetScheme() const;
-
-	std::string		GetFileName() const;
+	MFile				GetParent() const;
 	
-	MFile			GetParent() const;
+						operator GFile* () const;
+
+	MFileLoader*		Load();
+
+	MFileSaver*			Save();
+
+	bool				IsValid() const;
+
+	bool				IsLocal() const;
 	
-					operator GFile* () const;
+	bool				Exists() const;
 
-	MFileLoader*	Load() const;
+	double				GetModDate() const;
 
-	MFileSaver*		Save() const;
+	bool				ReadOnly() const;
 
-	bool			IsValid() const;
+	ssize_t				ReadAttribute(
+							const char*			inName,
+							void*				outData,
+							size_t				inDataSize) const;
 
-	bool			IsLocal() const;
-	
-	bool			Exists() const;
-
-	double			GetModDate() const;
-
-	bool			ReadOnly() const;
-
-	void			ReadAttribute(
-						const char*			inName,
-						std::string&		outData);
-
-	void			WriteAttribute(
-						const char*			inName,
-						const std::string&	inData);
+	size_t				WriteAttribute(
+							const char*			inName,
+							const void*			inData,
+							size_t				inDataSize) const;
 
   private:
-	friend fs::path RelativePath(const MFile&, const MFile&);
+	
+	void				SetFileInfo(
+							bool				inReadOnly,
+							double				inModDate);
 
-	GFile*			mFile;
-	bool			mLoaded;
-	bool			mReadOnly;
-	double			mModDate;
+	friend fs::path RelativePath(const MFile&, const MFile&);
+	friend class MFileLoader;
+	friend class MFileSaver;
+
+	GFile*				mFile;
+	bool				mLoaded;
+	bool				mReadOnly;
+	double				mModDate;
 };
 
 MFile operator/(const MFile& lhs, const fs::path& rhs);
@@ -130,16 +139,23 @@ class MFileLoader
 	MCallback<void(float, const std::string&)>	eProgress;
 	MCallback<void(const std::string&)>			eError;
 	MCallback<void(std::istream&)>				eReadFile;
+	MCallback<void()>							eFileLoaded;
 
 	virtual void	DoLoad() = 0;
+	
+	virtual void	Cancel();
 
   protected:
 					MFileLoader(
-						const MFile&		inFile);
+						MFile&				inFile);
 
 	virtual			~MFileLoader();
 
-	const MFile&	mFile;
+	MFile&			mFile;
+
+	void			SetFileInfo(
+						bool				inReadOnly,
+						double				inModDate);
 
   private:
 					MFileLoader(
@@ -159,16 +175,24 @@ class MFileSaver
 	MCallback<void(float, const std::string&)>	eProgress;
 	MCallback<void(const std::string&)>			eError;
 	MCallback<void(std::ostream&)>				eWriteFile;
+	MCallback<bool()>							eAskOverwriteNewer;
+	MCallback<void(void)>						eFileWritten;
 
 	virtual void	DoSave() = 0;
 
+	virtual void	Cancel();
+
   protected:
 					MFileSaver(
-						const MFile&		inFile);
+						MFile&				inFile);
 
 	virtual			~MFileSaver();
 	
-	const MFile&	mFile;
+	MFile&			mFile;
+
+	void			SetFileInfo(
+						bool				inReadOnly,
+						double				inModDate);
 
   private:
 					MFileSaver(

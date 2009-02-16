@@ -41,6 +41,12 @@ MDocument::MDocument(
 
 MDocument::~MDocument()
 {
+	if (mFileLoader != nil)
+		mFileLoader->Cancel();
+
+	if (mFileSaver != nil)
+		mFileSaver->Cancel();
+	
 	if (sFirst == this)
 		sFirst = mNext;
 	else
@@ -62,14 +68,12 @@ MDocument::~MDocument()
 }
 
 // ---------------------------------------------------------------------------
-//	SetFileNameHint
+//	SetFile
 
-void MDocument::SetFileNameHint(
-	const string&	inNameHint)
+void MDocument::SetFile(
+	const MFile&		inFile)
 {
-	mFile = MFile();
-	
-	mFileNameHint = inNameHint;
+	mFile = inFile;
 	eFileSpecChanged(this, mFile);
 }
 
@@ -89,6 +93,7 @@ void MDocument::DoLoad()
 	SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
 	SetCallback(mFileLoader->eError, this, &MDocument::IOError);
 	SetCallback(mFileLoader->eReadFile, this, &MDocument::ReadFile);
+	SetCallback(mFileLoader->eFileLoaded, this, &MDocument::IOFileLoaded);
 	
 	mFileLoader->DoLoad();
 }
@@ -110,7 +115,9 @@ bool MDocument::DoSave()
 	
 	SetCallback(mFileSaver->eProgress, this, &MDocument::IOProgress);
 	SetCallback(mFileSaver->eError, this, &MDocument::IOError);
+	SetCallback(mFileSaver->eAskOverwriteNewer, this, &MDocument::IOAskOverwriteNewer);
 	SetCallback(mFileSaver->eWriteFile, this, &MDocument::WriteFile);
+	SetCallback(mFileSaver->eFileWritten, this, &MDocument::IOFileWritten);
 
 	mFileSaver->DoSave();
 
@@ -344,5 +351,31 @@ void MDocument::IOError(const std::string& inError)
 	DisplayError(inError);
 
 	mFileLoader = nil;
+	mFileSaver = nil;
+}
+
+// ---------------------------------------------------------------------------
+//	IOAskOverwriteNewer
+
+bool MDocument::IOAskOverwriteNewer()
+{
+	return DisplayAlert("ask-overwrite-newer", mFile.GetFileName()) == 2;
+}
+
+// ---------------------------------------------------------------------------
+//	IOFileLoaded
+
+void MDocument::IOFileLoaded()
+{
+	SetModified(false);
+	mFileLoader = nil;
+}
+
+// ---------------------------------------------------------------------------
+//	IOFileWritten
+
+void MDocument::IOFileWritten()
+{
+	SetModified(false);
 	mFileSaver = nil;
 }

@@ -330,9 +330,12 @@ void MMessageWindow::SelectItem(
 //	{
 //		MFile url(mList.GetFile(item.mFileNr - 1));
 //		
-//		MTextDocument* doc = MTextDocument::GetDocumentForURL(url, false);
+//		MTextDocument* doc = MTextDocument::GetDocumentForFile(url, false);
 //		if (doc == nil)
+//		{
 //			doc = new MTextDocument(&url);
+//			doc->DoLoad();
+//		}
 //		
 ////		if (doc == mController.GetDocument() or
 ////			mController.TryCloseController(kSaveChangesClosingDocument))

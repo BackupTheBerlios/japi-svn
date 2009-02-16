@@ -182,14 +182,11 @@ void MProjectWindow::Initialize(
 	bool useState = false;
 	MProjectState state = {};
 	
-//	if (Preferences::GetInteger("save state", 1))
-//	{
-//		fs::path file = inDocument->GetFile().GetPath();
-//		
-//		ssize_t r = read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-//		
-//		useState = static_cast<uint32>(r) == kMProjectStateSize;
-//	}
+	if (Preferences::GetInteger("save state", 1))
+	{
+		ssize_t r = inDocument->GetFile().ReadAttribute(kJapieProjectState, &state, kMProjectStateSize);
+		useState = static_cast<uint32>(r) == kMProjectStateSize;
+	}
 	
 	if (useState)
 	{
@@ -517,29 +514,28 @@ bool MProjectWindow::DoClose()
 //	SaveState
 
 void MProjectWindow::SaveState()
-{//
-//	fs::path file = mProject->GetFile().GetPath();
-//	MProjectState state = { };
-//
-//	(void)read_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
-//	
-//	state.Swap();
-//
-//	state.mSelectedTarget = mProject->GetSelectedTarget();
-//
-//	MGtkNotebook book(GetWidget(kNoteBookID));
-//	state.mSelectedPanel = book.GetPage();
-//
-//	MRect r;
-//	GetWindowPosition(r);
-//	state.mWindowPosition[0] = r.x;
-//	state.mWindowPosition[1] = r.y;
-//	state.mWindowSize[0] = r.width;
-//	state.mWindowSize[1] = r.height;
-//
-//	state.Swap();
-//	
-//	write_attribute(file, kJapieProjectState, &state, kMProjectStateSize);
+{
+	MProjectState state = { };
+
+	mProject->GetFile().ReadAttribute(kJapieProjectState, &state, kMProjectStateSize);
+	
+	state.Swap();
+
+	state.mSelectedTarget = mProject->GetSelectedTarget();
+
+	MGtkNotebook book(GetWidget(kNoteBookID));
+	state.mSelectedPanel = book.GetPage();
+
+	MRect r;
+	GetWindowPosition(r);
+	state.mWindowPosition[0] = r.x;
+	state.mWindowPosition[1] = r.y;
+	state.mWindowSize[0] = r.width;
+	state.mWindowSize[1] = r.height;
+
+	state.Swap();
+	
+	mProject->GetFile().WriteAttribute(kJapieProjectState, &state, kMProjectStateSize);
 }
 
 // ---------------------------------------------------------------------------

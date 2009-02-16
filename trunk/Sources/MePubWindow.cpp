@@ -111,6 +111,122 @@ GtkListStore* CreateListStoreForMediaTypes()
 	return model;
 }
 
+//class MePubContentFile : public MFile
+//{
+//  public:
+//						MePubContentFile(
+//							MePubDocument*	inEPub,
+//							fs::path		inPath)
+//							: mEPub(inEPub)
+//							, mPath(inPath)
+//						{
+//						}
+//
+//	virtual bool		operator==(
+//							const MFile&		rhs) const
+//						{
+//							bool result = false;
+//							const MePubContentFile* file = dynamic_cast<const MePubContentFile*>(&rhs);
+//							if (file != nil)
+//								result = mEPub == file->mEPub and mPath == file->mPath;
+//							return result;
+//						}
+//
+//	virtual bool		operator!=(
+//							const MFile&		rhs) const
+//						{
+//							return not operator==(rhs);
+//						}
+//						
+//	virtual fs::path	GetPath() const		{ return mPath; }
+//
+//	virtual std::string	GetURI() const		{ return string("epub:"); }
+//		
+//	virtual std::string	GetScheme() const	{ return "epub"; }
+//
+//	virtual std::string	GetFileName() const	{ return mPath.leaf(); }
+//
+//	virtual MFileLoader*	
+//						Load();
+//
+//	virtual MFileSaver*	Save();
+//
+//	virtual bool		IsValid() const		{ return true; }
+//
+//	virtual bool		IsLocal() const		{ return false; }
+//	
+//	virtual bool		Exists() const		{ return true; }
+//
+//	MePubDocument*		mEPub;
+//	fs::path			mPath;
+//};
+//
+//class MePubFileLoader : public MFileLoader
+//{
+//  public:
+//						MePubFileLoader(
+//							MFile&			inFile,
+//							const string&	inData)
+//							: MFileLoader(inFile)
+//							, data(inData)
+//						{
+//						}
+//
+//	void				DoLoad()
+//						{
+//							stringstream s(data);
+//							eReadFile(s);
+//							
+////							SetFileInfo(false, modTime);
+//							
+//							eFileLoaded();
+//							
+//							delete this;
+//						}
+//
+//	string				data;
+//};
+//
+//class MePubFileSaver : public MFileSaver
+//{
+//  public:
+//						MePubFileSaver(
+//							MFile&			inFile,
+//							MePubDocument*	inEPub,
+//							fs::path		inPath)
+//							: MFileSaver(inFile)
+//							, mEPub(inEPub)
+//							, mPath(inPath)
+//						{
+//						}
+//
+//	void				DoSave()
+//						{
+//							stringstream s;
+//							eWriteFile(s);
+//							mEPub->SetFileData(mPath, s.str());
+//							
+////							SetFileInfo(false, modTime);
+//							
+//							eFileWritten();
+//							
+//							delete this;
+//						}
+//
+//	MePubDocument*		mEPub;
+//	fs::path			mPath;
+//};
+//
+//MFileLoader* MePubContentFile::Load()
+//{
+//	return new MePubFileLoader(*this, mEPub->GetFileData(mPath));
+//}
+//
+//MFileSaver* MePubContentFile::Save()
+//{
+//	return new MePubFileSaver(*this, mEPub, mPath);
+//}
+
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +348,6 @@ void MePubFileTree::GetValue(
 			
 		}
 	}
-	
 }
 
 // ---------------------------------------------------------------------------
@@ -531,14 +646,11 @@ void MePubWindow::Initialize(
 	bool useState = false;
 	MePubState state = {};
 	
-//	if (Preferences::GetInteger("save state", 1))
-//	{
-//		fs::path file = inDocument->GetFile().GetPath();
-//		
-//		ssize_t r = read_attribute(file, kJapieePubState, &state, kMePubStateSize);
-//		
-//		useState = static_cast<uint32>(r) == kMePubStateSize;
-//	}
+	if (Preferences::GetInteger("save state", 1))
+	{
+		ssize_t r = inDocument->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
+		useState = static_cast<uint32>(r) == kMePubStateSize;
+	}
 	
 	if (useState)
 	{
@@ -600,30 +712,29 @@ bool MePubWindow::DoClose()
 
 void MePubWindow::SaveState()
 {
-//	try
-//	{
-//		fs::path file = mEPub->GetFile().GetPath();
-//		MePubState state = { };
-//
-//		(void)read_attribute(file, kJapieePubState, &state, kMePubStateSize);
-//		
-//		state.Swap();
-//
-//		MGtkNotebook book(GetWidget(kNoteBookID));
-//		state.mSelectedPanel = book.GetPage();
-//
-//		MRect r;
-//		GetWindowPosition(r);
-//		state.mWindowPosition[0] = r.x;
-//		state.mWindowPosition[1] = r.y;
-//		state.mWindowSize[0] = r.width;
-//		state.mWindowSize[1] = r.height;
-//
-//		state.Swap();
-//		
-//		write_attribute(file, kJapieePubState, &state, kMePubStateSize);
-//	}
-//	catch (...) {}
+	try
+	{
+		MePubState state = { };
+
+		mEPub->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
+		
+		state.Swap();
+
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		state.mSelectedPanel = book.GetPage();
+
+		MRect r;
+		GetWindowPosition(r);
+		state.mWindowPosition[0] = r.x;
+		state.mWindowPosition[1] = r.y;
+		state.mWindowSize[0] = r.width;
+		state.mWindowSize[1] = r.height;
+
+		state.Swap();
+		
+		mEPub->GetFile().WriteAttribute(kJapieePubState, &state, kMePubStateSize);
+	}
+	catch (...) {}
 }
 
 bool MePubWindow::UpdateCommandStatus(
@@ -852,9 +963,13 @@ void MePubWindow::InvokeFileRow(
 			else
 			{
 				doc = new MTextDocument(MFile());
-//				doc->SetEPubDoc(mEPub, path);
+				
+//				doc->SetFile(new MePubContentFile(mEPub, path));
+//				doc->DoLoad();
+
 				AddRoute(doc->eDocumentClosed, eDocumentClosed);
 				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
+
 				mOpenFiles[path] = doc;
 			}
 
