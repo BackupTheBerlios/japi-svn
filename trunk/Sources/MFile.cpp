@@ -20,6 +20,7 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "MFile.h"
 #include "MError.h"
@@ -30,6 +31,7 @@
 
 using namespace std;
 namespace io = boost::iostreams;
+namespace ba = boost::algorithm;
 
 namespace {
 
@@ -905,10 +907,7 @@ struct MPathImp : public MFileImp
 							
 	virtual std::string		GetURI() const
 							{
-								GFile* file = g_file_new_for_path(mPath.string().c_str());
-								string result = g_file_get_uri(file);
-								g_object_unref(file);
-								return result;
+								return GetScheme() + "://" + mPath.string();
 							}
 							
 	virtual fs::path		GetPath() const
@@ -1002,15 +1001,20 @@ MFile::MFile(
 	, mReadOnly(false)
 	, mModDate(0)
 {
-	GFile* file = g_file_new_for_uri(inURI);
-	if (g_file_has_uri_scheme(file, "file"))
-	{
-		fs::path path(g_file_get_path(file));
-		mImpl = new MPathImp(path);
-		g_object_unref(file);
-	}
+	if (strncmp(inURI, "file://", 7) == 0)
+		mImpl = new MPathImp(fs::system_complete(inURI + 7));
 	else
-		mImpl = new MGFileImp(file);
+	{
+		GFile* file = g_file_new_for_uri(inURI);
+		if (g_file_has_uri_scheme(file, "file"))
+		{
+			fs::path path(g_file_get_path(file));
+			mImpl = new MPathImp(path);
+			g_object_unref(file);
+		}
+		else
+			mImpl = new MGFileImp(file);
+	}
 }
 
 MFile::MFile(
@@ -1019,15 +1023,20 @@ MFile::MFile(
 	, mReadOnly(false)
 	, mModDate(0)
 {
-	GFile* file = g_file_new_for_uri(inURI.c_str());
-	if (g_file_has_uri_scheme(file, "file"))
-	{
-		fs::path path(g_file_get_path(file));
-		mImpl = new MPathImp(path);
-		g_object_unref(file);
-	}
+	if (ba::starts_with(inURI, "file://"))
+		mImpl = new MPathImp(fs::system_complete(inURI.substr(7)));
 	else
-		mImpl = new MGFileImp(file);
+	{
+		GFile* file = g_file_new_for_uri(inURI.c_str());
+		if (g_file_has_uri_scheme(file, "file"))
+		{
+			fs::path path(g_file_get_path(file));
+			mImpl = new MPathImp(path);
+			g_object_unref(file);
+		}
+		else
+			mImpl = new MGFileImp(file);
+	}
 }
 
 MFile::MFile(

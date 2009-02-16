@@ -1037,7 +1037,7 @@ int OpenSocketToServer()
 }
 
 bool ForkServer(
-	const vector<pair<int32,MFile> >&
+	const vector<pair<int32,string> >&
 						inDocs,
 	bool				inReadStdin)
 {
@@ -1073,10 +1073,10 @@ bool ForkServer(
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (vector<pair<int32,MFile> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (vector<pair<int32,string> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
 			int32 lineNr = d->first;
-			string url = d->second.GetURI();
+			string url = d->second;
 			
 			msg.length = url.length() + sizeof(lineNr);
 			(void)write(sockfd, &msg, sizeof(msg));
@@ -1253,7 +1253,7 @@ int main(int argc, char* argv[])
 
 		fs::path::default_name_check(fs::no_check);
 
-		vector<pair<int32,MFile> > docs;
+		vector<pair<int32,string> > docs;
 		
 		int c;
 		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:vt")) != -1)
@@ -1310,7 +1310,7 @@ int main(int argc, char* argv[])
 				cout << "Building " << target << " Failed" << endl;
 			exit(0);
 		}
-		
+
 		if (fs::exists("/usr/local/share/japi/locale"))
 			bindtextdomain("japi", "/usr/local/share/japi/locale");
 		
@@ -1328,17 +1328,12 @@ int main(int argc, char* argv[])
 				a.substr(0, 7) == "sftp://" or
 				a.substr(0, 6) == "ssh://")
 			{
-				MFile url(a);
-				
-//				if (url.GetScheme() == "ssh")
-//					url.SetScheme("sftp");
-				
-				docs.push_back(make_pair(lineNr, url));
+				docs.push_back(make_pair(lineNr, a));
 				lineNr = -1;
 			}
 			else
 			{
-				docs.push_back(make_pair(lineNr, MFile(fs::system_complete(a))));
+				docs.push_back(make_pair(lineNr, MFile(fs::system_complete(a)).GetURI()));
 				lineNr = -1;
 			}
 		}
@@ -1368,11 +1363,11 @@ int main(int argc, char* argv[])
 			
 			if (fork == false and not docs.empty())
 			{
-				for (vector<pair<int32,MFile> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
+				for (vector<pair<int32,string> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
 				{
 					try
 					{
-						gApp->OpenOneDocument(doc->second);
+						gApp->OpenOneDocument(MFile(doc->second));
 					}
 					catch (...) {}
 				}
