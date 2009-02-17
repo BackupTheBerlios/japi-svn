@@ -1,11 +1,9 @@
 ﻿Te doen
 
 - ePub
-	- dublin core opties
 	- zoeken in alle ePub items
 	- revert op ePub werkt nog niet?
-	- revert
-
+	- guide
 	? adobe page dinges
 
 Moet af:
@@ -17,6 +15,9 @@ Moet af:
 - keybinding prefs panel
 - bestandsinfo dialoog venster
 - waarschuwen bij inconsistente einde regel tekens
+- message window met inline document view
+- betere (snellere) softwrap
+- doorgaan met afsluiten na 'Save Changes?' dialog
 
 - xml parser
 	- pad in popup?
