@@ -8,6 +8,8 @@
 #include <map>
 #include <vector>
 #include <cstring>
+#include <fstream>
+#include <iomanip>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -41,8 +43,8 @@ extern char** environ;
 using namespace std;
 
 const char
-	kSetDelimiterStr[] = "--:@:----:@:--",
-	kSetDelimiter[] = "--:@:----:@:--\n";
+	kSetDelimiterStr[]	= "--:@:----:@:--",
+	kSetDelimiter[]		= "--:@:----:@:--\n";
 
 const int32
 	kSetDelimiterLength = sizeof(kSetDelimiter) - 1;
@@ -252,7 +254,7 @@ void MShellImp::ExecuteScript(
 	argv.push_back(nil);
 	
 	Execute(argv);
-
+	
 	// make this a thread
 	
 	uint32 l = inText.length();
@@ -265,8 +267,11 @@ void MShellImp::ExecuteScript(
 			k = l;
 		
 		int r = write(mStdInFD, p, k);
-		p += r;
-		l -= r;
+		if (r > 0)
+		{
+			p += r;
+			l -= r;
+		}
 		
 		Poll(0);
 	}
@@ -280,50 +285,47 @@ void MShellImp::Poll(
 	char buffer[10240];
 	int r;
 	
+	string out;
+	
 	while (mStdOutFD >= 0)
 	{
 		r = read(mStdOutFD, buffer, sizeof(buffer));
 		
 		if (r > 0)
 		{
-			if (mState == kSetDelimiterLength)
-				mSetString.append(buffer, r);
-			else
+			// process the buffer block just read
+			
+			for (char* p = buffer; p < buffer + r; ++p)
 			{
-				char *p = buffer;
-				int flushed = 0;
-	
-				while (p < buffer + r and mState < kSetDelimiterLength)
+				// if we've already encountered the set delimiter, we simply cat
+				// output to the set string.
+				
+				if (mState == kSetDelimiterLength)
 				{
-					if (*p == kSetDelimiter[mState])
-						++mState;
-					else if (mState > 0)
-					{
-						if (p - buffer - flushed > mState)
-							eStdOut(buffer + flushed, p - buffer - flushed - mState);
-						eStdOut(kSetDelimiter, mState);
-						flushed = p - buffer;
-						mState = 0;
-					}
-					++p;
+					mSetString += *p;
+					continue;
 				}
+				
+				// if this is a character in the set string increase state
+				if (*p == kSetDelimiter[mState])
+				{
+					++mState;
+					continue;
+				}
+				
+				// if we've seen some characters that start the set delimiter
+				// add those to the output buffer first and reset mState
 				
 				if (mState > 0)
 				{
-					if (p - buffer - flushed > mState)
-					{
-						eStdOut(buffer + flushed, p - buffer - flushed - mState);
-						flushed = p - buffer - mState;
-					}
-
-					if (mState == kSetDelimiterLength)
-					{
-						if (r > flushed + kSetDelimiterLength)
-							mSetString.assign(p, r - flushed - kSetDelimiterLength);
-					}
+					for (int32 d = 0; d < mState; ++d)
+						out += kSetDelimiter[d];
+					
+					mState = 0;
 				}
-				else
-					eStdOut(buffer + flushed, r - flushed);
+				
+				// and now simply add the character to the output
+				out += *p;
 			}
 		}
 		else if (r == 0 or errno != EAGAIN)
@@ -335,6 +337,9 @@ void MShellImp::Poll(
 			break;
 	}
 	
+	if (not out.empty())
+		eStdOut(out.c_str(), out.length());
+
 	while (mStdErrFD >= 0)
 	{
 		r = read(mStdErrFD, buffer, sizeof(buffer));

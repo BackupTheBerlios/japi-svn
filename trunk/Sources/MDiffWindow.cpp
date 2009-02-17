@@ -147,14 +147,14 @@ void MDiffWindow::ChooseFile(int inFileNr)
 		if (mDoc1 != nil)
 			url = mDoc1->GetFile();
 		else if (mDir1Inited)
-			url = MFile(mDir1);
+			url = mDir1;
 	}
 	else if (inFileNr == 2)
 	{
 		if (mDoc2 != nil)
 			url = mDoc2->GetFile();
 		else if (mDir2Inited)
-			url = MFile(mDir2);
+			url = mDir2;
 	}
 
 	try
