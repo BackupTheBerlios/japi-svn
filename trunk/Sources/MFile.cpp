@@ -1211,27 +1211,42 @@ void MFile::SetFileInfo(
 
 fs::path MFile::GetPath() const
 {
-	return mImpl->GetPath();
+	fs::path result;
+	if (mImpl != nil)
+		result = mImpl->GetPath();
+	return result;
 }
 
 string MFile::GetURI() const
 {
-	return mImpl->GetURI();
+	string result;
+	if (mImpl != nil)
+		result = mImpl->GetURI();
+	return result;
 }
 
 string MFile::GetScheme() const
 {
-	return mImpl->GetScheme();
+	string result;
+	if (mImpl != nil)
+		result = mImpl->GetScheme();
+	return result;
 }
 
 string MFile::GetFileName() const
 {
-	return mImpl->GetFileName();
+	string result;
+	if (mImpl != nil)
+		result = mImpl->GetFileName();
+	return result;
 }
 
 MFile MFile::GetParent() const
 {
-	return MFile(mImpl->GetParent());
+	MFile result;
+	if (mImpl != nil)
+		result = MFile(mImpl->GetParent());
+	return result;
 }
 
 MFile::operator GFile*() const
@@ -1243,11 +1258,13 @@ MFile::operator GFile*() const
 
 MFileLoader* MFile::Load()
 {
+	THROW_IF_NIL(mImpl);
 	return mImpl->Load(*this);
 }
 
 MFileSaver* MFile::Save()
 {
+	THROW_IF_NIL(mImpl);
 	return mImpl->Save(*this);
 }
 

@@ -1094,6 +1094,10 @@ bool ForkServer(
 	msg.msg = 'done';
 	msg.length = 0;
 	(void)write(sockfd, &msg, sizeof(msg));
+
+	// now remove that pesky wait cursor
+	// I hope this will work even though we didn't call gtk_init 
+	gdk_notify_startup_complete();
 	
 	if (inReadStdin)
 	{
