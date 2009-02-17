@@ -40,10 +40,14 @@ class MePubItem : public MProjectItem
 	void			SetEncrypted(
 						bool				inEncrypted)	{ mEncrypted = inEncrypted; }
 
+	bool			IsLinear() const						{ return mLinear; }
+	void			SetLinear(
+						bool				inLinear)		{ mLinear = inLinear; }
+
 	void			GuessMediaType();
 
   protected:
-	bool			mIsOutOfDate, mEncrypted;
+	bool			mIsOutOfDate, mEncrypted, mLinear;
 	std::string		mID;
 	std::string		mData;
 	std::string		mMediaType;

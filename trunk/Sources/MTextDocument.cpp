@@ -4166,14 +4166,20 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 	if (mLanguage)
 	{
 		MIncludeFile file = mIncludeFiles->at(inItem);
+		
+		bool found = false;
 
 		if (mFile.IsLocal())
 		{
 			MFile path = mFile.GetParent() / file.name;
 			if (path.Exists())
+			{
 				gApp->OpenOneDocument(path);
+				found = true;
+			}
 		}
-		else
+		
+		if (not found)
 		{
 			MProject* project = MProject::Instance();
 			fs::path p;

@@ -7,6 +7,7 @@
 #define MEPUBDOCUMENT_H
 
 #include <map>
+#include <set>
 #include "MDocument.h"
 #include "MProjectItem.h"
 #include "node.hpp"
@@ -130,8 +131,8 @@ class MePubDocument : public MDocument
 
 	std::string			mRootFile;
 	fs::path			mTOCFile;
-	std::vector<std::string>
-						mSpine;
+	std::set<std::string>
+						mLinear;
 	MProjectGroup		mRoot, mTOC;
 	std::string			mDocumentID, mDocumentIDScheme;
 	std::map<std::string,std::string>

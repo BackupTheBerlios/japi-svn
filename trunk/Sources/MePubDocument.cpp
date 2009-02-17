@@ -629,8 +629,11 @@ void MePubDocument::ReadFile(
 		
 		if (encrypted.count(item->first))
 			epi->SetEncrypted(true);
+		
+		if (mLinear.count(epi->GetID()))
+			epi->SetLinear(true);
 	}
-	
+
 	if (not encrypted.empty())
 		problems.push_back(_("This ePub contains encrypted files"));
 	
@@ -903,6 +906,8 @@ xml::node_ptr MePubDocument::CreateOPF(
 		
 		xml::node_ptr itemref(new xml::node("itemref"));
 		itemref->add_attribute("idref", ePubItem->GetID());
+		if (ePubItem->IsLinear())
+			itemref->add_attribute("linear", "yes");
 		spine->add_child(itemref);
 	}
 	
@@ -1031,11 +1036,17 @@ void MePubDocument::ParseOPF(
 			if (dc->ns() != "http://purl.org/dc/elements/1.1/")
 				continue;
 			
+			string content = dc->content();
+			ba::trim(content);
+			
+			if (content.empty())
+				continue;
+			
 			if (dc->name() == "identifier")
 			{
 				if (dc->get_attribute("id") == uid)
 				{
-					mDocumentID = dc->content();
+					mDocumentID = content;
 					mDocumentIDScheme = dc->get_attribute("opf:scheme");
 					ba::to_lower(mDocumentIDScheme);
 				}
@@ -1046,20 +1057,17 @@ void MePubDocument::ParseOPF(
 				if (not date.empty())
 					date += '\n';
 				
-				string dt = dc->content();
-				
-				
 				if (dc->get_attribute("opf:event").empty())
-					date += dc->content();
+					date += content;
 				else
-					date += dc->get_attribute("opf:event") + ": " + dc->content();
+					date += dc->get_attribute("opf:event") + ": " + content;
 	
 				mDublinCore[dc->name()] = date;
 			}
 			else if (mDublinCore[dc->name()].empty())
-				mDublinCore[dc->name()] = dc->content();
+				mDublinCore[dc->name()] = content;
 			else
-				mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + dc->content();
+				mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + content;
 		}
 	}
 
@@ -1107,7 +1115,9 @@ void MePubDocument::ParseOPF(
 				continue;
 			
 			string idref = item->get_attribute("idref");
-			mSpine.push_back(idref);
+
+			if (item->get_attribute("linear") == "yes")
+				mLinear.insert(idref);
 		}
 	}
 

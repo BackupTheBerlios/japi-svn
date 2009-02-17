@@ -17,6 +17,7 @@ MePubItem::MePubItem(
 	: MProjectItem(inName, inParent)
 	, mIsOutOfDate(false)
 	, mEncrypted(false)
+	, mLinear(false)
 {
 }
 
@@ -54,7 +55,7 @@ void MePubItem::GuessMediaType()
 		SetMediaType("application/vnd.adobe-page-template+xml");
 	else if (FileNameMatches("*.png", mName))
 		SetMediaType("image/png");
-	else if (FileNameMatches("*.jpg", mName))
+	else if (FileNameMatches("*.jpg;*.jpeg", mName))
 		SetMediaType("image/jpeg");
 	else 
 		SetMediaType("application/xhtml+xml");

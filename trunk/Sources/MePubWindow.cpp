@@ -119,6 +119,7 @@ GtkListStore* CreateListStoreForMediaTypes()
 enum {
 	kePubFileNameColumn,
 	kePubFileIDColumn,
+	kePubFileLinearColumn,
 	kePubFileMediaTypeColumn,
 	kePubFileDataSizeColumn,
 	kePubFileDirtyColumn,
@@ -148,6 +149,9 @@ class MePubFileTree : public MProjectTree
 						gchar*			path,
 						gchar*			new_text);
 
+	bool			EditedItemLinear(
+						gchar*			path);
+
 	bool			EditedItemMediaType(
 						gchar*			path,
 						gchar*			new_text);
@@ -165,6 +169,8 @@ GType MePubFileTree::GetColumnType(
 	
 	if (inColumn == kePubFileDirtyColumn)
 		result = GDK_TYPE_PIXMAP;
+	else if (inColumn == kePubFileLinearColumn)
+		result = G_TYPE_BOOLEAN;
 	
 	return result;
 }
@@ -198,6 +204,12 @@ void MePubFileTree::GetValue(
 				g_value_init(outValue, G_TYPE_STRING);
 				if (ePubItem != nil)
 					g_value_set_string(outValue, ePubItem->GetID().c_str());
+				break;
+			
+			case kePubFileLinearColumn:
+				g_value_init(outValue, G_TYPE_BOOLEAN);
+				if (ePubItem != nil)
+					g_value_set_boolean(outValue, ePubItem->IsLinear());
 				break;
 			
 			case kePubFileMediaTypeColumn:
@@ -255,6 +267,36 @@ bool MePubFileTree::EditedItemID(
 		if (ePubItem != nil and ePubItem->GetID() != inNewValue)
 		{
 			ePubItem->SetID(inNewValue);
+			RowChanged(path, &iter);
+			result = true;
+		}
+	}
+	
+	if (path != nil)
+		gtk_tree_path_free(path);
+	
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	EditedItemLinear
+
+bool MePubFileTree::EditedItemLinear(
+	gchar*				inPath)
+{
+	bool result = false;
+	
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	
+	GtkTreeIter iter;
+	if (GetIter(&iter, path))
+	{
+		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		MePubItem* ePubItem = dynamic_cast<MePubItem*>(item);
+		
+		if (ePubItem != nil)
+		{
+			ePubItem->SetLinear(not ePubItem->IsLinear());
 			RowChanged(path, &iter);
 			result = true;
 		}
@@ -448,6 +490,7 @@ MePubWindow::MePubWindow()
 	, eDateChanged(this, &MePubWindow::DateChanged)
 	, mEditedItemName(this, &MePubWindow::EditedItemName)
 	, mEditedItemID(this, &MePubWindow::EditedItemID)
+	, mEditedItemLinear(this, &MePubWindow::EditedItemLinear)
 	, mEditedItemMediaType(this, &MePubWindow::EditedItemMediaType)
 	, mEditedTOCTitle(this, &MePubWindow::EditedTOCTitle)
 	, mEditedTOCSrc(this, &MePubWindow::EditedTOCSrc)
@@ -721,6 +764,14 @@ void MePubWindow::InitializeTreeView(
 		_("ID"), renderer, "text", kePubFileIDColumn, nil);
 	g_object_set(G_OBJECT(renderer), "editable", true, nil);
 	mEditedItemID.Connect(G_OBJECT(renderer), "edited");
+	gtk_tree_view_append_column(inGtkTreeView, column);
+	
+	// the Linear column
+	renderer = gtk_cell_renderer_toggle_new();
+	column = gtk_tree_view_column_new_with_attributes (
+		_("Linear"), renderer, "active", kePubFileLinearColumn, nil);
+//	g_object_set(G_OBJECT(renderer), "editable", true, nil);
+	mEditedItemLinear.Connect(G_OBJECT(renderer), "toggled");
 	gtk_tree_view_append_column(inGtkTreeView, column);
 	
 	// the MediaType column
@@ -1141,6 +1192,13 @@ void MePubWindow::EditedItemID(
 	gchar*				inNewValue)
 {
 	if (mFilesTree->EditedItemID(inPath, inNewValue))
+		mEPub->SetModified(true);
+}
+
+void MePubWindow::EditedItemLinear(
+	gchar*				inPath)
+{
+	if (mFilesTree->EditedItemLinear(inPath))
 		mEPub->SetModified(true);
 }
 

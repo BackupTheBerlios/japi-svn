@@ -954,7 +954,7 @@ struct MPathImp : public MFileImp
 							
 	virtual std::string		GetURI() const
 							{
-								string path = mPath.string();
+								string path = fs::system_complete(mPath).string();
 								URLEncode(path);
 								return GetScheme() + "://" + path;
 							}

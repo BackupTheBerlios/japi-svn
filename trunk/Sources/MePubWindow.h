@@ -98,6 +98,12 @@ class MePubWindow : public MDocWindow
 	MSlot<void(gchar*,gchar*)>
 					mEditedItemID;
 
+	void			EditedItemLinear(
+						gchar*			path);
+
+	MSlot<void(gchar*)>
+					mEditedItemLinear;
+
 	void			EditedItemMediaType(
 						gchar*			path,
 						gchar*			new_text);
