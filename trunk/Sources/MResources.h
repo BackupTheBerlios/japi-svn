@@ -41,9 +41,9 @@ struct MResourceImp
 	uint32			mData;
 };
 
-extern MResourceImp	gResourceIndex[];
-extern const char	gResourceData[];
-extern const char	gResourceName[];
+extern const MResourceImp	gResourceIndex[];
+extern const char			gResourceData[];
+extern const char			gResourceName[];
 
 class MResource
 {
@@ -114,7 +114,7 @@ class MResource
 
 	  private:
 						iterator(
-							MResourceImp*	inImpl)
+							const MResourceImp*	inImpl)
 							: mRsrc(new MResource(inImpl)) {}
 
 		MResource*		mRsrc;
@@ -122,7 +122,7 @@ class MResource
 
 	iterator			begin() const
 						{
-							MResourceImp* imp = nil;
+							const MResourceImp* imp = nil;
 							if (mImpl->mChild != 0)
 								imp = gResourceIndex + mImpl->mChild;
 							return iterator(imp);
@@ -143,10 +143,10 @@ class MResource
 
   private:
 						MResource(
-							MResourceImp*	inImpl)
+							const MResourceImp*	inImpl)
 							: mImpl(inImpl) {}
 
-	MResourceImp*		mImpl;
+	const MResourceImp*	mImpl;
 };
 
 // inlines

@@ -21,7 +21,7 @@
 using namespace std;
 
 #if defined(BUILDING_TEMPORARY_JAPI)
-const char gResourceIndex[] = "\0\0\0\0";
+const MResourceImp gResourceIndex[0] = {};
 const char gResourceData[] = "\0\0\0\0";
 const char gResourceName[] = "\0\0\0\0";
 #endif
