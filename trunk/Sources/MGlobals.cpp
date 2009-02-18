@@ -121,6 +121,9 @@ void InitGlobals()
 	{
 		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
 		{
+			if (t->size() == 0 or fs::exists(gTemplatesDir / t->name()))
+				continue;
+			
 			fs::ofstream f(gTemplatesDir / t->name());
 			f.write(t->data(), t->size());
 		}
@@ -134,6 +137,9 @@ void InitGlobals()
 	{
 		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
 		{
+			if (t->size() == 0 or fs::exists(gScriptsDir / t->name()))
+				continue;
+			
 			fs::path file(gScriptsDir / t->name());
 			
 			fs::ofstream f(file);

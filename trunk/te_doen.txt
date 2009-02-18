@@ -8,7 +8,8 @@
 
 Moet af:
 
-- resources lib maken voor distributie/andere resources opslag?
+- doorgaan met afsluiten na 'Save Changes?' dialog
+
 - link order aan de praat helpen
 - upper/lower case menu maken
 - accelerator-achtig iets
@@ -17,7 +18,8 @@ Moet af:
 - waarschuwen bij inconsistente einde regel tekens
 - message window met inline document view
 - betere (snellere) softwrap
-- doorgaan met afsluiten na 'Save Changes?' dialog
+
+- resources lib maken voor distributie/andere resources opslag?
 
 - xml parser
 	- pad in popup?
