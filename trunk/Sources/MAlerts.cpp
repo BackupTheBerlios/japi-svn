@@ -27,19 +27,17 @@ GtkWidget* CreateAlertWithArgs(
 	xmlDocPtr xmlDoc = nil;
 	GtkWidget* dlg = nil;
 	
-	string rsrc = string("Alerts/") + inResourceName + ".xml";
+	string resource = string("Alerts/") + inResourceName + ".xml";
 	
 	try
 	{
 		xmlInitParser();
 	
-		const char* xml;
-		uint32 size;
+		MResource rsrc = MResource::root().find(resource);
+		if (not rsrc)
+			THROW(("Could not load resource Alerts/%s.xml", inResourceName));
 		
-		if (not LoadResource(rsrc, xml, size))
-			THROW(("Could not load resource %s", inResourceName));
-		
-		xmlDoc = xmlParseMemory(xml, size);
+		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
 		if (xmlDoc == nil or xmlDoc->children == nil)
 			THROW(("Failed to parse project file"));
 		

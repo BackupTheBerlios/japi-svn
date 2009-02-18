@@ -3911,18 +3911,6 @@ bool MTextDocument::HandleRawKeydown(
 				break;
 			
 			case GDK_Tab:
-				if (mSelection.IsEmpty() or mFastFindMode)
-				{
-					if (inModifiers == 0)
-					{
-						Type("\t", 1);
-						handled = true;
-					}
-				}
-				// fall through
-
-			case GDK_ISO_Left_Tab:
-			
 			{
 				int minLine = mSelection.GetMinLine();
 				int maxLine = mSelection.GetMaxLine();
@@ -3937,10 +3925,33 @@ bool MTextDocument::HandleRawKeydown(
 				
 				if (shift)
 				{
-					if (inKeyValue == GDK_ISO_Left_Tab)
-						DoShiftLeft();
-					else
-						DoShiftRight();
+					DoShiftRight();
+					handled = true;
+				}
+				else
+				{
+					Type("\t", 1);
+					handled = true;
+				}
+				break;
+			}
+
+			case GDK_ISO_Left_Tab:
+			{
+				int minLine = mSelection.GetMinLine();
+				int maxLine = mSelection.GetMaxLine();
+
+				bool shift = minLine < maxLine;
+				if (not shift)
+				{
+					shift =
+						mSelection.GetMinOffset() == LineStart(minLine) and
+						mSelection.GetMaxOffset() == LineStart(minLine + 1);
+				}
+				
+				if (shift)
+				{
+					DoShiftLeft();
 					handled = true;
 				}
 				break;

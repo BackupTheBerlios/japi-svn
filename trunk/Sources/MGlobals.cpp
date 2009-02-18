@@ -116,49 +116,28 @@ void InitGlobals()
 	if (not fs::exists(gTemplatesDir))
 		fs::create_directory(gTemplatesDir);
 
-	const char* kBuiltInTemplates[] = {
-		"empty.c",
-		"Strict.xhtml",
-		"Template.html",
-		"Transitional.xhtml",
-		nil
-	};
-
-	for (const char** t = kBuiltInTemplates; *t != nil; ++t)
+	MResource rsrc = MResource::root().find("Templates");
+	if (rsrc)
 	{
-		const char* txt;
-		uint32 length;
-
-		if (not fs::exists(gTemplatesDir / *t) and
-			LoadResource(string("Templates/") + *t, txt, length))
+		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
 		{
-			fs::ofstream f(gTemplatesDir / *t);
-			f.write(txt, length);
+			fs::ofstream f(gTemplatesDir / t->name());
+			f.write(t->data(), t->size());
 		}
 	}
 
 	if (not fs::exists(gScriptsDir))
 		fs::create_directory(gScriptsDir);
 
-	const char* kBuiltInScripts[] = {
-		"sort.pl",
-		"strip-tags.pl",
-		"run-perl-script.pl",
-		nil
-	};
-
-	for (const char** t = kBuiltInScripts; *t != nil; ++t)
+	rsrc = MResource::root().find("Scripts");
+	if (rsrc)
 	{
-		const char* txt;
-		uint32 length;
-
-		if (not fs::exists(gScriptsDir / *t) and
-			LoadResource(string("Scripts/") + *t, txt, length))
+		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
 		{
-			fs::path file(gScriptsDir / *t);
+			fs::path file(gScriptsDir / t->name());
 			
 			fs::ofstream f(file);
-			f.write(txt, length);
+			f.write(t->data(), t->size());
 			
 			chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 		}

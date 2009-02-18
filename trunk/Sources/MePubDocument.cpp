@@ -443,6 +443,10 @@ MePubDocument::MePubDocument()
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
+	MResource rsrc = MResource::root().find("empty_xhtml_file.xhtml");
+	if (not rsrc)
+		THROW(("Missing xhtml resource"));
+	
 	mRootFile = "book.opf";
 	mTOCFile = "book.ncx";
 	
@@ -450,7 +454,7 @@ MePubDocument::MePubDocument()
 	mRoot.AddProjectItem(oebps);
 	
 	MePubItem* item = new MePubItem("main.xhtml", oebps);
-	item->SetData(LoadResource("empty_xhtml_file.xhtml"));
+	item->SetData(string(rsrc.data(), rsrc.size()));
 	item->GuessMediaType();
 	item->SetID("main");
 	oebps->AddProjectItem(item);

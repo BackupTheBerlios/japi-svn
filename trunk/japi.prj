@@ -113,7 +113,6 @@
 			<resource>Alerts/ask-add-lib-as-link.xml</resource>
 			<resource>Alerts/ask-add-include-path-alert.xml</resource>
 			<resource>Alerts/ask-overwrite-newer.xml</resource>
-			<resource>Alerts/host-key-changed-alert.xml</resource>
 			<resource>Alerts/make-clean-alert.xml</resource>
 			<resource>Alerts/save-changes-alert.xml</resource>
 			<resource>Alerts/discard-changes-alert.xml</resource>
@@ -122,7 +121,6 @@
 			<resource>Alerts/error-alert.xml</resource>
 			<resource>Alerts/exception-alert.xml</resource>
 			<resource>Alerts/stop-building-alert.xml</resource>
-			<resource>Alerts/unknown-host-alert.xml</resource>
 		</group>
 		<group name="Dialogs">
 			<resource>Dialogs/find-dialog.glade</resource>
@@ -164,8 +162,10 @@
 			<resource>Scripts/strip-tags.pl</resource>
 			<resource>Scripts/tidy.sh</resource>
 		</group>
-		<group name="Dutch">
-			<resource>Dutch/japi.po</resource>
+		<group name="Locale">
+			<group name="nl">
+				<resource>Dutch/japi.po</resource>
+			</group>
 		</group>
 		<resource>japi.desktop</resource>
 		<resource>empty_xhtml_file.xhtml</resource>

@@ -219,7 +219,8 @@ void MShellImp::Execute(
 	flags = fcntl(mStdErrFD, F_GETFL, 0);
 	fcntl(mStdErrFD, F_SETFL, flags | O_NONBLOCK);
 	
-	AddRoute(ePoll, gApp->eIdle);
+	if (gApp != nil)
+		AddRoute(ePoll, gApp->eIdle);
 	
 	mState = 0;
 	mSetString.clear();
@@ -365,7 +366,8 @@ void MShellImp::Poll(
 		mPID = -1;
 		eShellStatus(false);
 
-		RemoveRoute(ePoll, gApp->eIdle);
+		if (gApp != nil)
+			RemoveRoute(ePoll, gApp->eIdle);
 		
 		stringstream s(mSetString);
 
@@ -432,6 +434,7 @@ void MShell::Kill()
 
 bool MShell::IsRunning() const
 {
+	mImpl->Poll(0);
 	return mImpl->mPID > 0;
 }
 

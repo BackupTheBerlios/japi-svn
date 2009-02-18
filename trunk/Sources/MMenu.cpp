@@ -236,12 +236,10 @@ MMenu* MMenu::CreateFromResource(
 {
 	MMenu* result = nil;
 	
-	const char* xml;
-	uint32 size;
+	MResource rsrc = MResource::root().find(
+		string("Menus/") + inResourceName + ".xml");
 	
-	string rsrc = string("Menus/") + inResourceName + ".xml";
-	
-	if (not LoadResource(rsrc, xml, size))
+	if (not rsrc)
 		THROW(("Menu resource not found: %s", inResourceName));
 	
 	xmlDocPtr			xmlDoc = nil;
@@ -250,7 +248,7 @@ MMenu* MMenu::CreateFromResource(
 
 	try
 	{
-		xmlDoc = xmlParseMemory(xml, size);
+		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
 		if (xmlDoc == nil or xmlDoc->children == nil)
 			THROW(("Failed to parse menu resource"));
 		
@@ -631,12 +629,10 @@ void MMenubar::Initialize(
 	mGtkMenubar = inMBarWidget;
 	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
 	
-	const char* xml;
-	uint32 size;
+	MResource rsrc = MResource::root().find(
+		string("Menus/") + inResourceName + ".xml");
 	
-	string rsrc = string("Menus/") + inResourceName + ".xml";
-	
-	if (not LoadResource(rsrc, xml, size))
+	if (not rsrc)
 		THROW(("Menu resource not found: %s", inResourceName));
 	
 	xmlDocPtr			xmlDoc = nil;
@@ -645,7 +641,7 @@ void MMenubar::Initialize(
 
 	try
 	{
-		xmlDoc = xmlParseMemory(xml, size);
+		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
 		if (xmlDoc == nil or xmlDoc->children == nil)
 			THROW(("Failed to parse menu resource"));
 		

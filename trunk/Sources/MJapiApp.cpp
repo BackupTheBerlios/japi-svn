@@ -40,10 +40,12 @@
 #include "MSound.h"
 #include "MePubDocument.h"
 #include "MePubWindow.h"
+#include "MShell.h"
 
 #include <iostream>
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 static bool gQuit = false;
 
@@ -54,6 +56,7 @@ const char
 	kVersionString[] = "0.9.7-b2";
 
 MJapieApp* gApp;
+fs::path gExecutablePath, gPrefixPath;
 
 const char
 	kSocketName[] = "/tmp/japi.%d.socket";
@@ -683,13 +686,12 @@ void MJapieApp::DoNewProject()
 			THROW(("Failed to create project file"));
 		
 		// write out a default project from our resources
-		const char* txt;
-		uint32 length;
+		MResource rsrc = MResource::root().find("Templates/Projects/hello-cmdline.prj");
 
-		if (not LoadResource(string("Templates/Projects/hello-cmdline.prj"), txt, length))
+		if (rsrc)
 			THROW(("Failed to load project resource"));
 		
-		file.write(txt, length);
+		file.write(rsrc.data(), rsrc.size());
 		file.close();
 		
 		// and write out a sample source file
@@ -697,10 +699,11 @@ void MJapieApp::DoNewProject()
 		if (not srcfile.is_open())
 			THROW(("Failed to create project file"));
 		
-		if (not LoadResource(string("Templates/Projects/hello.cpp"), txt, length))
+		rsrc = MResource::root().find("Templates/Projects/hello.cpp");
+		if (not rsrc)
 			THROW(("Failed to load project sourcefile resource"));
 		
-		srcfile.write(txt, length);
+		srcfile.write(rsrc.data(), rsrc.size());
 		srcfile.close();
 		
 		OpenProject(MFile(projectFile));
@@ -838,9 +841,9 @@ void MJapieApp::DoOpenTemplate(
 	string text;
 	buffer.GetText(0, buffer.GetSize(), text);
 	
-	boost::algorithm::replace_all(text, "$date$", GetDateTime());
-	boost::algorithm::replace_all(text, "$name$", GetUserName(false));
-	boost::algorithm::replace_all(text, "$shortname$", GetUserName(true));
+	ba::replace_all(text, "$date$", GetDateTime());
+	ba::replace_all(text, "$name$", GetUserName(false));
+	ba::replace_all(text, "$shortname$", GetUserName(true));
 	
 	MTextDocument* doc = new MTextDocument(MFile());
 	doc->SetText(text.c_str(), text.length());
@@ -1130,9 +1133,8 @@ void usage()
 	cout << "usage: japi [options] [ [+line] files ]" << endl
 		 << "    available options: " << endl
 		 << endl
-		 << "    -i path    Install japi at location 'path', e.g. /usr/local/bin/japi" << endl
-		 << "    -l path    Install locale files at location 'path' " << endl
-		 << "                    e.g. /usr/local/share/japi" << endl
+		 << "    -i [path]  Install japi at prefix where prefix path, default is /usr/local" << endl
+		 << "               resulting in /usr/local/bin/japi" << endl
 		 << "    -h         This help message" << endl
 		 << "    -f         Don't fork into client/server" << endl
 		 << endl
@@ -1143,49 +1145,45 @@ void usage()
 }
 
 void install(
-	const char*		inPath)
+	const char*		inPrefix)
 {
 	if (getuid() != 0)
 		error("You must be root to be able to install japi");
 	
 	// copy the executable to the appropriate destination
+	if (inPrefix == nil or strlen(inPrefix) == 0)
+		inPrefix = "/usr/local";
 	
-	if (inPath == nil or strlen(inPath) == 0)
-		inPath = "/usr/bin/japi";
+	fs::path prefix(inPrefix);
 	
-	fs::path dest(inPath);
-	
-	if (not fs::exists(dest.branch_path()))
-		error("Destination directory %s does not seem to exist", 
-			dest.branch_path().string().c_str());
-	
-	fs::path exe(g_get_prgname());
-	
-	if (not fs::exists(exe))
-		error("I don't seem to exist...[%s]?", exe.string().c_str());
-	
-	cout << "copying " << exe.string() << " to " << dest.string() << endl;
+	if (not fs::exists(prefix / "bin"))
+	{
+		cout << "Creating directory " << (prefix / "bin") << endl;
+		fs::create_directories(prefix / "bin");
+	}
+
+	if (not fs::exists(gExecutablePath))
+		error("I don't seem to exist...[%s]?", gExecutablePath.string().c_str());
+
+	fs::path dest = prefix / "bin" / "japi";
+	cout << "copying " << gExecutablePath.string() << " to " << dest.string() << endl;
 	
 	if (fs::exists(dest))
 		fs::remove(dest);
 		
-	fs::copy_file(exe, dest);
+	fs::copy_file(gExecutablePath, dest);
 	
 	// create desktop file
 	
-	const char* desktop_text;
-	uint32 length;
-	if (not LoadResource("japi.desktop", desktop_text, length))
+	MResource rsrc = MResource::root().find("japi.desktop");
+	if (not rsrc)
 		error("japi.desktop file could not be created, missing data");
 
-	string desktop(desktop_text, desktop_text + length);
-	string::size_type p;
-	if ((p = desktop.find("__EXE__")) == string::npos)
-		error("japi.desktop file could not be created, invalid data");
-	
-	desktop.replace(p, 7, dest.string());
+	string desktop(rsrc.data(), rsrc.size());
+	ba::replace_first(desktop, "__EXE__", dest.string());
 	
 	// locate applications directory
+	// don't use glib here, 
 	
 	fs::path desktopFile, applicationsDir;
 	
@@ -1199,49 +1197,49 @@ void install(
 
 	if (not fs::exists(applicationsDir))
 	{
-		cout << "Could not locate the directory to store the .desktop file." << endl
-			 << "Using current directory instead" << endl;
-		
-		desktopFile = "japi.desktop";
+		cout << "Creating directory " << applicationsDir << endl;
+		fs::create_directories(applicationsDir);
 	}
-	else
-		desktopFile = applicationsDir / "japi.desktop";
 
-	cout << "writing desktop file " << desktopFile.string() << endl;
+	desktopFile = applicationsDir / "japi.desktop";
+	cout << "writing desktop file " << desktopFile << endl;
 
 	fs::ofstream df(desktopFile, ios::trunc);
 	df << desktop;
 	df.close();
 	
-	exit(0);
-}
-
-void install_locale(
-	const char*		inPath)
-{
-	// write localized strings (Dutch)
+	// write out all locale files
 	
-	fs::ofstream po("/tmp/japi.po", ios::trunc);
-	
-	const char* po_text;
-	uint32 length;
-	if (not LoadResource("Dutch/japi.po", po_text, length))
-		error("Dutch localisation file could not be created, missing data");
-	
-	po.write(po_text, length);
-	po.close();
-	
-	fs::path japiLocale(inPath);
-	
-	fs::create_directories(japiLocale / "locale" / "nl" / "LC_MESSAGES");
-	
-	string cmd = "msgfmt -o ";
-	cmd += (japiLocale / "locale" / "nl" / "LC_MESSAGES" / "japi.mo").string();
-	cmd += " /tmp/japi.po";
-
-	cout << "Executing: " << cmd << endl;
-	
-	(void)system(cmd.c_str());
+	rsrc = MResource::root().find("Locale");
+	for (MResource::iterator l = rsrc.begin(); l != rsrc.end(); ++l)
+	{
+		rsrc = l->find("japi.po");
+		if (not rsrc)
+			continue;
+		
+		fs::path localeDir =
+			applicationsDir.branch_path() / "japi" / "locale" / l->name() / "LC_MESSAGES";
+		
+		if (not fs::exists(localeDir))
+		{
+			cout << "Creating directory " << localeDir << endl;
+			fs::create_directories(localeDir);
+		}
+		
+		stringstream cmd;
+		cmd << "msgfmt -o " << (localeDir / "japi.mo") << " -";
+		
+		cout << "Installing locale file: " << cmd.str() << endl;
+		
+		FILE* f = popen(cmd.str().c_str(), "w");
+		if (f != nil)
+		{
+			fwrite(rsrc.data(), rsrc.size(), 1, f);
+			pclose(f);
+		}
+		else
+			cout << "failed: " << strerror(errno) << endl;
+	}
 	
 	exit(0);
 }
@@ -1249,7 +1247,7 @@ void install_locale(
 int main(int argc, char* argv[])
 {
 	bool test = false;
-
+	
 	try
 	{
 		bool fork = true, readStdin = false;
@@ -1258,9 +1256,21 @@ int main(int argc, char* argv[])
 		fs::path::default_name_check(fs::no_check);
 
 		vector<pair<int32,string> > docs;
+
+		// First find out who we are. Uses proc filesystem to find out.
+		char exePath[PATH_MAX + 1];
 		
+		int r = readlink("/proc/self/exe", exePath, PATH_MAX);
+		if (r > 0)
+		{
+			exePath[r] = 0;
+			gExecutablePath = fs::system_complete(exePath);
+			gPrefixPath = gExecutablePath.branch_path();
+		}
+	
+		// Collect the options
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:l:m:vt")) != -1)
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:m:vt")) != -1)
 		{
 			switch (c)
 			{
@@ -1269,24 +1279,18 @@ int main(int argc, char* argv[])
 					break;
 				
 				case 'i':
-					gtk_init(&argc, &argv);
 					install(optarg);
-					break;
-				
-				case 'l':
-					gtk_init(&argc, &argv);
-					install_locale(optarg);
 					break;
 				
 				case 'm':
 					target = optarg;
 					break;
 				
+#if DEBUG
 				case 'v':
 					++VERBOSE;
 					break;
 
-#if DEBUG
 				case 't':
 					test = true;
 					break;
@@ -1298,6 +1302,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		
+		// if the option was to build a target, try it and exit.
 		if (not target.empty())
 		{
 			if (optind >= argc)
@@ -1315,9 +1320,21 @@ int main(int argc, char* argv[])
 			exit(0);
 		}
 
-		if (fs::exists("/usr/local/share/japi/locale"))
-			bindtextdomain("japi", "/usr/local/share/japi/locale");
+		// setup locale, if we can find it.
+		fs::path localeDir = gPrefixPath / "share" / "japi" / "locale";
+		if (not fs::exists(localeDir))
+			localeDir = fs::path("/usr/local/share/japi/locale");
+		if (not fs::exists(localeDir))
+			localeDir = fs::path("/usr/share/japi/locale");
+		if (fs::exists(localeDir))
+		{
+			setlocale(LC_CTYPE, "");
+			setlocale(LC_MESSAGES, "");
+			bindtextdomain("japi", localeDir.string().c_str());
+			textdomain("japi");
+		}
 		
+		// see if we need to open any files from the commandline
 		int32 lineNr = -1;
 		
 		for (int32 i = optind; i < argc; ++i)
@@ -1365,30 +1382,34 @@ int main(int argc, char* argv[])
 	
 			gApp = new MJapieApp(fork);
 			
-			if (fork == false and not docs.empty())
+			try
 			{
-				for (vector<pair<int32,string> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
+				if (fork == false and not docs.empty())
 				{
-					try
+					for (vector<pair<int32,string> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
 					{
-						gApp->OpenOneDocument(MFile(doc->second));
+						try
+						{
+							gApp->OpenOneDocument(MFile(doc->second));
+						}
+						catch (...) {}
 					}
-					catch (...) {}
 				}
-			}
-
-			if (fork == false)
-			{
-				if (MDocument::GetFirstDocument() == nil)
-					gApp->ProcessCommand(cmd_New, nil, 0, 0);
-//				else
-//					exit(1);
-			}
-
+	
+				if (fork == false)
+				{
+					if (MDocument::GetFirstDocument() == nil)
+						gApp->ProcessCommand(cmd_New, nil, 0, 0);
+				}
+	
 #if DEBUG
-			if (test)
-				gApp->ProcessCommand('test', nil, 0, 0);
+				if (test)
+					gApp->ProcessCommand('test', nil, 0, 0);
 #endif
+			}
+			catch (...)
+			{
+			}
 	
 			gdk_notify_startup_complete();
 	

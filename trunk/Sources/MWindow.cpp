@@ -59,20 +59,19 @@ MWindow::MWindow(
 	, mGladeXML(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
 {
-	const char* xml;
-	uint32 size;
-	
-	string rsrc;
+	MResource rsrc;
 	
 	if (strcmp(inRootWidgetName, "dialog") == 0)
-		rsrc = string("Dialogs/") + inWindowResourceName + ".glade";
+		rsrc = MResource::root().find(
+			string("Dialogs/") + inWindowResourceName + ".glade");
 	else
-		rsrc = string("Windows/") + inWindowResourceName + ".glade";
+		rsrc = MResource::root().find(
+			string("Windows/") + inWindowResourceName + ".glade");
 	
-	if (not LoadResource(rsrc, xml, size))
+	if (not rsrc)
 		THROW(("Could not load dialog resource %s", inWindowResourceName));
 	
-	mGladeXML = glade_xml_new_from_buffer(xml, size, nil, "japi");
+	mGladeXML = glade_xml_new_from_buffer(rsrc.data(), rsrc.size(), nil, "japi");
 	if (mGladeXML == nil)
 		THROW(("Failed to create glade from resource"));
 	
