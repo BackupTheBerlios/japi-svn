@@ -25,6 +25,9 @@
 
 using namespace std;
 
+namespace
+{
+
 struct MCommandToString
 {
 	char mCommandString[10];
@@ -42,6 +45,39 @@ struct MCommandToString
 	
 	operator const char*() const	{ return mCommandString; }
 };
+
+struct MRecentItems
+{
+	static MRecentItems&
+						Instance();
+
+						operator GtkRecentManager* ()	{ return mRecentMgr; }
+
+  private:
+	
+						MRecentItems();
+						~MRecentItems();
+
+	GtkRecentManager*	mRecentMgr;
+};
+
+MRecentItems& MRecentItems::Instance()
+{
+	static MRecentItems sInstance;
+	return sInstance;
+}
+
+MRecentItems::MRecentItems()
+{
+	mRecentMgr = gtk_recent_manager_get_default();
+}
+
+MRecentItems::~MRecentItems()
+{
+	g_object_unref(mRecentMgr);
+}
+
+}
 
 struct MMenuItem
 {
@@ -286,7 +322,7 @@ MMenu* MMenu::Create(
 	MMenu* menu;
 
 	if (special == "recent")
-		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
+		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance()));
 	else
 	{
 		menu = new MMenu(label);
@@ -404,7 +440,7 @@ void MMenu::AppendMenu(
 //{
 //	MMenuItem* item = CreateNewItem(inLabel, 0, nil);
 //	
-//	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr());
+//	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance());
 //	item->mSubMenu = new MMenu(inLabel, recMenu);;
 //
 //	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
@@ -688,7 +724,7 @@ MMenu* MMenubar::CreateMenu(
 	MMenu* menu;
 
 	if (special == "recent")
-		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(gApp->GetRecentMgr()));
+		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance()));
 	else
 	{
 		menu = new MMenu(label);
@@ -776,4 +812,15 @@ void MMenubar::SetTarget(
 	
 	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
 		(*m)->SetTarget(inTarget);
+}
+
+void MMenu::AddToRecentMenu(
+	const MFile&		inFileRef)
+{
+	string uri = inFileRef.GetURI();
+	
+	if (gtk_recent_manager_has_item(MRecentItems::Instance(), uri.c_str()))
+		gtk_recent_manager_remove_item(MRecentItems::Instance(), uri.c_str(), nil);
+	
+	gtk_recent_manager_add_item(MRecentItems::Instance(), uri.c_str());
 }

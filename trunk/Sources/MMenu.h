@@ -29,6 +29,9 @@ class MMenu
 
 	virtual			~MMenu();
 
+	static void		AddToRecentMenu(
+						const MFile&		inFileRef);
+
 	static MMenu*	CreateFromResource(
 						const char*			inResourceName);
 

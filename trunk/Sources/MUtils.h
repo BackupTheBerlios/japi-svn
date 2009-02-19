@@ -263,12 +263,6 @@ std::string	GetUserName(
 
 std::string	GetDateTime();
 
-void NormalizePath(
-	std::string&	ioPath);
-
-void NormalizePath(
-	fs::path&		ioPath);
-
 double GetLocalTime();
 
 double GetDoubleClickTime();

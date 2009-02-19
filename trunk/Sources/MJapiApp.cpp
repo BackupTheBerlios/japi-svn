@@ -66,7 +66,6 @@ const char
 MJapieApp::MJapieApp(
 	bool	inForked)
 	: MHandler(nil)
-	, mRecentMgr(gtk_recent_manager_get_default())
 	, mSocketFD(-1)
 	, mReceivedFirstMsg(not inForked)
 	, mQuit(false)
@@ -187,14 +186,6 @@ bool MJapieApp::ProcessCommand(
 			DoSaveAll();
 			break;
 		
-//		case cmd_ClearRecent:
-//			DoClearRecent();
-//			break;
-//		
-//		case cmd_OpenRecent:
-//			DoOpenRecent(inCommand);
-//			break;
-		
 		case cmd_OpenTemplate:
 			if (inModifiers & GDK_CONTROL_MASK)
 				OpenOneDocument(MFile(gTemplatesDir / inMenu->GetItemLabel(inItemIndex)));
@@ -290,9 +281,7 @@ bool MJapieApp::UpdateCommandStatus(
 	{
 		case cmd_New:
 		case cmd_Open:
-		case cmd_OpenRecent:
 		case cmd_OpenTemplate:
-		case cmd_ClearRecent:
 		case cmd_CloseAll:
 		case cmd_SaveAll:
 		case cmd_PageSetup:
@@ -688,7 +677,7 @@ void MJapieApp::DoNewProject()
 		// write out a default project from our resources
 		MResource rsrc = MResource::root().find("Templates/Projects/hello-cmdline.prj");
 
-		if (rsrc)
+		if (not rsrc)
 			THROW(("Failed to load project resource"));
 		
 		file.write(rsrc.data(), rsrc.size());
@@ -772,7 +761,7 @@ MDocument* MJapieApp::OpenOneDocument(
 	if (doc != nil)
 	{
 		DisplayDocument(doc);
-		AddToRecentMenu(inFileRef);
+		MMenu::AddToRecentMenu(inFileRef);
 	}
 	
 	return doc;
@@ -794,7 +783,7 @@ void MJapieApp::OpenProject(
 	w->Show();
 	w.release();
 
-	AddToRecentMenu(inPath);
+	MMenu::AddToRecentMenu(inPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -815,20 +804,12 @@ void MJapieApp::OpenEPub(
 		w->Show();
 		w.release();
 	
-		AddToRecentMenu(inPath);
+		MMenu::AddToRecentMenu(inPath);
 	}
 	catch (exception& e)
 	{
 		DisplayError(e);
 	}
-}
-
-void MJapieApp::AddToRecentMenu(const MFile& inFileRef)
-{
-	if (gtk_recent_manager_has_item(mRecentMgr, inFileRef.GetURI().c_str()))
-		gtk_recent_manager_remove_item(mRecentMgr, inFileRef.GetURI().c_str(), nil);
-	
-	gtk_recent_manager_add_item(mRecentMgr, inFileRef.GetURI().c_str());
 }
 
 void MJapieApp::DoOpenTemplate(
@@ -1133,7 +1114,8 @@ void usage()
 	cout << "usage: japi [options] [ [+line] files ]" << endl
 		 << "    available options: " << endl
 		 << endl
-		 << "    -i [path]  Install japi at prefix where prefix path, default is /usr/local" << endl
+		 << "    -i         Install japi at prefix where prefix path" << endl
+		 << "    -p prefix  Prefix path where to install japi, default is /usr/local" << endl
 		 << "               resulting in /usr/local/bin/japi" << endl
 		 << "    -h         This help message" << endl
 		 << "    -f         Don't fork into client/server" << endl
@@ -1144,14 +1126,14 @@ void usage()
 	exit(1);
 }
 
-void install(
-	const char*		inPrefix)
+void InstallJapi(
+	std::string		inPrefix)
 {
 	if (getuid() != 0)
 		error("You must be root to be able to install japi");
 	
 	// copy the executable to the appropriate destination
-	if (inPrefix == nil or strlen(inPrefix) == 0)
+	if (inPrefix.empty())
 		inPrefix = "/usr/local";
 	
 	fs::path prefix(inPrefix);
@@ -1228,8 +1210,7 @@ void install(
 		
 		stringstream cmd;
 		cmd << "msgfmt -o " << (localeDir / "japi.mo") << " -";
-		
-		cout << "Installing locale file: " << cmd.str() << endl;
+		cout << "Installing locale file: `" << cmd.str() << '`' << endl;
 		
 		FILE* f = popen(cmd.str().c_str(), "w");
 		if (f != nil)
@@ -1246,13 +1227,8 @@ void install(
 
 int main(int argc, char* argv[])
 {
-	bool test = false;
-	
 	try
 	{
-		bool fork = true, readStdin = false;
-		string target;
-
 		fs::path::default_name_check(fs::no_check);
 
 		vector<pair<int32,string> > docs;
@@ -1270,7 +1246,10 @@ int main(int argc, char* argv[])
 	
 		// Collect the options
 		int c;
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fi:m:vt")) != -1)
+		bool fork = true, readStdin = false, install = false;
+		string target, prefix;
+
+		while ((c = getopt(argc, const_cast<char**>(argv), "h?fip:m:vt")) != -1)
 		{
 			switch (c)
 			{
@@ -1279,7 +1258,11 @@ int main(int argc, char* argv[])
 					break;
 				
 				case 'i':
-					install(optarg);
+					install = true;
+					break;
+				
+				case 'p':
+					prefix = optarg;
 					break;
 				
 				case 'm':
@@ -1291,9 +1274,6 @@ int main(int argc, char* argv[])
 					++VERBOSE;
 					break;
 
-				case 't':
-					test = true;
-					break;
 #endif
 				
 				default:
@@ -1301,6 +1281,9 @@ int main(int argc, char* argv[])
 					break;
 			}
 		}
+		
+		if (install)
+			InstallJapi(prefix);
 		
 		// if the option was to build a target, try it and exit.
 		if (not target.empty())
@@ -1401,11 +1384,6 @@ int main(int argc, char* argv[])
 					if (MDocument::GetFirstDocument() == nil)
 						gApp->ProcessCommand(cmd_New, nil, 0, 0);
 				}
-	
-#if DEBUG
-				if (test)
-					gApp->ProcessCommand('test', nil, 0, 0);
-#endif
 			}
 			catch (...)
 			{

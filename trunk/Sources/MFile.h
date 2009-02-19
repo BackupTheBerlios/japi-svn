@@ -262,4 +262,10 @@ fs::path relative_path(
 	const fs::path&		inFromDir,
 	const fs::path&		inFile);
 
+void NormalizePath(
+	std::string&		ioPath);
+
+void NormalizePath(
+	fs::path&			ioPath);
+
 #endif

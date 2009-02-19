@@ -4215,7 +4215,9 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 			else if (mFile.IsValid())
 			{
 				MFile path = mFile.GetParent() / file.name;
-				gApp->OpenOneDocument(path);
+				
+				if (path.Exists())
+					gApp->OpenOneDocument(path);
 			}
 		}
 	}

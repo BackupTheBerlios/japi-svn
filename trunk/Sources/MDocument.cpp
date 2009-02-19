@@ -9,11 +9,12 @@
 #include <boost/algorithm/string.hpp>
 
 #include "MDocument.h"
+#include "MController.h"
 #include "MUtils.h"
+#include "MMenu.h"
 #include "MError.h"
 #include "MPreferences.h"
 #include "MDocClosedNotifier.h"
-#include "MJapiApp.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -121,7 +122,7 @@ bool MDocument::DoSave()
 
 	mFileSaver->DoSave();
 
-	gApp->AddToRecentMenu(mFile);
+	MMenu::AddToRecentMenu(mFile);
 		
 	return true;
 }

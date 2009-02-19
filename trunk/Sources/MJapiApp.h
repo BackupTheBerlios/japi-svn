@@ -73,9 +73,6 @@ class MJapieApp : public MHandler
 	void				OpenEPub(
 							const MFile&		inPath);
 
-	void				AddToRecentMenu(
-							const MFile&		inFileRef);
-
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
 	void				SetCurrentFolder(
@@ -84,8 +81,6 @@ class MJapieApp : public MHandler
 	void				SetCurrentFolder(
 							const char*			inFolder);
 
-	GtkRecentManager*	GetRecentMgr() const					{ return mRecentMgr; }
-	
 	MEventOut<void(double)>						eIdle;
 
 	void				RunEventLoop();
@@ -139,7 +134,6 @@ class MJapieApp : public MHandler
 	void				ProcessSocketMessages();
 	
 	MWindowList			mTrashCan;
-	GtkRecentManager*	mRecentMgr;
 	int					mSocketFD;
 	bool				mReceivedFirstMsg;
 	bool				mQuit;

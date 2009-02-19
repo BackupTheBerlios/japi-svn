@@ -876,6 +876,7 @@ struct MGFileImp : public MFileImp
 							if (s != nil)
 							{
 								result = s;
+								NormalizePath(result);
 								g_free(s);
 							}
 							return result;
@@ -944,7 +945,10 @@ struct MGFileImp : public MFileImp
 
 struct MPathImp : public MFileImp
 {
-							MPathImp(const fs::path& inPath) : mPath(inPath) {}
+							MPathImp(const fs::path& inPath) : mPath(inPath)
+							{
+								NormalizePath(mPath);
+							}
 
 	virtual bool			Equivalent(const MFileImp* rhs) const
 							{
@@ -1881,3 +1885,94 @@ bool ChooseFiles(
 	return outFiles.size() > 0;
 }
 
+void NormalizePath(
+	fs::path&	ioPath)
+{
+	string p = ioPath.string();
+	NormalizePath(p);
+	ioPath = p;
+}
+
+void NormalizePath(string& ioPath)
+{
+	string path(ioPath);	
+	stack<unsigned long> dirs;
+	int r = 0;
+	unsigned long i = 0;
+	
+	dirs.push(0);
+	
+	while (i < path.length())
+	{
+		while (i < path.length() && path[i] == '/')
+		{
+			++i;
+			if (dirs.size() > 0)
+				dirs.top() = i;
+			else
+				dirs.push(i);
+		}
+		
+		if (path[i] == '.' && path[i + 1] == '.' && path[i + 2] == '/')
+		{
+			if (dirs.size() > 0)
+				dirs.pop();
+			if (dirs.size() == 0)
+				--r;
+			i += 2;
+			continue;
+		}
+		else if (path[i] == '.' && path[i + 1] == '/')
+		{
+			i += 1;
+			if (dirs.size() > 0)
+				dirs.top() = i;
+			else
+				dirs.push(i);
+			continue;
+		}
+
+		unsigned long d = path.find('/', i + 1);
+
+		if (d == string::npos)
+			break;
+		
+		i = d + 1;
+		dirs.push(i);
+	}
+	
+	if (dirs.size() > 0 && dirs.top() == path.length())
+		ioPath.assign("/");
+	else
+		ioPath.erase(ioPath.begin(), ioPath.end());
+	
+	bool dir = false;
+	while (dirs.size() > 0)
+	{
+		unsigned long l, n;
+		n = path.find('/', dirs.top());
+		if (n == string::npos)
+			l = path.length() - dirs.top();
+		else
+			l = n - dirs.top();
+		
+		if (l > 0)
+		{
+			if (dir)
+				ioPath.insert(0, "/");
+			ioPath.insert(0, path.c_str() + dirs.top(), l);
+			dir = true;
+		}
+		
+		dirs.pop();
+	}
+	
+	if (r < 0)
+	{
+		ioPath.insert(0, "../");
+		while (++r < 0)
+			ioPath.insert(0, "../");
+	}
+	else if (path.length() > 0 && path[0] == '/' && ioPath[0] != '/')
+		ioPath.insert(0, "/");
+}
