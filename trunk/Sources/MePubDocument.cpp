@@ -521,25 +521,25 @@ void DecryptBookKey(
 		{
 			// next try to read in the PEM encoded adeptkey file
 			fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.pem", ios::binary);
-			if (not adeptKeyFile.is_open())
-				THROW(("Could not find the key file 'adeptkey.pem' in the preferences directory"));
-	
-			streambuf* b = adeptKeyFile.rdbuf();
-			
-			int64 len = b->pubseekoff(0, ios::end);
-			b->pubseekpos(0);
-			
-			vector<char> data(len);
-			b->sgetn(&data[0], len);
-			
-			// put the data into a BIO
-			BIO *mem = BIO_new_mem_buf(&data[0], len);
-			rsa = PEM_read_bio_RSAPrivateKey(mem, nil, nil, nil);
-			BIO_free(mem);
+			if (adeptKeyFile.is_open())
+			{
+				streambuf* b = adeptKeyFile.rdbuf();
+				
+				int64 len = b->pubseekoff(0, ios::end);
+				b->pubseekpos(0);
+				
+				vector<char> data(len);
+				b->sgetn(&data[0], len);
+				
+				// put the data into a BIO
+				BIO *mem = BIO_new_mem_buf(&data[0], len);
+				rsa = PEM_read_bio_RSAPrivateKey(mem, nil, nil, nil);
+				BIO_free(mem);
+			}
 		}
 			
 		if (rsa == nil)
-			THROW(("Failed to read RSA private key from adeptkey.pem file"));
+			THROW(("Failed to read RSA private key from adeptkey.der or adeptkey.pem file, this file should be located in Japi's preferences folder in ~/.config/japi/"));
 	}
 	
 	uint8 b[16];
@@ -833,16 +833,13 @@ void MePubDocument::ReadFile(
 
 		epi->SetData(item->second);
 		
-//		if (encrypted.count(item->first))
-//			epi->SetEncrypted(true);
+		if (keyDecrypted == false and encrypted.count(item->first))
+			epi->SetEncrypted(true);
 		
 		if (mLinear.count(epi->GetID()))
 			epi->SetLinear(true);
 	}
 
-//	if (not encrypted.empty())
-//		problems.push_back(_("This ePub contains encrypted files"));
-	
 	if (not problems.empty())
 		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
 	

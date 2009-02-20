@@ -7,7 +7,7 @@
 PREFIX		= /usr/local
 
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
-LIBS		= boost_thread boost_filesystem boost_iostreams expat uuid attr
+LIBS		= boost_thread boost_filesystem boost_iostreams expat uuid attr crypto
 WARNINGS	= all no-multichar no-unknown-pragmas
 SOURCES		= $(wildcard Sources/*.cpp zeep/*.cpp)
 OBJDIR		= Obj.temp/
