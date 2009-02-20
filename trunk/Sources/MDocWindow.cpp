@@ -23,6 +23,7 @@ MDocWindow::MDocWindow(
 	, eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
+	, eDocumentLoaded(this, &MDocWindow::DocumentLoaded)
 	, mController(nil)
 	, mMenubar(this)
 {
@@ -129,6 +130,11 @@ void MDocWindow::DocumentChanged(
 		Close();
 }
 
+void MDocWindow::DocumentLoaded(
+	MDocument*		inDocument)
+{
+}
+
 void MDocWindow::ModifiedChanged(
 	bool			inModified)
 {
@@ -159,6 +165,7 @@ void MDocWindow::AddRoutes(
 {
 	AddRoute(inDocument->eModifiedChanged, eModifiedChanged);
 	AddRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
+	AddRoute(inDocument->eDocumentLoaded, eDocumentLoaded);
 }
 
 void MDocWindow::RemoveRoutes(
@@ -166,6 +173,7 @@ void MDocWindow::RemoveRoutes(
 {
 	RemoveRoute(inDocument->eModifiedChanged, eModifiedChanged);
 	RemoveRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
+	RemoveRoute(inDocument->eDocumentLoaded, eDocumentLoaded);
 }
 
 void MDocWindow::BeFocus()

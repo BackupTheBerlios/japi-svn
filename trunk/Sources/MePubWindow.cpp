@@ -576,7 +576,64 @@ void MePubWindow::Initialize(
 	
 	if (Preferences::GetInteger("save state", 1))
 	{
-		ssize_t r = inDocument->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
+		ssize_t r = mEPub->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
+		useState = static_cast<uint32>(r) == kMePubStateSize;
+	}
+	
+	if (useState)
+	{
+		state.Swap();
+
+		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
+			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
+		{
+			MRect r(
+				state.mWindowPosition[0], state.mWindowPosition[1],
+				state.mWindowSize[0], state.mWindowSize[1]);
+		
+			SetWindowPosition(r);
+		}
+		
+		MGtkNotebook book(GetWidget(kNoteBookID));
+		book.SetPage(state.mSelectedPanel);
+	}
+}
+
+void MePubWindow::DocumentLoaded(
+	MDocument*		inDocument)
+{
+	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
+	filesTree.SetModel(nil);
+	filesTree.SetModel(mFilesTree->GetModel());
+	filesTree.ExpandAll();
+
+	MGtkTreeView tocTree(GetWidget(kTOCListViewID));
+	tocTree.SetModel(nil);
+	tocTree.SetModel(mTOCTree->GetModel());
+	tocTree.ExpandAll();
+
+	// fill in the information fields
+	
+	SetText(kDCIDViewID,			mEPub->GetDocumentID());
+	SetText(kDocIDSchemePopupID,	mEPub->GetDocumentIDScheme());
+
+	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
+	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
+	SetText(kDCCreatorViewID,		mEPub->GetDublinCoreValue("creator"));
+	SetText(kDCPublisherViewID,		mEPub->GetDublinCoreValue("publisher"));
+	SetText(kDCDateViewID,			mEPub->GetDublinCoreValue("date"));
+	SetText(kDCDescriptionViewID,	mEPub->GetDublinCoreValue("description"));
+	SetText(kDCCoverageViewID,		mEPub->GetDublinCoreValue("coverage"));
+	SetText(kDCSourceViewID,		mEPub->GetDublinCoreValue("source"));
+	SetText(kDCRightsViewID,		mEPub->GetDublinCoreValue("rights"));
+	SetText(kDCSubjectViewID,		mEPub->GetDublinCoreValue("subject"));
+
+	bool useState = false;
+	MePubState state = {};
+	
+	if (Preferences::GetInteger("save state", 1))
+	{
+		ssize_t r = mEPub->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
 		useState = static_cast<uint32>(r) == kMePubStateSize;
 	}
 	
@@ -598,7 +655,7 @@ void MePubWindow::Initialize(
 		book.SetPage(state.mSelectedPanel);
 	}
 	
-	mEPub->SetModified(false);
+	mEPub->SetModified(true);
 }
 
 bool MePubWindow::DoClose()

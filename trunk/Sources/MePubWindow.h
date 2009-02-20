@@ -40,7 +40,10 @@ class MePubWindow : public MDocWindow
 
   private:
 
-	void			SaveState();
+	virtual void	SaveState();
+
+	virtual void	DocumentLoaded(
+						MDocument*		inDocument);
 
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);

@@ -370,6 +370,7 @@ void MDocument::IOFileLoaded()
 {
 	SetModified(false);
 	mFileLoader = nil;
+	eDocumentLoaded(this);
 }
 
 // ---------------------------------------------------------------------------

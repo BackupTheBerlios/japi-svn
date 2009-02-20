@@ -131,8 +131,6 @@ class MePubDocument : public MDocument
 							xml::node_ptr		inNavPoint,
 							uint32&				ioID);
 
-	char				mBuffer[1024];
-
 	std::string			mRootFile;
 	fs::path			mTOCFile;
 	std::set<std::string>

@@ -1556,4 +1556,3 @@ void MePubDocument::ItemMoved()
 {
 	SetModified(true);
 }
-

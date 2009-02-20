@@ -747,9 +747,13 @@ MDocument* MJapieApp::OpenOneDocument(
 	
 	if (doc == nil)
 	{
-		if (inFileRef.IsLocal() and FileNameMatches("*.prj", inFileRef))
+		if (FileNameMatches("*.prj", inFileRef))
+		{
+			if (not inFileRef.IsLocal())
+				THROW(("Can only open local project files for now, sorry"));
 			OpenProject(inFileRef);
-		else if (inFileRef.IsLocal() and FileNameMatches("*.epub", inFileRef))
+		}
+		else if (FileNameMatches("*.epub", inFileRef))
 			OpenEPub(inFileRef);
 		else
 		{
@@ -795,12 +799,12 @@ void MJapieApp::OpenEPub(
 	try
 	{
 		auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
-		
-		epub->DoLoad();
-		
 		auto_ptr<MePubWindow> w(new MePubWindow());
+		
 		w->Initialize(epub.get());
+		epub->DoLoad();
 		epub.release();
+
 		w->Show();
 		w.release();
 	

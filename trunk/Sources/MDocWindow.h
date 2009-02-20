@@ -23,6 +23,7 @@ class MDocWindow : public MWindow
 	MEventIn<void(bool)>					eModifiedChanged;
 	MEventIn<void(MDocument*, const MFile&)>	eFileSpecChanged;
 	MEventIn<void(MDocument*)>				eDocumentChanged;
+	MEventIn<void(MDocument*)>				eDocumentLoaded;
 
 	MDocument*			GetDocument();
 
@@ -45,6 +46,9 @@ class MDocWindow : public MWindow
 							MDocument*		inDocument);
 
 	virtual void		DocumentChanged(
+							MDocument*		inDocument);
+
+	virtual void		DocumentLoaded(
 							MDocument*		inDocument);
 
 	virtual bool		DoClose();

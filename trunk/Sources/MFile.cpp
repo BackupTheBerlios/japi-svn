@@ -88,6 +88,30 @@ void URLEncode(
 	}
 }
 
+void URLDecode(
+	string&		ioPath)
+{
+	vector<char> buf(ioPath.length() + 1);
+	char* r = &buf[0];
+	
+	for (string::iterator p = ioPath.begin(); p != ioPath.end(); ++p)
+	{
+		char q = *p;
+
+		if (q == '%' and ++p != ioPath.end())
+		{
+			q = (char) (ConvertHex(*p) * 16);
+
+			if (++p != ioPath.end())
+				q = (char) (q + ConvertHex(*p));
+		}
+
+		*r++ = q;
+	}
+	
+	ioPath.assign(&buf[0], r);
+}
+
 // ------------------------------------------------------------------
 //
 //  Three different implementations of extended attributes...
@@ -879,6 +903,20 @@ struct MGFileImp : public MFileImp
 								NormalizePath(result);
 								g_free(s);
 							}
+							else
+							{
+								string scheme;
+								scheme = GetScheme();
+								result = GetURI();
+								
+								if (not scheme.empty() and ba::starts_with(result, scheme))
+								{
+									result.erase(0, scheme.length() + 1);
+									if (ba::starts_with(result, "//"))
+										result.erase(0, 2);
+									URLDecode(result);
+								}
+							}
 							return result;
 						}
 							
@@ -1059,27 +1097,7 @@ MFileImp* CreateFileImpForURI(
 	if (ba::starts_with(inURI, "file://"))
 	{
 		string path = inURI.substr(7);
-
-		vector<char> buf(path.length() + 1);
-		char* r = &buf[0];
-		
-		for (string::iterator p = path.begin(); p != path.end(); ++p)
-		{
-			char q = *p;
-	
-			if (q == '%' and ++p != path.end())
-			{
-				q = (char) (ConvertHex(*p) * 16);
-	
-				if (++p != path.end())
-					q = (char) (q + ConvertHex(*p));
-			}
-	
-			*r++ = q;
-		}
-		
-		path.assign(&buf[0], r);
-	
+		URLDecode(path);
 		result = new MPathImp(fs::system_complete(path));
 	}
 	else

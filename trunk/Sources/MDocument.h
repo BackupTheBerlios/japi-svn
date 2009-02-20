@@ -103,6 +103,7 @@ class MDocument
 
 	MEventOut<void(bool)>					eModifiedChanged;
 	MEventOut<void(MDocument*)>				eDocumentClosed;
+	MEventOut<void(MDocument*)>				eDocumentLoaded;
 	MEventOut<void(MDocument*, const MFile&)>
 											eFileSpecChanged;
 	MEventOut<void(const fs::path&)>		eBaseDirChanged;
