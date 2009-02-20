@@ -102,6 +102,7 @@
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>
 			<file>libboost_iostreams-mt.a</file>
+			<file>libcrypto.a</file>
 			<file>libexpat.a</file>
 			<file>libpcre.a</file>
 			<file>libuuid.a</file>

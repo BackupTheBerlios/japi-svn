@@ -26,6 +26,13 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/copy.hpp>
 
+#include "boost/archive/iterators/base64_from_binary.hpp"
+#include "boost/archive/iterators/binary_from_base64.hpp"
+#include "boost/archive/iterators/transform_width.hpp"
+
+#include <openssl/pem.h>
+#include <openssl/aes.h>
+
 #include "document.hpp"
 
 #include "MError.h"
@@ -35,11 +42,13 @@
 #include "MFile.h"
 #include "MResources.h"
 #include "MStrings.h"
+#include "MGlobals.h"
 #include "MAlerts.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
 namespace io = boost::iostreams;
+namespace bai = boost::archive::iterators;
 
 // --------------------------------------------------------------------
 
@@ -51,7 +60,8 @@ const uint32
 const char
 	kEPubMimeType[] = "application/epub+zip",
 	kMagicMT[] = "mimetypeapplication/epub+zip",
-	kContainerNS[] = "urn:oasis:names:tc:opendocument:xmlns:container";
+	kContainerNS[] = "urn:oasis:names:tc:opendocument:xmlns:container",
+	kAdobeAdeptNS[] = "http://ns.adobe.com/adept";
 
 struct ZIPLocalFileHeader
 {
@@ -422,6 +432,152 @@ void deflate(
 	deflate(s.str(), outFileHeader);
 }
 
+void decode_base64(
+	const string&		inString,
+	vector<uint8>&		outBinary)
+{
+    const char kLookupTable[] =
+    {
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
+    };
+    
+    string::const_iterator b = inString.begin();
+    string::const_iterator e = inString.end();
+    
+	while (b != e)
+	{
+		uint8 s[4] = {};
+		int n = 0;
+		
+		for (int i = 0; i < 4 and b != e; ++i)
+		{
+			uint8 ix = uint8(*b++);
+
+			if (ix == '=')
+				break;
+			
+			char v = -1;
+			if (ix <= 127) 
+				v = kLookupTable[ix];
+			if (v < 0)	THROW(("Invalid character in base64 encoded string"));
+			s[i] = uint8(v);
+			++n;
+		}
+
+		if (n > 1)
+			outBinary.push_back(s[0] << 2 | s[1] >> 4);
+		
+		if (n > 2)
+			outBinary.push_back(s[1] << 4 | s[2] >> 2);
+		
+		if (n > 3)
+			outBinary.push_back(s[2] << 6 | s[3]);
+	}
+}
+
+void DecryptBookKey(
+	const string&	inBase64Key,
+	AES_KEY&		outBookKey)
+{
+	vector<uint8> adeptKey;
+	decode_base64(inBase64Key, adeptKey);
+	
+	if (adeptKey.size() != 128)
+		THROW(("Invalid key length, expected 128 bytes"));
+	
+	static RSA* rsa = nil;
+	if (rsa == nil)
+	{
+		// try DER encoded adeptkey file first
+		
+		if (fs::exists(gPrefsDir / "adeptkey.der"))
+		{
+			fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.der", ios::binary);
+			if (adeptKeyFile.is_open())
+			{
+				streambuf* b = adeptKeyFile.rdbuf();
+				
+				int64 len = b->pubseekoff(0, ios::end);
+				b->pubseekpos(0);
+				
+				vector<char> data(len);
+				b->sgetn(&data[0], len);
+			
+				// put the data into a BIO
+				BIO *mem = BIO_new_mem_buf(&data[0], len);
+				rsa = d2i_RSAPrivateKey_bio(mem, nil);
+				BIO_free(mem);
+			}
+		}
+		
+		if (rsa == nil)
+		{
+			// next try to read in the PEM encoded adeptkey file
+			fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.pem", ios::binary);
+			if (not adeptKeyFile.is_open())
+				THROW(("Could not find the key file 'adeptkey.pem' in the preferences directory"));
+	
+			streambuf* b = adeptKeyFile.rdbuf();
+			
+			int64 len = b->pubseekoff(0, ios::end);
+			b->pubseekpos(0);
+			
+			vector<char> data(len);
+			b->sgetn(&data[0], len);
+			
+			// put the data into a BIO
+			BIO *mem = BIO_new_mem_buf(&data[0], len);
+			rsa = PEM_read_bio_RSAPrivateKey(mem, nil, nil, nil);
+			BIO_free(mem);
+		}
+			
+		if (rsa == nil)
+			THROW(("Failed to read RSA private key from adeptkey.pem file"));
+	}
+	
+	uint8 b[16];
+	
+	int r = RSA_private_decrypt(128, &adeptKey[0], b, rsa, RSA_PKCS1_PADDING);
+	if (r != 16)
+		THROW(("Error decrypting book key, expected 16, got %d", r));
+	
+	AES_set_decrypt_key(b, 128, &outBookKey);
+}
+
+void DecryptFile(
+	string&			ioFile,
+	const AES_KEY&	inKey)
+{
+	vector<char> b(ioFile.length());
+
+	uint8* iv = reinterpret_cast<uint8*>(const_cast<char*>(ioFile.c_str()));
+	uint8* src = iv + 16;
+	
+	AES_cbc_encrypt(src, (uint8*)&b[0], ioFile.length(), &inKey, iv, AES_DECRYPT);
+	
+	io::zlib_params params;
+	params.noheader = true;	// don't read header, i.e. true deflate compression
+	params.calculate_crc = true;
+	io::zlib_decompressor z_stream(params);
+	
+	io::filtering_streambuf<io::input> in;
+	in.push(z_stream);
+	
+	io::filtering_istream bin(boost::make_iterator_range(b));
+	in.push(bin);
+	
+	ioFile.clear();
+	io::filtering_ostream out(io::back_inserter(ioFile));
+	io::copy(in, out);
+}
+
 }
 
 MePubDocument::MePubDocument(
@@ -518,6 +674,7 @@ void MePubDocument::ReadFile(
 
 	map<fs::path,string> content;
 	fs::path rootFile;
+	bool keyDecrypted = false;
 	
 	while (read_next_file(inFile, fh))
 	{
@@ -572,8 +729,42 @@ void MePubDocument::ReadFile(
 				fs::path uri = cr->get_attribute("URI");
 				encrypted.insert(uri);
 			}
-
-			content[path] = fh.data;
+		}
+		else if (path == "META-INF/rights.xml")
+		{
+			xml::document rights(fh.data);
+			xml::node_ptr root = rights.root();
+			
+			if (root->name() != "rights" or root->ns() != kAdobeAdeptNS)
+			{
+				problems.push_back(_("Invalid or unsupported rights.xml file"));
+				continue;
+			}
+			
+			xml::node_ptr licenseToken = root->find_first_child("licenseToken");
+			if (not licenseToken)
+			{
+				problems.push_back(_("licenseToken not found in rights file"));
+				continue;
+			}
+			
+			xml::node_ptr encryptedKey = licenseToken->find_first_child("encryptedKey");
+			if (not encryptedKey)
+			{
+				problems.push_back(_("encryptedKey not found in rights file"));
+				continue;
+			}
+			
+			try
+			{
+				DecryptBookKey(encryptedKey->content(), mKey);
+				keyDecrypted = true;
+			}
+			catch (exception& e)
+			{
+				problems.push_back(_("This book is encrypted and something went wrong trying to decrypt it:"));
+				problems.push_back(e.what());
+			}
 		}
 		else
 			content[path] = fh.data;
@@ -583,13 +774,23 @@ void MePubDocument::ReadFile(
 	
 	ParseOPF(rootFile.branch_path(), *opf.root(), problems);
 	
+	// decrypt all the files, if we can
+	if (keyDecrypted and not encrypted.empty())
+	{
+		for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
+		{
+			if (encrypted.count(item->first))
+				DecryptFile(item->second, mKey);
+		}
+	}
+	
 	fs::path tocFile;
 	
 	if (not mTOCFile.empty())
 	{
 		tocFile = rootFile.branch_path() / mTOCFile;
 		
-		if (encrypted.count(tocFile) == 0)
+		if (encrypted.count(tocFile) == 0 or keyDecrypted)
 		{
 			try
 			{
@@ -607,7 +808,7 @@ void MePubDocument::ReadFile(
 	
 	for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
 	{
-		if (item->first == rootFile or (item->first == tocFile and encrypted.count(tocFile) == 0))
+		if (item->first == rootFile or item->first == tocFile)
 			continue;
 		
 		MProjectItem* pi = mRoot.GetItem(item->first);
@@ -632,15 +833,15 @@ void MePubDocument::ReadFile(
 
 		epi->SetData(item->second);
 		
-		if (encrypted.count(item->first))
-			epi->SetEncrypted(true);
+//		if (encrypted.count(item->first))
+//			epi->SetEncrypted(true);
 		
 		if (mLinear.count(epi->GetID()))
 			epi->SetLinear(true);
 	}
 
-	if (not encrypted.empty())
-		problems.push_back(_("This ePub contains encrypted files"));
+//	if (not encrypted.empty())
+//		problems.push_back(_("This ePub contains encrypted files"));
 	
 	if (not problems.empty())
 		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
