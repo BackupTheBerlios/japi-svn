@@ -394,22 +394,20 @@ void MJapieApp::RecycleWindow(
 
 void MJapieApp::RunEventLoop()
 {
-	if (Preferences::GetInteger("open worksheet", 0))
-		ShowWorksheet();
-	
-	if (Preferences::GetInteger("reopen project", 1))
+	try
 	{
-		MFile pp(fs::path(Preferences::GetString("last project", "")));
-		if (pp.IsLocal() and pp.Exists())
-			OpenProject(pp);
+		if (Preferences::GetInteger("open worksheet", 0))
+			ShowWorksheet();
+		
+		if (Preferences::GetInteger("reopen project", 0))
+		{
+			MFile pp(fs::path(Preferences::GetString("last project", "")));
+			if (pp.IsLocal() and pp.Exists())
+				OpenProject(pp);
+		}
 	}
+	catch (...) {}
 	
-//	gdk_display_add_client_message_filter(
-//		gdk_display_get_default(),
-//		gdk_atom_intern("WM_PROTOCOLS", false),
-//		&MJapieApp::ClientMessageFilter, this);
-//	gdk_window_add_filter(nil, &MJapieApp::ClientMessageFilter, this);
-
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
@@ -417,7 +415,6 @@ void MJapieApp::RunEventLoop()
 		//g_timeout_add(250, &MJapieApp::Timeout, nil);
 	g_timeout_add(50, &MJapieApp::Timeout, nil);
 	
-//	gdk_event_handler_set(&MJapieApp::EventHandler, nil, nil);
 	gdk_threads_enter();
 	gtk_main();
 	gdk_threads_leave();
