@@ -134,8 +134,7 @@ class MePubDocument : public MDocument
 							uint32&				ioID,
 							MPlayOrder&			ioPlayOrder);
 
-	std::string			mRootFile;
-	fs::path			mTOCFile;
+	fs::path			mRootFile, mTOCFile;
 	std::set<std::string>
 						mLinear;
 	MProjectGroup		mRoot, mTOC;

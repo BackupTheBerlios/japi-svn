@@ -527,11 +527,11 @@ MePubDocument::MePubDocument()
 	if (not rsrc)
 		THROW(("Missing xhtml resource"));
 	
-	mRootFile = "book.opf";
-	mTOCFile = "book.ncx";
-	
 	MProjectGroup* oebps = new MProjectGroup("OEBPS", &mRoot);
 	mRoot.AddProjectItem(oebps);
+	
+	mRootFile = "OEBPS/book.opf";
+	mTOCFile = "OEBPS/book.ncx";
 	
 	MePubItem* item = new MePubItem("main.xhtml", oebps);
 	item->SetData(string(rsrc.data(), rsrc.size()));
@@ -590,23 +590,17 @@ void MePubDocument::ReadFile(
 	set<fs::path> encrypted;
 	
 	// read first file, should be the mimetype file
-	if (not read_next_file(inFile, fh))
-		THROW(("Empty ePub file"));
-
-	bool hasMimeType = false;
-	if (fh.filename == "mimetype" and ba::starts_with(fh.data, "application/epub+zip"))
-		hasMimeType = true;
-	
 	map<fs::path,string> content;
-	fs::path rootFile;
-	bool keyDecrypted = false;
+	bool keyDecrypted = false, hasMimeType = false, firstItem = true;
 	
 	while (read_next_file(inFile, fh))
 	{
 		if (fh.filename == "mimetype" and ba::starts_with(fh.data, "application/epub+zip"))
 		{
 			hasMimeType = true;
-			problems.push_back(_("Invalid ePub file, mimetype should be first file"));
+			if (not firstItem)
+				problems.push_back(_("Invalid ePub file, mimetype should be first file"));
+			firstItem = false;
 			continue;
 		}
 		
@@ -634,8 +628,7 @@ void MePubDocument::ReadFile(
 			if (n->get_attribute("media-type") != "application/oebps-package+xml")
 				problems.push_back(_("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
 			
-			rootFile = n->get_attribute("full-path");
-			mRootFile = rootFile.leaf();
+			mRootFile = n->get_attribute("full-path");
 		}
 		else if (path == "META-INF/encryption.xml")
 		{
@@ -705,9 +698,9 @@ void MePubDocument::ReadFile(
 	if (not hasMimeType)
 		problems.push_back(_("Invalid ePub file, mimetype file is missing"));
 
-	xml::document opf(content[rootFile]);
+	xml::document opf(content[mRootFile]);
 	
-	ParseOPF(rootFile.branch_path(), *opf.root(), problems);
+	ParseOPF(mRootFile.branch_path(), *opf.root(), problems);
 	
 	// decrypt all the files, if we can
 	if (keyDecrypted and not encrypted.empty())
@@ -721,31 +714,26 @@ void MePubDocument::ReadFile(
 	
 	fs::path tocFile;
 	
-	if (not mTOCFile.empty())
+	if (not mTOCFile.empty() and (encrypted.count(mTOCFile) == 0 or keyDecrypted))
 	{
-		tocFile = rootFile.branch_path() / mTOCFile;
-		
-		if (encrypted.count(tocFile) == 0 or keyDecrypted)
+		try
 		{
-			try
-			{
-				xml::document ncx(content[tocFile]);
-				ParseNCX(*ncx.root());
-			}
-			catch (exception& e)
-			{
-				problems.push_back(_(e.what()));
-			}
+			xml::document ncx(content[mTOCFile]);
+			ParseNCX(*ncx.root());
+		}
+		catch (exception& e)
+		{
+			problems.push_back(_(e.what()));
 		}
 	}
 	else
-		mTOCFile = "book.ncx";
+		mTOCFile = mRootFile.branch_path() / "book.ncx";
 	
 	// and now fill in the data for the items we've found
 	
 	for (map<fs::path,string>::iterator item = content.begin(); item != content.end(); ++item)
 	{
-		if (item->first == rootFile or item->first == tocFile)
+		if (item->first == mRootFile or item->first == mTOCFile)
 			continue;
 		
 		MProjectItem* pi = mRoot.GetItem(item->first);
@@ -791,20 +779,16 @@ void MePubDocument::WriteFile(
 	if (mRoot.Count() != 1 or dynamic_cast<MProjectGroup*>(mRoot.GetItem(0)) == nil)
 		THROW(("An ePub file should have a single directory in the root directory"));
 	
-	if (mTOCFile.empty())
-		mTOCFile = "book.ncx";
-	
-	if (mRootFile.empty())
-		mRootFile = "book.opf";
-	
 	MProjectGroup* oebps = static_cast<MProjectGroup*>(mRoot.GetItem(0));
 	fs::path oebpsPath(oebps->GetName());
 
-	fs::path rootFile = oebpsPath / mRootFile;
-	fs::path tocFile = oebpsPath / mTOCFile;
+	if (mTOCFile.empty())
+		mTOCFile = oebpsPath / "book.ncx";
+	
+	if (mRootFile.empty())
+		mRootFile = oebpsPath / "book.opf";
 	
 	// OK, write the file
-	
 	ZIPLocalFileHeader fh;
 	vector<ZIPCentralDirectory> dir;
 	ZIPCentralDirectory cd;
@@ -833,7 +817,7 @@ void MePubDocument::WriteFile(
 	xml::node_ptr rootfiles(new xml::node("rootfiles"));
 	container->add_child(rootfiles);
 	xml::node_ptr rootfile(new xml::node("rootfile"));
-	rootfile->add_attribute("full-path", rootFile.string());
+	rootfile->add_attribute("full-path", mRootFile.string());
 	rootfile->add_attribute("media-type", "application/oebps-package+xml");
 	rootfiles->add_child(rootfile);
 	deflate(container, fh);
@@ -845,7 +829,7 @@ void MePubDocument::WriteFile(
 	
 	// the OPF...
 	
-	fh.filename = rootFile.string();
+	fh.filename = mRootFile.string();
 	xml::node_ptr opf = CreateOPF(oebpsPath);
 	deflate(opf, fh);
 
@@ -856,7 +840,7 @@ void MePubDocument::WriteFile(
 	
 	// the NCX...
 	
-	fh.filename = tocFile.string();
+	fh.filename = mTOCFile.string();
 	xml::node_ptr ncx = CreateNCX();
 	deflate(ncx, fh);
 
@@ -964,7 +948,7 @@ xml::node_ptr MePubDocument::CreateOPF(
 		
 		xml::node_ptr item_node(new xml::node("item"));
 		item_node->add_attribute("id", ePubItem->GetID());
-		item_node->add_attribute("href", relative_path(inOEBPS, ePubItem->GetPath()).string());
+		item_node->add_attribute("href", relative_path(mRootFile.branch_path(), ePubItem->GetPath()).string());
 		if (not ePubItem->GetMediaType().empty())
 			item_node->add_attribute("media-type", ePubItem->GetMediaType());
 		manifest->add_child(item_node);
@@ -974,7 +958,7 @@ xml::node_ptr MePubDocument::CreateOPF(
 	
 	xml::node_ptr item_node(new xml::node("item"));
 	item_node->add_attribute("id", "ncx");
-	item_node->add_attribute("href", mTOCFile.string());
+	item_node->add_attribute("href", relative_path(mRootFile.branch_path(), mTOCFile).string());
 	item_node->add_attribute("media-type", "application/x-dtbncx+xml");
 	manifest->add_child(item_node);
 	
@@ -1192,14 +1176,14 @@ void MePubDocument::ParseOPF(
 			{
 				if (item->get_attribute("media-type") == "application/x-dtbncx+xml")
 				{
-					mTOCFile = relative_path(inDirectory, href);
+					mTOCFile = href;
 					continue;
 				}
 
 				if (FileNameMatches("*.ncx", href))
 				{
 					outProblems.push_back(_("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
-					mTOCFile = relative_path(inDirectory, href);
+					mTOCFile = href;
 					continue;
 				}
 			}
