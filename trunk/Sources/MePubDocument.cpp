@@ -44,6 +44,7 @@
 #include "MStrings.h"
 #include "MGlobals.h"
 #include "MAlerts.h"
+#include "MUtils.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -153,7 +154,7 @@ const uint32
 const uint16
 	kVersionMadeBy = 0x0017;
 
-ostream& operator<<(ostream& lhs, ZIPLocalFileHeader& rhs)
+uint32 write_next_file(ostream& lhs, ZIPLocalFileHeader& rhs)
 {
 	char b[30];
 	char* p;
@@ -179,18 +180,19 @@ ostream& operator<<(ostream& lhs, ZIPLocalFileHeader& rhs)
 	p = write(rhs.uncompressed_size, p);
 	p = write(fileNameLength, p);
 	p = write(extraFieldLength, p);
-	
+
 	assert(p == b + sizeof(b));
-	
+
 	lhs.write(b, sizeof(b));
 	lhs.write(rhs.filename.c_str(), fileNameLength);
-	
 	if (rhs.data.length() > 0)
 		lhs.write(rhs.data.c_str(), rhs.data.length());
 	
+	uint32 result = sizeof(b) + fileNameLength + rhs.data.length();
+	
 	rhs.data.clear();
 	
-	return lhs;
+	return result;
 }
 
 bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
@@ -327,7 +329,7 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 	return true;
 }
 
-ostream& operator<<(ostream& lhs, ZIPCentralDirectory& rhs)
+uint32 write_central_directory(ostream& lhs, ZIPCentralDirectory& rhs)
 {
 	char b[46];
 	char* p;
@@ -368,11 +370,11 @@ ostream& operator<<(ostream& lhs, ZIPCentralDirectory& rhs)
 	
 	lhs.write(b, sizeof(b));
 	lhs.write(rhs.file.filename.c_str(), fileNameLength);
-
-	return lhs;
+	
+	return sizeof(b) + fileNameLength;
 }
 
-ostream& operator<<(ostream& lhs, ZIPEndOfCentralDirectory& rhs)
+void write_directory_end(ostream& lhs, ZIPEndOfCentralDirectory& rhs)
 {
 	char b[22];
 	char* p;
@@ -389,8 +391,6 @@ ostream& operator<<(ostream& lhs, ZIPEndOfCentralDirectory& rhs)
 	p = write(nul, p);
 
 	lhs.write(b, sizeof(b));
-
-	return lhs;
 }
 
 void deflate(
@@ -432,56 +432,6 @@ void deflate(
 	deflate(s.str(), outFileHeader);
 }
 
-void decode_base64(
-	const string&		inString,
-	vector<uint8>&		outBinary)
-{
-    const char kLookupTable[] =
-    {
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
-        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
-        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
-        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
-    };
-    
-    string::const_iterator b = inString.begin();
-    string::const_iterator e = inString.end();
-    
-	while (b != e)
-	{
-		uint8 s[4] = {};
-		int n = 0;
-		
-		for (int i = 0; i < 4 and b != e; ++i)
-		{
-			uint8 ix = uint8(*b++);
-
-			if (ix == '=')
-				break;
-			
-			char v = -1;
-			if (ix <= 127) 
-				v = kLookupTable[ix];
-			if (v < 0)	THROW(("Invalid character in base64 encoded string"));
-			s[i] = uint8(v);
-			++n;
-		}
-
-		if (n > 1)
-			outBinary.push_back(s[0] << 2 | s[1] >> 4);
-		
-		if (n > 2)
-			outBinary.push_back(s[1] << 4 | s[2] >> 2);
-		
-		if (n > 3)
-			outBinary.push_back(s[2] << 6 | s[3]);
-	}
-}
-
 void DecryptBookKey(
 	const string&	inBase64Key,
 	AES_KEY&		outBookKey)
@@ -493,57 +443,31 @@ void DecryptBookKey(
 		THROW(("Invalid key length, expected 128 bytes"));
 	
 	static RSA* rsa = nil;
-	if (rsa == nil)
+	if (rsa == nil and fs::exists(gPrefsDir / "adeptkey.der"))
 	{
-		// try DER encoded adeptkey file first
-		
-		if (fs::exists(gPrefsDir / "adeptkey.der"))
+		fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.der", ios::binary);
+		if (adeptKeyFile.is_open())
 		{
-			fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.der", ios::binary);
-			if (adeptKeyFile.is_open())
-			{
-				streambuf* b = adeptKeyFile.rdbuf();
-				
-				int64 len = b->pubseekoff(0, ios::end);
-				b->pubseekpos(0);
-				
-				vector<char> data(len);
-				b->sgetn(&data[0], len);
+			streambuf* b = adeptKeyFile.rdbuf();
 			
-				// put the data into a BIO
-				BIO *mem = BIO_new_mem_buf(&data[0], len);
-				rsa = d2i_RSAPrivateKey_bio(mem, nil);
-				BIO_free(mem);
-			}
-		}
+			int64 len = b->pubseekoff(0, ios::end);
+			b->pubseekpos(0);
+			
+			vector<char> data(len);
+			b->sgetn(&data[0], len);
 		
-		if (rsa == nil)
-		{
-			// next try to read in the PEM encoded adeptkey file
-			fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.pem", ios::binary);
-			if (adeptKeyFile.is_open())
-			{
-				streambuf* b = adeptKeyFile.rdbuf();
-				
-				int64 len = b->pubseekoff(0, ios::end);
-				b->pubseekpos(0);
-				
-				vector<char> data(len);
-				b->sgetn(&data[0], len);
-				
-				// put the data into a BIO
-				BIO *mem = BIO_new_mem_buf(&data[0], len);
-				rsa = PEM_read_bio_RSAPrivateKey(mem, nil, nil, nil);
-				BIO_free(mem);
-			}
+			// put the data into a BIO
+			BIO *mem = BIO_new_mem_buf(&data[0], len);
+			rsa = d2i_RSAPrivateKey_bio(mem, nil);
+			BIO_free(mem);
 		}
-			
-		if (rsa == nil)
-			THROW(("Failed to read RSA private key from adeptkey.der or adeptkey.pem file, this file should be located in Japi's preferences folder in ~/.config/japi/"));
 	}
+
+	if (rsa == nil)
+		THROW(("Failed to read private ADEPT key from '%s'",
+			(gPrefsDir / "adeptkey.der").string().c_str()));
 	
 	uint8 b[16];
-	
 	int r = RSA_private_decrypt(128, &adeptKey[0], b, rsa, RSA_PKCS1_PADDING);
 	if (r != 16)
 		THROW(("Error decrypting book key, expected 16, got %d", r));
@@ -668,17 +592,25 @@ void MePubDocument::ReadFile(
 	// read first file, should be the mimetype file
 	if (not read_next_file(inFile, fh))
 		THROW(("Empty ePub file"));
-	
-	if (fh.filename != "mimetype" or not ba::starts_with(fh.data, "application/epub+zip"))
-		problems.push_back(_("Invalid ePub file, mimetype missing"));
 
+	bool hasMimeType = false;
+	if (fh.filename == "mimetype" and ba::starts_with(fh.data, "application/epub+zip"))
+		hasMimeType = true;
+	
 	map<fs::path,string> content;
 	fs::path rootFile;
 	bool keyDecrypted = false;
 	
 	while (read_next_file(inFile, fh))
 	{
-		if (ba::ends_with(fh.filename, "/"))
+		if (fh.filename == "mimetype" and ba::starts_with(fh.data, "application/epub+zip"))
+		{
+			hasMimeType = true;
+			problems.push_back(_("Invalid ePub file, mimetype should be first file"));
+			continue;
+		}
+		
+		if (ba::ends_with(fh.filename, "/") or fh.uncompressed_size == 0)
 			continue;
 		
 		fs::path path(fh.filename);
@@ -770,6 +702,9 @@ void MePubDocument::ReadFile(
 			content[path] = fh.data;
 	}
 
+	if (not hasMimeType)
+		problems.push_back(_("Invalid ePub file, mimetype file is missing"));
+
 	xml::document opf(content[rootFile]);
 	
 	ParseOPF(rootFile.branch_path(), *opf.root(), problems);
@@ -803,6 +738,8 @@ void MePubDocument::ReadFile(
 			}
 		}
 	}
+	else
+		mTOCFile = "book.ncx";
 	
 	// and now fill in the data for the items we've found
 	
@@ -854,6 +791,12 @@ void MePubDocument::WriteFile(
 	if (mRoot.Count() != 1 or dynamic_cast<MProjectGroup*>(mRoot.GetItem(0)) == nil)
 		THROW(("An ePub file should have a single directory in the root directory"));
 	
+	if (mTOCFile.empty())
+		mTOCFile = "book.ncx";
+	
+	if (mRootFile.empty())
+		mRootFile = "book.opf";
+	
 	MProjectGroup* oebps = static_cast<MProjectGroup*>(mRoot.GetItem(0));
 	fs::path oebpsPath(oebps->GetName());
 
@@ -865,6 +808,7 @@ void MePubDocument::WriteFile(
 	ZIPLocalFileHeader fh;
 	vector<ZIPCentralDirectory> dir;
 	ZIPCentralDirectory cd;
+	uint32 offset = 0;
 	
 	// first write out the mimetype, uncompressed
 	
@@ -874,21 +818,8 @@ void MePubDocument::WriteFile(
 	fh.crc = crc32(0, reinterpret_cast<const uint8*>(fh.data.c_str()), fh.data.length());
 	fh.filename = "mimetype";
 	
-	cd.offset = inFile.tellp();
-	inFile << fh;
-	cd.file = fh;
-	dir.push_back(cd);
-	
-	// write META-INF/ directory
-	
-	fh.filename = "META-INF/";
-	fh.deflated = false;
-	fh.compressed_size = fh.uncompressed_size = 0;
-	fh.data.clear();
-	fh.crc = 0;
-
-	cd.offset = inFile.tellp();
-	inFile << fh;
+	cd.offset = offset;
+	offset += write_next_file(inFile, fh);
 	cd.file = fh;
 	dir.push_back(cd);
 	
@@ -907,21 +838,8 @@ void MePubDocument::WriteFile(
 	rootfiles->add_child(rootfile);
 	deflate(container, fh);
 
-	cd.offset = inFile.tellp();
-	inFile << fh;
-	cd.file = fh;
-	dir.push_back(cd);
-
-	// write renditions root directory (typically OEBPS)
-
-	fh.filename = oebps->GetName() + '/';
-	fh.deflated = false;
-	fh.compressed_size = fh.uncompressed_size = 0;
-	fh.data.clear();
-	fh.crc = 0;
-
-	cd.offset = inFile.tellp();
-	inFile << fh;
+	cd.offset = offset;
+	offset += write_next_file(inFile, fh);
 	cd.file = fh;
 	dir.push_back(cd);
 	
@@ -931,8 +849,8 @@ void MePubDocument::WriteFile(
 	xml::node_ptr opf = CreateOPF(oebpsPath);
 	deflate(opf, fh);
 
-	cd.offset = inFile.tellp();
-	inFile << fh;
+	cd.offset = offset;
+	offset += write_next_file(inFile, fh);
 	cd.file = fh;
 	dir.push_back(cd);
 	
@@ -942,8 +860,8 @@ void MePubDocument::WriteFile(
 	xml::node_ptr ncx = CreateNCX();
 	deflate(ncx, fh);
 
-	cd.offset = inFile.tellp();
-	inFile << fh;
+	cd.offset = offset;
+	offset += write_next_file(inFile, fh);
 	cd.file = fh;
 	dir.push_back(cd);
 	
@@ -951,34 +869,6 @@ void MePubDocument::WriteFile(
 	
 	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
-		MProjectGroup* group = dynamic_cast<MProjectGroup*>(&*item);
-		if (group != nil)
-		{
-			fs::path path(group->GetName());
-			while (group->GetParent() != nil)
-			{
-				group = group->GetParent();
-				if (not group->GetName().empty())
-					path = group->GetName() / path;
-			}
-			
-			if (path == "META-INF" or path == rootFile.branch_path())
-				continue;
-			
-			fh.filename = path.string() + '/';
-			fh.deflated = false;
-			fh.compressed_size = fh.uncompressed_size = 0;
-			fh.data.clear();
-			fh.crc = 0;
-	
-			cd.offset = inFile.tellp();
-			inFile << fh;
-			cd.file = fh;
-			dir.push_back(cd);
-
-			continue;
-		}
-		
 		MePubItem* file = dynamic_cast<MePubItem*>(&*item);
 		if (file != nil)
 		{
@@ -986,12 +876,10 @@ void MePubDocument::WriteFile(
 			
 			deflate(file->GetData(), fh);
 	
-			cd.offset = inFile.tellp();
-			inFile << fh;
+			cd.offset = offset;
+			offset += write_next_file(inFile, fh);
 			cd.file = fh;
 			dir.push_back(cd);
-			
-			continue;
 		}
 	}
 	
@@ -1000,13 +888,13 @@ void MePubDocument::WriteFile(
 	ZIPEndOfCentralDirectory end;
 	
 	end.entries = dir.size();
-	end.directory_offset = inFile.tellp();
+	end.directory_offset = offset;
 	
 	for (vector<ZIPCentralDirectory>::iterator e = dir.begin(); e != dir.end(); ++e)
-		inFile << *e;
+		offset += write_central_directory(inFile, *e);
 	
-	end.directory_size = inFile.tellp() - static_cast<streamoff>(end.directory_offset);
-	inFile << end;
+	end.directory_size = offset - static_cast<streamoff>(end.directory_offset);
+	write_directory_end(inFile, end);
 }
 
 xml::node_ptr MePubDocument::CreateOPF(
@@ -1162,7 +1050,8 @@ xml::node_ptr MePubDocument::CreateNCX()
 	ncx->add_child(navMap);
 	
 	uint32 id = 1;
-	CreateNavMap(&mTOC, navMap, id);
+	MPlayOrder playOrder;
+	CreateNavMap(&mTOC, navMap, id, playOrder);
 	
 	return ncx;
 }
@@ -1170,18 +1059,28 @@ xml::node_ptr MePubDocument::CreateNCX()
 void MePubDocument::CreateNavMap(
 	MProjectGroup*		inGroup,
 	xml::node_ptr		inNavPoint,
-	uint32&				ioID)
+	uint32&				ioID,
+	MPlayOrder&			ioPlayOrder)
 {
 	for (int32 ix = 0; ix < inGroup->Count(); ++ix)
 	{
 		MePubTOCItem* tocItem = dynamic_cast<MePubTOCItem*>(inGroup->GetItem(ix));
 		THROW_IF_NIL(tocItem);
 		
+		string src = tocItem->GetSrc();
+		
+		if (ioPlayOrder.find(src) == ioPlayOrder.end())
+		{
+			uint32 playOrder = ioPlayOrder.size() + 1;
+			ioPlayOrder[src] = playOrder;
+		}
+
 		xml::node_ptr navPoint(new xml::node("navPoint"));
 		navPoint->add_attribute("id", string("id-") + boost::lexical_cast<string>(ioID));
-		navPoint->add_attribute("class", tocItem->GetClass());
-		navPoint->add_attribute("playOrder", boost::lexical_cast<string>(ioID));
 		++ioID;
+
+		navPoint->add_attribute("class", tocItem->GetClass());
+		navPoint->add_attribute("playOrder", boost::lexical_cast<string>(ioPlayOrder[src]));
 		
 		xml::node_ptr navLabel(new xml::node("navLabel"));
 		xml::node_ptr text(new xml::node("text"));
@@ -1190,11 +1089,11 @@ void MePubDocument::CreateNavMap(
 		navPoint->add_child(navLabel);
 		
 		xml::node_ptr content(new xml::node("content"));
-		content->add_attribute("src", tocItem->GetSrc());
+		content->add_attribute("src", src);
 		navPoint->add_child(content);
-		
+
 		if (tocItem->Count() > 0)
-			CreateNavMap(tocItem, navPoint, ioID);
+			CreateNavMap(tocItem, navPoint, ioID, ioPlayOrder);
 		
 		inNavPoint->add_child(navPoint);
 	}	
@@ -1275,6 +1174,7 @@ void MePubDocument::ParseOPF(
 	}
 
 	// collect the items from the manifest
+	bool warnMediaType = true, warnInvalidID = true;
 	
 	xml::node_ptr manifest = inOPF.find_first_child("manifest");
 	if (not manifest)
@@ -1283,23 +1183,52 @@ void MePubDocument::ParseOPF(
 	{
 		for (xml::node_ptr item = manifest->children(); item; item = item->next())
 		{
-			if (item->name() != "item" or item->ns() != "http://www.idpf.org/2007/opf")
+			if (item->name() != "item") // or item->ns() != "http://www.idpf.org/2007/opf")
 				continue;
 	
 			fs::path href = inDirectory / item->get_attribute("href");
 			
-			if (mTOCFile.empty() and item->get_attribute("media-type") == "application/x-dtbncx+xml")
+			if (mTOCFile.empty())
 			{
-				mTOCFile = relative_path(inDirectory, href);
-				continue;
+				if (item->get_attribute("media-type") == "application/x-dtbncx+xml")
+				{
+					mTOCFile = relative_path(inDirectory, href);
+					continue;
+				}
+
+				if (FileNameMatches("*.ncx", href))
+				{
+					outProblems.push_back(_("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
+					mTOCFile = relative_path(inDirectory, href);
+					continue;
+				}
 			}
 			
 			MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
 			
 			auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
 			
-			eItem->SetID(item->get_attribute("id"));
-			eItem->SetMediaType(item->get_attribute("media-type"));
+			string id = item->get_attribute("id");
+			if (id.empty() or not isalpha(id[0]))
+			{
+				if (warnInvalidID)
+					outProblems.push_back(_("ID's should start with a letter"));
+				id = 'x' + id;
+				warnInvalidID = false;
+			}
+			eItem->SetID(id);
+			
+			string mediaType = item->get_attribute("media-type");
+			
+			if (mediaType == "text/html")
+			{
+				mediaType = "application/xhtml+xml";
+				if (warnMediaType)
+					outProblems.push_back(_("Use media-type application/xhtml+xml instead of text/html"));
+				warnMediaType = false;
+			}
+				
+			eItem->SetMediaType(mediaType);
 			
 			group->AddProjectItem(eItem.release());
 		}

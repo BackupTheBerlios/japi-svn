@@ -53,7 +53,7 @@ int VERBOSE;
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9.7-b2";
+	kVersionString[] = "0.9.7-b3";
 
 MJapieApp* gApp;
 fs::path gExecutablePath, gPrefixPath;
@@ -407,14 +407,12 @@ void MJapieApp::RunEventLoop()
 		}
 	}
 	catch (...) {}
-	
+
 	uint32 snooper = gtk_key_snooper_install(
 		&MJapieApp::Snooper, nil);
 	
-	/*uint32 timer = */
-		//g_timeout_add(250, &MJapieApp::Timeout, nil);
 	g_timeout_add(50, &MJapieApp::Timeout, nil);
-	
+
 	gdk_threads_enter();
 	gtk_main();
 	gdk_threads_leave();

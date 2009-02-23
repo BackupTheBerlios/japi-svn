@@ -279,4 +279,8 @@ GdkPixbuf* CreateDot(
 	MColor			inColor,
 	uint32			inSize);
 
+void decode_base64(
+	const std::string&	inString,
+	std::vector<uint8>&	outBinary);
+
 #endif

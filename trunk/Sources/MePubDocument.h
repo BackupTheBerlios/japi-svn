@@ -126,10 +126,13 @@ class MePubDocument : public MDocument
 
 	xml::node_ptr		CreateNCX();
 
+	typedef std::map<std::string,uint32> MPlayOrder;
+
 	void				CreateNavMap(
 							MProjectGroup*		inGroup,
 							xml::node_ptr		inNavPoint,
-							uint32&				ioID);
+							uint32&				ioID,
+							MPlayOrder&			ioPlayOrder);
 
 	std::string			mRootFile;
 	fs::path			mTOCFile;

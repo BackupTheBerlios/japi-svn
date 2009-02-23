@@ -4,8 +4,6 @@
 	- zoeken in alle ePub items
 	- revert op ePub werkt nog niet?
 	- guide
-	- decrypten
-	- openen vanaf smb://
 	? adobe page dinges
 
 Moet af:

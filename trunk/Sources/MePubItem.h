@@ -69,8 +69,13 @@ class MePubTOCItem : public MProjectGroup
 	void			SetSrc(
 						const std::string&	inSrc)			{ mSrc = inSrc; }
 
+	uint32			GetPlayOrder() const					{ return mPlayOrder; }
+	void			SetPlayOrder(
+						const uint32		inPlayOrder)	{ mPlayOrder = inPlayOrder; }
+
   protected:
 	std::string		mClass, mSrc;
+	uint32			mPlayOrder;
 };
 
 #endif

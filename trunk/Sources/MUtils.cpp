@@ -17,8 +17,8 @@
 
 #include <sys/time.h>
 
-#include "MUtils.h"
 #include "MError.h"
+#include "MUtils.h"
 
 using namespace std;
 
@@ -385,5 +385,50 @@ GdkPixbuf* CreateDot(
 	cairo_surface_destroy(cs);
 
 	return result;
+}
+
+void decode_base64(
+	const string&		inString,
+	vector<uint8>&		outBinary)
+{
+    const char kLookupTable[] =
+    {
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1
+    };
+    
+    string::const_iterator b = inString.begin();
+    string::const_iterator e = inString.end();
+    
+	while (b != e)
+	{
+		uint8 s[4] = {};
+		int n = 0;
+		
+		for (int i = 0; i < 4 and b != e; ++i)
+		{
+			uint8 ix = uint8(*b++);
+
+			if (ix == '=')
+				break;
+			
+			char v = -1;
+			if (ix <= 127) 
+				v = kLookupTable[ix];
+			if (v < 0)	THROW(("Invalid character in base64 encoded string"));
+			s[i] = uint8(v);
+			++n;
+		}
+
+		if (n > 1)	outBinary.push_back(s[0] << 2 | s[1] >> 4);
+		if (n > 2)	outBinary.push_back(s[1] << 4 | s[2] >> 2);
+		if (n > 3)	outBinary.push_back(s[2] << 6 | s[3]);
+	}
 }
 
