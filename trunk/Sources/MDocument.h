@@ -23,12 +23,17 @@ class MMenu;
 class MDocument
 {
   public:
-	explicit			MDocument(
-							const MFile&		inFile);
-
 	virtual				~MDocument();
 
-	virtual void		DoLoad();
+	template<class D>
+	static D*			Create(
+							const MFile&		inFile)
+						{
+							std::auto_ptr<D> doc(new D(inFile));
+							if (inFile.IsValid())
+								doc->DoLoad();
+							return doc.release();
+						}
 
 	virtual bool		DoSave();
 
@@ -109,6 +114,11 @@ class MDocument
 	MEventOut<void(const fs::path&)>		eBaseDirChanged;
 
   protected:
+
+	explicit			MDocument(
+							const MFile&		inFile);
+
+	virtual void		DoLoad();
 
 	virtual void		CloseDocument();
 

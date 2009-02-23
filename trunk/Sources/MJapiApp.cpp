@@ -613,7 +613,7 @@ MDocWindow* MJapieApp::DisplayDocument(
 
 void MJapieApp::DoNew()
 {
-	MDocument*	doc = new MTextDocument(MFile());
+	MDocument* doc = MDocument::Create<MTextDocument>(MFile());
 	DisplayDocument(doc);
 }
 
@@ -751,10 +751,7 @@ MDocument* MJapieApp::OpenOneDocument(
 		else if (FileNameMatches("*.epub", inFileRef))
 			OpenEPub(inFileRef);
 		else
-		{
-			doc = new MTextDocument(inFileRef);
-			doc->DoLoad();
-		}
+			doc = MDocument::Create<MTextDocument>(inFileRef);
 	}
 	
 	if (doc != nil)
@@ -772,10 +769,7 @@ MDocument* MJapieApp::OpenOneDocument(
 void MJapieApp::OpenProject(
 	const MFile&		inPath)
 {
-	auto_ptr<MProject> project(new MProject(inPath));
-	
-	project->DoLoad();
-	
+	auto_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
 	auto_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();
@@ -793,11 +787,10 @@ void MJapieApp::OpenEPub(
 {
 	try
 	{
-		auto_ptr<MePubDocument> epub(new MePubDocument(inPath));
+		auto_ptr<MDocument> epub(MDocument::Create<MePubDocument>(inPath));
 		auto_ptr<MePubWindow> w(new MePubWindow());
 		
 		w->Initialize(epub.get());
-		epub->DoLoad();
 		epub.release();
 
 		w->Show();
@@ -825,7 +818,7 @@ void MJapieApp::DoOpenTemplate(
 	ba::replace_all(text, "$name$", GetUserName(false));
 	ba::replace_all(text, "$shortname$", GetUserName(true));
 	
-	MTextDocument* doc = new MTextDocument(MFile());
+	MTextDocument* doc = MDocument::Create<MTextDocument>(MFile());
 	doc->SetText(text.c_str(), text.length());
 	doc->SetFileNameHint(inTemplate);
 	DisplayDocument(doc);
@@ -965,12 +958,12 @@ void MJapieApp::ProcessSocketMessages()
 						break;
 					
 					case 'new ':
-						doc = new MTextDocument(MFile());
+						doc = MDocument::Create<MTextDocument>(MFile());
 						break;
 					
 					case 'data':
 						readStdin = true;
-						doc = new MTextDocument(MFile());
+						doc = MDocument::Create<MTextDocument>(MFile());
 						break;
 				}
 				
@@ -1292,10 +1285,9 @@ int main(int argc, char* argv[])
 			
 			MFile file(fs::system_complete(argv[optind]));
 			
-			MProject project(file);
-			project.DoLoad();
-			project.SelectTarget(target);
-			if (project.Make(false))
+			auto_ptr<MProject> project(MDocument::Create<MProject>(file));
+			project->SelectTarget(target);
+			if (project->Make(false))
 				cout << "Build successful, " << target << " is up-to-date" << endl;
 			else
 				cout << "Building " << target << " Failed" << endl;

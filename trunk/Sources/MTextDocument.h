@@ -63,9 +63,6 @@ class MTextDocument : public MDocument
   
   	// first the implementation of / overrides for MDocument
   	
-	explicit			MTextDocument(
-							const MFile&		inURI);
-
 	virtual				~MTextDocument();
 
 	static MTextDocument*
@@ -117,6 +114,11 @@ class MTextDocument : public MDocument
 	MEventOut<void(float,std::string)>			eSSHProgress;
 
   protected:
+
+	friend class MDocument;
+
+	explicit			MTextDocument(
+							const MFile&		inURI);
 
 	virtual void		ReadFile(
 							std::istream&		inFile);

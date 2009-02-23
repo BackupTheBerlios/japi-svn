@@ -605,8 +605,7 @@ bool MFindDialog::FindNext()
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(new MTextDocument(file));
-				newDoc->DoLoad();
+				auto_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
@@ -661,8 +660,7 @@ void MFindDialog::ReplaceAll(
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(new MTextDocument(file));
-				newDoc->DoLoad();
+				auto_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
 
 				if (newDoc->DoFindFirst())
 				{

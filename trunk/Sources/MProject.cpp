@@ -1399,7 +1399,7 @@ void MProject::Preprocess(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = new MTextDocument(MFile());
+	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
 	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
@@ -1437,7 +1437,7 @@ void MProject::Disassemble(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = new MTextDocument(MFile());
+	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
 	output->SetFileNameHint(inFile.leaf() + " # disassembled");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);

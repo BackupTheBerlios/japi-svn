@@ -955,10 +955,9 @@ void MePubWindow::InvokeFileRow(
 				doc = di->second;
 			else
 			{
-				doc = new MTextDocument(MFile());
+				MFile file(new MePubContentFile(mEPub, path));
 				
-				doc->SetFile(new MePubContentFile(mEPub, path));
-				doc->DoLoad();
+				doc = MDocument::Create<MTextDocument>(file);
 
 				AddRoute(doc->eDocumentClosed, eDocumentClosed);
 				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);

@@ -510,8 +510,7 @@ bool MDiffWindow::FilesDiffer(
 		doc->HashLines(a);
 	else
 	{
-		auto_ptr<MTextDocument> d(new MTextDocument(inA));
-		d->DoLoad();
+		auto_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inA));
 		d->HashLines(a);
 	}
 	
@@ -519,8 +518,7 @@ bool MDiffWindow::FilesDiffer(
 		doc->HashLines(b);
 	else
 	{
-		auto_ptr<MTextDocument> d(new MTextDocument(inB));
-		d->DoLoad();
+		auto_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inB));
 		d->HashLines(b);
 	}
 	
