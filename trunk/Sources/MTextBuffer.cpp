@@ -813,25 +813,65 @@ void MTextBuffer::GuessLineEndCharacter()
 			break;
 	}
 	
-	if (mEOLNKind == eEOLN_MAC)
+	bool inconsistent = false;
+	
+	for (src = dst = mData; src < end; ++src, ++dst)
 	{
-		for (; src != end; ++src)
+		*dst = *src;
+
+		if (*src == '\r')
 		{
-			if (*src == '\r')
-				*src = '\n';
+			switch (mEOLNKind)
+			{
+				case eEOLN_MAC:
+					*dst = '\n';
+					break;
+				
+				case eEOLN_DOS:
+					if (src < end - 1 and *(src + 1) == '\n')
+						++src;
+					else
+					{
+						*dst = '\n';
+						inconsistent = true;
+					}
+					break;
+				
+				case eEOLN_UNIX:
+					inconsistent = true;
+					if (src < end - 1 and *(src + 1) == '\n')
+						++src;
+					else
+						*dst = '\n';
+					break;
+			}
 		}
 	}
-	else if (mEOLNKind == eEOLN_DOS)
-	{
-		for (src = dst = mData; src < end; ++src, ++dst)
-		{
-			if (*src == '\r' and src < end - 1 and *(src + 1) == '\n')
-				++src;
-			*dst = *src;
-		}
-		
-		mGapOffset = mLogicalLength = dst - mData;
-	}
+
+	mGapOffset = mLogicalLength = dst - mData;
+
+	if (inconsistent)
+		PRINT(("Inconsistent line endings"));
+
+//	if (mEOLNKind == eEOLN_MAC)
+//	{
+//		for (; src != end; ++src)
+//		{
+//			if (*src == '\r')
+//				*src = '\n';
+//		}
+//	}
+//	else if (mEOLNKind == eEOLN_DOS)
+//	{
+//		for (src = dst = mData; src < end; ++src, ++dst)
+//		{
+//			if (*src == '\r' and src < end - 1 and *(src + 1) == '\n')
+//				++src;
+//			*dst = *src;
+//		}
+//		
+//		mGapOffset = mLogicalLength = dst - mData;
+//	}
 }
 
 string MTextBuffer::GetText()

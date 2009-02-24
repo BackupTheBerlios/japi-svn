@@ -61,6 +61,13 @@ fs::path gExecutablePath, gPrefixPath;
 const char
 	kSocketName[] = "/tmp/japi.%d.socket";
 
+
+namespace {
+	
+const uint32
+	cmd_ImportOEB =			'ImpB';
+}
+
 // --------------------------------------------------------------------
 
 MJapieApp::MJapieApp(
@@ -172,6 +179,10 @@ bool MJapieApp::ProcessCommand(
 		
 		case cmd_NewEPub:
 			DoNewEPub();
+			break;
+		
+		case cmd_ImportOEB:
+			ImportOEB();
 			break;
 		
 		case cmd_Open:
@@ -699,11 +710,29 @@ void MJapieApp::DoNewProject()
 void MJapieApp::DoNewEPub()
 {
 	auto_ptr<MePubDocument> epub(new MePubDocument());
+	epub->InitializeNew();
+	
 	auto_ptr<MePubWindow> w(new MePubWindow());
 	w->Initialize(epub.get());
 	epub.release();
 	w->Show();
 	w.release();
+}
+
+void MJapieApp::ImportOEB()
+{
+	MFile oeb;
+	if (ChooseOneFile(oeb))
+	{
+		auto_ptr<MePubDocument> epub(new MePubDocument());
+		epub->ImportOEB(oeb);
+		
+		auto_ptr<MePubWindow> w(new MePubWindow());
+		w->Initialize(epub.get());
+		epub.release();
+		w->Show();
+		w.release();
+	}
 }
 
 void MJapieApp::SetCurrentFolder(

@@ -6,6 +6,8 @@
 #ifndef MDEVICE_H
 #define MDEVICE_H
 
+#include <vector>
+
 #include "MTypes.h"
 #include "MColor.h"
 
@@ -158,9 +160,10 @@ class MDevice
 						float				inY,
 						uint32				inOffset);
 	
-	bool			BreakLine(
+	void			BreakLines(
 						uint32				inWidth,
-						uint32&				outBreak);
+						std::vector<uint32>&
+											outBreaks);
 
 	void			MakeTransparent(
 						float				inOpacity);

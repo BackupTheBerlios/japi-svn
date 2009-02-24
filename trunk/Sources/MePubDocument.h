@@ -28,41 +28,18 @@ class MePubDocument : public MDocument
 	explicit			MePubDocument(
 							const MFile&		inProjectFile);
 
-//						MePubDocument(
-//							const fs::path&		inParentDir,
-//							const std::string&	inName);
-
 	virtual				~MePubDocument();
 
-	virtual bool		UpdateCommandStatus(
-							uint32				inCommand,
-							MMenu*				inMenu,
-							uint32				inItemIndex,
-							bool&				outEnabled,
-							bool&				outChecked);
+	void				ImportOEB(
+							const MFile&		inOEB);
 
-	virtual bool		ProcessCommand(
-							uint32				inCommand,
-							const MMenu*		inMenu,
-							uint32				inItemIndex,
-							uint32				inModifiers);
-
-	virtual void		ReadFile(
-							std::istream&		inFile);
-
-	virtual void		WriteFile(
-							std::ostream&		inFile);
+	void				InitializeNew();
 
 	MProjectGroup*		GetFiles() const;
 	MProjectGroup*		GetTOC() const;
 
 	MEventOut<void(MProjectItem*)>				eInsertedFile;
 	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
-
-	void				CreateNewGroup(
-							const std::string&	inGroupName,
-							MProjectGroup*		inGroup,
-							int32				inIndex);
 
 	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
 											eCreateItem;
@@ -107,6 +84,12 @@ class MePubDocument : public MDocument
 							bool				inModified);
 
   private:
+
+	virtual void		ReadFile(
+							std::istream&		inFile);
+
+	virtual void		WriteFile(
+							std::ostream&		inFile);
 	
 	void				ParseOPF(
 							const fs::path&		inDirectory,

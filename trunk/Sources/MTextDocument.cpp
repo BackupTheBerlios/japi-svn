@@ -12,6 +12,7 @@
 
 #include <gdk/gdkkeysyms.h>
 
+#include <boost/bind.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -1389,64 +1390,85 @@ uint32 MTextDocument::GetLineIndentWidth(uint32 inLine) const
 // ---------------------------------------------------------------------------
 //	FindLineBreak
 
-uint32 MTextDocument::FindLineBreak(
-	uint32		inFromOffset,
-	uint16		inState,
-	uint32		inIndent) const
+void MTextDocument::FindLineBreaks(
+	uint32				inFromOffset,
+	uint32				inToOffset,
+	uint16				inState,
+	uint32				inIndent,
+	vector<uint32>&		outBreaks) const
 {
 	assert(inFromOffset < mText.GetSize());
 
-	MTextBuffer::const_iterator t = mText.begin() + inFromOffset;
+	MTextBuffer::const_iterator t = mText.begin() + inFromOffset, s = t;
 	
-	uint32 tabCount = 0;
+	// skip to end of line while counting the tab characters
+	bool leadingWhiteSpace = true;
 	
 	while (t != mText.end() and *t != '\n')
 	{
-		if (*t == '\t')
-			++tabCount;
+		if (leadingWhiteSpace)
+		{
+			if (*t == '\t')
+			{
+				++s;
+				uint32 d = mCharsPerTab - (inIndent % mCharsPerTab);
+				inIndent += d;
+			}
+			else if (*t == ' ')
+			{
+				++s;
+				++inIndent;
+			}
+			else
+				leadingWhiteSpace = false;
+		}
 		++t;
 	}
 	
-	uint32 result = (t - mText.begin()) + 1;
+	// if we're not softwrapping, the next line break is now known
+	uint32 lastBreak = t.GetOffset() + 1;
 	
-	if (GetSoftwrap() and mWrapWidth > 0 and result > inFromOffset + 1)
+	if (GetSoftwrap() and mWrapWidth > 0 and lastBreak > inFromOffset + 1)
 	{
-		uint32 width = mWrapWidth;
-
-		width -= inIndent * mCharWidth;
-
-		if (tabCount * mTabWidth > width)
+		if (mWrapWidth < inIndent * mCharWidth)
 		{
-			tabCount = width / mTabWidth;
-			result = inFromOffset + tabCount;
+			// overflow of leading whitespace, force a line break
+			lastBreak = s.GetOffset();
 		}
 		else
 		{
-			inFromOffset += tabCount;
+			// compensate for leading tabs
+			inFromOffset = s.GetOffset();
+			uint32 width = mWrapWidth - inIndent * mCharWidth;
 			
-			width -= tabCount * mTabWidth;
+			// length of the text to examine
+			uint32 length = lastBreak - inFromOffset;
+			if (*t == '\n')
+				--length;
+			
+			if (inFromOffset + length > mText.GetSize())
+				length = mText.GetSize() - inFromOffset;
 	
-			uint32 l = result - inFromOffset;
-			if (inFromOffset + l > mText.GetSize())
-				l = mText.GetSize() - inFromOffset;
-	
-			if (width <= mTabWidth)
-				result = inFromOffset + tabCount;
-			else
+			string text;
+			mText.GetText(inFromOffset, length, text);
+
+			MDevice dev;
+			dev.SetFont(mFont);
+			dev.SetText(text);
+			dev.SetTabStops(mTabWidth);
+		
+			dev.BreakLines(width, outBreaks);
+			
+			if (not outBreaks.empty())
 			{
-				string txt;
-				MDevice dev;
-	
-				(void)GetStyledText(inFromOffset, l, inState, dev, txt);
-	
-				uint32 br;
-				if (dev.BreakLine(width, br))
-					result = inFromOffset + br;
+				outBreaks.pop_back();
+				transform(outBreaks.begin(), outBreaks.end(),
+					outBreaks.begin(), boost::bind(plus<uint32>(), _1, inFromOffset));
 			}
 		}
 	}
-	
-	return result;
+
+	outBreaks.push_back(lastBreak);
 }
 
 // ---------------------------------------------------------------------------
@@ -1527,38 +1549,46 @@ int32 MTextDocument::RewrapLines(
 	// loop over the text until we're done
 	while (start < mText.GetSize())
 	{
-		uint32 nextBreak;
+		vector<uint32> breaks;
 		
 		if (isHardBreak)
-			nextBreak = FindLineBreak(start, state, 0);
+			FindLineBreaks(start, inTo, state, 0, breaks);
 		else
-			nextBreak = FindLineBreak(start, state, indent);
+			FindLineBreaks(start, inTo, state, indent, breaks);
 		
-		if (nextBreak > inTo)
+		assert(not breaks.empty());
+		
+		for (vector<uint32>::iterator nextBreak = breaks.begin(); nextBreak != breaks.end(); ++nextBreak)
+		{
+			if (*nextBreak > inTo)
+				break;
+			
+			uint32 length = *nextBreak - start;
+			
+			if (mLanguage)
+				mLanguage->StyleLine(mText, start, length, state);
+			
+			isHardBreak = (mText.GetChar(*nextBreak - 1) == '\n');
+	
+			if (isHardBreak)
+				indent = 0;
+	
+			lineInfoEnd = mLineInfo.insert(lineInfoEnd,
+				MLineInfo(*nextBreak, state, isHardBreak));
+			++lineInfoEnd;
+			
+			if (not isHardBreak and indent > 0)
+				lineInfoEnd->indent = true;
+	
+			if (isHardBreak)
+				indent = GetIndent(*nextBreak);
+			
+			++cnt;
+			start = *nextBreak;
+		}
+
+		if (breaks.back() > inTo)
 			break;
-		
-		uint32 length = nextBreak - start;
-		
-		if (mLanguage)
-			mLanguage->StyleLine(mText, start, length, state);
-		
-		isHardBreak = (mText.GetChar(nextBreak - 1) == '\n');
-
-		if (isHardBreak)
-			indent = 0;
-
-		lineInfoEnd = mLineInfo.insert(lineInfoEnd,
-			MLineInfo(nextBreak, state, isHardBreak));
-		++lineInfoEnd;
-		
-		if (not isHardBreak and indent > 0)
-			lineInfoEnd->indent = true;
-
-		if (isHardBreak)
-			indent = GetIndent(nextBreak);
-		
-		++cnt;
-		start = nextBreak;
 	}
 	
 	for (vector<uint32>::iterator i = markOffsets.begin(); i != markOffsets.end(); ++i)

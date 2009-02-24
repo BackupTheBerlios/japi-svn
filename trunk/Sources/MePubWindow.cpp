@@ -69,7 +69,7 @@ enum {
 	
 	kTOCListViewID			= 'tre3',
 	
-	kDocIDSchemePopupID		= 'docS',
+	kDocIDSchemeViewID		= 'docS',
 	kDocIDGenerateButtonID	= 'genI',
 	
 	kNoteBookID				= 'note'
@@ -558,7 +558,7 @@ void MePubWindow::Initialize(
 	// fill in the information fields
 	
 	SetText(kDCIDViewID,			mEPub->GetDocumentID());
-	SetText(kDocIDSchemePopupID,	mEPub->GetDocumentIDScheme());
+	SetText(kDocIDSchemeViewID,		mEPub->GetDocumentIDScheme());
 
 	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
 	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
@@ -615,7 +615,7 @@ void MePubWindow::DocumentLoaded(
 	// fill in the information fields
 	
 	SetText(kDCIDViewID,			mEPub->GetDocumentID());
-	SetText(kDocIDSchemePopupID,	mEPub->GetDocumentIDScheme());
+	SetText(kDocIDSchemeViewID,		mEPub->GetDocumentIDScheme());
 
 	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
 	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
@@ -1054,10 +1054,10 @@ void MePubWindow::ValueChanged(
 		case kDocIDGenerateButtonID:
 			mEPub->GenerateNewDocumentID();
 			SetText(kDCIDViewID, mEPub->GetDocumentID());
-			SetText(kDocIDSchemePopupID, mEPub->GetDocumentIDScheme());
+			SetText(kDocIDSchemeViewID, mEPub->GetDocumentIDScheme());
 			break;
 
-		case kDocIDSchemePopupID:
+		case kDocIDSchemeViewID:
 			mEPub->SetDocumentIDScheme(GetText(inID));
 			break;
 	}

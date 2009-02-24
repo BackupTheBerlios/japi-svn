@@ -480,10 +480,13 @@ class MTextDocument : public MDocument
 							uint32			inColumn,
 							bool			inAddSpacesExtendingLine);
 
-	uint32				FindLineBreak(
+	void				FindLineBreaks(
 							uint32			inFromOffset,
+							uint32			inToOffset,
 							uint16			inState,
-							uint32			inIndent) const;
+							uint32			inIndent,
+							std::vector<uint32>&
+											outBreaks) const;
 
 	int32				RewrapLines(
 							uint32			inFrom,

@@ -215,30 +215,6 @@ void MProject::RecheckFiles()
 }
 
 // ---------------------------------------------------------------------------
-//	MProject::CreateNewGroup
-
-void MProject::CreateNewGroup(
-	const string&		inGroupName,
-	MProjectGroup*		inGroup,
-	int32				inIndex)
-{
-	MProjectGroup* root = inGroup;
-	THROW_IF_NIL(root);
-	
-	while (root->GetParent() != nil)
-		root = root->GetParent();
-
-	MProjectGroup* newGroup = new MProjectGroup(inGroupName, inGroup);
-	inGroup->AddProjectItem(newGroup, inIndex);
-	
-	SetModified(true);
-	if (root == &mProjectItems)
-		eInsertedFile(newGroup);
-	else
-		eInsertedResource(newGroup);
-}
-
-// ---------------------------------------------------------------------------
 //	MProject::ReadPaths
 
 void MProject::ReadPaths(

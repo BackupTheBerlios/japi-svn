@@ -19,7 +19,6 @@ enum MMessageKind
 };
 
 struct MMessageItem;
-typedef std::vector<fs::path> MFileTable;
 
 class MMessageList
 {
@@ -51,8 +50,7 @@ class MMessageList
   private:
 	friend class MMessageWindow;
 
-	struct MMessageListImp*
-					mImpl;
+	struct MMessageListImp*					mImpl;
 };
 
 class MMessageWindow : public MWindow

@@ -105,6 +105,7 @@ struct MMessageItem
 };
 
 typedef vector<MMessageItem*> MMessageItemArray;
+typedef std::vector<fs::path> MFileTable;
 
 struct MMessageListImp
 {

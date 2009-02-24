@@ -145,9 +145,9 @@ class MDeviceImp
 								float				inY,
 								uint32				inOffset);
 	
-	virtual bool			BreakLine(
+	virtual void			BreakLines(
 								uint32				inWidth,
-								uint32&				outBreak);
+								vector<uint32>&		outBreaks);
 
 	virtual void			MakeTransparent(
 								float				inOpacity) {}
@@ -564,27 +564,27 @@ void MDeviceImp::DrawCaret(
 {
 }
 
-bool MDeviceImp::BreakLine(
+void MDeviceImp::BreakLines(
 	uint32				inWidth,
-	uint32&				outBreak)
+	vector<uint32>&		outBreaks)
 {
-	bool result = false;
-	
 	pango_layout_set_width(mPangoLayout, inWidth * PANGO_SCALE);
 	pango_layout_set_wrap(mPangoLayout, PANGO_WRAP_WORD_CHAR);
 
 	if (pango_layout_is_wrapped(mPangoLayout))
 	{
-		PangoLayoutLine* line = pango_layout_get_line_readonly(mPangoLayout, 0);
-		
-		if (line != nil)
+		uint32 line = 0;
+		for (;;)
 		{
-			outBreak = line->length;
-			result = true;
+			PangoLayoutLine* pangoLine = pango_layout_get_line_readonly(mPangoLayout, line);
+			++line;
+			
+			if (pangoLine == nil)
+				break;
+			
+			outBreaks.push_back(pangoLine->start_index + pangoLine->length);
 		}
 	}
-	
-	return result;
 }
 
 PangoItem* MDeviceImp::Itemize(
@@ -1416,11 +1416,11 @@ uint32 MDevice::GetTextWidth()
 	return mImpl->GetTextWidth();
 }
 
-bool MDevice::BreakLine(
+void MDevice::BreakLines(
 	uint32				inWidth,
-	uint32&				outBreak)
+	vector<uint32>&		outBreaks)
 {
-	return mImpl->BreakLine(inWidth, outBreak);
+	mImpl->BreakLines(inWidth, outBreaks);
 }
 
 void MDevice::DrawCaret(

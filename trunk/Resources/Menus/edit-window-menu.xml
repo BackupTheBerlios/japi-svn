@@ -12,6 +12,7 @@
 		<menu id='recentmenu' label="Open Recent" special="recent" />
 		<item label="Find and Open…" cmd='OInc'/>
 		<item label="Open Source/Header" cmd='SHdS'/>
+		<item label="Import OEB…" cmd='ImpB'/>
 		<item label="-" />
 		<item label="Close" cmd='clos'/>
 		<item label="Save" cmd='save'/>

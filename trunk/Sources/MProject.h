@@ -168,11 +168,6 @@ class MProject : public MDocument
 							std::vector<fs::path>&
 												outPaths) const;
 
-	void				CreateNewGroup(
-							const std::string&	inGroupName,
-							MProjectGroup*		inGroup,
-							int32				inIndex);
-
 	void				SetStatus(
 							const std::string&	inStatus,
 							bool				inBusy);

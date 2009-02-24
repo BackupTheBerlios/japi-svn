@@ -502,6 +502,18 @@ void DecryptFile(
 	io::copy(in, out);
 }
 
+string ISODate()
+{
+	time_t now = time(nil);
+	
+	struct tm tm = {};
+	gmtime_r(&now, &tm);
+	
+	char s[11] = "";
+	strftime(s, sizeof(s), "%Y-%m-%d", &tm);
+	return s;
+}
+
 }
 
 MePubDocument::MePubDocument(
@@ -522,6 +534,14 @@ MePubDocument::MePubDocument()
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
 	, mRoot("", nil)
 	, mTOC("", nil)
+{
+}
+
+MePubDocument::~MePubDocument()
+{
+}
+
+void MePubDocument::InitializeNew()
 {
 	MResource rsrc = MResource::root().find("empty_xhtml_file.xhtml");
 	if (not rsrc)
@@ -547,38 +567,59 @@ MePubDocument::MePubDocument()
 	
 	mDublinCore["title"] = "Untitled";
 	mDublinCore["language"] = "en";
-	
-	time_t now = time(nil);
-	
-	struct tm tm = {};
-	gmtime_r(&now, &tm);
-	
-	char s[11] = "";
-	strftime(s, sizeof(s), "%Y-%M-%d", &tm);
-	mDublinCore["date"] = s;
+	mDublinCore["date"] = ISODate();
 }
 
-MePubDocument::~MePubDocument()
+void MePubDocument::ImportOEB(
+	const MFile&		inOEB)
 {
-}
+	if (not inOEB.IsLocal())
+		THROW(("import oeb works on local files only for now, sorry"));
+	
+	fs::ifstream opfFile(inOEB.GetPath(), ios::binary);
+	if (not opfFile.is_open())
+		THROW(("Failed to open opf file"));
 
-bool MePubDocument::UpdateCommandStatus(
-	uint32			inCommand,
-	MMenu*			inMenu,
-	uint32			inItemIndex,
-	bool&			outEnabled,
-	bool&			outChecked)
-{
-	return MDocument::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
-}
+	MProjectGroup* oebps = new MProjectGroup("OEBPS", &mRoot);
+	mRoot.AddProjectItem(oebps);
+	
+	mRootFile = "OEBPS/book.opf";
+	mTOCFile = "OEBPS/book.ncx";
 
-bool MePubDocument::ProcessCommand(
-	uint32			inCommand,
-	const MMenu*	inMenu,
-	uint32			inItemIndex,
-	uint32			inModifiers)
-{
-	return MDocument::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+	mDublinCore["date"] = ISODate();
+	
+	xml::document opf(opfFile);
+	vector<string> problems;
+	ParseOPF(fs::path("OEBPS"), *opf.root(), problems);
+
+	fs::path dir = inOEB.GetPath().branch_path();
+	
+	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
+	{
+		MePubItem* epi = dynamic_cast<MePubItem*>(&*item);
+		
+		if (epi == nil)
+			continue;
+		
+		epi->GuessMediaType();
+		
+		fs::path path = dir / relative_path("OEBPS", epi->GetPath());
+		
+		if (not fs::exists(path))
+			problems.push_back(_("Could not locate file ") + path.string());
+		else
+		{
+			fs::ifstream in(path, ios::binary);
+			string data;
+			io::filtering_ostream out(io::back_inserter(data));
+			copy(in, out);
+			epi->SetData(data);
+		}
+	}
+	
+	if (not problems.empty())
+		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
+	
 }
 
 void MePubDocument::ReadFile(
@@ -1085,6 +1126,7 @@ void MePubDocument::CreateNavMap(
 
 MProjectGroup* MePubDocument::GetFiles() const
 {
+//	return dynamic_cast<MProjectGroup*>(mRoot.GetItem(0));
 	return const_cast<MProjectGroup*>(&mRoot);
 }
 
@@ -1116,11 +1158,17 @@ void MePubDocument::ParseOPF(
 			metadata = n;
 		
 		// collect all the Dublin Core information
-		
 		for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
 		{
-			if (dc->ns() != "http://purl.org/dc/elements/1.1/")
+			string name = dc->name();
+			
+			if (dc->ns() == "http://purl.org/dc/elements/1.0/")
+				ba::to_lower(name);
+			else if (dc->ns() != "http://purl.org/dc/elements/1.1/")
+			{
+				outProblems.push_back(_("unsupported dublin core version"));
 				continue;
+			}
 			
 			string content = dc->content();
 			ba::trim(content);
@@ -1128,18 +1176,19 @@ void MePubDocument::ParseOPF(
 			if (content.empty())
 				continue;
 			
-			if (dc->name() == "identifier")
+			if (name == "identifier")
 			{
 				if (dc->get_attribute("id") == uid)
 				{
 					mDocumentID = content;
 					mDocumentIDScheme = dc->get_attribute("opf:scheme");
-					ba::to_lower(mDocumentIDScheme);
+					if (mDocumentIDScheme.empty() and dc->ns() == "http://purl.org/dc/elements/1.0/")
+						mDocumentIDScheme = dc->get_attribute("scheme");
 				}
 			}
-			else if (dc->name() == "date")
+			else if (name == "date")
 			{
-				string date = mDublinCore[dc->name()];
+				string date = mDublinCore[name];
 				if (not date.empty())
 					date += '\n';
 				
@@ -1148,12 +1197,17 @@ void MePubDocument::ParseOPF(
 				else
 					date += dc->get_attribute("opf:event") + ": " + content;
 	
-				mDublinCore[dc->name()] = date;
+				mDublinCore[name] = date;
 			}
-			else if (mDublinCore[dc->name()].empty())
-				mDublinCore[dc->name()] = content;
+			else if (mDublinCore[name].empty())
+				mDublinCore[name] = content;
 			else
-				mDublinCore[dc->name()] = mDublinCore[dc->name()] + "\n" + content;
+			{
+				string separator = "; ";
+				if (name == "subject")
+					separator = "\n";
+				mDublinCore[name] = mDublinCore[name] + separator + content;
+			}
 		}
 	}
 
@@ -1385,20 +1439,6 @@ void MePubDocument::SetModified(
 		mRoot.SetOutOfDate(false);
 	
 	MDocument::SetModified(inModified);
-}
-
-// ---------------------------------------------------------------------------
-//	MePubDocument::CreateNewGroup
-
-void MePubDocument::CreateNewGroup(
-	const string&		inGroupName,
-	MProjectGroup*		inGroup,
-	int32				inIndex)
-{
-	MProjectGroup* newGroup = new MProjectGroup(inGroupName, inGroup);
-	inGroup->AddProjectItem(newGroup, inIndex);
-	SetModified(true);
-	eInsertedFile(newGroup);
 }
 
 void MePubDocument::CreateItem(

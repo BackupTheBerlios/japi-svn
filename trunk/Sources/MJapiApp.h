@@ -73,6 +73,8 @@ class MJapieApp : public MHandler
 	void				OpenEPub(
 							const MFile&		inPath);
 
+	void				ImportOEB();
+
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
 	void				SetCurrentFolder(
