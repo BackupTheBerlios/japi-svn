@@ -821,28 +821,24 @@ void MTextBuffer::GuessLineEndCharacter()
 
 		if (*src == '\r')
 		{
+			*dst = '\n';
+
 			switch (mEOLNKind)
 			{
 				case eEOLN_MAC:
-					*dst = '\n';
 					break;
 				
 				case eEOLN_DOS:
 					if (src < end - 1 and *(src + 1) == '\n')
 						++src;
 					else
-					{
-						*dst = '\n';
 						inconsistent = true;
-					}
 					break;
 				
 				case eEOLN_UNIX:
 					inconsistent = true;
 					if (src < end - 1 and *(src + 1) == '\n')
 						++src;
-					else
-						*dst = '\n';
 					break;
 			}
 		}

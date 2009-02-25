@@ -611,7 +611,19 @@ MLanguage::IsSmartIndentLocation(
 
 bool
 MLanguage::IsSmartIndentCloseChar(
-	wchar_t				inChar)
+	wchar_t				inChar,
+	const MTextBuffer&	inText,
+	uint32&				ioOpenOffset)
+{
+	return false;
+}
+
+bool
+MLanguage::IsAutoCompleteChar(
+	wchar_t				inChar,
+	const MTextBuffer&	inText,
+	uint32				inOffset,
+	string&				outCompletionText)
 {
 	return false;
 }

@@ -957,52 +957,75 @@ void MTextDocument::Type(
 
 	if (gSmartIndent and
 		inLength == 1 and
-		mLanguage and
-		mLanguage->IsSmartIndentCloseChar(*inText))
+		mLanguage != nil)
 	{
-		offset = mSelection.GetCaret() - 1;
-		uint32 length = 0;
-
-		uint32 closeLine = OffsetToLine(offset);
-		uint32 openLine;
+		char typedChar = *inText;
 		
-		if (mLanguage->Balance(mText, offset, length) and
-			(openLine = OffsetToLine(offset)) < closeLine)
+		offset = mSelection.GetCaret();
+		
+		string complete;
+		if (mLanguage->IsAutoCompleteChar(typedChar, mText, offset - 1, complete) and
+			not complete.empty())
 		{
-			string s;
-			MTextBuffer::iterator txt = mText.begin() + LineStart(openLine);
-			
-			while (txt.GetOffset() < offset and
-				(*txt == ' ' or *txt == '\t'))
-			{
-				s += *txt;
-				++txt;
-			}
+			Insert(offset, complete.c_str(), complete.length());
 
-			offset = mSelection.GetCaret() - 1;
-			txt = mText.begin() + LineStart(closeLine);
-			while (txt.GetOffset() < offset and
-				(*txt == ' ' or *txt == '\t'))
-			{
-				++txt;
-			}
+			MSelection s = mText.GetSelectionAfter();
+			if (s.GetCaret() == offset)
+				s.SetCaret(offset + complete.length());
+			ChangeSelection(MSelection(this, offset + complete.length(), offset + complete.length()));
+			mText.SetSelectionAfter(s);
 			
-			if (txt.GetOffset() == offset)
+			typedChar = complete[complete.length() - 1];
+			offset += complete.length();
+		}
+
+		uint32 openOffset = offset - 1;
+		if (mLanguage->IsSmartIndentCloseChar(typedChar, mText, openOffset))
+		{
+			offset = mSelection.GetCaret() - 1;
+			uint32 length = 0;
+	
+			uint32 closeLine = OffsetToLine(offset);
+			uint32 openLine;
+			
+			if (mLanguage->Balance(mText, offset, length) and
+				(openLine = OffsetToLine(offset)) < closeLine)
 			{
-				Delete(LineStart(closeLine), offset - LineStart(closeLine));
-				Insert(LineStart(closeLine), s.c_str(), s.length());
-			}
-			else
-			{
-				const char kLF = '\n';
-				Insert(offset, &kLF, 1);
-				Insert(offset + 1, s.c_str(), s.length());
+				string s;
+				MTextBuffer::iterator txt = mText.begin() + LineStart(openLine);
+				
+				while (txt.GetOffset() < offset and
+					(*txt == ' ' or *txt == '\t'))
+				{
+					s += *txt;
+					++txt;
+				}
+	
+				offset = openOffset;
+				txt = mText.begin() + LineStart(closeLine);
+				while (txt.GetOffset() < offset and
+					(*txt == ' ' or *txt == '\t'))
+				{
+					++txt;
+				}
+				
+				if (txt.GetOffset() == offset)
+				{
+					Delete(LineStart(closeLine), offset - LineStart(closeLine));
+					Insert(LineStart(closeLine), s.c_str(), s.length());
+				}
+				else
+				{
+					const char kLF = '\n';
+					Insert(offset, &kLF, 1);
+					Insert(offset + 1, s.c_str(), s.length());
+				}
 			}
 		}
 	}
 
 	uint32 line;
-	OffsetToPosition(offset + inLength, line, mWalkOffset);
+	OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
 	
 	SendSelectionChangedEvent();
 	eScroll(kScrollToCaret);

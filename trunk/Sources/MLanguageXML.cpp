@@ -14,6 +14,7 @@
 #include "MTextBuffer.h"
 #include "MUnicode.h"
 #include "MFile.h"
+#include "MUtils.h"
 
 #include <stack>
 #include <cassert>
@@ -29,6 +30,7 @@ enum {
 		TAGSTRING2,
 		TAGATTRIBUTE,
 		SPECIAL,
+		CDATA,
 		COMMENT_DTD,
 		COMMENT,
 		COMMENT_END
@@ -98,7 +100,12 @@ MLanguageXML::StyleLine(
 				else if (c == '?')
 					;//ioState = COMMENT_DTD;
 				else if (c == '!')
-					ioState = COMMENT_DTD;
+				{
+					if (text + i == "[CDATA[")
+						ioState = CDATA;
+					else
+						ioState = COMMENT_DTD;
+				}
 				else if (c == 0 or c == '\n')
 				{
 					SetStyle(s, kLTagColor);
@@ -229,6 +236,22 @@ MLanguageXML::StyleLine(
 					leave = true;
 				}
 				break;
+
+			case CDATA:
+				if (c == ']' and text[i] == ']' and text[i + 1] == '>')
+				{
+					SetStyle(s, kLStringColor);
+					i += 2;
+					s = i;
+					ioState = START;
+				}
+				else if (c == 0 or c == '\n')
+				{
+					SetStyle(s, kLStringColor);
+					leave = true;
+				}
+				break;
+				
 				
 			case COMMENT:
 				if (c == '-' and text[i] == '-')
@@ -267,13 +290,350 @@ MLanguageXML::StyleLine(
 	if (close) ioState |= 0x1000;
 }
 
-bool
-MLanguageXML::Balance(
+namespace
+{
+	
+typedef MTextBuffer::const_iterator	MTextPtr;
+	
+bool name_is_same(
+	MTextPtr			inA,
+	MTextPtr			inB)
+{
+	bool same = (isalpha(*inA) or *inA == '_' or *inA == ':') and *inA == *inB;
+	
+	while (same)
+	{
+		++inA;
+		++inB;
+	
+		bool isNameCharA = 
+			isalnum(*inA) or *inA == '.' or *inA == '-' or *inA == ':' or *inA == '_';
+
+		bool isNameCharB = 
+			isalnum(*inB) or *inB == '.' or *inB == '-' or *inB == ':' or *inB == '_';
+		
+		if (not isNameCharA and not isNameCharB)
+			break;
+		
+		same = *inA == *inB;	 
+	}
+	
+	return same;
+}
+
+bool parse_tag(
+	MTextPtr&			ioText,
+	uint32&				ioBegin,
+	uint32&				ioEnd);
+
+bool parse_content(
+	MTextPtr&			ioText,
+	uint32&				ioBegin,
+	uint32&				ioEnd)
+{
+	bool result = false;
+
+	uint32 begin = ioText.GetOffset();
+
+	while (*ioText)
+	{
+		if (*ioText == '<')
+		{
+			uint32 tagStart = ioText.GetOffset();
+			
+			if (*(ioText + 1) == '/')
+				break;
+
+			if (ioText == "![CDATA[")
+			{
+				ioText += 9;
+				while (*ioText and not (ioText == "]]>"))
+					++ioText;
+				ioText += 3;
+				
+				if (tagStart <= ioBegin and ioText.GetOffset() >= ioEnd)
+				{
+					ioBegin = tagStart;
+					ioEnd = ioText.GetOffset();
+					result = true;
+					break;
+				}
+
+				continue;
+			}
+			
+			if (*(ioText + 1) == '?' or *(ioText + 1) == '!')
+			{
+				ioText += 2;
+				while (*ioText and *ioText != '>')
+					++ioText;
+				++ioText;
+				
+				if (tagStart <= ioBegin and ioText.GetOffset() >= ioEnd)
+				{
+					ioBegin = tagStart;
+					ioEnd = ioText.GetOffset();
+					result = true;
+					break;
+				}
+
+				continue;
+			}
+			
+			if (parse_tag(ioText, ioBegin, ioEnd))
+			{
+				result = true;
+				break;
+			}
+
+			assert(*ioText == 0 or *(ioText - 1) == '>');
+
+			continue;
+		}
+		
+		++ioText;
+	}
+
+	if (not result)
+	{
+		if (begin <= ioBegin and ioText.GetOffset() >= ioEnd)
+		{
+			ioBegin = begin;
+			ioEnd = ioText.GetOffset();
+			result = true;
+		}
+	}
+	
+	return result;
+}
+
+bool parse_tag(
+	MTextPtr&			ioText,
+	uint32&				ioBegin,
+	uint32&				ioEnd)
+{
+	bool result = false;
+
+	uint32 begin = ioText.GetOffset();
+	
+	assert(*ioText == '<');
+	assert(*(ioText + 1) != '/');
+	
+	MTextPtr name = ioText + 1;
+	
+	while (*ioText)
+	{
+		++ioText;
+
+		if (*ioText == '/') 	// just to be sure
+			return false;
+		
+		while (*ioText and *ioText != '/' and *ioText != '>')
+		{
+			if (*ioText == '"')
+			{
+				++ioText;
+				while (*ioText and *ioText != '"')
+					++ioText;
+				++ioText;
+				continue;
+			}
+			
+			if (*ioText == '\'')
+			{
+				++ioText;
+				while (*ioText and *ioText != '\'')
+					++ioText;
+				++ioText;
+				continue;
+			}
+			
+			++ioText;
+		}
+		
+		// empty tag perhaps?
+		if (*ioText == '/')
+		{
+			++ioText;
+			while (*ioText and *ioText != '>')
+				++ioText;
+			++ioText;
+			
+			if (begin <= ioBegin and ioText.GetOffset() >= ioEnd)
+			{
+				ioBegin = begin;
+				ioEnd = ioText.GetOffset();
+				result = true;
+				break;
+			}
+		}
+		
+		if (*ioText == '>')
+		{
+			++ioText;
+			result = parse_content(ioText, ioBegin, ioEnd);
+			if (not result and *ioText == '<' and *(ioText + 1) == '/')
+			{
+				// check the name, we should now be located at end tag
+				if (not name_is_same(ioText + 2, name))
+					throw 1;
+				
+				ioText += 2;
+				while (*ioText and *ioText != '>')
+					++ioText;
+				++ioText;
+				
+				if (begin <= ioBegin and ioText.GetOffset() >= ioEnd)
+				{
+					ioBegin = begin;
+					ioEnd = ioText.GetOffset();
+					result = true;
+				}
+			}
+		}
+		
+		break;
+	}
+
+	return result;
+}
+
+void find_open_name(
+	MTextPtr&			inText,
+	MTextPtr			inEnd,
+	string&				outName)
+{
+	while (inText < inEnd)
+	{
+		// skip to the first tag
+		while (inText < inEnd and *inText != '<')
+			++inText;
+		
+		// break out if we've hit an end tag
+		if (*inText == '<' and *(inText + 1) == '/')
+			break;
+		
+		++inText;
+		
+		// comment or cdata?
+		if (inText == "![CDATA[")
+		{
+			inText += 9;
+			while (inText < inEnd and not (inText == "]]>"))
+				++inText;
+			inText += 3;
+			
+			continue;
+		}
+		
+		if (*inText == '?' or *inText == '!')
+		{
+			++inText;
+			while (inText < inEnd and *inText != '>')
+				++inText;
+			++inText;
+			
+			continue;
+		}
+		
+		// collect the name
+		string name;
+		MTextPtr namePtr = inText;
+		
+		if (isalpha(*inText) or *inText == ':' or *inText == '_')
+		{
+			name += *inText++;
+			while (isalnum(*inText) or *inText == '.' or *inText == '-' or *inText == ':' or *inText == '_')
+				name += *inText++;
+		}
+		
+		while (inText < inEnd and *inText != '/' and *inText != '>')
+		{
+			if (*inText == '"')
+			{
+				++inText;
+				while (inText < inEnd and *inText != '"')
+					++inText;
+				++inText;
+				continue;
+			}
+			
+			if (*inText == '\'')
+			{
+				++inText;
+				while (inText < inEnd and *inText != '\'')
+					++inText;
+				++inText;
+				continue;
+			}
+			
+			++inText;
+		}
+		
+		if (*inText == '/')
+		{
+			++inText;
+			while (inText < inEnd and *inText != '>')
+				++inText;
+			continue;
+		}
+		
+		if (inText >= inEnd)
+			break;
+
+		++inText;
+		// OK, so we're in the content section of <name> 
+		
+		string savedName = outName;
+		outName = name;
+		
+		find_open_name(inText, inEnd, outName);
+		
+		if (inText >= inEnd)
+			break;
+		
+		if (*inText != '<' or *(inText + 1) != '/')
+			continue;
+		
+		if (not name_is_same(namePtr, inText + 2))
+			throw 1;
+
+		inText += 2 + name.length();
+		while (inText < inEnd and *inText != '>')
+			++inText;
+		
+		outName = savedName;
+	}
+}
+
+}
+
+bool MLanguageXML::Balance(
 	const MTextBuffer&	inText,
 	uint32&				ioOffset,
 	uint32&				ioLength)
 {
-	return false;
+	uint32 begin = ioOffset;
+	uint32 end = ioOffset + ioLength;
+	
+	bool result = false;
+	
+	try
+	{
+		MTextPtr text = inText.begin();
+
+		if (parse_content(text, begin, end))
+		{
+			ioOffset = begin;
+			ioLength = end - begin;
+			if (ioLength > inText.GetSize() - ioOffset)
+				ioLength = inText.GetSize() - ioOffset;
+			result = true;
+		}
+	}
+	catch (...) {}
+	
+	return result;
 }
 
 bool
@@ -288,41 +648,93 @@ MLanguageXML::IsSmartIndentLocation(
 	const MTextBuffer&	inText,
 	uint32				inOffset)
 {
-//	MTextBuffer::const_iterator txt = inText.begin() + inOffset;
 	bool result = false;
+	MTextBuffer::const_iterator text = inText.begin();
 	
-//	if (inOffset > 0 and *(txt - 1) == '>')
-//	{
-//		while (txt.GetOffset() > 0 and *(txt - 1) != '\n')
-//			--txt;
-//		
-//		int openLevel = 0;
-//		
-//		while (txt.GetOffset() < inOffset)
-//		{
-//			if (*txt == '<')
-//			{
-//				++txt;
-//				
-//				if (*txt == '/')
-//				
-//				while (t
-//			}
-//			else if (*txt == '&')
-//			
-//			else
-//				++txt;
-//		}
-//	}
+	if (inOffset > 0 and text[inOffset - 1] == '>')
+	{
+		--inOffset;
+		while (inOffset >= 0 and
+			text[inOffset] != '<' and text[inOffset] != '/' and
+			text[inOffset] != '\n')
+		{
+			if (text[inOffset] == '\'')
+			{
+				--inOffset;
+				while (inOffset >= 0 and text[inOffset] != '\'')
+					--inOffset;
+				--inOffset;
+				continue;
+			}
+
+			if (text[inOffset] == '"')
+			{
+				--inOffset;
+				while (inOffset >= 0 and text[inOffset] != '"')
+					--inOffset;
+				--inOffset;
+				continue;
+			}
+			
+			--inOffset;
+		}
+		
+		result = inOffset >= 0 and text[inOffset] == '<';
+		
+		// TODO: check to see if we're in a CDATA section
+	}
 	
 	return result;
 }
 
 bool
 MLanguageXML::IsSmartIndentCloseChar(
-	wchar_t				inChar)
+	wchar_t				inChar,
+	const MTextBuffer&	inText,
+	uint32&				ioOpenOffset)
 {
-	return false;
+	bool result = false;
+	MTextPtr text = inText.begin();
+	
+	if (inChar == '>' and ioOpenOffset > 0 and
+		text[ioOpenOffset] != '/' and text[ioOpenOffset] != '\n')
+	{
+		--ioOpenOffset;
+		while (ioOpenOffset >= 0 and text[ioOpenOffset] != '<' and text[ioOpenOffset] != '\n')
+			--ioOpenOffset;
+		
+		result = text[ioOpenOffset] == '<';
+	}
+	
+	return result;
+}
+
+bool
+MLanguageXML::IsAutoCompleteChar(
+	wchar_t				inChar,
+	const MTextBuffer&	inText,
+	uint32				inOffset,
+	string&				outCompletionText)
+{
+	bool result = false;
+
+	try
+	{
+		MTextPtr text = inText.begin();
+	
+		if (inChar == '/' and inOffset > 0 and inText[inOffset - 1] == '<')
+		{
+			find_open_name(text, text + inOffset - 1, outCompletionText);
+			if (not outCompletionText.empty())
+			{
+				result = true;
+				outCompletionText += '>';
+			}
+		}
+	}
+	catch (...) {}
+	
+	return result;
 }
 
 static const

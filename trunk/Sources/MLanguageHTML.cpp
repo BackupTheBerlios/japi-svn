@@ -887,7 +887,9 @@ MLanguageHTML::IsSmartIndentLocation(
 
 bool
 MLanguageHTML::IsSmartIndentCloseChar(
-	wchar_t				inChar)
+	wchar_t				inChar,
+	const MTextBuffer&	inText,
+	uint32&				ioOpenOffset)
 {
 	return false;
 }

@@ -42,7 +42,9 @@ class MLanguageHTML : public MLanguage
 						uint32				inOffset);
 
 	virtual bool	IsSmartIndentCloseChar(
-						wchar_t				inChar);
+						wchar_t				inChar,
+						const MTextBuffer&	inText,
+						uint32&				ioOpenOffset);
 
 	virtual void	CommentLine(
 						std::string&		ioLine);

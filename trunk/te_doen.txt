@@ -17,7 +17,6 @@ Moet af:
 - bestandsinfo dialoog venster
 - waarschuwen bij inconsistente einde regel tekens
 - message window met inline document view
-- betere (snellere) softwrap
 
 - resources lib maken voor distributie/andere resources opslag?
 

@@ -42,7 +42,15 @@ class MLanguageXML : public MLanguage
 						uint32				inOffset);
 
 	virtual bool	IsSmartIndentCloseChar(
-						wchar_t				inChar);
+						wchar_t				inChar,
+						const MTextBuffer&	inText,
+						uint32&				ioOpenOffset);
+
+	virtual bool	IsAutoCompleteChar(
+						wchar_t				inChar,
+						const MTextBuffer&	inText,
+						uint32				inOffset,
+						std::string&		outCompletionText);
 
 	virtual void	CommentLine(
 						std::string&		ioLine);
