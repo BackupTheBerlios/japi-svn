@@ -167,6 +167,8 @@ MLanguageHTML::Init()
 		"upper-roman", "uppercase", "visible", "w-resize", "wait", "wider", "x-fast", "x-high", "x-loud", "x-low",
 		"x-slow", "x-soft", "z-index",
 		
+		"xx-small", "x-small", "small", "medium", "large", "x-large", "xx-large",
+		
 		"maroon", "red", "orange", "yellow", "olive", "purple", "fuchsia", "white", "lime",
 		"green", "navy", "blue", "aqua", "teal", "black", "silver", "gray",
 

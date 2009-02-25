@@ -77,6 +77,7 @@
 				<file>MePubDocument.cpp</file>
 				<file>MePubItem.cpp</file>
 				<file>MePubWindow.cpp</file>
+				<file>MXHTMLTools.cpp</file>
 			</group>
 			<group name="Language">
 				<file>MLanguage.cpp</file>
@@ -106,6 +107,7 @@
 			<file>libexpat.a</file>
 			<file>libpcre.a</file>
 			<file>libuuid.a</file>
+			<file>libtidy.a</file>
 		</group>
 	</files>
 	<resources resource-dir="Resources">

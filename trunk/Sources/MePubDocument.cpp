@@ -46,6 +46,8 @@
 #include "MAlerts.h"
 #include "MUtils.h"
 
+#include "MXHTMLTools.h"
+
 using namespace std;
 namespace ba = boost::algorithm;
 namespace io = boost::iostreams;
@@ -613,14 +615,26 @@ void MePubDocument::ImportOEB(
 			string data;
 			io::filtering_ostream out(io::back_inserter(data));
 			copy(in, out);
-			epi->SetData(data);
 			
 			if (epi->GetMediaType() == "application/xhtml+xml")
 			{
+				MXHTMLTools::Problems xhtmlProblems;
+				MXHTMLTools::ConvertAnyToXHTML(data, xhtmlProblems);
+				
+				for (MXHTMLTools::Problems::iterator p = xhtmlProblems.begin(); p != xhtmlProblems.end(); ++p)
+				{
+					if (p->kind == MXHTMLTools::info)
+						continue;
+
+					problems.push_back(p->message);
+				}
+				
 				MePubTOCItem* toc = new MePubTOCItem(epi->GetID(), &mTOC);
 				toc->SetSrc((relative_path("OEBPS", epi->GetPath())).string());
 				mTOC.AddProjectItem(toc);
 			}
+
+			epi->SetData(data);
 		}
 	}
 	
