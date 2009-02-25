@@ -57,6 +57,8 @@ void MePubItem::GuessMediaType()
 		SetMediaType("image/png");
 	else if (FileNameMatches("*.jpg;*.jpeg", mName))
 		SetMediaType("image/jpeg");
+	else if (FileNameMatches("*.gif", mName))
+		SetMediaType("image/gif");
 	else 
 		SetMediaType("application/xhtml+xml");
 }

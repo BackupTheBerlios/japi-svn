@@ -576,10 +576,6 @@ void MePubDocument::ImportOEB(
 	if (not inOEB.IsLocal())
 		THROW(("import oeb works on local files only for now, sorry"));
 	
-	fs::ifstream opfFile(inOEB.GetPath(), ios::binary);
-	if (not opfFile.is_open())
-		THROW(("Failed to open opf file"));
-
 	MProjectGroup* oebps = new MProjectGroup("OEBPS", &mRoot);
 	mRoot.AddProjectItem(oebps);
 	
@@ -588,6 +584,10 @@ void MePubDocument::ImportOEB(
 
 	mDublinCore["date"] = ISODate();
 	
+	fs::ifstream opfFile(inOEB.GetPath(), ios::binary);
+	if (not opfFile.is_open())
+		THROW(("Failed to open opf file"));
+
 	xml::document opf(opfFile);
 	vector<string> problems;
 	ParseOPF(fs::path("OEBPS"), *opf.root(), problems);
@@ -614,6 +614,13 @@ void MePubDocument::ImportOEB(
 			io::filtering_ostream out(io::back_inserter(data));
 			copy(in, out);
 			epi->SetData(data);
+			
+			if (epi->GetMediaType() == "application/xhtml+xml")
+			{
+				MePubTOCItem* toc = new MePubTOCItem(epi->GetID(), &mTOC);
+				toc->SetSrc((relative_path("OEBPS", epi->GetPath())).string());
+				mTOC.AddProjectItem(toc);
+			}
 		}
 	}
 	
@@ -1140,6 +1147,9 @@ void MePubDocument::ParseOPF(
 	xml::node&			inOPF,
 	vector<string>&		outProblems)
 {
+	if (inOPF.name() != "package")
+		THROW(("Not an OPF file, root item should be package"));
+	
 	// fetch the unique-identifier
 	string uid = inOPF.get_attribute("unique-identifier");
 	if (uid.empty())
@@ -1153,16 +1163,20 @@ void MePubDocument::ParseOPF(
 	{
 		// now I've found a weird file containing a dc-metadata inside metadata
 		
+		bool oldDC = false;
 		xml::node_ptr n = metadata->find_first_child("dc-metadata");
 		if (n)
+		{
+			oldDC = true;
 			metadata = n;
+		}
 		
 		// collect all the Dublin Core information
 		for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
 		{
 			string name = dc->name();
 			
-			if (dc->ns() == "http://purl.org/dc/elements/1.0/")
+			if (oldDC or dc->ns() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
 			else if (dc->ns() != "http://purl.org/dc/elements/1.1/")
 			{
