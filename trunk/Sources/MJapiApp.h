@@ -46,14 +46,7 @@ class MJapieApp : public MHandler
 							uint32				inItemIndex,
 							uint32				inModifiers);
 
-	void				UpdateWindowMenu(
-							MMenu*				inMenu);
-
-	void				UpdateTemplateMenu(
-							MMenu*				inMenu);
-
-	void				UpdateScriptsMenu(
-							MMenu*				inMenu);
+	MEventIn<void(const std::string&,MMenu*)>	eUpdateSpecialMenu;
 
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
@@ -107,6 +100,22 @@ class MJapieApp : public MHandler
 
 	void				DoOpenTemplate(
 							const std::string&	inTemplate);
+
+	void				UpdateSpecialMenu(
+							const std::string&	inName,
+							MMenu*				inMenu);
+
+	void				UpdateWindowMenu(
+							MMenu*				inMenu);
+
+	void				UpdateTemplateMenu(
+							MMenu*				inMenu);
+
+	void				UpdateScriptsMenu(
+							MMenu*				inMenu);
+	
+	void				UpdateEPubMenu(
+							MMenu*				inMenu);
 	
 	void				DoSelectWindowFromWindowMenu(
 							uint32				inIndex);

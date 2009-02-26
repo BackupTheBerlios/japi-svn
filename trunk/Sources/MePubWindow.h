@@ -68,15 +68,10 @@ class MePubWindow : public MDocWindow
 	virtual void	ValueChanged(
 						uint32			inID);
 
-	MEventIn<void(MDocument*)>		eDocumentClosed;	// doc closed
-	MEventIn<void(MDocument*, const MFile&)>
-									eFileSpecChanged;	// doc was saved as
-	
-	void			TextDocClosed(
-						MDocument*		inDocument);
-	void			TextDocFileSpecChanged(
-						MDocument*		inDocument,
-						const MFile&		inURL);
+	MEventIn<void(MProjectItem*)>	eFileItemInserted;
+
+	void			FileItemInserted(
+						MProjectItem*	inItem);
 
 	void			CreateNew(
 						bool			inNewDirectory);
@@ -150,9 +145,6 @@ class MePubWindow : public MDocWindow
 	GtkTreeViewColumn*	mFileNameColumn;
 	GtkCellRenderer*	mTOCTitleCell;
 	GtkTreeViewColumn*	mTOCTitleColumn;
-	
-	typedef std::map<fs::path,MTextDocument*>	MEPubTextDocMap;
-	MEPubTextDocMap	mOpenFiles;
 };
 
 #endif

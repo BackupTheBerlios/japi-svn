@@ -294,10 +294,6 @@ class MProject : public MDocument
 
 	MEventIn<void(double)>					ePoll;
 
-	MEventOut<void(MProjectItem*)>			eInsertedFile;
-	MEventOut<void(MProjectItem*)>			eInsertedResource;
-	MEventOut<void(MProjectGroup*,int32)>	eRemovedFile;
-	MEventOut<void(MProjectGroup*,int32)>	eRemovedResource;
 	MEventOut<void()>						eTargetsChanged;	// notify window
 
 	std::string					mName;

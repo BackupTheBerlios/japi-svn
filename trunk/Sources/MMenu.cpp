@@ -651,11 +651,10 @@ MMenubar::MMenubar(
 	: mOnButtonPressEvent(this, &MMenubar::OnButtonPress)
 	, mGtkMenubar(nil)
 	, mTarget(inTarget)
-	, mWindowMenu(nil)
-	, mTemplateMenu(nil)
-	, mScriptsMenu(nil)
 {
 	mGtkAccel = gtk_accel_group_new();
+	
+	AddRoute(eUpdateSpecialMenu, gApp->eUpdateSpecialMenu);
 }
 
 void MMenubar::Initialize(
@@ -761,12 +760,8 @@ MMenu* MMenubar::CreateMenu(
 		}
 	}
 	
-	if (special == "window")
-		mWindowMenu = menu;
-	else if (special == "template")
-		mTemplateMenu = menu;
-	else if (special == "scripts")
-		mScriptsMenu = menu;
+	if (not special.empty() and special != "recent")
+		mSpecialMenus.push_back(make_pair(special, menu));
 	
 	return menu;
 }
@@ -791,14 +786,8 @@ bool MMenubar::OnButtonPress(
 	for (list<MMenu*>::iterator m = mMenus.begin(); m != mMenus.end(); ++m)
 		(*m)->UpdateCommandStatus();
 
-	if (mWindowMenu != nil)
-		gApp->UpdateWindowMenu(mWindowMenu);
-	
-	if (mTemplateMenu != nil)
-		gApp->UpdateTemplateMenu(mTemplateMenu);
-
-	if (mScriptsMenu != nil)
-		gApp->UpdateScriptsMenu(mScriptsMenu);
+	for (MSpecialMenus::iterator m = mSpecialMenus.begin(); m != mSpecialMenus.end(); ++m)
+		eUpdateSpecialMenu(m->first, m->second);
 
 	gtk_widget_show_all(mGtkMenubar);
 

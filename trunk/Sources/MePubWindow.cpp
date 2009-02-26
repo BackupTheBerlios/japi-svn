@@ -484,8 +484,7 @@ MePubWindow::MePubWindow()
 	: MDocWindow("epub-window")
 	, eKeyPressEvent(this, &MePubWindow::OnKeyPressEvent)
 	, eInvokeFileRow(this, &MePubWindow::InvokeFileRow)
-	, eDocumentClosed(this, &MePubWindow::TextDocClosed)
-	, eFileSpecChanged(this, &MePubWindow::TextDocFileSpecChanged)
+	, eFileItemInserted(this, &MePubWindow::FileItemInserted)
 	, eSubjectChanged(this, &MePubWindow::SubjectChanged)
 	, eDateChanged(this, &MePubWindow::DateChanged)
 	, mEditedItemName(this, &MePubWindow::EditedItemName)
@@ -539,7 +538,9 @@ void MePubWindow::Initialize(
 
 	AddRoute(mEPub->eItemMoved, mFilesTree->eProjectItemMoved);
 	AddRoute(mEPub->eItemRemoved, mFilesTree->eProjectItemRemoved);
+	AddRoute(mEPub->eItemRenamed, mFilesTree->eProjectItemRenamed);
 	AddRoute(mEPub->eCreateItem, mFilesTree->eProjectCreateItem);
+	AddRoute(mEPub->eFileItemInserted, eFileItemInserted);
 	
 	filesTree.SetModel(mFilesTree->GetModel());
 	filesTree.ExpandAll();
@@ -660,23 +661,36 @@ void MePubWindow::DocumentLoaded(
 
 bool MePubWindow::DoClose()
 {
-	bool result = false;
+	bool result = true;
 
-	while (not mOpenFiles.empty())
+	if (GetDocument() != nil)
 	{
-		MDocument* doc = mOpenFiles.begin()->second;
-		if (doc == nil)
-		{
-			mOpenFiles.erase(mOpenFiles.begin());
-			continue;
-		}
+		MProjectGroup* files = mEPub->GetFiles();
 		
-		MController* controller = doc->GetFirstController();
-		if (not controller->TryCloseController(kSaveChangesClosingDocument))
-			break;
+		for (MProjectGroup::iterator item = files->begin(); item != files->end(); ++item)
+		{
+			MProjectItem* pItem = &(*item);
+			
+			MePubItem* epubItem = dynamic_cast<MePubItem*>(pItem);
+			if (epubItem == nil)
+				continue;
+			
+			MFile file(new MePubContentFile(mEPub, epubItem->GetPath()));
+	
+			MDocument* doc = MDocument::GetDocumentForFile(file);
+			if (doc == nil)
+				continue;
+			
+			MController* controller = doc->GetFirstController();
+			if (not controller->TryCloseController(kSaveChangesClosingDocument))
+			{
+				result = false;
+				break;
+			}
+		}
 	}
 	
-	if (mOpenFiles.empty() and MDocWindow::DoClose())
+	if (result == true and MDocWindow::DoClose())
 	{
 		// need to do this here, otherwise we crash in destructor code
 		
@@ -685,9 +699,9 @@ bool MePubWindow::DoClose()
 		
 		delete mTOCTree;
 		mTOCTree = nil;
-		
-		result = true;
 	}
+	else
+		result = false;
 	
 	return result;
 }
@@ -947,54 +961,19 @@ void MePubWindow::InvokeFileRow(
 				THROW(("Cannot open an encrypted ePub item"));
 			
 			fs::path path = ePubItem->GetPath();
-			
-			MEPubTextDocMap::iterator di = mOpenFiles.find(path);
-			MTextDocument* doc;
 
-			if (di != mOpenFiles.end())
-				doc = di->second;
-			else
+			MFile file(new MePubContentFile(mEPub, path));
+			
+			MDocument* doc = MDocument::GetDocumentForFile(file);
+
+			if (doc == nil)
 			{
-				MFile file(new MePubContentFile(mEPub, path));
-				
 				doc = MDocument::Create<MTextDocument>(file);
 
-				AddRoute(doc->eDocumentClosed, eDocumentClosed);
 				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
-
-				mOpenFiles[path] = doc;
 			}
 
 			gApp->DisplayDocument(doc);
-		}
-	}
-}
-
-void MePubWindow::TextDocClosed(
-	MDocument*			inDocument)
-{
-	MEPubTextDocMap::iterator i;
-	for (i = mOpenFiles.begin(); i != mOpenFiles.end(); ++i)
-	{
-		if (i->second == inDocument)
-		{
-			mOpenFiles.erase(i);
-			break;
-		}
-	}
-}
-
-void MePubWindow::TextDocFileSpecChanged(
-	MDocument*			inDocument,
-	const MFile&			inURL)
-{
-	MEPubTextDocMap::iterator i;
-	for (i = mOpenFiles.begin(); i != mOpenFiles.end(); ++i)
-	{
-		if (i->second == inDocument)
-		{
-			mOpenFiles.erase(i);
-			break;
 		}
 	}
 }
@@ -1300,4 +1279,10 @@ void MePubWindow::SubjectChanged()
 void MePubWindow::DateChanged()
 {
 	ValueChanged(kDCDateViewID);
+}
+
+void MePubWindow::FileItemInserted(
+	MProjectItem*	inItem)
+{
+	mFilesTree->ProjectItemInserted(inItem);
 }

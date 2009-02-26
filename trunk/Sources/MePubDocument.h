@@ -18,17 +18,25 @@
 
 class MProjectGroup;
 class MProjectItem;
+class MTextDocument;
 
 class MePubDocument : public MDocument
 {
   public:
-
 						MePubDocument();
 
 	explicit			MePubDocument(
 							const MFile&		inProjectFile);
 
 	virtual				~MePubDocument();
+
+	static MePubDocument*
+						GetFirstEPubDocument();
+	
+	MePubDocument*		GetNextEPubDocument();
+
+	void				AddDocument(
+							MTextDocument*		inDoc);
 
 	void				ImportOEB(
 							const MFile&		inOEB);
@@ -38,14 +46,15 @@ class MePubDocument : public MDocument
 	MProjectGroup*		GetFiles() const;
 	MProjectGroup*		GetTOC() const;
 
-	MEventOut<void(MProjectItem*)>				eInsertedFile;
-	MEventOut<void(MProjectGroup*,int32)>		eRemovedFile;
-
 	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
 											eCreateItem;
 	
 	MEventIn<void()>						eItemMoved;
 	MEventIn<void()>						eItemRemoved;
+	MEventIn<void(MProjectItem*,const std::string&,
+		const std::string&)>				eItemRenamed;
+	
+	MEventOut<void(MProjectItem*)>			eFileItemInserted;
 
 	void				CreateItem(
 							const std::string&	inFile,
@@ -53,6 +62,11 @@ class MePubDocument : public MDocument
 							MProjectItem*&		outItem);
 
 	void				ItemMoved();
+
+	void				ItemRenamed(
+							MProjectItem*		inItem,
+							const std::string&	inOldName,
+							const std::string&	inNewName);
 
 	std::string			GetDocumentID() const;
 	

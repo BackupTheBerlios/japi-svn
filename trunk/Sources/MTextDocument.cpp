@@ -47,6 +47,7 @@
 #include "MDiffWindow.h"
 #include "MJapiApp.h"
 #include "MPrinter.h"
+#include "MePubDocument.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -4292,6 +4293,16 @@ bool MTextDocument::ProcessCommand(
 	
 	switch (inCommand)
 	{
+		case cmd_SaveInEPub:
+		{
+			MePubDocument* epub = MePubDocument::GetFirstEPubDocument();
+			while (epub != nil and inItemIndex-- > 0)
+				epub = epub->GetNextEPubDocument();
+			if (epub != nil)
+				epub->AddDocument(this);
+			break;
+		}
+		
 		case cmd_Undo:
 			DoUndo();
 			break;
@@ -4569,6 +4580,7 @@ bool MTextDocument::UpdateCommandStatus(
 		// always
 		case cmd_Close:
 		case cmd_SaveAs:
+		case cmd_SaveInEPub:
 		case cmd_SelectAll:
 		case cmd_MarkLine:
 		case cmd_CompleteLookingBack:

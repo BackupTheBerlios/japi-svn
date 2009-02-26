@@ -73,6 +73,7 @@ const uint32
 MJapieApp::MJapieApp(
 	bool	inForked)
 	: MHandler(nil)
+	, eUpdateSpecialMenu(this, &MJapieApp::UpdateSpecialMenu)
 	, mSocketFD(-1)
 	, mReceivedFirstMsg(not inForked)
 	, mQuit(false)
@@ -314,6 +315,22 @@ bool MJapieApp::UpdateCommandStatus(
 	return result;
 }
 
+void MJapieApp::UpdateSpecialMenu(
+	const std::string&	inName,
+	MMenu*				inMenu)
+{
+	if (inName == "window")
+		UpdateWindowMenu(inMenu);
+	else if (inName == "template")
+		UpdateTemplateMenu(inMenu);
+	else if (inName == "scripts")
+		UpdateScriptsMenu(inMenu);
+	else if (inName == "epub")
+		UpdateEPubMenu(inMenu);
+	else
+		PRINT(("Unknown special menu %s", inName.c_str()));
+}
+
 void MJapieApp::UpdateWindowMenu(
 	MMenu*				inMenu)
 {
@@ -382,6 +399,19 @@ void MJapieApp::UpdateScriptsMenu(
 		fs::path file;
 		while (iter.Next(file))
 			inMenu->AppendItem(file.leaf(), cmd_ApplyScript);
+	}
+}
+
+void MJapieApp::UpdateEPubMenu(
+	MMenu*				inMenu)
+{
+	inMenu->RemoveItems(0, inMenu->CountItems());
+
+	MePubDocument* epub = MePubDocument::GetFirstEPubDocument();
+	while (epub != nil)
+	{
+		inMenu->AppendItem(epub->GetFile().GetFileName(), cmd_SaveInEPub);
+		epub = epub->GetNextEPubDocument();
 	}
 }
 

@@ -36,8 +36,10 @@
 #include "document.hpp"
 
 #include "MError.h"
+#include "MTextDocument.h"
 #include "MePubDocument.h"
 #include "MePubItem.h"
+#include "MePubContentFile.h"
 #include "MTextBuffer.h"
 #include "MFile.h"
 #include "MResources.h"
@@ -524,6 +526,7 @@ MePubDocument::MePubDocument(
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
+	, eItemRenamed(this, &MePubDocument::ItemRenamed)
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
@@ -534,6 +537,7 @@ MePubDocument::MePubDocument()
 	, eCreateItem(this, &MePubDocument::CreateItem)
 	, eItemMoved(this, &MePubDocument::ItemMoved)
 	, eItemRemoved(this, &MePubDocument::ItemMoved)
+	, eItemRenamed(this, &MePubDocument::ItemRenamed)
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
@@ -541,6 +545,58 @@ MePubDocument::MePubDocument()
 
 MePubDocument::~MePubDocument()
 {
+}
+
+MePubDocument* MePubDocument::GetFirstEPubDocument()
+{
+	MePubDocument* result = nil;
+	MDocument* doc = MDocument::GetFirstDocument();
+
+	while (doc != nil and result == nil)
+	{
+		result = dynamic_cast<MePubDocument*>(doc);
+		doc = doc->GetNextDocument();
+	}
+	
+	return result;
+}
+
+MePubDocument* MePubDocument::GetNextEPubDocument()
+{
+	MePubDocument* result = nil;
+	MDocument* doc = GetNextDocument();
+
+	while (doc != nil and result == nil)
+	{
+		result = dynamic_cast<MePubDocument*>(doc);
+		doc = doc->GetNextDocument();
+	}
+	
+	return result;
+}
+
+void MePubDocument::AddDocument(
+	MTextDocument*		inDocument)
+{
+	string name;
+
+	if (inDocument->IsSpecified())
+		name = inDocument->GetFile().GetFileName();
+	else
+		name = _("Untitled");
+
+	MProjectGroup* oebps = dynamic_cast<MProjectGroup*>(mRoot.GetItem(0));
+	
+	MePubItem* item = new MePubItem(name, oebps);
+	item->GuessMediaType();
+	item->SetID("main");
+	item->SetOutOfDate(true);
+	oebps->AddProjectItem(item);
+	
+	eFileItemInserted(item);
+	
+	MFile file(new MePubContentFile(this, item->GetPath()));
+	inDocument->DoSaveAs(file);
 }
 
 void MePubDocument::InitializeNew()
@@ -1508,24 +1564,13 @@ void MePubDocument::CreateItem(
 		
 		item->GuessMediaType();
 		
-		fs::ifstream file(path);
+		vector<char> data;
 
-		// First read the data into a buffer
-		streambuf* b = file.rdbuf();
-		
-		int64 len = b->pubseekoff(0, ios::end);
-		b->pubseekpos(0);
-	
-		if (len < 0)
-			THROW(("File is not open?"));
-	
-		if (len > numeric_limits<uint32>::max())
-			THROW(("File too large to open"));
-	
-		vector<char> data(len);
-		b->sgetn(&data[0], len);
-		
-		item->SetData(string(&data[0], len));
+		fs::ifstream in(path, ios::binary);
+		io::filtering_ostream out(io::back_inserter(data));
+		io::copy(in, out);
+
+		item->SetData(string(&data[0], data.size()));
 
 		item->SetID(fs::basename(name));
 
@@ -1536,4 +1581,26 @@ void MePubDocument::CreateItem(
 void MePubDocument::ItemMoved()
 {
 	SetModified(true);
+}
+
+void MePubDocument::ItemRenamed(
+	MProjectItem*		inItem,
+	const string&		inOldName,
+	const string&		inNewName)
+{
+	MePubItem* item = dynamic_cast<MePubItem*>(inItem);
+	if (item != nil)
+	{
+		fs::path path = item->GetPath();
+		path = path.branch_path() / inOldName;
+		
+		MFile file(new MePubContentFile(this, path));
+		
+		MDocument* doc = MDocument::GetDocumentForFile(file);
+		if (doc != nil)
+		{
+			file = MFile(new MePubContentFile(this, item->GetPath()));
+			doc->SetFile(file);
+		}
+	}
 }

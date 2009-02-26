@@ -614,11 +614,15 @@ bool MProjectTree::ProjectItemNameEdited(
 	if (GetIter(&iter, path))
 	{
 		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+		string oldName = item->GetName();
 
-		if (item->GetName() != inNewName)
+		if (oldName != inNewName)
 		{
 			item->SetName(inNewName);
 			RowChanged(path, &iter);
+			
+			eProjectItemRenamed(item, oldName, inNewName);
+			
 			result = true;
 		}
 	}

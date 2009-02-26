@@ -111,9 +111,12 @@ class MProjectTree : public MTreeModelInterface
 						const char*			inPath);
 
 	MEventIn<void(MProjectItem*)>			eProjectItemStatusChanged;
-	
+
 	MEventOut<void()>						eProjectItemMoved;
 	MEventOut<void()>						eProjectItemRemoved;
+	MEventOut<void(MProjectItem*,const std::string&,
+		const std::string&)>				eProjectItemRenamed;
+	
 	MEventOut<void(const std::string&, MProjectGroup*, MProjectItem*&)>
 											eProjectCreateItem;
 

@@ -115,7 +115,9 @@ const uint32
 	
 	cmd_ShowHideWhiteSpace =	'SWit',
 	
-	cmd_RenameItem =			'RenI';
+	cmd_RenameItem =			'RenI',
+	
+	cmd_SaveInEPub =			'AdtE';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =			'Test';

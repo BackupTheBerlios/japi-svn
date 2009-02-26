@@ -17,6 +17,7 @@
 		<item label="Close" cmd='clos'/>
 		<item label="Save" cmd='save'/>
 		<item label="Save As…" cmd='sava'/>
+		<menu id='epubmenu' label="Save in ePub" special="epub" />
 		<item label="Revert" cmd='reve'/>
 		<item label="-" />
 		<item label="Page Setup…" cmd='pgsu' />

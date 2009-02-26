@@ -11,6 +11,7 @@
 
 #include "MCommands.h"
 #include "MCallbacks.h"
+#include "MP2PEvents.h"
 
 class MHandler;
 class MFile;
@@ -148,9 +149,12 @@ class MMenubar
 	MHandler*		mTarget;
 	std::list<MMenu*>
 					mMenus;
-	MMenu*			mWindowMenu;
-	MMenu*			mTemplateMenu;
-	MMenu*			mScriptsMenu;
+
+	MEventOut<void(const std::string&,MMenu*)>	eUpdateSpecialMenu;
+
+	typedef std::list<std::pair<std::string,MMenu*> > MSpecialMenus;
+
+	MSpecialMenus	mSpecialMenus;
 };
 
 #endif
