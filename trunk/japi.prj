@@ -112,6 +112,7 @@
 	</files>
 	<resources resource-dir="Resources">
 		<group name="Alerts">
+			<resource>Alerts/epub-item-does-not-exist.xml</resource>
 			<resource>Alerts/problems-in-epub.xml</resource>
 			<resource>Alerts/ask-add-lib-as-link.xml</resource>
 			<resource>Alerts/ask-add-include-path-alert.xml</resource>

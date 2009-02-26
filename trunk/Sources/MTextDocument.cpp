@@ -14,6 +14,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -48,9 +49,11 @@
 #include "MJapiApp.h"
 #include "MPrinter.h"
 #include "MePubDocument.h"
+#include "MXHTMLTools.h"
 
 using namespace std;
 namespace io = boost::iostreams;
+namespace ba = boost::algorithm;
 
 MTextDocument* MTextDocument::sWorksheet;
 
@@ -1254,6 +1257,58 @@ void MTextDocument::CCCMarkedLines(bool inCopy, bool inClear)
 }
 
 // ---------------------------------------------------------------------------
+//	SplitAtMarkedLines
+
+void MTextDocument::SplitAtMarkedLines()
+{
+	vector<uint32> splits;
+	
+	splits.push_back(0);
+	
+	for (uint32 line = 1; line < mLineInfo.size(); ++line)
+	{
+		if (mLineInfo[line].marked)
+			splits.push_back(mLineInfo[line].start);
+	}
+	
+	splits.push_back(mText.GetSize());
+
+	string name, extension;
+	MFile parent;
+	
+	if (IsSpecified())
+	{
+		fs::path p = GetFile().GetPath();
+		extension = fs::extension(p);
+//		string name = fs::stem(p);
+		string name = p.leaf();
+		if (ba::ends_with(name, extension))
+			ba::erase_last(name, extension);
+		parent = GetFile().GetParent();
+	}
+	else
+		name = _("Untitled");
+
+	if (not parent.IsValid())
+		parent = MFile("file:///tmp/");
+	
+	// do we have to split at all?
+	if (splits.size() > 2)
+	{
+		for (uint32 part = 1; part < splits.size(); ++part)
+		{
+			string text;
+			mText.GetText(splits[part - 1], splits[part] - splits[part - 1], text);
+			
+			MFile file(parent / (name + '-' + boost::lexical_cast<string>(part) + extension));
+			MTextDocument* newDocument = new MTextDocument(file);
+			newDocument->SetText(text.c_str(), text.length());
+			gApp->DisplayDocument(newDocument);
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 //	ClearDiffs
 
 void MTextDocument::ClearDiffs()
@@ -1548,6 +1603,9 @@ int32 MTextDocument::RewrapLines(
 		
 		mLineInfo.erase(lineInfoStart + 1, lineInfoEnd);
 	}
+	else if (cnt == 1 and lineInfoStart->marked)
+		markOffsets.push_back(lineInfoStart->start);
+		
 	cnt = 1 - cnt;
 	
 	lineInfoEnd = lineInfoStart + 1;
@@ -2304,7 +2362,12 @@ void MTextDocument::Delete(
 			mLineInfo[line].start -= inLength;
 		
 		if (firstLine != lastLine)
+		{
+			bool marked = lastLine < mLineInfo.size() and mLineInfo[lastLine].marked;
 			mLineInfo.erase(mLineInfo.begin() + firstLine + 1, mLineInfo.begin() + lastLine + 1);
+			if (marked)
+				mLineInfo[firstLine].marked = true;
+		}
 
 		int32 delta = 0;
 		if (GetSoftwrap())
@@ -2956,7 +3019,7 @@ void MTextDocument::FindAll(string inWhat, bool inIgnoreCase,
 		GetLine(lineNr, s);
 		boost::trim_right(s);
 		
-		outHits.AddMessage(kMsgKindNone, mFile.GetPath(), lineNr + 1,
+		outHits.AddMessage(kMsgKindNone, mFile, lineNr + 1,
 			sel.GetMinOffset(), sel.GetMaxOffset(), s);
 		
 		minOffset = sel.GetMaxOffset();
@@ -4455,6 +4518,10 @@ bool MTextDocument::ProcessCommand(
 			CCCMarkedLines(false, true);
 			break;
 
+		case cmd_SplitAtMarkedLines:
+			SplitAtMarkedLines();
+			break;
+
 		case cmd_Softwrap:
 			DoSoftwrap();
 			break;
@@ -4550,6 +4617,10 @@ bool MTextDocument::ProcessCommand(
 				result = false;
 			break;
 	
+		case cmd_MakeXHTML:
+			MakeXHTML();
+			break;
+	
 		default:
 			result = false;
 			break;
@@ -4587,6 +4658,7 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_CompleteLookingFwd:
 		case cmd_JumpToNextMark:
 		case cmd_JumpToPrevMark:
+		case cmd_SplitAtMarkedLines:
 		case cmd_FastFind:
 		case cmd_FastFindBW:
 		case cmd_Find:
@@ -4601,6 +4673,7 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_OpenIncludeFile:
 		case cmd_ShowDocInfoDialog:
 		case cmd_ShowDiffWindow:
+		case cmd_MakeXHTML:
 			outEnabled = true;
 			break;
 
@@ -4739,4 +4812,52 @@ void MTextDocument::IOFileWritten()
 {
 	MDocument::IOFileWritten();
 	eSSHProgress(-1.f, "");
+}
+
+void MTextDocument::MakeXHTML()
+{
+	StartAction("Convert to XHTML");
+	
+	SelectAll();
+	
+	string text;
+	GetSelectedText(text);
+	
+	MXHTMLTools::Problems problems;
+	MXHTMLTools::ConvertAnyToXHTML(text, problems);
+
+	ReplaceSelectedText(text, false, false);
+	ChangeSelection(MSelection(this, 0, 0));
+	
+	mText.SetEncoding(kEncodingUTF8);
+	mText.SetEOLNKind(eEOLN_UNIX);
+
+	if (not problems.empty())
+	{
+		MMessageList messages;
+	
+		for (MXHTMLTools::Problems::iterator p = problems.begin(); p != problems.end(); ++p)
+		{
+			MMessageKind kind;
+			if (p->kind == MXHTMLTools::error)
+				kind = kMsgKindError;
+			else if (p->kind == MXHTMLTools::warning)
+				kind = kMsgKindWarning;
+			else if (p->kind == MXHTMLTools::info)
+				kind = kMsgKindNote;
+			else 
+				kind = kMsgKindNone;
+			
+			uint32 offset = LineAndColumnToOffset(p->line - 1, p->column);
+			messages.AddMessage(kind, GetFile(), p->line, offset, offset + 1, p->message);
+		}
+		
+		MMessageWindow* w = new MMessageWindow(_("Tidy messages"));
+		w->SetMessages(_("Tidy messages"), messages);
+		w->Show();
+	}
+	
+	SetLanguage("XML");
+	
+	FinishAction();
 }

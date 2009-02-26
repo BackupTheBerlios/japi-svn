@@ -22,7 +22,6 @@ Moet af:
 
 - xml parser
 	- pad in popup?
-	- autocomplete (aanvullen met sluit-tag)
 
 - html parser
 	- functie parser voor HTML/JS/CSS

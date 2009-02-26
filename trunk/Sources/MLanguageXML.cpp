@@ -797,7 +797,7 @@ MLanguageXML::MatchLanguage(
 {
 	uint32 result = 0;
 
-	if (FileNameMatches("*.xml;*.xslt;*.plist;*.xsd;*.dtd;*.xpgt", inFile))
+	if (FileNameMatches("*.xml;*.xslt;*.plist;*.xsd;*.dtd;*.xpgt;*.xhtml", inFile))
 	{
 		result += 90;
 	}

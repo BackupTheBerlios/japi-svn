@@ -739,13 +739,13 @@ void MFindDialog::FindAll(
 	catch (exception& e)
 	{
 		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, "Error in find all, sorry");
-		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, e.what());
+		mFindAllResult->AddMessage(kMsgKindError, MFile(), 0, 0, 0, "Error in find all, sorry");
+		mFindAllResult->AddMessage(kMsgKindError, MFile(), 0, 0, 0, e.what());
 	}	
 	catch (...)
 	{
 		mFindAllResult = new MMessageList;	// flag failure... sucks.. I know
-		mFindAllResult->AddMessage(kMsgKindError, fs::path(), 0, 0, 0, "Error in find all, sorry");
+		mFindAllResult->AddMessage(kMsgKindError, MFile(), 0, 0, 0, "Error in find all, sorry");
 	}	
 }
 

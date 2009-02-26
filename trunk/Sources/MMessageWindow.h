@@ -33,7 +33,7 @@ class MMessageList
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const fs::path&		inFile,
+						const MFile&		inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,
@@ -42,10 +42,12 @@ class MMessageList
 	MMessageItem&	GetItem(
 						uint32				inIndex) const;
 	
-	fs::path			GetFile(
+	MFile			GetFile(
 						uint32				inFileNr) const;
 
 	uint32			GetCount() const;
+	
+	bool			empty() const			{ return GetCount() == 0; }
 
   private:
 	friend class MMessageWindow;
@@ -86,7 +88,7 @@ class MMessageWindow : public MWindow
 
 	void			AddMessage(
 						MMessageKind		inKind,
-						const fs::path&		inFile,
+						const MFile&		inFile,
 						uint32				inLine,
 						uint32				inMinOffset,
 						uint32				inMaxOffset,

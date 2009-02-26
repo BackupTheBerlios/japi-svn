@@ -19,6 +19,7 @@
 class MProjectGroup;
 class MProjectItem;
 class MTextDocument;
+class MMessageList;
 
 class MePubDocument : public MDocument
 {
@@ -108,8 +109,7 @@ class MePubDocument : public MDocument
 	void				ParseOPF(
 							const fs::path&		inDirectory,
 							xml::node&			inOPF,
-							std::vector<std::string>&
-												outProblems);
+							MMessageList&		outProblems);
 
 	xml::node_ptr		CreateOPF(
 							const fs::path&		inOEBPS);

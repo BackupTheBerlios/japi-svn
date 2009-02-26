@@ -333,6 +333,8 @@ class MTextDocument : public MDocument
 
 	void				ClearAllMarkers();
 
+	void				SplitAtMarkedLines();
+
 	void				CCCMarkedLines(
 							bool			inCopy,
 							bool			inClear);
@@ -548,6 +550,8 @@ class MTextDocument : public MDocument
 
 	void				Idle(
 							double			inSystemTime);
+	
+	void				MakeXHTML();
 	
 	int							mDataFD;
 	MTextBuffer					mText;

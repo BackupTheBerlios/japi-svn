@@ -73,6 +73,7 @@
 			<item label="TeX" cmd='St_L' check='radio' />
 			<item label="XML" cmd='St_L' check='radio' />
 		</menu>
+		<item label="Convert into XHTML" cmd='MkXH' />
 		<!--item label="Bestandsinfo…" cmd='DocI'/-->
 	</menu>
 	<menu id='' label="Find">
@@ -109,6 +110,7 @@
 		<item label="Copy Marked Lines" cmd='CoML'/>
 		<item label="Cut Marked Lines" cmd='CuML'/>
 		<item label="Clear Marked Lines" cmd='ClML'/>
+		<item label="Split File at Marked Lines" cmd='SpML' />
 	</menu>
 	<menu id='' label="Project">
 		<item label="Add to Project" cmd='Padd'/>

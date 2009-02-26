@@ -70,8 +70,12 @@ MTidy::MTidy()
 	tidySetAppData(mTidyDoc, this);
 	tidySetReportFilter(mTidyDoc, &MTidy::ReportCallback);
 	
+	tidyInitSink(&mErrSink, &mErr, &MTidy::BackInserter);
+	tidySetErrorSink(mTidyDoc, &mErrSink);
+	
 	tidyOptSetBool(mTidyDoc, TidyXhtmlOut, yes);
 	tidyOptSetBool(mTidyDoc, TidyQuiet, yes);
+//	tidyOptSetBool(mTidyDoc, TidyMakeBare, yes);
 	tidyOptSetBool(mTidyDoc, TidyLogicalEmphasis, yes);
 	tidySetCharEncoding(mTidyDoc, "utf8");
 	tidyOptSetInt(mTidyDoc, TidyIndentContent, TidyAutoState);

@@ -1370,6 +1370,12 @@ int main(int argc, char* argv[])
 		// see if we need to open any files from the commandline
 		int32 lineNr = -1;
 		
+		/* init threads */	
+		g_thread_init(nil);
+		gdk_threads_init();
+
+		gtk_init(&argc, &argv);
+		
 		for (int32 i = optind; i < argc; ++i)
 		{
 			string a(argv[i]);
@@ -1378,28 +1384,23 @@ int main(int argc, char* argv[])
 				readStdin = true;
 			else if (a.substr(0, 1) == "+")
 				lineNr = atoi(a.c_str() + 1);
-			else  if (a.substr(0, 7) == "file://" or
-				a.substr(0, 7) == "sftp://" or
-				a.substr(0, 6) == "ssh://")
-			{
-				docs.push_back(make_pair(lineNr, a));
-				lineNr = -1;
-			}
+//			else if (a.substr(0, 7) == "file://" or
+//				a.substr(0, 7) == "sftp://" or
+//				a.substr(0, 6) == "ssh://" or
+//				a.substr(0, 5) == "smb:/")
+//			{
+//				docs.push_back(make_pair(lineNr, a));
+//				lineNr = -1;
+//			}
 			else
 			{
-				docs.push_back(make_pair(lineNr, MFile(fs::system_complete(a)).GetURI()));
+				docs.push_back(make_pair(lineNr, MFile(a).GetURI()));
 				lineNr = -1;
 			}
 		}
 		
 		if (fork == false or ForkServer(docs, readStdin))
 		{
-			/* init threads */	
-			g_thread_init(nil);
-			gdk_threads_init();
-	
-			gtk_init(&argc, &argv);
-	
 			gtk_window_set_default_icon_name ("accessories-text-editor");
 	
 			struct sigaction act, oact;

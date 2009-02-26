@@ -1094,7 +1094,11 @@ MFileImp* CreateFileImpForURI(
 {
 	MFileImp* result = nil;
 	
-	if (ba::starts_with(inURI, "file://"))
+	if (fs::exists(inURI))
+	{
+		result = new MPathImp(fs::system_complete(inURI));
+	}
+	else if (ba::starts_with(inURI, "file://"))
 	{
 		string path = inURI.substr(7);
 		URLDecode(path);

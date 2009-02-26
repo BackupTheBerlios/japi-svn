@@ -54,6 +54,7 @@ const uint32
 	cmd_CutMarkedLines =		'CuML',
 	cmd_CopyMarkedLines =		'CoML',
 	cmd_ClearMarkedLines =		'ClML',
+	cmd_SplitAtMarkedLines =	'SpML',
 	cmd_JumpToNextMark =		'NxtM',
 	cmd_JumpToPrevMark =		'PrvM',
 	cmd_Find = 					'Find',
@@ -117,7 +118,9 @@ const uint32
 	
 	cmd_RenameItem =			'RenI',
 	
-	cmd_SaveInEPub =			'AdtE';
+	cmd_SaveInEPub =			'AdtE',
+	
+	cmd_MakeXHTML =				'MkXH';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =			'Test';

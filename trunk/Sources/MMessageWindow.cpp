@@ -104,8 +104,8 @@ struct MMessageItem
 	void			operator delete(void* inPtr)					{ free(inPtr); }
 };
 
-typedef vector<MMessageItem*> MMessageItemArray;
-typedef std::vector<fs::path> MFileTable;
+typedef vector<MMessageItem*>	MMessageItemArray;
+typedef std::vector<MFile>		MFileTable;
 
 struct MMessageListImp
 {
@@ -158,7 +158,7 @@ MMessageList::~MMessageList()
 
 void MMessageList::AddMessage(
 	MMessageKind	inKind,
-	const fs::path&	inFile,
+	const MFile&	inFile,
 	uint32			inLine,
 	uint32			inMinOffset,
 	uint32			inMaxOffset,
@@ -166,7 +166,7 @@ void MMessageList::AddMessage(
 {
 	uint32 fileNr = 0;
 	
-	if (fs::exists(inFile))
+	if (inFile.IsLocal() == false or fs::exists(inFile.GetPath()))
 	{
 		MFileTable::iterator f = find(mImpl->mFileTable.begin(), mImpl->mFileTable.end(), inFile);
 		if (f == mImpl->mFileTable.end())
@@ -187,7 +187,7 @@ MMessageItem& MMessageList::GetItem(
 	return *mImpl->mArray[inIndex];
 }
 
-fs::path MMessageList::GetFile(
+MFile MMessageList::GetFile(
 	uint32				inFileNr) const
 {
 	if (inFileNr >= mImpl->mFileTable.size())
@@ -253,7 +253,7 @@ MMessageWindow::MMessageWindow(
 	
 void MMessageWindow::AddMessage(
 	MMessageKind		inKind,
-	const fs::path&		inFile,
+	const MFile&		inFile,
 	uint32				inLine,
 	uint32				inMinOffset,
 	uint32				inMaxOffset,
@@ -272,7 +272,7 @@ void MMessageWindow::AddMessage(
 	gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
 	gtk_list_store_set(GTK_LIST_STORE(store), &iter,
 		kBadgeColumn, GetBadge(inKind),
-		kFileColumn, inFile.leaf().c_str(),
+		kFileColumn, inFile.GetFileName().c_str(),
 		kLineColumn, line.c_str(),
 		kTextColumn, inMessage.c_str(),
 		-1);
@@ -297,7 +297,7 @@ void MMessageWindow::SetMessages(
 		
 		string file;
 		if (item.mFileNr > 0)
-			file = mList.GetFile(item.mFileNr - 1).leaf();
+			file = mList.GetFile(item.mFileNr - 1).GetFileName();
 		
 		string msg(item.mMessage, item.mMessageLength);
 		boost::trim_right(msg);
@@ -360,8 +360,8 @@ void MMessageWindow::InvokeItem(
 	
 	if (item.mFileNr > 0)
 	{
-		fs::path file = mList.GetFile(item.mFileNr - 1);
-		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MFile(file)));
+		MFile file = mList.GetFile(item.mFileNr - 1);
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(file));
 		
 		if (doc != nil)
 		{
@@ -447,13 +447,13 @@ void MMessageWindow::AddStdErr(
 					uint32 lineNr = 0;
 					if (l_nr.length() > 0)
 						lineNr = atoi(l_nr.c_str());
-					AddMessage(kind, spec, lineNr, 0, 0, mesg);
+					AddMessage(kind, MFile(spec), lineNr, 0, 0, mesg);
 					
 					continue;
 				}
 			}
 
-			AddMessage(kMsgKindNone, spec, 0, 0, 0, line);
+			AddMessage(kMsgKindNone, MFile(spec), 0, 0, 0, line);
 		}
 		
 		mLastAddition = GetLocalTime();

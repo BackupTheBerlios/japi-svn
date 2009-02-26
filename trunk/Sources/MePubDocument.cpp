@@ -47,6 +47,7 @@
 #include "MGlobals.h"
 #include "MAlerts.h"
 #include "MUtils.h"
+#include "MMessageWindow.h"
 
 #include "MXHTMLTools.h"
 
@@ -647,7 +648,7 @@ void MePubDocument::ImportOEB(
 		THROW(("Failed to open opf file"));
 
 	xml::document opf(opfFile);
-	vector<string> problems;
+	MMessageList problems;
 	ParseOPF(fs::path("OEBPS"), *opf.root(), problems);
 
 	fs::path dir = inOEB.GetPath().branch_path();
@@ -664,7 +665,7 @@ void MePubDocument::ImportOEB(
 		fs::path path = dir / relative_path("OEBPS", epi->GetPath());
 		
 		if (not fs::exists(path))
-			problems.push_back(_("Could not locate file ") + path.string());
+			problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Could not locate file ") + path.string());
 		else
 		{
 			fs::ifstream in(path, ios::binary);
@@ -682,7 +683,18 @@ void MePubDocument::ImportOEB(
 					if (p->kind == MXHTMLTools::info)
 						continue;
 
-					problems.push_back(p->message);
+					MMessageKind kind;
+					if (p->kind == MXHTMLTools::error)
+						kind = kMsgKindError;
+					else if (p->kind == MXHTMLTools::warning)
+						kind = kMsgKindWarning;
+					else if (p->kind == MXHTMLTools::info)
+						kind = kMsgKindNote;
+					else 
+						kind = kMsgKindNone;
+					
+					problems.AddMessage(kind, MFile(new MePubContentFile(this, path)),
+						p->line, 0, 0, p->message);
 				}
 				
 				MePubTOCItem* toc = new MePubTOCItem(epi->GetID(), &mTOC);
@@ -695,8 +707,11 @@ void MePubDocument::ImportOEB(
 	}
 	
 	if (not problems.empty())
-		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
-	
+	{
+		MMessageWindow* w = new MMessageWindow("");
+		w->SetMessages(_("Problems found in imported OEB"), problems);
+		w->Show();
+	}
 }
 
 void MePubDocument::ReadFile(
@@ -704,7 +719,7 @@ void MePubDocument::ReadFile(
 {
 	ZIPLocalFileHeader fh;
 	
-	vector<string> problems;
+	MMessageList problems;
 	set<fs::path> encrypted;
 	
 	// read first file, should be the mimetype file
@@ -717,7 +732,7 @@ void MePubDocument::ReadFile(
 		{
 			hasMimeType = true;
 			if (not firstItem)
-				problems.push_back(_("Invalid ePub file, mimetype should be first file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid ePub file, mimetype should be first file"));
 			firstItem = false;
 			continue;
 		}
@@ -733,7 +748,7 @@ void MePubDocument::ReadFile(
 			xml::node_ptr root = container.root();
 			
 			if (root->name() != "container" or root->ns() != kContainerNS)
-				problems.push_back(_("Invalid or unsupported container.xml file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported container.xml file"));
 			
 			xml::node_ptr n = root->find_first_child("rootfiles");
 			if (not n)
@@ -744,7 +759,7 @@ void MePubDocument::ReadFile(
 				THROW(("Invalid container.xml file, <rootfile> missing."));
 			
 			if (n->get_attribute("media-type") != "application/oebps-package+xml")
-				problems.push_back(_("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid container.xml file, first rootfile should be of type \"application/oebps-package+xml\""));
 			
 			mRootFile = n->get_attribute("full-path");
 		}
@@ -754,7 +769,7 @@ void MePubDocument::ReadFile(
 			xml::node_ptr root = encryption.root();
 			
 			if (root->name() != "encryption" or root->ns() != kContainerNS)
-				problems.push_back(_("Invalid or unsupported encryption.xml file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
 			
 			for (xml::node_ptr n = root->children(); n; n = n->next())
 			{
@@ -780,21 +795,21 @@ void MePubDocument::ReadFile(
 			
 			if (root->name() != "rights" or root->ns() != kAdobeAdeptNS)
 			{
-				problems.push_back(_("Invalid or unsupported rights.xml file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported rights.xml file"));
 				continue;
 			}
 			
 			xml::node_ptr licenseToken = root->find_first_child("licenseToken");
 			if (not licenseToken)
 			{
-				problems.push_back(_("licenseToken not found in rights file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("licenseToken not found in rights file"));
 				continue;
 			}
 			
 			xml::node_ptr encryptedKey = licenseToken->find_first_child("encryptedKey");
 			if (not encryptedKey)
 			{
-				problems.push_back(_("encryptedKey not found in rights file"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("encryptedKey not found in rights file"));
 				continue;
 			}
 			
@@ -805,8 +820,8 @@ void MePubDocument::ReadFile(
 			}
 			catch (exception& e)
 			{
-				problems.push_back(_("This book is encrypted and something went wrong trying to decrypt it:"));
-				problems.push_back(e.what());
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("This book is encrypted and something went wrong trying to decrypt it:"));
+				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, e.what());
 			}
 		}
 		else
@@ -814,7 +829,7 @@ void MePubDocument::ReadFile(
 	}
 
 	if (not hasMimeType)
-		problems.push_back(_("Invalid ePub file, mimetype file is missing"));
+		problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid ePub file, mimetype file is missing"));
 
 	xml::document opf(content[mRootFile]);
 	
@@ -841,7 +856,7 @@ void MePubDocument::ReadFile(
 		}
 		catch (exception& e)
 		{
-			problems.push_back(_(e.what()));
+			problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _(e.what()));
 		}
 	}
 	else
@@ -884,7 +899,11 @@ void MePubDocument::ReadFile(
 	}
 
 	if (not problems.empty())
-		DisplayAlert("problems-in-epub", ba::join(problems, "\n"));
+	{
+		MMessageWindow* w = new MMessageWindow("");
+		w->SetMessages(_("Problems found in ePub file"), problems);
+		w->Show();
+	}
 	
 	SetModified(false);
 }
@@ -1215,7 +1234,7 @@ MProjectGroup* MePubDocument::GetTOC() const
 void MePubDocument::ParseOPF(
 	const fs::path&		inDirectory,
 	xml::node&			inOPF,
-	vector<string>&		outProblems)
+	MMessageList&		outProblems)
 {
 	if (inOPF.name() != "package")
 		THROW(("Not an OPF file, root item should be package"));
@@ -1223,12 +1242,12 @@ void MePubDocument::ParseOPF(
 	// fetch the unique-identifier
 	string uid = inOPF.get_attribute("unique-identifier");
 	if (uid.empty())
-		outProblems.push_back(_("Unique Identifier is missing in OPF"));
+		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Unique Identifier is missing in OPF"));
 	
 	// fetch the meta data
 	xml::node_ptr metadata = inOPF.find_first_child("metadata");
 	if (not metadata)
-		outProblems.push_back(_("Metadata is missing from OPF"));
+		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Metadata is missing from OPF"));
 	else
 	{
 		// now I've found a weird file containing a dc-metadata inside metadata
@@ -1250,7 +1269,7 @@ void MePubDocument::ParseOPF(
 				ba::to_lower(name);
 			else if (dc->ns() != "http://purl.org/dc/elements/1.1/")
 			{
-				outProblems.push_back(_("unsupported dublin core version"));
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version"));
 				continue;
 			}
 			
@@ -1300,7 +1319,7 @@ void MePubDocument::ParseOPF(
 	
 	xml::node_ptr manifest = inOPF.find_first_child("manifest");
 	if (not manifest)
-		outProblems.push_back(_("Manifest missing from OPF document"));
+		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Manifest missing from OPF document"));
 	else
 	{
 		for (xml::node_ptr item = manifest->children(); item; item = item->next())
@@ -1320,7 +1339,7 @@ void MePubDocument::ParseOPF(
 
 				if (FileNameMatches("*.ncx", href))
 				{
-					outProblems.push_back(_("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
+					outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
 					mTOCFile = href;
 					continue;
 				}
@@ -1334,7 +1353,7 @@ void MePubDocument::ParseOPF(
 			if (id.empty() or not isalpha(id[0]))
 			{
 				if (warnInvalidID)
-					outProblems.push_back(_("ID's should start with a letter"));
+					outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("ID's should start with a letter"));
 				id = 'x' + id;
 				warnInvalidID = false;
 			}
@@ -1346,7 +1365,7 @@ void MePubDocument::ParseOPF(
 			{
 				mediaType = "application/xhtml+xml";
 				if (warnMediaType)
-					outProblems.push_back(_("Use media-type application/xhtml+xml instead of text/html"));
+					outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Use media-type application/xhtml+xml instead of text/html"));
 				warnMediaType = false;
 			}
 				
@@ -1360,7 +1379,7 @@ void MePubDocument::ParseOPF(
 	
 	xml::node_ptr spine = inOPF.find_first_child("spine");
 	if (not spine)
-		outProblems.push_back(_("Spine missing from OPF document"));
+		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Spine missing from OPF document"));
 	else
 	{
 		for (xml::node_ptr item = spine->children(); item; item = item->next())
@@ -1377,7 +1396,7 @@ void MePubDocument::ParseOPF(
 
 	// sanity checks
 	if (mDocumentID.empty())
-		outProblems.push_back(_("Missing document identifier in metadata section"));
+		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Missing document identifier in metadata section"));
 }
 
 void MePubDocument::ParseNCX(
@@ -1504,15 +1523,36 @@ void MePubDocument::SetFileData(
 {
 	MProjectItem* pi = mRoot.GetItem(inFile);
 	if (pi == nil)
-		THROW(("ePub item %s does not exist", inFile.string().c_str()));
-
-	MePubItem* epi = dynamic_cast<MePubItem*>(pi);
-	if (epi == nil)
-		THROW(("Error, item is not an editable file"));
-
-	epi->SetData(inText);
+	{
+		if (DisplayAlert("epub-item-does-not-exist", mFile.GetFileName(), inFile.leaf()) == 1)
+		{
+			MProjectGroup* folder = dynamic_cast<MProjectGroup*>(mRoot.GetItem(inFile.branch_path()));
+			if (folder == nil)
+				folder = dynamic_cast<MProjectGroup*>(mRoot.GetItem(0));
+			THROW_IF_NIL(folder);
+			
+			MePubItem* item = new MePubItem(inFile.leaf(), folder);
+			item->GuessMediaType();
+			item->SetID("main");
+			item->SetOutOfDate(false);
+			item->SetData(inText);
+			folder->AddProjectItem(item);
+			
+			eFileItemInserted(item);
+		}	
+		else
+			THROW(("ePub item %s does not exist", inFile.string().c_str()));
+	}
+	else
+	{
+		MePubItem* epi = dynamic_cast<MePubItem*>(pi);
+		if (epi == nil)
+			THROW(("Error, item is not an editable file"));
 	
-	epi->SetOutOfDate(true);
+		epi->SetData(inText);
+		epi->SetOutOfDate(false);
+	}
+	
 	SetModified(true);
 }
 
