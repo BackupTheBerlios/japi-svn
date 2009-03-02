@@ -726,7 +726,7 @@ void MGIOFileSaver::Async(
 				}
 				
 				// file does not exist yet, not an error
-				if (error->code == G_IO_ERROR_NOT_FOUND)
+				if (error != nil and error->code == G_IO_ERROR_NOT_FOUND)
 				{
 					g_error_free(error);
 					error = nil;
