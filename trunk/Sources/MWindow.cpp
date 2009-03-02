@@ -20,6 +20,7 @@
 using namespace std;
 
 MWindow* MWindow::sFirst = nil;
+MWindow* MWindow::sRecycle = nil;
 
 MWindow::MWindow()
 	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
@@ -220,8 +221,24 @@ bool MWindow::OnDestroy()
 
 	eWindowClosed(this);
 	
-	gApp->RecycleWindow(this);
+	// and put window in the queue to be recycled at next event
+	mNext = sRecycle;
+	sRecycle = this;
+	
 	return true;
+}
+
+void MWindow::RecycleWindows()
+{
+	MWindow* w = sRecycle;
+	sRecycle = nil;
+
+	while (w != nil)
+	{
+		MWindow* next = w->mNext;
+		delete w;
+		w = next;
+	}
 }
 
 bool MWindow::OnDelete(

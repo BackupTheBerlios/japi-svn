@@ -153,6 +153,10 @@ class MWindow : public MView, public MHandler
 	virtual void	ValueChanged(
 						uint32				inID);
 
+	// window recycling, called by application for now
+	
+	static void				RecycleWindows();
+
   protected:
 
 							MWindow(
@@ -183,6 +187,9 @@ class MWindow : public MView, public MHandler
 	virtual void			PutOnDuty(
 								MHandler*		inHandler);
 
+	static void				RemoveWindowFromList(
+								MWindow*		inWindow);
+	
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
@@ -198,9 +205,6 @@ class MWindow : public MView, public MHandler
 	void					TransitionTo(
 								MRect			inPosition);
 
-	static void				RemoveWindowFromList(
-								MWindow*		inWindow);
-	
 	void					DoForEach(
 								GtkWidget*		inWidget);
 
@@ -222,6 +226,8 @@ class MWindow : public MView, public MHandler
 
 	static MWindow*			sFirst;
 	MWindow*				mNext;
+	
+	static MWindow*			sRecycle;
 };
 
 

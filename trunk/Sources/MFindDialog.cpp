@@ -83,12 +83,8 @@ const int16
 
 MFindDialog& MFindDialog::Instance()
 {
-	static std::auto_ptr<MFindDialog> sInstance;
-
-	if (sInstance.get() == nil)
-		sInstance.reset(new MFindDialog);
-
-	return *sInstance;
+	static MFindDialog sInstance;
+	return sInstance;
 }
 
 MFindDialog::MFindDialog()
@@ -135,6 +131,11 @@ MFindDialog::MFindDialog()
 	SetText(kStatusPanelID, "");
 	
 	mUpdatingComboBox = false;
+}
+
+MFindDialog::~MFindDialog()
+{
+	RemoveWindowFromList(this);
 }
 
 bool MFindDialog::ProcessCommand(

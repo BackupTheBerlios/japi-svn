@@ -53,7 +53,7 @@ int VERBOSE;
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9.7-b3";
+	kVersionString[] = "0.9.7-b4";
 
 MJapieApp* gApp;
 fs::path gExecutablePath, gPrefixPath;
@@ -71,14 +71,19 @@ const uint32
 // --------------------------------------------------------------------
 
 MJapieApp::MJapieApp(
-	bool	inForked)
+	bool				inForked,
+	MFilesToOpenList&	inFilesToOpen)
 	: MHandler(nil)
 	, eUpdateSpecialMenu(this, &MJapieApp::UpdateSpecialMenu)
 	, mSocketFD(-1)
-	, mReceivedFirstMsg(not inForked)
 	, mQuit(false)
 	, mQuitPending(false)
+	, mInitialised(false)
+	, mFilesToOpenAtStart(inFilesToOpen)
 {
+	// set the global pointing to us
+	gApp = this;
+	
 	if (inForked)
 	{
 		mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
@@ -150,7 +155,7 @@ bool MJapieApp::ProcessCommand(
 			gtk_show_about_dialog(GTK_WINDOW(ww),
 				"program_name", kAppName,
 				"version", kVersionString,
-				"copyright", "Copyright © 2007 Maarten L. Hekkelman",
+				"copyright", "Copyright © 2007-2009 Maarten L. Hekkelman",
 				"comments", _("A simple development environment"),
 				"website", "http://www.hekkelman.com/",
 				nil);
@@ -427,12 +432,6 @@ void MJapieApp::DoSelectWindowFromWindowMenu(
 		DisplayDocument(doc);	
 }	
 
-void MJapieApp::RecycleWindow(
-	MWindow*		inWindow)
-{
-	mTrashCan.push_back(inWindow);
-}
-
 void MJapieApp::RunEventLoop()
 {
 	try
@@ -457,29 +456,8 @@ void MJapieApp::RunEventLoop()
 	gdk_threads_enter();
 	gtk_main();
 	gdk_threads_leave();
-	
+
 	gtk_key_snooper_remove(snooper);
-}
-
-GdkFilterReturn MJapieApp::ClientMessageFilter(
-	GdkXEvent*			inXEvent,
-	GdkEvent*			inEvent,
-	gpointer			data)
-{
-	XEvent* xevent = (XEvent*)inXEvent;
-	GdkFilterReturn result = GDK_FILTER_CONTINUE;
-
-	if (xevent->type == ClientMessage)
-	{
-		PRINT(("Received ClientMessage: "));
-		
-		if ((Atom)xevent->xclient.data.l[0] == gdk_x11_get_xatom_by_name("WM_TAKE_FOCUS"))
-		{
-			PRINT(("Take Focus event"));
-		}
-	}
-	
-	return result;
 }
 
 gint MJapieApp::Snooper(
@@ -512,17 +490,6 @@ gint MJapieApp::Snooper(
 	catch (...) {}
 
 	return result;
-}
-
-void MJapieApp::EventHandler(
-	GdkEvent*			inEvent,
-	gpointer			inData)
-{
-//	if (inEvent->type != GDK_KEY_PRESS or
-//		Snooper(nil, (GdkEventKey*)inEvent, nil) == false)
-//	{
-		gtk_main_do_event(inEvent);
-//	}
 }
 
 void MJapieApp::DoSaveAll()
@@ -908,24 +875,54 @@ gboolean MJapieApp::Timeout(
 	gpointer		inData)
 {
 	gdk_threads_enter();
-	gApp->Pulse();
+	try
+	{
+		gApp->Pulse();
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	gdk_threads_leave();
 	return true;
 }
 
 void MJapieApp::Pulse()
 {
-	for (MWindowList::iterator w = mTrashCan.begin(); w != mTrashCan.end(); ++w)
-		delete *w;
+	if (not mInitialised)
+	{
+		mInitialised = true;
+
+		for (MFilesToOpenList::iterator file = mFilesToOpenAtStart.begin(); file != mFilesToOpenAtStart.end(); ++file)
+		{
+			try
+			{
+				MDocument* doc = gApp->OpenOneDocument(file->second);
+				if (doc != nil)
+				{
+					DisplayDocument(doc);
+				
+					if (file->first > 0 and dynamic_cast<MTextDocument*>(doc) != nil)
+						static_cast<MTextDocument*>(doc)->GoToLine(file->first - 1);
+				}
+			}
+			catch (exception& e)
+			{
+				DisplayError(e);
+			}
+		}
+
+		if (MDocument::GetFirstDocument() == nil)
+			DoNew();
+	}
 	
-	mTrashCan.clear();
+	MWindow::RecycleWindows();
 	
 	if (mSocketFD >= 0)
 		ProcessSocketMessages();
 	
 	if (gQuit or
 		(MWindow::GetFirstWindow() == nil and
-		 mReceivedFirstMsg and
 		 MProject::Instance() == nil))
 	{
 		DoQuit();
@@ -982,7 +979,6 @@ void MJapieApp::ProcessSocketMessages()
 	
 	if (fd >= 0)
 	{
-		mReceivedFirstMsg = true;	
 		MDocClosedNotifier notify(fd);		// takes care of closing fd
 		
 		bool readStdin = false;
@@ -1071,10 +1067,9 @@ int OpenSocketToServer()
 	return result;
 }
 
-bool ForkServer(
-	const vector<pair<int32,string> >&
-						inDocs,
-	bool				inReadStdin)
+void ForkServer(
+	const MJapieApp::MFilesToOpenList&	inDocs,
+	bool								inReadStdin)
 {
 	int sockfd = OpenSocketToServer();
 	
@@ -1086,17 +1081,19 @@ bool ForkServer(
 			// detach from the process group, create new
 			// to avoid being killed by a CNTRL-C in the shell
 			setpgid(0, 0);
-
-			return true;
+			return;
 		}
 		
+		// give server time to start up
 		sleep(1);
+		
+		// and try to connect again
 		sockfd = OpenSocketToServer();
 	}
-	
+
 	if (sockfd < 0)
 		error("Failed to open connection to server: %s", strerror(errno));
-	
+
 	MSockMsg msg = { };
 
 	if (inReadStdin)
@@ -1104,14 +1101,14 @@ bool ForkServer(
 		msg.msg = 'data';
 		(void)write(sockfd, &msg, sizeof(msg));
 	}
-	
+
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (vector<pair<int32,string> >::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (MJapieApp::MFilesToOpenList::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
 			int32 lineNr = d->first;
-			string url = d->second;
+			string url = d->second.GetURI();
 			
 			msg.length = url.length() + sizeof(lineNr);
 			(void)write(sockfd, &msg, sizeof(msg));
@@ -1130,10 +1127,6 @@ bool ForkServer(
 	msg.length = 0;
 	(void)write(sockfd, &msg, sizeof(msg));
 
-	// now remove that pesky wait cursor
-	// I hope this will work even though we didn't call gtk_init 
-	gdk_notify_startup_complete();
-	
 	if (inReadStdin)
 	{
 		int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
@@ -1156,8 +1149,9 @@ bool ForkServer(
 	// now block until all windows are closed or server dies
 	char c;
 	read(sockfd, &c, 1);
-	
-	return false;
+
+	// and exit gracefully
+	exit(0);
 }
 
 void usage()
@@ -1169,7 +1163,7 @@ void usage()
 		 << "    -p prefix  Prefix path where to install japi, default is /usr/local" << endl
 		 << "               resulting in /usr/local/bin/japi" << endl
 		 << "    -h         This help message" << endl
-		 << "    -f         Don't fork into client/server" << endl
+		 << "    -f         Don't fork into client/server mode" << endl
 		 << endl
 		 << "  One or more files may be specified, use - for reading from stdin" << endl
 		 << endl;
@@ -1207,7 +1201,7 @@ void InstallJapi(
 	fs::copy_file(gExecutablePath, dest);
 	
 	// create desktop file
-	
+		
 	MResource rsrc = MResource::root().find("japi.desktop");
 	if (not rsrc)
 		error("japi.desktop file could not be created, missing data");
@@ -1282,8 +1276,6 @@ int main(int argc, char* argv[])
 	{
 		fs::path::default_name_check(fs::no_check);
 
-		vector<pair<int32,string> > docs;
-
 		// First find out who we are. Uses proc filesystem to find out.
 		char exePath[PATH_MAX + 1];
 		
@@ -1319,14 +1311,11 @@ int main(int argc, char* argv[])
 				case 'm':
 					target = optarg;
 					break;
-				
 #if DEBUG
 				case 'v':
 					++VERBOSE;
 					break;
-
 #endif
-				
 				default:
 					usage();
 					break;
@@ -1367,14 +1356,14 @@ int main(int argc, char* argv[])
 			textdomain("japi");
 		}
 		
-		// see if we need to open any files from the commandline
-		int32 lineNr = -1;
-		
-		/* init threads */	
+		/* time to initialize GTK+, needed since we might have to create a g_file object */	
 		g_thread_init(nil);
 		gdk_threads_init();
-
 		gtk_init(&argc, &argv);
+
+		// see if we need to open any files from the commandline
+		int32 lineNr = -1;
+		MJapieApp::MFilesToOpenList filesToOpen;
 		
 		for (int32 i = optind; i < argc; ++i)
 		{
@@ -1384,73 +1373,46 @@ int main(int argc, char* argv[])
 				readStdin = true;
 			else if (a.substr(0, 1) == "+")
 				lineNr = atoi(a.c_str() + 1);
-//			else if (a.substr(0, 7) == "file://" or
-//				a.substr(0, 7) == "sftp://" or
-//				a.substr(0, 6) == "ssh://" or
-//				a.substr(0, 5) == "smb:/")
-//			{
-//				docs.push_back(make_pair(lineNr, a));
-//				lineNr = -1;
-//			}
 			else
 			{
-				docs.push_back(make_pair(lineNr, MFile(a).GetURI()));
+				filesToOpen.push_back(make_pair(lineNr, MFile(a)));
 				lineNr = -1;
 			}
 		}
 		
-		if (fork == false or ForkServer(docs, readStdin))
+//openlog("japi", LOG_CONS|LOG_PID, LOG_USER);
+//syslog(LOG_INFO, "starting up");
+//
+		if (fork)
 		{
-			gtk_window_set_default_icon_name ("accessories-text-editor");
-	
-			struct sigaction act, oact;
-			act.sa_handler = my_signal_handler;
-			sigemptyset(&act.sa_mask);
-			act.sa_flags = 0;
-			::sigaction(SIGTERM, &act, &oact);
-			::sigaction(SIGUSR1, &act, &oact);
-			::sigaction(SIGPIPE, &act, &oact);
-			::sigaction(SIGINT, &act, &oact);
-
-			InitGlobals();
-	
-			gApp = new MJapieApp(fork);
-			
-			try
-			{
-				if (fork == false and not docs.empty())
-				{
-					for (vector<pair<int32,string> >::iterator doc = docs.begin(); doc != docs.end(); ++doc)
-					{
-						try
-						{
-							gApp->OpenOneDocument(MFile(doc->second));
-						}
-						catch (...) {}
-					}
-				}
-	
-				if (fork == false)
-				{
-					if (MDocument::GetFirstDocument() == nil)
-						gApp->ProcessCommand(cmd_New, nil, 0, 0);
-				}
-			}
-			catch (...)
-			{
-			}
-	
-			gdk_notify_startup_complete();
-	
-			gApp->RunEventLoop();
-			
-			// we're done, clean up
-			MFindDialog::Instance().Close();
-			
-			SaveGlobals();
-			
-			delete gApp;
+			ForkServer(filesToOpen, readStdin);	// returns only for the forked application
+			filesToOpen.clear();				// should be opened by now already
 		}
+
+		InitGlobals();
+
+		MJapieApp app(fork, filesToOpen);
+		
+		// now start up the normal executable		
+		gtk_window_set_default_icon_name ("accessories-text-editor");
+
+		struct sigaction act, oact;
+		act.sa_handler = my_signal_handler;
+		sigemptyset(&act.sa_mask);
+		act.sa_flags = 0;
+		::sigaction(SIGTERM, &act, &oact);
+		::sigaction(SIGUSR1, &act, &oact);
+		::sigaction(SIGPIPE, &act, &oact);
+		::sigaction(SIGINT, &act, &oact);
+
+		gdk_notify_startup_complete();
+
+		app.RunEventLoop();
+		
+		// we're done, clean up
+		MFindDialog::Instance().Close();
+		
+		SaveGlobals();
 	}
 	catch (exception& e)
 	{

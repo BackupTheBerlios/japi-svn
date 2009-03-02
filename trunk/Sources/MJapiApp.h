@@ -25,13 +25,14 @@ class MFile;
 class MJapieApp : public MHandler
 {
   public:
+
+	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
+	
 						MJapieApp(
-							bool				inForked);
+							bool				inForked,
+							MFilesToOpenList&	inFilesToOpen);
 	
 						~MJapieApp();
-	
-	void				RecycleWindow(
-							MWindow*			inWindow);
 	
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
@@ -132,24 +133,15 @@ class MJapieApp : public MHandler
 							GdkEventKey*		inEvent,
 							gpointer			inFuncData); 
 
-	static void			EventHandler(
-							GdkEvent*			inEvent,
-							gpointer			inData); 
-
-	static GdkFilterReturn
-						ClientMessageFilter(
-							GdkXEvent*			inXEvent,
-							GdkEvent*			inEvent,
-							gpointer			data);
-	
 	void				ProcessSocketMessages();
 	
-	MWindowList			mTrashCan;
 	int					mSocketFD;
-	bool				mReceivedFirstMsg;
 	bool				mQuit;
 	bool				mQuitPending;
+	bool				mInitialised;
 	std::string			mCurrentFolder;
+	
+	MFilesToOpenList	mFilesToOpenAtStart;
 };
 
 extern MJapieApp*	gApp;

@@ -40,8 +40,6 @@ class MFindDialog : public MDialog
 
 	static MFindDialog&	Instance();
 
-					MFindDialog();
-
 	void			Select();
 
 	virtual bool	ProcessCommand(
@@ -75,6 +73,10 @@ class MFindDialog : public MDialog
 	virtual bool	DoClose();
 
   private:
+
+					MFindDialog();
+
+					~MFindDialog();
 
 	typedef std::vector<std::string>		StringArray;
 	typedef std::deque<fs::path>			FileArray;
