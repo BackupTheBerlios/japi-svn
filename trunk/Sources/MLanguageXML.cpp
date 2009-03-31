@@ -344,7 +344,28 @@ bool parse_content(
 			if (*(ioText + 1) == '/')
 				break;
 
-			if (ioText == "![CDATA[")
+			if (ioText == "<!--")		// comment
+			{
+				ioText += 4;
+				while (*ioText and not (ioText == "--"))
+					++ioText;
+				ioText += 2;
+				
+				while (*ioText and *ioText != '>')
+					++ioText;
+				
+				if (tagStart <= ioBegin and ioText.GetOffset() >= ioEnd)
+				{
+					ioBegin = tagStart;
+					ioEnd = ioText.GetOffset();
+					result = true;
+					break;
+				}
+
+				continue;
+			}
+
+			if (ioText == "<![CDATA[")	// CDATA
 			{
 				ioText += 9;
 				while (*ioText and not (ioText == "]]>"))
@@ -515,13 +536,27 @@ void find_open_name(
 		
 		++inText;
 		
-		// comment or cdata?
+		// cdata?
 		if (inText == "![CDATA[")
 		{
 			inText += 9;
 			while (inText < inEnd and not (inText == "]]>"))
 				++inText;
 			inText += 3;
+			
+			continue;
+		}
+
+		// comment?
+		if (inText == "!--")
+		{
+			inText += 4;
+			while (inText < inEnd and not (inText == "--"))
+				++inText;
+			inText += 2;
+			
+			while (inText < inEnd and *inText != '>')
+				++inText;
 			
 			continue;
 		}
@@ -649,7 +684,7 @@ MLanguageXML::IsSmartIndentLocation(
 	uint32				inOffset)
 {
 	bool result = false;
-	MTextBuffer::const_iterator text = inText.begin();
+	MTextPtr text = inText.begin();
 	
 	if (inOffset > 0 and text[inOffset - 1] == '>')
 	{
@@ -679,9 +714,10 @@ MLanguageXML::IsSmartIndentLocation(
 			--inOffset;
 		}
 		
-		result = inOffset >= 0 and text[inOffset] == '<';
-		
-		// TODO: check to see if we're in a CDATA section
+		result =
+			inOffset >= 0 and
+			text[inOffset] == '<' and
+			not ((text + inOffset) == "<![CDATA[" or (text + inOffset) == "<!--");
 	}
 	
 	return result;

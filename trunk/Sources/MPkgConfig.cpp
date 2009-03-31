@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 #include <sstream>
 
 #include "MFile.h"
@@ -176,7 +177,13 @@ void ParseString(
 		}
 	}
 	
-	copy(argv.begin(), argv.end(), back_inserter(outFlags));
+	for (vector<char*>::iterator arg = argv.begin(); arg != argv.end(); ++arg)
+	{
+		string a(*arg);
+		ba::trim(a);
+		if (not a.empty())
+			outFlags.push_back(a);
+	}
 }
 
 }
