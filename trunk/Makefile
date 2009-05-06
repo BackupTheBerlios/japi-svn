@@ -7,7 +7,7 @@
 PREFIX		= /usr/local
 
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
-LIBS		= boost_thread boost_filesystem boost_iostreams expat uuid attr crypto
+LIBS		= boost_thread boost_filesystem boost_iostreams expat uuid crypto tidy
 WARNINGS	= all no-multichar no-unknown-pragmas
 SOURCES		= $(wildcard Sources/*.cpp zeep/*.cpp)
 OBJDIR		= Obj.temp/
@@ -18,6 +18,12 @@ CC			= c++
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8 -pipe $(WARNINGS:%=-W%) $(DEFINES:%=-D%)
 CFLAGS		+= $(shell pkg-config --cflags libglade-2.0 gstreamer-0.10)
 CFLAGS		+= $(addprefix -iquote, Sources zeep)
+
+OS		= $(shell uname -s)
+
+ifeq ($(OS),Linux)
+LIBS		+= attr
+endif
 
 all: japi
 

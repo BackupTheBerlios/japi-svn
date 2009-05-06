@@ -18,6 +18,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "MTextDocument.h"
 #include "MTextView.h"

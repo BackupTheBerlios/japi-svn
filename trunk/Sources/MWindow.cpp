@@ -165,10 +165,11 @@ void MWindow::Hide()
 
 void MWindow::Select()
 {
-	gtk_window_present(GTK_WINDOW(GetGtkWidget()));
+	if (gdk_window_is_visible(gtk_widget_get_window(GetGtkWidget())))
+		gtk_window_present(GTK_WINDOW(GetGtkWidget()));
 
 	TakeFocus();
-	
+
 	// trick learned from EEL
 	gdk_error_trap_push();
 	XSetInputFocus(GDK_DISPLAY(),
