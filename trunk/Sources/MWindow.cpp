@@ -165,18 +165,23 @@ void MWindow::Hide()
 
 void MWindow::Select()
 {
-	if (gdk_window_is_visible(gtk_widget_get_window(GetGtkWidget())))
+	if (GDK_IS_WINDOW(gtk_widget_get_window(GetGtkWidget())) and
+		gdk_window_is_visible(gtk_widget_get_window(GetGtkWidget())))
+	{
 		gtk_window_present(GTK_WINDOW(GetGtkWidget()));
+	}
+	else
+		Show();
 
 	TakeFocus();
 
-	// trick learned from EEL
-	gdk_error_trap_push();
-	XSetInputFocus(GDK_DISPLAY(),
-		GDK_WINDOW_XWINDOW(gtk_widget_get_window(GetGtkWidget())),
-		RevertToParent, GDK_CURRENT_TIME);
-	gdk_flush();
-	gdk_error_trap_pop ();
+//	// trick learned from EEL
+//	gdk_error_trap_push();
+//	XSetInputFocus(GDK_DISPLAY(),
+//		GDK_WINDOW_XWINDOW(gtk_widget_get_window(GetGtkWidget())),
+//		RevertToParent, GDK_CURRENT_TIME);
+//	gdk_flush();
+//	gdk_error_trap_pop ();
 }
 
 bool MWindow::DoClose()
