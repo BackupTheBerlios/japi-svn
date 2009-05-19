@@ -1286,6 +1286,9 @@ int main(int argc, char* argv[])
 			gExecutablePath = fs::system_complete(exePath);
 			gPrefixPath = gExecutablePath.branch_path();
 		}
+		
+		if (not fs::exists(gExecutablePath))
+			gExecutablePath = fs::system_complete(argv[0]);
 	
 		// Collect the options
 		int c;
@@ -1323,7 +1326,10 @@ int main(int argc, char* argv[])
 		}
 		
 		if (install)
+		{
+			gtk_init(&argc, &argv);
 			InstallJapi(prefix);
+		}
 		
 		// if the option was to build a target, try it and exit.
 		if (not target.empty())

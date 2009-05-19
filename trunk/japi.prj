@@ -12,7 +12,9 @@
 		<path>Sources</path>
 		<path>zeep</path>
 	</userpaths>
-	<libpaths/>
+	<libpaths>
+		<path>/usr/local/lib</path>
+	</libpaths>
 	<files>
 		<group name="MLib">
 			<file>MAlerts.cpp</file>
@@ -99,10 +101,10 @@
 		</group>
 		<group name="Libraries">
 			<file optional="true">libattr.a</file>
-			<file>libboost_system-mt.a</file>
-			<file>libboost_thread-mt.a</file>
-			<file>libboost_filesystem-mt.a</file>
-			<file>libboost_iostreams-mt.a</file>
+			<file>libboost_system.a</file>
+			<file>libboost_thread.a</file>
+			<file>libboost_filesystem.a</file>
+			<file>libboost_iostreams.a</file>
 			<file>libcrypto.a</file>
 			<file>libexpat.a</file>
 			<file>libpcre.a</file>
