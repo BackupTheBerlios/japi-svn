@@ -50,12 +50,16 @@ MProjectTree::MProjectTree(
 
 uint32 MProjectTree::GetColumnCount() const
 {
+//PRINT((__func__));
+
 	return 4;
 }
 
 GType MProjectTree::GetColumnType(
 	uint32			inColumn) const
 {
+//PRINT((__func__));
+
 	GType result;
 
 	if (inColumn == kFilesDirtyColumn)
@@ -71,6 +75,8 @@ void MProjectTree::GetValue(
 	uint32			inColumn,
 	GValue*			outValue) const
 {
+//PRINT((__func__));
+
 	// dots
 	
 	const uint32 kDotSize = 6;
@@ -131,6 +137,8 @@ bool MProjectTree::GetIter(
 	GtkTreeIter*	outIter,
 	GtkTreePath*	inPath)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	int32 depth = gtk_tree_path_get_depth(inPath);
@@ -161,13 +169,21 @@ bool MProjectTree::GetIter(
 GtkTreePath* MProjectTree::GetPath(
 	GtkTreeIter*	inIter)
 {
-	GtkTreePath* path = gtk_tree_path_new();
+//PRINT((__func__));
+
+	GtkTreePath* path;
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
 	
-	while (item->GetParent() != nil)
+	if (item->GetParent() == nil)
+		path = gtk_tree_path_new_first();
+	else
 	{
-		gtk_tree_path_prepend_index(path, item->GetPosition());
-		item = item->GetParent();
+		path = gtk_tree_path_new();
+		while (item->GetParent() != nil)
+		{
+			gtk_tree_path_prepend_index(path, item->GetPosition());
+			item = item->GetParent();
+		}
 	}
 
 	return path;
@@ -176,6 +192,8 @@ GtkTreePath* MProjectTree::GetPath(
 bool MProjectTree::Next(
 	GtkTreeIter*	ioIter)
 {
+//PRINT((__func__));
+
 	bool result = false;
 
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(ioIter->user_data);
@@ -196,6 +214,8 @@ bool MProjectTree::Children(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inParent)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	if (inParent == nil)
@@ -224,6 +244,8 @@ bool MProjectTree::Children(
 bool MProjectTree::HasChildren(
 	GtkTreeIter*	inIter)
 {
+//PRINT((__func__));
+
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inIter->user_data);
 	MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
 	
@@ -233,8 +255,10 @@ bool MProjectTree::HasChildren(
 int32 MProjectTree::CountChildren(
 	GtkTreeIter*	inIter)
 {
+//PRINT((__func__));
+
 	int32 result = 0;
-	
+
 	if (inIter == nil)
 		result = mItems->Count();
 	else
@@ -254,6 +278,8 @@ bool MProjectTree::GetChild(
 	GtkTreeIter*	inParent,
 	int32			inIndex)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	MProjectGroup* group;
@@ -281,6 +307,8 @@ bool MProjectTree::GetParent(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inChild)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	MProjectItem* item = reinterpret_cast<MProjectItem*>(inChild->user_data);
@@ -299,6 +327,8 @@ bool MProjectTree::GetParent(
 void MProjectTree::ProjectItemStatusChanged(
 	MProjectItem*	inItem)
 {
+//PRINT((__func__));
+
 	try
 	{
 		GtkTreeIter iter = {};
@@ -318,6 +348,8 @@ void MProjectTree::ProjectItemStatusChanged(
 void MProjectTree::ProjectItemInserted(
 	MProjectItem*	inItem)
 {
+//PRINT((__func__));
+
 	try
 	{
 		GtkTreeIter iter = {};
@@ -336,6 +368,8 @@ void MProjectTree::ProjectItemInserted(
 
 void MProjectTree::RemoveAll()
 {
+//PRINT((__func__));
+
 	while (mItems->Count() > 0)
 		RemoveItem(mItems->GetItem(0));
 }
@@ -343,6 +377,8 @@ void MProjectTree::RemoveAll()
 void MProjectTree::RemoveItem(
 	MProjectItem*		inItem)
 {
+//PRINT((__func__));
+
 	if (inItem != mItems and mItems->Contains(inItem))
 	{
 		RemoveRecursive(inItem);
@@ -354,6 +390,8 @@ void MProjectTree::RemoveItem(
 bool MProjectTree::RowDraggable(
 	GtkTreePath*		inPath)
 {
+//PRINT((__func__));
+
 	return true;
 }
 
@@ -361,6 +399,8 @@ bool MProjectTree::DragDataGet(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	outData)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	GtkTreeIter iter;
@@ -403,6 +443,8 @@ bool MProjectTree::DragDataGet(
 bool MProjectTree::DragDataDelete(
 	GtkTreePath*		inPath)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	
 	PRINT(("DragDataDelete"));
@@ -421,6 +463,8 @@ bool MProjectTree::DragDataReceived(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inData)
 {
+//PRINT((__func__));
+
 	bool result = false;
 
 	// find the location where to insert the items
@@ -501,6 +545,8 @@ void MProjectTree::AddFiles(
 	MProjectGroup*		inGroup,
 	int32				inIndex)
 {
+//PRINT((__func__));
+
 	for (vector<string>::iterator file = inFiles.begin(); file != inFiles.end(); ++file)
 	{
 		ba::trim(*file);
@@ -522,6 +568,8 @@ void MProjectTree::AddFiles(
 void MProjectTree::RemoveRecursive(
 	MProjectItem*		inItem)
 {
+//PRINT((__func__));
+
 	MProjectGroup* group = dynamic_cast<MProjectGroup*>(inItem);
 	if (group != nil)
 	{
@@ -548,6 +596,8 @@ void MProjectTree::RemoveRecursive(
 void MProjectTree::InsertRecursive(
 	MProjectItem*		inItem)
 {
+//PRINT((__func__));
+
 	ProjectItemInserted(inItem);
 
 	MProjectGroup* group = dynamic_cast<MProjectGroup*>(inItem);
@@ -565,6 +615,8 @@ bool MProjectTree::RowDropPossible(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inData)
 {
+//PRINT((__func__));
+
 	// find the location where to insert the items
 	MProjectGroup* group = mItems;
 
@@ -590,6 +642,8 @@ bool MProjectTree::RowDropPossible(
 MProjectItem* MProjectTree::GetProjectItemForPath(
 	const char*			inPath)
 {
+//PRINT((__func__));
+
 	MProjectItem* result = nil;
 	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
 	
@@ -607,6 +661,8 @@ bool MProjectTree::ProjectItemNameEdited(
 	const char*			inPath,
 	const char*			inNewName)
 {
+//PRINT((__func__));
+
 	bool result = false;
 	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
 	

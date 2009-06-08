@@ -259,7 +259,7 @@ void MProjectCompileAllJob::AddJob(
 // ---------------------------------------------------------------------------
 //	MProjectCompileAllJob::Execute
 
-const uint32 kMaxSimulateousJobs = 2;
+const uint32 kMaxSimulateousJobs = 4;
 
 void MProjectCompileAllJob::Execute()
 {

@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "MDocClosedNotifier.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ MDocClosedNotifier::MDocClosedNotifier(
 {
 	mImpl->mRefCount = 1;
 	mImpl->mFD = inFD;
+////PRINT(("%s: %d", __func__, mImpl->mFD));
 }
 
 MDocClosedNotifier::MDocClosedNotifier(
@@ -30,15 +32,18 @@ MDocClosedNotifier::MDocClosedNotifier(
 {
 	mImpl = inRHS.mImpl;
 	++mImpl->mRefCount;
+//PRINT(("%s: %d", __func__, mImpl->mFD));
 }
 
 MDocClosedNotifier&	MDocClosedNotifier::operator=(
 	const MDocClosedNotifier&	inRHS)
 {
+//PRINT(("%s: %d", __func__, mImpl->mFD));
 	if (this != &inRHS)
 	{
 		if (--mImpl->mRefCount <= 0)
 		{
+//PRINT(("closing"));
 			close(mImpl->mFD);
 			delete mImpl;
 		}
@@ -47,13 +52,16 @@ MDocClosedNotifier&	MDocClosedNotifier::operator=(
 		++mImpl->mRefCount;
 	}
 	
+//PRINT(("%s: %d", __func__, mImpl->mFD));
 	return *this;	
 }
 
 MDocClosedNotifier::~MDocClosedNotifier()
 {
+//PRINT(("%s: %d", __func__, mImpl->mFD));
 	if (--mImpl->mRefCount <= 0)
 	{
+//PRINT(("closing"));
 		close(mImpl->mFD);
 		delete mImpl;
 	}
@@ -61,5 +69,6 @@ MDocClosedNotifier::~MDocClosedNotifier()
 
 int MDocClosedNotifier::GetFD() const
 {
+//PRINT(("%s: %d", __func__, mImpl->mFD));
 	return mImpl->mFD;
 }
