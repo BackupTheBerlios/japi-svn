@@ -101,7 +101,7 @@
 		</group>
 		<group name="Libraries">
 			<file optional="true">libattr.a</file>
-			<file>libboost_system-mt.a</file>
+			<file optional="true">libboost_system-mt.a</file>
 			<file>libboost_thread-mt.a</file>
 			<file>libboost_filesystem-mt.a</file>
 			<file>libboost_iostreams-mt.a</file>

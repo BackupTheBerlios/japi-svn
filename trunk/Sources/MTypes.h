@@ -89,7 +89,8 @@ struct MRegion
 				
 	MRegion&	operator+=(const MRect& r)
 				{
-					gdk_region_union_with_rect(mGdkRegion, r);
+					MRect& c = const_cast<MRect&>(r);
+					gdk_region_union_with_rect(mGdkRegion, c);
 					return *this;
 				}
 

@@ -46,14 +46,8 @@ class MFile
 	explicit			MFile(
 							const char*			inURI);
 					
-	explicit			MFile(
-							GFile*				inFile);
-	
 	MFile&				operator=(
 							const MFile&		rhs);
-
-	MFile&				operator=(
-							GFile*				rhs);
 
 	MFile&				operator=(
 							const fs::path&		rhs);
@@ -80,8 +74,6 @@ class MFile
 	
 	MFile				GetParent() const;
 	
-						operator GFile* () const;
-
 	MFileLoader*		Load();
 
 	MFileSaver*			Save();

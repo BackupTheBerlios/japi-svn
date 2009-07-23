@@ -165,8 +165,8 @@ void MWindow::Hide()
 
 void MWindow::Select()
 {
-	if (GDK_IS_WINDOW(gtk_widget_get_window(GetGtkWidget())) and
-		gdk_window_is_visible(gtk_widget_get_window(GetGtkWidget())))
+	if (GDK_IS_WINDOW(GetGtkWidget()->window) and
+		gdk_window_is_visible(GetGtkWidget()->window))
 	{
 		gtk_window_present(GTK_WINDOW(GetGtkWidget()));
 	}

@@ -872,7 +872,8 @@ void MCairoDeviceImp::ClipRect(
 void MCairoDeviceImp::ClipRegion(
 	MRegion				inRegion)
 {
-	gdk_cairo_region(mContext, inRegion);
+	GdkRegion* gdkRegion = const_cast<GdkRegion*>(inRegion.operator const GdkRegion*());
+	gdk_cairo_region(mContext, gdkRegion);
 	cairo_clip(mContext);
 }
 
@@ -1054,6 +1055,7 @@ void MCairoDeviceImp::DrawWhiteSpace(
 	float				inX,
 	float				inY)
 {
+#if PANGO_VERSION_CHECK(1, 22, 0)
 	int baseLine = pango_layout_get_baseline(mPangoLayout);
 	PangoLayoutLine* line = pango_layout_get_line(mPangoLayout, 0);
 	
@@ -1132,6 +1134,7 @@ void MCairoDeviceImp::DrawWhiteSpace(
 	}
 	
 	cairo_show_glyphs(mContext, &cairo_glyphs[0], cairo_glyphs.size());	
+#endif
 }
 
 void MCairoDeviceImp::DrawText(
