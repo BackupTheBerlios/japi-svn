@@ -1267,10 +1267,11 @@ void MePubDocument::ParseOPF(
 			
 			if (oldDC or dc->ns() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
-			else if (dc->ns() != "http://purl.org/dc/elements/1.1/")
+			else if (dc->ns() != "http://purl.org/dc/elements/1.1/" and
+				dc->ns() != "http://www.idpf.org/2007/opf")
 			{
-				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version"));
-				continue;
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns());
+//				continue;
 			}
 			
 			string content = dc->content();

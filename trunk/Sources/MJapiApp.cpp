@@ -448,8 +448,7 @@ void MJapieApp::RunEventLoop()
 	}
 	catch (...) {}
 
-	uint32 snooper = gtk_key_snooper_install(
-		&MJapieApp::Snooper, nil);
+	uint32 snooper = gtk_key_snooper_install(&MJapieApp::Snooper, nil);
 	
 	g_timeout_add(50, &MJapieApp::Timeout, nil);
 
