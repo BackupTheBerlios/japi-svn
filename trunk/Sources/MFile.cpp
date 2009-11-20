@@ -23,6 +23,7 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "MFile.h"
 #include "MError.h"
@@ -474,12 +475,14 @@ struct MSftpImp : public MFileImp
 	
 	virtual MFileLoader*	Load(MFile& inFile)
 							{
+								THROW(("Unimplemented"));
 //								return new MSftpFileLoader(inFile);
 								return nil;
 							}
 							
 	virtual MFileSaver*		Save(MFile& inFile)
 							{
+								THROW(("Unimplemented"));
 //								return new MSftpFileSaver(inFile);
 								return nil;
 							}
@@ -550,13 +553,16 @@ MFileImp* CreateFileImpForURI(
 			result = new MPathImp(fs::system_complete(path));
 		else if (scheme == "sftp" or scheme == "ssh")
 		{
-			pcrecpp::RE re2("^((\\w+)(:(\\w+))?@)?(\\w+)(:\\d+)?/(.+)");
+			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
 			
-			string s1, s2, username, password, host, file;
-			uint16 port = 22;
-			
+			string s1, s2, username, password, host, port, file;
+
 			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
-				result = new MSftpImp(username, password, host, port, file);
+			{
+				if (port.empty())
+					port = "22";
+				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
+			}
 			else
 				THROW(("Malformed URL: '%s'", inURI.c_str()));
 		}
