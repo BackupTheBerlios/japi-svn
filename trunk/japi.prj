@@ -11,6 +11,7 @@
 	<userpaths>
 		<path>Sources</path>
 		<path>zeep</path>
+		<path>NetSources</path>
 	</userpaths>
 	<libpaths>
 		<path>/usr/local/lib</path>
@@ -40,6 +41,14 @@
 			<file>MUtils.cpp</file>
 			<file>MView.cpp</file>
 			<file>MWindow.cpp</file>
+		</group>
+		<group name="NetSources">
+			<file>MAuthDialog.cpp</file>
+			<file>MKnownHosts.cpp</file>
+			<file>MSftpChannel.cpp</file>
+			<file>MSshAgent.cpp</file>
+			<file>MSshChannel.cpp</file>
+			<file>MSshConnection.cpp</file>
 		</group>
 		<group name="Sources">
 			<file>MJapiApp.cpp</file>
@@ -108,8 +117,10 @@
 			<file>libcrypto.a</file>
 			<file>libexpat.a</file>
 			<file>libpcre.a</file>
+			<file>libpcrecpp.a</file>
 			<file>libuuid.a</file>
 			<file>libtidy.a</file>
+			<file>libcryptopp.a</file>
 		</group>
 	</files>
 	<resources resource-dir="Resources">

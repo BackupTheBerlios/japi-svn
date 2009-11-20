@@ -70,6 +70,12 @@ class MFile
 		
 	std::string			GetScheme() const;
 
+	std::string			GetHost() const;
+	
+	std::string			GetUser() const;
+	
+	uint16				GetPort() const;
+
 	std::string			GetFileName() const;
 	
 	MFile				GetParent() const;

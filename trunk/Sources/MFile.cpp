@@ -16,6 +16,8 @@
 #include <cerrno>
 #include <limits>
 
+#include <pcrecpp.h>
+
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -393,6 +395,101 @@ struct MPathImp : public MFileImp
 	fs::path				mPath;
 };
 
+struct MSftpImp : public MFileImp
+{
+							MSftpImp(
+								const string&	inUsername,
+								const string&	inPassword,
+								const string&	inHostname,
+								uint16			inPort,
+								const fs::path&	inFilePath)
+								: mUsername(inUsername)
+								, mPassword(inPassword)
+								, mHostname(inHostname)
+								, mPort(inPort)
+								, mFilePath(inFilePath)
+							{
+								NormalizePath(mFilePath);
+							}
+
+	virtual bool			Equivalent(const MFileImp* rhs) const
+							{
+								const MSftpImp* prhs = dynamic_cast<const MSftpImp*>(rhs);
+								return prhs != nil and
+									mUsername == prhs->mUsername and
+									mPassword == prhs->mPassword and
+									mHostname == prhs->mHostname and
+									mPort == prhs->mPort and
+									fs::equivalent(mFilePath, prhs->mFilePath);
+							}
+							
+	virtual std::string		GetURI() const
+							{
+								stringstream s;
+
+								s << "sftp://" << mUsername;
+								if (not mPassword.empty())
+									s << ':' << mPassword;
+								s << '@' << mHostname;
+								if (mPort != 22)
+									s << ':' << mPort;
+								s << '/' << mFilePath;
+
+								return s.str();
+							}
+							
+	virtual fs::path		GetPath() const
+							{
+								return mFilePath;
+							}
+
+	virtual std::string		GetScheme() const
+							{
+								return "sftp";
+							}
+
+	string					GetHost() const				{ return mHostname; }
+	string					GetUser() const				{ return mUsername; }
+	uint16					GetPort() const				{ return mPort; }
+							
+	virtual std::string		GetFileName() const
+							{
+								return mFilePath.leaf();
+							}
+							
+	virtual bool			IsLocal() const
+							{
+								return false;
+							}
+							
+	virtual MFileImp*		GetParent() const
+							{
+								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath.branch_path());
+							}
+	
+	virtual MFileImp*		GetChild(const fs::path& inSubPath) const
+							{
+								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath / inSubPath);
+							}
+	
+	virtual MFileLoader*	Load(MFile& inFile)
+							{
+//								return new MSftpFileLoader(inFile);
+								return nil;
+							}
+							
+	virtual MFileSaver*		Save(MFile& inFile)
+							{
+//								return new MSftpFileSaver(inFile);
+								return nil;
+							}
+
+  private:
+	string					mUsername, mPassword, mHostname;
+	uint16					mPort;
+	fs::path				mFilePath;
+};
+
 // --------------------------------------------------------------------
 
 MFile::MFile()
@@ -441,19 +538,33 @@ MFileImp* CreateFileImpForURI(
 	const std::string&	inURI)
 {
 	MFileImp* result = nil;
+
+	pcrecpp::RE re("^(\\w+)://(.+)");
+	string scheme, path;
 	
-	if (fs::exists(inURI))
+	if (re.FullMatch(inURI, &scheme, &path))
 	{
-		result = new MPathImp(fs::system_complete(inURI));
-	}
-	else if (ba::starts_with(inURI, "file://"))
-	{
-		string path = inURI.substr(7);
 		URLDecode(path);
-		result = new MPathImp(fs::system_complete(path));
+		
+		if (scheme == "file")
+			result = new MPathImp(fs::system_complete(path));
+		else if (scheme == "sftp" or scheme == "ssh")
+		{
+			pcrecpp::RE re2("^((\\w+)(:(\\w+))?@)?(\\w+)(:\\d+)?/(.+)");
+			
+			string s1, s2, username, password, host, file;
+			uint16 port = 22;
+			
+			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
+				result = new MSftpImp(username, password, host, port, file);
+			else
+				THROW(("Malformed URL: '%s'", inURI.c_str()));
+		}
+		else
+			THROW(("Unsupported URL scheme %s", path.c_str()));
 	}
-	else
-		THROW(("Unsupported URL scheme %s", inURI.c_str()));
+	else // assume it is a simple path
+		result = new MPathImp(fs::system_complete(inURI));
 	
 	return result;
 }
@@ -572,6 +683,39 @@ string MFile::GetScheme() const
 	return result;
 }
 
+string MFile::GetHost() const
+{
+	string result;
+	
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetHost();
+	
+	return result;
+}
+	
+string MFile::GetUser() const
+{
+	string result;
+	
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetUser();
+	
+	return result;
+}
+	
+uint16 MFile::GetPort() const
+{
+	uint16 result;
+	
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetPort() ;
+	
+	return result;
+}
+
 string MFile::GetFileName() const
 {
 	string result;
@@ -678,9 +822,6 @@ ostream& operator<<(ostream& lhs, const MFile& rhs)
 	lhs << rhs.GetURI();
 	return lhs;
 }
-
-
-
 
 namespace {
 

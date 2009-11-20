@@ -88,15 +88,18 @@ void MDocument::DoLoad()
 	
 	if (mFileLoader != nil)
 		THROW(("File is already being loaded"));
-	
-	mFileLoader = mFile.Load();
-	
-	SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
-	SetCallback(mFileLoader->eError, this, &MDocument::IOError);
-	SetCallback(mFileLoader->eReadFile, this, &MDocument::ReadFile);
-	SetCallback(mFileLoader->eFileLoaded, this, &MDocument::IOFileLoaded);
-	
-	mFileLoader->DoLoad();
+
+	if (mFile.IsLocal() == false or mFile.Exists())
+	{
+		mFileLoader = mFile.Load();
+		
+		SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
+		SetCallback(mFileLoader->eError, this, &MDocument::IOError);
+		SetCallback(mFileLoader->eReadFile, this, &MDocument::ReadFile);
+		SetCallback(mFileLoader->eFileLoaded, this, &MDocument::IOFileLoaded);
+		
+		mFileLoader->DoLoad();
+	}
 }
 
 // ---------------------------------------------------------------------------
