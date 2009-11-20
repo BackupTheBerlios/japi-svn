@@ -31,6 +31,8 @@
 #include "MUtils.h"
 #include "MStrings.h"
 #include "MJapiApp.h"
+#include "MPreferences.h"
+#include "MSftpChannel.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -396,6 +398,116 @@ struct MPathImp : public MFileImp
 	fs::path				mPath;
 };
 
+// --------------------------------------------------------------------
+// SFTP implementations
+
+class MSftpFileLoader : public MFileLoader
+{
+  public:
+					MSftpFileLoader(
+						MFile&			inUrl);
+	
+	virtual void	DoLoad();
+	
+	virtual void	Cancel();
+
+  private:
+
+	void			SFTPGetChannelEvent(
+						int				inMessage);
+
+	void			SFTPChannelMessage(
+						string			inMessage);
+
+	auto_ptr<MSftpChannel>
+					mSFTPChannel;
+	int64			mFileSize;
+	string			mData;
+};
+
+MSftpFileLoader::MSftpFileLoader(
+	MFile&			inUrl)
+	: MFileLoader(inUrl)
+{
+}
+
+void MSftpFileLoader::DoLoad()
+{
+	mSFTPChannel.reset(new MSftpChannel(mFile));
+
+	SetCallback(mSFTPChannel->eChannelEvent,
+		this, &MSftpFileLoader::SFTPGetChannelEvent);
+	SetCallback(mSFTPChannel->eChannelMessage,
+		this, &MSftpFileLoader::SFTPChannelMessage);
+	
+	mFileSize = 0;
+	mData.clear();
+}
+
+void MSftpFileLoader::Cancel()
+{
+	mSFTPChannel.release();
+}
+
+void MSftpFileLoader::SFTPGetChannelEvent(
+	int		inMessage)
+{
+	switch (inMessage)
+	{
+		case SFTP_INIT_DONE:
+			eProgress(0.f, _("Connected"));
+			mSFTPChannel->ReadFile(mFile.GetPath().string(),
+				Preferences::GetInteger("text transfer", true));
+			break;
+		
+		case SFTP_FILE_SIZE_KNOWN:
+			eProgress(0.f, _("File size known"));
+			mFileSize = mSFTPChannel->GetFileSize();
+			break;
+		
+		case SFTP_DATA_AVAILABLE:
+			mData += mSFTPChannel->GetData();
+			if (mFileSize > 0)
+			{
+				eProgress(
+					float(mData.length()) / mFileSize,
+					_("Receiving data"));
+			}
+			break;
+		
+		case SFTP_DATA_DONE:
+		{
+			eProgress(1.0f, _("Data received"));
+
+			stringstream data(mData);
+			eReadFile(data);
+
+			mData.clear();
+
+			mSFTPChannel->CloseFile();
+			break;
+		}
+		
+		case SFTP_FILE_CLOSED:
+			eFileLoaded();
+			mSFTPChannel->Close();
+			break;
+
+		case SSH_CHANNEL_TIMEOUT:
+			eProgress(0, _("Timeout"));
+			break;
+	}
+}
+
+void MSftpFileLoader::SFTPChannelMessage(
+	string	 	inMessage)
+{
+	float fraction = 0;
+	if (mFileSize > 0)
+		fraction = float(mData.size()) / mFileSize;
+	eProgress(fraction, inMessage);
+}
+
 struct MSftpImp : public MFileImp
 {
 							MSftpImp(
@@ -421,7 +533,7 @@ struct MSftpImp : public MFileImp
 									mPassword == prhs->mPassword and
 									mHostname == prhs->mHostname and
 									mPort == prhs->mPort and
-									fs::equivalent(mFilePath, prhs->mFilePath);
+									mFilePath == prhs->mFilePath;
 							}
 							
 	virtual std::string		GetURI() const
@@ -475,9 +587,7 @@ struct MSftpImp : public MFileImp
 	
 	virtual MFileLoader*	Load(MFile& inFile)
 							{
-								THROW(("Unimplemented"));
-//								return new MSftpFileLoader(inFile);
-								return nil;
+								return new MSftpFileLoader(inFile);
 							}
 							
 	virtual MFileSaver*		Save(MFile& inFile)
@@ -553,7 +663,7 @@ MFileImp* CreateFileImpForURI(
 			result = new MPathImp(fs::system_complete(path));
 		else if (scheme == "sftp" or scheme == "ssh")
 		{
-			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
+			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?(/.+)");
 			
 			string s1, s2, username, password, host, port, file;
 

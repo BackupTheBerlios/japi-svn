@@ -137,6 +137,8 @@
 			<resource>Alerts/read-only-alert.xml</resource>
 			<resource>Alerts/error-alert.xml</resource>
 			<resource>Alerts/exception-alert.xml</resource>
+			<resource>Alerts/host-key-changed-alert.xml</resource>
+			<resource>Alerts/unknown-host-alert.xml</resource>
 			<resource>Alerts/stop-building-alert.xml</resource>
 		</group>
 		<group name="Dialogs">

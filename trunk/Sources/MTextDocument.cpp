@@ -4796,7 +4796,7 @@ void MTextDocument::IOProgress(
 	float			inProgress,
 	const string&	inMessage)
 {
-	eSSHProgress(inProgress, _("Receiving data"));
+	eSSHProgress(inProgress, _(inMessage));
 	MDocument::IOProgress(inProgress, inMessage);
 }
 
