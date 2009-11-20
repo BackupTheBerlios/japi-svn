@@ -413,7 +413,7 @@ class MSftpFileLoader : public MFileLoader
 
   private:
 
-	void			SFTPGetChannelEvent(
+	void			SFTPChannelEvent(
 						int				inMessage);
 
 	void			SFTPChannelMessage(
@@ -436,7 +436,7 @@ void MSftpFileLoader::DoLoad()
 	mSFTPChannel.reset(new MSftpChannel(mFile));
 
 	SetCallback(mSFTPChannel->eChannelEvent,
-		this, &MSftpFileLoader::SFTPGetChannelEvent);
+		this, &MSftpFileLoader::SFTPChannelEvent);
 	SetCallback(mSFTPChannel->eChannelMessage,
 		this, &MSftpFileLoader::SFTPChannelMessage);
 	
@@ -449,7 +449,7 @@ void MSftpFileLoader::Cancel()
 	mSFTPChannel.release();
 }
 
-void MSftpFileLoader::SFTPGetChannelEvent(
+void MSftpFileLoader::SFTPChannelEvent(
 	int		inMessage)
 {
 	switch (inMessage)
@@ -482,9 +482,9 @@ void MSftpFileLoader::SFTPGetChannelEvent(
 			stringstream data(mData);
 			eReadFile(data);
 
-			mData.clear();
-
 			mSFTPChannel->CloseFile();
+			
+//			delete this;	// oohh, tricky?
 			break;
 		}
 		
@@ -507,6 +507,119 @@ void MSftpFileLoader::SFTPChannelMessage(
 		fraction = float(mData.size()) / mFileSize;
 	eProgress(fraction, inMessage);
 }
+
+// --------------------------------------------------------------------
+
+class MSftpFileSaver : public MFileSaver
+{
+  public:
+					MSftpFileSaver(
+						MFile&					inFile);
+
+	virtual void	DoSave();
+
+  private:
+
+	void			SFTPChannelEvent(
+						int				inMessage);
+
+	void			SFTPChannelMessage(
+						string			inMessage);
+
+	auto_ptr<MSftpChannel>
+					mSFTPChannel;
+	int64			mSFTPOffset;
+	int64			mSFTPSize;
+	string			mSFTPData;
+};
+
+MSftpFileSaver::MSftpFileSaver(
+	MFile&			inFile)
+	: MFileSaver(inFile)
+{
+}
+
+void MSftpFileSaver::DoSave()
+{
+	mSFTPChannel.reset(new MSftpChannel(mFile));
+
+	{
+		io::filtering_ostream out(io::back_inserter(mSFTPData));
+		eWriteFile(out);
+	}
+
+	SetCallback(mSFTPChannel->eChannelEvent,
+		this, &MSftpFileSaver::SFTPChannelEvent);
+	SetCallback(mSFTPChannel->eChannelMessage,
+		this, &MSftpFileSaver::SFTPChannelMessage);
+
+	mSFTPOffset = 0;
+	mSFTPSize = mSFTPData.length();
+}
+
+void MSftpFileSaver::SFTPChannelEvent(
+	int				inMessage)
+{
+	const uint32 kBufferSize = 10240;
+	
+	switch (inMessage)
+	{
+		case SFTP_INIT_DONE:
+			eProgress(0.f, _("Connected"));
+			mSFTPChannel->WriteFile(mFile.GetPath().string(),
+				Preferences::GetInteger("text transfer", true));
+			break;
+		
+		case SFTP_CAN_SEND_DATA:
+			if (mSFTPOffset < mSFTPSize)
+			{
+				uint32 k = mSFTPSize - mSFTPOffset;
+				if (k > kBufferSize)
+					k = kBufferSize;
+
+				eProgress(
+					float(mSFTPOffset) / mSFTPSize,
+					_("Sending data"));
+
+				mSFTPChannel->SendData(mSFTPData.substr(mSFTPOffset, k));
+				mSFTPOffset += k;
+			}
+			else
+			{
+				eProgress(1.0f, _("Closing file"));
+
+				mSFTPChannel->CloseFile();
+//				SetModified(false);
+//
+//				if (Preferences::GetInteger("loguploads", false) != 0)
+//					LogUpload();
+			}
+			break;
+
+		case SFTP_FILE_CLOSED:
+//			eProgress(-1.f, _("done"));
+			eFileWritten();
+			mSFTPChannel->Close();
+			
+//			SetFileInfo(false, fs::last_write_time(path));
+			break;
+
+		case SSH_CHANNEL_TIMEOUT:
+			eProgress(0, _("Timeout"));
+			break;
+	}
+}
+
+void MSftpFileSaver::SFTPChannelMessage(
+	string	 	inMessage)
+{
+	float fraction = 0;
+	if (mSFTPSize > 0)
+		fraction = float(mSFTPData.size()) / mSFTPSize;
+	eProgress(fraction, inMessage);
+}
+
+// --------------------------------------------------------------------
 
 struct MSftpImp : public MFileImp
 {
@@ -592,9 +705,7 @@ struct MSftpImp : public MFileImp
 							
 	virtual MFileSaver*		Save(MFile& inFile)
 							{
-								THROW(("Unimplemented"));
-//								return new MSftpFileSaver(inFile);
-								return nil;
+								return new MSftpFileSaver(inFile);
 							}
 
   private:
