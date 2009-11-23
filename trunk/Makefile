@@ -7,17 +7,17 @@
 PREFIX		= /usr/local
 
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
-LIBS		= boost_thread-mt boost_filesystem-mt boost_iostreams-mt expat uuid crypto tidy
+LIBS		= boost_thread-mt boost_filesystem-mt boost_iostreams-mt expat uuid crypto tidy crypto++ pcrecpp
 WARNINGS	= all no-multichar no-unknown-pragmas
-SOURCES		= $(wildcard Sources/*.cpp zeep/*.cpp)
+SOURCES		= $(wildcard Sources/*.cpp zeep/*.cpp NetSources/*.cpp)
 OBJDIR		= Obj.temp/
 OBJECTS		= $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
-VPATH		:= :Sources:zeep:
+VPATH		:= :Sources:zeep:NetSources:
 LDFLAGS		= -g $(shell pkg-config --libs libglade-2.0 gstreamer-0.10 gthread-2.0) $(LIBPATHS:%=-L%) $(LIBS:%=-l%)
 CC			= c++
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8 -pipe $(WARNINGS:%=-W%) $(DEFINES:%=-D%)
 CFLAGS		+= $(shell pkg-config --cflags libglade-2.0 gstreamer-0.10)
-CFLAGS		+= $(addprefix -iquote, Sources zeep)
+CFLAGS		+= $(addprefix -iquote, Sources zeep NetSources)
 
 OS		= $(shell uname -s)
 

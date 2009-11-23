@@ -70,7 +70,7 @@ class MResource
 	MResource			find(
 							const std::string&	inPath);
 
-	class iterator : public boost::iterator_facade<iterator, MResource, boost::forward_traversal_tag>
+	class iterator : public boost::iterator_facade<iterator, MResource&, boost::forward_traversal_tag>
 	{
 		friend class boost::iterator_core_access;
 		friend class MResource;

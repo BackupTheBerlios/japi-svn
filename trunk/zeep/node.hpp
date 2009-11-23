@@ -78,7 +78,7 @@ class node : public boost::noncopyable, public boost::enable_shared_from_this<no
 	void				do_to_all(
 							F					func);
 
-	class iterator : public boost::iterator_facade<iterator, node, boost::forward_traversal_tag>
+	class iterator : public boost::iterator_facade<iterator, node&, boost::forward_traversal_tag>
 	{
 	  public:
 						iterator() {}
@@ -101,7 +101,7 @@ class node : public boost::noncopyable, public boost::enable_shared_from_this<no
 	iterator			begin()									{ return iterator(m_children); }
 	iterator			end()									{ return iterator(); }
 
-	class const_iterator : public boost::iterator_facade<const_iterator, node const, boost::forward_traversal_tag>
+	class const_iterator : public boost::iterator_facade<const_iterator, node const&, boost::forward_traversal_tag>
 	{
 	  public:
 						const_iterator() {}
@@ -126,7 +126,7 @@ class node : public boost::noncopyable, public boost::enable_shared_from_this<no
 	const_iterator		begin() const							{ return const_iterator(m_children); }
 	const_iterator		end() const								{ return const_iterator(); }
 
-	class attribute_iterator : public boost::iterator_facade<attribute_iterator, attribute, boost::forward_traversal_tag>
+	class attribute_iterator : public boost::iterator_facade<attribute_iterator, attribute&, boost::forward_traversal_tag>
 	{
 	  public:
 						attribute_iterator() {}
@@ -151,7 +151,7 @@ class node : public boost::noncopyable, public boost::enable_shared_from_this<no
 	attribute_iterator	attribute_begin()						{ return attribute_iterator(m_attributes); }
 	attribute_iterator	attribute_end()							{ return attribute_iterator(); }
 
-	class const_attribute_iterator : public boost::iterator_facade<const_attribute_iterator, attribute const, boost::forward_traversal_tag>
+	class const_attribute_iterator : public boost::iterator_facade<const_attribute_iterator, attribute const&, boost::forward_traversal_tag>
 	{
 	  public:
 						const_attribute_iterator() {}
