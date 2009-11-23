@@ -1,0 +1,8 @@
+<?xml version="1.0" standalone="yes" ?>
+<alert type="warning">
+	<message>The ePub document ^0 does not contain the file ^1 yet, do you want to add it?</message>
+	<buttons>
+		<button title="Add" cmd="1" default="true" />
+		<button title="Cancel" cmd="2"/>
+	</buttons>
+</alert>

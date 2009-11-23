@@ -1,0 +1,87 @@
+﻿Te doen
+
+- ePub
+	- zoeken in alle ePub items
+	- revert op ePub werkt nog niet?
+	- guide
+	? adobe page dinges
+
+Moet af:
+
+- doorgaan met afsluiten na 'Save Changes?' dialog
+
+- link order aan de praat helpen
+- upper/lower case menu maken
+- accelerator-achtig iets
+- keybinding prefs panel
+- bestandsinfo dialoog venster
+- waarschuwen bij inconsistente einde regel tekens
+- message window met inline document view
+
+- resources lib maken voor distributie/andere resources opslag?
+
+- xml parser
+	- pad in popup?
+
+- html parser
+	- functie parser voor HTML/JS/CSS
+	- open 'include' files
+
+- meer vertalen
+
+- Diff window
+	- default mappen kan beter
+	- mooie, met beziers?
+
+- utf-8 problemen bij lopen door tekst
+- utf-8 validatie voor het doorsturen naar pango
+
+- sound crash?
+
+- keyboard shortcuts voor alert dialogs
+
+- clean up code na leaks test
+
+- verbeteringen project
+	- optional attribuut van bibliotheken kunnen wijzigen
+	- 'touchen' van source files mogelijk maken
+	- keyboard afhandeling
+	- configuratie van compiler, koppelen aan extensie(s)
+
+Leuk om te hebben:
+
+- een 'normalize unicode' menu item
+
+- print opties, print header
+
+- project templates
+
+- overnemen muisklik afhandeling van
+	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
+
+- libglade vervangen door gtkbuilder (als gtkbuilder werkt)
+
+- spelling checker
+- Invoegen... menu item(s)
+- tags support
+
+- Afronden Find Dialog:
+	- Replace All in Multi mode verbeteren (melding aantal?)
+
+- toch een rpm/installer?
+
+- fortran language plugin
+
+- regelnummer vlak
+
+- subversion support
+
+- libp11 support?
+
+- Lange foutmeldingen wrappen in meldingen lijsten
+
+- split windows?
+- dynamische menus?
+
+- linker schrijven
+- debugger
