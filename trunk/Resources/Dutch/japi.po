@@ -515,5 +515,8 @@ msgstr "Dit bestand is gemarkeerd als alleen lezen, wijzigingen kunnen niet word
 msgid "Failed to open file %s for writing"
 msgstr "Kan niet schrijven naar bestand '%s'"
 
+msgid "Failed to open connection to running japi: "
+msgstr "Kon geen contact leggen met reeds actieve japi: "
+
 msgid "Size"
 msgstr "Grootte"

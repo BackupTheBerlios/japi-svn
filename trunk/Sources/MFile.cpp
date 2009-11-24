@@ -653,10 +653,15 @@ struct MSftpImp : public MFileImp
 							{
 								stringstream s;
 
-								s << "sftp://" << mUsername;
-								if (not mPassword.empty())
-									s << ':' << mPassword;
-								s << '@' << mHostname;
+								s << "ssh://";
+								if (not mUsername.empty())
+								{
+									s << mUsername;
+									if (not mPassword.empty())
+										s << ':' << mPassword;
+									s << '@';
+								}
+								s << mHostname;
 								if (mPort != 22)
 									s << ':' << mPort;
 								s << '/' << mFilePath;
@@ -671,7 +676,7 @@ struct MSftpImp : public MFileImp
 
 	virtual std::string		GetScheme() const
 							{
-								return "sftp";
+								return "ssh";
 							}
 
 	string					GetHost() const				{ return mHostname; }
@@ -934,7 +939,7 @@ string MFile::GetUser() const
 	
 uint16 MFile::GetPort() const
 {
-	uint16 result;
+	uint16 result = 22;
 	
 	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
 	if (imp != nil)

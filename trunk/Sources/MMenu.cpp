@@ -515,6 +515,17 @@ bool MMenu::GetRecentItem(
 	return result;
 }
 
+void MMenu::AddToRecentMenu(
+	const MFile&		inFileRef)
+{
+	string uri = inFileRef.GetURI();
+	
+	if (gtk_recent_manager_has_item(MRecentItems::Instance(), uri.c_str()))
+		gtk_recent_manager_remove_item(MRecentItems::Instance(), uri.c_str(), nil);
+	
+	gtk_recent_manager_add_item(MRecentItems::Instance(), uri.c_str());
+}
+
 void MMenu::SetTarget(
 	MHandler*		inTarget)
 {
@@ -803,13 +814,3 @@ void MMenubar::SetTarget(
 		(*m)->SetTarget(inTarget);
 }
 
-void MMenu::AddToRecentMenu(
-	const MFile&		inFileRef)
-{
-	string uri = inFileRef.GetURI();
-	
-	if (gtk_recent_manager_has_item(MRecentItems::Instance(), uri.c_str()))
-		gtk_recent_manager_remove_item(MRecentItems::Instance(), uri.c_str(), nil);
-	
-	gtk_recent_manager_add_item(MRecentItems::Instance(), uri.c_str());
-}

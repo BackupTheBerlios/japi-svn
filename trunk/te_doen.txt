@@ -1,4 +1,10 @@
-﻿Te doen
+﻿Bugs
+
+- 'stale' /tmp/japi.x.socket bestand?
+- 
+
+
+Te doen
 
 - ePub
 	- zoeken in alle ePub items

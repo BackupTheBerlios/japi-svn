@@ -61,7 +61,6 @@ fs::path gExecutablePath, gPrefixPath;
 const char
 	kSocketName[] = "/tmp/japi.%d.socket";
 
-
 namespace {
 	
 const uint32
@@ -70,65 +69,22 @@ const uint32
 
 // --------------------------------------------------------------------
 
-MJapieApp::MJapieApp(
-	bool				inForked,
-	MFilesToOpenList&	inFilesToOpen)
+MJapieApp::MJapieApp()
 	: MHandler(nil)
 	, eUpdateSpecialMenu(this, &MJapieApp::UpdateSpecialMenu)
 	, mSocketFD(-1)
 	, mQuit(false)
 	, mQuitPending(false)
-	, mInitialised(false)
-	, mFilesToOpenAtStart(inFilesToOpen)
+	, mInitialized(false)
 {
 	// set the global pointing to us
 	gApp = this;
-	
-	if (inForked)
-	{
-		mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
-	
-		struct sockaddr_un addr = {};
-		addr.sun_family = AF_LOCAL;
-		snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
-		
-		unlink(addr.sun_path);	// allowed to fail
-	
-		int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
-	
-		if (err < 0)
-			cerr << _("bind failed: ") << strerror(errno) << endl;
-		else
-		{
-			err = listen(mSocketFD, 5);
-			if (err < 0)
-				cerr << _("Failed to listen to socket: ") << strerror(errno) << endl;
-			else
-			{
-				int flags = fcntl(mSocketFD, F_GETFL, 0);
-				if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
-					cerr << _("Failed to set mSocketFD non blocking: ") << strerror(errno) << endl;
-			}
-		}
-	
-		if (err != 0)
-		{
-			close(mSocketFD);
-			mSocketFD = -1;
-		}
-	}
 }
 
 MJapieApp::~MJapieApp()
 {
 	if (mSocketFD >= 0)
-	{
 		close(mSocketFD);
-	
-		char path[1024] = {};
-		snprintf(path, sizeof(path), kSocketName, getuid());
-		unlink(path);
-	}
 }
 
 bool MJapieApp::ProcessCommand(
@@ -266,7 +222,6 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
-//			new MCoverFlowWindow();
 			break;
 		
 		case cmd_ShowDiffWindow:
@@ -888,40 +843,14 @@ gboolean MJapieApp::Timeout(
 
 void MJapieApp::Pulse()
 {
-	if (not mInitialised)
-	{
-		mInitialised = true;
-
-		for (MFilesToOpenList::iterator file = mFilesToOpenAtStart.begin(); file != mFilesToOpenAtStart.end(); ++file)
-		{
-			try
-			{
-				MDocument* doc = gApp->OpenOneDocument(file->second);
-				if (doc != nil)
-				{
-					DisplayDocument(doc);
-				
-					if (file->first > 0 and dynamic_cast<MTextDocument*>(doc) != nil)
-						static_cast<MTextDocument*>(doc)->GoToLine(file->first - 1);
-				}
-			}
-			catch (exception& e)
-			{
-				DisplayError(e);
-			}
-		}
-
-		if (MDocument::GetFirstDocument() == nil)
-			DoNew();
-	}
-	
 	MWindow::RecycleWindows();
 	
 	if (mSocketFD >= 0)
 		ProcessSocketMessages();
-	
+
 	if (gQuit or
-		(MWindow::GetFirstWindow() == nil and
+		(mInitialized and
+		 MWindow::GetFirstWindow() == nil and
 		 MProject::Instance() == nil))
 	{
 		DoQuit();
@@ -1023,6 +952,8 @@ void MJapieApp::ProcessSocketMessages()
 				
 				if (doc != nil)
 				{
+					mInitialized = true;
+					
 					DisplayDocument(doc);
 					doc->AddNotifier(notify, readStdin);
 					
@@ -1039,66 +970,132 @@ void MJapieApp::ProcessSocketMessages()
 	}
 }
 
-int OpenSocketToServer()
+namespace {
+
+int OpenSocket(
+	struct sockaddr_un&		addr)
 {
-	int result = -1;
-
-	struct sockaddr_un addr = {};
-	addr.sun_family = AF_LOCAL;
-	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
-
+	int sockfd = -1;
+	
 	if (fs::exists(fs::path(addr.sun_path)))
 	{
-		result = socket(AF_LOCAL, SOCK_STREAM, 0);
-		if (result < 0)
-			cerr << "sockfd failed: " << strerror(errno) << endl;
+		sockfd = socket(AF_LOCAL, SOCK_STREAM, 0);
+		if (sockfd < 0)
+			cerr << "creating socket failed: " << strerror(errno) << endl;
 		else
 		{
-			int err = connect(result, (const sockaddr*)&addr, sizeof(addr));
+			int err = connect(sockfd, (const sockaddr*)&addr, sizeof(addr));
 			if (err < 0)
 			{
-				close(result);
-				result = -1;
+				close(sockfd);
+				sockfd = -1;
+
+				unlink(addr.sun_path);	// allowed to fail
 			}
 		}
 	}
 	
-	return result;
+	return sockfd;
+}
+	
 }
 
-void ForkServer(
-	const MJapieApp::MFilesToOpenList&	inDocs,
-	bool								inReadStdin)
+bool MJapieApp::IsServer()
 {
-	int sockfd = OpenSocketToServer();
+	bool isServer = false;
+
+	struct sockaddr_un addr = {};
+	addr.sun_family = AF_LOCAL;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), kSocketName, getuid());
 	
-	if (sockfd < 0)
+	mSocketFD = OpenSocket(addr);
+
+	if (mSocketFD == -1)
 	{
-		// no server available, apparently. Create one
-		if (fork() == 0)
+		isServer = true;
+
+		// So we're supposed to become a server
+		// We will fork here and open a new socket
+		// We use a pipe to let the client wait for the server
+
+		int fd[2];
+		(void)pipe(fd);
+		
+		int pid = fork();
+		
+		if (pid == -1)
+		{
+			close(fd[0]);
+			close(fd[1]);
+			
+			cerr << _("Fork failed: ") << strerror(errno) << endl;
+			
+			return false;
+		}
+		
+		if (pid == 0)	// forked process (child which becomes the server)
 		{
 			// detach from the process group, create new
 			// to avoid being killed by a CNTRL-C in the shell
 			setpgid(0, 0);
-			return;
+
+			// now setup the socket
+			mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
+			int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
+		
+			if (err < 0)
+				cerr << _("bind failed: ") << strerror(errno) << endl;
+			else
+			{
+				err = listen(mSocketFD, 5);
+				if (err < 0)
+					cerr << _("Failed to listen to socket: ") << strerror(errno) << endl;
+				else
+				{
+					int flags = fcntl(mSocketFD, F_GETFL, 0);
+					if (fcntl(mSocketFD, F_SETFL, flags | O_NONBLOCK))
+						cerr << _("Failed to set mSocketFD non blocking: ") << strerror(errno) << endl;
+				}
+			}
+			
+			write(fd[1], " ", 1);
+			close(fd[0]);
+			close(fd[1]);
 		}
-		
-		// give server time to start up
-		sleep(1);
-		
-		// and try to connect again
-		sockfd = OpenSocketToServer();
+		else
+		{
+			// client (parent process). Wait until the server has finished setting up the socket.
+			isServer = false;
+			
+			char c;
+			(void)read(fd[0], &c, 1);
+
+			close(fd[1]);
+			close(fd[0]);
+			
+			// the socket should now really exist
+			mSocketFD = OpenSocket(addr);
+		}
 	}
+	
+	return isServer;
+}
 
-	if (sockfd < 0)
-		error("Failed to open connection to server: %s", strerror(errno));
+bool MJapieApp::IsClient()
+{
+	return mSocketFD >= 0;
+}
 
+void MJapieApp::ProcessArgv(
+	bool				inReadStdin,
+	MFilesToOpenList&	inDocs)
+{
 	MSockMsg msg = { };
 
 	if (inReadStdin)
 	{
 		msg.msg = 'data';
-		(void)write(sockfd, &msg, sizeof(msg));
+		(void)write(mSocketFD, &msg, sizeof(msg));
 	}
 
 	if (inDocs.size() > 0)
@@ -1110,21 +1107,21 @@ void ForkServer(
 			string url = d->second.GetURI();
 			
 			msg.length = url.length() + sizeof(lineNr);
-			(void)write(sockfd, &msg, sizeof(msg));
-			(void)write(sockfd, &lineNr, sizeof(lineNr));
-			(void)write(sockfd, url.c_str(), url.length());
+			(void)write(mSocketFD, &msg, sizeof(msg));
+			(void)write(mSocketFD, &lineNr, sizeof(lineNr));
+			(void)write(mSocketFD, url.c_str(), url.length());
 		}
 	}
 	
 	if (not inReadStdin and inDocs.size() == 0)
 	{
 		msg.msg = 'new ';
-		(void)write(sockfd, &msg, sizeof(msg));
+		(void)write(mSocketFD, &msg, sizeof(msg));
 	}
 	
 	msg.msg = 'done';
 	msg.length = 0;
-	(void)write(sockfd, &msg, sizeof(msg));
+	(void)write(mSocketFD, &msg, sizeof(msg));
 
 	if (inReadStdin)
 	{
@@ -1141,16 +1138,13 @@ void ForkServer(
 				break;
 			
 			if (r > 0)
-				r = write(sockfd, buffer, r);
+				r = write(mSocketFD, buffer, r);
 		}
 	}
 
 	// now block until all windows are closed or server dies
 	char c;
-	read(sockfd, &c, 1);
-
-	// and exit gracefully
-	exit(0);
+	read(mSocketFD, &c, 1);
 }
 
 void usage()
@@ -1361,11 +1355,6 @@ int main(int argc, char* argv[])
 			textdomain("japi");
 		}
 		
-		/* time to initialize GTK+, needed since we might have to create a g_file object */	
-		g_thread_init(nil);
-		gdk_threads_init();
-		gtk_init(&argc, &argv);
-
 		// see if we need to open any files from the commandline
 		int32 lineNr = -1;
 		MJapieApp::MFilesToOpenList filesToOpen;
@@ -1385,39 +1374,46 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-//openlog("japi", LOG_CONS|LOG_PID, LOG_USER);
-//syslog(LOG_INFO, "starting up");
-//
-		if (fork)
+		MJapieApp app;
+		
+		if (fork == false or app.IsServer())
 		{
-			ForkServer(filesToOpen, readStdin);	// returns only for the forked application
-			filesToOpen.clear();				// should be opened by now already
+			g_thread_init(nil);
+			gdk_threads_init();
+			gtk_init(&argc, &argv);
+	
+			InitGlobals();
+			
+			// now start up the normal executable		
+			gtk_window_set_default_icon_name ("accessories-text-editor");
+	
+			struct sigaction act, oact;
+			act.sa_handler = my_signal_handler;
+			sigemptyset(&act.sa_mask);
+			act.sa_flags = 0;
+			::sigaction(SIGTERM, &act, &oact);
+			::sigaction(SIGUSR1, &act, &oact);
+			::sigaction(SIGPIPE, &act, &oact);
+			::sigaction(SIGINT, &act, &oact);
+	
+			gdk_notify_startup_complete();
+
+			app.RunEventLoop();
+		
+			// we're done, clean up
+			MFindDialog::Instance().Close();
+			
+			SaveGlobals();
+	
+			if (fork)
+			{
+				char path[1024] = {};
+				snprintf(path, sizeof(path), kSocketName, getuid());
+				unlink(path);
+			}
 		}
-
-		InitGlobals();
-
-		MJapieApp app(fork, filesToOpen);
-		
-		// now start up the normal executable		
-		gtk_window_set_default_icon_name ("accessories-text-editor");
-
-		struct sigaction act, oact;
-		act.sa_handler = my_signal_handler;
-		sigemptyset(&act.sa_mask);
-		act.sa_flags = 0;
-		::sigaction(SIGTERM, &act, &oact);
-		::sigaction(SIGUSR1, &act, &oact);
-		::sigaction(SIGPIPE, &act, &oact);
-		::sigaction(SIGINT, &act, &oact);
-
-		gdk_notify_startup_complete();
-
-		app.RunEventLoop();
-		
-		// we're done, clean up
-		MFindDialog::Instance().Close();
-		
-		SaveGlobals();
+		else if (app.IsClient())
+			app.ProcessArgv(readStdin, filesToOpen);
 	}
 	catch (exception& e)
 	{

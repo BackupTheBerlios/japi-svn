@@ -28,9 +28,7 @@ class MJapieApp : public MHandler
 
 	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
 	
-						MJapieApp(
-							bool				inForked,
-							MFilesToOpenList&	inFilesToOpen);
+						MJapieApp();
 	
 						~MJapieApp();
 	
@@ -79,6 +77,13 @@ class MJapieApp : public MHandler
 
 	MEventOut<void(double)>						eIdle;
 
+	bool				IsServer();
+	bool				IsClient();
+
+	void				ProcessArgv(
+							bool				inReadStdin,
+							MFilesToOpenList&	inFiles);
+	
 	void				RunEventLoop();
 
   private:
@@ -134,14 +139,12 @@ class MJapieApp : public MHandler
 							gpointer			inFuncData); 
 
 	void				ProcessSocketMessages();
-	
+
 	int					mSocketFD;
 	bool				mQuit;
 	bool				mQuitPending;
-	bool				mInitialised;
+	bool				mInitialized;
 	std::string			mCurrentFolder;
-	
-	MFilesToOpenList	mFilesToOpenAtStart;
 };
 
 extern MJapieApp*	gApp;
