@@ -158,7 +158,7 @@ void MSaverMixin::SaveDocumentAs(
 		
 		THROW_IF_NIL((uri));
 		
-		MFile file(uri);
+		MFile file(uri, true);
 		DoSaveAs(file);
 		g_free(uri);
 		

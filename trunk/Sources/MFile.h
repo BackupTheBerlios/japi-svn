@@ -40,12 +40,15 @@ class MFile
 	explicit			MFile(
 							const fs::path&		inPath);
 					
-	explicit			MFile(
-							const std::string&	inURI);
+						MFile(
+							const char*			inURI,
+							bool				isAbsoluteURI = false);
 					
-	explicit			MFile(
-							const char*			inURI);
-					
+	// GTK has the nasty habit of turning URI's into absolute URI's...
+						MFile(
+							const std::string&	inURI,
+							bool				isAbsoluteURI = false);
+
 	MFile&				operator=(
 							const MFile&		rhs);
 

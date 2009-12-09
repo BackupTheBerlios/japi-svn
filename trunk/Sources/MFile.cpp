@@ -764,8 +764,11 @@ namespace
 {
 
 MFileImp* CreateFileImpForURI(
-	const std::string&	inURI)
+	const char*			inURI,
+	bool				isAbsoluteURI)
 {
+	THROW_IF_NIL(inURI);
+	
 	MFileImp* result = nil;
 
 	pcrecpp::RE re("^(\\w+)://(.+)");
@@ -779,7 +782,7 @@ MFileImp* CreateFileImpForURI(
 			result = new MPathImp(fs::system_complete(path));
 		else if (scheme == "sftp" or scheme == "ssh")
 		{
-			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?(/.+)");
+			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
 			
 			string s1, s2, username, password, host, port, file;
 
@@ -787,13 +790,17 @@ MFileImp* CreateFileImpForURI(
 			{
 				if (port.empty())
 					port = "22";
+
+				if (isAbsoluteURI)
+					file.insert(file.begin(), '/');
+
 				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
 			}
 			else
-				THROW(("Malformed URL: '%s'", inURI.c_str()));
+				THROW(("Malformed URL: '%s'", inURI));
 		}
 		else
-			THROW(("Unsupported URL scheme %s", path.c_str()));
+			THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
 	}
 	else // assume it is a simple path
 		result = new MPathImp(fs::system_complete(inURI));
@@ -804,16 +811,18 @@ MFileImp* CreateFileImpForURI(
 }
 
 MFile::MFile(
-	const char*			inURI)
-	: mImpl(CreateFileImpForURI(inURI))
+	const char*			inURI,
+	bool				isAbsoluteURI)
+	: mImpl(CreateFileImpForURI(inURI, isAbsoluteURI))
 	, mReadOnly(false)
 	, mModDate(0)
 {
 }
 
 MFile::MFile(
-	const string&		inURI)
-	: mImpl(CreateFileImpForURI(inURI))
+	const string&		inURI,
+	bool				isAbsoluteURI)
+	: mImpl(CreateFileImpForURI(inURI.c_str(), isAbsoluteURI))
 	, mReadOnly(false)
 	, mModDate(0)
 {
@@ -1421,13 +1430,15 @@ bool ChooseDirectory(
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		{
 			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
-			
-			MFile url(uri);
-			outDirectory = url.GetPath();
-
-			g_free(uri);
-
-			result = true;
+			if (uri != nil)
+			{
+				MFile url(uri, true);
+				outDirectory = url.GetPath();
+	
+				g_free(uri);
+	
+				result = true;
+			}
 //
 //			gApp->SetCurrentFolder(
 //				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
@@ -1495,15 +1506,17 @@ bool ChooseOneFile(
 		
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 		{
-			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));	
-			
-			ioFile = MFile(uri);
-			g_free(uri);
-
-			gApp->SetCurrentFolder(
-				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
-
-			result = true;
+			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
+			if (uri != nil)
+			{
+				ioFile = MFile(uri, true);
+				g_free(uri);
+	
+				gApp->SetCurrentFolder(
+					gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
+	
+				result = true;
+			}
 		}
 	}
 	catch (exception& e)
@@ -1553,7 +1566,7 @@ bool ChooseFiles(
 			
 			while (file != nil)
 			{
-				MFile url(reinterpret_cast<char*>(file->data));
+				MFile url(reinterpret_cast<char*>(file->data), true);
 
 				g_free(file->data);
 				file->data = nil;

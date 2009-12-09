@@ -461,6 +461,8 @@ void MSftpChannelImp3::ProcessMkDir(
 void MSftpChannelImp3::ReadFile(string inPath)
 {
 	assert(fHandle.size() == 0);
+
+	PRINT(("== ReadFile: '%s'", inPath.c_str()));
 	
 	MSshPacket p;
 	p << uint8(SSH_FXP_OPEN) << fRequestId++ << inPath <<

@@ -1529,7 +1529,7 @@ bool MTextView::DragAccept(
 				if (file->length() == 0)
 					continue;
 				
-				MFile url(*file);
+				MFile url(*file, true);
 				gApp->OpenOneDocument(url);
 			}
 			

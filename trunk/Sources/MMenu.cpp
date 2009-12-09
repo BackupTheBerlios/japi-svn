@@ -225,7 +225,7 @@ void MMenuItem::RecentItemActivated()
 	
 	if (uri != nil)
 	{
-		MFile url(uri);
+		MFile url(uri, true);
 
 		g_free(uri);
 

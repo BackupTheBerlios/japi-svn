@@ -607,7 +607,7 @@ void MJapieApp::DoNewProject()
 		
 		THROW_IF_NIL((uri));
 		
-		MFile url(uri);
+		MFile url(uri, true);
 		g_free(uri);
 		
 		if (not url.IsLocal())
