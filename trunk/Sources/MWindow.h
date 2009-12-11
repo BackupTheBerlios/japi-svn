@@ -15,14 +15,13 @@
 #include "MColor.h"
 #include "MHandler.h"
 
-#include "MCallbacks.h"
 #include "MP2PEvents.h"
 
 namespace boost {
 class thread;
 }
 
-class MWindow : public MView, public MHandler
+class MWindow : public MView, public MHandler, public MSlotProviderMixin
 {
   public:
 							MWindow();
@@ -72,8 +71,13 @@ class MWindow : public MView, public MHandler
 	void					GetMaxPosition(
 								MRect&			outRect) const;
 	
-	// Glade support, views should have a name consisting of four characters
+	// GtkBuilder support, views should have a name consisting of four characters
 	// and so they are accessible by ID which is a uint32.
+	
+	virtual void	GetSlotsForHandler(
+						const char*			inHandler,
+						MSignalHandlerArray&
+											outSlots);
 	
 	void			SetFocus(
 						uint32				inID);
@@ -173,8 +177,6 @@ class MWindow : public MView, public MHandler
 	virtual bool			OnDelete(
 								GdkEvent*		inEvent);
 
-	GladeXML*				GetGladeXML() const				{ return mGladeXML; }
-
 	GtkWidget*				GetWidget(
 								uint32			inID) const;
 
@@ -189,25 +191,24 @@ class MWindow : public MView, public MHandler
 
 	static void				RemoveWindowFromList(
 								MWindow*		inWindow);
-	
+
   private:
 	MSlot<bool()>			mOnDestroy;
 	MSlot<bool(GdkEvent*)>	mOnDelete;
 
-
+	class MGtkBuilder*		mGtkBuilder;
 	std::string				mTitle;
 	bool					mModified;
 	boost::thread*			mTransitionThread;
-	GladeXML*				mGladeXML;
 
 	void					Init();
 
 	void					TransitionTo(
 								MRect			inPosition);
 
-	void					DoForEach(
+	virtual void			DoForEach(
 								GtkWidget*		inWidget);
-
+	
 	static void				DoForEachCallBack(
 								GtkWidget*		inWidget,
 								gpointer		inUserData);
@@ -220,9 +221,8 @@ class MWindow : public MView, public MHandler
 	virtual void			FocusChanged(
 								uint32			inFocussedID);
 
-	static void				ChangedCallBack(
-								GtkWidget*		inWidget,
-								gpointer		inUserData);
+	MSlot<void()>			mChanged;
+	void					Changed();
 
 	static MWindow*			sFirst;
 	MWindow*				mNext;

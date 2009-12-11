@@ -11,7 +11,6 @@
 #ifndef MDIALOG_H
 #define MDIALOG_H
 
-#include <glade/glade-xml.h>
 #include <vector>
 
 #include "MWindow.h"
@@ -46,9 +45,8 @@ class MDialog : public MWindow
 
   private:
 
-	static void		StdBtnClickedCallBack(
-						GtkWidget*			inWidget,
-						gpointer			inUserData);
+	MSlot<void()>	mStdBtnClicked;
+	void			StdBtnClicked();
 
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all

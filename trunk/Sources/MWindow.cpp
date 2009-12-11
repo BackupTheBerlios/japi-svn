@@ -8,7 +8,7 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
-#include <glade/glade-xml.h>
+#include <boost/foreach.hpp>
 #include <gdk/gdkx.h>
 
 #include "MCommands.h"
@@ -17,7 +17,117 @@
 #include "MError.h"
 #include "MJapiApp.h"
 
+#define foreach BOOST_FOREACH
+
 using namespace std;
+
+// GtkBuilder support. 
+
+class MGtkBuilder
+{
+  public:
+					MGtkBuilder(
+						const char*		inData,
+						uint32			inSize);
+	
+					~MGtkBuilder();
+	
+	void			GetSlotsForHandler(
+						const char*		inHandlerName,
+						MSignalHandlerArray&
+										outSlots);
+	
+	GtkWidget*		GetWidget(
+						const char*		inWidgetName);
+	
+  private:
+
+	static void		ConnectSignal(
+						GtkBuilder*		inBuilder,
+						GObject*		inObject,
+						const gchar*	inSignalName,
+						const gchar*	inHandlerName,
+						GObject*		inConnectObject,
+						GConnectFlags	inFlags,
+						gpointer		inUserData);
+
+	struct MSignalInfo
+	{
+		string		signal;
+		string		handler;
+		GObject*	object;
+	};
+	
+	typedef vector<MSignalInfo>	MSignalInfoVector;
+	
+	GtkBuilder*		mGtkBuilder;
+	MSignalInfoVector
+					mSignalInfo;
+};
+
+MGtkBuilder::MGtkBuilder(
+	const char*		inData,
+	uint32			inSize)
+{
+	mGtkBuilder = gtk_builder_new();
+	THROW_IF_NIL(mGtkBuilder);
+
+	gtk_builder_set_translation_domain(mGtkBuilder, "japi");
+
+	GError* err = nil;
+	if (not gtk_builder_add_from_string(mGtkBuilder, inData, inSize, &err))
+	{
+		string error_message = err->message;
+		g_error_free(err);
+		
+		THROW(("Failed to build window from resource: %s", error_message.c_str()));
+	}
+	
+	gtk_builder_connect_signals_full(mGtkBuilder, &MGtkBuilder::ConnectSignal, this);
+}
+
+MGtkBuilder::~MGtkBuilder()
+{
+	g_object_unref(mGtkBuilder);
+}
+
+void MGtkBuilder::ConnectSignal(
+	GtkBuilder*		inBuilder,
+	GObject*		inObject,
+	const gchar*	inSignalName,
+	const gchar*	inHandlerName,
+	GObject*		inConnectObject,
+	GConnectFlags	inFlags,
+	gpointer		inUserData)
+{
+	MGtkBuilder* self = reinterpret_cast<MGtkBuilder*>(inUserData);
+	
+	MSignalInfo info = { inSignalName, inHandlerName, inObject };
+	self->mSignalInfo.push_back(info);
+}
+
+void MGtkBuilder::GetSlotsForHandler(
+	const char*		inHandlerName,
+	MSignalHandlerArray&
+					outSlots)
+{
+	foreach (MSignalInfo& info, mSignalInfo)
+	{
+		if (info.handler == inHandlerName)
+			outSlots.push_back(make_pair(info.object, info.signal));
+	}
+}
+
+GtkWidget* MGtkBuilder::GetWidget(
+	const char*		inWidgetName)
+{
+	return GTK_WIDGET(gtk_builder_get_object(mGtkBuilder, inWidgetName));
+}
+
+// --------------------------------------------------------------------
+//
+//	MWindow
+//
 
 MWindow* MWindow::sFirst = nil;
 MWindow* MWindow::sRecycle = nil;
@@ -27,10 +137,11 @@ MWindow::MWindow()
 	, MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
+	, mGtkBuilder(nil)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
+	, mChanged(this, &MWindow::Changed)
 {
 	Init();
 }
@@ -41,10 +152,11 @@ MWindow::MWindow(
 	, MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
+	, mGtkBuilder(nil)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
+	, mChanged(this, &MWindow::Changed)
 {
 	Init();
 }
@@ -55,30 +167,29 @@ MWindow::MWindow(
 	: MHandler(gApp)
 	, mOnDestroy(this, &MWindow::OnDestroy)
 	, mOnDelete(this, &MWindow::OnDelete)
+	, mGtkBuilder(nil)
 	, mModified(false)
 	, mTransitionThread(nil)
-	, mGladeXML(nil)
 	, mChildFocus(this, &MWindow::ChildFocus)
+	, mChanged(this, &MWindow::Changed)
 {
 	MResource rsrc;
 	
 	if (strcmp(inRootWidgetName, "dialog") == 0)
 		rsrc = MResource::root().find(
-			string("Dialogs/") + inWindowResourceName + ".glade");
+			string("Dialogs/") + inWindowResourceName + ".ui");
 	else
 		rsrc = MResource::root().find(
-			string("Windows/") + inWindowResourceName + ".glade");
+			string("Windows/") + inWindowResourceName + ".ui");
 	
 	if (not rsrc)
 		THROW(("Could not load dialog resource %s", inWindowResourceName));
+
+	mGtkBuilder = new MGtkBuilder(rsrc.data(), rsrc.size());
 	
-	mGladeXML = glade_xml_new_from_buffer(rsrc.data(), rsrc.size(), nil, "japi");
-	if (mGladeXML == nil)
-		THROW(("Failed to create glade from resource"));
-	
-	GtkWidget* w = glade_xml_get_widget(mGladeXML, inRootWidgetName);
+	GtkWidget* w = mGtkBuilder->GetWidget(inRootWidgetName);
 	if (w == nil)
-		THROW(("Failed to extract root widget from glade (%s)", inRootWidgetName));
+		THROW(("Failed to extract root widget from gtk-builder data (%s)", inRootWidgetName));
 	
 	SetWidget(w, false, false);
 
@@ -89,12 +200,7 @@ MWindow::MWindow(
 
 void MWindow::Init()
 {
-	if (mGladeXML != nil)
-	{
-		glade_xml_signal_connect_data(GetGladeXML(), "on_changed", 
-			G_CALLBACK(&MWindow::ChangedCallBack), this);
-	}
-
+	mChanged.Connect(this, "on_changed");
 	mOnDestroy.Connect(GetGtkWidget(), "destroy");
 	mOnDelete.Connect(GetGtkWidget(), "delete_event");
 
@@ -104,8 +210,7 @@ void MWindow::Init()
 
 MWindow::~MWindow()
 {
-	if (mGladeXML != nil)
-		g_object_unref(mGladeXML);
+	delete mGtkBuilder;
 
 #if DEBUG
 	MWindow* w = sFirst;
@@ -405,7 +510,7 @@ GtkWidget* MWindow::GetWidget(
 	uint32			inID) const
 {
 	char name[5];
-	GtkWidget* wdgt = glade_xml_get_widget(GetGladeXML(), IDToName(inID, name));
+	GtkWidget* wdgt = mGtkBuilder->GetWidget(IDToName(inID, name));
 	if (wdgt == nil)
 		THROW(("Widget '%s' does not exist", name));
 	return wdgt;
@@ -732,28 +837,23 @@ void MWindow::ValueChanged(
 //	cout << "Value Changed for " << IDToName(inID, name) << endl;
 }
 
-void MWindow::ChangedCallBack(
-	GtkWidget*			inWidget,
-	gpointer			inUserData)
+void MWindow::Changed()
 {
-	MWindow* self = reinterpret_cast<MWindow*>(inUserData);
-	
-	const char* name = glade_get_widget_name(inWidget);
+	const char* name = gtk_widget_get_name(GTK_WIDGET(mChanged.GetSourceGObject()));
 	if (name != nil)
 	{
 		uint32 id = 0;
 		for (uint32 i = 0; i < 4 and name[i]; ++i)
 			id = (id << 8) | name[i];
 		
-		try
-		{
-			self->ValueChanged(id);
-		}
-		catch (exception& e)
-		{
-			DisplayError(e);
-		}
-		catch (...) {}
+		ValueChanged(id);
 	}
 }
 
+void MWindow::GetSlotsForHandler(
+	const char*			inHandler,
+	MSignalHandlerArray&
+						outSlots)
+{
+	mGtkBuilder->GetSlotsForHandler(inHandler, outSlots);
+}

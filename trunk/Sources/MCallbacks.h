@@ -13,11 +13,14 @@
 */
 
 #ifndef MCALLBACKS_H
-#define MCALLBACKS_H
 
+// we're using the boost iterating macro's to build the specialisations
+// for our handler objects
+#if not defined(BOOST_PP_IS_ITERATING)
+
+#include <boost/preprocessor.hpp>
 #include <memory>
-
-typedef struct _GladeXML GladeXML;
+#include <string>
 
 #include "MAlerts.h"
 
@@ -27,58 +30,10 @@ namespace MCallbackNS
 {
 
 // HandlerBase is a templated pure virtual base class. This is needed to declare
-// HCallBackIn objects without knowing the type of the object to deliver the callback to.
+// HCallbackIn objects without knowing the type of the object to deliver the callback to.
 
 template<typename Function> struct HandlerBase;
-
-template<typename R>
-struct HandlerBase<R()>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack() = 0;
-};
-
-template<typename R, typename T1>
-struct HandlerBase<R(T1)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1) = 0;
-};
-
-template<typename R, typename T1, typename T2>
-struct HandlerBase<R(T1,T2)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1, T2 a2) = 0;
-};
-
-template<typename R, typename T1, typename T2, typename T3>
-struct HandlerBase<R(T1,T2,T3)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3) = 0;
-};
-
-template<typename R, typename T1, typename T2, typename T3, typename T4>
-struct HandlerBase<R(T1,T2,T3,T4)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4) = 0;
-};
-
-template<typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
-struct HandlerBase<R(T1,T2,T3,T4,T5)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5) = 0;
-};
-
-template<typename R, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct HandlerBase<R(T1,T2,T3,T4,T5,T6)>
-{
-	virtual 							~HandlerBase() {}
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6) = 0;
-};
+// (specialisations are at the bottom of the file)
 
 // Handler is a base class that delivers the actual callback to the owner of MCallbackIn
 // as stated above, it is derived from HandlerBase.
@@ -86,320 +41,7 @@ struct HandlerBase<R(T1,T2,T3,T4,T5,T6)>
 // MCallbackInHandler class. 
 
 template<class Derived, class Owner, typename Function> struct Handler;
-
-template<class Derived, class Owner, typename R>
-struct Handler<Derived, Owner, R()> : public HandlerBase<R()>
-{
-	typedef R (Owner::*Callback)();
-	
-	virtual R							DoCallBack()
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)();
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner>
-struct Handler<Derived, Owner, void()> : public HandlerBase<void()>
-{
-	typedef void (Owner::*Callback)();
-	
-	virtual void						DoCallBack()
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											try
-											{
-												(owner->*func)();
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1>
-struct Handler<Derived, Owner, R(T1)> : public HandlerBase<R(T1)>
-{
-	typedef R (Owner::*Callback)(T1);
-	
-	virtual R							DoCallBack(T1 a1)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename T1>
-struct Handler<Derived, Owner, void(T1)> : public HandlerBase<void(T1)>
-{
-	typedef void (Owner::*Callback)(T1);
-	
-	virtual void						DoCallBack(T1 a1)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											try
-											{
-												(owner->*func)(a1);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1, typename T2>
-struct Handler<Derived, Owner, R(T1, T2)> : public HandlerBase<R(T1, T2)>
-{
-	typedef R (Owner::*Callback)(T1, T2);
-	
-	virtual R							DoCallBack(T1 a1, T2 a2)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1, a2);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename T1, typename T2>
-struct Handler<Derived, Owner, void(T1, T2)> : public HandlerBase<void(T1, T2)>
-{
-	typedef void (Owner::*Callback)(T1, T2);
-	
-	virtual void						DoCallBack(T1 a1, T2 a2)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-											
-											try
-											{
-												(owner->*func)(a1, a2);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3>
-struct Handler<Derived, Owner, R(T1, T2, T3)> : public HandlerBase<R(T1, T2, T3)>
-{
-	typedef R (Owner::*Callback)(T1, T2, T3);
-	
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1, a2, a3);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename T1, typename T2, typename T3>
-struct Handler<Derived, Owner, void(T1, T2, T3)> : public HandlerBase<void(T1, T2, T3)>
-{
-	typedef void (Owner::*Callback)(T1, T2, T3);
-	
-	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-											
-											try
-											{
-												(owner->*func)(a1, a2, a3);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3, typename T4>
-struct Handler<Derived, Owner, R(T1, T2, T3, T4)> : public HandlerBase<R(T1, T2, T3, T4)>
-{
-	typedef R (Owner::*Callback)(T1, T2, T3, T4);
-	
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1, a2, a3, a4);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename T1, typename T2, typename T3, typename T4>
-struct Handler<Derived, Owner, void(T1, T2, T3, T4)> : public HandlerBase<void(T1, T2, T3, T4)>
-{
-	typedef void (Owner::*Callback)(T1, T2, T3, T4);
-	
-	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-											
-											try
-											{
-												(owner->*func)(a1, a2, a3, a4);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
-struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5)> : public HandlerBase<R(T1, T2, T3, T4, T5)>
-{
-	typedef R (Owner::*Callback)(T1, T2, T3, T4, T5);
-	
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1, a2, a3, a4, a5);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename R, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct Handler<Derived, Owner, R(T1, T2, T3, T4, T5, T6)> : public HandlerBase<R(T1, T2, T3, T4, T5, T6)>
-{
-	typedef R (Owner::*Callback)(T1, T2, T3, T4, T5, T6);
-	
-	virtual R							DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-
-											R result = R();	
-											
-											try
-											{
-												result = (owner->*func)(a1, a2, a3, a4, a5, a6);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-											
-											return result;
-										}
-};
-
-template<class Derived, class Owner, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct Handler<Derived, Owner, void(T1, T2, T3, T4, T5, T6)> : public HandlerBase<void(T1, T2, T3, T4, T5, T6)>
-{
-	typedef void (Owner::*Callback)(T1, T2, T3, T4, T5, T6);
-	
-	virtual void						DoCallBack(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-										{
-											Derived* self = static_cast<Derived*>(this);
-											Owner* owner = self->fOwner;
-											Callback func = self->fHandler;
-											
-											try
-											{
-												(owner->*func)(a1, a2, a3, a4, a5, a6);
-											}
-											catch (const std::exception& e)
-											{
-												DisplayError(e);
-											}
-										}
-};
+// (again, specialisations are at the bottom of the file)
 
 // MCallbackInHandler is the complete handler object that has all the type info
 // needed to deliver the callback.
@@ -408,306 +50,35 @@ template<class C, typename Function>
 struct MCallbackInHandler : public Handler<MCallbackInHandler<C, Function>, C, Function>
 {
 	typedef Handler<MCallbackInHandler,C,Function>	base;
-	typedef typename base::Callback					CallBackProc;
+	typedef typename base::Callback					CallbackProc;
 	typedef C										Owner;
 	
-										MCallbackInHandler(Owner* inOwner, CallBackProc inHandler)
+										MCallbackInHandler(Owner* inOwner, CallbackProc inHandler)
 											: fOwner(inOwner)
 											, fHandler(inHandler)
 										{
 										}
-	
+
 	C*									fOwner;
-	CallBackProc						fHandler;
+	CallbackProc						fHandler;
 };
 
 // MCallbackOutHandler objects. Again we use the Curiously Recurring Template Pattern
 // to pull in type info we don't yet know.
 
-template<class CallBackIn, typename Function>
+template<class CallbackIn, typename Function>
 struct MCallbackOutHandler {};
+// (and yet again, specialisations are at the bottom of the file)
 
-template<class CallBackIn, typename R>
-struct MCallbackOutHandler<CallBackIn, R()>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-	
-	R			operator() ()
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack();
-					return R();
-				}
-
-	static R	GCallback(
-					GObject*		inObject,
-					gpointer		inData)
-				{
-					R result = R();
-					
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						result = handler.mHandler->DoCallBack();
-					
-					return result;
-				}
-};
-
-template<class CallBackIn>
-struct MCallbackOutHandler<CallBackIn, void()>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	void		operator() ()
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack();
-				}
-	
-	static void	GCallback(
-					GObject*		inWidget,
-					gpointer		inData)
-				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						handler.mHandler->DoCallBack();
-				}
-};
-
-template<class CallBackIn, typename R, typename T1>
-struct MCallbackOutHandler<CallBackIn, R(T1)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1);
-					return R();
-				}
-
-	static R	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					gpointer		inData)
-				{
-					R result = R();
-					
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						result = handler.mHandler->DoCallBack(inArg1);
-					
-					return result;
-				}
-};
-
-template<class CallBackIn, typename T1>
-struct MCallbackOutHandler<CallBackIn, void(T1)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	void		operator() (T1 a1)
-				{
-					if (mHandler.get() != nil)
-						mHandler->DoCallBack(a1);
-				}
-
-	static void	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					gpointer		inData)
-				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						handler.mHandler->DoCallBack(inArg1);
-				}
-};
-
-template<class CallBackIn, typename R, typename T1, typename T2>
-struct MCallbackOutHandler<CallBackIn, R(T1, T2)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1, T2 a2)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1, a2);
-					return R();
-				}
-
-	static R	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					T2				inArg2,
-					gpointer		inData)
-				{
-					R result = R();
-					
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						result = handler.mHandler->DoCallBack(inArg1, inArg2);
-					
-					return result;
-				}
-};
-
-template<class CallBackIn, typename T1, typename T2>
-struct MCallbackOutHandler<CallBackIn, void(T1, T2)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	void		operator() (T1 a1, T2 a2)
-				{
-					if (mHandler.get() != nil)
-						mHandler->DoCallBack(a1, a2);
-				}
-
-	static void	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					T2				inArg2,
-					gpointer		inData)
-				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						handler.mHandler->DoCallBack(inArg1, inArg2);
-				}
-};
-
-template<class CallBackIn, typename R, typename T1, typename T2, typename T3>
-struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1, T2 a2, T3 a3)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1, a2, a3);
-					return R();
-				}
-};
-
-template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4>
-struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1, T2 a2, T3 a3, T4 a4)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1, a2, a3, a4);
-					return R();
-				}
-
-	static R	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					T2				inArg2,
-					T3				inArg3,
-					T4				inArg4,
-					gpointer		inData)
-				{
-					R result = R();
-					
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						result = handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
-					
-					return result;
-				}
-};
-
-template<class CallBackIn, typename T1, typename T2, typename T3, typename T4>
-struct MCallbackOutHandler<CallBackIn, void(T1, T2, T3, T4)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	void		operator() (T1 a1, T2 a2, T3 a3, T4 a4)
-				{
-					if (mHandler.get() != nil)
-						mHandler->DoCallBack(a1, a2, a3, a4);
-				}
-
-	static void	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					T2				inArg2,
-					T3				inArg3,
-					T4				inArg4,
-					gpointer		inData)
-				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4);
-				}
-};
-
-template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
-struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1, a2, a3, a4, a5);
-					return R();
-				}
-};
-
-template<class CallBackIn, typename R, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct MCallbackOutHandler<CallBackIn, R(T1, T2, T3, T4, T5, T6)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	R			operator() (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-				{
-					if (mHandler.get() != nil)
-						return mHandler->DoCallBack(a1, a2, a3, a4, a5, a6);
-					return R();
-				}
-};
-
-template<class CallBackIn, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-struct MCallbackOutHandler<CallBackIn, void(T1, T2, T3, T4, T5, T6)>
-{
-	std::auto_ptr<CallBackIn>		mHandler;
-
-	void		operator() (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-				{
-					if (mHandler.get() != nil)
-						mHandler->DoCallBack(a1, a2, a3, a4, a5, a6);
-				}
-
-	static void	GCallback(
-					GObject*		inWidget,
-					T1				inArg1,
-					T2				inArg2,
-					T3				inArg3,
-					T4				inArg4,
-					T5				inArg5,
-					T6				inArg6,
-					gpointer		inData)
-				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
-						handler.mHandler->DoCallBack(inArg1, inArg2, inArg3, inArg4, inArg5, inArg6);
-				}
-};
+// Now include the specialisations using the boost preprocessor macro's
+#define  BOOST_PP_FILENAME_1 "MCallbacks.h"
+#define  BOOST_PP_ITERATION_LIMITS (0, 9)
+#include BOOST_PP_ITERATE()
 
 // a type factory
 
 template<typename Function>
-struct MakeCallBackHandler
+struct MakeCallbackHandler
 {
 	typedef MCallbackOutHandler<
 		HandlerBase<Function>,
@@ -717,16 +88,16 @@ struct MakeCallBackHandler
 } // namespace
 
 template<typename Function>
-class MCallback : public MCallbackNS::MakeCallBackHandler<Function>::type
+class MCallback : public MCallbackNS::MakeCallbackHandler<Function>::type
 {
-	typedef typename		MCallbackNS::MakeCallBackHandler<Function>::type	base_class;
+	typedef typename		MCallbackNS::MakeCallbackHandler<Function>::type	base_class;
   public:
 							MCallback()		{}
 							~MCallback()	{}
 	
 	template<class C>
 	void					SetProc(C* inOwner,
-								typename MCallbackNS::MCallbackInHandler<C, Function>::CallBackProc	inProc)
+								typename MCallbackNS::MCallbackInHandler<C, Function>::CallbackProc	inProc)
 							{
 								base_class* self = static_cast<base_class*>(this);
 								typedef typename MCallbackNS::MCallbackInHandler<C,Function> Handler;
@@ -743,22 +114,36 @@ class MCallback : public MCallbackNS::MakeCallBackHandler<Function>::type
 };
 
 template<typename Function, class C>
-void SetCallback(MCallback<Function>& inCallBack, C* inObject,
-	typename MCallbackNS::MCallbackInHandler<C,Function>::CallBackProc inProc)
+void SetCallback(MCallback<Function>& inCallback, C* inObject,
+	typename MCallbackNS::MCallbackInHandler<C,Function>::CallbackProc inProc)
 {
-	inCallBack.SetProc(inObject, inProc);
+	inCallback.SetProc(inObject, inProc);
 }
 
-template<typename Function>
-class MSlot : public MCallbackNS::MakeCallBackHandler<Function>::type
+// MSlot is used to connect to g_object signals.
+// A special case is the support for GtkBuilder handlers, a kludge
+// makes it possible to connect to all 'handler's in one call.
+
+typedef std::vector<std::pair<GObject*,std::string> > MSignalHandlerArray;
+class MSlotProviderMixin
 {
-	typedef typename		MCallbackNS::MakeCallBackHandler<Function>::type	base_class;
+  public:
+	virtual void			GetSlotsForHandler(
+								const char*		inHandler,
+								MSignalHandlerArray&
+												outSlots) = 0;
+};
+
+template<typename Function>
+class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
+{
+	typedef typename		MCallbackNS::MakeCallbackHandler<Function>::type	base_class;
   public:
 	
 	template<class C>
 							MSlot(
 								C*				inOwner,
-								typename MCallbackNS::MCallbackInHandler<C, Function>::CallBackProc
+								typename MCallbackNS::MCallbackInHandler<C, Function>::CallbackProc
 												inProc)
 							{
 								base_class* self = static_cast<base_class*>(this);
@@ -786,11 +171,17 @@ class MSlot : public MCallbackNS::MakeCallBackHandler<Function>::type
 							}
 
 	void					Connect(
-								GladeXML*		inGladeXML,
-								const char*		inSignalName)
+								MSlotProviderMixin*
+												inWindow,
+								const char*		inHandlerName)
 							{
-								glade_xml_signal_connect_data(inGladeXML, inSignalName, 
-									G_CALLBACK(&base_class::GCallback), this);
+								MSignalHandlerArray slots;
+								inWindow->GetSlotsForHandler(inHandlerName, slots);
+								for (MSignalHandlerArray::iterator slot = slots.begin(); slot != slots.end(); ++slot)
+								{
+									g_signal_connect(slot->first, slot->second.c_str(),
+										G_CALLBACK(&base_class::GCallback), this);
+								}
 							}
 
 	void					Block(
@@ -808,11 +199,146 @@ class MSlot : public MCallbackNS::MakeCallBackHandler<Function>::type
 								g_signal_handlers_unblock_by_func(G_OBJECT(inObject),
 									(void*)G_CALLBACK(&base_class::GCallback), this);
 							}
-	
+
+	GObject*				GetSourceGObject() const			{ return base_class::mSendingGObject; }
+
   private:
 
 							MSlot(const MSlot&);
 	MSlot&					operator=(const MSlot&);
 };
+
+#define MCALLBACKS_H
+
+#else
+
+#define N BOOST_PP_ITERATION()
+
+//
+//	Specializations for the handlers for a range of parameters
+//
+//	First the HandlerBase, which is a pure virtual base class
+//
+template<typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct HandlerBase<R(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	virtual 							~HandlerBase() {}
+	virtual R							DoCallback(BOOST_PP_ENUM_BINARY_PARAMS(N,T,a)) = 0;
+};
+
+//
+//	Next is the Handler which derives from HandlerBase
+//
+template<class Derived, class Owner, typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct Handler<Derived, Owner, R(BOOST_PP_ENUM_PARAMS(N,T))> : public HandlerBase<R(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	typedef R (Owner::*Callback)(BOOST_PP_ENUM_PARAMS(N,T));
+	
+	virtual R							DoCallback(BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+
+											R result = R();	
+											
+											try
+											{
+												result = (owner->*func)(BOOST_PP_ENUM_PARAMS(N,a));
+											}
+											catch (const std::exception& e)
+											{
+												DisplayError(e);
+											}
+											
+											return result;
+										}
+};
+
+template<class Derived, class Owner BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct Handler<Derived, Owner, void(BOOST_PP_ENUM_PARAMS(N,T))> : public HandlerBase<void(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	typedef void (Owner::*Callback)(BOOST_PP_ENUM_PARAMS(N,T));
+	
+	virtual void						DoCallback(BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+										{
+											Derived* self = static_cast<Derived*>(this);
+											Owner* owner = self->fOwner;
+											Callback func = self->fHandler;
+
+											try
+											{
+												(owner->*func)(BOOST_PP_ENUM_PARAMS(N,a));
+											}
+											catch (const std::exception& e)
+											{
+												DisplayError(e);
+											}
+										}
+};
+
+//
+//	And now the callback handlers
+//
+template<class CallbackIn, typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	std::auto_ptr<CallbackIn>	mHandler;
+	GObject*					mSendingGObject;
+
+	R			operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+				{
+					if (mHandler.get() != nil)
+						return mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+					return R();
+				}
+
+	static R	GCallback(
+					GObject*		inObject,
+					BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
+					gpointer		inData)
+				{
+					R result = R();
+					
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+					{
+						value_changer<GObject*> save(handler.mSendingGObject, inObject);
+						result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+					}
+					
+					return result;
+				}
+};
+
+template<class CallbackIn BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	std::auto_ptr<CallbackIn>	mHandler;
+	GObject*					mSendingGObject;
+
+	void		operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+				}
+
+	static void	GCallback(
+					GObject*		inObject,
+					BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
+					gpointer		inData)
+				{
+					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+					
+					if (handler.mHandler.get() != nil)
+					{
+						value_changer<GObject*> save(handler.mSendingGObject, inObject);
+						handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+					}
+				}
+};
+
+#endif
 
 #endif

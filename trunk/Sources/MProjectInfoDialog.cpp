@@ -75,7 +75,7 @@ MProjectInfoDialog::MProjectInfoDialog()
 	, ePkgToggled(this, &MProjectInfoDialog::PkgToggled)
 	, mProject(nil)
 {
-	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
+	eTargetChanged.Connect(this, "on_targ_changed");
 
 	GtkWidget* wdgt = GetWidget(kSystemPathsListID);
 	if (wdgt)

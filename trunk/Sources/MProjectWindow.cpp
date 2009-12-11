@@ -117,9 +117,9 @@ MProjectWindow::MProjectWindow()
 	
 	gtk_widget_show_all(statusBar);
 
-	eTargetChanged.Connect(GetGladeXML(), "on_targ_changed");
-	eInfoClicked.Connect(GetGladeXML(), "on_info_clicked");
-	eMakeClicked.Connect(GetGladeXML(), "on_make_clicked");
+	eTargetChanged.Connect(this, "on_targ_changed");
+	eInfoClicked.Connect(this, "on_info_clicked");
+	eMakeClicked.Connect(this, "on_make_clicked");
 
 	ConnectChildSignals();
 }
@@ -258,7 +258,7 @@ void MProjectWindow::InvokeResourceRow(
 		{
 			fs::path p = file->GetPath();
 			
-			if (FileNameMatches("*.glade", p))
+			if (FileNameMatches("*.glade", p) or FileNameMatches("*.ui", p))
 			{
 				// start up glade
 				string cmd = Preferences::GetString("glade", "glade-3");

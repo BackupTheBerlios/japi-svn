@@ -24,15 +24,15 @@ MDialog* MDialog::sFirst;
 MDialog::MDialog(
 	const char*		inDialogResource)
 	: MWindow(inDialogResource, "dialog")
+	, mStdBtnClicked(this, &MDialog::StdBtnClicked)
 	, mParentWindow(nil)
 	, mNext(nil)
 	, mCloseImmediatelyOnOK(true)
 {
 	mNext = sFirst;
 	sFirst = this;
-
-	glade_xml_signal_connect_data(GetGladeXML(), "on_std_btn_click", 
-		G_CALLBACK(&MDialog::StdBtnClickedCallBack), this);
+	
+	mStdBtnClicked.Connect(this, "on_std_btn_click");
 }
 
 MDialog::~MDialog()
@@ -77,13 +77,9 @@ bool MDialog::CancelClicked()
 	return true;
 }
 
-void MDialog::StdBtnClickedCallBack(
-	GtkWidget*			inWidget,
-	gpointer			inUserData)
+void MDialog::StdBtnClicked()
 {
-	MDialog* self = reinterpret_cast<MDialog*>(inUserData);
-	
-	const char* name = glade_get_widget_name(inWidget);
+	const char* name = gtk_widget_get_name(GTK_WIDGET(mStdBtnClicked.GetSourceGObject()));
 	if (name != nil)
 	{
 		uint32 id = 0;
@@ -95,17 +91,17 @@ void MDialog::StdBtnClickedCallBack(
 			switch (id)
 			{
 				case 'okok':
-					if (self->OKClicked())
-						self->Close();
+					if (OKClicked())
+						Close();
 					break;
 				
 				case 'cncl':
-					if (self->CancelClicked())
-						self->Close();
+					if (CancelClicked())
+						Close();
 					break;
 				
 				default:
-					self->ValueChanged(id);
+					ValueChanged(id);
 					break;
 			}
 		}

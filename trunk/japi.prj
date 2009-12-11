@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <project>
 	<pkg-config>
-		<pkg tool="pkg-config">libglade-2.0</pkg>
 		<pkg tool="pkg-config">gthread-2.0</pkg>
 		<pkg tool="pkg-config">gstreamer-0.10</pkg>
+		<pkg tool="pkg-config">gtk+-x11-2.0</pkg>
 	</pkg-config>
 	<syspaths>
 		<path>/usr/include</path>
@@ -142,16 +142,16 @@
 			<resource>Alerts/stop-building-alert.xml</resource>
 		</group>
 		<group name="Dialogs">
-			<resource>Dialogs/find-dialog.glade</resource>
-			<resource>Dialogs/find-and-open-dialog.glade</resource>
-			<resource>Dialogs/mark-matching-dialog.glade</resource>
-			<resource>Dialogs/go-to-line-dialog.glade</resource>
-			<resource>Dialogs/new-group-dialog.glade</resource>
-			<resource>Dialogs/auth-dialog.glade</resource>
-			<resource>Dialogs/prefs-dialog.glade</resource>
-			<resource>Dialogs/diff-window.glade</resource>
-			<resource>Dialogs/project-info-dialog.glade</resource>
-			<resource>Dialogs/quoted-rewrap-dialog.glade</resource>
+			<resource>Dialogs/find-dialog.ui</resource>
+			<resource>Dialogs/find-and-open-dialog.ui</resource>
+			<resource>Dialogs/mark-matching-dialog.ui</resource>
+			<resource>Dialogs/go-to-line-dialog.ui</resource>
+			<resource>Dialogs/new-group-dialog.ui</resource>
+			<resource>Dialogs/auth-dialog.ui</resource>
+			<resource>Dialogs/prefs-dialog.ui</resource>
+			<resource>Dialogs/diff-window.ui</resource>
+			<resource>Dialogs/project-info-dialog.ui</resource>
+			<resource>Dialogs/quoted-rewrap-dialog.ui</resource>
 		</group>
 		<group name="Menus">
 			<resource>Menus/epub-window-menu.xml</resource>
@@ -160,10 +160,10 @@
 			<resource>Menus/project-window-menu.xml</resource>
 		</group>
 		<group name="Windows">
-			<resource>Windows/epub-window.glade</resource>
-			<resource>Windows/message-list-window.glade</resource>
-			<resource>Windows/edit-window.glade</resource>
-			<resource>Windows/project-window.glade</resource>
+			<resource>Windows/epub-window.ui</resource>
+			<resource>Windows/message-list-window.ui</resource>
+			<resource>Windows/edit-window.ui</resource>
+			<resource>Windows/project-window.ui</resource>
 		</group>
 		<group name="Templates">
 			<resource>Templates/empty.c</resource>

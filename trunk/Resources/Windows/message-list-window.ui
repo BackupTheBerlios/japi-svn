@@ -1,22 +1,22 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
+<?xml version="1.0"?>
 <!--Generated with glade3 3.1.5 on Wed Dec 19 12:25:23 2007 by maarten@zuinig-->
-<glade-interface>
-  <widget class="GtkWindow" id="window">
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <object class="GtkWindow" id="window">
     <property name="default_width">600</property>
     <property name="default_height">200</property>
     <child>
-      <widget class="GtkScrolledWindow" id="scrolledwindow1">
+      <object class="GtkScrolledWindow" id="scrolledwindow1">
         <property name="visible">True</property>
         <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
         <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
         <child>
-          <widget class="GtkTreeView" id="tree">
+          <object class="GtkTreeView" id="tree">
             <property name="visible">True</property>
             <property name="rules_hint">True</property>
-          </widget>
+          </object>
         </child>
-      </widget>
+      </object>
     </child>
-  </widget>
-</glade-interface>
+  </object>
+</interface>

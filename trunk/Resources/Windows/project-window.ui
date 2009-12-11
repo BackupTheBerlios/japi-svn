@@ -1,47 +1,75 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.4.5 on Fri Dec 12 16:10:31 2008 -->
-<glade-interface>
-  <widget class="GtkWindow" id="window">
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy toplevel-contextual -->
+  <object class="GtkListStore" id="model1">
+    <columns>
+      <!-- column-name gchararray -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">aap</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">noot</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">mies</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkUIManager" id="uimanager1"/>
+  <object class="GtkWindow" id="window">
     <property name="width_request">400</property>
     <property name="default_width">250</property>
     <property name="default_height">500</property>
     <child>
-      <widget class="GtkVBox" id="vbox1">
+      <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
+        <property name="orientation">vertical</property>
         <child>
-          <widget class="GtkMenuBar" id="mbar">
+          <object class="GtkMenuBar" id="mbar">
             <property name="visible">True</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
+            <property name="position">0</property>
           </packing>
         </child>
         <child>
-          <widget class="GtkHBox" id="hbox1">
+          <object class="GtkHBox" id="hbox1">
             <property name="visible">True</property>
             <property name="spacing">4</property>
             <child>
-              <widget class="GtkComboBox" id="targ">
+              <object class="GtkComboBox" id="targ">
                 <property name="visible">True</property>
-                <property name="items" translatable="yes">aap
-noot
-mies</property>
+                <property name="model">model1</property>
                 <signal name="changed" handler="on_targ_changed"/>
-              </widget>
+                <child>
+                  <object class="GtkCellRendererText" id="renderer1"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="info">
+              <object class="GtkButton" id="info">
                 <property name="visible">True</property>
-                <property name="response_id">0</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">False</property>
                 <signal name="clicked" handler="on_info_clicked"/>
                 <child>
-                  <widget class="GtkImage" id="image1">
+                  <object class="GtkImage" id="image1">
                     <property name="visible">True</property>
                     <property name="stock">gtk-info</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
@@ -49,24 +77,25 @@ mies</property>
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="make">
+              <object class="GtkButton" id="make">
                 <property name="visible">True</property>
-                <property name="response_id">0</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">False</property>
                 <signal name="clicked" handler="on_make_clicked"/>
                 <child>
-                  <widget class="GtkImage" id="image2">
+                  <object class="GtkImage" id="image2">
                     <property name="visible">True</property>
                     <property name="stock">gtk-execute</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="position">2</property>
               </packing>
             </child>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
@@ -75,102 +104,99 @@ mies</property>
           </packing>
         </child>
         <child>
-          <widget class="GtkNotebook" id="note">
+          <object class="GtkNotebook" id="note">
             <property name="visible">True</property>
             <property name="tab_hborder">6</property>
             <property name="homogeneous">True</property>
             <child>
-              <widget class="GtkScrolledWindow" id="scrolledwindow1">
+              <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <widget class="GtkTreeView" id="tre1">
+                  <object class="GtkTreeView" id="tre1">
                     <property name="visible">True</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
             </child>
-            <child>
-              <widget class="GtkLabel" id="label1">
+            <child type="tab">
+              <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Files</property>
-              </widget>
+              </object>
               <packing>
-                <property name="type">tab</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
             <child>
-              <widget class="GtkScrolledWindow" id="scrolledwindow2">
+              <object class="GtkScrolledWindow" id="scrolledwindow2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <widget class="GtkTreeView" id="tre2">
+                  <object class="GtkTreeView" id="tre2">
                     <property name="visible">True</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
               <packing>
                 <property name="position">1</property>
               </packing>
             </child>
-            <child>
-              <widget class="GtkLabel" id="label2">
+            <child type="tab">
+              <object class="GtkLabel" id="label2">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Link Order</property>
-              </widget>
+              </object>
               <packing>
-                <property name="type">tab</property>
                 <property name="position">1</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
             <child>
-              <widget class="GtkScrolledWindow" id="scrolledwindow3">
+              <object class="GtkScrolledWindow" id="scrolledwindow3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="hscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
-                <property name="vscrollbar_policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="hscrollbar_policy">automatic</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <widget class="GtkTreeView" id="tre3">
+                  <object class="GtkTreeView" id="tre3">
                     <property name="visible">True</property>
-                  </widget>
+                  </object>
                 </child>
-              </widget>
+              </object>
               <packing>
                 <property name="position">2</property>
               </packing>
             </child>
-            <child>
-              <widget class="GtkLabel" id="label3">
+            <child type="tab">
+              <object class="GtkLabel" id="label3">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Resources</property>
-              </widget>
+              </object>
               <packing>
-                <property name="type">tab</property>
                 <property name="position">2</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
-          </widget>
+          </object>
           <packing>
             <property name="position">2</property>
           </packing>
         </child>
         <child>
-          <widget class="GtkStatusbar" id="stat">
+          <object class="GtkStatusbar" id="stat">
             <property name="visible">True</property>
-          </widget>
+          </object>
           <packing>
             <property name="expand">False</property>
             <property name="position">3</property>
           </packing>
         </child>
-      </widget>
+      </object>
     </child>
-  </widget>
-</glade-interface>
+  </object>
+</interface>
