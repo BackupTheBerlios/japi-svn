@@ -89,7 +89,7 @@ static void RunCommand(
 		setpgid(0, 0);		// detach from the process group, create new
 
 		dup2(fd[1], STDOUT_FILENO);
-		dup2(fd[1], STDERR_FILENO);
+//		dup2(fd[1], STDERR_FILENO);
 		close(fd[0]);
 		close(fd[1]);
 
