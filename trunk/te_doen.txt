@@ -65,8 +65,6 @@ Leuk om te hebben:
 - overnemen muisklik afhandeling van
 	nautilus-2.8.2/libnautilus-private/nautilus-drag-window.c
 
-- libglade vervangen door gtkbuilder (als gtkbuilder werkt)
-
 - spelling checker
 - Invoegen... menu item(s)
 - tags support

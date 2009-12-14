@@ -152,12 +152,7 @@
                     <property name="text_column">0</property>
                     <signal name="changed" handler="on_changed"/>
                     <child>
-                      <object class="GtkCellRendererText" id="renderer2">
-                        <property name="alignment">center</property>
-                      </object>
-                      <attributes>
-                        <attribute name="text">0</attribute>
-                      </attributes>
+                      <object class="GtkCellRendererText" id="renderer2"/>
                     </child>
                   </object>
                   <packing>
@@ -396,12 +391,7 @@
                             <property name="model">model3</property>
                             <signal name="changed" handler="on_changed"/>
                             <child>
-                              <object class="GtkCellRendererText" id="renderer3">
-                                <property name="alignment">right</property>
-                              </object>
-                              <attributes>
-                                <attribute name="text">0</attribute>
-                              </attributes>
+                              <object class="GtkCellRendererText" id="renderer3"/>
                             </child>
                           </object>
                           <packing>
@@ -470,9 +460,6 @@
                             <signal name="changed" handler="on_changed"/>
                             <child>
                               <object class="GtkCellRendererText" id="renderer4"/>
-                              <attributes>
-                                <attribute name="text">0</attribute>
-                              </attributes>
                             </child>
                           </object>
                           <packing>
