@@ -1,10 +1,4 @@
-﻿Bugs
-
-- 'stale' /tmp/japi.x.socket bestand?
-- 
-
-
-Te doen
+﻿Te doen
 
 - ePub
 	- zoeken in alle ePub items
@@ -15,6 +9,7 @@ Te doen
 Moet af:
 
 - doorgaan met afsluiten na 'Save Changes?' dialog
+	- maar pas op... er kan een 'save in progress' zijn...
 
 - link order aan de praat helpen
 - upper/lower case menu maken
