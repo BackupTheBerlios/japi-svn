@@ -258,6 +258,8 @@ void MProjectWindow::InvokeResourceRow(
 		{
 			fs::path p = file->GetPath();
 			
+			bool openSelf = true;
+			
 			if (FileNameMatches("*.glade", p) or FileNameMatches("*.ui", p))
 			{
 				// start up glade
@@ -266,9 +268,17 @@ void MProjectWindow::InvokeResourceRow(
 				cmd += p.string();
 				cmd += "&";
 				
-				system(cmd.c_str());
+				int r = system(cmd.c_str());
+				if (r != 0)
+				{
+					DisplayAlert("error-alert",
+						string("Could not execute command:\n") + cmd);
+				}
+				else
+					openSelf = false;
 			}
-			else
+
+			if (openSelf)
 				gApp->OpenOneDocument(MFile(p));
 		}
 	}
