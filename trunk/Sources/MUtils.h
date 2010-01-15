@@ -173,60 +173,6 @@ class MValueChanger
 	T			mValue;
 };
 
-typedef struct _xmlNode xmlNode;
-typedef xmlNode *xmlNodePtr;
-
-class XMLNode
-{
-  public:
-					XMLNode(
-						xmlNodePtr	inNode)
-						: mNode(inNode)	{}
-
-	std::string		name() const;
-
-	std::string		text() const;
-
-	std::string		property(
-						const char*	inName) const;
-	
-	xmlNodePtr		children() const;
-	
-					operator xmlNodePtr() const		{ return mNode; }
-
-	class iterator : public boost::iterator_facade<iterator,
-		XMLNode, boost::forward_traversal_tag>
-	{
-	  public:
-						iterator(
-							xmlNodePtr	inNode = nil)
-							: mNode(inNode)
-							, mXMLNode(new XMLNode(inNode)) {}
-		
-						~iterator()
-						{
-							delete mXMLNode;
-						}
-	  private:
-		friend class boost::iterator_core_access;
-
-		void			increment();
-		bool			equal(const iterator& inOther) const;
-		reference		dereference() const;
-		
-		xmlNodePtr		mNode;
-		XMLNode*		mXMLNode;
-	};
-
-	iterator			begin() const;
-	iterator			end() const;
-
-  private:
-	friend class iterator;
-
-	xmlNodePtr		mNode;
-};
-
 class MGdkThreadBlock
 {
   public:

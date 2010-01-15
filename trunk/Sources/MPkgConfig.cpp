@@ -11,6 +11,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <sstream>
+#include <fcntl.h>
 
 #include "MFile.h"
 #include "MPkgConfig.h"
@@ -70,16 +71,16 @@ static void RunCommand(
 {
 	// OK, now start it.
 
-	int fd[2];
+	int ofd[2];
 	
-	pipe(fd);
+	pipe(ofd);
 	
 	int pid = fork();
 	
 	if (pid == -1)
 	{
-		close(fd[0]);
-		close(fd[1]);
+		close(ofd[0]);
+		close(ofd[1]);
 		
 		THROW(("fork failed: %s", strerror(errno)));
 	}
@@ -88,10 +89,15 @@ static void RunCommand(
 	{
 		setpgid(0, 0);		// detach from the process group, create new
 
-		dup2(fd[1], STDOUT_FILENO);
-//		dup2(fd[1], STDERR_FILENO);
-		close(fd[0]);
-		close(fd[1]);
+		dup2(ofd[1], STDOUT_FILENO);
+//		dup2(ofd[1], STDERR_FILENO);
+		close(ofd[0]);
+		close(ofd[1]);
+		
+		// redirect stderr to /dev/null
+		int fd = open("/dev/null", O_RDWR);
+		dup2(fd, STDERR_FILENO);
+		close(fd);
 
 		close(STDIN_FILENO);
 		
@@ -102,14 +108,14 @@ static void RunCommand(
 		exit(-1);
 	}
 	
-	close(fd[1]);
+	close(ofd[1]);
 
 	outResult.clear();
 	for (;;)
 	{
 		char b[1024];
 
-		int r = read(fd[0], b, sizeof(b));
+		int r = read(ofd[0], b, sizeof(b));
 		
 		if (r == 0)
 			break;

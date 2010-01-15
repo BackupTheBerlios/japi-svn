@@ -5,114 +5,95 @@
 
 #include "MJapi.h"
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 
 #include <vector>
 
+#include "document.hpp"
+
 #include "MResources.h"
 #include "MAlerts.h"
-#include "MUtils.h"
 #include "MStrings.h"
 #include "MWindow.h"
 #include "MError.h"
 #include "MSound.h"
 
 using namespace std;
+namespace io = boost::iostreams;
 
 GtkWidget* CreateAlertWithArgs(
 	const char* 	inResourceName,
 	vector<string>&	inArgs)
 {
-	xmlDocPtr xmlDoc = nil;
 	GtkWidget* dlg = nil;
 	
 	string resource = string("Alerts/") + inResourceName + ".xml";
 	
-	try
-	{
-		xmlInitParser();
+	MResource rsrc = MResource::root().find(resource);
+	if (not rsrc)
+		THROW(("Could not load resource Alerts/%s.xml", inResourceName));
 	
-		MResource rsrc = MResource::root().find(resource);
-		if (not rsrc)
-			THROW(("Could not load resource Alerts/%s.xml", inResourceName));
-		
-		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
-		if (xmlDoc == nil or xmlDoc->children == nil)
-			THROW(("Failed to parse project file"));
-		
-		// build an alert
-		
-		string text;
-		vector<pair<string,uint32> > btns;
-		int32 defaultButton = -1;
-		GtkMessageType type = GTK_MESSAGE_ERROR;
-		
-		XMLNode node(xmlDoc->children);
-		
-		if (node.name() == "alert")
+	// parse the XML data
+	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
+	xml::document doc(data);
+	
+	// build an alert
+	xml::node_ptr root = doc.root();
+	
+	if (root->name() != "alert")
+		THROW(("Invalid resource for alert %s, first tag should be <alert>", inResourceName));
+	
+	string text;
+	vector<pair<string,uint32> > btns;
+	int32 defaultButton = -1;
+	GtkMessageType type = GTK_MESSAGE_ERROR;
+	
+	if (root->get_attribute("type") == "warning")
+		type = GTK_MESSAGE_WARNING;
+	
+	for (xml::node_list::iterator item = root->children().begin(); item != root->children().end(); ++item)
+	{
+		if (item->name() == "message")
+			text = _(item->content());
+		else if (item->name() == "buttons")
 		{
-			if (node.property("type") == "warning")
-				type = GTK_MESSAGE_WARNING;
-			
-			for (XMLNode::iterator item = node.begin(); item != node.end(); ++item)
+			for (xml::node_list::iterator button = item->children().begin(); button != item->children().end(); ++button)
 			{
-				if (item->name() == "message")
-					text = _(item->text());
-				else if (item->name() == "buttons")
+				if (button->name() == "button")
 				{
-					for (XMLNode::iterator button = item->begin(); button != item->end(); ++button)
-					{
-						if (button->name() == "button")
-						{
-							string label = _(button->property("title"));
-							uint32 cmd = atoi(button->property("cmd").c_str());
-							if (button->property("default") == "true")
-								defaultButton = cmd;
-							
-							btns.push_back(make_pair(label, cmd));
-						}
-					}
+					string label = _(button->get_attribute("title"));
+					uint32 cmd = atoi(button->get_attribute("cmd").c_str());
+					if (button->get_attribute("default") == "true")
+						defaultButton = cmd;
+					
+					btns.push_back(make_pair(label, cmd));
 				}
 			}
 		}
-	
-		// replace parameters
-		char s[] = "^0";
-		
-		for (vector<string>::const_iterator a = inArgs.begin(); a != inArgs.end(); ++a)
-		{
-			string::size_type p = text.find(s);
-			if (p != string::npos)
-				text.replace(p, 2, *a);
-			++s[1];
-		}
-		
-		dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-			type, GTK_BUTTONS_NONE, "%s", text.c_str());
-		
-		THROW_IF_NIL(dlg);
-		
-		for (vector<pair<string,uint32> >::iterator b = btns.begin(); b != btns.end(); ++b)
-			gtk_dialog_add_button(GTK_DIALOG(dlg), b->first.c_str(), b->second);
-	
-		if (defaultButton >= 0)
-			gtk_dialog_set_default_response(GTK_DIALOG(dlg), defaultButton);
-	
-		if (xmlDoc != nil)
-			xmlFreeDoc(xmlDoc);
-		
-		xmlCleanupParser();
 	}
-	catch (...)
+
+	// replace parameters
+	char s[] = "^0";
+	
+	for (vector<string>::const_iterator a = inArgs.begin(); a != inArgs.end(); ++a)
 	{
-		if (xmlDoc != nil)
-			xmlFreeDoc(xmlDoc);
-		
-		xmlCleanupParser();
-		
-		throw;
+		string::size_type p = text.find(s);
+		if (p != string::npos)
+			text.replace(p, 2, *a);
+		++s[1];
 	}
+	
+	dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+		type, GTK_BUTTONS_NONE, "%s", text.c_str());
+	
+	THROW_IF_NIL(dlg);
+	
+	for (vector<pair<string,uint32> >::iterator b = btns.begin(); b != btns.end(); ++b)
+		gtk_dialog_add_button(GTK_DIALOG(dlg), b->first.c_str(), b->second);
+
+	if (defaultButton >= 0)
+		gtk_dialog_set_default_response(GTK_DIALOG(dlg), defaultButton);
 	
 	return dlg;
 }

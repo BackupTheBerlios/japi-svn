@@ -1,9 +1,18 @@
-﻿Te doen
+﻿Bugs
+
+- items in ePub lijst verslepen: er verschijnen spook items.
+- text in popup menu's ontbreekt.
+
+
+Te doen
 
 - ePub
 	- zoeken in alle ePub items
 	- revert op ePub werkt nog niet?
 	- guide
+	- rename na een tweede klik op een item titel
+	- TOC generator
+	- plaatjes laten zien
 	? adobe page dinges
 
 Moet af:

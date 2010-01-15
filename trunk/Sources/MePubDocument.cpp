@@ -30,6 +30,8 @@
 #include "boost/archive/iterators/binary_from_base64.hpp"
 #include "boost/archive/iterators/transform_width.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <openssl/pem.h>
 #include <openssl/aes.h>
 
@@ -50,6 +52,8 @@
 #include "MMessageWindow.h"
 
 #include "MXHTMLTools.h"
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -771,12 +775,12 @@ void MePubDocument::ReadFile(
 			if (root->name() != "encryption" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
 			
-			for (xml::node_ptr n = root->children(); n; n = n->next())
+			foreach (xml::node& n, root->children())
 			{
-				if (n->name() != "EncryptedData")
+				if (n.name() != "EncryptedData")
 					continue;
 				
-				xml::node_ptr cd = n->find_first_child("CipherData");
+				xml::node_ptr cd = n.find_first_child("CipherData");
 				if (not cd)
 					continue;
 				
@@ -1261,20 +1265,20 @@ void MePubDocument::ParseOPF(
 		}
 		
 		// collect all the Dublin Core information
-		for (xml::node_ptr dc = metadata->children(); dc; dc = dc->next())
+		foreach (xml::node& dc, metadata->children())
 		{
-			string name = dc->name();
+			string name = dc.name();
 			
-			if (oldDC or dc->ns() == "http://purl.org/dc/elements/1.0/")
+			if (oldDC or dc.ns() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
-			else if (dc->ns() != "http://purl.org/dc/elements/1.1/" and
-				dc->ns() != "http://www.idpf.org/2007/opf")
+			else if (dc.ns() != "http://purl.org/dc/elements/1.1/" and
+				dc.ns() != "http://www.idpf.org/2007/opf")
 			{
-				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns());
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc.ns());
 //				continue;
 			}
 			
-			string content = dc->content();
+			string content = dc.content();
 			ba::trim(content);
 			
 			if (content.empty())
@@ -1282,12 +1286,12 @@ void MePubDocument::ParseOPF(
 			
 			if (name == "identifier")
 			{
-				if (dc->get_attribute("id") == uid)
+				if (dc.get_attribute("id") == uid)
 				{
 					mDocumentID = content;
-					mDocumentIDScheme = dc->get_attribute("opf:scheme");
-					if (mDocumentIDScheme.empty() and dc->ns() == "http://purl.org/dc/elements/1.0/")
-						mDocumentIDScheme = dc->get_attribute("scheme");
+					mDocumentIDScheme = dc.get_attribute("opf:scheme");
+					if (mDocumentIDScheme.empty() and dc.ns() == "http://purl.org/dc/elements/1.0/")
+						mDocumentIDScheme = dc.get_attribute("scheme");
 				}
 			}
 			else if (name == "date")
@@ -1296,10 +1300,10 @@ void MePubDocument::ParseOPF(
 				if (not date.empty())
 					date += '\n';
 				
-				if (dc->get_attribute("opf:event").empty())
+				if (dc.get_attribute("opf:event").empty())
 					date += content;
 				else
-					date += dc->get_attribute("opf:event") + ": " + content;
+					date += dc.get_attribute("opf:event") + ": " + content;
 	
 				mDublinCore[name] = date;
 			}
@@ -1323,16 +1327,16 @@ void MePubDocument::ParseOPF(
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Manifest missing from OPF document"));
 	else
 	{
-		for (xml::node_ptr item = manifest->children(); item; item = item->next())
+		foreach (xml::node& item, manifest->children())
 		{
-			if (item->name() != "item") // or item->ns() != "http://www.idpf.org/2007/opf")
+			if (item.name() != "item") // or item.ns() != "http://www.idpf.org/2007/opf")
 				continue;
 	
-			fs::path href = inDirectory / item->get_attribute("href");
+			fs::path href = inDirectory / item.get_attribute("href");
 			
 			if (mTOCFile.empty())
 			{
-				if (item->get_attribute("media-type") == "application/x-dtbncx+xml")
+				if (item.get_attribute("media-type") == "application/x-dtbncx+xml")
 				{
 					mTOCFile = href;
 					continue;
@@ -1350,7 +1354,7 @@ void MePubDocument::ParseOPF(
 			
 			auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
 			
-			string id = item->get_attribute("id");
+			string id = item.get_attribute("id");
 			if (id.empty() or not isalpha(id[0]))
 			{
 				if (warnInvalidID)
@@ -1360,7 +1364,7 @@ void MePubDocument::ParseOPF(
 			}
 			eItem->SetID(id);
 			
-			string mediaType = item->get_attribute("media-type");
+			string mediaType = item.get_attribute("media-type");
 			
 			if (mediaType == "text/html")
 			{
@@ -1383,14 +1387,14 @@ void MePubDocument::ParseOPF(
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Spine missing from OPF document"));
 	else
 	{
-		for (xml::node_ptr item = spine->children(); item; item = item->next())
+		foreach (xml::node& item, spine->children())
 		{
-			if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
+			if (item.name() != "itemref" or item.ns() != "http://www.idpf.org/2007/opf")
 				continue;
 			
-			string idref = item->get_attribute("idref");
+			string idref = item.get_attribute("idref");
 
-			if (item->get_attribute("linear") == "yes")
+			if (item.get_attribute("linear") == "yes")
 				mLinear.insert(idref);
 		}
 	}
@@ -1407,10 +1411,10 @@ void MePubDocument::ParseNCX(
 	if (not navMap)
 		THROW(("Missing navMap element in NCX file"));
 
-	for (xml::node_ptr n = navMap->children(); n; n = n->next())
+	foreach (xml::node& n, navMap->children())
 	{
-		if (n->name() == "navPoint")
-			ParseNavPoint(&mTOC, n);
+		if (n.name() == "navPoint")
+			ParseNavPoint(&mTOC, n.shared_from_this());
 	}
 }
 
@@ -1438,10 +1442,10 @@ void MePubDocument::ParseNavPoint(
 
 	np->SetClass(inNavPoint->get_attribute("class"));
 	
-	for (xml::node_ptr n = inNavPoint->children(); n; n = n->next())
+	foreach (xml::node& n, inNavPoint->children())
 	{
-		if (n->name() == "navPoint")
-			ParseNavPoint(np.get(), n);
+		if (n.name() == "navPoint")
+			ParseNavPoint(np.get(), n.shared_from_this());
 	}
 	
 	inGroup->AddProjectItem(np.release());

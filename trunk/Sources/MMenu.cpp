@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <cstring>
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+
+#include "document.hpp"
 
 #include "MCallbacks.h"
 #include "MMenu.h"
@@ -24,6 +26,7 @@
 #include "MJapiApp.h"
 
 using namespace std;
+namespace io = boost::iostreams;
 
 namespace
 {
@@ -277,47 +280,35 @@ MMenu* MMenu::CreateFromResource(
 	
 	if (not rsrc)
 		THROW(("Menu resource not found: %s", inResourceName));
-	
-	xmlDocPtr			xmlDoc = nil;
-	
-	xmlInitParser();
 
-	try
-	{
-		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
-		if (xmlDoc == nil or xmlDoc->children == nil)
-			THROW(("Failed to parse menu resource"));
-		
-		// build a menu
-		
-		XMLNode node(xmlDoc->children);
-		if (node.name() == "menu")
-			result = Create(node);
+	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
 
-		xmlFreeDoc(xmlDoc);
-	}
-	catch (...)
-	{
-		if (xmlDoc != nil)
-			xmlFreeDoc(xmlDoc);
-		
-		xmlCleanupParser();
-		throw;
-	}
+while (not data.eof())
+{
+	string line;
+	getline(data, line);
+	cout << line << endl;
+}
+
+	xml::document doc(data);
 	
-	xmlCleanupParser();
+	// build a menu from the resource XML
+	xml::node_ptr root = doc.root();
+
+	if (root->name() == "menu")
+		result = Create(*root);
 
 	return result;
 }
 
 MMenu* MMenu::Create(
-	XMLNode&			inXMLNode)
+	xml::node&		inXMLNode)
 {
-	string label = inXMLNode.property("label");
+	string label = inXMLNode.get_attribute("label");
 	if (label.length() == 0)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	string special = inXMLNode.property("special");
+	string special = inXMLNode.get_attribute("special");
 
 	MMenu* menu;
 
@@ -327,17 +318,17 @@ MMenu* MMenu::Create(
 	{
 		menu = new MMenu(label);
 		
-		for (XMLNode::iterator item = inXMLNode.begin(); item != inXMLNode.end(); ++item)
+		for (xml::node_list::iterator item = inXMLNode.children().begin(); item != inXMLNode.children().end(); ++item)
 		{
 			if (item->name() == "item")
 			{
-				label = item->property("label");
+				label = item->get_attribute("label");
 				
 				if (label == "-")
 					menu->AppendSeparator();
 				else
 				{
-					string cs = item->property("cmd").c_str();
+					string cs = item->get_attribute("cmd").c_str();
 	
 					if (cs.length() != 4)
 						THROW(("Invalid menu item specification, cmd is not correct"));
@@ -346,9 +337,9 @@ MMenu* MMenu::Create(
 					for (int i = 0; i < 4; ++i)
 						cmd |= cs[i] << ((3 - i) * 8);
 					
-					if (item->property("check") == "radio")
+					if (item->get_attribute("check") == "radio")
 						menu->AppendRadioItem(label, cmd);
-					else if (item->property("check") == "checkbox")
+					else if (item->get_attribute("check") == "checkbox")
 						menu->AppendCheckItem(label, cmd);
 					else
 						menu->AppendItem(label, cmd);
@@ -680,56 +671,36 @@ void MMenubar::Initialize(
 	
 	if (not rsrc)
 		THROW(("Menu resource not found: %s", inResourceName));
-	
-	xmlDocPtr			xmlDoc = nil;
-	
-	xmlInitParser();
 
-	try
+	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
+	xml::document doc(data);
+	
+	// build a menubar from the resource XML
+	xml::node_ptr root = doc.root();
+
+	if (root->name() != "menubar")
+		THROW(("Menubar resource %s is invalid, should start with <menubar> tag", inResourceName));
+
+	for (xml::node_list::iterator menu = root->children().begin(); menu != root->children().end(); ++menu)
 	{
-		xmlDoc = xmlParseMemory(rsrc.data(), rsrc.size());
-		if (xmlDoc == nil or xmlDoc->children == nil)
-			THROW(("Failed to parse menu resource"));
-		
-		// build a menu
-		
-		XMLNode node(xmlDoc->children);
-		if (node.name() == "menubar")
+		if (menu->name() == "menu")
 		{
-			for (XMLNode::iterator menu = node.begin(); menu != node.end(); ++menu)
-			{
-				if (menu->name() == "menu")
-				{
-					MMenu* obj = CreateMenu(*menu);
-					AddMenu(obj);
-				}
-			}
+			MMenu* obj = CreateMenu(*menu);
+			AddMenu(obj);
 		}
-
-		xmlFreeDoc(xmlDoc);
 	}
-	catch (...)
-	{
-		if (xmlDoc != nil)
-			xmlFreeDoc(xmlDoc);
-		
-		xmlCleanupParser();
-		throw;
-	}
-	
-	xmlCleanupParser();
 	
 	gtk_widget_show_all(mGtkMenubar);
 }
 
 MMenu* MMenubar::CreateMenu(
-	XMLNode&		inXMLNode)
+	xml::node&		inXMLNode)
 {
-	string label = inXMLNode.property("label");
+	string label = inXMLNode.get_attribute("label");
 	if (label.length() == 0)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	string special = inXMLNode.property("special");
+	string special = inXMLNode.get_attribute("special");
 
 	MMenu* menu;
 
@@ -739,17 +710,17 @@ MMenu* MMenubar::CreateMenu(
 	{
 		menu = new MMenu(label);
 		
-		for (XMLNode::iterator item = inXMLNode.begin(); item != inXMLNode.end(); ++item)
+		for (xml::node_list::iterator item = inXMLNode.children().begin(); item != inXMLNode.children().end(); ++item)
 		{
 			if (item->name() == "item")
 			{
-				label = item->property("label");
+				label = item->get_attribute("label");
 				
 				if (label == "-")
 					menu->AppendSeparator();
 				else
 				{
-					string cs = item->property("cmd").c_str();
+					string cs = item->get_attribute("cmd").c_str();
 	
 					if (cs.length() != 4)
 						THROW(("Invalid menu item specification, cmd is not correct"));
@@ -758,9 +729,9 @@ MMenu* MMenubar::CreateMenu(
 					for (int i = 0; i < 4; ++i)
 						cmd |= cs[i] << ((3 - i) * 8);
 					
-					if (item->property("check") == "radio")
+					if (item->get_attribute("check") == "radio")
 						menu->AppendRadioItem(label, cmd);
-					else if (item->property("check") == "checkbox")
+					else if (item->get_attribute("check") == "checkbox")
 						menu->AppendCheckItem(label, cmd);
 					else
 						menu->AppendItem(label, cmd);

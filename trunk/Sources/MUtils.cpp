@@ -203,69 +203,6 @@ string GetDateTime()
 	return result;
 }
 
-string XMLNode::name() const
-{
-	return string((const char*)mNode->name);
-}
-
-string XMLNode::text() const
-{
-	string result;
-	
-	if (mNode->children != nil)
-	{
-		const char* t = (const char*)XML_GET_CONTENT(mNode->children);
-		if (t != nil)
-			result = t;
-	}
-	
-	return result;
-}
-
-string XMLNode::property(
-	const char*	inName) const
-{
-	char* p = (char*)xmlGetProp(mNode, BAD_CAST inName);
-	string result;
-	if (p != nil)
-	{
-		result = p;
-		xmlFree(p);
-	}
-	return result;
-}
-
-xmlNodePtr XMLNode::children() const
-{
-	return mNode->children;
-}
-
-void XMLNode::iterator::increment()
-{
-	mNode = mNode->next;
-}
-
-bool XMLNode::iterator::equal(const iterator& inOther) const
-{
-	return mNode == inOther.mNode;
-}
-
-XMLNode::iterator::reference  XMLNode::iterator::dereference() const
-{
-	mXMLNode->mNode = mNode;
-	return *mXMLNode;
-}
-
-XMLNode::iterator XMLNode::begin() const
-{
-	return iterator(mNode->children);
-}
-
-XMLNode::iterator XMLNode::end() const
-{
-	return iterator(nil);
-}
-
 bool IsModifierDown(
 	int		inModifierMask)
 {

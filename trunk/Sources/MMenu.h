@@ -19,7 +19,7 @@ class MFile;
 struct MMenuItem;
 typedef std::list<MMenuItem*>	MMenuItemList;
 
-class XMLNode;
+namespace xml { class node; }
 
 class MMenu
 {
@@ -90,7 +90,7 @@ class MMenu
   protected:
 
 	static MMenu*	Create(
-						XMLNode&			inXMLNode);
+						xml::node&			inXMLNode);
 
 	static void		MenuPosition(
 						GtkMenu*			inMenu,
@@ -137,7 +137,7 @@ class MMenubar
   private:
 	
 	MMenu*			CreateMenu(
-						XMLNode&			inXMLNode);
+						xml::node&			inXMLNode);
 	
 	bool			OnButtonPress(
 						GdkEventButton*		inEvent);

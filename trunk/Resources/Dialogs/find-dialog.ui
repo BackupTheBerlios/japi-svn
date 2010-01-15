@@ -392,6 +392,9 @@
                             <signal name="changed" handler="on_changed"/>
                             <child>
                               <object class="GtkCellRendererText" id="renderer3"/>
+                              <attributes>
+                                <attribute name="text">0</attribute>
+                              </attributes>
                             </child>
                           </object>
                           <packing>

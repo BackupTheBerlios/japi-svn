@@ -70,13 +70,37 @@ class MResource
 	MResource			find(
 							const std::string&	inPath);
 
-	class iterator : public boost::iterator_facade<iterator, MResource, boost::forward_traversal_tag>
+	template <class R>
+	class iterator_base : public boost::iterator_facade<iterator_base<R>, R, boost::forward_traversal_tag>
 	{
 		friend class boost::iterator_core_access;
 		friend class MResource;
+
 	  public:
 
-		MResource&		dereference() const
+		typedef typename boost::iterator_facade<iterator_base<R>, R, boost::forward_traversal_tag>::reference reference;
+
+						iterator_base(
+							const iterator_base&	rhs)
+							: mRsrc(new MResource(rhs.mRsrc->mImpl))
+						{
+						}
+						
+						~iterator_base()
+						{
+							delete mRsrc;
+						}
+		
+		iterator_base&		operator=(
+							const iterator_base&	rhs)
+						{
+							mRsrc->mImpl = rhs.mRsrc->mImpl;
+							return *this;
+						}
+
+	  private:
+
+		reference		dereference() const
 						{
 							return *mRsrc;
 						}
@@ -89,36 +113,19 @@ class MResource
 								mRsrc->mImpl = nil;
 						}
 
-		bool			equal(const iterator& rhs) const
+		bool			equal(const iterator_base& rhs) const
 						{
 							return mRsrc->mImpl == rhs.mRsrc->mImpl;
 						}
 	
-						iterator(
-							const iterator&	rhs)
-							: mRsrc(new MResource(rhs.mRsrc->mImpl))
-						{
-						}
-						
-						~iterator()
-						{
-							delete mRsrc;
-						}
-		
-		iterator&		operator=(
-							const iterator&	rhs)
-						{
-							mRsrc->mImpl = rhs.mRsrc->mImpl;
-							return *this;
-						}
-
-	  private:
-						iterator(
+						iterator_base(
 							const MResourceImp*	inImpl)
 							: mRsrc(new MResource(inImpl)) {}
 
 		MResource*		mRsrc;
 	};
+	
+	typedef iterator_base<MResource> iterator;
 
 	iterator			begin() const
 						{

@@ -10,11 +10,7 @@
 #include "MProjectItem.h"
 #include "MDocument.h"
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <libxml/xpath.h>
-#include <libxml/xpathInternals.h>
-#include <libxml/xmlwriter.h>
+namespace xml { class node; class node_list; }
 
 class MWindow;
 class MMessageWindow;
@@ -224,50 +220,51 @@ class MProject : public MDocument
 	void				MakeClean();
 
 	void				ReadPaths(
-							xmlXPathObjectPtr	inData,
+							const xml::node_list&
+												inData,
 							std::vector<fs::path>&
 												outPaths);
 
 	void		 		ReadOptions(
-							xmlNodePtr			inData,
+							const xml::node&	inData,
 							const char*			inOptionName,
 							std::vector<std::string>&
 												outOptions);
 
 	void				ReadFiles(
-							xmlNodePtr			inData,
+							const xml::node&	inData,
 							MProjectGroup*		inGroup);
 
 	void				ReadResources(
-							xmlNodePtr			inData,
+							const xml::node&	inData,
 							MProjectGroup*		inGroup);
 
 	void				Read(
-							xmlXPathContextPtr	inContext);
+							const xml::node&	inContext);
 
 	void				WritePaths(
-							xmlTextWriterPtr	inWriter,
+							xml::node&			inNode,
 							const char*			inTag,
 							std::vector<fs::path>&
 												inPaths,
 							bool				inFullPath);
 
 	void				WriteFiles(
-							xmlTextWriterPtr	inWriter,
+							xml::node&			inNode,
 							std::vector<MProjectItem*>&
 												inItems);
 
 	void				WriteResources(
-							xmlTextWriterPtr	inWriter,
+							xml::node&			inNode,
 							std::vector<MProjectItem*>&
 												inItems);
 
 	void				WriteTarget(
-							xmlTextWriterPtr	inWriter,
+							xml::node&			inNode,
 							MProjectTarget&		inTarget);
 
 	void				WriteOptions(
-							xmlTextWriterPtr	inWriter,
+							xml::node&			inNode,
 							const char*			inOptionGroupName,
 							const char*			inOptionName,
 							const std::vector<std::string>&
