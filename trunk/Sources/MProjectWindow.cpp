@@ -20,6 +20,7 @@
 #include "MAlerts.h"
 #include "MJapiApp.h"
 #include "MProjectInfoDialog.h"
+#include "MLibraryInfoDialog.h"
 #include "MGtkWrappers.h"
 #include "MProjectTree.h"
 
@@ -237,7 +238,26 @@ void MProjectWindow::InvokeFileRow(
 		if (file != nil)
 		{
 			fs::path p = file->GetPath();
-			gApp->OpenOneDocument(MFile(p));
+			if (FileNameMatches("lib*.a", p.leaf()))
+			{
+				auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
+				dlog->Initialize(mProject);
+				dlog->Show(this);
+				dlog.release();
+			}
+			else
+				gApp->OpenOneDocument(MFile(p));
+		}
+		else
+		{
+			MProjectLib* lib = dynamic_cast<MProjectLib*>(item);
+			if (lib != nil)
+			{
+				auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
+				dlog->Initialize(mProject);
+				dlog->Show(this);
+				dlog.release();
+			}
 		}
 	}
 }

@@ -27,6 +27,8 @@ extern bool				gPlaySounds;
 extern uint32			gCharsPerTab;
 extern uint32			gSpacesPerTab;
 
+extern uint32			gConcurrentJobs;
+
 extern uint32			gFontSize;
 extern std::string		gFontName;
 

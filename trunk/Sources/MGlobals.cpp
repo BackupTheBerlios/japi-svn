@@ -67,6 +67,8 @@ MColor			gCurrentLineColor, gMarkedLineColor;
 MColor			gPCLineColor, gBreakpointColor;
 MColor			gWhiteSpaceColor;
 
+uint32			gConcurrentJobs = 2;
+
 fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
 void InitGlobals()
@@ -148,6 +150,8 @@ void InitGlobals()
 			chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 		}
 	}
+	
+	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs", gConcurrentJobs);
 }
 
 void SaveGlobals()
@@ -168,4 +172,6 @@ void SaveGlobals()
 	{
 //		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
 	}
+	
+	Preferences::SetInteger("concurrent-jobs", gConcurrentJobs);
 }

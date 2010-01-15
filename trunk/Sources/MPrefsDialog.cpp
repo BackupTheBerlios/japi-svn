@@ -5,6 +5,8 @@
 
 #include "MJapi.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include "MGlobals.h"
 #include "MPrefsDialog.h"
 #include "MLanguage.h"
@@ -50,7 +52,13 @@ const uint32
 	kOpenLastProjectControlID	= 'lstp',
 	kOpenWorksheetControlID		= 'wrks',
 	kSaveStateControlID			= 'stat',
-	kForceNLControlID			= 'nlae';
+	kForceNLControlID			= 'nlae',
+	
+	kDefaultCompilerEditTextID	= 'comp',
+	kConcurrentJobsEditTextID	= 'conc',
+	
+	kBoostLibraryNameExtEditTextID
+								= 'bste';
 
 }
 
@@ -127,6 +135,13 @@ MPrefsDialog::MPrefsDialog()
 	SetChecked(kOpenWorksheetControlID, Preferences::GetInteger("open worksheet", 0));
 	SetChecked(kSaveStateControlID, Preferences::GetInteger("save state", 1));
 	SetChecked(kForceNLControlID, Preferences::GetInteger("force newline at eof", 1));
+	
+	// compiler and build options
+	
+	SetText(kDefaultCompilerEditTextID, Preferences::GetString("c++", "/usr/bin/c++"));
+	SetText(kConcurrentJobsEditTextID, boost::lexical_cast<string>(gConcurrentJobs));
+	
+	SetText(kBoostLibraryNameExtEditTextID, Preferences::GetString("boost-ext", ""));
 }
 
 bool MPrefsDialog::DoClose()
@@ -137,133 +152,10 @@ bool MPrefsDialog::DoClose()
 
 void MPrefsDialog::SelectPage(uint32 inPage)
 {
-//	ControlRef select = nil;
-//	
-//	for (uint32 page = 1; page <= kPageCount; ++page)
-//	{
-//		ControlRef pane = FindControl(kPageIDs[page]);
-//		
-//		if (page == inPage)
-//			select = pane;
-//		else
-//		{
-//            ::SetControlVisibility(pane, false, false);
-//            ::DisableControl(pane);
-//		}
-//	}
-//	
-//    if (select != NULL)
-//    {
-//        ::EnableControl(select);
-//        ::SetControlVisibility(select, true, true);
-//    }
-//
-//	mCurrentPage = inPage;
 }
 
-//OSStatus MPrefsDialog::DoControlHit(EventRef inEvent)
-//{
-//    ControlRef theControl;
-//	::GetEventParameter(inEvent, kEventParamDirectObject,
-//		typeControlRef, NULL, sizeof(ControlRef), NULL, &theControl);
-//
-//	ControlID controlID;
-//	::GetControlID(theControl, &controlID);
-//	
-//	OSStatus result = noErr;
-//	
-//	switch (controlID.id)
-//	{
-//		case kTabControlID:
-//			if (static_cast<uint32>(::GetControlValue(theControl)) != mCurrentPage)
-//			{
-//				SelectPage(::GetControlValue(theControl));
-//				result = noErr;
-//			}
-//			break;
-//		
-//		default:
-//	    	result = MDialog::DoControlHit(inEvent);
-//	}
-//    
-//    return result;
-//}
-//
 bool MPrefsDialog::OKClicked()
 {
-//	// save the changed values
-//	
-//	string s;
-//	
-//	GetText(kTabWidthEditTextID, s);
-//	uint32 n = StringToNum(s);
-//	if (n > 0 and n < 100)
-//		Preferences::SetInteger("chars per tab", gCharsPerTab = n);
-//	
-//	Preferences::SetInteger("tab enters spaces", gTabEntersSpaces = IsChecked(kTabEntersSpacesCheckboxID));
-//
-//	GetText(kSpacesPerTabEditTextID, s);
-//	n = StringToNum(s);
-//	if (n > 0 and n < 100)
-//		Preferences::SetInteger("spaces per tab", gSpacesPerTab = n);
-//
-//	Preferences::SetInteger("kiss", gKiss = IsChecked(kBalanceWhileTypingCheckboxID));
-//	Preferences::SetInteger("auto indent", gAutoIndent = IsChecked(kAutoIndentCheckboxID));
-//	Preferences::SetInteger("smart indent", gSmartIndent = IsChecked(kSmartIndentCheckboxID));
-//	
-//	switch (GetValue(kEncodingPopupID))
-//	{
-//		case 1:
-//			Preferences::SetString("default encoding", "utf-8");
-//			break;
-//		
-//		case 2:
-//			Preferences::SetString("default encoding", "utf-16 be");
-//			break;
-//		
-//		case 3:
-//			Preferences::SetString("default encoding", "utf-16 le");
-//			break;
-//		
-//		case 4:
-//			Preferences::SetString("default encoding", "mac os roman");
-//			break;
-//	}
-//	
-//	Preferences::SetInteger("add bom", IsChecked(kBOMCheckboxID));
-//	
-//	switch (GetValue(kNewlinePopupID))
-//	{
-//		case 1:
-//			Preferences::SetString("newline char", "LF");
-//			break;
-//		
-//		case 2:
-//			Preferences::SetString("newline char", "CR");
-//			break;
-//		
-//		case 3:
-//			Preferences::SetString("newline char", "CRLF");
-//			break;
-//		
-//	}
-//	
-//	// appearance
-//	
-////	Preferences::SetColor("text color",
-////	gLanguageColors[kLTextColor] = mColorSwatches[0]->GetColor());
-//
-//
-////	Preferences::GetColor("invisibles color", 
-////		gLanguageColors[kLInvisiblesColor] = mColorSwatches[7]->GetColor());
-//	
-//	// startup options
-//	
-//	Preferences::SetInteger("at launch", GetValue(kOpenOptionControlID));
-//	Preferences::SetInteger("reopen project", IsChecked(kOpenLastProjectControlID));
-//	
-//	ePrefsChanged();
-	
 	return true;
 }
 
@@ -426,6 +318,18 @@ void MPrefsDialog::ValueChanged(
 		
 		case kForceNLControlID:
 			Preferences::SetInteger("force newline at eof", IsChecked(kForceNLControlID));
+			break;
+		
+		case kDefaultCompilerEditTextID:
+			Preferences::SetString("c++", GetText(kDefaultCompilerEditTextID));
+			break;
+		
+		case kConcurrentJobsEditTextID:
+			Preferences::SetInteger("concurrent-jobs", gConcurrentJobs = boost::lexical_cast<uint32>(GetText(kConcurrentJobsEditTextID)));
+			break;
+		
+		case kBoostLibraryNameExtEditTextID:
+			Preferences::SetString("boost-ext", GetText(kBoostLibraryNameExtEditTextID));
 			break;
 		
 		default:

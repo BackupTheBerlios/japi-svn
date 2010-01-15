@@ -815,6 +815,28 @@ bool MProject::LocateFile(
 				found = exists(outPath);
 			}
 		}
+
+		// special case for boost file names
+		if (not found and FileNameMatches("libboost*.a;boost*.so", inFile) and
+			not Preferences::GetString("boost-ext", "").empty())
+		{
+			string ext = Preferences::GetString("boost-ext", "");
+			
+			string::size_type p = inFile.rfind('.');
+			assert(p != string::npos);
+			
+			string file = inFile;
+			file.insert(p, ext);
+
+			for (vector<fs::path>::const_iterator p = mCLibSearchPaths.begin();
+				 not found and p != mCLibSearchPaths.end();
+				 ++p)
+			{
+				outPath = *p / file;
+				found = exists(outPath);
+			}
+		}
+
 	}
 	else
 	{

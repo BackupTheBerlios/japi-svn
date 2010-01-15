@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+
 #include "MResources.h"
 
 #undef check
@@ -29,8 +30,8 @@
 #include "MProject.h"
 #include "MProjectJob.h"
 #include "MObjectFile.h"
-//#include "MProjectItem.h"
 #include "MError.h"
+#include "MGlobals.h"
 
 extern char** environ;
 extern int VERBOSE;
@@ -259,11 +260,9 @@ void MProjectCompileAllJob::AddJob(
 // ---------------------------------------------------------------------------
 //	MProjectCompileAllJob::Execute
 
-const uint32 kMaxSimulateousJobs = 4;
-
 void MProjectCompileAllJob::Execute()
 {
-	while (not mCompileJobs.empty() and mCurrentJobs.size() < kMaxSimulateousJobs)
+	while (not mCompileJobs.empty() and mCurrentJobs.size() < gConcurrentJobs)
 	{
 		mCurrentJobs.transfer(mCurrentJobs.end(), mCompileJobs.begin(), mCompileJobs);
 		mCurrentJobs.back().Execute();
@@ -296,7 +295,7 @@ bool MProjectCompileAllJob::IsDone()
 		++job;
 	}
 	
-	if (mCurrentJobs.size() < kMaxSimulateousJobs)
+	if (mCurrentJobs.size() < gConcurrentJobs)
 		Execute();
 	
 	return mCurrentJobs.empty() and mCompileJobs.empty();
