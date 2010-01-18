@@ -26,9 +26,6 @@ class MLibraryInfoDialog : public MDialog
 	
   private:
 
-	virtual void		ValueChanged(
-							uint32			inID);
-
 	MProject*			mProject;
 	MProjectLib*		mLibrary;
 };

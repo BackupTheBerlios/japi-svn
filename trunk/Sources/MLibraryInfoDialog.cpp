@@ -71,22 +71,9 @@ void MLibraryInfoDialog::Initialize(
 
 bool MLibraryInfoDialog::OKClicked()
 {
+	mLibrary->SetOptional(IsChecked(kIgnoreCheckboxID));
+	mLibrary->SetStatic(IsChecked(kLinkStaticRadioButtonID));
+	mProject->SetModified(true);
+	
 	return true;
 }
-
-void MLibraryInfoDialog::ValueChanged(
-	uint32			inID)
-{
-	switch (inID)
-	{
-		case kIgnoreCheckboxID:
-			mLibrary->SetOptional(IsChecked(kIgnoreCheckboxID));
-			break;
-
-		case kLinkSharedRadioButtonID:
-		case kLinkStaticRadioButtonID:
-			mLibrary->SetStatic(IsChecked(kLinkStaticRadioButtonID));
-			break;
-	}	
-}
-

@@ -90,8 +90,6 @@ static void RunCommand(
 		setpgid(0, 0);		// detach from the process group, create new
 
 		dup2(ofd[1], STDOUT_FILENO);
-//		dup2(ofd[1], STDERR_FILENO);
-		close(ofd[0]);
 		close(ofd[1]);
 		
 		// redirect stderr to /dev/null
@@ -99,8 +97,17 @@ static void RunCommand(
 		dup2(fd, STDERR_FILENO);
 		close(fd);
 
+		close(ofd[0]);
 		close(STDIN_FILENO);
 		
+		// redirect errors to /dev/null
+		int sink = open("/dev/null", O_RDWR);
+		if (sink >= 0)
+		{
+			dup2(sink, STDERR_FILENO);
+			close(sink);
+		}
+
 		(void)execve(cmd.string().c_str(),
 			const_cast<char*const*>(argv), environ);
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project>
+<project version="2.0">
  <pkg-config>
   <pkg tool="pkg-config">gthread-2.0</pkg>
   <pkg tool="pkg-config">gstreamer-0.10</pkg>
@@ -110,18 +110,18 @@
    <file>document.cpp</file>
   </group>
   <group name="Libraries">
-   <file optional="true">libattr.a</file>
-   <file optional="true">libboost_system.a</file>
-   <file>libboost_thread.a</file>
-   <file>libboost_filesystem.a</file>
-   <file>libboost_iostreams.a</file>
-   <file>libcrypto.a</file>
-   <file>libexpat.a</file>
-   <file>libpcre.a</file>
-   <file>libpcrecpp.a</file>
-   <file>libuuid.a</file>
-   <file>libtidy.a</file>
-   <file>libcryptopp.a</file>
+   <link optional="true">attr</link>
+   <link optional="true">boost_system</link>
+   <link>boost_thread</link>
+   <link>boost_filesystem</link>
+   <link>boost_iostreams</link>
+   <link>crypto</link>
+   <link>expat</link>
+   <link>pcre</link>
+   <link>pcrecpp</link>
+   <link>uuid</link>
+   <link>tidy</link>
+   <link>cryptopp</link>
   </group>
  </files>
  <resources resource-dir="Resources">
