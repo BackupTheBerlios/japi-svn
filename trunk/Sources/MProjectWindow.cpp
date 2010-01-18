@@ -238,15 +238,7 @@ void MProjectWindow::InvokeFileRow(
 		if (file != nil)
 		{
 			fs::path p = file->GetPath();
-			if (FileNameMatches("lib*.a", p.leaf()))
-			{
-				auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
-				dlog->Initialize(mProject);
-				dlog->Show(this);
-				dlog.release();
-			}
-			else
-				gApp->OpenOneDocument(MFile(p));
+			gApp->OpenOneDocument(MFile(p));
 		}
 		else
 		{
@@ -254,7 +246,7 @@ void MProjectWindow::InvokeFileRow(
 			if (lib != nil)
 			{
 				auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
-				dlog->Initialize(mProject);
+				dlog->Initialize(mProject, lib);
 				dlog->Show(this);
 				dlog.release();
 			}

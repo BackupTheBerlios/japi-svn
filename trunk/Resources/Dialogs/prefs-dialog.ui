@@ -1177,6 +1177,7 @@
                         <property name="can_focus">True</property>
                         <property name="invisible_char">&#x25CF;</property>
                         <property name="text" translatable="yes">/usr/bin/c++</property>
+                        <signal name="changed" handler="on_changed"/>
                       </object>
                       <packing>
                         <property name="position">1</property>
@@ -1211,6 +1212,7 @@
                         <property name="invisible_char">&#x25CF;</property>
                         <property name="text" translatable="yes">4</property>
                         <property name="xalign">1</property>
+                        <signal name="changed" handler="on_changed"/>
                       </object>
                       <packing>
                         <property name="position">1</property>
@@ -1274,6 +1276,7 @@
                         <property name="can_focus">True</property>
                         <property name="invisible_char">&#x25CF;</property>
                         <property name="text" translatable="yes">-mt</property>
+                        <signal name="changed" handler="on_changed"/>
                       </object>
                       <packing>
                         <property name="position">1</property>

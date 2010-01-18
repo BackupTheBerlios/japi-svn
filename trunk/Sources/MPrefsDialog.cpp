@@ -141,7 +141,7 @@ MPrefsDialog::MPrefsDialog()
 	SetText(kDefaultCompilerEditTextID, Preferences::GetString("c++", "/usr/bin/c++"));
 	SetText(kConcurrentJobsEditTextID, boost::lexical_cast<string>(gConcurrentJobs));
 	
-	SetText(kBoostLibraryNameExtEditTextID, Preferences::GetString("boost-ext", ""));
+	SetText(kBoostLibraryNameExtEditTextID, Preferences::GetString("boost-ext", "-mt"));
 }
 
 bool MPrefsDialog::DoClose()
@@ -325,7 +325,9 @@ void MPrefsDialog::ValueChanged(
 			break;
 		
 		case kConcurrentJobsEditTextID:
-			Preferences::SetInteger("concurrent-jobs", gConcurrentJobs = boost::lexical_cast<uint32>(GetText(kConcurrentJobsEditTextID)));
+			n = StringToNum(GetText(kConcurrentJobsEditTextID));
+			if (n > 0 and n < 12)
+				Preferences::SetInteger("concurrent-jobs", gConcurrentJobs = n);
 			break;
 		
 		case kBoostLibraryNameExtEditTextID:

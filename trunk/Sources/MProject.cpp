@@ -267,26 +267,45 @@ void MProject::ReadFiles(
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
-			fs::path filePath;
-			try
+			if (mVersion == 1.0f and FileNameMatches("lib*.a;lib*.so;lib*.dylib", fileName))
 			{
-				auto_ptr<MProjectFile> projectFile;
+				bool shared = true;
 				
-				if (LocateFile(fileName, true, filePath))
-					projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
+				string linkName = fileName.substr(3);
+				if (ba::ends_with(linkName, ".a"))
+				{
+					linkName.erase(linkName.end() - 2, linkName.end());
+					shared = false;
+				}
+				else if (ba::ends_with(linkName, ".so"))
+					linkName.erase(linkName.end() - 3, linkName.end());
 				else
-					projectFile.reset(new MProjectFile(fileName, inGroup, fs::path()));
+					linkName.erase(linkName.end() - 6, linkName.end());
 				
-				if (node.get_attribute("optional") == "true")
-					projectFile->SetOptional(true);
-
-//				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
-
-				inGroup->AddProjectItem(projectFile.release());
+				inGroup->AddProjectItem(new MProjectLib(linkName,
+					shared == false,
+					node.get_attribute("optional") == "true",
+					inGroup));
 			}
-			catch (std::exception& e)
+			else
 			{
-				DisplayError(e);
+				fs::path filePath;
+				try
+				{
+					auto_ptr<MProjectFile> projectFile;
+					
+					if (LocateFile(fileName, true, filePath))
+						projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
+					else
+						projectFile.reset(new MProjectFile(fileName, inGroup, fs::path()));
+			
+	//				AddRoute(projectFile->eStatusChanged, eProjectFileStatusChanged);
+					inGroup->AddProjectItem(projectFile.release());
+				}
+				catch (std::exception& e)
+				{
+					DisplayError(e);
+				}
 			}
 		}
 		else if (node.name() == "link")
@@ -295,7 +314,10 @@ void MProject::ReadFiles(
 			if (linkName.length() == 0)
 				THROW(("Invalid project file"));
 			
-			inGroup->AddProjectItem(new MProjectLib(linkName, inGroup));
+			inGroup->AddProjectItem(new MProjectLib(linkName,
+				node.get_attribute("static") == "true",
+				node.get_attribute("optional") == "true",
+				inGroup));
 		}
 		else if (node.name() == "group")
 		{
@@ -317,6 +339,16 @@ void MProject::ReadFiles(
 void MProject::Read(
 	const xml::node&	inRoot)
 {
+	mVersion = 1.0;
+
+	try
+	{
+		mVersion = boost::lexical_cast<float>(inRoot.get_attribute("version"));
+		if (mVersion < 1)
+			mVersion = 1.0f;
+	}
+	catch (...) {}
+	
 	// read the pkg-config data
 	
 	xml::node_list data = inRoot.find_all("/project/pkg-config/pkg");
@@ -503,19 +535,20 @@ void MProject::WriteFiles(
 		}
 		else if (dynamic_cast<MProjectLib*>(*item) != nil)
 		{
+			MProjectLib* link = dynamic_cast<MProjectLib*>(*item);
+
 			xml::node_ptr linkNode(new xml::node("link"));
-			linkNode->content((*item)->GetName());
+			linkNode->content(link->GetName());
+
+			if (link->IsOptional())
+				linkNode->add_attribute("optional", "true");
+
 			inNode.add_child(linkNode);
 		}
 		else
 		{
-			MProjectFile* file = dynamic_cast<MProjectFile*>(*item);
-			
 			xml::node_ptr fileNode(new xml::node("file"));
-			if (file != nil and file->IsOptional())
-				fileNode->add_attribute("optional", "true");
 			fileNode->content((*item)->GetName());
-			
 			inNode.add_child(fileNode);
 		}
 	}
@@ -659,6 +692,8 @@ void MProject::WriteFile(
 {
 	// <project>
 	xml::node_ptr projectNode(new xml::node("project"));
+	
+	projectNode->add_attribute("version", "2.0");
 		
 	// pkg-config
 	if (mProjectInfo.mPkgConfigPkgs.size() > 0)
@@ -817,10 +852,10 @@ bool MProject::LocateFile(
 		}
 
 		// special case for boost file names
-		if (not found and FileNameMatches("libboost*.a;boost*.so", inFile) and
-			not Preferences::GetString("boost-ext", "").empty())
+		if (not found and FileNameMatches("libboost*.a;libboost*.so", inFile) and
+			not Preferences::GetString("boost-ext", "-mt").empty())
 		{
-			string ext = Preferences::GetString("boost-ext", "");
+			string ext = Preferences::GetString("boost-ext", "-mt");
 			
 			string::size_type p = inFile.rfind('.');
 			assert(p != string::npos);
@@ -836,7 +871,6 @@ bool MProject::LocateFile(
 				found = exists(outPath);
 			}
 		}
-
 	}
 	else
 	{
@@ -1160,13 +1194,6 @@ MProjectJob* MProject::CreateLinkJob(
 		{
 			if (f->IsCompilable())
 				argv.push_back(f->GetObjectPath().string());
-			else if (FileNameMatches("*.a;*.o;*.dylib", f->GetName()))
-			{
-				if (fs::exists(f->GetPath()) )
-					argv.push_back(f->GetPath().string());
-				else if (not f->IsOptional())
-					THROW(("Missing library file %s", f->GetName().c_str()));
-			}
 			
 			continue;
 		}
@@ -1174,7 +1201,18 @@ MProjectJob* MProject::CreateLinkJob(
 		MProjectLib* l = dynamic_cast<MProjectLib*>(*file);
 
 		if (l != nil)
-			argv.push_back(kl + l->GetName());
+		{
+			if (l->IsStatic())
+			{
+				fs::path path;
+				if (LocateFile(l->GetLibraryName(), true, path))
+					argv.push_back(path.string());
+				else if (not l->IsOptional())
+					THROW(("Could not locate static library %s", l->GetLibraryName().c_str()));
+			}
+			else
+				argv.push_back(kl + l->GetName());
+		}
 	}
 
 	files.clear();
@@ -1721,15 +1759,22 @@ void MProject::CreateFileItem(
 						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
 					else if (r == 2)
 					{
+						// user chose 'Link' so we create a link statement
+						
+						bool shared = true;
+						
 						string linkName = p.leaf().substr(3);
 						if (ba::ends_with(linkName, ".a"))
+						{
 							linkName.erase(linkName.end() - 2, linkName.end());
+							shared = false;
+						}
 						else if (ba::ends_with(linkName, ".so"))
 							linkName.erase(linkName.end() - 3, linkName.end());
 						else
 							linkName.erase(linkName.end() - 6, linkName.end());
 						
-						projectFile.reset(new MProjectLib(linkName, inGroup));
+						projectFile.reset(new MProjectLib(linkName, shared == false, false, inGroup));
 					}
 				}
 				else

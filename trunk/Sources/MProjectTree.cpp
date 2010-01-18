@@ -103,7 +103,7 @@ void MProjectTree::GetValue(
 			
 			case kFilesNameColumn:
 				g_value_init(outValue, G_TYPE_STRING);
-				g_value_set_string(outValue, item->GetName().c_str());
+				g_value_set_string(outValue, item->GetDisplayName().c_str());
 				break;
 			
 			case kFilesDataSizeColumn:

@@ -63,6 +63,9 @@ class MProjectItem
 	void			SetName(
 						const std::string&	inName)			{ mName = inName; }
 	
+	virtual std::string
+					GetDisplayName() const					{ return GetName(); }
+	
 	uint32			GetLevel() const;
 
 	virtual void	Flatten(
@@ -118,10 +121,6 @@ class MProjectFile : public MProjectItem
 
 	virtual bool	IsCompilable() const					{ return FileNameMatches("*.cpp;*.c", mName); }
 
-	virtual bool	IsOptional() const						{ return mOptional; }
-	virtual void	SetOptional(
-						bool				inOptional)		{ mOptional = inOptional; }
-
 	virtual bool	IsCompiling() const						{ return mIsCompiling; }
 	void			SetCompiling(
 						bool				inIsCompiling);
@@ -143,7 +142,6 @@ class MProjectFile : public MProjectItem
 	uint32			mDataSize;
 	bool			mIsCompiling;
 	bool			mIsOutOfDate;
-	bool			mOptional;
 };
 
 // ---------------------------------------------------------------------------
@@ -271,8 +269,29 @@ class MProjectLib : public MProjectItem
   public:
 					MProjectLib(
 						const std::string&	inName,
+						bool				inStatic,
+						bool				inOptional,
 						MProjectGroup*		inParent)
-						: MProjectItem(inName, inParent) {}
+						: MProjectItem(inName, inParent)
+						, mStatic(inStatic)
+						, mOptional(inOptional) {}
+
+	virtual std::string
+					GetDisplayName() const;
+
+	virtual std::string
+					GetLibraryName() const;
+
+	bool			IsOptional() const				{ return mOptional; }
+	void			SetOptional(
+						bool		inOptional)		{ mOptional = inOptional; }
+
+	bool			IsStatic() const				{ return mStatic; }
+	void			SetStatic(
+						bool		inStatic)		{ mStatic = inStatic; }
+
+  private:
+	bool			mStatic, mOptional;
 };
 
 // ---------------------------------------------------------------------------

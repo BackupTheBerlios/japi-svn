@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
 #include <boost/range.hpp>
 #include <vector>

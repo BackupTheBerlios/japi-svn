@@ -311,6 +311,9 @@ class MProject : public MDocument
 	bool						mAllowWindows;
 	uint32						mCurrentTarget;
 	std::auto_ptr<MProjectJob>	mCurrentJob;
+	
+	// version, used when importing older versions of project files
+	float						mVersion;
 };
 
 #endif

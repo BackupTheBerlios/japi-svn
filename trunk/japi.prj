@@ -81,8 +81,8 @@
     <file>MObjectFile.cpp</file>
     <file>MObjectFileImp_elf.cpp</file>
     <file>MObjectFileImp_macho.cpp</file>
-    <file>MLibraryInfoDialog.cpp</file>
     <file>MProjectInfoDialog.cpp</file>
+    <file>MLibraryInfoDialog.cpp</file>
     <file>MProjectWindow.cpp</file>
    </group>
    <group name="ePub">
@@ -151,8 +151,8 @@
    <resource>Dialogs/auth-dialog.ui</resource>
    <resource>Dialogs/prefs-dialog.ui</resource>
    <resource>Dialogs/diff-window.ui</resource>
-   <resource>Dialogs/library-info-dialog.ui</resource>
    <resource>Dialogs/project-info-dialog.ui</resource>
+   <resource>Dialogs/library-info-dialog.ui</resource>
    <resource>Dialogs/quoted-rewrap-dialog.ui</resource>
   </group>
   <group name="Menus">

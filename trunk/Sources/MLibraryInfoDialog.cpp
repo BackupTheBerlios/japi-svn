@@ -32,7 +32,7 @@ namespace ba = boost::algorithm;
 namespace {
 
 enum {
-	kNameEditTextID				= 'name',
+//	kNameEditTextID				= 'name',
 	kIgnoreCheckboxID			= 'igno',
 	kLinkStaticRadioButtonID	= 'file',
 	kLinkSharedRadioButtonID	= 'link',
@@ -43,6 +43,7 @@ enum {
 MLibraryInfoDialog::MLibraryInfoDialog()
 	: MDialog("library-info-dialog")
 	, mProject(nil)
+	, mLibrary(nil)
 {
 }
 
@@ -51,10 +52,21 @@ MLibraryInfoDialog::~MLibraryInfoDialog()
 }
 
 void MLibraryInfoDialog::Initialize(
-	MProject*		inProject)
+	MProject*		inProject,
+	MProjectLib*	inLibrary)
 {
 	mProject = inProject;
+	mLibrary = inLibrary;
+
+	SetChecked(kIgnoreCheckboxID, inLibrary->IsOptional());
 	
+	if (inLibrary->IsStatic())
+		SetChecked(kLinkStaticRadioButtonID, true);
+	else
+		SetChecked(kLinkSharedRadioButtonID, true);
+	
+	SetTitle(
+		FormatString("Settings for library '^0'", inLibrary->GetName()));
 }
 
 bool MLibraryInfoDialog::OKClicked()
@@ -65,17 +77,16 @@ bool MLibraryInfoDialog::OKClicked()
 void MLibraryInfoDialog::ValueChanged(
 	uint32			inID)
 {
-	string s;
-
-cout << "value changed: " << hex << inID << endl;
-	
 	switch (inID)
 	{
-//		case kTargetNameControlID:
-//			GetText(inID, target.mName);
-//			UpdateTargetPopup(targetPopup.GetActive());
-//			break;
+		case kIgnoreCheckboxID:
+			mLibrary->SetOptional(IsChecked(kIgnoreCheckboxID));
+			break;
 
+		case kLinkSharedRadioButtonID:
+		case kLinkStaticRadioButtonID:
+			mLibrary->SetStatic(IsChecked(kLinkStaticRadioButtonID));
+			break;
 	}	
 }
 

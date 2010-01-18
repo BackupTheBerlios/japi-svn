@@ -16,6 +16,7 @@
 #include "MProjectItem.h"
 #include "MObjectFile.h"
 #include "MError.h"
+#include "MStrings.h"
 
 using namespace std;
 
@@ -236,7 +237,6 @@ MProjectFile::MProjectFile(
 	, mDataSize(0)
 	, mIsCompiling(false)
 	, mIsOutOfDate(false)
-	, mOptional(false)
 {
 	mIsOutOfDate = IsOutOfDate();
 }
@@ -837,6 +837,54 @@ uint32 MProjectCpFile::GetDataSize() const
 	}
 	catch (...) {}
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectLib::GetDisplayName
+
+string MProjectLib::GetDisplayName() const
+{
+	string name = MProjectItem::GetDisplayName();
+	
+	if (FileNameMatches("lib*.a", name))
+		name = name.substr(3, name.length() - 5);
+	else if (FileNameMatches("lib*.so", name))
+		name = name.substr(3, name.length() - 6);
+
+	string tags;
+	if (mStatic)
+		tags += _("static");
+	else
+		tags += _("shared");
+	
+	if (mOptional)
+	{
+		tags += ", ";
+		tags += _("optional");
+	}
+	
+	name += string(" (") + tags + ")";
+	return name;
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectLib::GetLibraryName
+
+string MProjectLib::GetLibraryName() const
+{
+	string name = MProjectItem::GetName();
+	
+	if (not FileNameMatches("lib*.a", name) and
+		not FileNameMatches("lib*.so", name))
+	{
+		name.insert(0, "lib");
+		if (mStatic)
+			name += ".a";
+		else
+			name += ".so";
+	}
+
+	return name;
 }
 
 // ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 #include "MDialog.h"
 
 class MProject;
-class MProjectTarget;
+class MProjectLib;
 
 class MLibraryInfoDialog : public MDialog
 {
@@ -19,7 +19,8 @@ class MLibraryInfoDialog : public MDialog
 						~MLibraryInfoDialog();
 
 	void				Initialize(
-							MProject*		inProject);
+							MProject*		inProject,
+							MProjectLib*	inLibrary);
 
 	virtual bool		OKClicked();
 	
@@ -29,6 +30,7 @@ class MLibraryInfoDialog : public MDialog
 							uint32			inID);
 
 	MProject*			mProject;
+	MProjectLib*		mLibrary;
 };
 
 #endif // MFINDANDOPENDIALOG_H
