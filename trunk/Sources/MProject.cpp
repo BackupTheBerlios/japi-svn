@@ -18,6 +18,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #define foreach BOOST_FOREACH
 
@@ -283,7 +284,7 @@ void MProject::ReadFiles(
 					linkName.erase(linkName.end() - 6, linkName.end());
 				
 				inGroup->AddProjectItem(new MProjectLib(linkName,
-					shared == false,
+					shared,
 					node.get_attribute("optional") == "true",
 					inGroup));
 			}
@@ -315,7 +316,7 @@ void MProject::ReadFiles(
 				THROW(("Invalid project file"));
 			
 			inGroup->AddProjectItem(new MProjectLib(linkName,
-				node.get_attribute("static") == "true",
+				node.get_attribute("shared") == "true",
 				node.get_attribute("optional") == "true",
 				inGroup));
 		}
@@ -542,6 +543,9 @@ void MProject::WriteFiles(
 
 			if (link->IsOptional())
 				linkNode->add_attribute("optional", "true");
+
+			if (link->IsShared())
+				linkNode->add_attribute("shared", "true");
 
 			inNode.add_child(linkNode);
 		}
@@ -1202,16 +1206,16 @@ MProjectJob* MProject::CreateLinkJob(
 
 		if (l != nil)
 		{
-			if (l->IsStatic())
+			fs::path path;
+			if (LocateFile(l->GetLibraryName(), true, path))
 			{
-				fs::path path;
-				if (LocateFile(l->GetLibraryName(), true, path))
+				if (l->IsShared())
+					argv.push_back(kl + l->GetName());
+				else
 					argv.push_back(path.string());
-				else if (not l->IsOptional())
-					THROW(("Could not locate static library %s", l->GetLibraryName().c_str()));
 			}
-			else
-				argv.push_back(kl + l->GetName());
+			else if (not l->IsOptional())
+				THROW(("Could not locate library '%s'", l->GetLibraryName().c_str()));
 		}
 	}
 
@@ -1751,7 +1755,7 @@ void MProject::CreateFileItem(
 		{
 			if (p == filePath)
 			{
-				if (FileNameMatches("lib*.a;lib*.so;lib*.dylib", p))
+				if (FileNameMatches("*.a;*.so;*.dylib", p))
 				{
 					int r = DisplayAlert("ask-add-lib-as-link", p.leaf());
 					
@@ -1763,7 +1767,10 @@ void MProject::CreateFileItem(
 						
 						bool shared = true;
 						
-						string linkName = p.leaf().substr(3);
+						string linkName = p.leaf();
+						if (ba::starts_with(linkName, "lib"))
+							linkName.erase(0, 3);
+
 						if (ba::ends_with(linkName, ".a"))
 						{
 							linkName.erase(linkName.end() - 2, linkName.end());
@@ -1774,7 +1781,7 @@ void MProject::CreateFileItem(
 						else
 							linkName.erase(linkName.end() - 6, linkName.end());
 						
-						projectFile.reset(new MProjectLib(linkName, shared == false, false, inGroup));
+						projectFile.reset(new MProjectLib(linkName, shared, false, inGroup));
 					}
 				}
 				else

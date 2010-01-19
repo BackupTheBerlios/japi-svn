@@ -852,10 +852,10 @@ string MProjectLib::GetDisplayName() const
 		name = name.substr(3, name.length() - 6);
 
 	string tags;
-	if (mStatic)
-		tags += _("static");
-	else
+	if (mShared)
 		tags += _("shared");
+	else
+		tags += _("static");
 	
 	if (mOptional)
 	{
@@ -878,10 +878,10 @@ string MProjectLib::GetLibraryName() const
 		not FileNameMatches("lib*.so", name))
 	{
 		name.insert(0, "lib");
-		if (mStatic)
-			name += ".a";
-		else
+		if (mShared)
 			name += ".so";
+		else
+			name += ".a";
 	}
 
 	return name;

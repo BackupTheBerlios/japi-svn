@@ -60,10 +60,10 @@ void MLibraryInfoDialog::Initialize(
 
 	SetChecked(kIgnoreCheckboxID, inLibrary->IsOptional());
 	
-	if (inLibrary->IsStatic())
-		SetChecked(kLinkStaticRadioButtonID, true);
-	else
+	if (inLibrary->IsShared())
 		SetChecked(kLinkSharedRadioButtonID, true);
+	else
+		SetChecked(kLinkStaticRadioButtonID, true);
 	
 	SetTitle(
 		FormatString("Settings for library '^0'", inLibrary->GetName()));
@@ -72,7 +72,7 @@ void MLibraryInfoDialog::Initialize(
 bool MLibraryInfoDialog::OKClicked()
 {
 	mLibrary->SetOptional(IsChecked(kIgnoreCheckboxID));
-	mLibrary->SetStatic(IsChecked(kLinkStaticRadioButtonID));
+	mLibrary->SetShared(IsChecked(kLinkSharedRadioButtonID));
 	mProject->SetModified(true);
 	
 	return true;

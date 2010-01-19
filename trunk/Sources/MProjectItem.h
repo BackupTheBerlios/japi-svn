@@ -269,11 +269,11 @@ class MProjectLib : public MProjectItem
   public:
 					MProjectLib(
 						const std::string&	inName,
-						bool				inStatic,
+						bool				inShared,
 						bool				inOptional,
 						MProjectGroup*		inParent)
 						: MProjectItem(inName, inParent)
-						, mStatic(inStatic)
+						, mShared(inShared)
 						, mOptional(inOptional) {}
 
 	virtual std::string
@@ -286,12 +286,12 @@ class MProjectLib : public MProjectItem
 	void			SetOptional(
 						bool		inOptional)		{ mOptional = inOptional; }
 
-	bool			IsStatic() const				{ return mStatic; }
-	void			SetStatic(
-						bool		inStatic)		{ mStatic = inStatic; }
+	bool			IsShared() const				{ return mShared; }
+	void			SetShared(
+						bool		inShared)		{ mShared = inShared; }
 
   private:
-	bool			mStatic, mOptional;
+	bool			mShared, mOptional;
 };
 
 // ---------------------------------------------------------------------------
