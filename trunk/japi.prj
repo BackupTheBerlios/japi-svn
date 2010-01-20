@@ -110,7 +110,7 @@
    <file>document.cpp</file>
   </group>
   <group name="Libraries">
-   <link optional="true" shared="true">attr</link>
+   <link optional="true">attr</link>
    <link optional="true">boost_system</link>
    <link>boost_thread</link>
    <link>boost_filesystem</link>

@@ -171,10 +171,11 @@ class node_list : public boost::noncopyable
 	};
 
 	typedef iterator_base<node>			iterator;
-	typedef iterator_base<const node>	const_iterator;
 
 	iterator			begin()									{ return iterator(m_nodes.begin()); }
 	iterator			end()									{ return iterator(m_nodes.end()); }
+
+	typedef iterator_base<const node>	const_iterator;
 
 	const_iterator		begin() const							{ return const_iterator(const_cast<std::list<node_ptr>&>(m_nodes).begin()); }
 	const_iterator		end() const								{ return const_iterator(const_cast<std::list<node_ptr>&>(m_nodes).end()); }
@@ -259,30 +260,11 @@ class attribute_list : public boost::noncopyable
 	};
 
 	typedef iterator_base<attribute>							iterator;
-	typedef iterator_base<const attribute>						const_iterator;
 
 	iterator			begin()									{ return iterator(m_attributes.begin()); }
 	iterator			end()									{ return iterator(m_attributes.end()); }
 
-//	class const_iterator : public boost::iterator_facade<iterator, const attribute, boost::bidirectional_traversal_tag>
-//	{
-//	  public:
-//						const_iterator() {}
-//		explicit		const_iterator(std::list<attribute_ptr>::const_iterator iter)
-//							: m_iter(iter) {}
-//
-//		template<class ATTR>
-//						const_iterator(const_iterator<ATTR> const& other)
-//							: m_iter(other.m_iter) {}
-//		
-//		reference		dereference()							{ return *m_iter->get(); }
-//		void			increment()								{ ++m_iter; }
-//		void			decrement()								{ --m_iter; }
-//
-//	  private:
-//		std::list<attribute_ptr>::const_iterator
-//						m_iter;
-//	};
+	typedef iterator_base<const attribute>						const_iterator;
 
 	const_iterator		begin() const							{ return const_iterator(const_cast<std::list<attribute_ptr>&>(m_attributes).begin()); }
 	const_iterator		end() const								{ return const_iterator(const_cast<std::list<attribute_ptr>&>(m_attributes).end()); }
@@ -292,31 +274,9 @@ class attribute_list : public boost::noncopyable
 						m_attributes;
 };
 
-
-
 std::ostream& operator<<(std::ostream& lhs, const node& rhs);
 
-//// inlines
-//
-//inline void node::attribute_iterator::increment()
-//{
-//	m_attr = m_attr->next();
-//}
-//
-//inline void node::const_attribute_iterator::increment()
-//{
-//	m_attr = m_attr->next();
-//}
-//
-//template<typename F>
-//void node::do_to_all(
-//	F			func)
-//{
-//	func(*this);
-//	for (iterator child = begin(); child != end(); ++child)
-//		child->do_to_all(func);
-//}
-
+// inlines
 // a set of convenience routines to create a nodes along with attributes in one call
 attribute_ptr make_attribute(const std::string& name, const std::string& value);
 node_ptr make_node(const std::string& name,

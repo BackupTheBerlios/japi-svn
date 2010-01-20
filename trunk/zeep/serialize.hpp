@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef SOAP_XML_SERIALISE_H
-#define SOAP_XML_SERIALISE_H
+#ifndef SOAP_XML_SERIALIZE_H
+#define SOAP_XML_SERIALIZE_H
 
 #include <sstream>
 #include <vector>

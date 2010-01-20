@@ -282,14 +282,6 @@ MMenu* MMenu::CreateFromResource(
 		THROW(("Menu resource not found: %s", inResourceName));
 
 	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
-
-while (not data.eof())
-{
-	string line;
-	getline(data, line);
-	cout << line << endl;
-}
-
 	xml::document doc(data);
 	
 	// build a menu from the resource XML

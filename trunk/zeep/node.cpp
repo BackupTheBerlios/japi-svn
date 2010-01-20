@@ -16,7 +16,7 @@ using namespace std;
 namespace ba = boost::algorithm;
 
 namespace xml {
-	
+
 node::node()
 {
 	m_children = new node_list;
