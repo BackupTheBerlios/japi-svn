@@ -30,7 +30,7 @@ GtkWidget* CreateAlertWithArgs(
 	
 	string resource = string("Alerts/") + inResourceName + ".xml";
 	
-	MResource rsrc = MResource::root().find(resource);
+	mrsrc::rsrc rsrc(resource);
 	if (not rsrc)
 		THROW(("Could not load resource Alerts/%s.xml", inResourceName));
 	

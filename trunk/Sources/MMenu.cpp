@@ -275,7 +275,7 @@ MMenu* MMenu::CreateFromResource(
 {
 	MMenu* result = nil;
 	
-	MResource rsrc = MResource::root().find(
+	mrsrc::rsrc rsrc(
 		string("Menus/") + inResourceName + ".xml");
 	
 	if (not rsrc)
@@ -658,8 +658,7 @@ void MMenubar::Initialize(
 	mGtkMenubar = inMBarWidget;
 	mOnButtonPressEvent.Connect(mGtkMenubar, "button-press-event");
 	
-	MResource rsrc = MResource::root().find(
-		string("Menus/") + inResourceName + ".xml");
+	mrsrc::rsrc rsrc(string("Menus/") + inResourceName + ".xml");
 	
 	if (not rsrc)
 		THROW(("Menu resource not found: %s", inResourceName));

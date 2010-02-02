@@ -53,7 +53,7 @@ enum {
 	kDebugInfoControlID			= 'debu',
 	kProfileControlID			= 'prof',
 	kPICControlID				= 'pic ',
-	
+	kCxx0xControlID				= 'c+0x',
 	
 //	kAnsiStrictControlID		= 3001,
 //	kPedanticControlID			= 3002,
@@ -247,6 +247,7 @@ void MProjectInfoDialog::TargetChanged()
 	SetChecked(kDebugInfoControlID, find(cflags.begin(), cflags.end(), "-gdwarf-2") != cflags.end());
 	SetChecked(kProfileControlID, find(cflags.begin(), cflags.end(), "-pg") != cflags.end());
 	SetChecked(kPICControlID, find(cflags.begin(), cflags.end(), "-fPIC") != cflags.end());
+	SetChecked(kCxx0xControlID, find(cflags.begin(), cflags.end(), "-std=c++0x") != cflags.end());
 
 	SetText(kCompilerControlID, target.mCompiler);
 	
@@ -332,6 +333,12 @@ void MProjectInfoDialog::ValueChanged(
 			cflags.erase(remove(cflags.begin(), cflags.end(), "-fPIC"), cflags.end());
 			if (IsChecked(inID))
 				cflags.push_back("-fPIC");
+			break;
+		
+		case kCxx0xControlID:
+			cflags.erase(remove(cflags.begin(), cflags.end(), "-std=c++0x"), cflags.end());
+			if (IsChecked(inID))
+				cflags.push_back("-std=c++0x");
 			break;
 		
 		case 'thre':

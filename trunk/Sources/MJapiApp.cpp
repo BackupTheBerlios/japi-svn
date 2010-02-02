@@ -632,7 +632,7 @@ void MJapieApp::DoNewProject()
 			THROW(("Failed to create project file"));
 		
 		// write out a default project from our resources
-		MResource rsrc = MResource::root().find("Templates/Projects/hello-cmdline.prj");
+		mrsrc::rsrc rsrc("Templates/Projects/hello-cmdline.prj");
 
 		if (not rsrc)
 			THROW(("Failed to load project resource"));
@@ -645,7 +645,7 @@ void MJapieApp::DoNewProject()
 		if (not srcfile.is_open())
 			THROW(("Failed to create project file"));
 		
-		rsrc = MResource::root().find("Templates/Projects/hello.cpp");
+		rsrc = mrsrc::rsrc("Templates/Projects/hello.cpp");
 		if (not rsrc)
 			THROW(("Failed to load project sourcefile resource"));
 		
@@ -1195,7 +1195,7 @@ void InstallJapi(
 	
 	// create desktop file
 		
-	MResource rsrc = MResource::root().find("japi.desktop");
+	mrsrc::rsrc rsrc("japi.desktop");
 	if (not rsrc)
 		error("japi.desktop file could not be created, missing data");
 
@@ -1230,11 +1230,15 @@ void InstallJapi(
 	
 	// write out all locale files
 	
-	rsrc = MResource::root().find("Locale");
-	for (MResource::iterator l = rsrc.begin(); l != rsrc.end(); ++l)
+	mrsrc::rsrc_list loc_rsrc = mrsrc::rsrc("Locale").children();
+	for (mrsrc::rsrc_list::iterator l = loc_rsrc.begin(); l != loc_rsrc.end(); ++l)
 	{
-		rsrc = l->find("japi.po");
-		if (not rsrc)
+		mrsrc::rsrc_list loc_files = l->children();
+		if (loc_files.empty())
+			continue;
+		
+		rsrc = loc_files.front();
+		if (not rsrc or rsrc.name() != "japi.po")
 			continue;
 		
 		fs::path localeDir =

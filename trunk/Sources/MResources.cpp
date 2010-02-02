@@ -21,7 +21,7 @@
 using namespace std;
 
 #if defined(BUILDING_TEMPORARY_JAPI)
-const MResourceImp gResourceIndex[0] = {};
+const mrsrc::rsrc_imp gResourceIndex[0] = {};
 const char gResourceData[] = "\0\0\0\0";
 const char gResourceName[] = "\0\0\0\0";
 #endif
@@ -31,8 +31,8 @@ const char gResourceName[] = "\0\0\0\0";
 struct MResourceFileImp
 {
 	MTargetCPU				mTarget;
-	vector<MResourceImp>	mIndex;
-	vector<char>			mData, mName;
+	vector<mrsrc::rsrc_imp>	m_index;
+	vector<char>			m_data, m_name;
 
 	void		AddEntry(
 					fs::path	inPath,
@@ -47,9 +47,9 @@ MResourceFile::MResourceFile(
 	mImpl->mTarget = inTarget;
 	
 	// push the root
-	MResourceImp root = {};
-	mImpl->mIndex.push_back(root);
-	mImpl->mName.push_back(0);
+	mrsrc::rsrc_imp root = {};
+	mImpl->m_index.push_back(root);
+	mImpl->m_name.push_back(0);
 }
 
 MResourceFile::~MResourceFile()
@@ -67,26 +67,26 @@ void MResourceFileImp::AddEntry(
 	for (fs::path::iterator p = inPath.begin(); p != inPath.end(); ++p)
 	{
 		// no such child? Add it and continue
-		if (mIndex[node].mChild == 0)
+		if (m_index[node].m_child == 0)
 		{
-			MResourceImp child = {};
+			mrsrc::rsrc_imp child = {};
 			
-			child.mName = mName.size();
-			copy(p->begin(), p->end(), back_inserter(mName));
-			mName.push_back(0);
+			child.m_name = m_name.size();
+			copy(p->begin(), p->end(), back_inserter(m_name));
+			m_name.push_back(0);
 			
-			mIndex[node].mChild = mIndex.size();
-			mIndex.push_back(child);
+			m_index[node].m_child = m_index.size();
+			m_index.push_back(child);
 			
-			node = mIndex[node].mChild;
+			node = m_index[node].m_child;
 			continue;
 		}
 		
 		// lookup the path element in the current directory
-		uint32 next = mIndex[node].mChild;
+		uint32 next = m_index[node].m_child;
 		for (;;)
 		{
-			const char* name = &mName[0] + mIndex[next].mName;
+			const char* name = &m_name[0] + m_index[next].m_name;
 			
 			// if this is the one we're looking for, break out of the loop
 			if (*p == name)
@@ -96,36 +96,36 @@ void MResourceFileImp::AddEntry(
 			}
 			
 			// if there is a next element, loop
-			if (mIndex[next].mNext != 0)
+			if (m_index[next].m_next != 0)
 			{
-				next = mIndex[next].mNext;
+				next = m_index[next].m_next;
 				continue;
 			}
 			
 			// not found, create it
-			MResourceImp n = {};
+			mrsrc::rsrc_imp n = {};
 			
-			n.mName = mName.size();
-			copy(p->begin(), p->end(), back_inserter(mName));
-			mName.push_back(0);
+			n.m_name = m_name.size();
+			copy(p->begin(), p->end(), back_inserter(m_name));
+			m_name.push_back(0);
 			
-			node = mIndex.size();
-			mIndex[next].mNext = node;
-			mIndex.push_back(n);
+			node = m_index.size();
+			m_index[next].m_next = node;
+			m_index.push_back(n);
 
 			break;
 		}
 	}
 	
 	assert(node != 0);
-	assert(node < mIndex.size());
+	assert(node < m_index.size());
 	
-	mIndex[node].mSize = inSize;
-	mIndex[node].mData = mData.size();
+	m_index[node].m_size = inSize;
+	m_index[node].m_data = m_data.size();
 	
-	copy(inData, inData + inSize, back_inserter(mData));
-	while ((mData.size() % 8) != 0)
-		mData.push_back('\0');
+	copy(inData, inData + inSize, back_inserter(m_data));
+	while ((m_data.size() % 8) != 0)
+		m_data.push_back('\0');
 }
 
 void MResourceFile::Add(
@@ -166,13 +166,13 @@ void MResourceFile::Write(
 	MObjectFile obj(mImpl->mTarget);
 
 	obj.AddGlobal("gResourceIndex",
-		&mImpl->mIndex[0], mImpl->mIndex.size() * sizeof(MResourceImp));
+		&mImpl->m_index[0], mImpl->m_index.size() * sizeof(mrsrc::rsrc_imp));
 
 	obj.AddGlobal("gResourceData",
-		&mImpl->mData[0], mImpl->mData.size());
+		&mImpl->m_data[0], mImpl->m_data.size());
 
 	obj.AddGlobal("gResourceName",
-		&mImpl->mName[0], mImpl->mName.size());
+		&mImpl->m_name[0], mImpl->m_name.size());
 	
 	obj.Write(inFile);
 }

@@ -173,13 +173,13 @@ MWindow::MWindow(
 	, mChildFocus(this, &MWindow::ChildFocus)
 	, mChanged(this, &MWindow::Changed)
 {
-	MResource rsrc;
+	mrsrc::rsrc rsrc;
 	
 	if (strcmp(inRootWidgetName, "dialog") == 0)
-		rsrc = MResource::root().find(
+		rsrc = mrsrc::rsrc(
 			string("Dialogs/") + inWindowResourceName + ".ui");
 	else
-		rsrc = MResource::root().find(
+		rsrc = mrsrc::rsrc(
 			string("Windows/") + inWindowResourceName + ".ui");
 	
 	if (not rsrc)

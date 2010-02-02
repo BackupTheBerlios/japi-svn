@@ -186,7 +186,8 @@ void MProject::ReadPaths(
 	{
 		string path(node.content());
 		if (path.empty())
-			THROW(("Invalid project file, missing path"));
+			continue;
+//			THROW(("Invalid project file, missing path"));
 		
 		outPaths.push_back(path);
 	}

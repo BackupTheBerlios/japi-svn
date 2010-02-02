@@ -118,37 +118,31 @@ void InitGlobals()
 	if (not fs::exists(gTemplatesDir))
 		fs::create_directory(gTemplatesDir);
 
-	MResource rsrc = MResource::root().find("Templates");
-	if (rsrc)
+	mrsrc::rsrc_list templates = mrsrc::rsrc("Templates").children();
+	for (mrsrc::rsrc_list::iterator t = templates.begin(); t != templates.end(); ++t)
 	{
-		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
-		{
-			if (t->size() == 0 or fs::exists(gTemplatesDir / t->name()))
-				continue;
-			
-			fs::ofstream f(gTemplatesDir / t->name());
-			f.write(t->data(), t->size());
-		}
+		if (t->size() == 0 or fs::exists(gTemplatesDir / t->name()))
+			continue;
+		
+		fs::ofstream f(gTemplatesDir / t->name());
+		f.write(t->data(), t->size());
 	}
 
 	if (not fs::exists(gScriptsDir))
 		fs::create_directory(gScriptsDir);
 
-	rsrc = MResource::root().find("Scripts");
-	if (rsrc)
+	mrsrc::rsrc_list scripts = mrsrc::rsrc("Scripts").children();
+	for (mrsrc::rsrc_list::iterator t = scripts.begin(); t != scripts.end(); ++t)
 	{
-		for (MResource::iterator t = rsrc.begin(); t != rsrc.end(); ++t)
-		{
-			if (t->size() == 0 or fs::exists(gScriptsDir / t->name()))
-				continue;
-			
-			fs::path file(gScriptsDir / t->name());
-			
-			fs::ofstream f(file);
-			f.write(t->data(), t->size());
-			
-			chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
-		}
+		if (t->size() == 0 or fs::exists(gScriptsDir / t->name()))
+			continue;
+		
+		fs::path file(gScriptsDir / t->name());
+		
+		fs::ofstream f(file);
+		f.write(t->data(), t->size());
+		
+		chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 	}
 	
 	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs", gConcurrentJobs);

@@ -606,7 +606,7 @@ void MePubDocument::AddDocument(
 
 void MePubDocument::InitializeNew()
 {
-	MResource rsrc = MResource::root().find("empty_xhtml_file.xhtml");
+	mrsrc::rsrc rsrc("empty_xhtml_file.xhtml");
 	if (not rsrc)
 		THROW(("Missing xhtml resource"));
 	

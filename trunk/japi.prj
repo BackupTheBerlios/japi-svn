@@ -190,6 +190,7 @@
   </group>
   <resource>japi.desktop</resource>
   <resource>empty_xhtml_file.xhtml</resource>
+  <resource>../Sources/mrsrc.h</resource>
  </resources>
  <targets>
   <target kind="Executable">

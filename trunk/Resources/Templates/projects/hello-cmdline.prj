@@ -6,9 +6,6 @@
 	<userpaths>
 		<path>src</path>
 	</userpaths>
-	<libpaths>
-		<path></path>
-	</libpaths>
 	<files>
 		<file>HelloWorld.cpp</file>
 	</files>
