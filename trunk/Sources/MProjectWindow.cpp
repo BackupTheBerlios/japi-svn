@@ -22,7 +22,9 @@
 #include "MProjectInfoDialog.h"
 #include "MLibraryInfoDialog.h"
 #include "MGtkWrappers.h"
-#include "MProjectTree.h"
+//#include "MProjectTree.h"
+
+#include "MList.h"
 
 namespace ba = boost::algorithm;
 
@@ -75,9 +77,159 @@ enum {
 
 }
 
+namespace {
+
+const uint32 kDotSize = 6;
+const MColor
+	kOutOfDateColor = MColor("#ff664c"),
+	kCompilingColor = MColor("#ffbb6b");
+
+GdkPixbuf* GetOutOfDateDot()
+{
+	static GdkPixbuf* kOutOfDateDot = CreateDot(kOutOfDateColor, kDotSize);
+	return kOutOfDateDot;
+}
+
+GdkPixbuf* GetCompilingDot()
+{
+	static GdkPixbuf* kCompilingDot = CreateDot(kCompilingColor, kDotSize);
+	return kCompilingDot;
+}
+
+void GetSize(
+	uint32		inSize,
+	string&		outSizeAsString)
+{
+	stringstream s;
+	if (inSize >= 1024 * 1024 * 1024)
+		s << (inSize / (1024 * 1024 * 1024)) << 'G';
+	else if (inSize >= 1024 * 1024)
+		s << (inSize / (1024 * 1024)) << 'M';
+	else if (inSize >= 1024)
+		s << (inSize / (1024)) << 'K';
+	else if (inSize > 0)
+		s << inSize;
+	outSizeAsString = s.str();
+}
+
+}
+
+//---------------------------------------------------------------------
+// MFileRowItem
+
+namespace MItemColumns
+{
+	struct name {};
+	struct text {};
+	struct data {};
+	struct dirty {};
+}
+
+class MFileRowItem : public MListRow<
+	MFileRowItem,
+	MItemColumns::name,		string,
+	MItemColumns::text,		string,
+	MItemColumns::data,		string,
+	MItemColumns::dirty,	GdkPixbuf*
+>
+{
+  public:
+					MFileRowItem(
+						MProjectItem*	inItem)
+						: mItem(inItem)
+					{
+					}
+				
+	void			GetData(
+						const MItemColumns::name&,
+						string&			outName)
+					{
+						outName = mItem->GetDisplayName();
+					}
+
+	void			GetData(
+						const MItemColumns::text&,
+						string&			outSize)
+					{
+						GetSize(mItem->GetTextSize(), outSize);
+					}
+
+	void			GetData(
+						const MItemColumns::data&,
+						string&			outSize)
+					{
+						GetSize(mItem->GetDataSize(), outSize);
+					}
+
+	void			GetData(
+						const MItemColumns::dirty&,
+						GdkPixbuf*&		outPixbuf)
+					{
+						if (mItem->IsCompiling())
+							outPixbuf = GetCompilingDot();
+						else if (mItem->IsOutOfDate())
+							outPixbuf = GetOutOfDateDot();
+						else
+							outPixbuf = nil;
+					}
+
+	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
+
+	MProjectItem*	mItem;
+};
+
+class MRsrcRowItem : public MListRow<
+	MRsrcRowItem,
+	MItemColumns::name,		string,
+	MItemColumns::data,		string,
+	MItemColumns::dirty,	GdkPixbuf*
+>
+{
+  public:
+					MRsrcRowItem(
+						MProjectItem*	inItem)
+						: mItem(inItem)
+					{
+					}
+				
+	void			GetData(
+						const MItemColumns::name&,
+						string&			outName)
+					{
+						outName = mItem->GetDisplayName();
+					}
+
+	void			GetData(
+						const MItemColumns::data&,
+						string&			outSize)
+					{
+						GetSize(mItem->GetDataSize(), outSize);
+					}
+
+	void			GetData(
+						const MItemColumns::dirty&,
+						GdkPixbuf*&		outPixbuf)
+					{
+						if (mItem->IsCompiling())
+							outPixbuf = GetCompilingDot();
+						else if (mItem->IsOutOfDate())
+							outPixbuf = GetOutOfDateDot();
+						else
+							outPixbuf = nil;
+					}
+
+	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
+
+	MProjectItem*	mItem;
+};
+
+//---------------------------------------------------------------------
+// MProjectWindow
+
 MProjectWindow::MProjectWindow()
 	: MDocWindow("project-window")
 	, eStatus(this, &MProjectWindow::SetStatus)
+	, eSelectFileRow(this, &MProjectWindow::SelectFileRow)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
 	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
 	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
@@ -88,8 +240,6 @@ MProjectWindow::MProjectWindow()
 	, mEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
 	, mEditedResourceGroupName(this, &MProjectWindow::EditedResourceGroupName)
 	, mProject(nil)
-	, mFilesTree(nil)
-	, mResourcesTree(nil)
 	, mBusy(false)
 	, mEditingName(false)
 {
@@ -130,11 +280,6 @@ MProjectWindow::MProjectWindow()
 
 MProjectWindow::~MProjectWindow()
 {
-	delete mFilesTree;
-	mFilesTree = nil;
-	
-	delete mResourcesTree;
-	mResourcesTree = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,30 +298,44 @@ void MProjectWindow::Initialize(
 	MDocWindow::Initialize(inDocument);
 
 	// Files tree
-	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
-	InitializeTreeView(filesTree, ePanelFiles);
-	eInvokeFileRow.Connect(filesTree, "row-activated");
-	mFilesTree = new MProjectTree(mProject->GetFiles());
-
-	AddRoute(mProject->eProjectItemRemoved, mFilesTree->eProjectItemRemoved);
-	AddRoute(mProject->eProjectItemMoved, mFilesTree->eProjectItemMoved);
-	AddRoute(mProject->eProjectCreateFileItem, mFilesTree->eProjectCreateItem);
 	
-	filesTree.SetModel(mFilesTree->GetModel());
-	filesTree.ExpandAll();
+	MList<MFileRowItem>* fileTree = new MList<MFileRowItem>(GetWidget(kFilesListViewID));
+	mFileTree = fileTree;
+	AddRoute(fileTree->eRowSelected, eSelectFileRow);
+	AddRoute(fileTree->eRowInvoked, eInvokeFileRow);
+	AddRoute(fileTree->eRowEdited, mEditedFileGroupName);
+	mFileTree->SetColumnTitle(0, _("File"));
+	mFileTree->SetExpandColumn(0);
+	mFileTree->SetColumnTitle(1, _("Tekst"));
+	mFileTree->SetColumnTitle(2, _("Data"));
+	
+	AddFileItemsToList(mProject->GetFiles(), nil, mFileTree);
+	mFileTree->ExpandAll();
+	
+//	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
+//	InitializeTreeView(filesTree, ePanelFiles);
+//	eInvokeFileRow.Connect(filesTree, "row-activated");
+//	mFilesTree = new MProjectTree(mProject->GetFiles());
+//
+//	AddRoute(mProject->eProjectItemRemoved, mFilesTree->eProjectItemRemoved);
+//	AddRoute(mProject->eProjectItemMoved, mFilesTree->eProjectItemMoved);
+//	AddRoute(mProject->eProjectCreateFileItem, mFilesTree->eProjectCreateItem);
+//	
+//	filesTree.SetModel(mFilesTree->GetModel());
+//	filesTree.ExpandAll();
 
 	// Resources tree
 
-	MGtkTreeView resourcesTree(GetWidget(kResourceViewID));
-	InitializeTreeView(resourcesTree, ePanelPackage);
-	eInvokeResourceRow.Connect(resourcesTree, "row-activated");
-	mResourcesTree = new MProjectTree(mProject->GetResources());
-	resourcesTree.SetModel(mResourcesTree->GetModel());
-	resourcesTree.ExpandAll();
-
-	AddRoute(mProject->eProjectItemRemoved, mResourcesTree->eProjectItemRemoved);
-	AddRoute(mProject->eProjectItemMoved, mResourcesTree->eProjectItemMoved);
-	AddRoute(mProject->eProjectCreateResourceItem, mResourcesTree->eProjectCreateItem);
+//	MGtkTreeView resourcesTree(GetWidget(kResourceViewID));
+//	InitializeTreeView(resourcesTree, ePanelPackage);
+//	eInvokeResourceRow.Connect(resourcesTree, "row-activated");
+//	mResourcesTree = new MProjectTree(mProject->GetResources());
+//	resourcesTree.SetModel(mResourcesTree->GetModel());
+//	resourcesTree.ExpandAll();
+//
+//	AddRoute(mProject->eProjectItemRemoved, mResourcesTree->eProjectItemRemoved);
+//	AddRoute(mProject->eProjectItemMoved, mResourcesTree->eProjectItemMoved);
+//	AddRoute(mProject->eProjectCreateResourceItem, mResourcesTree->eProjectCreateItem);
 
 	// read the project's state, if any
 	
@@ -223,33 +382,56 @@ void MProjectWindow::Initialize(
 	SyncInterfaceWithProject();
 }
 
+void MProjectWindow::AddFileItemsToList(
+	MProjectGroup*		inGroup,
+	MListRowBase*		inParent,
+	MListBase*			inList)
+{
+	for (auto iter = inGroup->GetItems().begin(); iter != inGroup->GetItems().end(); ++iter)
+	{
+		MFileRowItem* item = new MFileRowItem(*iter);
+		
+		inList->AppendRowInt(item, inParent);
+		
+		MProjectGroup* group = dynamic_cast<MProjectGroup*>(*iter);
+		if (group != nil)
+			AddFileItemsToList(group, item, inList);
+	}
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectWindow::SelectFileRow
+
+void MProjectWindow::SelectFileRow(
+	MFileRowItem*		inFileRow)
+{
+	MProjectItem* item = inFileRow->mItem;
+	MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
+	mFileTree->SetColumnEditable(0, group != nil);
+}
+
 // ---------------------------------------------------------------------------
 //	MProjectWindow::InvokeFileRow
 
 void MProjectWindow::InvokeFileRow(
-	GtkTreePath*		inPath,
-	GtkTreeViewColumn*	inColumn)
+	MFileRowItem*		inFileRow)
 {
-	GtkTreeIter iter;
-	if (gtk_tree_model_get_iter(mFilesTree->GetModel(), &iter, inPath))
+	MProjectItem* item = inFileRow->mItem;
+	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
+	if (file != nil)
 	{
-		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
-		if (file != nil)
+		fs::path p = file->GetPath();
+		gApp->OpenOneDocument(MFile(p));
+	}
+	else
+	{
+		MProjectLib* lib = dynamic_cast<MProjectLib*>(item);
+		if (lib != nil)
 		{
-			fs::path p = file->GetPath();
-			gApp->OpenOneDocument(MFile(p));
-		}
-		else
-		{
-			MProjectLib* lib = dynamic_cast<MProjectLib*>(item);
-			if (lib != nil)
-			{
-				auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
-				dlog->Initialize(mProject, lib);
-				dlog->Show(this);
-				dlog.release();
-			}
+			auto_ptr<MLibraryInfoDialog> dlog(new MLibraryInfoDialog);
+			dlog->Initialize(mProject, lib);
+			dlog->Show(this);
+			dlog.release();
 		}
 	}
 }
@@ -258,41 +440,36 @@ void MProjectWindow::InvokeFileRow(
 //	MProjectWindow::InvokeResourceRow
 
 void MProjectWindow::InvokeResourceRow(
-	GtkTreePath*		inPath,
-	GtkTreeViewColumn*	inColumn)
+	MRsrcRowItem*		inResourceRow)
 {
-	GtkTreeIter iter;
-	if (gtk_tree_model_get_iter(mResourcesTree->GetModel(), &iter, inPath))
+	MProjectItem* item = inResourceRow->mItem;
+	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
+	if (file != nil)
 	{
-		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-		MProjectFile* file = dynamic_cast<MProjectFile*>(item);
-		if (file != nil)
+		fs::path p = file->GetPath();
+		
+		bool openSelf = true;
+		
+		if (FileNameMatches("*.glade", p) or FileNameMatches("*.ui", p))
 		{
-			fs::path p = file->GetPath();
+			// start up glade
+			string cmd = Preferences::GetString("glade", "glade-3");
+			cmd += " ";
+			cmd += p.string();
+			cmd += "&";
 			
-			bool openSelf = true;
-			
-			if (FileNameMatches("*.glade", p) or FileNameMatches("*.ui", p))
+			int r = system(cmd.c_str());
+			if (r != 0)
 			{
-				// start up glade
-				string cmd = Preferences::GetString("glade", "glade-3");
-				cmd += " ";
-				cmd += p.string();
-				cmd += "&";
-				
-				int r = system(cmd.c_str());
-				if (r != 0)
-				{
-					DisplayAlert("error-alert",
-						string("Could not execute command:\n") + cmd);
-				}
-				else
-					openSelf = false;
+				DisplayAlert("error-alert",
+					string("Could not execute command:\n") + cmd);
 			}
-
-			if (openSelf)
-				gApp->OpenOneDocument(MFile(p));
+			else
+				openSelf = false;
 		}
+
+		if (openSelf)
+			gApp->OpenOneDocument(MFile(p));
 	}
 }
 
@@ -498,11 +675,11 @@ void MProjectWindow::DocumentChanged(
 {
 	if (inDocument != mProject)
 	{
-		delete mFilesTree;
-		mFilesTree = nil;
-		
-		delete mResourcesTree;
-		mResourcesTree = nil;
+//		delete mFilesTree;
+//		mFilesTree = nil;
+//		
+//		delete mResourcesTree;
+//		mResourcesTree = nil;
 		
 		mProject = dynamic_cast<MProject*>(inDocument);
 	}
@@ -567,77 +744,77 @@ void MProjectWindow::InitializeTreeView(
 	GtkTreeView*		inGtkTreeView,
 	int32				inPanel)
 {
-	THROW_IF_NIL(inGtkTreeView);
-
-	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
-		kTreeDragTargets, kTreeDragTargetCount,
-		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
-		kTreeDragTargets, kTreeDragTargetCount,
-		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-	
-	GtkTreeSelection* selection = gtk_tree_view_get_selection(inGtkTreeView);
-	if (selection != nil)
-		gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-
-	// Add the columns and renderers
-
-	// the name column
-	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-		_("File"), renderer, "text", kFilesNameColumn, nil);
-	g_object_set(G_OBJECT(column), "expand", true, nil);
-	gtk_tree_view_append_column(inGtkTreeView, column);
-	
-	if (inPanel == ePanelFiles or inPanel == ePanelLinkOrder)
-	{
-		mFileNameColumn = column;
-		mFileNameCell = renderer;
-		mEditedFileGroupName.Connect(G_OBJECT(renderer), "edited");
-
-		// the text size column
-		
-		renderer = gtk_cell_renderer_text_new();
-		column = gtk_tree_view_column_new_with_attributes (
-			_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
-		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-		gtk_tree_view_column_set_alignment(column, 1.0f);
-		gtk_tree_view_append_column(inGtkTreeView, column);
-	
-		// the data size column
-		
-		renderer = gtk_cell_renderer_text_new();
-		column = gtk_tree_view_column_new_with_attributes (
-			_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
-		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-		gtk_tree_view_column_set_alignment(column, 1.0f);
-		gtk_tree_view_append_column(inGtkTreeView, column);
-	}
-	else if (inPanel == ePanelPackage)
-	{
-		mResourceNameColumn = column;
-		mResourceNameCell = renderer;
-		mEditedResourceGroupName.Connect(G_OBJECT(renderer), "edited");
-		
-		// the data size column
-		
-		renderer = gtk_cell_renderer_text_new();
-		column = gtk_tree_view_column_new_with_attributes (
-			_("Size"), renderer, "text", kFilesDataSizeColumn, nil);
-		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-		gtk_tree_view_column_set_alignment(column, 1.0f);
-		gtk_tree_view_append_column(inGtkTreeView, column);
-	}
-	
-	// at last the dirty mark	
-	renderer = gtk_cell_renderer_pixbuf_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
-	gtk_tree_view_append_column(inGtkTreeView, column);
-
-	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
-	
-	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
+//	THROW_IF_NIL(inGtkTreeView);
+//
+//	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
+//		kTreeDragTargets, kTreeDragTargetCount,
+//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+//	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
+//		kTreeDragTargets, kTreeDragTargetCount,
+//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
+//	
+//	GtkTreeSelection* selection = gtk_tree_view_get_selection(inGtkTreeView);
+//	if (selection != nil)
+//		gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
+//
+//	// Add the columns and renderers
+//
+//	// the name column
+//	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
+//	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
+//		_("File"), renderer, "text", kFilesNameColumn, nil);
+//	g_object_set(G_OBJECT(column), "expand", true, nil);
+//	gtk_tree_view_append_column(inGtkTreeView, column);
+//	
+//	if (inPanel == ePanelFiles or inPanel == ePanelLinkOrder)
+//	{
+//		mFileNameColumn = column;
+//		mFileNameCell = renderer;
+//		mEditedFileGroupName.Connect(G_OBJECT(renderer), "edited");
+//
+//		// the text size column
+//		
+//		renderer = gtk_cell_renderer_text_new();
+//		column = gtk_tree_view_column_new_with_attributes (
+//			_("Text"), renderer, "text", kFilesTextSizeColumn, nil);
+//		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+//		gtk_tree_view_column_set_alignment(column, 1.0f);
+//		gtk_tree_view_append_column(inGtkTreeView, column);
+//	
+//		// the data size column
+//		
+//		renderer = gtk_cell_renderer_text_new();
+//		column = gtk_tree_view_column_new_with_attributes (
+//			_("Data"), renderer, "text", kFilesDataSizeColumn, nil);
+//		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+//		gtk_tree_view_column_set_alignment(column, 1.0f);
+//		gtk_tree_view_append_column(inGtkTreeView, column);
+//	}
+//	else if (inPanel == ePanelPackage)
+//	{
+//		mResourceNameColumn = column;
+//		mResourceNameCell = renderer;
+//		mEditedResourceGroupName.Connect(G_OBJECT(renderer), "edited");
+//		
+//		// the data size column
+//		
+//		renderer = gtk_cell_renderer_text_new();
+//		column = gtk_tree_view_column_new_with_attributes (
+//			_("Size"), renderer, "text", kFilesDataSizeColumn, nil);
+//		g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
+//		gtk_tree_view_column_set_alignment(column, 1.0f);
+//		gtk_tree_view_append_column(inGtkTreeView, column);
+//	}
+//	
+//	// at last the dirty mark	
+//	renderer = gtk_cell_renderer_pixbuf_new();
+//	column = gtk_tree_view_column_new_with_attributes(
+//		_(" "), renderer, "pixbuf", kFilesDirtyColumn, nil);
+//	gtk_tree_view_append_column(inGtkTreeView, column);
+//
+//	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
+//	
+//	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
 }
 
 // ---------------------------------------------------------------------------
@@ -645,107 +822,107 @@ void MProjectWindow::InitializeTreeView(
 
 void MProjectWindow::CreateNewGroup()
 {
-	MGtkNotebook notebook(GetWidget(kNoteBookID));
-	auto_ptr<MGtkTreeView> treeView;
-	MProjectTree* model;
-	MProjectGroup* group;
-	GtkTreeViewColumn* column;
-	GtkCellRenderer* cell;
-	
-	if (notebook.GetPage() == ePanelFiles)
-	{
-		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
-		model = mFilesTree;
-		group = mProject->GetFiles();
-		column = mFileNameColumn;
-		cell = mFileNameCell;
-	}
-	else
-	{
-		treeView.reset(new MGtkTreeView(GetWidget(kResourceViewID)));
-		model = mResourcesTree;
-		group = mProject->GetResources();
-		column = mResourceNameColumn;
-		cell = mResourceNameCell;
-	}
-		
-	int32 index = 0;
-	
-	GtkTreePath* path = nil;
-	GtkTreeIter iter;
-	
-	if (treeView->GetFirstSelectedRow(path) and
-		model->GetIter(&iter, path))
-	{
-		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-		group = item->GetParent();
-		index = item->GetPosition();
-	}
-	
-	MProjectGroup* newGroup = new MProjectGroup(_("New Folder"), group);
-	group->AddProjectItem(newGroup, index);
-	model->ProjectItemInserted(newGroup);
-	g_object_set(G_OBJECT(cell), "editable", true, nil);
-	treeView->SetCursor(path, column, true);
-	mEditingName = true;
-	
-	if (path != nil)
-		gtk_tree_path_free(path);
-	
-	mProject->SetModified(true);
+//	MGtkNotebook notebook(GetWidget(kNoteBookID));
+//	auto_ptr<MGtkTreeView> treeView;
+//	MProjectTree* model;
+//	MProjectGroup* group;
+//	GtkTreeViewColumn* column;
+//	GtkCellRenderer* cell;
+//	
+//	if (notebook.GetPage() == ePanelFiles)
+//	{
+//		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
+//		model = mFilesTree;
+//		group = mProject->GetFiles();
+//		column = mFileNameColumn;
+//		cell = mFileNameCell;
+//	}
+//	else
+//	{
+//		treeView.reset(new MGtkTreeView(GetWidget(kResourceViewID)));
+//		model = mResourcesTree;
+//		group = mProject->GetResources();
+//		column = mResourceNameColumn;
+//		cell = mResourceNameCell;
+//	}
+//		
+//	int32 index = 0;
+//	
+//	GtkTreePath* path = nil;
+//	GtkTreeIter iter;
+//	
+//	if (treeView->GetFirstSelectedRow(path) and
+//		model->GetIter(&iter, path))
+//	{
+//		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+//		group = item->GetParent();
+//		index = item->GetPosition();
+//	}
+//	
+//	MProjectGroup* newGroup = new MProjectGroup(_("New Folder"), group);
+//	group->AddProjectItem(newGroup, index);
+//	model->ProjectItemInserted(newGroup);
+//	g_object_set(G_OBJECT(cell), "editable", true, nil);
+//	treeView->SetCursor(path, column, true);
+//	mEditingName = true;
+//	
+//	if (path != nil)
+//		gtk_tree_path_free(path);
+//	
+//	mProject->SetModified(true);
 }
 
 void MProjectWindow::RenameGroup()
 {
-	if (mEditingName)
-		return;
-	
-	MGtkNotebook notebook(GetWidget(kNoteBookID));
-
-	GtkTreePath* path = nil;
-
-	if (notebook.GetPage() == ePanelFiles)
-	{
-		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-		treeView.GetFirstSelectedRow(path);
-		if (path != nil)
-		{
-			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
-			treeView.SetCursor(path, mFileNameColumn);
-			mEditingName = true;
-		}
-	}
-	else if (notebook.GetPage() == ePanelPackage)
-	{
-		MGtkTreeView treeView(GetWidget(kResourceViewID));
-		treeView.GetFirstSelectedRow(path);
-		if (path != nil)
-		{
-			g_object_set(G_OBJECT(mResourceNameCell), "editable", true, nil);
-			treeView.SetCursor(path, mResourceNameColumn);
-			mEditingName = true;
-		}
-	}
+//	if (mEditingName)
+//		return;
+//	
+//	MGtkNotebook notebook(GetWidget(kNoteBookID));
+//
+//	GtkTreePath* path = nil;
+//
+//	if (notebook.GetPage() == ePanelFiles)
+//	{
+//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+//		treeView.GetFirstSelectedRow(path);
+//		if (path != nil)
+//		{
+//			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
+//			treeView.SetCursor(path, mFileNameColumn);
+//			mEditingName = true;
+//		}
+//	}
+//	else if (notebook.GetPage() == ePanelPackage)
+//	{
+//		MGtkTreeView treeView(GetWidget(kResourceViewID));
+//		treeView.GetFirstSelectedRow(path);
+//		if (path != nil)
+//		{
+//			g_object_set(G_OBJECT(mResourceNameCell), "editable", true, nil);
+//			treeView.SetCursor(path, mResourceNameColumn);
+//			mEditingName = true;
+//		}
+//	}
 }
 
 void MProjectWindow::EditedFileGroupName(
-	gchar*				inPath,
-	gchar*				inNewValue)
+	MFileRowItem*		inRow,
+	const string&		inNewName)
 {
-	mEditingName = false;
-	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
-	if (mFilesTree->ProjectItemNameEdited(inPath, inNewValue))
-		mProject->SetModified(true);
+//	mEditingName = false;
+//	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
+//	if (mFilesTree->ProjectItemNameEdited(inPath, inNewValue))
+//		mProject->SetModified(true);
 }
 
 void MProjectWindow::EditedResourceGroupName(
 	gchar*				inPath,
 	gchar*				inNewValue)
 {
-	mEditingName = false;
-	g_object_set(G_OBJECT(mResourceNameCell), "editable", false, nil);
-	if (mResourcesTree->ProjectItemNameEdited(inPath, inNewValue))
-		mProject->SetModified(true);
+//	mEditingName = false;
+//	g_object_set(G_OBJECT(mResourceNameCell), "editable", false, nil);
+//	if (mResourcesTree->ProjectItemNameEdited(inPath, inNewValue))
+//		mProject->SetModified(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -753,73 +930,73 @@ void MProjectWindow::EditedResourceGroupName(
 
 void MProjectWindow::AddFilesToProject()
 {
-	vector<MFile> urls;
-	if (ChooseFiles(true, urls))
-	{
-		MProjectTree* tree = nil;
-		MProjectGroup* group = nil;
-		int32 index = 0;
-
-		MGtkNotebook notebook(GetWidget(kNoteBookID));
-		
-		if (notebook.GetPage() == ePanelFiles)
-		{
-			tree = mFilesTree;
-			group = mProject->GetFiles();
-			
-			MGtkTreeView treeView(GetWidget(kFilesListViewID));
-
-			GtkTreePath* path;
-			GtkTreeIter iter;
-			
-			if (treeView.GetFirstSelectedRow(path) and
-				mFilesTree->GetIter(&iter, path))
-			{
-				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-				if (dynamic_cast<MProjectGroup*>(item) != nil)
-					group = static_cast<MProjectGroup*>(item);
-				else
-				{
-					group = item->GetParent();
-					index = item->GetPosition();
-				}
-			}
-		}
-		else if (notebook.GetPage() == ePanelPackage)
-		{
-			tree = mResourcesTree;
-			group = mProject->GetResources();
-
-			MGtkTreeView treeView(GetWidget(kResourceViewID));
-
-			GtkTreePath* path;
-			GtkTreeIter iter;
-			
-			if (treeView.GetFirstSelectedRow(path) and
-				mResourcesTree->GetIter(&iter, path))
-			{
-				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-				if (dynamic_cast<MProjectGroup*>(item) != nil)
-					group = static_cast<MProjectGroup*>(item);
-				else
-				{
-					group = item->GetParent();
-					index = item->GetPosition();
-				}
-			}
-		}
-		
-		if (tree != nil)
-		{
-			vector<string> files;
-			transform(urls.begin(), urls.end(), back_inserter(files),
-				boost::bind(&MFile::GetURI, _1));
-			
-			tree->AddFiles(files, group, index);
-			
-			mProject->SetModified(true);
-		}
-	}
+//	vector<MFile> urls;
+//	if (ChooseFiles(true, urls))
+//	{
+//		MProjectTree* tree = nil;
+//		MProjectGroup* group = nil;
+//		int32 index = 0;
+//
+//		MGtkNotebook notebook(GetWidget(kNoteBookID));
+//		
+//		if (notebook.GetPage() == ePanelFiles)
+//		{
+//			tree = mFilesTree;
+//			group = mProject->GetFiles();
+//			
+//			MGtkTreeView treeView(GetWidget(kFilesListViewID));
+//
+//			GtkTreePath* path;
+//			GtkTreeIter iter;
+//			
+//			if (treeView.GetFirstSelectedRow(path) and
+//				mFilesTree->GetIter(&iter, path))
+//			{
+//				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+//				if (dynamic_cast<MProjectGroup*>(item) != nil)
+//					group = static_cast<MProjectGroup*>(item);
+//				else
+//				{
+//					group = item->GetParent();
+//					index = item->GetPosition();
+//				}
+//			}
+//		}
+//		else if (notebook.GetPage() == ePanelPackage)
+//		{
+//			tree = mResourcesTree;
+//			group = mProject->GetResources();
+//
+//			MGtkTreeView treeView(GetWidget(kResourceViewID));
+//
+//			GtkTreePath* path;
+//			GtkTreeIter iter;
+//			
+//			if (treeView.GetFirstSelectedRow(path) and
+//				mResourcesTree->GetIter(&iter, path))
+//			{
+//				MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
+//				if (dynamic_cast<MProjectGroup*>(item) != nil)
+//					group = static_cast<MProjectGroup*>(item);
+//				else
+//				{
+//					group = item->GetParent();
+//					index = item->GetPosition();
+//				}
+//			}
+//		}
+//		
+//		if (tree != nil)
+//		{
+//			vector<string> files;
+//			transform(urls.begin(), urls.end(), back_inserter(files),
+//				boost::bind(&MFile::GetURI, _1));
+//			
+//			tree->AddFiles(files, group, index);
+//			
+//			mProject->SetModified(true);
+//		}
+//	}
 }
 
 // ---------------------------------------------------------------------------
@@ -828,35 +1005,35 @@ void MProjectWindow::AddFilesToProject()
 void MProjectWindow::GetSelectedItems(
 	vector<MProjectItem*>&	outItems)
 {
-	vector<GtkTreePath*> paths;
-
-	MGtkNotebook notebook(GetWidget(kNoteBookID));
-	if (notebook.GetPage() == ePanelFiles)
-	{
-		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-		treeView.GetSelectedRows(paths);
-		
-		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
-		{
-			GtkTreeIter iter;
-			if (mFilesTree->GetIter(&iter, *path))
-				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
-			gtk_tree_path_free(*path);
-		}
-	}
-	else
-	{
-		MGtkTreeView treeView(GetWidget(kResourceViewID));
-		treeView.GetSelectedRows(paths);
-
-		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
-		{
-			GtkTreeIter iter;
-			if (mResourcesTree->GetIter(&iter, *path))
-				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
-			gtk_tree_path_free(*path);
-		}
-	}
+//	vector<GtkTreePath*> paths;
+//
+//	MGtkNotebook notebook(GetWidget(kNoteBookID));
+//	if (notebook.GetPage() == ePanelFiles)
+//	{
+//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
+//		treeView.GetSelectedRows(paths);
+//		
+//		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
+//		{
+//			GtkTreeIter iter;
+//			if (mFilesTree->GetIter(&iter, *path))
+//				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+//			gtk_tree_path_free(*path);
+//		}
+//	}
+//	else
+//	{
+//		MGtkTreeView treeView(GetWidget(kResourceViewID));
+//		treeView.GetSelectedRows(paths);
+//
+//		for (vector<GtkTreePath*>::iterator path = paths.begin(); path != paths.end(); ++path)
+//		{
+//			GtkTreeIter iter;
+//			if (mResourcesTree->GetIter(&iter, *path))
+//				outItems.push_back(reinterpret_cast<MProjectItem*>(iter.user_data));
+//			gtk_tree_path_free(*path);
+//		}
+//	}
 }
 
 // ---------------------------------------------------------------------------
@@ -864,21 +1041,21 @@ void MProjectWindow::GetSelectedItems(
 
 void MProjectWindow::DeleteSelectedItems()
 {
-	vector<MProjectItem*> items;
-	
-	GetSelectedItems(items);
-	
-	MGtkNotebook notebook(GetWidget(kNoteBookID));
-	if (notebook.GetPage() == ePanelFiles)
-	{
-		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
-			mFilesTree->RemoveItem(*item);
-	}
-	else
-	{
-		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
-			mResourcesTree->RemoveItem(*item);
-	}
+//	vector<MProjectItem*> items;
+//	
+//	GetSelectedItems(items);
+//	
+//	MGtkNotebook notebook(GetWidget(kNoteBookID));
+//	if (notebook.GetPage() == ePanelFiles)
+//	{
+//		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+//			mFilesTree->RemoveItem(*item);
+//	}
+//	else
+//	{
+//		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
+//			mResourcesTree->RemoveItem(*item);
+//	}
 }
 
 // ---------------------------------------------------------------------------

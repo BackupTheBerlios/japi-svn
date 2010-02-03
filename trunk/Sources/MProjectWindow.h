@@ -11,7 +11,11 @@
 
 class MProject;
 class MProjectItem;
-class MProjectTree;
+class MProjectGroup;
+class MFileRowItem;
+class MRsrcRowItem;
+class MListBase;
+class MListRowBase;
 
 class MProjectWindow : public MDocWindow
 {
@@ -40,6 +44,11 @@ class MProjectWindow : public MDocWindow
 
   protected:
 
+	void			AddFileItemsToList(
+						MProjectGroup*	inGroup,
+						MListRowBase*	inParent,
+						MListBase*		inList);
+
 	bool			DoClose();
 	
 	void			CreateNewGroup();
@@ -60,20 +69,22 @@ class MProjectWindow : public MDocWindow
 						std::string		inStatus,
 						bool			inBusy);
 
-	void			InvokeFileRow(
-						GtkTreePath*	inPath,
-						GtkTreeViewColumn*
-										inColumn);
+	void			SelectFileRow(
+						MFileRowItem*	inRow);
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+	MEventIn<void(MFileRowItem*)>
+					eSelectFileRow;
+
+	void			InvokeFileRow(
+						MFileRowItem*	inRow);
+
+	MEventIn<void(MFileRowItem*)>
 					eInvokeFileRow;
 
 	void			InvokeResourceRow(
-						GtkTreePath*	inPath,
-						GtkTreeViewColumn*
-										inColumn);
+						MRsrcRowItem*	inRow);
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+	MEventIn<void(MRsrcRowItem*)>
 					eInvokeResourceRow;
 
 	virtual bool	OnKeyPressEvent(
@@ -104,10 +115,11 @@ class MProjectWindow : public MDocWindow
 	MSlot<void()>	eMakeClicked;
 
 	void			EditedFileGroupName(
-						gchar*			path,
-						gchar*			new_text);
+						MFileRowItem*		inRow,
+						const std::string&	inNewName);
 
-	MSlot<void(gchar*,gchar*)>			mEditedFileGroupName;
+	MEventIn<void(MFileRowItem*,const std::string&)>
+										mEditedFileGroupName;
 
 	void			EditedResourceGroupName(
 						gchar*			path,
@@ -116,13 +128,12 @@ class MProjectWindow : public MDocWindow
 	MSlot<void(gchar*,gchar*)>			mEditedResourceGroupName;
 
 	MProject*		mProject;
-	MProjectTree*	mFilesTree;
-	MProjectTree*	mResourcesTree;
 	GtkWidget*		mStatusPanel;
-	GtkTreeViewColumn*	mFileNameColumn;
-	GtkCellRenderer*	mFileNameCell;
-	GtkTreeViewColumn*	mResourceNameColumn;
-	GtkCellRenderer*	mResourceNameCell;
+	MListBase*		mFileTree;
+//	GtkTreeViewColumn*	mFileNameColumn;
+//	GtkCellRenderer*	mFileNameCell;
+//	GtkTreeViewColumn*	mResourceNameColumn;
+//	GtkCellRenderer*	mResourceNameCell;
 	bool			mBusy, mEditingName;
 };
 

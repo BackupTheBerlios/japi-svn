@@ -67,6 +67,7 @@ MListBase::MListBase(
 	, mRowDeleted(this, &MListBase::RowDeleted)
 	, mRowInserted(this, &MListBase::RowInserted)
 	, mRowsReordered(this, &MListBase::RowsReordered)
+	, mEdited(this, &MListBase::Edited)
 {
 	mCursorChanged.Connect(inTreeView, "cursor-changed");
 	mRowActivated.Connect(inTreeView, "row-activated");
@@ -108,6 +109,9 @@ void MListBase::CreateTreeStore(
 	for (size_t i = 0; i < inRenderers.size(); ++i)
 	{
 	    GtkCellRenderer* renderer = inRenderers[i].first;
+	    
+	    mRenderers.push_back(renderer);
+	    
 	    const char* attribute = inRenderers[i].second;
 	    GtkTreeViewColumn* column = gtk_tree_view_column_new();
 	    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(column), renderer, TRUE);
@@ -172,6 +176,26 @@ void MListBase::SetColumnTitle(
 	if (column == NULL)
 		throw "column not found";
 	gtk_tree_view_column_set_title(column, inTitle.c_str());
+}
+
+void MListBase::SetExpandColumn(
+	int				inColumnNr)
+{
+	GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), inColumnNr);
+	if (column == NULL)
+		throw "column not found";
+	g_object_set(G_OBJECT(column), "expand", true, nil);
+}
+
+void MListBase::SetColumnEditable(
+	int				inColumnNr,
+	bool			inEditable)
+{
+	if (inColumnNr < mRenderers.size())
+	{
+		 g_object_set(G_OBJECT(mRenderers[inColumnNr]), "editable", inEditable, nil);
+		 mEdited.Connect(G_OBJECT(mRenderers[inColumnNr]), "edited");
+	}
 }
 
 void MListBase::CollapseRow(
@@ -332,3 +356,22 @@ void MListBase::RowsReordered(
 	cout << "RowsReordered" << endl;
 }
 
+void MListBase::Edited(
+	gchar*				inPath,
+	gchar*				inNewText)
+{
+	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+	if (path != nil and inNewText != nil)
+	{
+		GtkTreeIter iter;
+		if (gtk_tree_model_get_iter(GTK_TREE_MODEL(mTreeStore), &iter, path))
+		{
+			MListRowBase* row = GetRowForPath(path);
+			
+			if (row != nil)
+				EmitRowEdited(row, inNewText);
+		}
+		
+		gtk_tree_path_free(path);
+	}
+}

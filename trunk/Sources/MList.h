@@ -114,7 +114,7 @@ class MListRow : public MListRowBase
 
 		template<class G>
 		static void		GetGValue(
-							G			inProvider,
+							const G		inProvider,
 							int			inColumnNr,
 							GValue&		outValue)					{ throw "error"; }
 	};
@@ -153,7 +153,7 @@ class MListRow : public MListRowBase
 
 		template<class G>
 		static void		GetGValue(
-							G			inProvider,
+							const G		inProvider,
 							int			inColumnNr,
 							GValue&		outValue)
 						{
@@ -217,6 +217,13 @@ class MListBase : public MView
 						int					inColumnNr,
 						const std::string&	inTitle);
 
+	void			SetExpandColumn(
+						int					inColumnNr);		
+
+	void			SetColumnEditable(
+						int					inColumnNr,
+						bool				inEditable);
+
 	void			SelectRow(
 						MListRowBase*		inRow);
 
@@ -233,16 +240,16 @@ class MListBase : public MView
 
 	virtual int		GetColumnCount() const = 0;
 
+	void			AppendRowInt(
+						MListRowBase*		inRow,
+						MListRowBase*		inParent);
+
   protected:
 
 	void			CreateTreeStore(
 						std::vector<GType>&	inTypes,
 						std::vector<std::pair<GtkCellRenderer*,const char*>>&
 											inRenderers);
-
-	void			AppendRowInt(
-						MListRowBase*		inRow,
-						MListRowBase*		inParent);
 
 	GtkTreePath*	GetTreePathForRow(
 						MListRowBase*		inRow);
@@ -293,6 +300,16 @@ class MListBase : public MView
 	MSlot<void(GtkTreePath*,GtkTreeIter*,gint*)>
 					mRowsReordered;
 	
+	void			Edited(
+						gchar*				path,
+						gchar*				new_text);
+
+	virtual void	EmitRowEdited(
+						MListRowBase*		inRow,
+						const std::string&	inNewText) = 0;
+
+	MSlot<void(gchar*,gchar*)>			mEdited;
+
 	// tree store overrides
 	
 	typedef gboolean (*RowDropPossibleFunc)(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
@@ -306,6 +323,8 @@ class MListBase : public MView
 						GtkSelectionData*	inSelectionData);
 
 	GtkTreeStore*	mTreeStore;
+	std::vector<GtkCellRenderer*>
+					mRenderers;
 };
 
 template<class R>
@@ -329,6 +348,8 @@ class MList : public MListBase
 
 	MEventOut<void(row_type*)>				eRowSelected;
 	MEventOut<void(row_type*)>				eRowInvoked;
+	MEventOut<void(row_type*,const std::string&)>
+											eRowEdited;
 	
   protected:
 	
@@ -337,6 +358,10 @@ class MList : public MListBase
 
 	virtual void	RowActivated(
 						MListRowBase*		inRow)		{ eRowInvoked(static_cast<row_type*>(inRow)); }
+
+	virtual void	EmitRowEdited(
+						MListRowBase*		inRow,
+						const std::string&	inNewText)	{ eRowEdited(static_cast<row_type*>(inRow), inNewText); }
 };
 
 template<typename R>
