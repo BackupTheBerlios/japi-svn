@@ -29,6 +29,7 @@
    <file>MError.cpp</file>
    <file>MFile.cpp</file>
    <file>MHandler.cpp</file>
+   <file>MList.cpp</file>
    <file>MMenu.cpp</file>
    <file>MPreferences.cpp</file>
    <file>MPrinter.cpp</file>
@@ -102,6 +103,7 @@
    </group>
    <file>MShell.cpp</file>
    <file>MPkgConfig.cpp</file>
+   <file>MTestWindow.cpp</file>
    <file>MSelection.cpp</file>
   </group>
   <group name="zeep">
@@ -166,6 +168,7 @@
    <resource>Windows/message-list-window.ui</resource>
    <resource>Windows/edit-window.ui</resource>
    <resource>Windows/project-window.ui</resource>
+   <resource>Windows/test-window.ui</resource>
   </group>
   <group name="Templates">
    <resource>Templates/empty.c</resource>
@@ -204,6 +207,7 @@
     <cflag>-O0</cflag>
     <cflag>-pthread</cflag>
     <cflag>-gdwarf-2</cflag>
+    <cflag>-std=c++0x</cflag>
    </cflags>
    <warnings>
     <warning>all</warning>

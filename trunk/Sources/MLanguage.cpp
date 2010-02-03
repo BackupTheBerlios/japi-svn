@@ -24,6 +24,7 @@
 #include <set>
 #include <map>
 #include <limits>
+#include <cstring>
 
 using namespace std;
 

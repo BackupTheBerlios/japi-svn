@@ -42,6 +42,8 @@
 #include "MePubWindow.h"
 #include "MShell.h"
 
+#include "MTestWindow.h"
+
 #include <iostream>
 
 using namespace std;
@@ -222,7 +224,11 @@ bool MJapieApp::ProcessCommand(
 			break;
 		
 		case 'test':
+		{
+			MWindow* w = new MTestWindow();
+			w->Show();
 			break;
+		}
 		
 		case cmd_ShowDiffWindow:
 			new MDiffWindow;
@@ -1041,7 +1047,7 @@ bool MJapieApp::IsServer()
 
 			// now setup the socket
 			mSocketFD = socket(AF_LOCAL, SOCK_STREAM, 0);
-			int err = bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
+			int err = ::bind(mSocketFD, (const sockaddr*)&addr, SUN_LEN(&addr));
 		
 			if (err < 0)
 				cerr << _("bind failed: ") << strerror(errno) << endl;

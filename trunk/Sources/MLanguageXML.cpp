@@ -18,6 +18,7 @@
 
 #include <stack>
 #include <cassert>
+#include <cstring>
 
 using namespace std;
 

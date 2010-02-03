@@ -276,7 +276,7 @@ void MELFObjectFileImp<CPU, traits>::Write(
 			0,				// sh_flags
 			0,				// sh_addr
 			shstrtab_off,	// sh_offset
-			shstrtab.length(),// sh_size
+			Elf32_Word(shstrtab.length()),// sh_size
 			0,				// sh_link
 			0,				// sh_info
 			1,				// sh_addralign
@@ -304,7 +304,7 @@ void MELFObjectFileImp<CPU, traits>::Write(
 			0,
 			0,				// sh_addr
 			strtab_off,		// sh_offset
-			strtab.length(),// sh_size
+			Elf32_Word(strtab.length()),// sh_size
 			0,				// sh_link
 			0,				// sh_info
 			1,				// sh_addralign

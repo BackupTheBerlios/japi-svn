@@ -888,21 +888,21 @@ void MTextBuffer::WriteToFile(
 		{
 			case kEncodingUTF8:
 			{
-				const char kBOM[] = { 0xEF, 0xBB, 0xBF };
+				const char kBOM[] = { '\xEF', '\xBB', '\xBF' };
 				inFile.write(kBOM, 3);
 				break;
 			}
 			
 			case kEncodingUTF16BE:
 			{
-				const char kBOM[] = { 0xFE, 0xFF };
+				const char kBOM[] = { '\xFE', '\xFF' };
 				inFile.write(kBOM, 2);
 				break;
 			}
 			
 			case kEncodingUTF16LE:
 			{
-				const char kBOM[] = { 0xFF, 0xFE };
+				const char kBOM[] = { '\xFF', '\xFE' };
 				inFile.write(kBOM, 2);
 				break;
 			}

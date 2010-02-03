@@ -40,7 +40,7 @@
 		<item label="Select All" cmd='sall'/>
 		<item label="-"/>
 		<item label="Preferences" cmd='pref' />
-<!--		<item label="Test" cmd='test'/>-->
+		<item label="Test" cmd='test'/>
 	</menu>
 	<menu id='textmenu' label="Text">
 		<item label="Balance" cmd='Bala'/>
