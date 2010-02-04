@@ -319,6 +319,9 @@ void MProjectFile::SetCompiling(
 
 void MProjectFile::CheckCompilationResult()
 {
+	uint32 savedTextSize = mTextSize;
+	uint32 savedDataSize = mDataSize;
+	
 	mTextSize = 0;
 	mDataSize = 0;
 	
@@ -371,6 +374,9 @@ void MProjectFile::CheckCompilationResult()
 	{
 		SetOutOfDate(true);
 	}
+
+	if (savedDataSize != mDataSize or savedTextSize != mTextSize)
+		eStatusChanged(this);
 }
 
 // ---------------------------------------------------------------------------

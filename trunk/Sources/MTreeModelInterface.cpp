@@ -212,7 +212,7 @@ void MTreeModelImp::ModelInit(
 void MTreeModelImp::DragSourceInit(
 	GtkTreeDragSourceIface*	iface)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	iface->row_draggable =			&MTreeModelImp::row_draggable;
 	iface->drag_data_get =			&MTreeModelImp::drag_data_get;
@@ -222,7 +222,7 @@ void MTreeModelImp::DragSourceInit(
 void MTreeModelImp::DragDestInit(
 	GtkTreeDragDestIface*	iface)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	iface->drag_data_received =		&MTreeModelImp::drag_data_received;
 	iface->row_drop_possible =		&MTreeModelImp::row_drop_possible;
@@ -231,7 +231,7 @@ void MTreeModelImp::DragDestInit(
 void MTreeModelImp::Init(
 	MTreeModelImp*	self)
 {
-////PRINT((__func__));
+//PRINT((__func__));
 
 	self->flags = GtkTreeModelFlags(0);
 	self->interface = nil;
@@ -240,7 +240,7 @@ void MTreeModelImp::Init(
 void MTreeModelImp::Finalize(
 	GObject*		inObject)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 //	PRINT(("Finalize"));
 	(*sParentClass->finalize)(inObject);
@@ -248,7 +248,7 @@ void MTreeModelImp::Finalize(
 
 GType MTreeModelImp::GetType()
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	static GType sMTreeListType = 0;
 	
@@ -309,11 +309,11 @@ void MTreeModelImp::row_changed(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
-	//PRINT(("row_changed"));
+	PRINT(("row_changed"));
 		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 		if (self != nil and self->interface != nil)
 			self->interface->RowChanged(path, iter);
@@ -329,11 +329,11 @@ void MTreeModelImp::row_inserted(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
-	//PRINT(("row_inserted"));
+	PRINT(("row_inserted"));
 		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 		if (self != nil and self->interface != nil)
 			self->interface->RowInserted(path, iter);
@@ -349,11 +349,11 @@ void MTreeModelImp::row_has_child_toggled(
 						GtkTreePath  *path,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
-	//PRINT(("row_has_child_toggled"));
+	PRINT(("row_has_child_toggled"));
 		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 		if (self != nil and self->interface != nil)
 			self->interface->RowHasChildToggled(path, iter);
@@ -368,11 +368,11 @@ void MTreeModelImp::row_deleted(
 						GtkTreeModel *tree_model,
 						GtkTreePath  *path)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
-	//PRINT(("row_deleted"));
+	PRINT(("row_deleted"));
 		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 		if (self != nil and self->interface != nil)
 			self->interface->RowDeleted(path);
@@ -389,11 +389,11 @@ void MTreeModelImp::rows_reordered(
 						GtkTreeIter  *iter,
 						gint         *new_order)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
-	//PRINT(("rows_reordered"));
+	PRINT(("rows_reordered"));
 		MTreeModelImp* self = reinterpret_cast<MTreeModelImp*>(tree_model);
 		if (self != nil and self->interface != nil)
 			self->interface->RowsReordered(path, iter, *new_order);
@@ -407,7 +407,7 @@ void MTreeModelImp::rows_reordered(
 GtkTreeModelFlags MTreeModelImp::get_flags(
 						GtkTreeModel *tree_model)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
@@ -426,7 +426,7 @@ GtkTreeModelFlags MTreeModelImp::get_flags(
 gint MTreeModelImp::get_n_columns(
 						GtkTreeModel *tree_model)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	gint result = 0;
 
@@ -448,7 +448,7 @@ GType MTreeModelImp::get_column_type(
 						GtkTreeModel *tree_model,
 						gint          index_)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	GType result = G_TYPE_NONE;
 	
@@ -471,7 +471,7 @@ gboolean MTreeModelImp::get_iter(
 						GtkTreeIter  *iter,
 						GtkTreePath  *path)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 
@@ -493,7 +493,7 @@ GtkTreePath* MTreeModelImp::get_path(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	GtkTreePath* result = nil;
 
@@ -517,7 +517,7 @@ void MTreeModelImp::get_value(
 						gint          column,
 						GValue       *value)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
@@ -535,7 +535,7 @@ gboolean MTreeModelImp::iter_next(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -558,7 +558,7 @@ gboolean MTreeModelImp::iter_children(
 						GtkTreeIter  *iter,
 						GtkTreeIter  *parent)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -580,7 +580,7 @@ gboolean MTreeModelImp::iter_has_child(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -602,7 +602,7 @@ gint MTreeModelImp::iter_n_children(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 		
@@ -626,7 +626,7 @@ gboolean MTreeModelImp::iter_nth_child(
 						GtkTreeIter  *parent,
 						gint          n)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -649,7 +649,7 @@ gboolean MTreeModelImp::iter_parent(
 						GtkTreeIter  *iter,
 						GtkTreeIter  *child)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 
@@ -671,7 +671,7 @@ void MTreeModelImp::ref_node(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
@@ -689,7 +689,7 @@ void MTreeModelImp::unref_node(
 						GtkTreeModel *tree_model,
 						GtkTreeIter  *iter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	try
 	{
@@ -707,7 +707,7 @@ gboolean MTreeModelImp::row_draggable(
 	GtkTreeDragSource*	drag_source,
 	GtkTreePath*		path)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -731,7 +731,7 @@ gboolean MTreeModelImp::drag_data_get(
 	GtkTreePath*		path,
 	GtkSelectionData*	selection_data)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -754,7 +754,7 @@ gboolean MTreeModelImp::drag_data_delete(
 	GtkTreeDragSource*	drag_source,
 	GtkTreePath*		path)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -778,7 +778,7 @@ gboolean MTreeModelImp::drag_data_received(
 	GtkTreePath*		dest,
 	GtkSelectionData*	selection_data)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 	
@@ -802,7 +802,7 @@ gboolean MTreeModelImp::row_drop_possible(
 	GtkTreePath*		dest_path,
 	GtkSelectionData*	selection_data)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	bool result = false;
 
@@ -828,7 +828,7 @@ MTreeModelInterface::MTreeModelInterface(
 	MTreeModelFlags		inFlags)
 	: mImpl(reinterpret_cast<MTreeModelImp*>(g_object_new(MTREE_TYPE_LIST, nil)))
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	THROW_IF_NIL(mImpl);
 	
@@ -838,7 +838,7 @@ MTreeModelInterface::MTreeModelInterface(
 
 MTreeModelInterface::~MTreeModelInterface()
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	mImpl->interface = nil;
 	g_object_unref(mImpl);
@@ -848,7 +848,7 @@ void MTreeModelInterface::RowChanged(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
@@ -856,7 +856,7 @@ void MTreeModelInterface::RowInserted(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
@@ -864,14 +864,14 @@ void MTreeModelInterface::RowHasChildToggled(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
 void MTreeModelInterface::RowDeleted(
 	GtkTreePath*	inPath)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
@@ -880,7 +880,7 @@ void MTreeModelInterface::RowsReordered(
 	GtkTreeIter*	inIter,
 	int32&			inNewOrder)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
@@ -888,7 +888,7 @@ bool MTreeModelInterface::GetIter(
 	GtkTreeIter*	outIter,
 	GtkTreePath*	inPath)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -896,7 +896,7 @@ bool MTreeModelInterface::GetIter(
 GtkTreePath* MTreeModelInterface::GetPath(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return nil;
 }
@@ -904,7 +904,7 @@ GtkTreePath* MTreeModelInterface::GetPath(
 bool MTreeModelInterface::Next(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -913,7 +913,7 @@ bool MTreeModelInterface::Children(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inParent)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -921,7 +921,7 @@ bool MTreeModelInterface::Children(
 bool MTreeModelInterface::HasChildren(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -929,7 +929,7 @@ bool MTreeModelInterface::HasChildren(
 int32 MTreeModelInterface::CountChildren(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return 0;
 }
@@ -939,7 +939,7 @@ bool MTreeModelInterface::GetChild(
 	GtkTreeIter*	inParent,
 	int32			inIndex)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -948,7 +948,7 @@ bool MTreeModelInterface::GetParent(
 	GtkTreeIter*	outIter,
 	GtkTreeIter*	inChild)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -956,21 +956,21 @@ bool MTreeModelInterface::GetParent(
 void MTreeModelInterface::RefNode(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
 void MTreeModelInterface::UnrefNode(
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 }
 
 bool MTreeModelInterface::RowDraggable(
 	GtkTreePath*		inPath)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -979,7 +979,7 @@ bool MTreeModelInterface::DragDataGet(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	outData)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -987,7 +987,7 @@ bool MTreeModelInterface::DragDataGet(
 bool MTreeModelInterface::DragDataDelete(
 	GtkTreePath*		inPath)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -996,7 +996,7 @@ bool MTreeModelInterface::DragDataReceived(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inData)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -1005,7 +1005,7 @@ bool MTreeModelInterface::RowDropPossible(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inData)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	return false;
 }
@@ -1014,7 +1014,7 @@ void MTreeModelInterface::DoRowChanged(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	gtk_tree_model_row_changed(GTK_TREE_MODEL(mImpl), inPath, inIter);
 }
@@ -1023,7 +1023,7 @@ void MTreeModelInterface::DoRowInserted(
 	GtkTreePath*	inPath,
 	GtkTreeIter*	inIter)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	gtk_tree_model_row_inserted(GTK_TREE_MODEL(mImpl), inPath, inIter);
 }	
@@ -1031,7 +1031,7 @@ void MTreeModelInterface::DoRowInserted(
 void MTreeModelInterface::DoRowDeleted(
 	GtkTreePath*	inPath)
 {
-//PRINT((__func__));
+PRINT((__func__));
 
 	gtk_tree_model_row_deleted(GTK_TREE_MODEL(mImpl), inPath);
 }	

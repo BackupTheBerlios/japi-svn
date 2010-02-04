@@ -12,7 +12,7 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 
-#include "document.hpp"
+#include <zeep/xml/document.hpp>
 
 #include "MCallbacks.h"
 #include "MMenu.h"
@@ -26,6 +26,7 @@
 #include "MJapiApp.h"
 
 using namespace std;
+namespace xml = zeep::xml;
 namespace io = boost::iostreams;
 
 namespace

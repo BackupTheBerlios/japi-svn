@@ -77,43 +77,6 @@ enum {
 
 }
 
-namespace {
-
-const uint32 kDotSize = 6;
-const MColor
-	kOutOfDateColor = MColor("#ff664c"),
-	kCompilingColor = MColor("#ffbb6b");
-
-GdkPixbuf* GetOutOfDateDot()
-{
-	static GdkPixbuf* kOutOfDateDot = CreateDot(kOutOfDateColor, kDotSize);
-	return kOutOfDateDot;
-}
-
-GdkPixbuf* GetCompilingDot()
-{
-	static GdkPixbuf* kCompilingDot = CreateDot(kCompilingColor, kDotSize);
-	return kCompilingDot;
-}
-
-void GetSize(
-	uint32		inSize,
-	string&		outSizeAsString)
-{
-	stringstream s;
-	if (inSize >= 1024 * 1024 * 1024)
-		s << (inSize / (1024 * 1024 * 1024)) << 'G';
-	else if (inSize >= 1024 * 1024)
-		s << (inSize / (1024 * 1024)) << 'M';
-	else if (inSize >= 1024)
-		s << (inSize / (1024)) << 'K';
-	else if (inSize > 0)
-		s << inSize;
-	outSizeAsString = s.str();
-}
-
-}
-
 //---------------------------------------------------------------------
 // MFileRowItem
 
@@ -125,18 +88,93 @@ namespace MItemColumns
 	struct dirty {};
 }
 
-class MFileRowItem : public MListRow<
-	MFileRowItem,
-	MItemColumns::name,		string,
-	MItemColumns::text,		string,
-	MItemColumns::data,		string,
-	MItemColumns::dirty,	GdkPixbuf*
->
+class MProjectItemRow
+{
+  public:
+					MProjectItemRow(
+						MProjectItem*	inItem)
+						: eStatusChanged(this, &MProjectItemRow::StatusChanged)
+						, mItem(inItem)
+					{
+						AddRoute(mItem->eStatusChanged, eStatusChanged);
+					}
+	
+	static const uint32 kDotSize = 6;
+	static const MColor	kOutOfDateColor, kCompilingColor;
+
+	GdkPixbuf*		GetOutOfDateDot()
+					{
+						static GdkPixbuf* kOutOfDateDot = CreateDot(kOutOfDateColor, kDotSize);
+						return kOutOfDateDot;
+					}
+	
+	GdkPixbuf*		GetCompilingDot()
+					{
+						static GdkPixbuf* kCompilingDot = CreateDot(kCompilingColor, kDotSize);
+						return kCompilingDot;
+					}
+
+	void			GetSize(
+						uint32		inSize,
+						string&		outSizeAsString)
+					{
+						stringstream s;
+						if (inSize >= 1024 * 1024 * 1024)
+							s << (inSize / (1024 * 1024 * 1024)) << 'G';
+						else if (inSize >= 1024 * 1024)
+							s << (inSize / (1024 * 1024)) << 'M';
+						else if (inSize >= 1024)
+							s << (inSize / (1024)) << 'K';
+						else if (inSize > 0)
+							s << inSize;
+						outSizeAsString = s.str();
+					}
+
+	void			SetFileName(
+						const string&	inName)
+					{
+						assert(dynamic_cast<MProjectGroup*>(mItem) != nil);
+						if (inName != mItem->GetName())
+						{
+							mItem->SetName(inName);
+							EmitRowChanged();
+						}
+					}
+
+	MProjectItem*	GetProjectItem()			{ return mItem; }
+
+	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
+
+  protected:
+
+	virtual void	EmitRowChanged() = 0;
+
+	void			StatusChanged(
+						MProjectItem*	inItem)	{ EmitRowChanged(); }
+	MEventIn<void(MProjectItem*)>
+					eStatusChanged;
+
+	MProjectItem*	mItem;
+};
+
+const MColor
+	MProjectItemRow::kOutOfDateColor = MColor("#ff664c"),
+	MProjectItemRow::kCompilingColor = MColor("#ffbb6b");
+
+class MFileRowItem
+	: public MListRow<
+			MFileRowItem,
+			MItemColumns::name,		string,
+			MItemColumns::text,		string,
+			MItemColumns::data,		string,
+			MItemColumns::dirty,	GdkPixbuf*
+		>
+	, public MProjectItemRow
 {
   public:
 					MFileRowItem(
 						MProjectItem*	inItem)
-						: mItem(inItem)
+						: MProjectItemRow(inItem)
 					{
 					}
 				
@@ -173,22 +211,22 @@ class MFileRowItem : public MListRow<
 							outPixbuf = nil;
 					}
 
-	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
-
-	MProjectItem*	mItem;
+	virtual void	EmitRowChanged()			{ RowChanged(); }
 };
 
-class MRsrcRowItem : public MListRow<
-	MRsrcRowItem,
-	MItemColumns::name,		string,
-	MItemColumns::data,		string,
-	MItemColumns::dirty,	GdkPixbuf*
->
+class MRsrcRowItem
+	: public MListRow<
+			MRsrcRowItem,
+			MItemColumns::name,		string,
+			MItemColumns::data,		string,
+			MItemColumns::dirty,	GdkPixbuf*
+		>
+	, public MProjectItemRow
 {
   public:
 					MRsrcRowItem(
 						MProjectItem*	inItem)
-						: mItem(inItem)
+						: MProjectItemRow(inItem)
 					{
 					}
 				
@@ -218,9 +256,7 @@ class MRsrcRowItem : public MListRow<
 							outPixbuf = nil;
 					}
 
-	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
-
-	MProjectItem*	mItem;
+	virtual void	EmitRowChanged()			{ RowChanged(); }
 };
 
 //---------------------------------------------------------------------
@@ -231,14 +267,15 @@ MProjectWindow::MProjectWindow()
 	, eStatus(this, &MProjectWindow::SetStatus)
 	, eSelectFileRow(this, &MProjectWindow::SelectFileRow)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
-	, eInvokeResourceRow(this, &MProjectWindow::InvokeResourceRow)
+	, eSelectRsrcRow(this, &MProjectWindow::SelectRsrcRow)
+	, eInvokeRsrcRow(this, &MProjectWindow::InvokeRsrcRow)
 	, eKeyPressEvent(this, &MProjectWindow::OnKeyPressEvent)
 	, eTargetChanged(this, &MProjectWindow::TargetChanged)
 	, eTargetsChanged(this, &MProjectWindow::TargetsChanged)
 	, eInfoClicked(this, &MProjectWindow::InfoClicked)
 	, eMakeClicked(this, &MProjectWindow::MakeClicked)
-	, mEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
-	, mEditedResourceGroupName(this, &MProjectWindow::EditedResourceGroupName)
+	, eEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
+	, eEditedRsrcGroupName(this, &MProjectWindow::EditedRsrcGroupName)
 	, mProject(nil)
 	, mBusy(false)
 	, mEditingName(false)
@@ -303,14 +340,18 @@ void MProjectWindow::Initialize(
 	mFileTree = fileTree;
 	AddRoute(fileTree->eRowSelected, eSelectFileRow);
 	AddRoute(fileTree->eRowInvoked, eInvokeFileRow);
-	AddRoute(fileTree->eRowEdited, mEditedFileGroupName);
+	AddRoute(fileTree->eRowEdited, eEditedFileGroupName);
 	mFileTree->SetColumnTitle(0, _("File"));
 	mFileTree->SetExpandColumn(0);
 	mFileTree->SetColumnTitle(1, _("Tekst"));
+	mFileTree->SetColumnAlignment(1, 1.0f);
 	mFileTree->SetColumnTitle(2, _("Data"));
+	mFileTree->SetColumnAlignment(2, 1.0f);
 	
-	AddFileItemsToList(mProject->GetFiles(), nil, mFileTree);
+	AddItemsToList(mProject->GetFiles(), nil, fileTree);
 	mFileTree->ExpandAll();
+
+	eKeyPressEvent.Connect(G_OBJECT(fileTree->GetGtkWidget()), "key-press-event");
 	
 //	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
 //	InitializeTreeView(filesTree, ePanelFiles);
@@ -325,6 +366,21 @@ void MProjectWindow::Initialize(
 //	filesTree.ExpandAll();
 
 	// Resources tree
+
+	MList<MRsrcRowItem>* rsrcTree = new MList<MRsrcRowItem>(GetWidget(kResourceViewID));
+	mRsrcTree = rsrcTree;
+	AddRoute(rsrcTree->eRowSelected, eSelectRsrcRow);
+	AddRoute(rsrcTree->eRowInvoked, eInvokeRsrcRow);
+	AddRoute(rsrcTree->eRowEdited, eEditedRsrcGroupName);
+	mRsrcTree->SetColumnTitle(0, _("File"));
+	mRsrcTree->SetExpandColumn(0);
+	mRsrcTree->SetColumnTitle(1, _("Size"));
+	mRsrcTree->SetColumnAlignment(1, 1.0f);
+	
+	AddItemsToList(mProject->GetResources(), nil, rsrcTree);
+	mRsrcTree->ExpandAll();
+
+	eKeyPressEvent.Connect(G_OBJECT(rsrcTree->GetGtkWidget()), "key-press-event");
 
 //	MGtkTreeView resourcesTree(GetWidget(kResourceViewID));
 //	InitializeTreeView(resourcesTree, ePanelPackage);
@@ -382,20 +438,21 @@ void MProjectWindow::Initialize(
 	SyncInterfaceWithProject();
 }
 
-void MProjectWindow::AddFileItemsToList(
+template<class R>
+void MProjectWindow::AddItemsToList(
 	MProjectGroup*		inGroup,
 	MListRowBase*		inParent,
-	MListBase*			inList)
+	MList<R>*			inList)
 {
 	for (auto iter = inGroup->GetItems().begin(); iter != inGroup->GetItems().end(); ++iter)
 	{
-		MFileRowItem* item = new MFileRowItem(*iter);
+		R* item = new R(*iter);
 		
 		inList->AppendRowInt(item, inParent);
 		
 		MProjectGroup* group = dynamic_cast<MProjectGroup*>(*iter);
 		if (group != nil)
-			AddFileItemsToList(group, item, inList);
+			AddItemsToList(group, item, inList);
 	}
 }
 
@@ -405,7 +462,7 @@ void MProjectWindow::AddFileItemsToList(
 void MProjectWindow::SelectFileRow(
 	MFileRowItem*		inFileRow)
 {
-	MProjectItem* item = inFileRow->mItem;
+	MProjectItem* item = inFileRow->GetProjectItem();
 	MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
 	mFileTree->SetColumnEditable(0, group != nil);
 }
@@ -416,7 +473,7 @@ void MProjectWindow::SelectFileRow(
 void MProjectWindow::InvokeFileRow(
 	MFileRowItem*		inFileRow)
 {
-	MProjectItem* item = inFileRow->mItem;
+	MProjectItem* item = inFileRow->GetProjectItem();
 	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 	if (file != nil)
 	{
@@ -437,12 +494,23 @@ void MProjectWindow::InvokeFileRow(
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectWindow::SelectRsrcRow
+
+void MProjectWindow::SelectRsrcRow(
+	MRsrcRowItem*		inRsrcRow)
+{
+	MProjectItem* item = inRsrcRow->GetProjectItem();
+	MProjectGroup* group = dynamic_cast<MProjectGroup*>(item);
+	mRsrcTree->SetColumnEditable(0, group != nil);
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectWindow::InvokeResourceRow
 
-void MProjectWindow::InvokeResourceRow(
+void MProjectWindow::InvokeRsrcRow(
 	MRsrcRowItem*		inResourceRow)
 {
-	MProjectItem* item = inResourceRow->mItem;
+	MProjectItem* item = inResourceRow->GetProjectItem();
 	MProjectFile* file = dynamic_cast<MProjectFile*>(item);
 	if (file != nil)
 	{
@@ -519,18 +587,6 @@ bool MProjectWindow::UpdateCommandStatus(
 			outEnabled = notebook.GetPage() != ePanelLinkOrder;
 			break;
 		
-		case cmd_RenameItem:
-			if (notebook.GetPage() != ePanelLinkOrder)
-			{
-				vector<MProjectItem*> selectedItems;
-				GetSelectedItems(selectedItems);
-				
-				outEnabled = 
-					selectedItems.size() == 1 and
-					dynamic_cast<MProjectGroup*>(selectedItems.front());
-			}
-			break;
-
 		default:
 			result = MDocWindow::UpdateCommandStatus(
 				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
@@ -586,10 +642,6 @@ bool MProjectWindow::ProcessCommand(
 		
 		case cmd_NewGroup:
 			CreateNewGroup();
-			break;
-		
-		case cmd_RenameItem:
-			RenameGroup();
 			break;
 		
 		case cmd_OpenIncludeFile:
@@ -872,57 +924,18 @@ void MProjectWindow::CreateNewGroup()
 //	mProject->SetModified(true);
 }
 
-void MProjectWindow::RenameGroup()
-{
-//	if (mEditingName)
-//		return;
-//	
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//
-//	GtkTreePath* path = nil;
-//
-//	if (notebook.GetPage() == ePanelFiles)
-//	{
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
-//			treeView.SetCursor(path, mFileNameColumn);
-//			mEditingName = true;
-//		}
-//	}
-//	else if (notebook.GetPage() == ePanelPackage)
-//	{
-//		MGtkTreeView treeView(GetWidget(kResourceViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mResourceNameCell), "editable", true, nil);
-//			treeView.SetCursor(path, mResourceNameColumn);
-//			mEditingName = true;
-//		}
-//	}
-}
-
 void MProjectWindow::EditedFileGroupName(
 	MFileRowItem*		inRow,
 	const string&		inNewName)
 {
-//	mEditingName = false;
-//	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
-//	if (mFilesTree->ProjectItemNameEdited(inPath, inNewValue))
-//		mProject->SetModified(true);
+	inRow->SetFileName(inNewName);
 }
 
-void MProjectWindow::EditedResourceGroupName(
-	gchar*				inPath,
-	gchar*				inNewValue)
+void MProjectWindow::EditedRsrcGroupName(
+	MRsrcRowItem*		inRow,
+	const string&		inNewName)
 {
-//	mEditingName = false;
-//	g_object_set(G_OBJECT(mResourceNameCell), "editable", false, nil);
-//	if (mResourcesTree->ProjectItemNameEdited(inPath, inNewValue))
-//		mProject->SetModified(true);
+	inRow->SetFileName(inNewName);
 }
 
 // ---------------------------------------------------------------------------

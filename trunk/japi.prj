@@ -4,17 +4,19 @@
   <pkg tool="pkg-config">gthread-2.0</pkg>
   <pkg tool="pkg-config">gstreamer-0.10</pkg>
   <pkg tool="pkg-config">gtk+-x11-2.0</pkg>
+  <pkg tool="pkg-config">uuid</pkg>
  </pkg-config>
  <syspaths>
   <path>/usr/include</path>
+  <path>libzeep/</path>
  </syspaths>
  <userpaths>
   <path>Sources</path>
-  <path>zeep</path>
   <path>NetSources</path>
  </userpaths>
  <libpaths>
   <path>/usr/local/lib</path>
+  <path>libzeep</path>
  </libpaths>
  <files>
   <group name="MLib">
@@ -103,13 +105,7 @@
    </group>
    <file>MShell.cpp</file>
    <file>MPkgConfig.cpp</file>
-   <file>MTestWindow.cpp</file>
    <file>MSelection.cpp</file>
-  </group>
-  <group name="zeep">
-   <file>exception.cpp</file>
-   <file>node.cpp</file>
-   <file>document.cpp</file>
   </group>
   <group name="Libraries">
    <link optional="true">attr</link>
@@ -124,6 +120,7 @@
    <link>uuid</link>
    <link>tidy</link>
    <link>cryptopp</link>
+   <link>zeep</link>
   </group>
  </files>
  <resources resource-dir="Resources">
@@ -168,7 +165,6 @@
    <resource>Windows/message-list-window.ui</resource>
    <resource>Windows/edit-window.ui</resource>
    <resource>Windows/project-window.ui</resource>
-   <resource>Windows/test-window.ui</resource>
   </group>
   <group name="Templates">
    <resource>Templates/empty.c</resource>

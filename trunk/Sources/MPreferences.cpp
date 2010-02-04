@@ -24,11 +24,12 @@
 #include "MPreferences.h"
 #include "MGlobals.h"
 
-#include "document.hpp"
-#include "node.hpp"
-#include "serialize.hpp"
+#include <zeep/xml/document.hpp>
+#include <zeep/xml/node.hpp>
+#include <zeep/xml/serialize.hpp>
 
 using namespace std;
+namespace xml = zeep::xml;
 namespace fs = boost::filesystem;
 
 namespace Preferences

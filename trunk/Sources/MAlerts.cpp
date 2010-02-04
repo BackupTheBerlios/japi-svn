@@ -10,7 +10,7 @@
 
 #include <vector>
 
-#include "document.hpp"
+#include <zeep/xml/document.hpp>
 
 #include "MResources.h"
 #include "MAlerts.h"
@@ -20,6 +20,7 @@
 #include "MSound.h"
 
 using namespace std;
+namespace xml = zeep::xml;
 namespace io = boost::iostreams;
 
 GtkWidget* CreateAlertWithArgs(

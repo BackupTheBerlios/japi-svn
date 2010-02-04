@@ -42,7 +42,7 @@
 #include "MePubWindow.h"
 #include "MShell.h"
 
-#include "MTestWindow.h"
+//#include "MTestWindow.h"
 
 #include <iostream>
 
@@ -225,8 +225,8 @@ bool MJapieApp::ProcessCommand(
 		
 		case 'test':
 		{
-			MWindow* w = new MTestWindow();
-			w->Show();
+//			MWindow* w = new MTestWindow();
+//			w->Show();
 			break;
 		}
 		

@@ -54,7 +54,10 @@ MLanguageCpp::Init()
 		"typeid", "typename", "union", "unsigned", "using", "virtual",
 		"void", "volatile", "wchar_t", "while", "and", "and_eq",
 		"bitand", "bitor", "compl", "not", "or", "or_eq", "xor", "xor_eq",
-		"not_eq", nil
+		"not_eq",
+		// c++0x
+		"nullptr", "constexpr", "decltype", "static_assert",
+		nil
 	};
 	
 	const char* preprocessorSymbols[] = {

@@ -10,7 +10,7 @@
 #include "MProjectItem.h"
 #include "MDocument.h"
 
-namespace xml { class node; class node_list; }
+namespace zeep { namespace xml { class node; class node_list; } }
 
 class MWindow;
 class MMessageWindow;
@@ -220,51 +220,55 @@ class MProject : public MDocument
 	void				MakeClean();
 
 	void				ReadPaths(
-							const xml::node_list&
+							const zeep::xml::node_list&
 												inData,
 							std::vector<fs::path>&
 												outPaths);
 
 	void		 		ReadOptions(
-							const xml::node&	inData,
+							const zeep::xml::node&
+												inData,
 							const char*			inOptionName,
 							std::vector<std::string>&
 												outOptions);
 
 	void				ReadFiles(
-							const xml::node&	inData,
+							const zeep::xml::node&
+												inData,
 							MProjectGroup*		inGroup);
 
 	void				ReadResources(
-							const xml::node&	inData,
+							const zeep::xml::node&
+												inData,
 							MProjectGroup*		inGroup);
 
 	void				Read(
-							const xml::node&	inContext);
+							const zeep::xml::node&
+												inContext);
 
 	void				WritePaths(
-							xml::node&			inNode,
+							zeep::xml::node&	inNode,
 							const char*			inTag,
 							std::vector<fs::path>&
 												inPaths,
 							bool				inFullPath);
 
 	void				WriteFiles(
-							xml::node&			inNode,
+							zeep::xml::node&	inNode,
 							std::vector<MProjectItem*>&
 												inItems);
 
 	void				WriteResources(
-							xml::node&			inNode,
+							zeep::xml::node&	inNode,
 							std::vector<MProjectItem*>&
 												inItems);
 
 	void				WriteTarget(
-							xml::node&			inNode,
+							zeep::xml::node&	inNode,
 							MProjectTarget&		inTarget);
 
 	void				WriteOptions(
-							xml::node&			inNode,
+							zeep::xml::node&	inNode,
 							const char*			inOptionGroupName,
 							const char*			inOptionName,
 							const std::vector<std::string>&

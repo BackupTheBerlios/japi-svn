@@ -55,6 +55,28 @@ bool MListRowBase::GetModelAndIter(
 	return result;
 }
 
+void MListRowBase::RowChanged()
+{
+	UpdateDataInTreeStore();
+	
+	if (mRowReference != nil and gtk_tree_row_reference_valid(mRowReference))
+	{
+		GtkTreeModel* model = gtk_tree_row_reference_get_model(mRowReference);
+		if (model != nil)
+		{
+			GtkTreePath* path = gtk_tree_row_reference_get_path(mRowReference);
+			if (path != nil)
+			{
+				GtkTreeIter iter;
+				if (gtk_tree_model_get_iter(model, &iter, path))
+					gtk_tree_model_row_changed(model, path, &iter);
+				gtk_tree_path_free(path);
+			}
+		}
+	}
+	
+}
+
 //---------------------------------------------------------------------
 // MListBase
 
@@ -169,7 +191,7 @@ MListRowBase* MListBase::GetCursorRow()
 }
 
 void MListBase::SetColumnTitle(
-	int				inColumnNr,
+	uint32			inColumnNr,
 	const string&	inTitle)
 {
 	GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), inColumnNr);
@@ -179,7 +201,7 @@ void MListBase::SetColumnTitle(
 }
 
 void MListBase::SetExpandColumn(
-	int				inColumnNr)
+	uint32			inColumnNr)
 {
 	GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), inColumnNr);
 	if (column == NULL)
@@ -187,8 +209,20 @@ void MListBase::SetExpandColumn(
 	g_object_set(G_OBJECT(column), "expand", true, nil);
 }
 
+void MListBase::SetColumnAlignment(
+	uint32				inColumnNr,
+	float				inAlignment)
+{
+	GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), inColumnNr);
+	if (column == NULL)
+		throw "column not found";
+	gtk_tree_view_column_set_alignment(column, inAlignment);
+	if (inColumnNr < mRenderers.size())
+		g_object_set(G_OBJECT(mRenderers[inColumnNr]), "xalign", inAlignment, nil);
+}
+
 void MListBase::SetColumnEditable(
-	int				inColumnNr,
+	uint32			inColumnNr,
 	bool			inEditable)
 {
 	if (inColumnNr < mRenderers.size())
@@ -332,20 +366,17 @@ void MListBase::RowChanged(
 	GtkTreePath*		inTreePath,
 	GtkTreeIter*		inTreeIter)
 {
-	cout << "RowChanged" << endl;
 }
 
 void MListBase::RowDeleted(
 	GtkTreePath*		inTreePath)
 {
-	cout << "RowDeleted" << endl;
 }
 
 void MListBase::RowInserted(
 	GtkTreePath*		inTreePath,
 	GtkTreeIter*		inTreeIter)
 {
-	cout << "RowInserted" << endl;
 }
 
 void MListBase::RowsReordered(
@@ -353,7 +384,6 @@ void MListBase::RowsReordered(
 	GtkTreeIter*		inTreeIter,
 	gint*				inNewOrder)
 {
-	cout << "RowsReordered" << endl;
 }
 
 void MListBase::Edited(

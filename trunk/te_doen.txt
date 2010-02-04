@@ -1,6 +1,8 @@
 ﻿Bugs
 
-- items in ePub lijst verslepen: er verschijnen spook items.
+- items in lijsten verslepen: er verschijnen spook items.
+	Bug lijkt te zitten in de remove code.
+- resources' checkbox in project info dialoogvenster werkt niet
 - text in popup menu's ontbreekt.
 
 

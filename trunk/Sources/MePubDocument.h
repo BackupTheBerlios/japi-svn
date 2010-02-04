@@ -14,7 +14,7 @@
 
 #include "MDocument.h"
 #include "MProjectItem.h"
-#include "node.hpp"
+#include <zeep/xml/node.hpp>
 
 class MProjectGroup;
 class MProjectItem;
@@ -108,26 +108,26 @@ class MePubDocument : public MDocument
 	
 	void				ParseOPF(
 							const fs::path&		inDirectory,
-							xml::node&			inOPF,
+							zeep::xml::node&	inOPF,
 							MMessageList&		outProblems);
 
-	xml::node_ptr		CreateOPF(
+	zeep::xml::node_ptr	CreateOPF(
 							const fs::path&		inOEBPS);
 
 	void				ParseNCX(
-							xml::node&			inNCX);
+							zeep::xml::node&	inNCX);
 
 	void				ParseNavPoint(
 							MProjectGroup*		inGroup,
-							xml::node_ptr		inNavPoint);
+							zeep::xml::node_ptr	inNavPoint);
 
-	xml::node_ptr		CreateNCX();
+	zeep::xml::node_ptr	CreateNCX();
 
 	typedef std::map<std::string,uint32> MPlayOrder;
 
 	void				CreateNavMap(
 							MProjectGroup*		inGroup,
-							xml::node_ptr		inNavPoint,
+							zeep::xml::node_ptr	inNavPoint,
 							uint32&				ioID,
 							MPlayOrder&			ioPlayOrder);
 

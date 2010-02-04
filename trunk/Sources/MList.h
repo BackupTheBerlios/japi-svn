@@ -65,6 +65,9 @@ class MListRowBase : public boost::noncopyable
 	
 	virtual bool		RowDropPossible() const		{ return false; }
 
+	// call this to update the contents in the list:
+	virtual void		RowChanged();
+
   protected:
 
 	bool				GetModelAndIter(
@@ -214,14 +217,18 @@ class MListBase : public MView
 	virtual			~MListBase();
 
 	void			SetColumnTitle(
-						int					inColumnNr,
+						uint32				inColumnNr,
 						const std::string&	inTitle);
 
+	void			SetColumnAlignment(
+						uint32				inColumnNr,
+						float				inAlignment);		
+
 	void			SetExpandColumn(
-						int					inColumnNr);		
+						uint32				inColumnNr);		
 
 	void			SetColumnEditable(
-						int					inColumnNr,
+						uint32				inColumnNr,
 						bool				inEditable);
 
 	void			SelectRow(

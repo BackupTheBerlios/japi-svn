@@ -22,7 +22,7 @@
 
 #define foreach BOOST_FOREACH
 
-#include "document.hpp"
+#include <zeep/xml/document.hpp>
 
 #include "MProject.h"
 #include "MDevice.h"
@@ -44,6 +44,7 @@
 #include "MJapiApp.h"
 
 using namespace std;
+namespace xml = zeep::xml;
 namespace ba = boost::algorithm;
 
 namespace
@@ -353,7 +354,7 @@ void MProject::Read(
 	
 	// read the pkg-config data
 	
-	xml::node_list data = inRoot.find_all("/project/pkg-config/pkg");
+	xml::node_list data = inRoot.find_all("pkg-config/pkg");
 
 	foreach (xml::node& node, data)
 	{
@@ -367,17 +368,17 @@ void MProject::Read(
 	
 	// read the system search paths
 	
-	data = inRoot.find_all("/project/syspaths/path");
+	data = inRoot.find_all("syspaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mSysSearchPaths);
 	
 	// next the user search paths
-	data = inRoot.find_all("/project/userpaths/path");
+	data = inRoot.find_all("userpaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mUserSearchPaths);
 	
 	// then the lib search paths
-	data = inRoot.find_all("/project/libpaths/path");
+	data = inRoot.find_all("libpaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mLibSearchPaths);
 	
@@ -404,7 +405,7 @@ void MProject::Read(
 		mProjectInfo.mAddResources = false;
 	
 	// And finally we add the targets
-	data = inRoot.find_all("/project/targets/target");
+	data = inRoot.find_all("targets/target");
 	foreach (xml::node& targetnode, data)
 	{
 		string linkTarget = targetnode.get_attribute("linkTarget");

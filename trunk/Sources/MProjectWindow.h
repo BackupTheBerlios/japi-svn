@@ -16,6 +16,7 @@ class MFileRowItem;
 class MRsrcRowItem;
 class MListBase;
 class MListRowBase;
+template<class R> class MList;
 
 class MProjectWindow : public MDocWindow
 {
@@ -44,17 +45,16 @@ class MProjectWindow : public MDocWindow
 
   protected:
 
-	void			AddFileItemsToList(
-						MProjectGroup*	inGroup,
-						MListRowBase*	inParent,
-						MListBase*		inList);
+	template<class R>
+	void			AddItemsToList(
+						MProjectGroup*		inGroup,
+						MListRowBase*		inParent,
+						MList<R>*			inList);
 
 	bool			DoClose();
 	
 	void			CreateNewGroup();
 
-	void			RenameGroup();
-	
 	void			AddFilesToProject();
 	
 	void			GetSelectedItems(
@@ -81,11 +81,17 @@ class MProjectWindow : public MDocWindow
 	MEventIn<void(MFileRowItem*)>
 					eInvokeFileRow;
 
-	void			InvokeResourceRow(
+	void			SelectRsrcRow(
 						MRsrcRowItem*	inRow);
 
 	MEventIn<void(MRsrcRowItem*)>
-					eInvokeResourceRow;
+					eSelectRsrcRow;
+
+	void			InvokeRsrcRow(
+						MRsrcRowItem*	inRow);
+
+	MEventIn<void(MRsrcRowItem*)>
+					eInvokeRsrcRow;
 
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);
@@ -119,17 +125,19 @@ class MProjectWindow : public MDocWindow
 						const std::string&	inNewName);
 
 	MEventIn<void(MFileRowItem*,const std::string&)>
-										mEditedFileGroupName;
+					eEditedFileGroupName;
 
-	void			EditedResourceGroupName(
-						gchar*			path,
-						gchar*			new_text);
+	void			EditedRsrcGroupName(
+						MRsrcRowItem*		inRow,
+						const std::string&	inNewName);
 
-	MSlot<void(gchar*,gchar*)>			mEditedResourceGroupName;
+	MEventIn<void(MRsrcRowItem*,const std::string&)>
+					eEditedRsrcGroupName;
 
 	MProject*		mProject;
 	GtkWidget*		mStatusPanel;
 	MListBase*		mFileTree;
+	MListBase*		mRsrcTree;
 //	GtkTreeViewColumn*	mFileNameColumn;
 //	GtkCellRenderer*	mFileNameCell;
 //	GtkTreeViewColumn*	mResourceNameColumn;

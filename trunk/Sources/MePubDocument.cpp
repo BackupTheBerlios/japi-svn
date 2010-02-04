@@ -35,7 +35,7 @@
 #include <openssl/pem.h>
 #include <openssl/aes.h>
 
-#include "document.hpp"
+#include <zeep/xml/document.hpp>
 
 #include "MError.h"
 #include "MTextDocument.h"
@@ -56,6 +56,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
+namespace xml = zeep::xml;
 namespace ba = boost::algorithm;
 namespace io = boost::iostreams;
 namespace bai = boost::archive::iterators;
