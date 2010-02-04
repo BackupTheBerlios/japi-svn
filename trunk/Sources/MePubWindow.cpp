@@ -12,7 +12,6 @@
 #include "MePubItem.h"
 #include "MTextDocument.h"
 #include "MGtkWrappers.h"
-#include "MProjectTree.h"
 #include "MStrings.h"
 #include "MUtils.h"
 #include "MPreferences.h"

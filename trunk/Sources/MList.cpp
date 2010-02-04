@@ -22,7 +22,6 @@ MListRowBase::MListRowBase()
 
 MListRowBase::~MListRowBase()
 {
-	cout << "MListRowBase deleted" << endl;
 	if (mRowReference != NULL)
 		gtk_tree_row_reference_free(mRowReference);
 }
@@ -242,7 +241,7 @@ bool MListBase::GetTreeIterForRow(
 	return result;
 }
 
-MListRowBase* MListBase::GetCursorRowInt() const
+MListRowBase* MListBase::GetCursorRow() const
 {
 	MListRowBase* row = nil;
 	
@@ -257,7 +256,7 @@ MListRowBase* MListBase::GetCursorRowInt() const
 	return row;
 }
 
-void MListBase::GetSelectedRowsInt(
+void MListBase::GetSelectedRows(
 	list<MListRowBase*>&	outRows) const
 {
 	GList* rows = gtk_tree_selection_get_selected_rows(
@@ -352,7 +351,7 @@ void MListBase::ExpandAll()
 	gtk_tree_view_expand_all(GTK_TREE_VIEW(GetGtkWidget()));
 }
 
-void MListBase::AppendRowInt(
+void MListBase::AppendRow(
 	MListRowBase*		inRow,
 	MListRowBase*		inParentRow)
 {
@@ -374,7 +373,7 @@ void MListBase::AppendRowInt(
 	inRow->UpdateDataInTreeStore();
 }
 
-void MListBase::InsertRowInt(
+void MListBase::InsertRow(
 	MListRowBase*		inRow,
 	MListRowBase*		inBefore)
 {
@@ -396,14 +395,47 @@ void MListBase::InsertRowInt(
 	inRow->UpdateDataInTreeStore();
 }
 
+void MListBase::RemoveRow(
+	MListRowBase*		inRow)
+{
+	GtkTreeIter iter;
+	if (GetTreeIterForRow(inRow, &iter))
+		gtk_tree_store_remove(mTreeStore, &iter);
+}
+
 void MListBase::SelectRow(
 	MListRowBase*		inRow)
 {
 	GtkTreePath* path = inRow->GetTreePath();
 	if (path != nil)
 	{
+		GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), 0);
+		
+		gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(GetGtkWidget()),
+			path, column, false, 0, 0);
+
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(GetGtkWidget()),
-			path, nil, false);
+			path, column, false);
+
+		gtk_tree_path_free(path);
+	}
+}
+
+void MListBase::SelectRowAndStartEditingColumn(
+	MListRowBase*		inRow,
+	uint32				inColumnNr)
+{
+	GtkTreePath* path = inRow->GetTreePath();
+	if (path != nil)
+	{
+		GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), 0);
+		
+		gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(GetGtkWidget()),
+			path, column, false, 0, 0);
+
+		gtk_tree_view_set_cursor(GTK_TREE_VIEW(GetGtkWidget()),
+			path, column, true);
+
 		gtk_tree_path_free(path);
 	}
 }
@@ -478,7 +510,7 @@ bool MListBase::DragDataReceived(
 	
 void MListBase::CursorChanged()
 {
-	MListRowBase* row = GetCursorRowInt();
+	MListRowBase* row = GetCursorRow();
 	if (row != nil)
 		RowSelected(row);
 }

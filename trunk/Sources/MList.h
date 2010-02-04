@@ -260,6 +260,17 @@ class MListBase : public MView
 						uint32				inColumnNr,
 						bool				inEditable);
 
+	void			SelectRowAndStartEditingColumn(
+						MListRowBase*		inRow,
+						uint32				inColumnNr);
+
+	virtual MListRowBase*
+					GetCursorRow() const;
+
+	void			GetSelectedRows(
+						std::list<MListRowBase*>&
+											outRows) const;
+
 	void			SelectRow(
 						MListRowBase*		inRow);
 
@@ -276,13 +287,16 @@ class MListBase : public MView
 
 	virtual int		GetColumnCount() const = 0;
 
-	void			AppendRowInt(
+	virtual void	AppendRow(
 						MListRowBase*		inRow,
 						MListRowBase*		inParent);
 
-	void			InsertRowInt(
+	virtual void	InsertRow(
 						MListRowBase*		inRow,
 						MListRowBase*		inBefore);
+
+	virtual void	RemoveRow(
+						MListRowBase*		inRow);
 
 	MEventOut<void()>
 					eRowsReordered;
@@ -303,12 +317,6 @@ class MListBase : public MView
 
 	MListRowBase*	GetRowForPath(
 						GtkTreePath*		inPath) const;
-
-	MListRowBase*	GetCursorRowInt() const;
-	
-	void			GetSelectedRowsInt(
-						std::list<MListRowBase*>&
-											outRows) const;
 
 	virtual void	CursorChanged();
 	MSlot<void()>	mCursorChanged;
@@ -403,19 +411,20 @@ class MList : public MListBase
 	void			AppendRow(
 						row_type*			inRow,
 						row_type*			inParentRow = nil)
-														{ AppendRowInt(inRow, inParentRow); }
+														{ MListBase::AppendRow(inRow, inParentRow); }
 
-	void			InsertRow(
+	virtual void	InsertRow(
 						row_type*			inRow,
 						row_type*			inBefore = nil)
-														{ InsertRowInt(inRow, inBefore); }
+														{ MListBase::InsertRow(inRow, inBefore); }
 
-	row_type*		GetCursorRow() const				{ return static_cast<row_type*>(GetCursorRowInt()); }
+	virtual row_type*
+					GetCursorRow() const				{ return static_cast<row_type*>(MListBase::GetCursorRow()); }
 	
 	row_list		GetSelectedRows() const
 					{
 						std::list<MListRowBase*> selected;
-						GetSelectedRowsInt(selected);
+						MListBase::GetSelectedRows(selected);
 
 						row_list result;
 						for (auto s = selected.begin(); s != selected.end(); ++s)

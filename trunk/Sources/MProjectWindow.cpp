@@ -14,7 +14,6 @@
 #include "MError.h"
 #include "MFindAndOpenDialog.h"
 #include "MProject.h"
-#include "MTreeModelInterface.h"
 #include "MUtils.h"
 #include "MPreferences.h"
 #include "MAlerts.h"
@@ -22,7 +21,6 @@
 #include "MProjectInfoDialog.h"
 #include "MLibraryInfoDialog.h"
 #include "MGtkWrappers.h"
-//#include "MProjectTree.h"
 
 #include "MList.h"
 
@@ -142,6 +140,9 @@ class MProjectItemRow
 					}
 
 	MProjectItem*	GetProjectItem()			{ return mItem; }
+
+	void			SetProjectItem(
+						MProjectItem*	inItem)	{ mItem = inItem; }
 
   protected:
 
@@ -433,7 +434,7 @@ void MProjectWindow::AddItemsToList(
 	{
 		R* item = new R(*iter);
 		
-		inList->AppendRowInt(item, inParent);
+		inList->AppendRow(item, static_cast<R*>(inParent));
 		
 		MProjectGroup* group = dynamic_cast<MProjectGroup*>(*iter);
 		if (group != nil)
@@ -498,11 +499,11 @@ void MProjectWindow::DraggedFileRow(
 		else
 			newGroup = mProject->GetFiles();
 
-		if (oldGroup != nil and newGroup != nil)
-		{
+		if (oldGroup != nil)
 			oldGroup->RemoveProjectItem(item);
+
+		if (newGroup != nil)
 			newGroup->AddProjectItem(item, position);
-		}
 	}
 }
 
@@ -574,11 +575,11 @@ void MProjectWindow::DraggedRsrcRow(
 		else
 			newGroup = mProject->GetResources();
 
-		if (oldGroup != nil and newGroup != nil)
-		{
+		if (oldGroup != nil)
 			oldGroup->RemoveProjectItem(item);
+
+		if (newGroup != nil)
 			newGroup->AddProjectItem(item, position);
-		}
 	}
 }
 
@@ -817,54 +818,32 @@ void MProjectWindow::SaveState()
 
 void MProjectWindow::CreateNewGroup()
 {
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//	unique_ptr<MGtkTreeView> treeView;
-//	MProjectTree* model;
-//	MProjectGroup* group;
-//	GtkTreeViewColumn* column;
-//	GtkCellRenderer* cell;
-//	
-//	if (notebook.GetPage() == ePanelFiles)
-//	{
-//		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
-//		model = mFilesTree;
-//		group = mProject->GetFiles();
-//		column = mFileNameColumn;
-//		cell = mFileNameCell;
-//	}
-//	else
-//	{
-//		treeView.reset(new MGtkTreeView(GetWidget(kResourceViewID)));
-//		model = mResourcesTree;
-//		group = mProject->GetResources();
-//		column = mResourceNameColumn;
-//		cell = mResourceNameCell;
-//	}
-//		
-//	int32 index = 0;
-//	
-//	GtkTreePath* path = nil;
-//	GtkTreeIter iter;
-//	
-//	if (treeView->GetFirstSelectedRow(path) and
-//		model->GetIter(&iter, path))
-//	{
-//		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-//		group = item->GetParent();
-//		index = item->GetPosition();
-//	}
-//	
-//	MProjectGroup* newGroup = new MProjectGroup(_("New Folder"), group);
-//	group->AddProjectItem(newGroup, index);
-//	model->ProjectItemInserted(newGroup);
-//	g_object_set(G_OBJECT(cell), "editable", true, nil);
-//	treeView->SetCursor(path, column, true);
-//	mEditingName = true;
-//	
-//	if (path != nil)
-//		gtk_tree_path_free(path);
-//	
-//	mProject->SetModified(true);
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	
+	MListBase* list;
+	MListRowBase* row;
+	MProjectGroup* newGroup = new MProjectGroup(_("New Folder"), nil);
+	
+	if (notebook.GetPage() == ePanelFiles)
+	{
+		list = mFileTree;
+		row = new MFileRowItem(newGroup);
+	}
+	else
+	{
+		list = mRsrcTree;
+		row = new MRsrcRowItem(newGroup);
+	}
+
+	MListRowBase* cursor = list->GetCursorRow();
+	list->InsertRow(row, cursor);
+	
+	if (notebook.GetPage() == ePanelFiles)
+		DraggedFileRow(static_cast<MFileRowItem*>(row));
+	else
+		DraggedRsrcRow(static_cast<MRsrcRowItem*>(row));
+	
+	list->SelectRowAndStartEditingColumn(row, 0);
 }
 
 void MProjectWindow::EditedFileGroupName(
@@ -905,7 +884,13 @@ void MProjectWindow::AddFilesToProject()
 			
 			MFileRowItem* row = new MFileRowItem(item.get());
 			
-			fileTree->InsertRow(row, cursor);
+			if (dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
+			{
+				fileTree->AppendRow(row, cursor);
+				fileTree->ExpandRow(cursor, false);
+			}
+			else
+				fileTree->InsertRow(row, cursor);
 
 			MFileRowItem* parentRow;
 			uint32 position;
@@ -949,7 +934,13 @@ void MProjectWindow::AddRsrcsToProject()
 			
 			MRsrcRowItem* row = new MRsrcRowItem(item.get());
 			
-			rsrcTree->InsertRow(row, cursor);
+			if (dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
+			{
+				rsrcTree->AppendRow(row, cursor);
+				rsrcTree->ExpandRow(cursor, false);
+			}
+			else
+				rsrcTree->InsertRow(row, cursor);
 			
 			MRsrcRowItem* parentRow;
 			uint32 position;
@@ -1039,15 +1030,55 @@ void MProjectWindow::DeleteSelectedItems()
 	{
 		auto rows = static_cast<MList<MFileRowItem>*>(mFileTree)->GetSelectedRows();
 		
+		// first remove the project items from the MProject
+		MProjectGroup* files = mProject->GetFiles();
 		
+		for (auto row = rows.begin(); row != rows.end(); ++row)
+		{
+			MProjectItem* item = (*row)->GetProjectItem();
+			if (files->Contains(item))	// be very paranoid
+			{
+				assert(item->GetParent() != nil);
 
-//		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
-//			mFilesTree->RemoveItem(*item);
+				item->GetParent()->RemoveProjectItem(item);
+				delete item;
+				
+				(*row)->SetProjectItem(nil);
+			}
+		}
+		
+		for (auto row = rows.begin(); row != rows.end(); ++row)
+		{
+			mFileTree->RemoveRow(*row);
+			delete *row;
+		}
 	}
 	else
 	{
-//		for (vector<MProjectItem*>::iterator item = items.begin(); item != items.end(); ++item)
-//			mResourcesTree->RemoveItem(*item);
+		auto rows = static_cast<MList<MRsrcRowItem>*>(mRsrcTree)->GetSelectedRows();
+		
+		// first remove the project items from the MProject
+		MProjectGroup* files = mProject->GetResources();
+		
+		for (auto row = rows.begin(); row != rows.end(); ++row)
+		{
+			MProjectItem* item = (*row)->GetProjectItem();
+			if (files->Contains(item))	// be very paranoid
+			{
+				assert(item->GetParent() != nil);
+
+				item->GetParent()->RemoveProjectItem(item);
+				delete item;
+				
+				(*row)->SetProjectItem(nil);
+			}
+		}
+		
+		for (auto row = rows.begin(); row != rows.end(); ++row)
+		{
+			mRsrcTree->RemoveRow(*row);
+			delete *row;
+		}
 	}
 }
 
