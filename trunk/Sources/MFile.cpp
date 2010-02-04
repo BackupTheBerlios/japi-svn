@@ -419,7 +419,7 @@ class MSftpFileLoader : public MFileLoader
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	auto_ptr<MSftpChannel>
+	unique_ptr<MSftpChannel>
 					mSFTPChannel;
 	int64			mFileSize;
 	string			mData;
@@ -526,7 +526,7 @@ class MSftpFileSaver : public MFileSaver
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	auto_ptr<MSftpChannel>
+	unique_ptr<MSftpChannel>
 					mSFTPChannel;
 	int64			mSFTPOffset;
 	int64			mSFTPSize;

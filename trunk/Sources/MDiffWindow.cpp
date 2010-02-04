@@ -510,7 +510,7 @@ bool MDiffWindow::FilesDiffer(
 		doc->HashLines(a);
 	else
 	{
-		auto_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inA));
+		unique_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inA));
 		d->HashLines(a);
 	}
 	
@@ -518,7 +518,7 @@ bool MDiffWindow::FilesDiffer(
 		doc->HashLines(b);
 	else
 	{
-		auto_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inB));
+		unique_ptr<MTextDocument> d(MDocument::Create<MTextDocument>(inB));
 		d->HashLines(b);
 	}
 	
@@ -572,7 +572,7 @@ void MDiffWindow::DiffInvoked(
 		{
 			case 0:
 			{
-				auto_ptr<MDiffWindow> w(new MDiffWindow);
+				unique_ptr<MDiffWindow> w(new MDiffWindow);
 				
 				w->SetDocument(1,
 					dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(MFile(mDir1 / diff.name))));

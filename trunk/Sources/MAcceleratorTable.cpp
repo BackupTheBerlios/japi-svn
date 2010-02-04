@@ -61,7 +61,7 @@ struct MAcceleratorTableImp
 
 MAcceleratorTable& MAcceleratorTable::Instance()
 {
-	static auto_ptr<MAcceleratorTable>	sInstance;
+	static unique_ptr<MAcceleratorTable>	sInstance;
 	
 	if (sInstance.get() == nil)
 	{
@@ -128,7 +128,7 @@ MAcceleratorTable& MAcceleratorTable::Instance()
 MAcceleratorTable&
 MAcceleratorTable::EditKeysInstance()
 {
-	static auto_ptr<MAcceleratorTable>	sInstance;
+	static unique_ptr<MAcceleratorTable>	sInstance;
 	
 	if (sInstance.get() == nil)
 	{

@@ -269,16 +269,16 @@ class MSshConnection
 	uint32						fPacketLength;
 	uint32						fPasswordAttempts;
 
-	std::auto_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;
-	std::auto_ptr<CryptoPP::StreamTransformation>			fDecryptorCBC;
-	std::auto_ptr<CryptoPP::BufferedTransformation>			fDecryptor;
-	std::auto_ptr<CryptoPP::BlockCipher>					fEncryptorCipher;
-	std::auto_ptr<CryptoPP::StreamTransformation>			fEncryptorCBC;
-	std::auto_ptr<CryptoPP::BufferedTransformation>			fEncryptor;
-	std::auto_ptr<CryptoPP::MessageAuthenticationCode>		fSigner;
-	std::auto_ptr<CryptoPP::MessageAuthenticationCode>		fVerifier;
-	std::auto_ptr<ZLibHelper>								fCompressor;
-	std::auto_ptr<ZLibHelper>								fDecompressor;
+	std::unique_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			fDecryptorCBC;
+	std::unique_ptr<CryptoPP::BufferedTransformation>		fDecryptor;
+	std::unique_ptr<CryptoPP::BlockCipher>					fEncryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			fEncryptorCBC;
+	std::unique_ptr<CryptoPP::BufferedTransformation>		fEncryptor;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fSigner;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fVerifier;
+	std::unique_ptr<ZLibHelper>								fCompressor;
+	std::unique_ptr<ZLibHelper>								fDecompressor;
 	
 	CryptoPP::Integer			f_x;
 	CryptoPP::Integer			f_e;
@@ -308,8 +308,8 @@ class MSshConnection
 	
 	bool						fAuthenticated;
 
-//	std::auto_ptr<MCertificate>	fCertificate;
-	std::auto_ptr<MSshAgent>	fSshAgent;
+//	std::unique_ptr<MCertificate>	fCertificate;
+	std::unique_ptr<MSshAgent>	fSshAgent;
 
 	MEventIn<void(MCertificate*)>	eCertificateDeleted;
 

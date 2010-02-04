@@ -111,7 +111,7 @@ struct MRecognizer
 	};
 	
 	MAutomaton			mAutomaton;
-	auto_ptr<map<string,uint8> >
+	unique_ptr<map<string,uint8> >
 						mData;
 };
 
@@ -439,7 +439,7 @@ struct LanguageFactory
 template<class L>
 L* LanguageFactory<L>::Create()
 {
-	static auto_ptr<L> sInstance;
+	static unique_ptr<L> sInstance;
 	
 	if (sInstance.get() == nil)
 	{

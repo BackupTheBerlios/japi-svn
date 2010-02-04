@@ -1051,13 +1051,13 @@ void MePubWindow::CreateNew(
 	bool 		inDirectory)
 {
 	MGtkNotebook notebook(GetWidget(kNoteBookID));
-	auto_ptr<MGtkTreeView> treeView;
+	unique_ptr<MGtkTreeView> treeView;
 	MProjectTree* model;
 	MProjectGroup* group;
 	GtkTreeViewColumn* column;
 	GtkCellRenderer* cell;
 
-	auto_ptr<MProjectItem> newItem;
+	unique_ptr<MProjectItem> newItem;
 	
 	if (notebook.GetPage() == kFilesPageNr)
 	{

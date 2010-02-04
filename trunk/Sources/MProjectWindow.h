@@ -12,6 +12,7 @@
 class MProject;
 class MProjectItem;
 class MProjectGroup;
+class MProjectFile;
 class MFileRowItem;
 class MRsrcRowItem;
 class MListBase;
@@ -56,10 +57,16 @@ class MProjectWindow : public MDocWindow
 	void			CreateNewGroup();
 
 	void			AddFilesToProject();
+
+	void			AddRsrcsToProject();
 	
 	void			GetSelectedItems(
 						std::vector<MProjectItem*>&
 										outItems);
+
+	void			GetSelectedFiles(
+						std::vector<MProjectFile*>&
+										outFiles);
 	
 	void			DeleteSelectedItems();
 
@@ -71,27 +78,33 @@ class MProjectWindow : public MDocWindow
 
 	void			SelectFileRow(
 						MFileRowItem*	inRow);
-
 	MEventIn<void(MFileRowItem*)>
 					eSelectFileRow;
 
 	void			InvokeFileRow(
 						MFileRowItem*	inRow);
-
 	MEventIn<void(MFileRowItem*)>
 					eInvokeFileRow;
 
+	void			DraggedFileRow(
+						MFileRowItem*	inRow);
+	MEventIn<void(MFileRowItem*)>
+					eDraggedFileRow;
+
 	void			SelectRsrcRow(
 						MRsrcRowItem*	inRow);
-
 	MEventIn<void(MRsrcRowItem*)>
 					eSelectRsrcRow;
 
 	void			InvokeRsrcRow(
 						MRsrcRowItem*	inRow);
-
 	MEventIn<void(MRsrcRowItem*)>
 					eInvokeRsrcRow;
+
+	void			DraggedRsrcRow(
+						MRsrcRowItem*	inRow);
+	MEventIn<void(MRsrcRowItem*)>
+					eDraggedRsrcRow;
 
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);

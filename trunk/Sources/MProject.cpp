@@ -94,10 +94,7 @@ MProject* MProject::Instance()
 MProject::MProject(
 	const MFile&		inProjectFile)
 	: MDocument(inProjectFile)
-	, eProjectCreateFileItem(this, &MProject::CreateFileItem)
-	, eProjectCreateResourceItem(this, &MProject::CreateResourceItem)
 	, eProjectItemMoved(this, &MProject::ProjectItemMoved)
-	, eProjectItemRemoved(this, &MProject::ProjectItemMoved)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile.GetPath())
@@ -230,7 +227,7 @@ void MProject::ReadResources(
 			{
 				fs::path p(fileName);
 				
-				auto_ptr<MProjectResource> projectFile(
+				unique_ptr<MProjectResource> projectFile(
 					new MProjectResource(p.leaf(), inGroup,
 						mProjectDir / mProjectInfo.mResourcesDir / p.branch_path()));
 
@@ -245,7 +242,7 @@ void MProject::ReadResources(
 		{
 			string name = node.get_attribute("name");
 			
-			auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
+			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
 			if (not node.children().empty())
 				ReadResources(node, group.get());
@@ -295,7 +292,7 @@ void MProject::ReadFiles(
 				fs::path filePath;
 				try
 				{
-					auto_ptr<MProjectFile> projectFile;
+					unique_ptr<MProjectFile> projectFile;
 					
 					if (LocateFile(fileName, true, filePath))
 						projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
@@ -326,7 +323,7 @@ void MProject::ReadFiles(
 		{
 			string name = node.get_attribute("name");
 			
-			auto_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
+			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
 			if (not node.children().empty())
 				ReadFiles(node, group.get());
@@ -796,12 +793,12 @@ void MProject::Poll(
 void MProject::StartJob(
 	MProjectJob*	inJob)
 {
-	auto_ptr<MProjectJob> job(inJob);
+	unique_ptr<MProjectJob> job(inJob);
 	
 	if (mCurrentJob.get() != nil)
 		THROW(("Cannot start a job when another already runs"));
 	
-	mCurrentJob = job;
+	swap(mCurrentJob, job);
 	
 	if (mStdErrWindow != nil)
 	{
@@ -819,6 +816,15 @@ MProjectFile* MProject::GetProjectFileForPath(
 	const fs::path&		inPath) const
 {
 	return mProjectItems.GetProjectFileForPath(inPath);
+}
+
+// ---------------------------------------------------------------------------
+//	MProject::GetProjectRsrcForPath
+
+MProjectResource* MProject::GetProjectRsrcForPath(
+	const fs::path&		inPath) const
+{
+	return mPackageItems.GetProjectResourceForPath(inPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -1066,14 +1072,10 @@ void MProject::GenerateCFlags(
 //	MProject::CreateCompileJob
 
 MProjectJob* MProject::CreateCompileJob(
-	const fs::path&	inFile)
+	MProjectFile*		inFile)
 {
 	CheckDataDir();
 	
-	MProjectFile* file = GetProjectFileForPath(inFile);
-	if (file == nil)
-		THROW(("File %s is not part of the target project", inFile.string().c_str()));
-
 	vector<string> argv;
 	
 	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
@@ -1082,13 +1084,13 @@ MProjectJob* MProject::CreateCompileJob(
 
 	argv.push_back("-c");
 	argv.push_back("-o");
-	argv.push_back(GetObjectPathForFile(inFile).string());
+	argv.push_back(inFile->GetObjectPath().string());
 	argv.push_back("-MD");
 	
-	argv.push_back(inFile.string());
+	argv.push_back(inFile->GetPath().string());
 
 	MProjectExecJob* result = new MProjectCompileJob(
-		string("Compiling ") + inFile.leaf(), this, argv, file);
+		string("Compiling ") + inFile->GetPath().leaf(), this, argv, inFile);
 	result->eStdErr.SetProc(this, &MProject::StdErrIn);
 	return result;
 }
@@ -1098,7 +1100,7 @@ MProjectJob* MProject::CreateCompileJob(
 
 MProjectJob* MProject::CreateCompileAllJob()
 {
-	auto_ptr<MProjectCompileAllJob> job(new MProjectCompileAllJob("Compiling",  this));
+	unique_ptr<MProjectDoAllJob> job(new MProjectDoAllJob("Compiling",  this));
 	
 	vector<MProjectItem*> files;
 	mProjectItems.Flatten(files);
@@ -1106,7 +1108,7 @@ MProjectJob* MProject::CreateCompileAllJob()
 	for (vector<MProjectItem*>::iterator file = files.begin(); file != files.end(); ++file)
 	{
 		if ((*file)->IsCompilable() and (*file)->IsOutOfDate())
-			job->AddJob(CreateCompileJob(static_cast<MProjectFile*>(*file)->GetPath()));
+			job->AddJob(CreateCompileJob(static_cast<MProjectFile*>(*file)));
 	}
 	
 	if (mProjectInfo.mAddResources)
@@ -1246,87 +1248,112 @@ MProjectJob* MProject::CreateLinkJob(
 //	MProject::Preprocess
 
 void MProject::Preprocess(
-	const fs::path&	inFile)
+	const vector<MProjectFile*>&	inFiles)
 {
 	CheckDataDir();
-	
-	MProjectFile* file = GetProjectFileForPath(inFile);
-	if (file == nil)
-		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
+	unique_ptr<MProjectDoAllJob> allJobs(new MProjectDoAllJob("Preprocessing",  this));
+	
+	for (auto file = inFiles.begin(); file != inFiles.end(); ++file)
+		allJobs->AddJob(CreatePreprocessJob(*file));
+	
+	StartJob(allJobs.release());
+}
+
+MProjectJob* MProject::CreatePreprocessJob(
+	MProjectFile*		inFile)
+{
 	vector<string> argv;
+	
+	fs::path path = inFile->GetPath();
 	
 	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
 	GenerateCFlags(argv);
 
 	argv.push_back("-E");
-	argv.push_back(inFile.string());
+	argv.push_back(path.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Preprocessing ") + inFile.leaf(), this, argv, file);
+		string("Preprocessing ") + path.leaf(), this, argv, inFile);
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
-	output->SetFileNameHint(inFile.leaf() + " # preprocessed");
+	output->SetFileNameHint(path.leaf() + " # preprocessed");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
 
-	StartJob(job);
+	return job;
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::Disassemble
 
 void MProject::Disassemble(
-	const fs::path&	inFile)
+	const vector<MProjectFile*>&	inFiles)
 {
 	CheckDataDir();
-	
-	MProjectFile* file = GetProjectFileForPath(inFile);
-	if (file == nil)
-		THROW(("File %s is not part of the target project", inFile.string().c_str()));
 
+	unique_ptr<MProjectDoAllJob> allJobs(new MProjectDoAllJob("Disassembling",  this));
+	
+	for (auto file = inFiles.begin(); file != inFiles.end(); ++file)
+		allJobs->AddJob(CreateDisassembleJob(*file));
+
+	StartJob(allJobs.release());
+}
+
+MProjectJob* MProject::CreateDisassembleJob(
+	MProjectFile*		inFile)
+{
 	vector<string> argv;
 	
-	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
+	fs::path path = inFile->GetPath();
 	
-	GenerateCFlags(argv);
+	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
 
+	GenerateCFlags(argv);
+	
 	argv.push_back("-S");
 	argv.push_back("-o");
 	argv.push_back("-");
 	
-	argv.push_back(inFile.string());
+	argv.push_back(path.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Disassembling ") + inFile.leaf(), this, argv, file);
+		string("Disassembling ") + path.leaf(), this, argv, inFile);
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
-	output->SetFileNameHint(inFile.leaf() + " # disassembled");
+	output->SetFileNameHint(path.leaf() + " # disassembled");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
-
-	StartJob(job);
+	
+	return job;
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::CheckSyntax
 
 void MProject::CheckSyntax(
-	const fs::path&	inFile)
+	const vector<MProjectFile*>&	inFiles)
+{
+	unique_ptr<MProjectDoAllJob> allJobs(new MProjectDoAllJob("Checking Syntax",  this));
+	
+	for (auto file = inFiles.begin(); file != inFiles.end(); ++file)
+		allJobs->AddJob(CreateCheckSyntaxJob(*file));
+
+	StartJob(allJobs.release());
+}
+
+MProjectJob* MProject::CreateCheckSyntaxJob(
+	MProjectFile*	inFile)
 {
 	CheckDataDir();
 	
-	MProjectFile* file = GetProjectFileForPath(inFile);
-	if (file == nil)
-		THROW(("File %s is not part of the target project", inFile.string().c_str()));
-
 	vector<string> argv;
 	
 	argv.push_back(mProjectInfo.mTargets[mCurrentTarget].mCompiler);
@@ -1336,22 +1363,30 @@ void MProject::CheckSyntax(
 	argv.push_back("-o");
 	argv.push_back("/dev/null");
 	argv.push_back("-c");
-	argv.push_back(inFile.string());
+	argv.push_back(inFile->GetPath().string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Checking syntax of ") + inFile.leaf(), this, argv, file);
+		string("Checking syntax of ") + inFile->GetPath().leaf(), this, argv, inFile);
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
-	StartJob(job);
+	
+	return job;
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::Compile
 
 void MProject::Compile(
-	const fs::path&	inFile)
+	const vector<MProjectFile*>&	inFiles)
 {
-	StartJob(CreateCompileJob(inFile));
+	unique_ptr<MProjectDoAllJob> allJobs(new MProjectDoAllJob("Compiling",  this));
+	
+	for (auto file = inFiles.begin(); file != inFiles.end(); ++file)
+		allJobs->AddJob(CreateCompileJob(*file));
+
+	StartJob(allJobs.release());
 }
+
+
 
 // ---------------------------------------------------------------------------
 //	MProject::MakeClean
@@ -1391,7 +1426,7 @@ void MProject::BringUpToDate()
 bool MProject::Make(
 	bool		inUsePolling)
 {
-	auto_ptr<MProjectJob> job(CreateCompileAllJob());
+	unique_ptr<MProjectJob> job(CreateCompileAllJob());
 
 	fs::path targetPath;
 	fs::path outputDir;
@@ -1519,9 +1554,6 @@ void MProject::SelectTarget(
 
 	if (mCurrentTarget == inTarget)
 		return;
-	
-//	if (gtk_combo_box_get_active(GTK_COMBO_BOX(mTargetPopup)) != int32(inTarget))
-//		gtk_combo_box_set_active(GTK_COMBO_BOX(mTargetPopup), inTarget);
 
 	mCurrentTarget = inTarget;
 
@@ -1687,6 +1719,7 @@ bool MProject::ProcessCommand(
 	switch (inCommand)
 	{
 		case cmd_RecheckFiles:
+			ResearchForFiles();
 			CheckIsOutOfDate();
 			break;
 		
@@ -1712,6 +1745,80 @@ bool MProject::ProcessCommand(
 	}
 	
 	return result;
+}
+
+MProjectItem* MProject::CreateFileItem(
+	const fs::path&		inFile)
+{
+	if (GetProjectFileForPath(inFile))
+		THROW(("File is already part of this project"));
+	
+	string name = inFile.leaf();
+	
+	assert (not fs::is_directory(inFile));
+
+	unique_ptr<MProjectItem> projectFile;
+	fs::path filePath;
+	
+	if (LocateFile(name, true, filePath))
+	{
+		if (inFile == filePath)
+		{
+			if (FileNameMatches("*.a;*.so;*.dylib", inFile))
+			{
+				int r = DisplayAlert("ask-add-lib-as-link", inFile.leaf());
+				
+				if (r == 1)
+					projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+				else if (r == 2)
+				{
+					// user chose 'Link' so we create a link statement
+					
+					bool shared = true;
+					
+					string linkName = inFile.leaf();
+					if (ba::starts_with(linkName, "lib"))
+						linkName.erase(0, 3);
+
+					if (ba::ends_with(linkName, ".a"))
+					{
+						linkName.erase(linkName.end() - 2, linkName.end());
+						shared = false;
+					}
+					else if (ba::ends_with(linkName, ".so"))
+						linkName.erase(linkName.end() - 3, linkName.end());
+					else
+						linkName.erase(linkName.end() - 6, linkName.end());
+					
+					projectFile.reset(new MProjectLib(linkName, shared, false, nil));
+				}
+			}
+			else
+				projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+		}
+		else
+			THROW(("Cannot add file %s since another file with that name but in another location is already present.",
+				name.c_str()));
+	}
+	else
+	{
+		fs::path dir = relative_path(mProjectDir, inFile.branch_path());
+		
+		if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
+		{
+			if (FileNameMatches("*.a;*.so;*.dylib", inFile))
+				mProjectInfo.mLibSearchPaths.push_back(dir);
+			else
+				mProjectInfo.mUserSearchPaths.push_back(dir);
+
+			if (not LocateFile(name, true, filePath))
+				THROW(("Cannot find file, something is wrong, sorry..."));
+			
+			projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+		}
+	}
+	
+	return projectFile.release();
 }
 
 void MProject::CreateFileItem(
@@ -1750,7 +1857,7 @@ void MProject::CreateFileItem(
 	}
 	else
 	{
-		auto_ptr<MProjectItem> projectFile;
+		unique_ptr<MProjectItem> projectFile;
 		fs::path filePath;
 		
 		if (LocateFile(name, true, filePath))
@@ -1848,13 +1955,26 @@ void MProject::CreateResourceItem(
 	}
 	else
 	{
-		auto_ptr<MProjectItem> projectFile;
+		unique_ptr<MProjectItem> projectFile;
 		fs::path filePath;
 		
 		fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
 		filePath = relative_path(rsrcDir, p);
 		outItem = new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path());
 	}
+}
+
+MProjectItem* MProject::CreateRsrcItem(
+	const fs::path&		inFile)
+{
+	string name = inFile.leaf();
+	
+	unique_ptr<MProjectItem> projectFile;
+	fs::path filePath;
+	
+	fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
+	filePath = relative_path(rsrcDir, inFile);
+	return new MProjectResource(filePath.leaf(), nil, rsrcDir / filePath.branch_path());
 }
 
 bool MProject::IsValidItem(
@@ -1865,18 +1985,6 @@ bool MProject::IsValidItem(
 
 void MProject::ProjectItemMoved()
 {
-	ResearchForFiles();
-	
-	MModDateCache modDateCache;
-	
-	mProjectItems.UpdatePaths(mObjectDir);
-	mProjectItems.CheckCompilationResult();
-	mProjectItems.CheckIsOutOfDate(modDateCache);
-
-	mPackageItems.UpdatePaths(mObjectDir);
-	mPackageItems.CheckCompilationResult();
-	mPackageItems.CheckIsOutOfDate(modDateCache);
-	
 	SetModified(true);
 }
 

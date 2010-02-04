@@ -8,7 +8,7 @@
  </pkg-config>
  <syspaths>
   <path>/usr/include</path>
-  <path>libzeep/</path>
+  <path>/usr/local/include</path>
  </syspaths>
  <userpaths>
   <path>Sources</path>
@@ -16,7 +16,6 @@
  </userpaths>
  <libpaths>
   <path>/usr/local/lib</path>
-  <path>libzeep</path>
  </libpaths>
  <files>
   <group name="MLib">

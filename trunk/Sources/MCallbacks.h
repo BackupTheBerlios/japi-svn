@@ -283,7 +283,7 @@ struct Handler<Derived, Owner, void(BOOST_PP_ENUM_PARAMS(N,T))> : public Handler
 template<class CallbackIn, typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
 struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
 {
-	std::auto_ptr<CallbackIn>	mHandler;
+	std::unique_ptr<CallbackIn>	mHandler;
 	GObject*					mSendingGObject;
 
 	R			operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
@@ -315,7 +315,7 @@ struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
 template<class CallbackIn BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
 struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
 {
-	std::auto_ptr<CallbackIn>	mHandler;
+	std::unique_ptr<CallbackIn>	mHandler;
 	GObject*					mSendingGObject;
 
 	void		operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))

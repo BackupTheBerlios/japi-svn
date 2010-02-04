@@ -17,6 +17,7 @@ typedef MPatriciaTree<double> MModDateCache;
 //	MProjectItem
 
 class MProjectFile;
+class MProjectResource;
 class MProjectGroup;
 
 class MProjectItem
@@ -37,6 +38,10 @@ class MProjectItem
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
+						const fs::path&		inPath) const	{ return nil; }
+
+	virtual MProjectResource*
+					GetProjectResourceForPath(
 						const fs::path&		inPath) const	{ return nil; }
 
 	virtual void	UpdatePaths(
@@ -157,6 +162,10 @@ class MProjectGroup : public MProjectItem
 
 	virtual MProjectFile*
 					GetProjectFileForPath(
+						const fs::path&		inPath) const;
+	
+	virtual MProjectResource*
+					GetProjectResourceForPath(
 						const fs::path&		inPath) const;
 	
 	virtual void	UpdatePaths(
@@ -307,6 +316,10 @@ class MProjectResource : public MProjectFile
 						: MProjectFile(inName, inParent, inParentDir) {}
 
 	virtual bool	IsCompilable() const					{ return true; }
+
+	virtual MProjectResource*
+					GetProjectResourceForPath(
+						const fs::path&		inPath) const;
 
 	virtual void	UpdatePaths(
 						const fs::path&		inObjectDir);

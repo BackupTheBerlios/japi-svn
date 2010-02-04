@@ -606,7 +606,7 @@ bool MFindDialog::FindNext()
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
+				unique_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
 
 				if (newDoc->DoFindNext(kDirectionForward))
 				{
@@ -661,7 +661,7 @@ void MFindDialog::ReplaceAll(
 				found = doc->DoFindFirst();
 			else
 			{
-				auto_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
+				unique_ptr<MTextDocument> newDoc(MDocument::Create<MTextDocument>(file));
 
 				if (newDoc->DoFindFirst())
 				{
@@ -706,7 +706,7 @@ void MFindDialog::FindAll(
 	try
 	{
 		FileSet files;
-		auto_ptr<MMessageList> list(new MMessageList);
+		unique_ptr<MMessageList> list(new MMessageList);
 		
 		GetFilesForFindAll(inMethod, inDirectory,
 			inRecursive, inFileNameFilter, files);
@@ -854,7 +854,7 @@ void MFindDialog::Idle(
 	
 		if (mFindAllResult != nil)
 		{
-			auto_ptr<MMessageList> list(mFindAllResult);
+			unique_ptr<MMessageList> list(mFindAllResult);
 			mFindAllResult = nil;
 
 //			SetVisible(kChasingArrowsID, false);

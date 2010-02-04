@@ -582,7 +582,7 @@ class MTextDocument : public MDocument
 	int32						mCompletionIndex;
 	uint32						mCompletionStartOffset;
 	MTextInputAreaInfo			mTextInputAreaInfo;
-	std::auto_ptr<MShell>		mShell;
+	std::unique_ptr<MShell>		mShell;
 	MMessageWindow*				mStdErrWindow;
 	bool						mStdErrWindowSelected;
 	bool						mPreparedForStdOut;

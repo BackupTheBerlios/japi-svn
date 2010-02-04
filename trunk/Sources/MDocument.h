@@ -29,7 +29,7 @@ class MDocument
 	static D*			Create(
 							const MFile&		inFile)
 						{
-							std::auto_ptr<D> doc(new D(inFile));
+							std::unique_ptr<D> doc(new D(inFile));
 							if (inFile.IsValid())
 								doc->DoLoad();
 							return doc.release();

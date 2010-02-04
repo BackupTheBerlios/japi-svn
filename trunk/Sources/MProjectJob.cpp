@@ -249,18 +249,18 @@ bool MProjectCompileJob::IsDone()
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectCompileAllJob::AddJob
+//	MProjectDoAllJob::AddJob
 
-void MProjectCompileAllJob::AddJob(
+void MProjectDoAllJob::AddJob(
 	MProjectJob*			inJob)
 {
 	mCompileJobs.push_back(inJob);
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectCompileAllJob::Execute
+//	MProjectDoAllJob::Execute
 
-void MProjectCompileAllJob::Execute()
+void MProjectDoAllJob::Execute()
 {
 	while (not mCompileJobs.empty() and mCurrentJobs.size() < gConcurrentJobs)
 	{
@@ -270,18 +270,18 @@ void MProjectCompileAllJob::Execute()
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectCompileAllJob::Kill
+//	MProjectDoAllJob::Kill
 
-void MProjectCompileAllJob::Kill()
+void MProjectDoAllJob::Kill()
 {
 	for_each(mCurrentJobs.begin(), mCurrentJobs.end(),
 		boost::bind(&MProjectJob::Kill, _1));
 }
 
 // ---------------------------------------------------------------------------
-//	MProjectCompileAllJob::Execute
+//	MProjectDoAllJob::Execute
 
-bool MProjectCompileAllJob::IsDone()
+bool MProjectDoAllJob::IsDone()
 {
 	boost::ptr_deque<MProjectJob>::iterator job = mCurrentJobs.begin();
 	while (job != mCurrentJobs.end())

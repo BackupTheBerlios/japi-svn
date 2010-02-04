@@ -89,11 +89,11 @@ struct MProjectCompileJob : public MProjectExecJob
 };
 
 // ---------------------------------------------------------------------------
-//	MProjectCompileAllJob
+//	MProjectDoAllJob
 
-struct MProjectCompileAllJob : public MProjectJob
+struct MProjectDoAllJob : public MProjectJob
 {
-							MProjectCompileAllJob(
+							MProjectDoAllJob(
 								const std::string&		inTitle,
 								MProject*				inProject)
 								: MProjectJob(inTitle, inProject) {}
@@ -129,9 +129,9 @@ struct MProjectIfJob : public MProjectJob
 	virtual void			Kill();
 	virtual bool			IsDone();
 
-	std::auto_ptr<MProjectJob>
+	std::unique_ptr<MProjectJob>
 							mFirstJob;
-	std::auto_ptr<MProjectJob>
+	std::unique_ptr<MProjectJob>
 							mSecondJob;
 };
 

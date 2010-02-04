@@ -32,6 +32,15 @@ GtkTreePath* MListRowBase::GetTreePath() const
 	return gtk_tree_row_reference_get_path(mRowReference);
 }
 
+void MListRowBase::UpdateRowReference(
+	GtkTreeModel*	inNewModel,
+	GtkTreePath*	inNewPath)
+{
+	if (mRowReference != nil)
+		gtk_tree_row_reference_free(mRowReference);
+	mRowReference = gtk_tree_row_reference_new(inNewModel, inNewPath);
+}
+
 bool MListRowBase::GetModelAndIter(
 	GtkTreeStore*&	outTreeStore,
 	GtkTreeIter&	outTreeIter)
@@ -74,11 +83,56 @@ void MListRowBase::RowChanged()
 			}
 		}
 	}
+}
+
+bool MListRowBase::GetParentAndPosition(
+	MListRowBase*&		outParent,
+	uint32&				outPosition,
+	uint32				inObjectColumn)
+{
+	bool result = false;
+
+	outPosition = 0;
+	outParent = nil;
 	
+	if (mRowReference != nil and gtk_tree_row_reference_valid(mRowReference))
+	{
+		GtkTreeModel* model = gtk_tree_row_reference_get_model(mRowReference);
+		if (model != nil)
+		{
+			GtkTreePath* path = gtk_tree_row_reference_get_path(mRowReference);
+			if (path != nil)
+			{
+				result = true;
+				
+				int depth = gtk_tree_path_get_depth(path);
+				gint* indices = gtk_tree_path_get_indices(path);
+
+				if (depth > 0)
+				{
+					outPosition = indices[depth - 1];
+					
+					if (depth > 1)
+					{
+						GtkTreeIter iter;
+						if (gtk_tree_path_up(path) and gtk_tree_model_get_iter(model, &iter, path))
+							gtk_tree_model_get(model, &iter, inObjectColumn, &outParent, -1);
+					}
+				}
+
+				gtk_tree_path_free(path);
+			}
+		}
+	}
+	
+	return result;
 }
 
 //---------------------------------------------------------------------
 // MListBase
+
+MListBase::RowDropPossibleFunc MListBase::sSavedRowDropPossible;
+MListBase::DragDataReceivedFunc MListBase::sSavedDragDataReceived;
 
 MListBase::MListBase(
 	GtkWidget*	inTreeView)
@@ -118,10 +172,16 @@ void MListBase::CreateTreeStore(
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(GetGtkWidget()), GTK_TREE_MODEL(mTreeStore));
 
-	GtkTreeDragDestIface* dragIface = GTK_TREE_DRAG_DEST_GET_IFACE(mTreeStore);
 	g_object_set_data(G_OBJECT(mTreeStore), "mlistbase", this);
-	mSavedRowDropPossible = dragIface->row_drop_possible;
-	dragIface->row_drop_possible = &MListBase::RowDropPossibleCallback;
+	GtkTreeDragDestIface* dragIface = GTK_TREE_DRAG_DEST_GET_IFACE(mTreeStore);
+	if (sSavedRowDropPossible == nil)
+	{
+		sSavedRowDropPossible = dragIface->row_drop_possible;
+		dragIface->row_drop_possible = &MListBase::RowDropPossibleCallback;
+		
+		sSavedDragDataReceived = dragIface->drag_data_received;
+		dragIface->drag_data_received = &MListBase::DragDataReceivedCallback;
+	}
 
 	mRowChanged.Connect(G_OBJECT(mTreeStore), "row-changed");
 	mRowDeleted.Connect(G_OBJECT(mTreeStore), "row-deleted");
@@ -142,8 +202,15 @@ void MListBase::CreateTreeStore(
 	}
 }
 
+void MListBase::AllowMultipleSelectedItems()
+{
+	GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(GetGtkWidget()));
+	if (selection != nil)
+		gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
+}
+
 MListRowBase* MListBase::GetRowForPath(
-	GtkTreePath*		inPath)
+	GtkTreePath*		inPath) const
 {
 	MListRowBase* row = nil;
 	
@@ -175,7 +242,7 @@ bool MListBase::GetTreeIterForRow(
 	return result;
 }
 
-MListRowBase* MListBase::GetCursorRow()
+MListRowBase* MListBase::GetCursorRowInt() const
 {
 	MListRowBase* row = nil;
 	
@@ -188,6 +255,26 @@ MListRowBase* MListBase::GetCursorRow()
 	}
 	
 	return row;
+}
+
+void MListBase::GetSelectedRowsInt(
+	list<MListRowBase*>&	outRows) const
+{
+	GList* rows = gtk_tree_selection_get_selected_rows(
+		gtk_tree_view_get_selection(GTK_TREE_VIEW(GetGtkWidget())), nil);
+					
+	if (rows != nil)
+	{
+		GList* row = rows;
+		while (row != nil)
+		{
+			outRows.push_back(GetRowForPath((GtkTreePath*)row->data));
+			row = row->next;
+		}
+		
+		g_list_foreach(rows, (GFunc)(gtk_tree_path_free), nil);
+		g_list_free(rows);
+	}
 }
 
 void MListBase::SetColumnTitle(
@@ -287,6 +374,28 @@ void MListBase::AppendRowInt(
 	inRow->UpdateDataInTreeStore();
 }
 
+void MListBase::InsertRowInt(
+	MListRowBase*		inRow,
+	MListRowBase*		inBefore)
+{
+	// store in tree
+	GtkTreeIter iter, siblingIter;
+	
+	if (inBefore != nil and GetTreeIterForRow(inBefore, &siblingIter))
+		gtk_tree_store_insert_before(mTreeStore, &iter, nil, &siblingIter);
+	else
+		gtk_tree_store_append(mTreeStore, &iter, NULL);
+
+	GtkTreePath* path = gtk_tree_model_get_path(GTK_TREE_MODEL(mTreeStore), &iter);
+	if (path != nil)
+	{
+		inRow->mRowReference = gtk_tree_row_reference_new(GTK_TREE_MODEL(mTreeStore), path);
+		gtk_tree_path_free(path);
+	}
+
+	inRow->UpdateDataInTreeStore();
+}
+
 void MListBase::SelectRow(
 	MListRowBase*		inRow)
 {
@@ -304,14 +413,11 @@ gboolean MListBase::RowDropPossibleCallback(
 	GtkTreePath*		inPath,
 	GtkSelectionData*	inSelectionData)
 {
-	bool result = false;
-
-	MListBase* self = reinterpret_cast<MListBase*>(g_object_get_data(G_OBJECT(inTreeDragDest), "mlistbase"));
-	if (self != nil)
+	bool result = (*MListBase::sSavedRowDropPossible)(inTreeDragDest, inPath, inSelectionData);
+	if (result)
 	{
-		RowDropPossibleFunc func = self->mSavedRowDropPossible;
-		
-		if ((*func)(inTreeDragDest, inPath, inSelectionData))
+		MListBase* self = reinterpret_cast<MListBase*>(g_object_get_data(G_OBJECT(inTreeDragDest), "mlistbase"));
+		if (self != nil)
 			result = self->RowDropPossible(inPath, inSelectionData);
 	}
 
@@ -345,10 +451,34 @@ bool MListBase::RowDropPossible(
 	
 	return result;
 }
+
+gboolean MListBase::DragDataReceivedCallback(
+	GtkTreeDragDest*	inTreeDragDest,
+	GtkTreePath*		inPath,
+	GtkSelectionData*	inSelectionData)
+{
+	bool result = (*MListBase::sSavedDragDataReceived)(inTreeDragDest, inPath, inSelectionData);
+	if (result)
+	{
+		MListBase* self = reinterpret_cast<MListBase*>(g_object_get_data(G_OBJECT(inTreeDragDest), "mlistbase"));
+		if (self != nil)
+			result = self->DragDataReceived(inPath, inSelectionData);
+	}
+
+	return result;
+}
+
+bool MListBase::DragDataReceived(
+	GtkTreePath*		inTreePath,
+	GtkSelectionData*	inSelectionData)
+{
+	RowDragged(GetRowForPath(inTreePath));
+	return true;
+}	
 	
 void MListBase::CursorChanged()
 {
-	MListRowBase* row = GetCursorRow();
+	MListRowBase* row = GetCursorRowInt();
 	if (row != nil)
 		RowSelected(row);
 }
@@ -366,17 +496,26 @@ void MListBase::RowChanged(
 	GtkTreePath*		inTreePath,
 	GtkTreeIter*		inTreeIter)
 {
+	MListRowBase* row = GetRowForPath(inTreePath);
+	if (row != nil)
+		row->UpdateRowReference(GTK_TREE_MODEL(mTreeStore), inTreePath);
 }
 
 void MListBase::RowDeleted(
 	GtkTreePath*		inTreePath)
 {
+	eRowsReordered();
 }
 
 void MListBase::RowInserted(
 	GtkTreePath*		inTreePath,
 	GtkTreeIter*		inTreeIter)
 {
+	eRowsReordered();
+	
+	MListRowBase* row = GetRowForPath(inTreePath);
+	if (row != nil)
+		row->UpdateRowReference(GTK_TREE_MODEL(mTreeStore), inTreePath);
 }
 
 void MListBase::RowsReordered(
@@ -384,6 +523,7 @@ void MListBase::RowsReordered(
 	GtkTreeIter*		inTreeIter,
 	gint*				inNewOrder)
 {
+	eRowsReordered();
 }
 
 void MListBase::Edited(

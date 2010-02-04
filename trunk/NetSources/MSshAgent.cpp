@@ -67,7 +67,7 @@ enum {
 
 MSshAgent* MSshAgent::Create()
 {
-	auto_ptr<MSshAgent> result;
+	unique_ptr<MSshAgent> result;
 
 	const char* authSock = getenv("SSH_AUTH_SOCK");
 	

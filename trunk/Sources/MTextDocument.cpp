@@ -4552,22 +4552,46 @@ bool MTextDocument::ProcessCommand(
 	
 		case cmd_Preprocess:
 			if (project != nil)
-				project->Preprocess(GetFile().GetPath());
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Preprocess(vector<MProjectFile*>(1, file));
+			}
 			break;
 			
 		case cmd_CheckSyntax:
 			if (project != nil)
-				project->CheckSyntax(GetFile().GetPath());
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->CheckSyntax(vector<MProjectFile*>(1, file));
+			}
 			break;
 			
 		case cmd_Compile:
 			if (project != nil)
-				project->Compile(GetFile().GetPath());
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Compile(vector<MProjectFile*>(1, file));
+			}
 			break;
 
 		case cmd_Disassemble:
 			if (project != nil)
-				project->Disassemble(GetFile().GetPath());
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Disassemble(vector<MProjectFile*>(1, file));
+			}
 			break;
 
 		case cmd_2CharsPerTab:
@@ -4600,7 +4624,7 @@ bool MTextDocument::ProcessCommand(
 		
 		case cmd_ShowDiffWindow:
 		{
-			auto_ptr<MDiffWindow> w(new MDiffWindow(this));
+			unique_ptr<MDiffWindow> w(new MDiffWindow(this));
 			w->Select();
 			w.release();
 			break;

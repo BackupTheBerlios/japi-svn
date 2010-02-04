@@ -478,6 +478,20 @@ MProjectFile* MProjectGroup::GetProjectFileForPath(
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectGroup::GetProjectResourceForPath
+
+MProjectResource* MProjectGroup::GetProjectResourceForPath(
+	const fs::path&		inPath) const
+{
+	MProjectResource* result = nil;
+
+	for (vector<MProjectItem*>::const_iterator i = mItems.begin(); result == nil and i != mItems.end(); ++i)
+		result = (*i)->GetProjectResourceForPath(inPath);
+
+	return result;
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectGroup::UpdatePaths
 
 void MProjectGroup::UpdatePaths(
@@ -942,6 +956,18 @@ void MProjectResource::CheckIsOutOfDate(
 		isOutOfDate = fs::last_write_time(path) > fs::last_write_time(object);
 	
 	SetOutOfDate(isOutOfDate);
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectResource::GetProjectResourceForPath
+
+MProjectResource* MProjectResource::GetProjectResourceForPath(
+	const fs::path&		inPath) const
+{
+	MProjectResource* result = nil;
+	if (fs::exists(inPath) and fs::exists(GetPath()) and fs::equivalent(inPath, GetPath()))
+		result = const_cast<MProjectResource*>(this);
+	return result;
 }
 
 // ---------------------------------------------------------------------------

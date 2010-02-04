@@ -107,23 +107,23 @@ class MProject : public MDocument
 	MProjectGroup*		GetFiles() const		{ return const_cast<MProjectGroup*>(&mProjectItems); }
 	MProjectGroup*		GetResources() const	{ return const_cast<MProjectGroup*>(&mPackageItems); }
 
-	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
-											eProjectCreateFileItem;
-	MEventIn<void(const std::string&, MProjectGroup*, MProjectItem*&)>
-											eProjectCreateResourceItem;
-	
 	MEventIn<void()>						eProjectItemMoved;
-	MEventIn<void()>						eProjectItemRemoved;
 
 	void				CreateFileItem(
 							const std::string&	inFile,
 							MProjectGroup*		inGroup,
 							MProjectItem*&		outItem);
 
+	MProjectItem*		CreateFileItem(
+							const fs::path&		inFile);
+
 	void				CreateResourceItem(
 							const std::string&	inFile,
 							MProjectGroup*		inGroup,
 							MProjectItem*&		outItem);
+
+	MProjectItem*		CreateRsrcItem(
+							const fs::path&		inFile);
 
 	bool				IsValidItem(
 							MProjectItem*		inItem);
@@ -137,16 +137,20 @@ class MProject : public MDocument
 	void				StopBuilding();
 
 	void				Preprocess(
-							const fs::path&		inFile);
+							const std::vector<MProjectFile*>&
+												inFiles);
 
 	void				CheckSyntax(
-							const fs::path&		inFile);
+							const std::vector<MProjectFile*>&
+												inFiles);
 
 	void				Compile(
-							const fs::path&		inFile);
+							const std::vector<MProjectFile*>&
+												inFiles);
 
 	void				Disassemble(
-							const fs::path&		inFile);
+							const std::vector<MProjectFile*>&
+												inFiles);
 
 	bool				IsFileInProject(
 							const fs::path&		inFile) const;
@@ -192,6 +196,9 @@ class MProject : public MDocument
 	MProjectFile*		GetProjectFileForPath(
 							const fs::path&		inPath) const;
 
+	MProjectResource*	GetProjectRsrcForPath(
+							const fs::path&		inPath) const;
+
 	void				CheckIsOutOfDate();
 
 	fs::path			GetObjectPathForFile(
@@ -201,8 +208,17 @@ class MProject : public MDocument
 							std::vector<std::string>&
 												outArgv) const;
 
+	MProjectJob*		CreatePreprocessJob(
+							MProjectFile*		inFile);
+
+	MProjectJob*		CreateCheckSyntaxJob(
+							MProjectFile*		inFile);
+
 	MProjectJob*		CreateCompileJob(
-							const fs::path&		inFile);
+							MProjectFile*		inFile);
+
+	MProjectJob*		CreateDisassembleJob(
+							MProjectFile*		inFile);
 
 	MProjectJob*		CreateCompileAllJob();
 
@@ -314,7 +330,8 @@ class MProject : public MDocument
 	MMessageWindow*				mStdErrWindow;
 	bool						mAllowWindows;
 	uint32						mCurrentTarget;
-	std::auto_ptr<MProjectJob>	mCurrentJob;
+	std::unique_ptr<MProjectJob>
+								mCurrentJob;
 	
 	// version, used when importing older versions of project files
 	float						mVersion;

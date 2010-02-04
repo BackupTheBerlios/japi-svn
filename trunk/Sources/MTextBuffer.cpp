@@ -917,7 +917,7 @@ void MTextBuffer::WriteToFile(
 	else
 	{
 		wc_iterator txt(this, 0);
-		auto_ptr<MEncoder> encoder(MEncoder::GetEncoder(mEncoding));
+		unique_ptr<MEncoder> encoder(MEncoder::GetEncoder(mEncoding));
 		
 		while (txt.GetOffset() < mLogicalLength)
 		{

@@ -1353,7 +1353,7 @@ void MePubDocument::ParseOPF(
 			
 			MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
 			
-			auto_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
+			unique_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
 			
 			string id = item.get_attribute("id");
 			if (id.empty() or not isalpha(id[0]))
@@ -1433,7 +1433,7 @@ void MePubDocument::ParseNavPoint(
 	if (not name)
 		THROW(("Missing text in navLabel"));
 	
-	auto_ptr<MePubTOCItem> np(new MePubTOCItem(name->content(), inGroup));
+	unique_ptr<MePubTOCItem> np(new MePubTOCItem(name->content(), inGroup));
 
 	xml::node_ptr content = inNavPoint->find_first_child("content");
 	if (not content)
@@ -1606,7 +1606,7 @@ void MePubDocument::CreateItem(
 	}
 	else
 	{
-		auto_ptr<MePubItem> item(new MePubItem(name, inGroup));
+		unique_ptr<MePubItem> item(new MePubItem(name, inGroup));
 		
 		item->GuessMediaType();
 		

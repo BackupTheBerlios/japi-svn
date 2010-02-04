@@ -203,7 +203,7 @@ bool MJapieApp::ProcessCommand(
 
 //		case cmd_ShowDiffWindow:
 //		{
-//			auto_ptr<MDiffWindow> w(new MDiffWindow);
+//			unique_ptr<MDiffWindow> w(new MDiffWindow);
 //			w->Initialize();
 //			w->Show();
 //			w.release();
@@ -212,7 +212,7 @@ bool MJapieApp::ProcessCommand(
 
 //		case 'DgTs':
 //		{
-//			auto_ptr<MDebuggerWindow> w(new MDebuggerWindow);
+//			unique_ptr<MDebuggerWindow> w(new MDebuggerWindow);
 //			w->Initialize();
 //			w->Show();
 //			w.release();
@@ -666,10 +666,10 @@ void MJapieApp::DoNewProject()
 
 void MJapieApp::DoNewEPub()
 {
-	auto_ptr<MePubDocument> epub(new MePubDocument());
+	unique_ptr<MePubDocument> epub(new MePubDocument());
 	epub->InitializeNew();
 	
-	auto_ptr<MePubWindow> w(new MePubWindow());
+	unique_ptr<MePubWindow> w(new MePubWindow());
 	w->Initialize(epub.get());
 	epub.release();
 	w->Show();
@@ -681,10 +681,10 @@ void MJapieApp::ImportOEB()
 	MFile oeb;
 	if (ChooseOneFile(oeb))
 	{
-		auto_ptr<MePubDocument> epub(new MePubDocument());
+		unique_ptr<MePubDocument> epub(new MePubDocument());
 		epub->ImportOEB(oeb);
 		
-		auto_ptr<MePubWindow> w(new MePubWindow());
+		unique_ptr<MePubWindow> w(new MePubWindow());
 		w->Initialize(epub.get());
 		epub.release();
 		w->Show();
@@ -755,8 +755,8 @@ MDocument* MJapieApp::OpenOneDocument(
 void MJapieApp::OpenProject(
 	const MFile&		inPath)
 {
-	auto_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
-	auto_ptr<MProjectWindow> w(new MProjectWindow());
+	unique_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
+	unique_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
 	project.release();
 	w->Show();
@@ -773,8 +773,8 @@ void MJapieApp::OpenEPub(
 {
 	try
 	{
-		auto_ptr<MDocument> epub(MDocument::Create<MePubDocument>(inPath));
-		auto_ptr<MePubWindow> w(new MePubWindow());
+		unique_ptr<MDocument> epub(MDocument::Create<MePubDocument>(inPath));
+		unique_ptr<MePubWindow> w(new MePubWindow());
 		
 		w->Initialize(epub.get());
 		epub.release();
@@ -1342,7 +1342,7 @@ int main(int argc, char* argv[])
 			
 			MFile file(fs::system_complete(argv[optind]));
 			
-			auto_ptr<MProject> project(MDocument::Create<MProject>(file));
+			unique_ptr<MProject> project(MDocument::Create<MProject>(file));
 			project->SelectTarget(target);
 			if (project->Make(false))
 				cout << "Build successful, " << target << " is up-to-date" << endl;

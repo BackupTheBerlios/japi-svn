@@ -76,6 +76,15 @@ class MListRowBase : public boost::noncopyable
 
 	virtual void		UpdateDataInTreeStore() = 0;
 
+	bool				GetParentAndPosition(
+							MListRowBase*&	outParent,
+							uint32&			outPosition,
+							uint32			inObjectColumn);
+
+	void				UpdateRowReference(
+							GtkTreeModel*	inNewModel,
+							GtkTreePath*	inNewPath);
+
   private:
 
 	GtkTreePath*		GetTreePath() const;
@@ -203,6 +212,24 @@ class MListRow : public MListRowBase
 	typedef I							impl_type;
 	typedef column_type_traits<Args...>	traits;
 	static const int					column_count = traits::count;
+
+	using MListRowBase::GetParentAndPosition;
+
+	bool				GetParentAndPosition(
+							impl_type*&	outParent,
+							uint32&		outPosition)
+						{
+							bool result = false;
+							MListRowBase* parent;
+							
+							if (GetParentAndPosition(parent, outPosition, column_count))
+							{
+								outParent = static_cast<impl_type*>(parent);
+								result = true;
+							}
+							
+							return result;
+						}
 };
 
 //---------------------------------------------------------------------
@@ -215,6 +242,8 @@ class MListBase : public MView
 						GtkWidget*	inTreeView);
 
 	virtual			~MListBase();
+
+	void			AllowMultipleSelectedItems();
 
 	void			SetColumnTitle(
 						uint32				inColumnNr,
@@ -251,6 +280,13 @@ class MListBase : public MView
 						MListRowBase*		inRow,
 						MListRowBase*		inParent);
 
+	void			InsertRowInt(
+						MListRowBase*		inRow,
+						MListRowBase*		inBefore);
+
+	MEventOut<void()>
+					eRowsReordered;
+
   protected:
 
 	void			CreateTreeStore(
@@ -266,9 +302,13 @@ class MListBase : public MView
 						GtkTreeIter*		outIter);
 
 	MListRowBase*	GetRowForPath(
-						GtkTreePath*		inPath);
+						GtkTreePath*		inPath) const;
 
-	MListRowBase*	GetCursorRow();
+	MListRowBase*	GetCursorRowInt() const;
+	
+	void			GetSelectedRowsInt(
+						std::list<MListRowBase*>&
+											outRows) const;
 
 	virtual void	CursorChanged();
 	MSlot<void()>	mCursorChanged;
@@ -321,13 +361,26 @@ class MListBase : public MView
 	
 	typedef gboolean (*RowDropPossibleFunc)(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
 	static gboolean RowDropPossibleCallback(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
-
-	RowDropPossibleFunc
-					mSavedRowDropPossible;
+	
+	static RowDropPossibleFunc
+					sSavedRowDropPossible;
 
 	virtual bool	RowDropPossible(
 						GtkTreePath*		inTreePath,
 						GtkSelectionData*	inSelectionData);
+
+	typedef gboolean (*DragDataReceivedFunc)(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
+	static gboolean DragDataReceivedCallback(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
+
+	static DragDataReceivedFunc
+					sSavedDragDataReceived;
+
+	virtual bool	DragDataReceived(
+						GtkTreePath*		inTreePath,
+						GtkSelectionData*	inSelectionData);
+
+	virtual void	RowDragged(
+						MListRowBase*		inRow) = 0;
 
 	GtkTreeStore*	mTreeStore;
 	std::vector<GtkCellRenderer*>
@@ -339,6 +392,7 @@ class MList : public MListBase
 {
   private:
 	typedef R								row_type;
+	typedef std::list<row_type*>			row_list;
 	typedef typename row_type::traits		column_type_traits;
 	
   public:
@@ -351,12 +405,32 @@ class MList : public MListBase
 						row_type*			inParentRow = nil)
 														{ AppendRowInt(inRow, inParentRow); }
 
+	void			InsertRow(
+						row_type*			inRow,
+						row_type*			inBefore = nil)
+														{ InsertRowInt(inRow, inBefore); }
+
+	row_type*		GetCursorRow() const				{ return static_cast<row_type*>(GetCursorRowInt()); }
+	
+	row_list		GetSelectedRows() const
+					{
+						std::list<MListRowBase*> selected;
+						GetSelectedRowsInt(selected);
+
+						row_list result;
+						for (auto s = selected.begin(); s != selected.end(); ++s)
+							result.push_back(static_cast<row_type*>(*s));
+						
+						return result;
+					}
+
 	virtual int		GetColumnCount() const				{ return column_type_traits::count; }
 
 	MEventOut<void(row_type*)>				eRowSelected;
 	MEventOut<void(row_type*)>				eRowInvoked;
 	MEventOut<void(row_type*,const std::string&)>
 											eRowEdited;
+	MEventOut<void(row_type*)>				eRowDragged;
 	
   protected:
 	
@@ -365,6 +439,9 @@ class MList : public MListBase
 
 	virtual void	RowActivated(
 						MListRowBase*		inRow)		{ eRowInvoked(static_cast<row_type*>(inRow)); }
+
+	virtual void	RowDragged(
+						MListRowBase*		inRow)		{ eRowDragged(static_cast<row_type*>(inRow)); }
 
 	virtual void	EmitRowEdited(
 						MListRowBase*		inRow,

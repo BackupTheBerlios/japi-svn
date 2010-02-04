@@ -318,7 +318,7 @@ class MEventIn
 	MEventIn&				operator=(const MEventIn&);
 
 
-	std::auto_ptr<HandlerBase>
+	std::unique_ptr<HandlerBase>
 							fHandler;
 	MEventOutList			fOutEvents;
 };
