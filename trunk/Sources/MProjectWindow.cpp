@@ -96,7 +96,7 @@ class MProjectItemRow
 					{
 						AddRoute(mItem->eStatusChanged, eStatusChanged);
 					}
-	
+
 	static const uint32 kDotSize = 6;
 	static const MColor	kOutOfDateColor, kCompilingColor;
 
@@ -126,17 +126,6 @@ class MProjectItemRow
 						else if (inSize > 0)
 							s << inSize;
 						outSizeAsString = s.str();
-					}
-
-	void			SetFileName(
-						const string&	inName)
-					{
-						assert(dynamic_cast<MProjectGroup*>(mItem) != nil);
-						if (inName != mItem->GetName())
-						{
-							mItem->SetName(inName);
-							EmitRowChanged();
-						}
 					}
 
 	MProjectItem*	GetProjectItem()			{ return mItem; }
@@ -210,6 +199,18 @@ class MFileRowItem
 							outPixbuf = nil;
 					}
 
+	virtual void	ColumnEdited(
+						uint32			inColumnNr,
+						const string&	inName)
+					{
+						assert(dynamic_cast<MProjectGroup*>(mItem) != nil);
+						if (inName != mItem->GetName() and inColumnNr == 0)
+						{
+							mItem->SetName(inName);
+							EmitRowChanged();
+						}
+					}
+
 	virtual void	EmitRowChanged()			{ RowChanged(); }
 	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
 };
@@ -237,6 +238,18 @@ class MRsrcRowItem
 						outName = mItem->GetDisplayName();
 					}
 
+	void			SetData(
+						const MItemColumns::name&,
+						const string&	inName)
+					{
+						assert(dynamic_cast<MProjectGroup*>(mItem) != nil);
+						if (inName != mItem->GetName())
+						{
+							mItem->SetName(inName);
+							EmitRowChanged();
+						}
+					}
+
 	void			GetData(
 						const MItemColumns::data&,
 						string&			outSize)
@@ -254,6 +267,18 @@ class MRsrcRowItem
 							outPixbuf = GetOutOfDateDot();
 						else
 							outPixbuf = nil;
+					}
+
+	virtual void	ColumnEdited(
+						uint32			inColumnNr,
+						const string&	inName)
+					{
+						assert(dynamic_cast<MProjectGroup*>(mItem) != nil);
+						if (inName != mItem->GetName() and inColumnNr == 0)
+						{
+							mItem->SetName(inName);
+							EmitRowChanged();
+						}
 					}
 
 	virtual void	EmitRowChanged()			{ RowChanged(); }
@@ -277,8 +302,8 @@ MProjectWindow::MProjectWindow()
 	, eTargetsChanged(this, &MProjectWindow::TargetsChanged)
 	, eInfoClicked(this, &MProjectWindow::InfoClicked)
 	, eMakeClicked(this, &MProjectWindow::MakeClicked)
-	, eEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
-	, eEditedRsrcGroupName(this, &MProjectWindow::EditedRsrcGroupName)
+//	, eEditedFileGroupName(this, &MProjectWindow::EditedFileGroupName)
+//	, eEditedRsrcGroupName(this, &MProjectWindow::EditedRsrcGroupName)
 	, mProject(nil)
 	, mBusy(false)
 	, mEditingName(false)
@@ -345,7 +370,7 @@ void MProjectWindow::Initialize(
 	AddRoute(fileTree->eRowSelected, eSelectFileRow);
 	AddRoute(fileTree->eRowInvoked, eInvokeFileRow);
 	AddRoute(fileTree->eRowDragged, eDraggedFileRow);
-	AddRoute(fileTree->eRowEdited, eEditedFileGroupName);
+//	AddRoute(fileTree->eRowColumnEdited, eEditedFileGroupName);
 	AddRoute(fileTree->eRowsReordered, mProject->eProjectItemMoved);
 	mFileTree->SetColumnTitle(0, _("File"));
 	mFileTree->SetExpandColumn(0);
@@ -367,7 +392,7 @@ void MProjectWindow::Initialize(
 	AddRoute(rsrcTree->eRowSelected, eSelectRsrcRow);
 	AddRoute(rsrcTree->eRowInvoked, eInvokeRsrcRow);
 	AddRoute(rsrcTree->eRowDragged, eDraggedRsrcRow);
-	AddRoute(rsrcTree->eRowEdited, eEditedRsrcGroupName);
+//	AddRoute(rsrcTree->eRowColumnEdited, eEditedRsrcGroupName);
 	AddRoute(rsrcTree->eRowsReordered, mProject->eProjectItemMoved);
 	mRsrcTree->SetColumnTitle(0, _("File"));
 	mRsrcTree->SetExpandColumn(0);
@@ -846,19 +871,21 @@ void MProjectWindow::CreateNewGroup()
 	list->SelectRowAndStartEditingColumn(row, 0);
 }
 
-void MProjectWindow::EditedFileGroupName(
-	MFileRowItem*		inRow,
-	const string&		inNewName)
-{
-	inRow->SetFileName(inNewName);
-}
-
-void MProjectWindow::EditedRsrcGroupName(
-	MRsrcRowItem*		inRow,
-	const string&		inNewName)
-{
-	inRow->SetFileName(inNewName);
-}
+//void MProjectWindow::EditedFileGroupName(
+//	MFileRowItem*		inRow,
+//	uint32				inColumnNr,
+//	const string&		inNewName)
+//{
+//	inRow->SetFileName(inNewName);
+//}
+//
+//void MProjectWindow::EditedRsrcGroupName(
+//	MRsrcRowItem*		inRow,
+//	uint32				inColumnNr,
+//	const string&		inNewName)
+//{
+//	inRow->SetFileName(inNewName);
+//}
 
 // ---------------------------------------------------------------------------
 //	AddFilesToProject

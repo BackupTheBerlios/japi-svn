@@ -8,23 +8,34 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <tr1/tuple>
+#include <tr1/type_traits>
+#include <boost/type_traits.hpp>
 
 #include "MView.h"
 #include "MP2PEvents.h"
+#include "MError.h"
+#include "MTimer.h"
 
 template<class R>
 class MList;
 class MListBase;
+class MListColumnEditedListener;
+
+typedef std::tuple<GtkCellRenderer*,const char*,bool,bool>	MGtkRendererInfo;
 
 template<typename T>
 struct g_type_mapped
 {
 	static const GType g_type = G_TYPE_STRING;
-	static std::pair<GtkCellRenderer*,const char*>	GetRenderer()
-		{ return std::make_pair(gtk_cell_renderer_text_new(), "text"); }
+	enum { can_toggle = false, can_edit = false };
+	static MGtkRendererInfo	GetRenderer()
+		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit); }
 	static void to_g_value(GValue& gv, T v)
 	{
 		g_value_set_string(&gv, boost::lexical_cast<std::string>(v).c_str());
@@ -34,18 +45,31 @@ struct g_type_mapped
 template<> struct g_type_mapped<std::string>
 {
 	static const GType g_type = G_TYPE_STRING;
-	static std::pair<GtkCellRenderer*,const char*>	GetRenderer()
-		{ return std::make_pair(gtk_cell_renderer_text_new(), "text"); }
+	enum { can_toggle = false, can_edit = true };
+	static MGtkRendererInfo	GetRenderer()
+		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit); }
 	static void to_g_value(GValue& gv, const std::string& s)
 	{
 		g_value_set_string(&gv, s.c_str());
 	}
 };
+template<> struct g_type_mapped<bool>
+{
+	static const GType g_type = G_TYPE_BOOLEAN;
+	enum { can_toggle = true, can_edit = false };
+	static MGtkRendererInfo	GetRenderer()
+		{ return MGtkRendererInfo(gtk_cell_renderer_toggle_new(), "active", can_toggle, can_edit); }
+	static void to_g_value(GValue& gv, bool v)
+	{
+		g_value_set_boolean(&gv, v);
+	}
+};
 template<> struct g_type_mapped<GdkPixbuf*>
 {
 	static const GType g_type = G_TYPE_OBJECT;
-	static std::pair<GtkCellRenderer*,const char*>	GetRenderer()
-		{ return std::make_pair(gtk_cell_renderer_pixbuf_new(), "pixbuf"); }
+	enum { can_toggle = false, can_edit = false };
+	static MGtkRendererInfo	GetRenderer()
+		{ return MGtkRendererInfo(gtk_cell_renderer_pixbuf_new(), "pixbuf", can_toggle, can_edit); }
 	static void to_g_value(GValue& gv, GdkPixbuf* pixbuf)
 	{
 		g_value_set_object(&gv, pixbuf);
@@ -58,6 +82,7 @@ template<> struct g_type_mapped<GdkPixbuf*>
 class MListRowBase : public boost::noncopyable
 {
 	friend class MListBase;
+	friend class MListColumnEditedListener;
 
   public:
 						MListRowBase();
@@ -85,6 +110,14 @@ class MListRowBase : public boost::noncopyable
 							GtkTreeModel*	inNewModel,
 							GtkTreePath*	inNewPath);
 
+	virtual void		ColumnEdited(
+							uint32			inColumnNr,
+							const std::string&
+											inNewText)		{}
+
+	virtual void		ColumnToggled(
+							uint32			inColumnNr)		{}
+
   private:
 
 	GtkTreePath*		GetTreePath() const;
@@ -96,9 +129,15 @@ class MListRowBase : public boost::noncopyable
 template<class I, typename... Args>
 class MListRow : public MListRowBase
 {
+  public:
+
+	typedef I							impl_type;
+
   private:
 	friend class MList<MListRow>;
 
+	typedef 		MGtkRendererInfo					renderer_info;
+	
 	template<class base_type, class N, class T, int P>
 	struct column_type
 	{
@@ -118,17 +157,16 @@ class MListRow : public MListRowBase
 	struct column_type_traits
 	{
 		static GType	GetGType(
-							int			inColumnNr)					{ throw "error"; }
+							int					inColumnNr)			{ THROW(("error")); }
 
-		static std::pair<GtkCellRenderer*,const char*>
+		static renderer_info
 						GetRenderer(
-							int			inColumnNr)					{ throw "error"; }
+							int					inColumnNr)			{ THROW(("error")); }
 
-		template<class G>
 		static void		GetGValue(
-							const G		inProvider,
-							int			inColumnNr,
-							GValue&		outValue)					{ throw "error"; }
+							impl_type*			inProvider,
+							int					inColumnNr,
+							GValue&				outValue)			{ THROW(("error")); }
 	};
 	
 	template<class N, class T, class... Args1>
@@ -151,11 +189,11 @@ class MListRow : public MListRowBase
 							return result;
 						}
 
-		static std::pair<GtkCellRenderer*,const char*>
+		static renderer_info
 						GetRenderer(
 							int			inColumnNr)
 						{
-							std::pair<GtkCellRenderer*,const char*> result;
+							MGtkRendererInfo result;
 							if (inColumnNr == 0)
 								result = g_type_mapped<T>::GetRenderer();
 							else
@@ -163,9 +201,8 @@ class MListRow : public MListRowBase
 							return result;
 						}
 
-		template<class G>
 		static void		GetGValue(
-							const G		inProvider,
+							impl_type*	inProvider,
 							int			inColumnNr,
 							GValue&		outValue)
 						{
@@ -206,10 +243,9 @@ class MListRow : public MListRowBase
 								gtk_tree_store_set_valuesv(treeStore, &treeIter, &c[0], &v[0], column_count + 1);
 							}
 						}
-					
+
   public:
 
-	typedef I							impl_type;
 	typedef column_type_traits<Args...>	traits;
 	static const int					column_count = traits::count;
 
@@ -237,6 +273,8 @@ class MListRow : public MListRowBase
 
 class MListBase : public MView
 {
+	friend class MListColumnEditedListener;
+	
   public:
 					MListBase(
 						GtkWidget*	inTreeView);
@@ -259,6 +297,10 @@ class MListBase : public MView
 	void			SetColumnEditable(
 						uint32				inColumnNr,
 						bool				inEditable);
+
+	void			SetColumnToggleable(
+						uint32				inColumnNr,
+						bool				inToggleable);
 
 	void			SelectRowAndStartEditingColumn(
 						MListRowBase*		inRow,
@@ -305,7 +347,7 @@ class MListBase : public MView
 
 	void			CreateTreeStore(
 						std::vector<GType>&	inTypes,
-						std::vector<std::pair<GtkCellRenderer*,const char*>>&
+						std::vector<MGtkRendererInfo>&
 											inRenderers);
 
 	GtkTreePath*	GetTreePathForRow(
@@ -355,16 +397,6 @@ class MListBase : public MView
 	MSlot<void(GtkTreePath*,GtkTreeIter*,gint*)>
 					mRowsReordered;
 	
-	void			Edited(
-						gchar*				path,
-						gchar*				new_text);
-
-	virtual void	EmitRowEdited(
-						MListRowBase*		inRow,
-						const std::string&	inNewText) = 0;
-
-	MSlot<void(gchar*,gchar*)>			mEdited;
-
 	// tree store overrides
 	
 	typedef gboolean (*RowDropPossibleFunc)(GtkTreeDragDest*, GtkTreePath*, GtkSelectionData*);
@@ -393,6 +425,16 @@ class MListBase : public MView
 	GtkTreeStore*	mTreeStore;
 	std::vector<GtkCellRenderer*>
 					mRenderers;
+	std::vector<MListColumnEditedListener*>
+					mListeners;
+	
+	void			RowSelectedTimeOutWaited();
+	void			DisableEditingAndTimer();
+ 	
+	MTimeOut		mRowSelectedTimer;
+	MTimeOut		mRowEditingTimedOut;
+	std::set<uint32>
+					mEnabledEditColumns;
 };
 
 template<class R>
@@ -402,6 +444,7 @@ class MList : public MListBase
 	typedef R								row_type;
 	typedef std::list<row_type*>			row_list;
 	typedef typename row_type::traits		column_type_traits;
+	static const int						column_count = column_type_traits::count;
 	
   public:
 
@@ -437,8 +480,6 @@ class MList : public MListBase
 
 	MEventOut<void(row_type*)>				eRowSelected;
 	MEventOut<void(row_type*)>				eRowInvoked;
-	MEventOut<void(row_type*,const std::string&)>
-											eRowEdited;
 	MEventOut<void(row_type*)>				eRowDragged;
 	
   protected:
@@ -451,10 +492,6 @@ class MList : public MListBase
 
 	virtual void	RowDragged(
 						MListRowBase*		inRow)		{ eRowDragged(static_cast<row_type*>(inRow)); }
-
-	virtual void	EmitRowEdited(
-						MListRowBase*		inRow,
-						const std::string&	inNewText)	{ eRowEdited(static_cast<row_type*>(inRow), inNewText); }
 };
 
 template<typename R>
@@ -463,7 +500,7 @@ MList<R>::MList(
 	: MListBase(inTreeView)
 {
     std::vector<GType> types(GetColumnCount() + 1);
-    std::vector<std::pair<GtkCellRenderer*,const char*>> renderers(GetColumnCount());
+    std::vector<MGtkRendererInfo> renderers(GetColumnCount());
     
     for (int i = 0; i < GetColumnCount(); ++i)
     {

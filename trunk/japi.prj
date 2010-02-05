@@ -38,7 +38,7 @@
    <file>MSaverMixin.cpp</file>
    <file>MStrings.cpp</file>
    <file>MSound.cpp</file>
-   <file>MTreeModelInterface.cpp</file>
+   <file>MTimer.cpp</file>
    <file>MUnicode.cpp</file>
    <file>MUtils.cpp</file>
    <file>MView.cpp</file>
@@ -77,7 +77,6 @@
    <file>MDiff.cpp</file>
    <group name="Project">
     <file>MProject.cpp</file>
-    <file>MProjectTree.cpp</file>
     <file>MProjectItem.cpp</file>
     <file>MProjectJob.cpp</file>
     <file>MObjectFile.cpp</file>

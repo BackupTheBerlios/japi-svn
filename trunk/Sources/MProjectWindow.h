@@ -18,6 +18,7 @@ class MRsrcRowItem;
 class MListBase;
 class MListRowBase;
 template<class R> class MList;
+class MTimer;
 
 class MProjectWindow : public MDocWindow
 {
@@ -133,20 +134,22 @@ class MProjectWindow : public MDocWindow
 	void			MakeClicked();
 	MSlot<void()>	eMakeClicked;
 
-	void			EditedFileGroupName(
-						MFileRowItem*		inRow,
-						const std::string&	inNewName);
-
-	MEventIn<void(MFileRowItem*,const std::string&)>
-					eEditedFileGroupName;
-
-	void			EditedRsrcGroupName(
-						MRsrcRowItem*		inRow,
-						const std::string&	inNewName);
-
-	MEventIn<void(MRsrcRowItem*,const std::string&)>
-					eEditedRsrcGroupName;
-
+//	void			EditedFileGroupName(
+//						MFileRowItem*		inRow,
+//						uint32				inColumnNr,
+//						const std::string&	inNewName);
+//
+//	MEventIn<void(MFileRowItem*,uint32,const std::string&)>
+//					eEditedFileGroupName;
+//
+//	void			EditedRsrcGroupName(
+//						MRsrcRowItem*		inRow,
+//						uint32				inColumnNr,
+//						const std::string&	inNewName);
+//
+//	MEventIn<void(MRsrcRowItem*,uint32,const std::string&)>
+//					eEditedRsrcGroupName;
+//
 	MProject*		mProject;
 	GtkWidget*		mStatusPanel;
 	MListBase*		mFileTree;

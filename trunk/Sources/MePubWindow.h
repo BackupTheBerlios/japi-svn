@@ -9,9 +9,12 @@
 #include "MDocWindow.h"
 
 class MProjectItem;
-class MePubFileTree;
-class MTOCTree;
 class MTextDocument;
+class MListBase;
+class MListRowBase;
+template<class R> class MList;
+class MePubFileRow;
+class MePubTOCRow;
 
 class MePubWindow : public MDocWindow
 {
@@ -42,6 +45,12 @@ class MePubWindow : public MDocWindow
 
 	virtual void	SaveState();
 
+	template<class R>
+	void			AddItemsToList(
+						MProjectGroup*		inGroup,
+						MListRowBase*		inParent,
+						MList<R>*			inList);
+
 	virtual void	DocumentLoaded(
 						MDocument*		inDocument);
 
@@ -51,27 +60,38 @@ class MePubWindow : public MDocWindow
 	MSlot<bool(GdkEventKey*)>
 					eKeyPressEvent;
 
-	void			InvokeFileRow(
-						GtkTreePath*	inPath,
-						GtkTreeViewColumn*
-										inColumn);
+	void			SelectFileRow(
+						MePubFileRow*	inRow);
+	MEventIn<void(MePubFileRow*)>
+					eSelectFileRow;
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+	void			InvokeFileRow(
+						MePubFileRow*	inRow);
+	MEventIn<void(MePubFileRow*)>
 					eInvokeFileRow;
 
-	void			InitializeTreeView(
-						GtkTreeView*	inGtkTreeView);
+	void			DraggedFileRow(
+						MePubFileRow*	inRow);
+	MEventIn<void(MePubFileRow*)>
+					eDraggedFileRow;
 
-	void			InitializeTOCTreeView(
-						GtkTreeView*	inGtkTreeView);
+	void			SelectTOCRow(
+						MePubTOCRow*	inRow);
+	MEventIn<void(MePubTOCRow*)>
+					eSelectTOCRow;
+
+	void			InvokeTOCRow(
+						MePubTOCRow*	inRow);
+	MEventIn<void(MePubTOCRow*)>
+					eInvokeTOCRow;
+
+	void			DraggedTOCRow(
+						MePubTOCRow*	inRow);
+	MEventIn<void(MePubTOCRow*)>
+					eDraggedTOCRow;
 
 	virtual void	ValueChanged(
 						uint32			inID);
-
-	MEventIn<void(MProjectItem*)>	eFileItemInserted;
-
-	void			FileItemInserted(
-						MProjectItem*	inItem);
 
 	void			CreateNew(
 						bool			inNewDirectory);
@@ -82,53 +102,53 @@ class MePubWindow : public MDocWindow
 	void			DateChanged();
 	MSlot<void()>	eDateChanged;
 
-	void			EditedItemName(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedItemName;
-
-	void			EditedItemID(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedItemID;
-
-	void			EditedItemLinear(
-						gchar*			path);
-
-	MSlot<void(gchar*)>
-					mEditedItemLinear;
-
-	void			EditedItemMediaType(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedItemMediaType;
-
-	void			EditedTOCTitle(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedTOCTitle;
-
-	void			EditedTOCSrc(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedTOCSrc;
-
-	void			EditedTOCClass(
-						gchar*			path,
-						gchar*			new_text);
-
-	MSlot<void(gchar*,gchar*)>
-					mEditedTOCClass;
+//	void			EditedItemName(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedItemName;
+//
+//	void			EditedItemID(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedItemID;
+//
+//	void			EditedItemLinear(
+//						gchar*			path);
+//
+//	MSlot<void(gchar*)>
+//					mEditedItemLinear;
+//
+//	void			EditedItemMediaType(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedItemMediaType;
+//
+//	void			EditedTOCTitle(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedTOCTitle;
+//
+//	void			EditedTOCSrc(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedTOCSrc;
+//
+//	void			EditedTOCClass(
+//						gchar*			path,
+//						gchar*			new_text);
+//
+//	MSlot<void(gchar*,gchar*)>
+//					mEditedTOCClass;
 
 	void			RenameItem();
 
@@ -137,14 +157,8 @@ class MePubWindow : public MDocWindow
 	void			DeleteSelectedItem();
 
 	MePubDocument*	mEPub;
-	MePubFileTree*	mFilesTree;
-	MTOCTree*		mTOCTree;
-
-	bool				mEditingName;
-	GtkCellRenderer*	mFileNameCell;
-	GtkTreeViewColumn*	mFileNameColumn;
-	GtkCellRenderer*	mTOCTitleCell;
-	GtkTreeViewColumn*	mTOCTitleColumn;
+	MListBase*		mFileTree;
+	MListBase*		mTOCTree;
 };
 
 #endif

@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "MList.h"
+#include "MTimer.h"
 
 using namespace std;
 
@@ -128,6 +129,68 @@ bool MListRowBase::GetParentAndPosition(
 }
 
 //---------------------------------------------------------------------
+// MListColumnEditedListener
+
+class MListColumnEditedListener
+{
+  public:
+					MListColumnEditedListener(
+						uint32				inColumnNr,
+						MListBase*			inList,
+						GtkCellRenderer*	inRenderer,
+						bool				inListenToToggle,
+						bool				inListenToEdited)
+						: eToggled(this, &MListColumnEditedListener::Toggled)
+						, eEdited(this, &MListColumnEditedListener::Edited)
+						, mColumnNr(inColumnNr)
+						, mList(inList)
+					{
+						if (inListenToToggle)
+							eToggled.Connect(G_OBJECT(inRenderer), "toggled");
+						if (inListenToEdited)
+							eEdited.Connect(G_OBJECT(inRenderer), "edited");
+					}
+
+  private:
+
+	void			Toggled(
+						gchar*				inPath)
+					{
+						GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+						if (path != nil)
+						{
+							MListRowBase* row = mList->GetRowForPath(path);
+							row->ColumnToggled(mColumnNr);
+							gtk_tree_path_free(path);
+						}
+					}
+					
+	MSlot<void(gchar*)>						eToggled;
+
+	void			Edited(
+						gchar*				inPath,
+						gchar*				inNewText)
+					{
+						string newText;
+						if (inNewText != nil)
+							newText = inNewText;
+						
+						GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
+						if (path != nil)
+						{
+							MListRowBase* row = mList->GetRowForPath(path);
+							row->ColumnEdited(mColumnNr, newText);
+							gtk_tree_path_free(path);
+						}
+					}
+					
+	MSlot<void(gchar*,gchar*)>				eEdited;
+
+	uint32			mColumnNr;
+	MListBase*		mList;
+};
+
+//---------------------------------------------------------------------
 // MListBase
 
 MListBase::RowDropPossibleFunc MListBase::sSavedRowDropPossible;
@@ -142,10 +205,12 @@ MListBase::MListBase(
 	, mRowDeleted(this, &MListBase::RowDeleted)
 	, mRowInserted(this, &MListBase::RowInserted)
 	, mRowsReordered(this, &MListBase::RowsReordered)
-	, mEdited(this, &MListBase::Edited)
 {
 	mCursorChanged.Connect(inTreeView, "cursor-changed");
 	mRowActivated.Connect(inTreeView, "row-activated");
+	
+	mRowSelectedTimer.eTimedOut.SetProc(this, &MListBase::RowSelectedTimeOutWaited);
+	mRowEditingTimedOut.eTimedOut.SetProc(this, &MListBase::DisableEditingAndTimer);
 
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(GetGtkWidget()), true);
 
@@ -164,7 +229,7 @@ MListBase::~MListBase()
 
 void MListBase::CreateTreeStore(
 	std::vector<GType>&		inTypes,
-	std::vector<std::pair<GtkCellRenderer*,const char*>>&
+	std::vector<MGtkRendererInfo>&
 							inRenderers)
 {
     mTreeStore = gtk_tree_store_newv(inTypes.size(), &inTypes[0]);
@@ -189,15 +254,18 @@ void MListBase::CreateTreeStore(
 	
 	for (size_t i = 0; i < inRenderers.size(); ++i)
 	{
-	    GtkCellRenderer* renderer = inRenderers[i].first;
+	    GtkCellRenderer* renderer = get<0>(inRenderers[i]);
 	    
 	    mRenderers.push_back(renderer);
 	    
-	    const char* attribute = inRenderers[i].second;
+	    const char* attribute = get<1>(inRenderers[i]);
 	    GtkTreeViewColumn* column = gtk_tree_view_column_new();
 	    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(column), renderer, TRUE);
 	    gtk_tree_view_column_set_attributes(column, renderer, attribute, i, NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(GetGtkWidget()), column);
+
+		mListeners.push_back(new MListColumnEditedListener(i, this, renderer,
+					get<2>(inRenderers[i]), get<3>(inRenderers[i])));
 	}
 }
 
@@ -313,9 +381,22 @@ void MListBase::SetColumnEditable(
 {
 	if (inColumnNr < mRenderers.size())
 	{
-		 g_object_set(G_OBJECT(mRenderers[inColumnNr]), "editable", inEditable, nil);
-		 mEdited.Connect(G_OBJECT(mRenderers[inColumnNr]), "edited");
+		if (inEditable)
+			mEnabledEditColumns.insert(inColumnNr);
+		else
+		{
+			mEnabledEditColumns.erase(inColumnNr);
+			g_object_set(G_OBJECT(mRenderers[inColumnNr]), "editable", false, nil);
+		}
 	}
+}
+
+void MListBase::SetColumnToggleable(
+	uint32			inColumnNr,
+	bool			inToggleable)
+{
+	if (inColumnNr < mRenderers.size())
+		 g_object_set(G_OBJECT(mRenderers[inColumnNr]), "activatable", inToggleable, nil);
 }
 
 void MListBase::CollapseRow(
@@ -507,18 +588,45 @@ bool MListBase::DragDataReceived(
 	RowDragged(GetRowForPath(inTreePath));
 	return true;
 }	
-	
+
 void MListBase::CursorChanged()
 {
 	MListRowBase* row = GetCursorRow();
+	
 	if (row != nil)
+	{
+		mRowSelectedTimer.Stop();
+		mRowEditingTimedOut.Stop();
+		
 		RowSelected(row);
+		mRowSelectedTimer.Start(0.3);
+	}
+}
+
+void MListBase::RowSelectedTimeOutWaited()
+{
+	for (auto col = mEnabledEditColumns.begin(); col != mEnabledEditColumns.end(); ++col)
+		 g_object_set(G_OBJECT(mRenderers[*col]), "editable", true, nil);
+	
+	mRowEditingTimedOut.Start(2.0);
+}
+
+void MListBase::DisableEditingAndTimer()
+{
+	for (auto col = mEnabledEditColumns.begin(); col != mEnabledEditColumns.end(); ++col)
+		 g_object_set(G_OBJECT(mRenderers[*col]), "editable", false, nil);
+	mEnabledEditColumns.clear();
 }
 
 void MListBase::RowActivated(
 	GtkTreePath*		inTreePath,
 	GtkTreeViewColumn*	inColumn)
 {
+	mRowSelectedTimer.Stop();
+	mRowEditingTimedOut.Stop();
+
+	mEnabledEditColumns.clear();
+	
 	MListRowBase* row = GetRowForPath(inTreePath);
 	if (row != nil)
 		RowActivated(row);
@@ -558,22 +666,3 @@ void MListBase::RowsReordered(
 	eRowsReordered();
 }
 
-void MListBase::Edited(
-	gchar*				inPath,
-	gchar*				inNewText)
-{
-	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
-	if (path != nil and inNewText != nil)
-	{
-		GtkTreeIter iter;
-		if (gtk_tree_model_get_iter(GTK_TREE_MODEL(mTreeStore), &iter, path))
-		{
-			MListRowBase* row = GetRowForPath(path);
-			
-			if (row != nil)
-				EmitRowEdited(row, inNewText);
-		}
-		
-		gtk_tree_path_free(path);
-	}
-}
