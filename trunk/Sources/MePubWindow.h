@@ -102,58 +102,6 @@ class MePubWindow : public MDocWindow
 	void			DateChanged();
 	MSlot<void()>	eDateChanged;
 
-//	void			EditedItemName(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedItemName;
-//
-//	void			EditedItemID(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedItemID;
-//
-//	void			EditedItemLinear(
-//						gchar*			path);
-//
-//	MSlot<void(gchar*)>
-//					mEditedItemLinear;
-//
-//	void			EditedItemMediaType(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedItemMediaType;
-//
-//	void			EditedTOCTitle(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedTOCTitle;
-//
-//	void			EditedTOCSrc(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedTOCSrc;
-//
-//	void			EditedTOCClass(
-//						gchar*			path,
-//						gchar*			new_text);
-//
-//	MSlot<void(gchar*,gchar*)>
-//					mEditedTOCClass;
-
-	void			RenameItem();
-
-	MProjectItem*	GetSelectedItem();
-
 	void			DeleteSelectedItem();
 
 	MePubDocument*	mEPub;

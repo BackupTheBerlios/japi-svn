@@ -5,9 +5,6 @@
 
 #include "MJapi.h"
 
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-
 #include <string>
 #include <sstream>
 #include <string>

@@ -1431,7 +1431,7 @@ void MSshConnection::TryPassword()
 	e[0] = false;
 
 	MWindow* docWindow = MWindow::GetFirstWindow();	// I hope...
-	auto_ptr<MAuthDialog> dlog(new MAuthDialog("Logging in",
+	unique_ptr<MAuthDialog> dlog(new MAuthDialog("Logging in",
 		string("Please enter password for acount ") + fUserName + " ip address " + fIPAddress,
 		1, p, e));
 

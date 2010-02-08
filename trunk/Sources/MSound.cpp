@@ -8,7 +8,7 @@
 #include <map>
 #include <dlfcn.h>
 #include <iostream>
-#include <gst/gst.h>
+#include <canberra.h>
 
 #include "MFile.h"
 #include "MSound.h"
@@ -28,37 +28,35 @@ class MAudioSocket
 					Instance();
 	
 	void			Play(
-							const string&	inPath);
+						const string&	inPath);
 
   private:
 
 					MAudioSocket();
 					~MAudioSocket();
+
+	static void		CAFinishCallback(
+						ca_context*		inContext,
+						uint32_t		inID,
+						int				inErrorCode,
+						void*			inUserData);
 	
-	GstElement*		mPlayer;
+	ca_context*		mCAContext;
 };
 
 MAudioSocket::MAudioSocket()
+	: mCAContext(nil)
 {
-	gst_init(nil, nil);
+	int err = ca_context_create(&mCAContext);
+	if (err == 0)
+		err = ca_context_open(mCAContext);
 	
-	mPlayer = gst_element_factory_make("playbin", "play");
-	if (mPlayer == nil)
-		THROW(("Failed to create player"));
-	
-	// Instead of using the default audiosink, use the gconfaudiosink, which
-	// will respect the defaults in gstreamer-properties
-
-	GstElement* sink = gst_element_factory_make("gconfaudiosink", "GconfAudioSink");
-	if (sink == nil)
-		THROW(("Failed to create sink"));
-	
-	g_object_set(G_OBJECT(mPlayer), "audio-sink", sink, nil);
 }
 
 MAudioSocket::~MAudioSocket()
 {
-	g_object_unref(mPlayer);
+	ca_context_destroy(mCAContext);
+	mCAContext = nil;
 }
 
 MAudioSocket& MAudioSocket::Instance()
@@ -67,22 +65,42 @@ MAudioSocket& MAudioSocket::Instance()
 	return sInstance;
 }
 
+void MAudioSocket::CAFinishCallback(
+	ca_context*		inContext,
+	uint32_t		inID,
+	int				inErrorCode,
+	void*			inUserData)
+{
+	if (inErrorCode != CA_SUCCESS)
+		cerr << "Error playing sound using canberra" << endl;
+}
+
 void MAudioSocket::Play(
 	const string&	inFile)
 {
-	if (mPlayer != nil)
+	if (mCAContext != nil)
 	{
-		string uri = "file://";
-		uri += inFile;
+		ca_proplist* pl;
 		
-		// stop old sound
-		gst_element_set_state(mPlayer, GST_STATE_NULL);
+		ca_proplist_create(&pl);
+		ca_proplist_sets(pl, CA_PROP_MEDIA_FILENAME, inFile.c_str());
+		
+		int pan = 2;
+//        gc = gconf_client_get_default();
+//        value = gconf_client_get(gc, ALARM_GCONF_PATH, NULL);
+//
+//        if (value && value->type == GCONF_VALUE_INT)
+//                pan = gconf_value_get_int(value);
+//        else
+//                pan = 2;
+		float volume = (1.0f - float(pan) / 2.0f) * -6.0f;
+		ca_proplist_setf(pl, CA_PROP_CANBERRA_VOLUME, "%f", volume);
 
-		// Set the input to a local file
-		g_object_set(G_OBJECT(mPlayer), "uri", uri.c_str(), nil);
-	
-		// Start the pipeline again
-		gst_element_set_state(mPlayer, GST_STATE_PLAYING);
+		int err = ca_context_play_full(mCAContext, 0, pl, &MAudioSocket::CAFinishCallback, this);
+		if (err != CA_SUCCESS)
+			cerr << "Error calling ca_context_play_full: " << err << endl;
+
+		ca_proplist_destroy(pl);
 	}
 	else if (MWindow::GetFirstWindow() != nil)
 		MWindow::GetFirstWindow()->Beep();
@@ -143,3 +161,4 @@ void PlaySound(
 		gdk_beep();
 	}
 }
+

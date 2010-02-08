@@ -2,9 +2,9 @@
 <project version="2.0">
  <pkg-config>
   <pkg tool="pkg-config">gthread-2.0</pkg>
-  <pkg tool="pkg-config">gstreamer-0.10</pkg>
   <pkg tool="pkg-config">gtk+-x11-2.0</pkg>
   <pkg tool="pkg-config">uuid</pkg>
+  <pkg tool="pkg-config">libcanberra</pkg>
  </pkg-config>
  <syspaths>
   <path>/usr/include</path>
@@ -219,6 +219,7 @@
    <cflags>
     <cflag>-O3</cflag>
     <cflag>-pthread</cflag>
+    <cflag>-std=c++0x</cflag>
    </cflags>
    <warnings>
     <warning>all</warning>

@@ -151,10 +151,12 @@ class MePubFileRow : public MListRow<
 {
   public:
 					MePubFileRow(
-						MProjectItem*	inItem)
+						MProjectItem*	inItem,
+						MePubDocument*	inEPub)
 						: mItem(inItem)
 						, mEPubItem(dynamic_cast<MePubItem*>(inItem))
 					{
+						AddRoute(inEPub->eItemRenamed, eItemRenamed);
 					}
 	
 	void			GetData(
@@ -230,9 +232,13 @@ class MePubFileRow : public MListRow<
 						switch (inColumnNr)
 						{
 							case kePubFileNameColumn:
+							{
+								string oldName = mItem->GetName();
 								mItem->SetName(inNewText);
 								RowChanged();
+								eItemRenamed(mEPubItem, oldName, inNewText);
 								break;
+							}
 							
 							case kePubFileIDColumn:
 								mEPubItem->SetID(inNewText);
@@ -261,6 +267,9 @@ class MePubFileRow : public MListRow<
 
 	MProjectItem*	GetProjectItem() const				{ return mItem; }
 	MePubItem*		GetEPubItem() const					{ return mEPubItem; }
+	
+	MEventOut<void(MProjectItem*,const string&,const string&)>
+					eItemRenamed;
 	
   private:
 	MProjectItem*	mItem;
@@ -293,7 +302,8 @@ class MePubTOCRow : public MListRow<
 {
   public:
 					MePubTOCRow(
-						MProjectItem* inTOCItem)
+						MProjectItem* inTOCItem,
+						MePubDocument*	inEPub)
 						: mItem(inTOCItem)
 						, mTOCItem(dynamic_cast<MePubTOCItem*>(inTOCItem))
 					{
@@ -368,13 +378,6 @@ MePubWindow::MePubWindow()
 	, eDraggedTOCRow(this, &MePubWindow::DraggedTOCRow)
 	, eSubjectChanged(this, &MePubWindow::SubjectChanged)
 	, eDateChanged(this, &MePubWindow::DateChanged)
-//	, mEditedItemName(this, &MePubWindow::EditedItemName)
-//	, mEditedItemID(this, &MePubWindow::EditedItemID)
-//	, mEditedItemLinear(this, &MePubWindow::EditedItemLinear)
-//	, mEditedItemMediaType(this, &MePubWindow::EditedItemMediaType)
-//	, mEditedTOCTitle(this, &MePubWindow::EditedTOCTitle)
-//	, mEditedTOCSrc(this, &MePubWindow::EditedTOCSrc)
-//	, mEditedTOCClass(this, &MePubWindow::EditedTOCClass)
 	, mFileTree(nil)
 	, mTOCTree(nil)
 {
@@ -442,17 +445,6 @@ void MePubWindow::Initialize(
 	tocTree->SetColumnTitle(kTOCClassColumn, _("Class"));
 	AddItemsToList(mEPub->GetTOC(), nil, tocTree);
 	tocTree->ExpandAll();
-	
-//	MGtkTreeView tocTree(GetWidget(kTOCListViewID));
-//	InitializeTOCTreeView(tocTree);
-//	mTOCTree = new MTOCTree(mEPub->GetTOC());
-//
-//	AddRoute(mEPub->eItemMoved, mTOCTree->eProjectItemMoved);
-//	AddRoute(mEPub->eItemRemoved, mTOCTree->eProjectItemRemoved);
-////	AddRoute(mEPub->eCreateItem, mFileTree->eProjectCreateItem);
-//	
-//	tocTree.SetModel(mTOCTree->GetModel());
-//	tocTree.ExpandAll();
 
 	// fill in the information fields
 	
@@ -506,7 +498,7 @@ void MePubWindow::AddItemsToList(
 {
 	for (auto iter = inGroup->GetItems().begin(); iter != inGroup->GetItems().end(); ++iter)
 	{
-		R* item = new R(*iter);
+		R* item = new R(*iter, mEPub);
 		
 		inList->AppendRow(item, static_cast<R*>(inParent));
 		
@@ -669,10 +661,6 @@ bool MePubWindow::UpdateCommandStatus(
 				notebook.GetPage() == kTOCPageNr;
 			break;
 		
-		case cmd_RenameItem:
-			outEnabled = GetSelectedItem() != nil;
-			break;
-		
 		default:
 			result = MDocWindow::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 	}
@@ -698,10 +686,6 @@ bool MePubWindow::ProcessCommand(
 			CreateNew(false);
 			break;
 		
-		case cmd_RenameItem:
-			RenameItem();
-			break;
-		
 		default:
 			result = MDocWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 			break;
@@ -709,128 +693,6 @@ bool MePubWindow::ProcessCommand(
 	
 	return result;
 }
-
-//// ---------------------------------------------------------------------------
-////	InitializeTreeView
-//
-//void MePubWindow::InitializeTreeView(
-//	GtkTreeView*		inGtkTreeView)
-//{
-//	THROW_IF_NIL(inGtkTreeView);
-//
-//	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
-//		kTreeDragTargets, kTreeDragTargetCount,
-//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-//	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
-//		kTreeDragTargets, kTreeDragTargetCount,
-//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-//	
-//	// Add the columns and renderers
-//
-//	// the name column
-//	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-//	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-//		_("File"), renderer, "text", kePubFileNameColumn, nil);
-//	g_object_set(G_OBJECT(column), "expand", true, nil);
-////	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mFileNameCell = renderer;
-//	mFileNameColumn = column;
-//	mEditedItemName.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the ID column
-//	renderer = gtk_cell_renderer_text_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("ID"), renderer, "text", kePubFileIDColumn, nil);
-//	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mEditedItemID.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the Linear column
-//	renderer = gtk_cell_renderer_toggle_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("Linear"), renderer, "active", kePubFileLinearColumn, nil);
-////	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mEditedItemLinear.Connect(G_OBJECT(renderer), "toggled");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the MediaType column
-//	renderer = gtk_cell_renderer_combo_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("Media-Type"), renderer, "text", kePubFileMediaTypeColumn, nil);
-//	g_object_set(G_OBJECT(renderer), "text-column", 0, "editable", true,
-//		"has-entry", true, "model", CreateListStoreForMediaTypes(), nil);
-//	mEditedItemMediaType.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the data size column
-//	
-//	renderer = gtk_cell_renderer_text_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("Size"), renderer, "text", kePubFileDataSizeColumn, nil);
-//	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, nil);
-//	gtk_tree_view_column_set_alignment(column, 1.0f);
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// at last the dirty mark	
-//	renderer = gtk_cell_renderer_pixbuf_new();
-//	column = gtk_tree_view_column_new_with_attributes(
-//		_(" "), renderer, "pixbuf", kePubFileDirtyColumn, nil);
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//
-//	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
-//	
-//	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
-//}
-//
-//// ---------------------------------------------------------------------------
-////	InitializeTOCTreeView
-//
-//void MePubWindow::InitializeTOCTreeView(
-//	GtkTreeView*		inGtkTreeView)
-//{
-//	THROW_IF_NIL(inGtkTreeView);
-//
-//	gtk_tree_view_enable_model_drag_dest(inGtkTreeView,
-//		kTreeDragTargets, kTreeDragTargetCount,
-//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-//	gtk_tree_view_enable_model_drag_source(inGtkTreeView, GDK_BUTTON1_MASK,
-//		kTreeDragTargets, kTreeDragTargetCount,
-//		GdkDragAction(GDK_ACTION_COPY|GDK_ACTION_MOVE));
-//	
-//	// Add the columns and renderers
-//
-//	// the title column
-//	GtkCellRenderer* renderer = gtk_cell_renderer_text_new();
-//	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes (
-//		_("Title"), renderer, "text", kTOCTitleColumn, nil);
-//	g_object_set(G_OBJECT(column), "expand", true, nil);
-////	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mTOCTitleCell = renderer;
-//	mTOCTitleColumn = column;
-//	mEditedTOCTitle.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the src column
-//	renderer = gtk_cell_renderer_text_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("Source"), renderer, "text", kTOCSrcColumn, nil);
-//	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mEditedTOCSrc.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	// the class column
-//	renderer = gtk_cell_renderer_text_new();
-//	column = gtk_tree_view_column_new_with_attributes (
-//		_("Class"), renderer, "text", kTOCClassColumn, nil);
-//	g_object_set(G_OBJECT(renderer), "editable", true, nil);
-//	mEditedTOCClass.Connect(G_OBJECT(renderer), "edited");
-//	gtk_tree_view_append_column(inGtkTreeView, column);
-//	
-//	gtk_widget_show_all(GTK_WIDGET(inGtkTreeView));
-//	
-//	eKeyPressEvent.Connect(G_OBJECT(inGtkTreeView), "key-press-event");
-//}
 
 // ---------------------------------------------------------------------------
 //	OnKeyPressEvent
@@ -942,27 +804,24 @@ void MePubWindow::SelectTOCRow(
 void MePubWindow::InvokeTOCRow(
 	MePubTOCRow*	inRow)
 {
-//	MePubTOCItem* tocItem = inRow->GetTOCItem();
-//
-//	if (tocItem != nil)
-//	{
-//		if (tocItem->IsEncrypted())
-//			THROW(("Cannot open an encrypted ePub item"));
-//		
-//		fs::path path = tocItem->GetPath();
-//
-//		MFile file(new MePubContentFile(mEPub, path));
-//		
-//		MDocument* doc = MDocument::GetDocumentForFile(file);
-//
+	MePubTOCItem* tocItem = inRow->GetTOCItem();
+
+	if (tocItem != nil)
+	{
+		string source = tocItem->GetSrc();
+
+		MFile file(new MePubContentFile(mEPub, source));
+
+		MDocument* doc = MDocument::GetDocumentForFile(file);
+
 //		if (doc == nil)
 //		{
 //			doc = MDocument::Create<MTextDocument>(file);
 //			AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
 //		}
-//
-//		gApp->DisplayDocument(doc);
-//	}
+
+		gApp->DisplayDocument(doc);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1125,38 +984,6 @@ void MePubWindow::CreateNew(
 //	mEPub->SetModified(true);
 }
 
-MProjectItem* MePubWindow::GetSelectedItem()
-{//
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//
-//	GtkTreePath* path = nil;
-//	MProjectItem* result = nil;
-//
-//	if (notebook.GetPage() == kFilesPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//
-//		GtkTreeIter iter;
-//		if (path != nil and mFileTree->GetIter(&iter, path))
-//			result = reinterpret_cast<MProjectItem*>(iter.user_data);
-//	}
-//	else if (notebook.GetPage() == kTOCPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kTOCListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//
-//		GtkTreeIter iter;
-//		if (path != nil and mTOCTree->GetIter(&iter, path))
-//			result = reinterpret_cast<MProjectItem*>(iter.user_data);
-//	}
-//
-//	if (path != nil)
-//		gtk_tree_path_free(path);
-//
-//	return result;
-}
-
 void MePubWindow::DeleteSelectedItem()
 {//
 //	MGtkNotebook notebook(GetWidget(kNoteBookID));
@@ -1186,106 +1013,6 @@ void MePubWindow::DeleteSelectedItem()
 //		gtk_tree_path_free(path);
 }
 
-void MePubWindow::RenameItem()
-{//
-//	if (mEditingName)
-//		return;
-//	
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//
-//	GtkTreePath* path = nil;
-//
-//	if (notebook.GetPage() == kFilesPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mFileNameCell), "editable", true, nil);
-//			treeView.SetCursor(path, mFileNameColumn);
-//			mEditingName = true;
-//		}
-//	}
-//	else if (notebook.GetPage() == kTOCPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kTOCListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//		if (path != nil)
-//		{
-//			g_object_set(G_OBJECT(mTOCTitleCell), "editable", true, nil);
-//			treeView.SetCursor(path, mTOCTitleColumn);
-//			mEditingName = true;
-//		}
-//	}
-}
-
-//void MePubWindow::EditedItemName(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	mEditingName = false;
-//	g_object_set(G_OBJECT(mFileNameCell), "editable", false, nil);
-//	if (mFileTree->ProjectItemNameEdited(inPath, inNewValue))
-//	{
-//		MePubItem* item = dynamic_cast<MePubItem*>(
-//			mFileTree->GetProjectItemForPath(inPath));
-//
-//		if (item != nil and item->GetMediaType().empty())
-//			item->GuessMediaType();
-//
-//		mEPub->SetModified(true);
-//	}
-//}
-//
-//void MePubWindow::EditedItemID(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	if (mFileTree->EditedItemID(inPath, inNewValue))
-//		mEPub->SetModified(true);
-//}
-//
-//void MePubWindow::EditedItemLinear(
-//	gchar*				inPath)
-//{
-//	if (mFileTree->EditedItemLinear(inPath))
-//		mEPub->SetModified(true);
-//}
-//
-//void MePubWindow::EditedItemMediaType(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	if (mFileTree->EditedItemMediaType(inPath, inNewValue))
-//		mEPub->SetModified(true);
-//}
-//
-//void MePubWindow::EditedTOCTitle(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	mEditingName = false;
-//	g_object_set(G_OBJECT(mTOCTitleCell), "editable", false, nil);
-//	if (mTOCTree->ProjectItemNameEdited(inPath, inNewValue))
-//		mEPub->SetModified(true);
-//}
-//
-//void MePubWindow::EditedTOCSrc(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	if (mTOCTree->EditedTOCSrc(inPath, inNewValue))
-//		mEPub->SetModified(true);
-//}
-//
-//void MePubWindow::EditedTOCClass(
-//	gchar*				inPath,
-//	gchar*				inNewValue)
-//{
-//	if (mTOCTree->EditedTOCClass(inPath, inNewValue))
-//		mEPub->SetModified(true);
-//}
-
 void MePubWindow::SubjectChanged()
 {
 	ValueChanged(kDCSubjectViewID);
@@ -1295,9 +1022,3 @@ void MePubWindow::DateChanged()
 {
 	ValueChanged(kDCDateViewID);
 }
-
-//void MePubWindow::FileItemInserted(
-//	MProjectItem*	inItem)
-//{
-//	mFileTree->ProjectItemInserted(inItem);
-//}
