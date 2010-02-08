@@ -1075,6 +1075,9 @@ MProjectJob* MProject::CreateCompileJob(
 	MProjectFile*		inFile)
 {
 	CheckDataDir();
+
+	if (inFile->GetObjectPath().empty())
+		ResearchForFiles();
 	
 	vector<string> argv;
 	
@@ -1602,14 +1605,6 @@ void MProject::SelectTarget(
 	
 	ResearchForFiles();
 	
-	mProjectItems.UpdatePaths(mObjectDir);
-	mProjectItems.CheckCompilationResult();
-	mProjectItems.CheckIsOutOfDate(modDateCache);
-	
-	mPackageItems.UpdatePaths(mObjectDir);
-	mPackageItems.CheckCompilationResult();
-	mPackageItems.CheckIsOutOfDate(modDateCache);
-	
 	SetStatus("", false);
 }
 
@@ -1621,7 +1616,11 @@ void MProject::CheckIsOutOfDate()
 	try
 	{
 		MModDateCache modDateCache;
+
+		mProjectItems.CheckCompilationResult();
 		mProjectItems.CheckIsOutOfDate(modDateCache);
+
+		mPackageItems.CheckCompilationResult();
 		mPackageItems.CheckIsOutOfDate(modDateCache);
 	}
 	catch (exception& e)
@@ -1651,6 +1650,8 @@ void MProject::ResearchForFiles()
 		else
 			f->SetParentDir(fs::path());
 	}
+	
+	mProjectItems.UpdatePaths(mObjectDir);
 	
 	CheckIsOutOfDate();
 }

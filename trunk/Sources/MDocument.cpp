@@ -113,7 +113,7 @@ bool MDocument::DoSave()
 		THROW(("File is not specified"));
 	
 	if (mFileSaver != nil)
-		THROW(("File is already being loaded"));
+		THROW(("File is already being saved"));
 	
 	mFileSaver = mFile.Save();
 	
@@ -373,7 +373,7 @@ void MDocument::IOFileLoaded()
 {
 	SetModified(false);
 	mFileLoader = nil;
-	eDocumentLoaded(this);
+//	eDocumentLoaded(this);
 }
 
 // ---------------------------------------------------------------------------

@@ -318,6 +318,7 @@ void MLocalFileSaver::DoSave()
 		save = eAskOverwriteNewer();
 
 	fs::ofstream file(path, ios::trunc|ios::binary);
+#pragma message("Check if file is actually open")
 	eWriteFile(file);
 	
 	eFileWritten();

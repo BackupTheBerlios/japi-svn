@@ -293,11 +293,11 @@ class MProjectLib : public MProjectItem
 
 	bool			IsOptional() const				{ return mOptional; }
 	void			SetOptional(
-						bool		inOptional)		{ mOptional = inOptional; }
+						bool		inOptional);
 
 	bool			IsShared() const				{ return mShared; }
 	void			SetShared(
-						bool		inShared)		{ mShared = inShared; }
+						bool		inShared);
 
   private:
 	bool			mShared, mOptional;

@@ -72,7 +72,7 @@ void MAudioSocket::CAFinishCallback(
 	void*			inUserData)
 {
 	if (inErrorCode != CA_SUCCESS)
-		cerr << "Error playing sound using canberra" << endl;
+		cerr << "Error playing sound using canberra: " << ca_strerror(inErrorCode) << endl;
 }
 
 void MAudioSocket::Play(
@@ -98,7 +98,7 @@ void MAudioSocket::Play(
 
 		int err = ca_context_play_full(mCAContext, 0, pl, &MAudioSocket::CAFinishCallback, this);
 		if (err != CA_SUCCESS)
-			cerr << "Error calling ca_context_play_full: " << err << endl;
+			cerr << "Error calling ca_context_play_full: " << ca_strerror(err) << endl;
 
 		ca_proplist_destroy(pl);
 	}

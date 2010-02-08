@@ -51,9 +51,6 @@ class MePubWindow : public MDocWindow
 						MListRowBase*		inParent,
 						MList<R>*			inList);
 
-	virtual void	DocumentLoaded(
-						MDocument*		inDocument);
-
 	virtual bool	OnKeyPressEvent(
 						GdkEventKey*	inEvent);
 
@@ -102,7 +99,8 @@ class MePubWindow : public MDocWindow
 	void			DateChanged();
 	MSlot<void()>	eDateChanged;
 
-	void			DeleteSelectedItem();
+	void			DeleteSelectedFileItems();
+	void			DeleteSelectedTOCItems();
 
 	MePubDocument*	mEPub;
 	MListBase*		mFileTree;

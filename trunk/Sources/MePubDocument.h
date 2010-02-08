@@ -95,6 +95,9 @@ class MePubDocument : public MDocument
 							const fs::path&		inFile,
 							const std::string&	inText);
 
+	MFile				GetFileForSrc(
+							const std::string&	inSrc);
+
 	virtual void		SetModified(
 							bool				inModified);
 

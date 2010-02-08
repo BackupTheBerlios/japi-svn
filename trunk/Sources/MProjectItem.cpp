@@ -908,6 +908,26 @@ string MProjectLib::GetLibraryName() const
 }
 
 // ---------------------------------------------------------------------------
+//	MProjectLib::SetOptional
+
+void MProjectLib::SetOptional(
+	bool		inOptional)
+{
+	mOptional = inOptional;
+	eStatusChanged(this);
+}
+
+// ---------------------------------------------------------------------------
+//	MProjectLib::SetShared
+
+void MProjectLib::SetShared(
+	bool		inShared)
+{
+	mShared = inShared;
+	eStatusChanged(this);
+}
+
+// ---------------------------------------------------------------------------
 //	MProjectResource::GetResourceName
 
 string MProjectResource::GetResourceName() const

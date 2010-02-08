@@ -52,6 +52,7 @@
 #include "MMessageWindow.h"
 
 #include "MXHTMLTools.h"
+#include "MePubServer.h"
 
 #define foreach BOOST_FOREACH
 
@@ -536,6 +537,11 @@ MePubDocument::MePubDocument(
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
+	try
+	{
+		MePubServer::Instance();
+	}
+	catch (...) {}
 }
 
 MePubDocument::MePubDocument()
@@ -547,6 +553,11 @@ MePubDocument::MePubDocument()
 	, mRoot("", nil)
 	, mTOC("", nil)
 {
+	try
+	{
+		MePubServer::Instance();
+	}
+	catch (...) {}
 }
 
 MePubDocument::~MePubDocument()
@@ -1560,6 +1571,15 @@ void MePubDocument::SetFileData(
 	}
 	
 	SetModified(true);
+}
+
+MFile MePubDocument::GetFileForSrc(
+	const string&		inSrc)
+{
+	fs::path path = mRootFile.branch_path() / inSrc;
+
+	MFile file(new MePubContentFile(this, path));
+	return file;
 }
 
 void MePubDocument::SetModified(

@@ -90,6 +90,7 @@
     <file>MePubDocument.cpp</file>
     <file>MePubItem.cpp</file>
     <file>MePubWindow.cpp</file>
+    <file>MePubServer.cpp</file>
     <file>MXHTMLTools.cpp</file>
    </group>
    <group name="Language">

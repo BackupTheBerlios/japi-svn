@@ -574,7 +574,8 @@ MDocWindow* MJapieApp::DisplayDocument(
 		}
 	}
 	
-	result->Select();
+	if (result != nil)
+		result->Select();
 	
 	return result;
 }
@@ -671,6 +672,7 @@ void MJapieApp::DoNewEPub()
 	
 	unique_ptr<MePubWindow> w(new MePubWindow());
 	w->Initialize(epub.get());
+	epub->SetModified(false);
 	epub.release();
 	w->Show();
 	w.release();
@@ -686,6 +688,7 @@ void MJapieApp::ImportOEB()
 		
 		unique_ptr<MePubWindow> w(new MePubWindow());
 		w->Initialize(epub.get());
+		epub->SetModified(false);
 		epub.release();
 		w->Show();
 		w.release();
@@ -758,6 +761,7 @@ void MJapieApp::OpenProject(
 	unique_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
 	unique_ptr<MProjectWindow> w(new MProjectWindow());
 	w->Initialize(project.get());
+	project->SetModified(false);
 	project.release();
 	w->Show();
 	w.release();
@@ -777,6 +781,7 @@ void MJapieApp::OpenEPub(
 		unique_ptr<MePubWindow> w(new MePubWindow());
 		
 		w->Initialize(epub.get());
+		epub->SetModified(false);
 		epub.release();
 
 		w->Show();

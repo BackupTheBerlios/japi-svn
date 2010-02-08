@@ -266,6 +266,9 @@ class MePubFileRow : public MListRow<
 	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
 
 	MProjectItem*	GetProjectItem() const				{ return mItem; }
+	void			SetProjectItem(
+						MProjectItem*	inItem)			{ mItem = inItem; mEPubItem = dynamic_cast<MePubItem*>(inItem); }
+	
 	MePubItem*		GetEPubItem() const					{ return mEPubItem; }
 	
 	MEventOut<void(MProjectItem*,const string&,const string&)>
@@ -358,6 +361,9 @@ class MePubTOCRow : public MListRow<
 	virtual bool	RowDropPossible() const		{ return dynamic_cast<MProjectGroup*>(mItem) != nil; }
 
 	MProjectItem*	GetProjectItem()			{ return mItem; }
+	void			SetProjectItem(
+						MProjectItem*	inItem)	{ mItem = inItem; mTOCItem = dynamic_cast<MePubTOCItem*>(inItem); }
+
 	MePubTOCItem*	GetTOCItem()				{ return mTOCItem; }
 
   private:
@@ -432,6 +438,8 @@ void MePubWindow::Initialize(
 	mFileTree->SetColumnAlignment(kePubFileDataSizeColumn, 1.0f);
 	AddItemsToList(mEPub->GetFiles(), nil, fileTree);
 	mFileTree->ExpandAll();
+	
+	eKeyPressEvent.Connect(fileTree->GetGtkWidget(), "key-press-event");
 
 	MList<MePubTOCRow>* tocTree = new MList<MePubTOCRow>(GetWidget(kTOCListViewID));
 	mTOCTree = tocTree;
@@ -445,6 +453,8 @@ void MePubWindow::Initialize(
 	tocTree->SetColumnTitle(kTOCClassColumn, _("Class"));
 	AddItemsToList(mEPub->GetTOC(), nil, tocTree);
 	tocTree->ExpandAll();
+
+	eKeyPressEvent.Connect(tocTree->GetGtkWidget(), "key-press-event");
 
 	// fill in the information fields
 	
@@ -506,68 +516,6 @@ void MePubWindow::AddItemsToList(
 		if (group != nil)
 			AddItemsToList(group, item, inList);
 	}
-}
-
-void MePubWindow::DocumentLoaded(
-	MDocument*		inDocument)
-{
-//	AddItemsToList(mProject->GetFiles(), nil, fileTree);
-	mFileTree->ExpandAll();
-
-//	MGtkTreeView filesTree(GetWidget(kFilesListViewID));
-//	filesTree.SetModel(nil);
-//	filesTree.SetModel(mFileTree->GetModel());
-//	filesTree.ExpandAll();
-//
-//	MGtkTreeView tocTree(GetWidget(kTOCListViewID));
-//	tocTree.SetModel(nil);
-//	tocTree.SetModel(mTOCTree->GetModel());
-//	tocTree.ExpandAll();
-
-	// fill in the information fields
-	
-	SetText(kDCIDViewID,			mEPub->GetDocumentID());
-	SetText(kDocIDSchemeViewID,		mEPub->GetDocumentIDScheme());
-
-	SetText(kDCTitleViewID,			mEPub->GetDublinCoreValue("title"));
-	SetText(kDCLanguageViewID,		mEPub->GetDublinCoreValue("language"));
-	SetText(kDCCreatorViewID,		mEPub->GetDublinCoreValue("creator"));
-	SetText(kDCPublisherViewID,		mEPub->GetDublinCoreValue("publisher"));
-	SetText(kDCDateViewID,			mEPub->GetDublinCoreValue("date"));
-	SetText(kDCDescriptionViewID,	mEPub->GetDublinCoreValue("description"));
-	SetText(kDCCoverageViewID,		mEPub->GetDublinCoreValue("coverage"));
-	SetText(kDCSourceViewID,		mEPub->GetDublinCoreValue("source"));
-	SetText(kDCRightsViewID,		mEPub->GetDublinCoreValue("rights"));
-	SetText(kDCSubjectViewID,		mEPub->GetDublinCoreValue("subject"));
-
-	bool useState = false;
-	MePubState state = {};
-	
-	if (Preferences::GetInteger("save state", 1))
-	{
-		ssize_t r = mEPub->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
-		useState = static_cast<uint32>(r) == kMePubStateSize;
-	}
-	
-	if (useState)
-	{
-		state.Swap();
-
-		if (state.mWindowSize[0] > 50 and state.mWindowSize[1] > 50 and
-			state.mWindowSize[0] < 2000 and state.mWindowSize[1] < 2000)
-		{
-			MRect r(
-				state.mWindowPosition[0], state.mWindowPosition[1],
-				state.mWindowSize[0], state.mWindowSize[1]);
-		
-			SetWindowPosition(r);
-		}
-		
-		MGtkNotebook book(GetWidget(kNoteBookID));
-		book.SetPage(state.mSelectedPanel);
-	}
-	
-	mEPub->SetModified(true);
 }
 
 bool MePubWindow::DoClose()
@@ -707,7 +655,13 @@ bool MePubWindow::OnKeyPressEvent(
 	
 	if (modifiers == 0 and (keyValue == GDK_BackSpace or keyValue == GDK_Delete))
 	{
-		DeleteSelectedItem();
+		MGtkNotebook notebook(GetWidget(kNoteBookID));
+
+		if (notebook.GetPage() == kFilesPageNr)
+			DeleteSelectedFileItems();
+		else
+			DeleteSelectedTOCItems();
+
 		result = true;
 	}
 	
@@ -810,15 +764,14 @@ void MePubWindow::InvokeTOCRow(
 	{
 		string source = tocItem->GetSrc();
 
-		MFile file(new MePubContentFile(mEPub, source));
-
+		MFile file(mEPub->GetFileForSrc(source));
 		MDocument* doc = MDocument::GetDocumentForFile(file);
-
-//		if (doc == nil)
-//		{
-//			doc = MDocument::Create<MTextDocument>(file);
-//			AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
-//		}
+	
+		if (doc == nil)
+		{
+			doc = MDocument::Create<MTextDocument>(file);
+			AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
+		}
 
 		gApp->DisplayDocument(doc);
 	}
@@ -914,8 +867,6 @@ void MePubWindow::ValueChanged(
 			mEPub->SetDocumentIDScheme(GetText(inID));
 			break;
 	}
-	
-	mEPub->SetModified(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -923,94 +874,94 @@ void MePubWindow::ValueChanged(
 
 void MePubWindow::CreateNew(
 	bool 		inDirectory)
-{//
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//	unique_ptr<MGtkTreeView> treeView;
-//	MProjectTree* model;
-//	MProjectGroup* group;
-//	GtkTreeViewColumn* column;
-//	GtkCellRenderer* cell;
-//
-//	unique_ptr<MProjectItem> newItem;
-//	
-//	if (notebook.GetPage() == kFilesPageNr)
-//	{
-//		treeView.reset(new MGtkTreeView(GetWidget(kFilesListViewID)));
-//		model = mFileTree;
-//		group = mEPub->GetFiles();
-//		column = mFileNameColumn;
-//		cell = mFileNameCell;
-//		if (inDirectory)
-//			newItem.reset(new MProjectGroup(_("New Directory"), group));
-//		else
-//			newItem.reset(new MePubItem(_("New File"), group));
-//	}
-//	else if (notebook.GetPage() == kTOCPageNr)
-//	{
-//		treeView.reset(new MGtkTreeView(GetWidget(kTOCListViewID)));
-//		model = mTOCTree;
-//		group = mEPub->GetTOC();
-//		column = mTOCTitleColumn;
-//		cell = mTOCTitleCell;
-//		newItem.reset(new MePubTOCItem(_("New TOC Entry"), group));
-//	}
-//	else
-//		return;
-//		
-//	int32 index = 0;
-//	
-//	GtkTreePath* path = nil;
-//	GtkTreeIter iter;
-//	
-//	if (not treeView->GetFirstSelectedRow(path))
-//		path = gtk_tree_path_new_from_indices(0, -1);
-//	
-//	if (model->GetIter(&iter, path))
-//	{
-//		MProjectItem* item = reinterpret_cast<MProjectItem*>(iter.user_data);
-//		group = item->GetParent();
-//		index = item->GetPosition();
-//	}
-//	
-//	group->AddProjectItem(newItem.get(), index);
-//	model->ProjectItemInserted(newItem.release());
-//	g_object_set(G_OBJECT(cell), "editable", true, nil);
-//	treeView->SetCursor(path, column, true);
-//	mEditingName = true;
-//	
-//	if (path != nil)
-//		gtk_tree_path_free(path);
-//	
-//	mEPub->SetModified(true);
+{
+	MGtkNotebook notebook(GetWidget(kNoteBookID));
+	
+	MListBase* list;
+	MListRowBase* row;
+	MProjectItem* item;
+	
+	if (notebook.GetPage() == kFilesPageNr)
+	{
+		list = mFileTree;
+		if (inDirectory)
+			item = new MePubItem(_("New File"), nil);
+		else
+			item = new MProjectGroup(_("New Folder"), nil);
+		row = new MePubFileRow(item, mEPub);
+	}
+	else
+	{
+		list = mTOCTree;
+		item = new MePubTOCItem(_("New TOC Entry"), nil);
+		row = new MePubTOCRow(item, mEPub);
+	}
+
+	MListRowBase* cursor = list->GetCursorRow();
+	list->InsertRow(row, cursor);
+	
+	if (notebook.GetPage() == kFilesPageNr)
+		DraggedFileRow(static_cast<MePubFileRow*>(row));
+	else
+		DraggedTOCRow(static_cast<MePubTOCRow*>(row));
+	
+	list->SelectRowAndStartEditingColumn(row, 0);
 }
 
-void MePubWindow::DeleteSelectedItem()
-{//
-//	MGtkNotebook notebook(GetWidget(kNoteBookID));
-//
-//	GtkTreePath* path = nil;
-//
-//	if (notebook.GetPage() == kFilesPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kFilesListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//
-//		GtkTreeIter iter;
-//		if (path != nil and mFileTree->GetIter(&iter, path))
-//			mFileTree->RemoveItem(reinterpret_cast<MProjectItem*>(iter.user_data));
-//	}
-//	else if (notebook.GetPage() == kTOCPageNr)
-//	{
-//		MGtkTreeView treeView(GetWidget(kTOCListViewID));
-//		treeView.GetFirstSelectedRow(path);
-//
-//		GtkTreeIter iter;
-//		if (path != nil and mTOCTree->GetIter(&iter, path))
-//			mTOCTree->RemoveItem(reinterpret_cast<MProjectItem*>(iter.user_data));
-//	}
-//
-//	if (path != nil)
-//		gtk_tree_path_free(path);
+void MePubWindow::DeleteSelectedFileItems()
+{
+	auto rows = static_cast<MList<MePubFileRow>*>(mFileTree)->GetSelectedRows();
+	
+	// first remove the project items from the MProject
+	MProjectGroup* files = mEPub->GetFiles();
+	
+	for (auto row = rows.begin(); row != rows.end(); ++row)
+	{
+		MProjectItem* item = (*row)->GetProjectItem();
+		if (files->Contains(item))	// be very paranoid
+		{
+			assert(item->GetParent() != nil);
+
+			item->GetParent()->RemoveProjectItem(item);
+			delete item;
+			
+			(*row)->SetProjectItem(nil);
+		}
+	}
+	
+	for (auto row = rows.begin(); row != rows.end(); ++row)
+	{
+		mFileTree->RemoveRow(*row);
+		delete *row;
+	}
+}
+
+void MePubWindow::DeleteSelectedTOCItems()
+{
+	auto rows = static_cast<MList<MePubTOCRow>*>(mTOCTree)->GetSelectedRows();
+	
+	// first remove the project items from the MProject
+	MProjectGroup* files = mEPub->GetTOC();
+	
+	for (auto row = rows.begin(); row != rows.end(); ++row)
+	{
+		MProjectItem* item = (*row)->GetProjectItem();
+		if (files->Contains(item))	// be very paranoid
+		{
+			assert(item->GetParent() != nil);
+
+			item->GetParent()->RemoveProjectItem(item);
+			delete item;
+			
+			(*row)->SetProjectItem(nil);
+		}
+	}
+	
+	for (auto row = rows.begin(); row != rows.end(); ++row)
+	{
+		mTOCTree->RemoveRow(*row);
+		delete *row;
+	}
 }
 
 void MePubWindow::SubjectChanged()
