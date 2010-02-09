@@ -667,7 +667,7 @@ void MePubDocument::ImportOEB(
 	MMessageList problems;
 	ParseOPF(fs::path("OEBPS"), *opf.root(), problems);
 
-	fs::path dir = inOEB.GetPath().branch_path();
+	fs::path dir = inOEB.GetPath().parent_path();
 	
 	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
@@ -849,7 +849,7 @@ void MePubDocument::ReadFile(
 
 	xml::document opf(content[mRootFile]);
 	
-	ParseOPF(mRootFile.branch_path(), *opf.root(), problems);
+	ParseOPF(mRootFile.parent_path(), *opf.root(), problems);
 	
 	// decrypt all the files, if we can
 	if (keyDecrypted and not encrypted.empty())
@@ -876,7 +876,7 @@ void MePubDocument::ReadFile(
 		}
 	}
 	else
-		mTOCFile = mRootFile.branch_path() / "book.ncx";
+		mTOCFile = mRootFile.parent_path() / "book.ncx";
 	
 	// and now fill in the data for the items we've found
 	
@@ -890,12 +890,12 @@ void MePubDocument::ReadFile(
 		
 		if (pi == nil)
 		{
-			if (item->first.leaf() == ".DS_Store")
+			if (item->first.filename() == ".DS_Store")
 				continue;
 			
 			// this item was not mentioned in the spine, add it here
-			MProjectGroup* group = mRoot.GetGroupForPath(item->first.branch_path());
-			epi = new MePubItem(item->first.leaf(), group);
+			MProjectGroup* group = mRoot.GetGroupForPath(item->first.parent_path());
+			epi = new MePubItem(item->first.filename(), group);
 			group->AddProjectItem(epi);
 			epi->GuessMediaType();
 		}
@@ -1101,7 +1101,7 @@ xml::node_ptr MePubDocument::CreateOPF(
 		
 		xml::node_ptr item_node(new xml::node("item"));
 		item_node->add_attribute("id", ePubItem->GetID());
-		item_node->add_attribute("href", relative_path(mRootFile.branch_path(), ePubItem->GetPath()).string());
+		item_node->add_attribute("href", relative_path(mRootFile.parent_path(), ePubItem->GetPath()).string());
 		if (not ePubItem->GetMediaType().empty())
 			item_node->add_attribute("media-type", ePubItem->GetMediaType());
 		manifest->add_child(item_node);
@@ -1111,7 +1111,7 @@ xml::node_ptr MePubDocument::CreateOPF(
 	
 	xml::node_ptr item_node(new xml::node("item"));
 	item_node->add_attribute("id", "ncx");
-	item_node->add_attribute("href", relative_path(mRootFile.branch_path(), mTOCFile).string());
+	item_node->add_attribute("href", relative_path(mRootFile.parent_path(), mTOCFile).string());
 	item_node->add_attribute("media-type", "application/x-dtbncx+xml");
 	manifest->add_child(item_node);
 	
@@ -1362,9 +1362,9 @@ void MePubDocument::ParseOPF(
 				}
 			}
 			
-			MProjectGroup* group = mRoot.GetGroupForPath(href.branch_path());
+			MProjectGroup* group = mRoot.GetGroupForPath(href.parent_path());
 			
-			unique_ptr<MePubItem> eItem(new MePubItem(href.leaf(), group));
+			unique_ptr<MePubItem> eItem(new MePubItem(href.filename(), group));
 			
 			string id = item.get_attribute("id");
 			if (id.empty() or not isalpha(id[0]))
@@ -1541,14 +1541,14 @@ void MePubDocument::SetFileData(
 	MProjectItem* pi = mRoot.GetItem(inFile);
 	if (pi == nil)
 	{
-		if (DisplayAlert("epub-item-does-not-exist", mFile.GetFileName(), inFile.leaf()) == 1)
+		if (DisplayAlert("epub-item-does-not-exist", mFile.GetFileName(), inFile.filename()) == 1)
 		{
-			MProjectGroup* folder = dynamic_cast<MProjectGroup*>(mRoot.GetItem(inFile.branch_path()));
+			MProjectGroup* folder = dynamic_cast<MProjectGroup*>(mRoot.GetItem(inFile.parent_path()));
 			if (folder == nil)
 				folder = dynamic_cast<MProjectGroup*>(mRoot.GetItem(0));
 			THROW_IF_NIL(folder);
 			
-			MePubItem* item = new MePubItem(inFile.leaf(), folder);
+			MePubItem* item = new MePubItem(inFile.filename(), folder);
 			item->GuessMediaType();
 			item->SetID("main");
 			item->SetOutOfDate(false);
@@ -1576,7 +1576,7 @@ void MePubDocument::SetFileData(
 MFile MePubDocument::GetFileForSrc(
 	const string&		inSrc)
 {
-	fs::path path = mRootFile.branch_path() / inSrc;
+	fs::path path = mRootFile.parent_path() / inSrc;
 
 	MFile file(new MePubContentFile(this, path));
 	return file;
@@ -1597,7 +1597,7 @@ void MePubDocument::CreateItem(
 	MProjectItem*&		outItem)
 {
 	fs::path path(MFile(inFile).GetPath());
-	string name = path.leaf();
+	string name = path.filename();
 	
 	if (not fs::exists(path))
 		THROW(("File %s does not exist?", inFile.c_str()));
@@ -1658,7 +1658,7 @@ void MePubDocument::ItemRenamed(
 	if (item != nil)
 	{
 		fs::path path = item->GetPath();
-		path = path.branch_path() / inOldName;
+		path = path.parent_path() / inOldName;
 		
 		MFile file(new MePubContentFile(this, path));
 		

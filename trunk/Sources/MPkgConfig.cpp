@@ -210,7 +210,7 @@ void GetPkgConfigResult(
 	LocateCommand("pkg-config", cmd);
 	
 	const char* args[] = {
-		cmd.leaf().c_str(),
+		cmd.filename().c_str(),
 		inInfo,
 		inPackage.c_str(),
 		NULL
@@ -239,7 +239,7 @@ void GetCompilerPaths(
 	// get the list of libraries search dirs
 	{
 		const char* args[] = {
-			cmd.leaf().c_str(),
+			cmd.filename().c_str(),
 			"-v",
 			NULL
 		};
@@ -277,7 +277,7 @@ void GetCompilerPaths(
 	// get the list of libraries search dirs
 	{
 		const char* args[] = {
-			cmd.leaf().c_str(),
+			cmd.filename().c_str(),
 			"-print-search-dirs",
 			NULL
 		};

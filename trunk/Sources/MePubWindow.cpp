@@ -81,36 +81,19 @@ enum {
 	kTOCPageNr
 };
 
-GtkListStore* CreateListStoreForMediaTypes()
-{
-	GtkListStore* model = gtk_list_store_new(1, G_TYPE_STRING);
-	GtkTreeIter iter;
-	
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "application/xhtml+xml", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "application/xml", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "application/x-dtbncx+xml", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "application/x-dtbook+xml", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "image/gif", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "image/jpeg", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "image/png", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "image/svg+xml", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "text/css", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "text/x-oeb1-css", -1);
-	gtk_list_store_append(model, &iter);
-	gtk_list_store_set(model, &iter, 0, "text/x-oeb1-document", -1);
-	
-	return model;
-}
+const char* kKnownMediaTypes[] = {
+	"application/xhtml+xml",
+	"application/xml",
+	"application/x-dtbncx+xml",
+	"application/x-dtbook+xml",
+	"image/gif",
+	"image/jpeg",
+	"image/png",
+	"image/svg+xml",
+	"text/css",
+	"text/x-oeb1-css",
+	"text/x-oeb1-document"
+};
 
 }
 
@@ -144,7 +127,7 @@ class MePubFileRow : public MListRow<
 	MePubFileFields::name,		string,
 	MePubFileFields::id,		string,
 	MePubFileFields::linear,	bool,
-	MePubFileFields::mediatype,	string,
+	MePubFileFields::mediatype,	vector<string>,
 	MePubFileFields::size,		string,
 	MePubFileFields::dirty,		GdkPixbuf*
 >
@@ -422,6 +405,9 @@ void MePubWindow::Initialize(
 	
 	MDocWindow::Initialize(inDocument);
 	
+	vector<string> knownMediaTypes(
+		kKnownMediaTypes, kKnownMediaTypes + sizeof(kKnownMediaTypes) / sizeof(const char*));
+	
 	MList<MePubFileRow>* fileTree = new MList<MePubFileRow>(GetWidget(kFilesListViewID));
 	mFileTree = fileTree;
 	mFileTree->AllowMultipleSelectedItems();
@@ -434,12 +420,15 @@ void MePubWindow::Initialize(
 	mFileTree->SetColumnTitle(kePubFileIDColumn, _("ID"));
 	mFileTree->SetColumnTitle(kePubFileLinearColumn, _("Linear"));
 	mFileTree->SetColumnTitle(kePubFileMediaTypeColumn, _("Media-Type"));
+	mFileTree->SetListOfOptionsForColumn(kePubFileMediaTypeColumn, knownMediaTypes);
 	mFileTree->SetColumnTitle(kePubFileDataSizeColumn, _("Size"));
 	mFileTree->SetColumnAlignment(kePubFileDataSizeColumn, 1.0f);
 	AddItemsToList(mEPub->GetFiles(), nil, fileTree);
 	mFileTree->ExpandAll();
 	
 	eKeyPressEvent.Connect(fileTree->GetGtkWidget(), "key-press-event");
+
+	eKeyPressEvent.Connect(G_OBJECT(fileTree->GetGtkWidget()), "key-press-event");
 
 	MList<MePubTOCRow>* tocTree = new MList<MePubTOCRow>(GetWidget(kTOCListViewID));
 	mTOCTree = tocTree;
@@ -676,9 +665,8 @@ void MePubWindow::SelectFileRow(
 {
 	MePubItem* ePubItem = inRow->GetEPubItem();
 	
-	mFileTree->SetColumnEditable(kePubFileNameColumn, ePubItem != nil);
+	mFileTree->SetColumnEditable(kePubFileNameColumn, true);
 	mFileTree->SetColumnEditable(kePubFileIDColumn, ePubItem != nil);
-//	mFileTree->SetColumnToggleable(kePubFileLinearColumn, ePubItem != nil);
 	mFileTree->SetColumnEditable(kePubFileMediaTypeColumn, ePubItem != nil);
 }
 
@@ -727,7 +715,7 @@ void MePubWindow::DraggedFileRow(
 		MProjectGroup* newGroup;
 		
 		if (parent != nil)
-			newGroup = dynamic_cast<MProjectGroup*>(parent->GetEPubItem());
+			newGroup = dynamic_cast<MProjectGroup*>(parent->GetProjectItem());
 		else
 			newGroup = mEPub->GetFiles();
 
@@ -885,9 +873,9 @@ void MePubWindow::CreateNew(
 	{
 		list = mFileTree;
 		if (inDirectory)
-			item = new MePubItem(_("New File"), nil);
-		else
 			item = new MProjectGroup(_("New Folder"), nil);
+		else
+			item = new MePubItem(_("New File"), nil);
 		row = new MePubFileRow(item, mEPub);
 	}
 	else

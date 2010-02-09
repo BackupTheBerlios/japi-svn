@@ -10,7 +10,6 @@ Te doen
 	- zoeken in alle ePub items
 	- revert op ePub werkt nog niet?
 	- guide
-	- rename na een tweede klik op een item titel
 	- TOC generator
 	- plaatjes laten zien
 	? adobe page dinges

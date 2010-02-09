@@ -139,7 +139,8 @@ class MListColumnEditedListener
 						MListBase*			inList,
 						GtkCellRenderer*	inRenderer,
 						bool				inListenToToggle,
-						bool				inListenToEdited)
+						bool				inListenToEdited,
+						bool				inListenToChanged = false)
 						: eToggled(this, &MListColumnEditedListener::Toggled)
 						, eEdited(this, &MListColumnEditedListener::Edited)
 						, mColumnNr(inColumnNr)
@@ -149,6 +150,8 @@ class MListColumnEditedListener
 							eToggled.Connect(G_OBJECT(inRenderer), "toggled");
 						if (inListenToEdited)
 							eEdited.Connect(G_OBJECT(inRenderer), "edited");
+						if (inListenToChanged)
+							eEdited.Connect(G_OBJECT(inRenderer), "changed");
 					}
 
   private:
@@ -397,6 +400,43 @@ void MListBase::SetColumnToggleable(
 {
 	if (inColumnNr < mRenderers.size())
 		 g_object_set(G_OBJECT(mRenderers[inColumnNr]), "activatable", inToggleable, nil);
+}
+
+void MListBase::SetListOfOptionsForColumn(
+	uint32					inColumnNr,
+	const vector<string>&	inOptions)
+{
+	if (inColumnNr >= mRenderers.size())
+		THROW(("Invalid column specified for SetListOfOptionsForColumn"));
+	
+	GtkListStore* model = gtk_list_store_new(1, G_TYPE_STRING);
+	
+	for (auto option = inOptions.begin(); option != inOptions.end(); ++option)
+	{
+		GtkTreeIter iter;
+		gtk_list_store_append(model, &iter);
+		gtk_list_store_set(model, &iter, 0, option->c_str(), -1);
+	}
+
+	g_object_set(G_OBJECT(mRenderers[inColumnNr]),
+		"text-column", 0,
+		"editable", true,
+		"has-entry", true,
+		"model", model,
+		nil);
+	
+//	GtkTreeViewColumn* column = gtk_tree_view_get_column(GTK_TREE_VIEW(GetGtkWidget()), inColumnNr);
+//	gtk_cell_layout_clear(GTK_CELL_LAYOUT(column));
+//
+//	GtkCellRenderer* renderer = gtk_cell_renderer_combo_new();
+//    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(column), renderer, TRUE);
+//    gtk_tree_view_column_set_attributes(column, renderer, "text", inColumnNr, nil);
+//	g_object_set(G_OBJECT(renderer), "text-column", 0, "editable", true,
+//		"has-entry", true, "model", model, nil);
+//
+//	delete mListeners[inColumnNr];
+//	mListeners[inColumnNr] = new MListColumnEditedListener(inColumnNr, this, renderer,
+//		false, false, true);
 }
 
 void MListBase::CollapseRow(

@@ -4203,7 +4203,7 @@ void MTextDocument::Execute()
 				mShell->SetCWD(d);
 			}
 			else
-				mShell->SetCWD(mFile.GetPath().branch_path().string());
+				mShell->SetCWD(mFile.GetPath().parent_path().string());
 		}
 		
 		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);

@@ -634,37 +634,36 @@ MProjectItem* MProjectGroup::GetItem(
 MProjectItem* MProjectGroup::GetItem(
 	const fs::path&		inPath) const
 {
-	const MProjectItem* result;
+	const MProjectItem* result = this;
+	const MProjectGroup* group = this;
 	
-	fs::path::iterator pi = inPath.begin();
-	
-	if (pi == inPath.end())
-		result = this;
-	else
+	for (fs::path::iterator pi = inPath.begin(); pi != inPath.end(); ++pi)
 	{
-		const MProjectGroup* group = this;
+		result = group;
 		
-		while (group != nil and pi != inPath.end())
+		if (group == nil)
+			break;
+		
+		if (*pi == ".")
+			continue;
+		
+		if (*pi == "..")
 		{
-			vector<MProjectItem*>::const_iterator item = find_if(
-				group->mItems.begin(), group->mItems.end(), boost::bind(&MProjectItem::GetName, _1) == *pi);
-		
-			if (item == group->mItems.end())
-			{
-				result = nil;
-				break;
-			}
-		
-			++pi;
-		
-			group = dynamic_cast<MProjectGroup*>(*item);
-			if (group != nil)
-				result = group;
-			else if (pi != inPath.end())
-				THROW(("Item/group mismatch for %s", (*item)->GetName().c_str()));
-			else
-				result = *item;
+			result = group = group->GetParent();
+			continue;
 		}
+		
+		vector<MProjectItem*>::const_iterator item = find_if(
+			group->mItems.begin(), group->mItems.end(), boost::bind(&MProjectItem::GetName, _1) == *pi);
+	
+		if (item == group->mItems.end())
+		{
+			result = nil;
+			break;
+		}
+	
+		result = *item;
+		group = dynamic_cast<const MProjectGroup*>(result);
 	}
 	
 	return const_cast<MProjectItem*>(result);
@@ -846,7 +845,7 @@ uint32 MProjectCpFile::GetDataSize() const
 			
 			while (iter.Next(p))
 			{
-				if (p.leaf() == ".svn" or FileNameMatches("*~.nib", p))
+				if (p.filename() == ".svn" or FileNameMatches("*~.nib", p))
 					continue;
 	
 				result += fs::file_size(p);

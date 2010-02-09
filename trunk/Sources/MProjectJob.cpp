@@ -373,16 +373,16 @@ void MProjectCopyFileJob::CopyFilesRecursive(
 	
 	while (iter.Next(p))
 	{
-		if (p.leaf() == ".svn" or FileNameMatches("*~.nib", p))
+		if (p.filename() == ".svn" or FileNameMatches("*~.nib", p))
 			continue;
 		
-		mProject->SetStatus(string("Copying ") + p.leaf(), true);
+		mProject->SetStatus(string("Copying ") + p.filename(), true);
 
 		if (is_directory(p))
-			CopyFilesRecursive(p, inDstDir / p.leaf());
+			CopyFilesRecursive(p, inDstDir / p.filename());
 		else
 		{
-			fs::path dstFile = inDstDir / p.leaf();
+			fs::path dstFile = inDstDir / p.filename();
 			
 			if (fs::exists(dstFile))
 				fs::remove(dstFile);
@@ -406,7 +406,7 @@ void MProjectCopyFileJob::Execute()
 	}	
 	else
 	{
-		mProject->SetStatus(string("Copying ") + mSrcFile.leaf(), true);
+		mProject->SetStatus(string("Copying ") + mSrcFile.filename(), true);
 
 		if (fs::exists(mDstFile))
 			fs::remove(mDstFile);

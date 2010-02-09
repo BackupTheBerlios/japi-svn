@@ -46,7 +46,7 @@ struct MePubContentFile : public MFileImp
 						
 	virtual std::string	GetFileName() const
 						{
-							return mPath.leaf();
+							return mPath.filename();
 						}
 						
 	virtual bool		IsLocal() const
@@ -56,7 +56,7 @@ struct MePubContentFile : public MFileImp
 						
 	virtual MFileImp*	GetParent() const
 						{
-							return new MePubContentFile(mEPub, mPath.branch_path());
+							return new MePubContentFile(mEPub, mPath.parent_path());
 						}
 						
 	virtual MFileImp*	GetChild(const fs::path& inSubPath) const

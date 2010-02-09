@@ -269,4 +269,10 @@ void NormalizePath(
 void NormalizePath(
 	fs::path&			ioPath);
 
+void URLDecode(
+	std::string&		ioURL);
+
+void URLEncode(
+	std::string&		ioURL);
+
 #endif

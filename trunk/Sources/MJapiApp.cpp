@@ -349,7 +349,7 @@ void MJapieApp::UpdateTemplateMenu(
 		
 		fs::path file;
 		while (iter.Next(file))
-			inMenu->AppendItem(file.leaf(), cmd_OpenTemplate);
+			inMenu->AppendItem(file.filename(), cmd_OpenTemplate);
 	}
 }
 
@@ -364,7 +364,7 @@ void MJapieApp::UpdateScriptsMenu(
 		
 		fs::path file;
 		while (iter.Next(file))
-			inMenu->AppendItem(file.leaf(), cmd_ApplyScript);
+			inMenu->AppendItem(file.filename(), cmd_ApplyScript);
 	}
 }
 
@@ -631,7 +631,7 @@ void MJapieApp::DoNewProject()
 		fs::create_directories(p / "src");
 		
 		// create the project path
-		fs::path projectFile = p / (p.leaf() + ".prj");
+		fs::path projectFile = p / (p.filename() + ".prj");
 		
 		// and file
 		fs::ofstream file(projectFile);
@@ -1253,7 +1253,7 @@ void InstallJapi(
 			continue;
 		
 		fs::path localeDir =
-			applicationsDir.branch_path() / "japi" / "locale" / l->name() / "LC_MESSAGES";
+			applicationsDir.parent_path() / "japi" / "locale" / l->name() / "LC_MESSAGES";
 		
 		if (not fs::exists(localeDir))
 		{
@@ -1292,7 +1292,7 @@ int main(int argc, char* argv[])
 		{
 			exePath[r] = 0;
 			gExecutablePath = fs::system_complete(exePath);
-			gPrefixPath = gExecutablePath.branch_path();
+			gPrefixPath = gExecutablePath.parent_path();
 		}
 		
 		if (not fs::exists(gExecutablePath))

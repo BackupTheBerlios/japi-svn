@@ -98,7 +98,7 @@ MProject::MProject(
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
 	, mProjectFile(inProjectFile.GetPath())
-	, mProjectDir(mProjectFile.branch_path())
+	, mProjectDir(mProjectFile.parent_path())
 	, mProjectItems("", nil)
 	, mPackageItems("", nil)
 	, mStdErrWindow(nil)
@@ -128,7 +128,7 @@ void MProject::ReadFile(
 	if (fs::extension(mProjectFile) == ".prj")
 		mName = fs::basename(mProjectFile);
 	else
-		mName = mProjectFile.leaf();
+		mName = mProjectFile.filename();
 	
 	xml::document doc(inFile);
 	Read(*doc.root());
@@ -228,8 +228,8 @@ void MProject::ReadResources(
 				fs::path p(fileName);
 				
 				unique_ptr<MProjectResource> projectFile(
-					new MProjectResource(p.leaf(), inGroup,
-						mProjectDir / mProjectInfo.mResourcesDir / p.branch_path()));
+					new MProjectResource(p.filename(), inGroup,
+						mProjectDir / mProjectInfo.mResourcesDir / p.parent_path()));
 
 				inGroup->AddProjectItem(projectFile.release());
 			}
@@ -295,7 +295,7 @@ void MProject::ReadFiles(
 					unique_ptr<MProjectFile> projectFile;
 					
 					if (LocateFile(fileName, true, filePath))
-						projectFile.reset(new MProjectFile(fileName, inGroup, filePath.branch_path()));
+						projectFile.reset(new MProjectFile(fileName, inGroup, filePath.parent_path()));
 					else
 						projectFile.reset(new MProjectFile(fileName, inGroup, fs::path()));
 			
@@ -1093,7 +1093,7 @@ MProjectJob* MProject::CreateCompileJob(
 	argv.push_back(inFile->GetPath().string());
 
 	MProjectExecJob* result = new MProjectCompileJob(
-		string("Compiling ") + inFile->GetPath().leaf(), this, argv, inFile);
+		string("Compiling ") + inFile->GetPath().filename(), this, argv, inFile);
 	result->eStdErr.SetProc(this, &MProject::StdErrIn);
 	return result;
 }
@@ -1278,12 +1278,12 @@ MProjectJob* MProject::CreatePreprocessJob(
 	argv.push_back(path.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Preprocessing ") + path.leaf(), this, argv, inFile);
+		string("Preprocessing ") + path.filename(), this, argv, inFile);
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
-	output->SetFileNameHint(path.leaf() + " # preprocessed");
+	output->SetFileNameHint(path.filename() + " # preprocessed");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
@@ -1325,12 +1325,12 @@ MProjectJob* MProject::CreateDisassembleJob(
 	argv.push_back(path.string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Disassembling ") + path.leaf(), this, argv, inFile);
+		string("Disassembling ") + path.filename(), this, argv, inFile);
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
-	output->SetFileNameHint(path.leaf() + " # disassembled");
+	output->SetFileNameHint(path.filename() + " # disassembled");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
 	gApp->DisplayDocument(output);
@@ -1369,7 +1369,7 @@ MProjectJob* MProject::CreateCheckSyntaxJob(
 	argv.push_back(inFile->GetPath().string());
 
 	MProjectExecJob* job = new MProjectCompileJob(
-		string("Checking syntax of ") + inFile->GetPath().leaf(), this, argv, inFile);
+		string("Checking syntax of ") + inFile->GetPath().filename(), this, argv, inFile);
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
 	return job;
@@ -1646,7 +1646,7 @@ void MProject::ResearchForFiles()
 		fs::path filePath;
 		
 		if (LocateFile(f->GetName(), true, filePath))
-			f->SetParentDir(filePath.branch_path());
+			f->SetParentDir(filePath.parent_path());
 		else
 			f->SetParentDir(fs::path());
 	}
@@ -1754,7 +1754,7 @@ MProjectItem* MProject::CreateFileItem(
 	if (GetProjectFileForPath(inFile))
 		THROW(("File is already part of this project"));
 	
-	string name = inFile.leaf();
+	string name = inFile.filename();
 	
 	assert (not fs::is_directory(inFile));
 
@@ -1767,17 +1767,17 @@ MProjectItem* MProject::CreateFileItem(
 		{
 			if (FileNameMatches("*.a;*.so;*.dylib", inFile))
 			{
-				int r = DisplayAlert("ask-add-lib-as-link", inFile.leaf());
+				int r = DisplayAlert("ask-add-lib-as-link", inFile.filename());
 				
 				if (r == 1)
-					projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+					projectFile.reset(new MProjectFile(name, nil, inFile.parent_path()));
 				else if (r == 2)
 				{
 					// user chose 'Link' so we create a link statement
 					
 					bool shared = true;
 					
-					string linkName = inFile.leaf();
+					string linkName = inFile.filename();
 					if (ba::starts_with(linkName, "lib"))
 						linkName.erase(0, 3);
 
@@ -1795,7 +1795,7 @@ MProjectItem* MProject::CreateFileItem(
 				}
 			}
 			else
-				projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+				projectFile.reset(new MProjectFile(name, nil, inFile.parent_path()));
 		}
 		else
 			THROW(("Cannot add file %s since another file with that name but in another location is already present.",
@@ -1803,7 +1803,7 @@ MProjectItem* MProject::CreateFileItem(
 	}
 	else
 	{
-		fs::path dir = relative_path(mProjectDir, inFile.branch_path());
+		fs::path dir = relative_path(mProjectDir, inFile.parent_path());
 		
 		if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
 		{
@@ -1815,7 +1815,7 @@ MProjectItem* MProject::CreateFileItem(
 			if (not LocateFile(name, true, filePath))
 				THROW(("Cannot find file, something is wrong, sorry..."));
 			
-			projectFile.reset(new MProjectFile(name, nil, inFile.branch_path()));
+			projectFile.reset(new MProjectFile(name, nil, inFile.parent_path()));
 		}
 	}
 	
@@ -1832,7 +1832,7 @@ void MProject::CreateFileItem(
 		THROW(("You can only add local files to a project"));
 	
 	fs::path p = url.GetPath();
-	string name = p.leaf();
+	string name = p.filename();
 	
 	if (fs::is_directory(p))
 	{
@@ -1867,17 +1867,17 @@ void MProject::CreateFileItem(
 			{
 				if (FileNameMatches("*.a;*.so;*.dylib", p))
 				{
-					int r = DisplayAlert("ask-add-lib-as-link", p.leaf());
+					int r = DisplayAlert("ask-add-lib-as-link", p.filename());
 					
 					if (r == 1)
-						projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+						projectFile.reset(new MProjectFile(name, inGroup, p.parent_path()));
 					else if (r == 2)
 					{
 						// user chose 'Link' so we create a link statement
 						
 						bool shared = true;
 						
-						string linkName = p.leaf();
+						string linkName = p.filename();
 						if (ba::starts_with(linkName, "lib"))
 							linkName.erase(0, 3);
 
@@ -1895,7 +1895,7 @@ void MProject::CreateFileItem(
 					}
 				}
 				else
-					projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+					projectFile.reset(new MProjectFile(name, inGroup, p.parent_path()));
 			}
 			else
 				THROW(("Cannot add file %s since another file with that name but in another location is already present.",
@@ -1903,7 +1903,7 @@ void MProject::CreateFileItem(
 		}
 		else
 		{
-			fs::path dir = relative_path(mProjectDir, p.branch_path());
+			fs::path dir = relative_path(mProjectDir, p.parent_path());
 			
 			if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
 			{
@@ -1912,7 +1912,7 @@ void MProject::CreateFileItem(
 				if (not LocateFile(name, true, filePath))
 					THROW(("Cannot find file, something is wrong, sorry..."));
 				
-				projectFile.reset(new MProjectFile(name, inGroup, p.branch_path()));
+				projectFile.reset(new MProjectFile(name, inGroup, p.parent_path()));
 			}
 		}
 		
@@ -1930,7 +1930,7 @@ void MProject::CreateResourceItem(
 		THROW(("You can only add local files to a project"));
 	
 	fs::path p = url.GetPath();
-	string name = p.leaf();
+	string name = p.filename();
 	
 	if (fs::is_directory(p))
 	{
@@ -1961,21 +1961,21 @@ void MProject::CreateResourceItem(
 		
 		fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
 		filePath = relative_path(rsrcDir, p);
-		outItem = new MProjectResource(filePath.leaf(), inGroup, rsrcDir / filePath.branch_path());
+		outItem = new MProjectResource(filePath.filename(), inGroup, rsrcDir / filePath.parent_path());
 	}
 }
 
 MProjectItem* MProject::CreateRsrcItem(
 	const fs::path&		inFile)
 {
-	string name = inFile.leaf();
+	string name = inFile.filename();
 	
 	unique_ptr<MProjectItem> projectFile;
 	fs::path filePath;
 	
 	fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
 	filePath = relative_path(rsrcDir, inFile);
-	return new MProjectResource(filePath.leaf(), nil, rsrcDir / filePath.branch_path());
+	return new MProjectResource(filePath.filename(), nil, rsrcDir / filePath.parent_path());
 }
 
 bool MProject::IsValidItem(

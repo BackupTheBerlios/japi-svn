@@ -12,6 +12,8 @@
 
 #include "MePubServer.h"
 #include "MePubDocument.h"
+#include "MePubItem.h"
+#include "MFile.h"
 
 using namespace std;
 using namespace zeep;
@@ -42,10 +44,15 @@ void MePubServer::handle_request(
 {
 	rep = http::reply::stock_reply(http::not_found);
 	
+cout << req.method << " -> " << req.uri << endl;
+
 	if (req.method == "GET")
 	{
 		// start by sanitizing the request's URI
 		string uri = req.uri;
+		URLDecode(uri);
+
+		log() << '"' << uri << "\" ";
 
 		// strip off the http part including hostname and such
 		if (ba::starts_with(uri, "http://"))
@@ -69,13 +76,19 @@ void MePubServer::handle_request(
 			index_h1->content("List of open ePub documents");
 			index_body->add_child(index_h1);
 			
+			xml::node_ptr ul(new xml::node("ul"));
+			index_body->add_child(ul);
+			
 			MePubDocument* doc = MePubDocument::GetFirstEPubDocument();
 			while (doc != nil)
 			{
+				xml::node_ptr li(new xml::node("li"));
+				ul->add_child(li);
+				
 				xml::node_ptr index_a(new xml::node("a"));
-				index_a->add_attribute("href", doc->GetDocumentID());
-				index_a->content(doc->GetFile().GetPath().leaf());
-				index_body->add_child(index_a);
+				index_a->add_attribute("href", doc->GetDocumentID() + '/');
+				index_a->content(doc->GetFile().GetPath().filename());
+				li->add_child(index_a);
 				
 				doc = doc->GetNextEPubDocument();
 			}
@@ -109,32 +122,50 @@ void MePubServer::handle_request(
 			{
 				// listing of first level of ePub document
 				
-				MProjectItem* root = doc->GetFiles();
+				fs::path itemPath = relative_path(fs::path(docID), path);
+				MProjectItem* item = doc->GetFiles()->GetItem(itemPath);
 
-				rep = http::reply::stock_reply(http::ok);
-				xml::node_ptr index_html(new xml::node("html"));
-				xml::node_ptr index_body(new xml::node("body"));
-				index_html->add_child(index_body);
-				xml::node_ptr index_h1(new xml::node("h1"));
-				index_h1->content("List of files in epub document");
-				index_body->add_child(index_h1);
-				
-//				while (doc != nil)
-//				{
-//					xml::node_ptr index_a(new xml::node("a"));
-//					index_a->add_attribute("href", doc->GetDocumentID());
-//					index_a->content(doc->GetFile().GetPath().leaf());
-//					index_body->add_child(index_a);
-//					
-//					doc = doc->GetNextEPubDocument();
-//				}
-				
-				rep.set_content(index_html);
-				if (rep.headers[1].name == "Content-Type")
-					rep.headers[1].value = "text/html; charset=utf-8";
-				
-				log() << "index of epub documents";
+				if (dynamic_cast<MProjectGroup*>(item) != nil)
+				{
+					MProjectGroup* group = static_cast<MProjectGroup*>(item);
+					
+					rep = http::reply::stock_reply(http::ok);
+					xml::node_ptr index_html(new xml::node("html"));
+					xml::node_ptr index_body(new xml::node("body"));
+					index_html->add_child(index_body);
+					xml::node_ptr index_h1(new xml::node("h1"));
+					index_h1->content("List of files in epub document");
+					index_body->add_child(index_h1);
 
+					xml::node_ptr ul(new xml::node("ul"));
+					index_body->add_child(ul);
+					
+					for (auto file = group->GetItems().begin(); file != group->GetItems().end(); ++file)
+					{
+						xml::node_ptr li(new xml::node("li"));
+						ul->add_child(li);
+						
+						xml::node_ptr index_a(new xml::node("a"));
+
+						if (dynamic_cast<MProjectGroup*>(*file) != nil)
+							index_a->add_attribute("href", (*file)->GetName() + '/');
+						else
+							index_a->add_attribute("href", (*file)->GetName());
+
+						index_a->content((*file)->GetName());
+						li->add_child(index_a);
+					}
+					
+					rep.set_content(index_html);
+					if (rep.headers[1].name == "Content-Type")
+						rep.headers[1].value = "text/html; charset=utf-8";
+				}
+				else if (dynamic_cast<MePubItem*>(item) != nil)
+				{
+					MePubItem* epubItem = static_cast<MePubItem*>(item);
+					
+					rep.set_content(epubItem->GetData(), epubItem->GetMediaType());
+				}
 			}
 		}
 	}

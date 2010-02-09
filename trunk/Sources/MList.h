@@ -27,15 +27,16 @@ class MList;
 class MListBase;
 class MListColumnEditedListener;
 
-typedef std::tuple<GtkCellRenderer*,const char*,bool,bool>	MGtkRendererInfo;
+typedef std::tuple<GtkCellRenderer*,const char*,bool,bool,bool>	MGtkRendererInfo;
 
 template<typename T>
 struct g_type_mapped
 {
+	typedef T					value_type;
 	static const GType g_type = G_TYPE_STRING;
-	enum { can_toggle = false, can_edit = false };
+	enum { can_toggle = false, can_edit = false, can_change = false };
 	static MGtkRendererInfo	GetRenderer()
-		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit); }
+		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit, can_change); }
 	static void to_g_value(GValue& gv, T v)
 	{
 		g_value_set_string(&gv, boost::lexical_cast<std::string>(v).c_str());
@@ -44,21 +45,36 @@ struct g_type_mapped
 
 template<> struct g_type_mapped<std::string>
 {
+	typedef std::string			value_type;
 	static const GType g_type = G_TYPE_STRING;
-	enum { can_toggle = false, can_edit = true };
+	enum { can_toggle = false, can_edit = true, can_change = false };
 	static MGtkRendererInfo	GetRenderer()
-		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit); }
+		{ return MGtkRendererInfo(gtk_cell_renderer_text_new(), "text", can_toggle, can_edit, can_change); }
 	static void to_g_value(GValue& gv, const std::string& s)
 	{
 		g_value_set_string(&gv, s.c_str());
 	}
 };
+template<> struct g_type_mapped<std::vector<std::string>>
+{
+	typedef std::string			value_type;
+	static const GType g_type = G_TYPE_STRING;
+	enum { can_toggle = false, can_edit = true, can_change = true };
+	static MGtkRendererInfo	GetRenderer()
+		{ return MGtkRendererInfo(gtk_cell_renderer_combo_new(), "text", can_toggle, can_edit, can_change); }
+	static void to_g_value(GValue& gv, const std::string& s)
+	{
+		g_value_set_string(&gv, s.c_str());
+	}
+	static GtkListStore* get_options();
+};
 template<> struct g_type_mapped<bool>
 {
+	typedef bool				value_type;
 	static const GType g_type = G_TYPE_BOOLEAN;
-	enum { can_toggle = true, can_edit = false };
+	enum { can_toggle = true, can_edit = false, can_change = false };
 	static MGtkRendererInfo	GetRenderer()
-		{ return MGtkRendererInfo(gtk_cell_renderer_toggle_new(), "active", can_toggle, can_edit); }
+		{ return MGtkRendererInfo(gtk_cell_renderer_toggle_new(), "active", can_toggle, can_edit, can_change); }
 	static void to_g_value(GValue& gv, bool v)
 	{
 		g_value_set_boolean(&gv, v);
@@ -66,10 +82,11 @@ template<> struct g_type_mapped<bool>
 };
 template<> struct g_type_mapped<GdkPixbuf*>
 {
+	typedef GdkPixbuf*			value_type;
 	static const GType g_type = G_TYPE_OBJECT;
-	enum { can_toggle = false, can_edit = false };
+	enum { can_toggle = false, can_edit = false, can_change = false };
 	static MGtkRendererInfo	GetRenderer()
-		{ return MGtkRendererInfo(gtk_cell_renderer_pixbuf_new(), "pixbuf", can_toggle, can_edit); }
+		{ return MGtkRendererInfo(gtk_cell_renderer_pixbuf_new(), "pixbuf", can_toggle, can_edit, can_change); }
 	static void to_g_value(GValue& gv, GdkPixbuf* pixbuf)
 	{
 		g_value_set_object(&gv, pixbuf);
@@ -208,7 +225,7 @@ class MListRow : public MListRowBase
 						{
 							if (inColumnNr == 0)
 							{
-								T v;
+								typename g_type_mapped<T>::value_type v;
 								inProvider->GetData(N(), v);
 								g_value_init(&outValue, g_type_mapped<T>::g_type);
 								g_type_mapped<T>::to_g_value(outValue, v);
@@ -301,6 +318,12 @@ class MListBase : public MView
 	void			SetColumnToggleable(
 						uint32				inColumnNr,
 						bool				inToggleable);
+
+					// turn column into a popup/combo item
+	void			SetListOfOptionsForColumn(
+						uint32				inColumnNr,
+						const std::vector<std::string>&
+											inOptions);
 
 	void			SelectRowAndStartEditingColumn(
 						MListRowBase*		inRow,

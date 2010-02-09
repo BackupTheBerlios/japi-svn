@@ -66,51 +66,6 @@ inline char ConvertHex(
 	return char(value);
 }
 
-void URLEncode(
-	string&		ioPath)
-{
-	string path;
-	
-	swap(path, ioPath);
-	
-	for (unsigned int i = 0; i < path.length(); ++i)
-	{
-		unsigned char a = (unsigned char)path[i];
-		if (not (a >= 32 and a < 128 and (kURLAcceptable[a - 32] & 4)))
-		{
-			ioPath += '%';
-			ioPath += kHexChars[a >> 4];
-			ioPath += kHexChars[a & 15];
-		}
-		else
-			ioPath += path[i];
-	}
-}
-
-void URLDecode(
-	string&		ioPath)
-{
-	vector<char> buf(ioPath.length() + 1);
-	char* r = &buf[0];
-	
-	for (string::iterator p = ioPath.begin(); p != ioPath.end(); ++p)
-	{
-		char q = *p;
-
-		if (q == '%' and ++p != ioPath.end())
-		{
-			q = (char) (ConvertHex(*p) * 16);
-
-			if (++p != ioPath.end())
-				q = (char) (q + ConvertHex(*p));
-		}
-
-		*r++ = q;
-	}
-	
-	ioPath.assign(&buf[0], r);
-}
-
 // ------------------------------------------------------------------
 //
 //  Three different implementations of extended attributes...
@@ -199,6 +154,53 @@ void write_attribute(const fs::path& inPath, const char* inName, const void* inD
 
 #endif
 	
+}
+
+// --------------------------------------------------------------------
+
+void URLEncode(
+	string&		ioPath)
+{
+	string path;
+	
+	swap(path, ioPath);
+	
+	for (unsigned int i = 0; i < path.length(); ++i)
+	{
+		unsigned char a = (unsigned char)path[i];
+		if (not (a >= 32 and a < 128 and (kURLAcceptable[a - 32] & 4)))
+		{
+			ioPath += '%';
+			ioPath += kHexChars[a >> 4];
+			ioPath += kHexChars[a & 15];
+		}
+		else
+			ioPath += path[i];
+	}
+}
+
+void URLDecode(
+	string&		ioPath)
+{
+	vector<char> buf(ioPath.length() + 1);
+	char* r = &buf[0];
+	
+	for (string::iterator p = ioPath.begin(); p != ioPath.end(); ++p)
+	{
+		char q = *p;
+
+		if (q == '%' and ++p != ioPath.end())
+		{
+			q = (char) (ConvertHex(*p) * 16);
+
+			if (++p != ioPath.end())
+				q = (char) (q + ConvertHex(*p));
+		}
+
+		*r++ = q;
+	}
+	
+	ioPath.assign(&buf[0], r);
 }
 
 // --------------------------------------------------------------------
@@ -367,7 +369,7 @@ struct MPathImp : public MFileImp
 							
 	virtual std::string		GetFileName() const
 							{
-								return mPath.leaf();
+								return mPath.filename();
 							}
 							
 	virtual bool			IsLocal() const
@@ -377,7 +379,7 @@ struct MPathImp : public MFileImp
 							
 	virtual MFileImp*		GetParent() const
 							{
-								return new MPathImp(mPath.branch_path());
+								return new MPathImp(mPath.parent_path());
 							}
 	
 	virtual MFileImp*		GetChild(const fs::path& inSubPath) const
@@ -686,7 +688,7 @@ struct MSftpImp : public MFileImp
 							
 	virtual std::string		GetFileName() const
 							{
-								return mFilePath.leaf();
+								return mFilePath.filename();
 							}
 							
 	virtual bool			IsLocal() const
@@ -696,7 +698,7 @@ struct MSftpImp : public MFileImp
 							
 	virtual MFileImp*		GetParent() const
 							{
-								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath.branch_path());
+								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath.parent_path());
 							}
 	
 	virtual MFileImp*		GetChild(const fs::path& inSubPath) const
@@ -1126,7 +1128,7 @@ bool FileNameMatches(
 	const char*		inPattern,
 	const fs::path&		inFile)
 {
-	return FileNameMatches(inPattern, inFile.leaf());
+	return FileNameMatches(inPattern, inFile.filename());
 }
 
 bool FileNameMatches(
