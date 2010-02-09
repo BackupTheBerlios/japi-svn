@@ -119,6 +119,7 @@ const uint32
 	cmd_RenameItem =			'RenI',
 	
 	cmd_SaveInEPub =			'AdtE',
+	cmd_EPubShowInBrowser =		'ePht',
 	
 	cmd_MakeXHTML =				'MkXH';
 

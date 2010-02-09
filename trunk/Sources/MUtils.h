@@ -229,4 +229,7 @@ void decode_base64(
 	const std::string&	inString,
 	std::vector<uint8>&	outBinary);
 
+void OpenURI(
+	const std::string&	inURI);
+
 #endif

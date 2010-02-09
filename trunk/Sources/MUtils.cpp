@@ -366,3 +366,28 @@ void decode_base64(
 	}
 }
 
+#include <dlfcn.h>
+
+void OpenURI(
+	const string&	inURI)
+{
+	bool opened = false;
+	
+	void* libgnome = dlopen("libgnomevfs-2.so.0", RTLD_LAZY);
+	if (libgnome != nil)
+	{
+		typedef gboolean (*gnome_vfs_url_show_func)(const char*);
+		
+		gnome_vfs_url_show_func gnome_url_show =
+			(gnome_vfs_url_show_func)dlsym(libgnome, "gnome_vfs_url_show");
+
+		if (gnome_url_show != nil)
+		{
+			int r = (*gnome_url_show)(inURI.c_str());
+			opened = r == 0;
+		}
+	}
+	
+	if (not opened)
+		system((string("gnome-open ") + inURI).c_str());
+}

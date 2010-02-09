@@ -44,8 +44,6 @@ void MePubServer::handle_request(
 {
 	rep = http::reply::stock_reply(http::not_found);
 	
-cout << req.method << " -> " << req.uri << endl;
-
 	if (req.method == "GET")
 	{
 		// start by sanitizing the request's URI

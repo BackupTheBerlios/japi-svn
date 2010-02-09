@@ -5,6 +5,8 @@
 
 #include "MJapi.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include "MJapiApp.h"
 
 #include "MePubDocument.h"
@@ -21,6 +23,7 @@
 #include "MError.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 // ---------------------------------------------------------------------------
 
@@ -94,6 +97,10 @@ const char* kKnownMediaTypes[] = {
 	"text/x-oeb1-css",
 	"text/x-oeb1-document"
 };
+
+const uint32 kKnownMediaTypesCount = sizeof(kKnownMediaTypes) / sizeof(const char*);
+
+const string kBaseURL = "http://localhost:9090/";
 
 }
 
@@ -406,7 +413,7 @@ void MePubWindow::Initialize(
 	MDocWindow::Initialize(inDocument);
 	
 	vector<string> knownMediaTypes(
-		kKnownMediaTypes, kKnownMediaTypes + sizeof(kKnownMediaTypes) / sizeof(const char*));
+		kKnownMediaTypes, kKnownMediaTypes + kKnownMediaTypesCount);
 	
 	MList<MePubFileRow>* fileTree = new MList<MePubFileRow>(GetWidget(kFilesListViewID));
 	mFileTree = fileTree;
@@ -591,6 +598,10 @@ bool MePubWindow::UpdateCommandStatus(
 			outEnabled =
 				notebook.GetPage() == kFilesPageNr;
 			break;
+
+		case cmd_EPubShowInBrowser:
+			outEnabled = true;
+			break;
 		
 		case cmd_AddFileToProject:
 			outEnabled =
@@ -621,6 +632,10 @@ bool MePubWindow::ProcessCommand(
 
 		case cmd_AddFileToProject:
 			CreateNew(false);
+			break;
+		
+		case cmd_EPubShowInBrowser:
+			OpenURI(kBaseURL + mEPub->GetDocumentID());
 			break;
 		
 		default:
@@ -685,17 +700,26 @@ void MePubWindow::InvokeFileRow(
 		
 		fs::path path = ePubItem->GetPath();
 
-		MFile file(new MePubContentFile(mEPub, path));
-		
-		MDocument* doc = MDocument::GetDocumentForFile(file);
-
-		if (doc == nil)
+		if (ba::starts_with(ePubItem->GetMediaType(), "image/") or
+			ePubItem->GetMediaType() == "application/x-font-ttf")
 		{
-			doc = MDocument::Create<MTextDocument>(file);
-			AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
+			string url = kBaseURL + mEPub->GetDocumentID() + '/' + path.string();
+			OpenURI(url);
 		}
-
-		gApp->DisplayDocument(doc);
+		else
+		{
+			MFile file(new MePubContentFile(mEPub, path));
+			
+			MDocument* doc = MDocument::GetDocumentForFile(file);
+	
+			if (doc == nil)
+			{
+				doc = MDocument::Create<MTextDocument>(file);
+				AddRoute(doc->eFileSpecChanged, eFileSpecChanged);
+			}
+	
+			gApp->DisplayDocument(doc);
+		}
 	}
 }
 

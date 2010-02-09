@@ -26,6 +26,8 @@
 		<item label="Rename" cmd='RenI' />
 		<item label="-" />
 		<item label="Validate" cmd='ePva'/>
+		<item label="-" />
+		<item label="Show in Web Browser" cmd='ePht' />
 	</menu>
 	<menu id='' label="Window" special="window">
 		<item label="Worksheet" cmd='Wrks'/>	
