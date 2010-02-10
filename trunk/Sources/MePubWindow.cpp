@@ -757,11 +757,9 @@ void MePubWindow::DraggedFileRow(
 void MePubWindow::SelectTOCRow(
 	MePubTOCRow*	inRow)
 {
-	MePubTOCItem* ePubItem = inRow->GetTOCItem();
-	
-	mFileTree->SetColumnEditable(kePubFileIDColumn, ePubItem != nil);
-//	mFileTree->SetColumnToggleable(kePubFileLinearColumn, ePubItem != nil);
-	mFileTree->SetColumnEditable(kePubFileMediaTypeColumn, ePubItem != nil);
+	mTOCTree->SetColumnEditable(kTOCTitleColumn, true);
+	mTOCTree->SetColumnEditable(kTOCSrcColumn, true);
+	mTOCTree->SetColumnEditable(kTOCClassColumn, true);
 }
 
 // ---------------------------------------------------------------------------

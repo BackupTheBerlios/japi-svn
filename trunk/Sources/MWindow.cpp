@@ -273,6 +273,7 @@ void MWindow::Select()
 	if (GDK_IS_WINDOW(GetGtkWidget()->window) and
 		gdk_window_is_visible(GetGtkWidget()->window))
 	{
+		gdk_window_raise(GetGtkWidget()->window);
 		gtk_window_present(GTK_WINDOW(GetGtkWidget()));
 	}
 	else
