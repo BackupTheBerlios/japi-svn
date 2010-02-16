@@ -911,7 +911,7 @@ void MProjectWindow::AddFilesToProject()
 			
 			MFileRowItem* row = new MFileRowItem(item.get());
 			
-			if (dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
+			if (cursor != nil and dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
 			{
 				fileTree->AppendRow(row, cursor);
 				fileTree->ExpandRow(cursor, false);
@@ -961,7 +961,7 @@ void MProjectWindow::AddRsrcsToProject()
 			
 			MRsrcRowItem* row = new MRsrcRowItem(item.get());
 			
-			if (dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
+			if (cursor != nil and dynamic_cast<MProjectGroup*>(cursor->GetProjectItem()) != nil)
 			{
 				rsrcTree->AppendRow(row, cursor);
 				rsrcTree->ExpandRow(cursor, false);

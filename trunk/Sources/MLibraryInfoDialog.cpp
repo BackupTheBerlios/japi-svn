@@ -32,7 +32,7 @@ namespace ba = boost::algorithm;
 namespace {
 
 enum {
-//	kNameEditTextID				= 'name',
+	kNameEditTextID				= 'name',
 	kIgnoreCheckboxID			= 'igno',
 	kLinkStaticRadioButtonID	= 'file',
 	kLinkSharedRadioButtonID	= 'link',
@@ -58,6 +58,8 @@ void MLibraryInfoDialog::Initialize(
 	mProject = inProject;
 	mLibrary = inLibrary;
 
+	SetText(kNameEditTextID, inLibrary->GetName());
+
 	SetChecked(kIgnoreCheckboxID, inLibrary->IsOptional());
 	
 	if (inLibrary->IsShared())
@@ -71,6 +73,7 @@ void MLibraryInfoDialog::Initialize(
 
 bool MLibraryInfoDialog::OKClicked()
 {
+	mLibrary->SetName(GetText(kNameEditTextID));
 	mLibrary->SetOptional(IsChecked(kIgnoreCheckboxID));
 	mLibrary->SetShared(IsChecked(kLinkSharedRadioButtonID));
 	mProject->SetModified(true);
