@@ -9,6 +9,7 @@
  <syspaths>
   <path>/usr/include</path>
   <path>/usr/local/include</path>
+  <path>../libzeep</path>
  </syspaths>
  <userpaths>
   <path>Sources</path>
@@ -16,6 +17,7 @@
  </userpaths>
  <libpaths>
   <path>/usr/local/lib</path>
+  <path>../libzeep</path>
  </libpaths>
  <files>
   <group name="MLib">
@@ -194,7 +196,7 @@
   <target kind="Executable">
    <name>Japi-Debug</name>
    <linkTarget>japi</linkTarget>
-   <compiler>/usr/bin/g++</compiler>
+   <compiler>/usr/bin/c++</compiler>
    <defines>
     <define>DEBUG</define>
    </defines>

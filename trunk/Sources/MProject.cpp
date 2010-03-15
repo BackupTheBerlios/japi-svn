@@ -1165,7 +1165,7 @@ MProjectJob* MProject::CreateLinkJob(
 	{
 		case eTargetSharedLibrary:
 			argv.push_back("-shared");
-			argv.push_back("-static-libgcc");
+//			argv.push_back("-static-libgcc");
 			break;
 		
 		case eTargetStaticLibrary:
