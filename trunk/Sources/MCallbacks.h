@@ -304,7 +304,7 @@ struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
 					
 					if (handler.mHandler.get() != nil)
 					{
-						value_changer<GObject*> save(handler.mSendingGObject, inObject);
+						handler.mSendingGObject = inObject;
 						result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
 					}
 					
@@ -333,7 +333,7 @@ struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
 					
 					if (handler.mHandler.get() != nil)
 					{
-						value_changer<GObject*> save(handler.mSendingGObject, inObject);
+						handler.mSendingGObject = inObject;
 						handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
 					}
 				}

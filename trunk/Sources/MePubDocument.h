@@ -111,26 +111,26 @@ class MePubDocument : public MDocument
 	
 	void				ParseOPF(
 							const fs::path&		inDirectory,
-							zeep::xml::node&	inOPF,
+							zeep::xml::element*	inOPF,
 							MMessageList&		outProblems);
 
-	zeep::xml::node_ptr	CreateOPF(
+	zeep::xml::element*	CreateOPF(
 							const fs::path&		inOEBPS);
 
 	void				ParseNCX(
-							zeep::xml::node&	inNCX);
+							zeep::xml::element*	inNCX);
 
 	void				ParseNavPoint(
 							MProjectGroup*		inGroup,
-							zeep::xml::node_ptr	inNavPoint);
+							zeep::xml::element*	inNavPoint);
 
-	zeep::xml::node_ptr	CreateNCX();
+	zeep::xml::element*	CreateNCX();
 
 	typedef std::map<std::string,uint32> MPlayOrder;
 
 	void				CreateNavMap(
 							MProjectGroup*		inGroup,
-							zeep::xml::node_ptr	inNavPoint,
+							zeep::xml::element*	inNavPoint,
 							uint32&				ioID,
 							MPlayOrder&			ioPlayOrder);
 

@@ -12,6 +12,7 @@ MHandler* MHandler::sFocus = nil;
 MHandler::MHandler(
 	MHandler*		inSuper)
 	: mSuper(inSuper)
+	, mOnCommandChain(eTriStateOff)
 {
 }
 

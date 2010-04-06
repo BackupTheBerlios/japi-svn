@@ -85,6 +85,7 @@ class MSftpChannel : public MSshChannel
   protected:
 	
 	friend struct MSftpChannelImp;
+	friend struct MSftpChannelImp3;
 
 	virtual void			HandleData(
 								std::string		inData);

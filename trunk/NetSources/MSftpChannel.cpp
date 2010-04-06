@@ -271,7 +271,7 @@ MSftpChannelImp3::MSftpChannelImp3(MSftpChannel& inChannel)
 
 void MSftpChannelImp3::Init(MSshPacket& out)
 {
-	fChannel.eChannelEvent(SFTP_INIT_DONE);
+	fChannel.HandleChannelEvent(SFTP_INIT_DONE);
 }
 
 void MSftpChannelImp3::HandlePacket(
@@ -331,12 +331,12 @@ void MSftpChannelImp3::ProcessRealPath(
 		fDirList.clear();
 
 		fHandler = nil;
-		fChannel.eChannelEvent(SFTP_SETCWD_OK);
+		fChannel.HandleChannelEvent(SFTP_SETCWD_OK);
 	}
 	catch (...)
 	{
 		fHandler = nil;
-		fChannel.eChannelEvent(SFTP_ERROR);
+		fChannel.HandleChannelEvent(SFTP_ERROR);
 	}	
 }
 
@@ -428,7 +428,7 @@ PRINT(("- %s\n", e.name.c_str()));
 
 	if (done)
 	{
-		fChannel.eChannelEvent(SFTP_DIR_LISTING_AVAILABLE);
+		fChannel.HandleChannelEvent(SFTP_DIR_LISTING_AVAILABLE);
 		
 		out << uint8(SSH_FXP_CLOSE) << fRequestId++ << fHandle;
 		
@@ -452,7 +452,7 @@ void MSftpChannelImp3::ProcessMkDir(
 	if (inMessage == SSH_FXP_STATUS)
 	{
 		if (fChannel.GetStatusCode() != SSH_FX_OK)
-			fChannel.eChannelEvent(SFTP_ERROR);
+			fChannel.HandleChannelEvent(SFTP_ERROR);
 	}
 	
 	fHandler = nil;
@@ -508,7 +508,7 @@ void MSftpChannelImp3::ProcessFStat(
 		if (flags & SSH_FILEXFER_ATTR_SIZE)
 			in >> fFileSize;
 		
-		fChannel.eChannelEvent(SFTP_FILE_SIZE_KNOWN);
+		fChannel.HandleChannelEvent(SFTP_FILE_SIZE_KNOWN);
 		
 		fOffset = 0;
 
@@ -538,17 +538,17 @@ void MSftpChannelImp3::ProcessRead(
 		
 		fOffset += fData.length();
 
-		fChannel.eChannelEvent(SFTP_DATA_AVAILABLE);
+		fChannel.HandleChannelEvent(SFTP_DATA_AVAILABLE);
 		
 		int64 n = fFileSize - fOffset;
 		if (n > kMaxPacketSize)
 			n = kMaxPacketSize;
 		
 		if (n <= 0)
-			fChannel.eChannelEvent(SFTP_DATA_DONE);
+			fChannel.HandleChannelEvent(SFTP_DATA_DONE);
 	}
 	else
-		fChannel.eChannelEvent(SFTP_ERROR);	
+		fChannel.HandleChannelEvent(SFTP_ERROR);	
 }
 
 void MSftpChannelImp3::WriteFile(string inPath)
@@ -576,7 +576,7 @@ void MSftpChannelImp3::ProcessCreateFile(
 		fOffset = 0;
 		fHandler = &MSftpChannelImp3::ProcessWrite;
 		
-		fChannel.eChannelEvent(SFTP_CAN_SEND_DATA);
+		fChannel.HandleChannelEvent(SFTP_CAN_SEND_DATA);
 	}
 	else
 	{
@@ -601,7 +601,7 @@ void MSftpChannelImp3::ProcessWrite(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	fChannel.eChannelEvent(SFTP_CAN_SEND_DATA);
+	fChannel.HandleChannelEvent(SFTP_CAN_SEND_DATA);
 }
 
 void MSftpChannelImp3::CloseFile()
@@ -622,7 +622,7 @@ void MSftpChannelImp3::ProcessClose(
 	assert(fChannel.GetStatusCode() == 0);
 	
 	fHandler = nil;
-	fChannel.eChannelEvent(SFTP_FILE_CLOSED);
+	fChannel.HandleChannelEvent(SFTP_FILE_CLOSED);
 }
 
 /*

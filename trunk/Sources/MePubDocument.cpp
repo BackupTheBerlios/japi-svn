@@ -431,10 +431,11 @@ void deflate(
 }	
 
 void deflate(
-	xml::node_ptr		inXML,
+	xml::element*		inXML,
 	ZIPLocalFileHeader&	outFileHeader)
 {
-	xml::document doc(inXML);
+	xml::document doc;
+	doc.root(inXML);
 	
 	outFileHeader.data.clear();
 	
@@ -665,7 +666,7 @@ void MePubDocument::ImportOEB(
 
 	xml::document opf(opfFile);
 	MMessageList problems;
-	ParseOPF(fs::path("OEBPS"), *opf.root(), problems);
+	ParseOPF(fs::path("OEBPS"), opf.root(), problems);
 
 	fs::path dir = inOEB.GetPath().parent_path();
 	
@@ -761,16 +762,16 @@ void MePubDocument::ReadFile(
 		if (path == "META-INF/container.xml")
 		{
 			xml::document container(fh.data);
-			xml::node_ptr root = container.root();
+			xml::element* root = container.root();
 			
-			if (root->name() != "container" or root->ns() != kContainerNS)
+			if (root->local_name() != "container" or root->ns_name() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported container.xml file"));
 			
-			xml::node_ptr n = root->find_first_child("rootfiles");
+			xml::element* n = root->find_first("rootfiles");
 			if (not n)
 				THROW(("Invalid container.xml file, <rootfiles> missing."));
 			
-			n = n->find_first_child("rootfile");
+			n = n->find_first("rootfile");
 			if (not n)
 				THROW(("Invalid container.xml file, <rootfile> missing."));
 			
@@ -782,21 +783,21 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/encryption.xml")
 		{
 			xml::document encryption(fh.data);
-			xml::node_ptr root = encryption.root();
+			xml::element* root = encryption.root();
 			
-			if (root->name() != "encryption" or root->ns() != kContainerNS)
+			if (root->local_name() != "encryption" or root->ns_name() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
 			
-			foreach (xml::node& n, root->children())
+			foreach (xml::element* n, root->children<xml::element>())
 			{
-				if (n.name() != "EncryptedData")
+				if (n->local_name() != "EncryptedData")
 					continue;
 				
-				xml::node_ptr cd = n.find_first_child("CipherData");
+				xml::element* cd = n->find_first("CipherData");
 				if (not cd)
 					continue;
 				
-				xml::node_ptr cr = cd->find_first_child("CipherReference");
+				xml::element* cr = cd->find_first("CipherReference");
 				if (not cr)
 					continue;
 				
@@ -807,22 +808,22 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/rights.xml")
 		{
 			xml::document rights(fh.data);
-			xml::node_ptr root = rights.root();
+			xml::element* root = rights.root();
 			
-			if (root->name() != "rights" or root->ns() != kAdobeAdeptNS)
+			if (root->local_name() != "rights" or root->ns_name() != kAdobeAdeptNS)
 			{
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported rights.xml file"));
 				continue;
 			}
 			
-			xml::node_ptr licenseToken = root->find_first_child("licenseToken");
+			xml::element* licenseToken = root->find_first("licenseToken");
 			if (not licenseToken)
 			{
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("licenseToken not found in rights file"));
 				continue;
 			}
 			
-			xml::node_ptr encryptedKey = licenseToken->find_first_child("encryptedKey");
+			xml::element* encryptedKey = licenseToken->find_first("encryptedKey");
 			if (not encryptedKey)
 			{
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("encryptedKey not found in rights file"));
@@ -849,7 +850,7 @@ void MePubDocument::ReadFile(
 
 	xml::document opf(content[mRootFile]);
 	
-	ParseOPF(mRootFile.parent_path(), *opf.root(), problems);
+	ParseOPF(mRootFile.parent_path(), opf.root(), problems);
 	
 	// decrypt all the files, if we can
 	if (keyDecrypted and not encrypted.empty())
@@ -868,7 +869,7 @@ void MePubDocument::ReadFile(
 		try
 		{
 			xml::document ncx(content[mTOCFile]);
-			ParseNCX(*ncx.root());
+			ParseNCX(ncx.root());
 		}
 		catch (exception& e)
 		{
@@ -964,15 +965,15 @@ void MePubDocument::WriteFile(
 	
 	fh.filename = "META-INF/container.xml";
 	
-	xml::node_ptr container(new xml::node("container"));
-	container->add_attribute("version", "1.0");
-	container->add_attribute("xmlns", kContainerNS);
-	xml::node_ptr rootfiles(new xml::node("rootfiles"));
-	container->add_child(rootfiles);
-	xml::node_ptr rootfile(new xml::node("rootfile"));
-	rootfile->add_attribute("full-path", mRootFile.string());
-	rootfile->add_attribute("media-type", "application/oebps-package+xml");
-	rootfiles->add_child(rootfile);
+	xml::element* container(new xml::element("container"));
+	container->set_attribute("version", "1.0");
+	container->set_attribute("xmlns", kContainerNS);
+	xml::element* rootfiles(new xml::element("rootfiles"));
+	container->append(rootfiles);
+	xml::element* rootfile(new xml::element("rootfile"));
+	rootfile->set_attribute("full-path", mRootFile.string());
+	rootfile->set_attribute("media-type", "application/oebps-package+xml");
+	rootfiles->append(rootfile);
 	deflate(container, fh);
 
 	cd.offset = offset;
@@ -983,7 +984,7 @@ void MePubDocument::WriteFile(
 	// the OPF...
 	
 	fh.filename = mRootFile.string();
-	xml::node_ptr opf = CreateOPF(oebpsPath);
+	xml::element* opf = CreateOPF(oebpsPath);
 	deflate(opf, fh);
 
 	cd.offset = offset;
@@ -994,7 +995,7 @@ void MePubDocument::WriteFile(
 	// the NCX...
 	
 	fh.filename = mTOCFile.string();
-	xml::node_ptr ncx = CreateNCX();
+	xml::element* ncx = CreateNCX();
 	deflate(ncx, fh);
 
 	cd.offset = offset;
@@ -1034,26 +1035,26 @@ void MePubDocument::WriteFile(
 	write_directory_end(inFile, end);
 }
 
-xml::node_ptr MePubDocument::CreateOPF(
+xml::element* MePubDocument::CreateOPF(
 	const fs::path&		inOEBPS)
 {
-	xml::node_ptr opf(new xml::node("package"));
-	opf->add_attribute("version", "2.0");
-	opf->add_attribute("unique-identifier", "BookID");
-	opf->add_attribute("xmlns", "http://www.idpf.org/2007/opf");
+	xml::element* opf(new xml::element("package"));
+	opf->set_attribute("version", "2.0");
+	opf->set_attribute("unique-identifier", "BookID");
+	opf->set_attribute("xmlns", "http://www.idpf.org/2007/opf");
 	
 	// metadata block
-	xml::node_ptr metadata(new xml::node("metadata"));
-	metadata->add_attribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
-	metadata->add_attribute("xmlns:opf", "http://www.idpf.org/2007/opf");
-	opf->add_child(metadata);
+	xml::element* metadata(new xml::element("metadata"));
+	metadata->set_attribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
+	metadata->set_attribute("xmlns:opf", "http://www.idpf.org/2007/opf");
+	opf->append(metadata);
 	
 	// the identifier
-	xml::node_ptr identifier(new xml::node("identifier", "dc"));
-	identifier->add_attribute("id", "BookID");
-	identifier->add_attribute("opf:scheme", mDocumentIDScheme);
+	xml::element* identifier(new xml::element("dc:identifier"));
+	identifier->set_attribute("id", "BookID");
+	identifier->set_attribute("opf:scheme", mDocumentIDScheme);
 	identifier->content(mDocumentID);
-	metadata->add_child(identifier);
+	metadata->append(identifier);
 	
 	// other dublin core data
 	for (map<string,string>::iterator dc = mDublinCore.begin(); dc != mDublinCore.end(); ++dc)
@@ -1063,16 +1064,16 @@ xml::node_ptr MePubDocument::CreateOPF(
 		
 		for (vector<string>::iterator value = values.begin(); value != values.end(); ++value)
 		{
-			xml::node_ptr dcn(new xml::node(dc->first, "dc"));
+			xml::element* dcn(new xml::element(string("dc:") + dc->first));
 			if (dc->first == "creator")
-				dcn->add_attribute("opf:role", "aut");
+				dcn->set_attribute("opf:role", "aut");
 			
 			if (dc->first == "date")
 			{
 				string::size_type p;
 				if ((p = value->find(':')) != string::npos)
 				{
-					dcn->add_attribute("opf:event", value->substr(0, p));
+					dcn->set_attribute("opf:event", value->substr(0, p));
 
 					string date = value->substr(p + 1);
 					ba::trim(date);
@@ -1084,13 +1085,13 @@ xml::node_ptr MePubDocument::CreateOPF(
 			else
 				dcn->content(*value);
 
-			metadata->add_child(dcn);
+			metadata->append(dcn);
 		}
 	}
 	
 	// manifest
-	xml::node_ptr manifest(new xml::node("manifest"));
-	opf->add_child(manifest);
+	xml::element* manifest(new xml::element("manifest"));
+	opf->append(manifest);
 
 	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
@@ -1099,27 +1100,27 @@ xml::node_ptr MePubDocument::CreateOPF(
 		if (ePubItem == nil or ePubItem->GetID().empty())
 			continue;
 		
-		xml::node_ptr item_node(new xml::node("item"));
-		item_node->add_attribute("id", ePubItem->GetID());
-		item_node->add_attribute("href", relative_path(mRootFile.parent_path(), ePubItem->GetPath()).string());
+		xml::element* item_node(new xml::element("item"));
+		item_node->set_attribute("id", ePubItem->GetID());
+		item_node->set_attribute("href", relative_path(mRootFile.parent_path(), ePubItem->GetPath()).string());
 		if (not ePubItem->GetMediaType().empty())
-			item_node->add_attribute("media-type", ePubItem->GetMediaType());
-		manifest->add_child(item_node);
+			item_node->set_attribute("media-type", ePubItem->GetMediaType());
+		manifest->append(item_node);
 	}
 	
 	// add the ncx to the manifest too
 	
-	xml::node_ptr item_node(new xml::node("item"));
-	item_node->add_attribute("id", "ncx");
-	item_node->add_attribute("href", relative_path(mRootFile.parent_path(), mTOCFile).string());
-	item_node->add_attribute("media-type", "application/x-dtbncx+xml");
-	manifest->add_child(item_node);
+	xml::element* item_node(new xml::element("item"));
+	item_node->set_attribute("id", "ncx");
+	item_node->set_attribute("href", relative_path(mRootFile.parent_path(), mTOCFile).string());
+	item_node->set_attribute("media-type", "application/x-dtbncx+xml");
+	manifest->append(item_node);
 	
 	// spine. For now we write out all items having a file ID and a media-type application/xhtml+xml 
 
-	xml::node_ptr spine(new xml::node("spine"));
-	spine->add_attribute("toc", "ncx");
-	opf->add_child(spine);
+	xml::element* spine(new xml::element("spine"));
+	spine->set_attribute("toc", "ncx");
+	opf->append(spine);
 	
 	for (MProjectGroup::iterator item = mRoot.begin(); item != mRoot.end(); ++item)
 	{
@@ -1132,59 +1133,59 @@ xml::node_ptr MePubDocument::CreateOPF(
 			continue;
 		}
 		
-		xml::node_ptr itemref(new xml::node("itemref"));
-		itemref->add_attribute("idref", ePubItem->GetID());
+		xml::element* itemref(new xml::element("itemref"));
+		itemref->set_attribute("idref", ePubItem->GetID());
 		if (ePubItem->IsLinear())
-			itemref->add_attribute("linear", "yes");
-		spine->add_child(itemref);
+			itemref->set_attribute("linear", "yes");
+		spine->append(itemref);
 	}
 	
 	return opf;
 }
 
-xml::node_ptr MePubDocument::CreateNCX()
+xml::element* MePubDocument::CreateNCX()
 {
-	xml::node_ptr ncx(new xml::node("ncx"));
-	ncx->add_attribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
-	ncx->add_attribute("version", "2005-1");
-	ncx->add_attribute("xml:lang", mDublinCore["language"]);
+	xml::element* ncx(new xml::element("ncx"));
+	ncx->set_attribute("xmlns", "http://www.daisy.org/z3986/2005/ncx/");
+	ncx->set_attribute("version", "2005-1");
+	ncx->set_attribute("xml:lang", mDublinCore["language"]);
 
 	// the required head values
-	xml::node_ptr head(new xml::node("head"));
-	ncx->add_child(head);
+	xml::element* head(new xml::element("head"));
+	ncx->append(head);
 	
-	xml::node_ptr meta(new xml::node("meta"));
-	meta->add_attribute("name", "dtb:uid");
-	meta->add_attribute("content", mDocumentID);
-	head->add_child(meta);
+	xml::element* meta(new xml::element("meta"));
+	meta->set_attribute("name", "dtb:uid");
+	meta->set_attribute("content", mDocumentID);
+	head->append(meta);
 	
-	meta.reset(new xml::node("meta"));
-	meta->add_attribute("name", "dtb:depth");
-	meta->add_attribute("content", boost::lexical_cast<string>(mTOC.GetDepth() - 1));
-	head->add_child(meta);
+	meta = new xml::element("meta");
+	meta->set_attribute("name", "dtb:depth");
+	meta->set_attribute("content", boost::lexical_cast<string>(mTOC.GetDepth() - 1));
+	head->append(meta);
 	
-	meta.reset(new xml::node("meta"));
-	meta->add_attribute("name", "dtb:totalPageCount");
-	meta->add_attribute("content", "0");
-	head->add_child(meta);
+	meta = new xml::element("meta");
+	meta->set_attribute("name", "dtb:totalPageCount");
+	meta->set_attribute("content", "0");
+	head->append(meta);
 	
-	meta.reset(new xml::node("meta"));
-	meta->add_attribute("name", "dtb:maxPageNumber");
-	meta->add_attribute("content", "0");
-	head->add_child(meta);
+	meta = new xml::element("meta");
+	meta->set_attribute("name", "dtb:maxPageNumber");
+	meta->set_attribute("content", "0");
+	head->append(meta);
 	
 	// the title
 	
-	xml::node_ptr docTitle(new xml::node("docTitle"));
-	xml::node_ptr text(new xml::node("text"));
+	xml::element* docTitle(new xml::element("docTitle"));
+	xml::element* text(new xml::element("text"));
 	text->content(mDublinCore["title"]);
-	docTitle->add_child(text);
-	ncx->add_child(docTitle);
+	docTitle->append(text);
+	ncx->append(docTitle);
 	
 	// the navMap
 	
-	xml::node_ptr navMap(new xml::node("navMap"));
-	ncx->add_child(navMap);
+	xml::element* navMap(new xml::element("navMap"));
+	ncx->append(navMap);
 	
 	uint32 id = 1;
 	MPlayOrder playOrder;
@@ -1195,7 +1196,7 @@ xml::node_ptr MePubDocument::CreateNCX()
 
 void MePubDocument::CreateNavMap(
 	MProjectGroup*		inGroup,
-	xml::node_ptr		inNavPoint,
+	xml::element*		inNavPoint,
 	uint32&				ioID,
 	MPlayOrder&			ioPlayOrder)
 {
@@ -1212,27 +1213,33 @@ void MePubDocument::CreateNavMap(
 			ioPlayOrder[src] = playOrder;
 		}
 
-		xml::node_ptr navPoint(new xml::node("navPoint"));
-		navPoint->add_attribute("id", string("id-") + boost::lexical_cast<string>(ioID));
+		xml::element* navPoint(new xml::element("navPoint"));
+		navPoint->set_attribute("id", string("id-") + boost::lexical_cast<string>(ioID));
 		++ioID;
 
-		navPoint->add_attribute("class", tocItem->GetClass());
-		navPoint->add_attribute("playOrder", boost::lexical_cast<string>(ioPlayOrder[src]));
+		if (not tocItem->GetId().empty())
+			navPoint->set_attribute("id", tocItem->GetId());
+		if (not tocItem->GetClass().empty())
+			navPoint->set_attribute("class", tocItem->GetClass());
+		navPoint->set_attribute("playOrder", boost::lexical_cast<string>(ioPlayOrder[src]));
 		
-		xml::node_ptr navLabel(new xml::node("navLabel"));
-		xml::node_ptr text(new xml::node("text"));
-		text->content(tocItem->GetName());
-		navLabel->add_child(text);
-		navPoint->add_child(navLabel);
+		if (not tocItem->GetName().empty())
+		{
+			xml::element* navLabel(new xml::element("navLabel"));
+			xml::element* text(new xml::element("text"));
+			text->content(tocItem->GetName());
+			navLabel->append(text);
+			navPoint->append(navLabel);
+		}
 		
-		xml::node_ptr content(new xml::node("content"));
-		content->add_attribute("src", src);
-		navPoint->add_child(content);
+		xml::element* content(new xml::element("content"));
+		content->set_attribute("src", src);
+		navPoint->append(content);
 
 		if (tocItem->Count() > 0)
 			CreateNavMap(tocItem, navPoint, ioID, ioPlayOrder);
 		
-		inNavPoint->add_child(navPoint);
+		inNavPoint->append(navPoint);
 	}	
 }	
 
@@ -1249,19 +1256,19 @@ MProjectGroup* MePubDocument::GetTOC() const
 
 void MePubDocument::ParseOPF(
 	const fs::path&		inDirectory,
-	xml::node&			inOPF,
+	xml::element*		inOPF,
 	MMessageList&		outProblems)
 {
-	if (inOPF.name() != "package")
+	if (inOPF->local_name() != "package")
 		THROW(("Not an OPF file, root item should be package"));
 	
 	// fetch the unique-identifier
-	string uid = inOPF.get_attribute("unique-identifier");
+	string uid = inOPF->get_attribute("unique-identifier");
 	if (uid.empty())
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Unique Identifier is missing in OPF"));
 	
 	// fetch the meta data
-	xml::node_ptr metadata = inOPF.find_first_child("metadata");
+	xml::element* metadata = inOPF->find_first("metadata");
 	if (not metadata)
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Metadata is missing from OPF"));
 	else
@@ -1269,7 +1276,7 @@ void MePubDocument::ParseOPF(
 		// now I've found a weird file containing a dc-metadata inside metadata
 		
 		bool oldDC = false;
-		xml::node_ptr n = metadata->find_first_child("dc-metadata");
+		xml::element* n = metadata->find_first("dc-metadata");
 		if (n)
 		{
 			oldDC = true;
@@ -1277,20 +1284,20 @@ void MePubDocument::ParseOPF(
 		}
 		
 		// collect all the Dublin Core information
-		foreach (xml::node& dc, metadata->children())
+		foreach (xml::element* dc, metadata->children<xml::element>())
 		{
-			string name = dc.name();
+			string name = dc->local_name();
 			
-			if (oldDC or dc.ns() == "http://purl.org/dc/elements/1.0/")
+			if (oldDC or dc->ns_name() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
-			else if (dc.ns() != "http://purl.org/dc/elements/1.1/" and
-				dc.ns() != "http://www.idpf.org/2007/opf")
+			else if (dc->ns_name() != "http://purl.org/dc/elements/1.1/" and
+				dc->ns_name() != "http://www.idpf.org/2007/opf")
 			{
-				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc.ns());
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns_name());
 //				continue;
 			}
 			
-			string content = dc.content();
+			string content = dc->content();
 			ba::trim(content);
 			
 			if (content.empty())
@@ -1298,12 +1305,12 @@ void MePubDocument::ParseOPF(
 			
 			if (name == "identifier")
 			{
-				if (dc.get_attribute("id") == uid)
+				if (dc->get_attribute("id") == uid)
 				{
 					mDocumentID = content;
-					mDocumentIDScheme = dc.get_attribute("opf:scheme");
-					if (mDocumentIDScheme.empty() and dc.ns() == "http://purl.org/dc/elements/1.0/")
-						mDocumentIDScheme = dc.get_attribute("scheme");
+					mDocumentIDScheme = dc->get_attribute("opf:scheme");
+					if (mDocumentIDScheme.empty() and dc->ns_name() == "http://purl.org/dc/elements/1.0/")
+						mDocumentIDScheme = dc->get_attribute("scheme");
 				}
 			}
 			else if (name == "date")
@@ -1312,10 +1319,10 @@ void MePubDocument::ParseOPF(
 				if (not date.empty())
 					date += '\n';
 				
-				if (dc.get_attribute("opf:event").empty())
+				if (dc->get_attribute("opf:event").empty())
 					date += content;
 				else
-					date += dc.get_attribute("opf:event") + ": " + content;
+					date += dc->get_attribute("opf:event") + ": " + content;
 	
 				mDublinCore[name] = date;
 			}
@@ -1334,21 +1341,21 @@ void MePubDocument::ParseOPF(
 	// collect the items from the manifest
 	bool warnMediaType = true, warnInvalidID = true;
 	
-	xml::node_ptr manifest = inOPF.find_first_child("manifest");
+	xml::element* manifest = inOPF->find_first("manifest");
 	if (not manifest)
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Manifest missing from OPF document"));
 	else
 	{
-		foreach (xml::node& item, manifest->children())
+		foreach (xml::element* item, manifest->children<xml::element>())
 		{
-			if (item.name() != "item") // or item.ns() != "http://www.idpf.org/2007/opf")
+			if (item->local_name() != "item") // or item->ns_name() != "http://www.idpf.org/2007/opf")
 				continue;
 	
-			fs::path href = inDirectory / item.get_attribute("href");
+			fs::path href = inDirectory / item->get_attribute("href");
 			
 			if (mTOCFile.empty())
 			{
-				if (item.get_attribute("media-type") == "application/x-dtbncx+xml")
+				if (item->get_attribute("media-type") == "application/x-dtbncx+xml")
 				{
 					mTOCFile = href;
 					continue;
@@ -1366,7 +1373,7 @@ void MePubDocument::ParseOPF(
 			
 			unique_ptr<MePubItem> eItem(new MePubItem(href.filename(), group));
 			
-			string id = item.get_attribute("id");
+			string id = item->get_attribute("id");
 			if (id.empty() or not isalpha(id[0]))
 			{
 				if (warnInvalidID)
@@ -1376,7 +1383,7 @@ void MePubDocument::ParseOPF(
 			}
 			eItem->SetID(id);
 			
-			string mediaType = item.get_attribute("media-type");
+			string mediaType = item->get_attribute("media-type");
 			
 			if (mediaType == "text/html")
 			{
@@ -1394,19 +1401,19 @@ void MePubDocument::ParseOPF(
 	
 	// the spine
 	
-	xml::node_ptr spine = inOPF.find_first_child("spine");
+	xml::element* spine = inOPF->find_first("spine");
 	if (not spine)
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Spine missing from OPF document"));
 	else
 	{
-		foreach (xml::node& item, spine->children())
+		foreach (xml::element* item, spine->children<xml::element>())
 		{
-			if (item.name() != "itemref" or item.ns() != "http://www.idpf.org/2007/opf")
+			if (item->local_name() != "itemref" or item->ns_name() != "http://www.idpf.org/2007/opf")
 				continue;
 			
-			string idref = item.get_attribute("idref");
+			string idref = item->get_attribute("idref");
 
-			if (item.get_attribute("linear") == "yes")
+			if (item->get_attribute("linear") == "yes")
 				mLinear.insert(idref);
 		}
 	}
@@ -1417,36 +1424,45 @@ void MePubDocument::ParseOPF(
 }
 
 void MePubDocument::ParseNCX(
-	xml::node&			inNCX)
+	xml::element*			inNCX)
 {
-	xml::node_ptr navMap = inNCX.find_first_child("navMap");
+	xml::element* navMap = inNCX->find_first("navMap");
 	if (not navMap)
 		THROW(("Missing navMap element in NCX file"));
 
-	foreach (xml::node& n, navMap->children())
+	foreach (xml::element* n, navMap->children<xml::element>())
 	{
-		if (n.name() == "navPoint")
-			ParseNavPoint(&mTOC, n.shared_from_this());
+		if (n->local_name() == "navPoint")
+			ParseNavPoint(&mTOC, n);
 	}
 }
 
 void MePubDocument::ParseNavPoint(
 	MProjectGroup*		inGroup,
-	xml::node_ptr		inNavPoint)
+	xml::element*		inNavPoint)
 {
-	assert(inNavPoint->name() == "navPoint");
+	assert(inNavPoint->local_name() == "navPoint");
 	
-	xml::node_ptr label = inNavPoint->find_first_child("navLabel");
-	if (not label)
-		THROW(("Missing navLabel in navPoint"));
+	unique_ptr<MePubTOCItem> np;
 
-	xml::node_ptr name = label->find_first_child("text");
-	if (not name)
-		THROW(("Missing text in navLabel"));
-	
-	unique_ptr<MePubTOCItem> np(new MePubTOCItem(name->content(), inGroup));
+	xml::element* label = inNavPoint->find_first("navLabel");
+	if (label != nil)
+	{
+		xml::element* name = label->find_first("text");
+		if (not name)
+			THROW(("Missing text in navLabel"));
+		np.reset(new MePubTOCItem(name->content(), inGroup));
+	}
+	else
+		np.reset(new MePubTOCItem("", inGroup));
 
-	xml::node_ptr content = inNavPoint->find_first_child("content");
+	if (not inNavPoint->get_attribute("id").empty())
+		np->SetId(inNavPoint->get_attribute("id"));
+
+	if (not inNavPoint->get_attribute("playOrder").empty())
+		np->SetPlayOrder(boost::lexical_cast<uint32>(inNavPoint->get_attribute("playOrder")));
+
+	xml::element* content = inNavPoint->find_first("content");
 	if (not content)
 		THROW(("Missing content in navPoint"));
 	
@@ -1454,10 +1470,10 @@ void MePubDocument::ParseNavPoint(
 
 	np->SetClass(inNavPoint->get_attribute("class"));
 	
-	foreach (xml::node& n, inNavPoint->children())
+	foreach (xml::element* n, inNavPoint->children<xml::element>())
 	{
-		if (n.name() == "navPoint")
-			ParseNavPoint(np.get(), n.shared_from_this());
+		if (n->local_name() == "navPoint")
+			ParseNavPoint(np.get(), n);
 	}
 	
 	inGroup->AddProjectItem(np.release());

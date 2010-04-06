@@ -11,6 +11,7 @@
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/foreach.hpp>
 
 #include <zeep/xml/document.hpp>
 
@@ -24,6 +25,8 @@
 #include "MUtils.h"
 #include "MError.h"
 #include "MJapiApp.h"
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 namespace xml = zeep::xml;
@@ -286,22 +289,22 @@ MMenu* MMenu::CreateFromResource(
 	xml::document doc(data);
 	
 	// build a menu from the resource XML
-	xml::node_ptr root = doc.root();
+	xml::element* root = doc.root();
 
-	if (root->name() == "menu")
-		result = Create(*root);
+	if (root->qname() == "menu")
+		result = Create(root);
 
 	return result;
 }
 
 MMenu* MMenu::Create(
-	xml::node&		inXMLNode)
+	xml::element*	inXMLNode)
 {
-	string label = inXMLNode.get_attribute("label");
+	string label = inXMLNode->get_attribute("label");
 	if (label.length() == 0)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	string special = inXMLNode.get_attribute("special");
+	string special = inXMLNode->get_attribute("special");
 
 	MMenu* menu;
 
@@ -311,9 +314,9 @@ MMenu* MMenu::Create(
 	{
 		menu = new MMenu(label);
 		
-		for (xml::node_list::iterator item = inXMLNode.children().begin(); item != inXMLNode.children().end(); ++item)
+		foreach (xml::element* item, inXMLNode->children<xml::element>())
 		{
-			if (item->name() == "item")
+			if (item->qname() == "item")
 			{
 				label = item->get_attribute("label");
 				
@@ -338,8 +341,8 @@ MMenu* MMenu::Create(
 						menu->AppendItem(label, cmd);
 				}
 			}
-			else if (item->name() == "menu")
-				menu->AppendMenu(Create(*item));
+			else if (item->qname() == "menu")
+				menu->AppendMenu(Create(item));
 		}
 	}
 	
@@ -668,31 +671,28 @@ void MMenubar::Initialize(
 	xml::document doc(data);
 	
 	// build a menubar from the resource XML
-	xml::node_ptr root = doc.root();
+	xml::element* root = doc.root();
 
-	if (root->name() != "menubar")
+	if (root->qname() != "menubar")
 		THROW(("Menubar resource %s is invalid, should start with <menubar> tag", inResourceName));
 
-	for (xml::node_list::iterator menu = root->children().begin(); menu != root->children().end(); ++menu)
+	foreach (xml::element* menu, root->find("menu"))
 	{
-		if (menu->name() == "menu")
-		{
-			MMenu* obj = CreateMenu(*menu);
-			AddMenu(obj);
-		}
+		MMenu* obj = CreateMenu(menu);
+		AddMenu(obj);
 	}
 	
 	gtk_widget_show_all(mGtkMenubar);
 }
 
 MMenu* MMenubar::CreateMenu(
-	xml::node&		inXMLNode)
+	xml::element*	inXMLNode)
 {
-	string label = inXMLNode.get_attribute("label");
+	string label = inXMLNode->get_attribute("label");
 	if (label.length() == 0)
 		THROW(("Invalid menu specification, label is missing"));
 	
-	string special = inXMLNode.get_attribute("special");
+	string special = inXMLNode->get_attribute("special");
 
 	MMenu* menu;
 
@@ -702,9 +702,9 @@ MMenu* MMenubar::CreateMenu(
 	{
 		menu = new MMenu(label);
 		
-		for (xml::node_list::iterator item = inXMLNode.children().begin(); item != inXMLNode.children().end(); ++item)
+		foreach (xml::element* item, inXMLNode->children<xml::element>())
 		{
-			if (item->name() == "item")
+			if (item->qname() == "item")
 			{
 				label = item->get_attribute("label");
 				
@@ -729,8 +729,8 @@ MMenu* MMenubar::CreateMenu(
 						menu->AppendItem(label, cmd);
 				}
 			}
-			else if (item->name() == "menu")
-				menu->AppendMenu(CreateMenu(*item));
+			else if (item->qname() == "menu")
+				menu->AppendMenu(CreateMenu(item));
 		}
 	}
 	

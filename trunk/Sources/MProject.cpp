@@ -131,7 +131,7 @@ void MProject::ReadFile(
 		mName = mProjectFile.filename();
 	
 	xml::document doc(inFile);
-	Read(*doc.root());
+	Read(doc.root());
 }
 
 // ---------------------------------------------------------------------------
@@ -177,12 +177,12 @@ void MProject::RecheckFiles()
 //	MProject::ReadPaths
 
 void MProject::ReadPaths(
-	const xml::node_list&	inData,
+	const xml::element_set&	inData,
 	vector<fs::path>&		outPaths)
 {
-	foreach (const xml::node& node, inData)
+	foreach (const xml::element* node, inData)
 	{
-		string path(node.content());
+		string path(node->content());
 		if (path.empty())
 			continue;
 //			THROW(("Invalid project file, missing path"));
@@ -195,16 +195,15 @@ void MProject::ReadPaths(
 //	MProject::ReadOptions
 
 void MProject::ReadOptions(
-	const xml::node&	inData,
-	const char*			inOptionName,
-	vector<string>&		outOptions)
+	const xml::element_set&	inData,
+	vector<string>&			outOptions)
 {
-	foreach (const xml::node& option, inData.children())
+	foreach (const xml::element* option, inData)
 	{
-		if (option.name() != inOptionName or option.content().empty())
+		if (option->content().empty())
 			continue;
 		
-		outOptions.push_back(option.content());
+		outOptions.push_back(option->content());
 	}
 }
 
@@ -212,14 +211,14 @@ void MProject::ReadOptions(
 //	MProject::ReadResources
 
 void MProject::ReadResources(
-	const xml::node&	inData,
-	MProjectGroup*		inGroup)
+	const xml::element*		inData,
+	MProjectGroup*			inGroup)
 {
-	foreach (const xml::node& node, inData.children())
+	foreach (const xml::element* node, inData->children<xml::element>())
 	{		
-		if (node.name() == "resource")
+		if (node->qname() == "resource")
 		{
-			string fileName = node.content();
+			string fileName = node->content();
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
@@ -238,14 +237,13 @@ void MProject::ReadResources(
 				DisplayError(e);
 			}
 		}
-		else if (node.name() == "group")
+		else if (node->qname() == "group")
 		{
-			string name = node.get_attribute("name");
+			string name = node->get_attribute("name");
 			
 			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
-			if (not node.children().empty())
-				ReadResources(node, group.get());
+			ReadResources(node, group.get());
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -256,14 +254,14 @@ void MProject::ReadResources(
 //	MProject::ReadFiles
 
 void MProject::ReadFiles(
-	const xml::node&	inData,
+	const xml::element*	inData,
 	MProjectGroup*		inGroup)
 {
-	foreach (const xml::node& node, inData.children())
+	foreach (const xml::element* node, inData->children<xml::element>())
 	{
-		if (node.name() == "file")
+		if (node->qname() == "file")
 		{
-			string fileName = node.content();
+			string fileName = node->content();
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
@@ -284,7 +282,7 @@ void MProject::ReadFiles(
 				
 				inGroup->AddProjectItem(new MProjectLib(linkName,
 					shared,
-					node.get_attribute("optional") == "true",
+					node->get_attribute("optional") == "true",
 					inGroup));
 			}
 			else
@@ -308,25 +306,24 @@ void MProject::ReadFiles(
 				}
 			}
 		}
-		else if (node.name() == "link")
+		else if (node->qname() == "link")
 		{
-			string linkName = node.content();
+			string linkName = node->content();
 			if (linkName.length() == 0)
 				THROW(("Invalid project file"));
 			
 			inGroup->AddProjectItem(new MProjectLib(linkName,
-				node.get_attribute("shared") == "true",
-				node.get_attribute("optional") == "true",
+				node->get_attribute("shared") == "true",
+				node->get_attribute("optional") == "true",
 				inGroup));
 		}
-		else if (node.name() == "group")
+		else if (node->qname() == "group")
 		{
-			string name = node.get_attribute("name");
+			string name = node->get_attribute("name");
 			
 			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
-			if (not node.children().empty())
-				ReadFiles(node, group.get());
+			ReadFiles(node, group.get());
 			
 			inGroup->AddProjectItem(group.release());
 		}
@@ -337,13 +334,13 @@ void MProject::ReadFiles(
 //	MProject::Read
 
 void MProject::Read(
-	const xml::node&	inRoot)
+	const xml::element*	inRoot)
 {
 	mVersion = 1.0;
 
 	try
 	{
-		mVersion = boost::lexical_cast<float>(inRoot.get_attribute("version"));
+		mVersion = boost::lexical_cast<float>(inRoot->get_attribute("version"));
 		if (mVersion < 1)
 			mVersion = 1.0f;
 	}
@@ -351,42 +348,42 @@ void MProject::Read(
 	
 	// read the pkg-config data
 	
-	xml::node_list data = inRoot.find_all("pkg-config/pkg");
+	xml::element_set data = inRoot->find("pkg-config/pkg");
 
-	foreach (xml::node& node, data)
+	foreach (xml::element* node, data)
 	{
-		string tool = node.get_attribute("tool");
+		string tool = node->get_attribute("tool");
 		if (tool.length() == 0)
 			tool = "pkg-config";
 				
-		string pkg = node.content();
+		string pkg = node->content();
 		mProjectInfo.mPkgConfigPkgs.push_back(tool + ':' + pkg);
 	}
 	
 	// read the system search paths
 	
-	data = inRoot.find_all("syspaths/path");
+	data = inRoot->find("syspaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mSysSearchPaths);
 	
 	// next the user search paths
-	data = inRoot.find_all("userpaths/path");
+	data = inRoot->find("userpaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mUserSearchPaths);
 	
 	// then the lib search paths
-	data = inRoot.find_all("libpaths/path");
+	data = inRoot->find("libpaths/path");
 	if (not data.empty())
 		ReadPaths(data, mProjectInfo.mLibSearchPaths);
 	
 	// now we're ready to read the files
-	xml::node_ptr files = inRoot.find_first_child("files");
-	if (files and not files->children().empty())
-		ReadFiles(*files, &mProjectItems);
+	xml::element* files = inRoot->find_first("files");
+	if (files != nil)
+		ReadFiles(files, &mProjectItems);
 
 	// and the package actions, if any
-	xml::node_ptr resources = inRoot.find_first_child("resources");
-	if (resources and not resources->children().empty())
+	xml::element* resources = inRoot->find_first("resources");
+	if (resources != nil)
 	{
 		mProjectInfo.mAddResources = true;
 		
@@ -396,19 +393,19 @@ void MProject::Read(
 		else
 			mProjectInfo.mResourcesDir = "Resources";
 
-		ReadResources(*resources, &mPackageItems);
+		ReadResources(resources, &mPackageItems);
 	}
 	else
 		mProjectInfo.mAddResources = false;
 	
 	// And finally we add the targets
-	data = inRoot.find_all("targets/target");
-	foreach (xml::node& targetnode, data)
+	data = inRoot->find("targets/target");
+	foreach (xml::element* targetnode, data)
 	{
-		string linkTarget = targetnode.get_attribute("linkTarget");
-		string name = targetnode.get_attribute("name");
+		string linkTarget = targetnode->get_attribute("linkTarget");
+		string name = targetnode->get_attribute("name");
 		
-		string p = targetnode.get_attribute("kind");
+		string p = targetnode->get_attribute("kind");
 		if (p.length() == 0)
 			THROW(("Invalid target, missing kind"));
 		
@@ -427,7 +424,7 @@ void MProject::Read(
 		
 		MTargetCPU arch = eCPU_native;
 
-		p = targetnode.get_attribute("arch");
+		p = targetnode->get_attribute("arch");
 		if (p.length() > 0)
 		{
 			if (p == "ppc")
@@ -449,34 +446,39 @@ void MProject::Read(
 		target.mTargetCPU = arch;
 		target.mCompiler = Preferences::GetString("c++", "/usr/bin/c++");
 		
-		p = targetnode.get_attribute("debug");
+		p = targetnode->get_attribute("debug");
 		if (p == "true")
 			target.mCFlags.push_back("-gdwarf-2");
 		
-		p = targetnode.get_attribute("pic");
+		p = targetnode->get_attribute("pic");
 		if (p == "true")
 			target.mCFlags.push_back("-fPIC");
 		
-		p = targetnode.get_attribute("profile");
+		p = targetnode->get_attribute("profile");
 		if (p == "true")
 			target.mCFlags.push_back("-pg");
 		
-		foreach (xml::node& node, targetnode.children())
+		ReadOptions(targetnode->find("defines/define"), target.mDefines);
+		ReadOptions(targetnode->find("cflags/cflag"), target.mCFlags);
+		ReadOptions(targetnode->find("ldflags/ldflag"), target.mLDFlags);
+		ReadOptions(targetnode->find("warnings/warning"), target.mWarnings);
+		
+		foreach (xml::element* node, targetnode->children<xml::element>())
 		{
-			if (node.name() == "name")
-				target.mName = node.content();
-			else if (node.name() == "defines")
-				ReadOptions(node, "define", target.mDefines);
-			else if (node.name() == "cflags")
-				ReadOptions(node, "cflag", target.mCFlags);
-			else if (node.name() == "ldflags")
-				ReadOptions(node, "ldflag", target.mLDFlags);
-			else if (node.name() == "warnings")
-				ReadOptions(node, "warning", target.mWarnings);
-			else if (node.name() == "compiler")
-				target.mCompiler = node.content();
-			else if (node.name() == "linkTarget")
-				target.mLinkTarget = node.content();
+			if (node->qname() == "name")
+				target.mName = node->content();
+//			else if (node->name() == "defines")
+//				ReadOptions(node, "define", target.mDefines);
+//			else if (node->name() == "cflags")
+//				ReadOptions(node, "cflag", target.mCFlags);
+//			else if (node->name() == "ldflags")
+//				ReadOptions(node, "ldflag", target.mLDFlags);
+//			else if (node->name() == "warnings")
+//				ReadOptions(node, "warning", target.mWarnings);
+			else if (node->qname() == "compiler")
+				target.mCompiler = node->content();
+			else if (node->qname() == "linkTarget")
+				target.mLinkTarget = node->content();
 		}
 		
 		mProjectInfo.mTargets.push_back(target);
@@ -491,16 +493,16 @@ void MProject::Read(
 //	MProject::WritePaths
 
 void MProject::WritePaths(
-	xml::node&			inNode,
+	xml::element*		inNode,
 	const char*			inTag,
 	vector<fs::path>&	inPaths,
 	bool				inFullPath)
 {
-	xml::node_ptr root(new xml::node(inTag));
+	xml::element* root(new xml::element(inTag));
 	
 	for (vector<fs::path>::iterator p = inPaths.begin(); p != inPaths.end(); ++p)
 	{
-		xml::node_ptr path(new xml::node("path"));
+		xml::element* path(new xml::element("path"));
 
 		if (p->is_complete())
 			path->content(p->string());
@@ -509,17 +511,17 @@ void MProject::WritePaths(
 		else
 			path->content(p->string());
 
-		root->add_child(path);
+		root->append(path);
 	}
 	
-	inNode.add_child(root);
+	inNode->append(root);
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::WriteFiles
 
 void MProject::WriteFiles(
-	xml::node&				inNode,
+	xml::element*			inNode,
 	vector<MProjectItem*>&	inItems)
 {
 	for (vector<MProjectItem*>::iterator item = inItems.begin(); item != inItems.end(); ++item)
@@ -528,31 +530,31 @@ void MProject::WriteFiles(
 		{
 			MProjectGroup* group = static_cast<MProjectGroup*>(*item);
 
-			xml::node_ptr groupNode(new xml::node("group"));
-			groupNode->add_attribute("name", group->GetName());
-			WriteFiles(*groupNode, group->GetItems());
-			inNode.add_child(groupNode);
+			xml::element* groupNode(new xml::element("group"));
+			groupNode->set_attribute("name", group->GetName());
+			WriteFiles(groupNode, group->GetItems());
+			inNode->append(groupNode);
 		}
 		else if (dynamic_cast<MProjectLib*>(*item) != nil)
 		{
 			MProjectLib* link = dynamic_cast<MProjectLib*>(*item);
 
-			xml::node_ptr linkNode(new xml::node("link"));
+			xml::element* linkNode(new xml::element("link"));
 			linkNode->content(link->GetName());
 
 			if (link->IsOptional())
-				linkNode->add_attribute("optional", "true");
+				linkNode->set_attribute("optional", "true");
 
 			if (link->IsShared())
-				linkNode->add_attribute("shared", "true");
+				linkNode->set_attribute("shared", "true");
 
-			inNode.add_child(linkNode);
+			inNode->append(linkNode);
 		}
 		else
 		{
-			xml::node_ptr fileNode(new xml::node("file"));
+			xml::element* fileNode(new xml::element("file"));
 			fileNode->content((*item)->GetName());
-			inNode.add_child(fileNode);
+			inNode->append(fileNode);
 		}
 	}
 }
@@ -561,7 +563,7 @@ void MProject::WriteFiles(
 //	MProject::WriteResources
 
 void MProject::WriteResources(
-	xml::node&				inNode,
+	xml::element*			inNode,
 	vector<MProjectItem*>&	inItems)
 {
 	fs::path rsrcDir = mProjectDir / mProjectInfo.mResourcesDir;
@@ -572,21 +574,21 @@ void MProject::WriteResources(
 		{
 			MProjectGroup* group = static_cast<MProjectGroup*>(*item);
 			
-			xml::node_ptr groupNode(new xml::node("group"));
-			groupNode->add_attribute("name", group->GetName());
+			xml::element* groupNode(new xml::element("group"));
+			groupNode->set_attribute("name", group->GetName());
 			
-			WriteResources(*groupNode, group->GetItems());
+			WriteResources(groupNode, group->GetItems());
 			
-			inNode.add_child(groupNode);
+			inNode->append(groupNode);
 		}
 		else if (dynamic_cast<MProjectResource*>(*item) != nil)
 		{
 			fs::path path = static_cast<MProjectResource*>(*item)->GetPath();
 			
-			xml::node_ptr resourceNode(new xml::node("resource"));
+			xml::element* resourceNode(new xml::element("resource"));
 			resourceNode->content(relative_path(rsrcDir, path).string());
 
-			inNode.add_child(resourceNode);
+			inNode->append(resourceNode);
 		}
 	}
 }
@@ -595,24 +597,24 @@ void MProject::WriteResources(
 //	MProject::WriteTarget
 
 void MProject::WriteTarget(
-	xml::node&			inNode,
+	xml::element*		inNode,
 	MProjectTarget&		inTarget)
 {
 	// <target>
-	xml::node_ptr targetNode(new xml::node("target"));
+	xml::element* targetNode(new xml::element("target"));
 	
 	switch (inTarget.mKind)
 	{
 		case eTargetExecutable:
-			targetNode->add_attribute("kind", "Executable");
+			targetNode->set_attribute("kind", "Executable");
 			break;
 		
 		case eTargetStaticLibrary:
-			targetNode->add_attribute("kind", "Static Library");
+			targetNode->set_attribute("kind", "Static Library");
 			break;
 		
 		case eTargetSharedLibrary:
-			targetNode->add_attribute("kind", "Shared Library");
+			targetNode->set_attribute("kind", "Shared Library");
 			break;
 		
 		default:
@@ -622,50 +624,50 @@ void MProject::WriteTarget(
 	switch (inTarget.mTargetCPU)
 	{
 		case eCPU_PowerPC_32:
-			targetNode->add_attribute("arch", "ppc");
+			targetNode->set_attribute("arch", "ppc");
 			break;
 		
 		case eCPU_PowerPC_64:
-			targetNode->add_attribute("arch", "ppc64");
+			targetNode->set_attribute("arch", "ppc64");
 			break;
 		
 		case eCPU_386:
-			targetNode->add_attribute("arch", "i386");
+			targetNode->set_attribute("arch", "i386");
 			break;
 		
 		case eCPU_x86_64:
-			targetNode->add_attribute("arch", "amd64");
+			targetNode->set_attribute("arch", "amd64");
 			break;
 		
 		default:
 			break;
 	}
 	
-	xml::node_ptr node(new xml::node("name"));
+	xml::element* node(new xml::element("name"));
 	node->content(inTarget.mName);
-	targetNode->add_child(node);
+	targetNode->append(node);
 	
-	node.reset(new xml::node("linkTarget"));
+	node = new xml::element("linkTarget");
 	node->content(inTarget.mLinkTarget);
-	targetNode->add_child(node);
+	targetNode->append(node);
 
-	node.reset(new xml::node("compiler"));
+	node = new xml::element("compiler");
 	node->content(inTarget.mCompiler);
-	targetNode->add_child(node);
+	targetNode->append(node);
 	
-	WriteOptions(*targetNode, "defines", "define", inTarget.mDefines);
-	WriteOptions(*targetNode, "cflags", "cflag", inTarget.mCFlags);
-	WriteOptions(*targetNode, "ldflags", "ldflag", inTarget.mLDFlags);
-	WriteOptions(*targetNode, "warnings", "warning", inTarget.mWarnings);
+	WriteOptions(targetNode, "defines", "define", inTarget.mDefines);
+	WriteOptions(targetNode, "cflags", "cflag", inTarget.mCFlags);
+	WriteOptions(targetNode, "ldflags", "ldflag", inTarget.mLDFlags);
+	WriteOptions(targetNode, "warnings", "warning", inTarget.mWarnings);
 	
-	inNode.add_child(targetNode);
+	inNode->append(targetNode);
 }
 
 // ---------------------------------------------------------------------------
 //	MProject::WriteOptions
 
 void MProject::WriteOptions(
-	xml::node&				inNode,
+	xml::element*			inNode,
 	const char*				inOptionGroupName,
 	const char*				inOptionName,
 	const vector<string>&	inOptions)
@@ -673,17 +675,17 @@ void MProject::WriteOptions(
 	if (not inOptions.empty())
 	{
 		// <optiongroup>
-		xml::node_ptr group(new xml::node(inOptionGroupName));
+		xml::element* group(new xml::element(inOptionGroupName));
 		
 		for (vector<string>::const_iterator o = inOptions.begin(); o != inOptions.end(); ++o)
 		{
-			xml::node_ptr option(new xml::node(inOptionName));
+			xml::element* option(new xml::element(inOptionName));
 			option->content(*o);
-			group->add_child(option);
+			group->append(option);
 		}
 	
 		// </optiongroup>
-		inNode.add_child(group);
+		inNode->append(group);
 	}
 }
 
@@ -694,67 +696,68 @@ void MProject::WriteFile(
 	ostream&			inFile)
 {
 	// <project>
-	xml::node_ptr projectNode(new xml::node("project"));
+	xml::element* projectNode(new xml::element("project"));
 	
-	projectNode->add_attribute("version", "2.0");
+	projectNode->set_attribute("version", "2.0");
 		
 	// pkg-config
 	if (mProjectInfo.mPkgConfigPkgs.size() > 0)
 	{
-		xml::node_ptr pkgConfigNode(new xml::node("pkg-config"));
+		xml::element* pkgConfigNode(new xml::element("pkg-config"));
 		
 		for (vector<string>::iterator p = mProjectInfo.mPkgConfigPkgs.begin(); p != mProjectInfo.mPkgConfigPkgs.end(); ++p)
 		{
-			xml::node_ptr pkgNode(new xml::node("pkg"));
+			xml::element* pkgNode(new xml::element("pkg"));
 			
 			vector<string> f;
 			ba::split(f, *p, ba::is_any_of(":"));
 			
 			if (f.size() == 2)
 			{
-				pkgNode->add_attribute("tool", f[0]);
+				pkgNode->set_attribute("tool", f[0]);
 				pkgNode->content(f[1]);
 			}
 			else if (f[0] == "perl")
-				pkgNode->add_attribute("tool", "perl");
+				pkgNode->set_attribute("tool", "perl");
 			else
 				pkgNode->content(f[0]);
 			
-			pkgConfigNode->add_child(pkgNode);
+			pkgConfigNode->append(pkgNode);
 		}
 		
-		projectNode->add_child(pkgConfigNode);
+		projectNode->append(pkgConfigNode);
 	}
 	
-	WritePaths(*projectNode, "syspaths", mProjectInfo.mSysSearchPaths, false);
-	WritePaths(*projectNode, "userpaths", mProjectInfo.mUserSearchPaths, false);
-	WritePaths(*projectNode, "libpaths", mProjectInfo.mLibSearchPaths, false);
+	WritePaths(projectNode, "syspaths", mProjectInfo.mSysSearchPaths, false);
+	WritePaths(projectNode, "userpaths", mProjectInfo.mUserSearchPaths, false);
+	WritePaths(projectNode, "libpaths", mProjectInfo.mLibSearchPaths, false);
 
 	// <files>
-	xml::node_ptr filesNode(new xml::node("files"));
-	WriteFiles(*filesNode, mProjectItems.GetItems());
-	projectNode->add_child(filesNode);
+	xml::element* filesNode(new xml::element("files"));
+	WriteFiles(filesNode, mProjectItems.GetItems());
+	projectNode->append(filesNode);
 	
 	// <resources>
 	if (mProjectInfo.mAddResources)
 	{
-		xml::node_ptr resourcesNode(new xml::node("resources"));
+		xml::element* resourcesNode(new xml::element("resources"));
 
 		if (fs::exists(mProjectDir / mProjectInfo.mResourcesDir))
-			resourcesNode->add_attribute("resource-dir", mProjectInfo.mResourcesDir.string());
+			resourcesNode->set_attribute("resource-dir", mProjectInfo.mResourcesDir.string());
 
-		WriteResources(*resourcesNode, mPackageItems.GetItems());
+		WriteResources(resourcesNode, mPackageItems.GetItems());
 		
-		projectNode->add_child(resourcesNode);
+		projectNode->append(resourcesNode);
 	}
 
 	// <targets>
-	xml::node_ptr targetsNode(new xml::node("targets"));
+	xml::element* targetsNode(new xml::element("targets"));
 	for (vector<MProjectTarget>::iterator target = mProjectInfo.mTargets.begin(); target != mProjectInfo.mTargets.end(); ++target)
-		WriteTarget(*targetsNode, *target);
-	projectNode->add_child(targetsNode);
+		WriteTarget(targetsNode, *target);
+	projectNode->append(targetsNode);
 	
-	xml::document doc(projectNode);
+	xml::document doc;
+	doc.root(projectNode);
 	inFile << doc;
 }
 

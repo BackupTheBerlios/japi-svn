@@ -137,6 +137,9 @@ class MFindDialog : public MDialog
 	boost::mutex	mFindDialogMutex;
 	std::string		mCurrentMultiFile;
 	MMessageList*	mFindAllResult;
+	
+	static MFindDialog*
+					sInstance;
 };
 
 #endif // MFINDDIALOG_H

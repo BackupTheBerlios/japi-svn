@@ -7,6 +7,7 @@
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/foreach.hpp>
 
 #include <vector>
 
@@ -18,6 +19,8 @@
 #include "MWindow.h"
 #include "MError.h"
 #include "MSound.h"
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 namespace xml = zeep::xml;
@@ -40,9 +43,9 @@ GtkWidget* CreateAlertWithArgs(
 	xml::document doc(data);
 	
 	// build an alert
-	xml::node_ptr root = doc.root();
+	xml::element* root = doc.root();
 	
-	if (root->name() != "alert")
+	if (root->qname() != "alert")
 		THROW(("Invalid resource for alert %s, first tag should be <alert>", inResourceName));
 	
 	string text;
@@ -53,15 +56,17 @@ GtkWidget* CreateAlertWithArgs(
 	if (root->get_attribute("type") == "warning")
 		type = GTK_MESSAGE_WARNING;
 	
-	for (xml::node_list::iterator item = root->children().begin(); item != root->children().end(); ++item)
+	xml::element_set elements(root->children<xml::element>());
+	
+	foreach (xml::element* item, elements)
 	{
-		if (item->name() == "message")
+		if (item->qname() == "message")
 			text = _(item->content());
-		else if (item->name() == "buttons")
+		else if (item->qname() == "buttons")
 		{
-			for (xml::node_list::iterator button = item->children().begin(); button != item->children().end(); ++button)
+			foreach (xml::element* button, item->children<xml::element>())
 			{
-				if (button->name() == "button")
+				if (button->qname() == "button")
 				{
 					string label = _(button->get_attribute("title"));
 					uint32 cmd = atoi(button->get_attribute("cmd").c_str());

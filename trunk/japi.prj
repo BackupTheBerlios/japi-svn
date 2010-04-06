@@ -8,7 +8,7 @@
  </pkg-config>
  <syspaths>
   <path>/usr/include</path>
-  <path>/usr/local/include</path>
+  <path>../boost/include</path>
   <path>../libzeep</path>
  </syspaths>
  <userpaths>
@@ -16,7 +16,7 @@
   <path>NetSources</path>
  </userpaths>
  <libpaths>
-  <path>/usr/local/lib</path>
+  <path>../boost/lib</path>
   <path>../libzeep</path>
  </libpaths>
  <files>

@@ -65,6 +65,10 @@ class MePubTOCItem : public MProjectGroup
 	void			SetClass(
 						const std::string&	inClass)		{ mClass = inClass; }
 
+	std::string		GetId() const							{ return mId; }
+	void			SetId(
+						const std::string&	inId)			{ mId = inId; }
+
 	std::string		GetSrc() const							{ return mSrc; }
 	void			SetSrc(
 						const std::string&	inSrc)			{ mSrc = inSrc; }
@@ -74,7 +78,7 @@ class MePubTOCItem : public MProjectGroup
 						const uint32		inPlayOrder)	{ mPlayOrder = inPlayOrder; }
 
   protected:
-	std::string		mClass, mSrc;
+	std::string		mClass, mSrc, mId;
 	uint32			mPlayOrder;
 };
 

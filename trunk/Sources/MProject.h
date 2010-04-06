@@ -10,7 +10,8 @@
 #include "MProjectItem.h"
 #include "MDocument.h"
 
-namespace zeep { namespace xml { class node; class node_list; } }
+#include "zeep/xml/node.hpp"
+#include "zeep/xml/writer.hpp"
 
 class MWindow;
 class MMessageWindow;
@@ -236,59 +237,47 @@ class MProject : public MDocument
 	void				MakeClean();
 
 	void				ReadPaths(
-							const zeep::xml::node_list&
-												inData,
-							std::vector<fs::path>&
-												outPaths);
+							const zeep::xml::element_set&	inData,
+							std::vector<fs::path>&			outPaths);
 
 	void		 		ReadOptions(
-							const zeep::xml::node&
-												inData,
-							const char*			inOptionName,
-							std::vector<std::string>&
-												outOptions);
+							const zeep::xml::element_set&	inData,
+							std::vector<std::string>&		outOptions);
 
 	void				ReadFiles(
-							const zeep::xml::node&
-												inData,
-							MProjectGroup*		inGroup);
+							const zeep::xml::element*		inData,
+							MProjectGroup*					inGroup);
 
 	void				ReadResources(
-							const zeep::xml::node&
-												inData,
-							MProjectGroup*		inGroup);
+							const zeep::xml::element*		inData,
+							MProjectGroup*					inGroup);
 
 	void				Read(
-							const zeep::xml::node&
-												inContext);
+							const zeep::xml::element*		inContext);
 
 	void				WritePaths(
-							zeep::xml::node&	inNode,
-							const char*			inTag,
-							std::vector<fs::path>&
-												inPaths,
-							bool				inFullPath);
+							zeep::xml::element*				inNode,
+							const char*						inTag,
+							std::vector<fs::path>&			inPaths,
+							bool							inFullPath);
 
 	void				WriteFiles(
-							zeep::xml::node&	inNode,
-							std::vector<MProjectItem*>&
-												inItems);
+							zeep::xml::element*				inNode,
+							std::vector<MProjectItem*>&		inItems);
 
 	void				WriteResources(
-							zeep::xml::node&	inNode,
-							std::vector<MProjectItem*>&
-												inItems);
+							zeep::xml::element*				inNode,
+							std::vector<MProjectItem*>&		inItems);
 
 	void				WriteTarget(
-							zeep::xml::node&	inNode,
-							MProjectTarget&		inTarget);
+							zeep::xml::element*				inNode,
+							MProjectTarget&					inTarget);
 
 	void				WriteOptions(
-							zeep::xml::node&	inNode,
-							const char*			inOptionGroupName,
-							const char*			inOptionName,
-							const std::vector<std::string>&
-												inOptions);
+							zeep::xml::element*				inNode,
+							const char*						inOptionGroupName,
+							const char*						inOptionName,
+							const std::vector<std::string>&	inOptions);
 
 	// interface for Project Info Dialog
 	void				GetInfo(

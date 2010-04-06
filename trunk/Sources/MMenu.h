@@ -19,7 +19,7 @@ class MFile;
 struct MMenuItem;
 typedef std::list<MMenuItem*>	MMenuItemList;
 
-namespace zeep { namespace xml { class node; } }
+namespace zeep { namespace xml { class node; class element; } }
 
 class MMenu
 {
@@ -90,7 +90,7 @@ class MMenu
   protected:
 
 	static MMenu*	Create(
-						zeep::xml::node&	inXMLNode);
+						zeep::xml::element*	inXMLNode);
 
 	static void		MenuPosition(
 						GtkMenu*			inMenu,
@@ -137,7 +137,7 @@ class MMenubar
   private:
 	
 	MMenu*			CreateMenu(
-						zeep::xml::node&	inXMLNode);
+						zeep::xml::element*	inXMLNode);
 	
 	bool			OnButtonPress(
 						GdkEventButton*		inEvent);

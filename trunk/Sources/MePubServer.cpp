@@ -67,26 +67,26 @@ void MePubServer::handle_request(
 		if (uri.empty())	// root requested, return an index
 		{
 			rep = http::reply::stock_reply(http::ok);
-			xml::node_ptr index_html(new xml::node("html"));
-			xml::node_ptr index_body(new xml::node("body"));
-			index_html->add_child(index_body);
-			xml::node_ptr index_h1(new xml::node("h1"));
+			xml::element* index_html(new xml::element("html"));
+			xml::element* index_body(new xml::element("body"));
+			index_html->append(index_body);
+			xml::element* index_h1(new xml::element("h1"));
 			index_h1->content("List of open ePub documents");
-			index_body->add_child(index_h1);
+			index_body->append(index_h1);
 			
-			xml::node_ptr ul(new xml::node("ul"));
-			index_body->add_child(ul);
+			xml::element* ul(new xml::element("ul"));
+			index_body->append(ul);
 			
 			MePubDocument* doc = MePubDocument::GetFirstEPubDocument();
 			while (doc != nil)
 			{
-				xml::node_ptr li(new xml::node("li"));
-				ul->add_child(li);
+				xml::element* li(new xml::element("li"));
+				ul->append(li);
 				
-				xml::node_ptr index_a(new xml::node("a"));
-				index_a->add_attribute("href", doc->GetDocumentID() + '/');
+				xml::element* index_a(new xml::element("a"));
+				index_a->set_attribute("href", doc->GetDocumentID() + '/');
 				index_a->content(doc->GetFile().GetPath().filename());
-				li->add_child(index_a);
+				li->append(index_a);
 				
 				doc = doc->GetNextEPubDocument();
 			}
@@ -128,30 +128,30 @@ void MePubServer::handle_request(
 					MProjectGroup* group = static_cast<MProjectGroup*>(item);
 					
 					rep = http::reply::stock_reply(http::ok);
-					xml::node_ptr index_html(new xml::node("html"));
-					xml::node_ptr index_body(new xml::node("body"));
-					index_html->add_child(index_body);
-					xml::node_ptr index_h1(new xml::node("h1"));
+					xml::element* index_html(new xml::element("html"));
+					xml::element* index_body(new xml::element("body"));
+					index_html->append(index_body);
+					xml::element* index_h1(new xml::element("h1"));
 					index_h1->content("List of files in epub document");
-					index_body->add_child(index_h1);
+					index_body->append(index_h1);
 
-					xml::node_ptr ul(new xml::node("ul"));
-					index_body->add_child(ul);
+					xml::element* ul(new xml::element("ul"));
+					index_body->append(ul);
 					
 					for (auto file = group->GetItems().begin(); file != group->GetItems().end(); ++file)
 					{
-						xml::node_ptr li(new xml::node("li"));
-						ul->add_child(li);
+						xml::element* li(new xml::element("li"));
+						ul->append(li);
 						
-						xml::node_ptr index_a(new xml::node("a"));
+						xml::element* index_a(new xml::element("a"));
 
 						if (dynamic_cast<MProjectGroup*>(*file) != nil)
-							index_a->add_attribute("href", (*file)->GetName() + '/');
+							index_a->set_attribute("href", (*file)->GetName() + '/');
 						else
-							index_a->add_attribute("href", (*file)->GetName());
+							index_a->set_attribute("href", (*file)->GetName());
 
 						index_a->content((*file)->GetName());
-						li->add_child(index_a);
+						li->append(index_a);
 					}
 					
 					rep.set_content(index_html);

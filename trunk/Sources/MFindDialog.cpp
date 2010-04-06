@@ -81,10 +81,13 @@ const int16
 
 }
 
+MFindDialog* MFindDialog::sInstance = nil;
+
 MFindDialog& MFindDialog::Instance()
 {
-	static MFindDialog sInstance;
-	return sInstance;
+	if (sInstance == nil)
+		sInstance = new MFindDialog();
+	return *sInstance;
 }
 
 MFindDialog::MFindDialog()
@@ -135,6 +138,7 @@ MFindDialog::MFindDialog()
 
 MFindDialog::~MFindDialog()
 {
+	sInstance = nil;
 	RemoveWindowFromList(this);
 }
 
@@ -185,7 +189,7 @@ bool MFindDialog::DoClose()
 
 	Hide();
 	
-	return false;
+	return true;
 }
 
 void MFindDialog::Select()

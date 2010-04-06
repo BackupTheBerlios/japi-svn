@@ -273,8 +273,10 @@ class MePubFileRow : public MListRow<
 
 enum {
 	kTOCTitleColumn,
+	kTOCIDColumn,
 	kTOCSrcColumn,
 	kTOCClassColumn,
+	kTOCPlayOrderColumn,
 
 	kTOCColumnCount
 };
@@ -282,15 +284,19 @@ enum {
 namespace MePubTOCFields
 {
 	struct title {};
+	struct id {};
 	struct src {};
 	struct cls {};
+	struct po {};
 }
 
 class MePubTOCRow : public MListRow<
 	MePubTOCRow,
 	MePubTOCFields::title,	string,
+	MePubTOCFields::id,		string,
 	MePubTOCFields::src,	string,
-	MePubTOCFields::cls,	string
+	MePubTOCFields::cls,	string,
+	MePubTOCFields::po,		uint32
 >
 {
   public:
@@ -310,6 +316,13 @@ class MePubTOCRow : public MListRow<
 					}
 
 	void			GetData(
+						const MePubTOCFields::id&,
+						string&			outData)
+					{
+						outData = mTOCItem->GetId();
+					}
+
+	void			GetData(
 						const MePubTOCFields::src&,
 						string&			outData)
 					{
@@ -325,6 +338,13 @@ class MePubTOCRow : public MListRow<
 							outData = mTOCItem->GetClass();
 					}
 
+	void			GetData(
+						const MePubTOCFields::po&,
+						uint32&			outData)
+					{
+						outData = mTOCItem->GetPlayOrder();
+					}
+
 	virtual void	ColumnEdited(
 						uint32			inColumnNr,
 						const string&	inNewText)
@@ -333,6 +353,11 @@ class MePubTOCRow : public MListRow<
 						{
 							case kTOCTitleColumn:
 								mItem->SetName(inNewText);
+								RowChanged();
+								break;
+							
+							case kTOCIDColumn:
+								mTOCItem->SetId(inNewText);
 								RowChanged();
 								break;
 							
@@ -345,6 +370,12 @@ class MePubTOCRow : public MListRow<
 								mTOCItem->SetClass(inNewText);
 								RowChanged();
 								break;
+
+							case kTOCPlayOrderColumn:
+								mTOCItem->SetPlayOrder(boost::lexical_cast<uint32>(inNewText));
+								RowChanged();
+								break;
+							
 						}
 					}
 
@@ -445,8 +476,10 @@ void MePubWindow::Initialize(
 	tocTree->SetColumnTitle(kTOCTitleColumn, _("Title"));
 	tocTree->SetExpandColumn(kTOCTitleColumn);
 	tocTree->SetColumnEditable(kTOCTitleColumn, true);
+	tocTree->SetColumnTitle(kTOCIDColumn, _("ID"));
 	tocTree->SetColumnTitle(kTOCSrcColumn, _("Source"));
 	tocTree->SetColumnTitle(kTOCClassColumn, _("Class"));
+	tocTree->SetColumnTitle(kTOCPlayOrderColumn, _("Play Order"));
 	AddItemsToList(mEPub->GetTOC(), nil, tocTree);
 	tocTree->ExpandAll();
 
@@ -758,8 +791,10 @@ void MePubWindow::SelectTOCRow(
 	MePubTOCRow*	inRow)
 {
 	mTOCTree->SetColumnEditable(kTOCTitleColumn, true);
+	mTOCTree->SetColumnEditable(kTOCIDColumn, true);
 	mTOCTree->SetColumnEditable(kTOCSrcColumn, true);
 	mTOCTree->SetColumnEditable(kTOCClassColumn, true);
+	mTOCTree->SetColumnEditable(kTOCPlayOrderColumn, true);
 }
 
 // ---------------------------------------------------------------------------

@@ -835,10 +835,12 @@ MLanguageXML::MatchLanguage(
 	uint32 result = 0;
 
 	if (FileNameMatches("*.xml;*.xslt;*.plist;*.xsd;*.dtd;*.xpgt;*.xhtml", inFile))
-	{
 		result += 90;
-	}
-	else
+
+	if (FileNameMatches("*.mod", inFile))
+		result += 5;
+
+	if (result < 90)
 	{
 		const char kXMLString[] = "<?xml";
 		char s[8] = {};
@@ -847,7 +849,7 @@ MLanguageXML::MatchLanguage(
 		MTextBuffer::iterator txt(inText.begin());
 		while (*txt and l < sizeof(kXMLString) - 1)
 		{
-			if (not isspace(*txt))
+			if (not isspace(*txt))		// this is wrong, <?xml should be the first characters
 			{
 				if (isprint(*txt))
 					s[l++] = tolower(*txt);
@@ -860,6 +862,27 @@ MLanguageXML::MatchLanguage(
 		if (strcmp(kXMLString, s) == 0)
 			result += 80;
 	}
+	
+	if (result < 50)
+	{
+		const char kXMLString[] = "<!--";
+		char s[8] = {};
+		uint32 l = 0;
+		
+		MTextBuffer::iterator txt(inText.begin());
+		while (*txt and l < sizeof(kXMLString) - 1 and txt.GetOffset() < 1000)
+		{
+			if (*txt == kXMLString[l])
+				++l;
+			else
+				l = 0;
+			++txt;
+		}
+		
+		if (strcmp(kXMLString, s) == 0)
+			result += 50;
+	}
+	
 	return result;
 }
 

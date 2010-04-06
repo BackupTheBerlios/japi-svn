@@ -51,11 +51,13 @@ namespace ba = boost::algorithm;
 
 static bool gQuit = false;
 
-int VERBOSE;
+#if DEBUG
+int VERBOSE, TRACE;
+#endif
 
 const char
 	kAppName[] = "Japi",
-	kVersionString[] = "0.9.7-b4";
+	kVersionString[] = "0.9.8";
 
 MJapieApp* gApp;
 fs::path gExecutablePath, gPrefixPath;

@@ -87,8 +87,11 @@ MObjectFile::MObjectFile(
 	catch (std::exception& e)
 	{
 		DisplayError(e);
-		mImpl->mTextSize = 0;
-		mImpl->mDataSize = 0;
+		if (mImpl != nil)
+		{
+			mImpl->mTextSize = 0;
+			mImpl->mDataSize = 0;
+		}
 	}
 }
 
@@ -99,12 +102,18 @@ MObjectFile::~MObjectFile()
 
 uint32 MObjectFile::GetTextSize() const
 {
-	return mImpl->mTextSize;
+	uint32 textSize = 0;
+	if (mImpl != nil)
+		textSize = mImpl->mTextSize;
+	return textSize;
 }
 
 uint32 MObjectFile::GetDataSize() const
 {
-	return mImpl->mDataSize;
+	uint32 dataSize = 0;
+	if (mImpl != nil)
+		dataSize = mImpl->mDataSize;
+	return dataSize;
 }
 
 void MObjectFile::AddGlobal(

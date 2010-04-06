@@ -107,9 +107,14 @@ static void RunCommand(
 			dup2(sink, STDERR_FILENO);
 			close(sink);
 		}
+		
+		vector<char*> av;
+		for (const char** a = argv; *a; ++a)
+			av.push_back(strdup(*a));
+		av.push_back(nil);
 
 		(void)execve(cmd.string().c_str(),
-			const_cast<char*const*>(argv), environ);
+			&av[0], environ);
 
 		cerr << "execution of " << argv[0] << " failed: " << strerror(errno) << endl;
 		exit(-1);

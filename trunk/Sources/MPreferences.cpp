@@ -27,6 +27,7 @@
 #include <zeep/xml/document.hpp>
 #include <zeep/xml/node.hpp>
 #include <zeep/xml/serialize.hpp>
+#include <zeep/xml/writer.hpp>
 
 using namespace std;
 namespace xml = zeep::xml;
@@ -133,28 +134,25 @@ IniFile::~IniFile()
 		
 		if (data.is_open())
 		{
-			xml::node_ptr root(new xml::node("japi-preferences"));
+			xml::writer w(data);
+			
+			w.write_xml_decl(false);
+			
+			w.write_start_element("japi-preferences");
 			
 			for (map<string,vector<string> >::iterator p = mPrefs.begin(); p != mPrefs.end(); ++p)
 			{
-				xml::node_ptr pref(new xml::node("pref"));
-				
-				xml::node_ptr name(new xml::node("name"));
-				name->content(p->first);
-				pref->add_child(name);
+				w.write_start_element("pref");
+
+				w.write_element("name", p->first);
 				
 				for (vector<string>::iterator v = p->second.begin(); v != p->second.end(); ++v)
-				{
-					xml::node_ptr value(new xml::node("value"));
-					value->content(*v);
-					pref->add_child(value);
-				}
+					w.write_element("value", *v);
 				
-				root->add_child(pref);
+				w.write_end_element("pref");
 			}
 			
-			xml::document doc(root);
-			data << doc;
+			w.write_end_element("japi-preferences");
 		}
 	}
 	catch (exception& e)
