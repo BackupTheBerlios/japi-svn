@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include "MAlerts.h"
+#include "MError.h"
 
 #if defined(__APPLE__) and defined(__MACH__)
 #	include "MObjectFileImp_macho.h"
@@ -131,6 +132,7 @@ void MObjectFile::AddGlobal(
 void MObjectFile::Write(
 	const fs::path&		inFile)
 {
+	THROW_IF_NIL((mImpl));
 	mImpl->Write(inFile);
 }
 

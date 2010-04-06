@@ -210,8 +210,7 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 {
 	char b[30];
 	
-	if (s.readsome(b, 4) != 4)
-		THROW(("Truncated ePub file"));
+	s.read(b, 4);
 
 	if (b[0] != 'P' or b[1] != 'K')
 		THROW(("Invalid ePub file"));
@@ -229,8 +228,7 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 	if (not (b[2] == '\003' and b[3] == '\004'))
 		THROW(("Invalid ePub file, perhaps it is damaged"));
 
-	if (s.readsome(b + 4, sizeof(b) - 4) != sizeof(b) - 4)
-		THROW(("Truncated ePub file"));
+	s.read(b + 4, sizeof(b) - 4);
 
 	uint16 versionNeededToExtract, bitFlag, compressionMethod, fileNameLength, extraFieldLength;
 	
@@ -254,17 +252,13 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 	// read file name
 	
 	vector<char> fn(fileNameLength);
-	if (s.readsome(&fn[0], fileNameLength) != fileNameLength)
-		THROW(("Truncated ePub file"));
-	
-	fh.filename.assign(&fn[0], fileNameLength);
+	s.read(&fn[0], fileNameLength);
+	fh.filename.assign(&fn[0], fileNameLength);	
 	
 	// skip over the extra data
-	
 	s.seekg(extraFieldLength, ios::cur);
 	
 	// OK, now read in the data and inflate if required
-
 	fh.data.clear();
 
 	// save the offset in the stream to be able to seek back if needed
@@ -275,8 +269,7 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 		if (fh.compressed_size > 0)
 		{
 			vector<char> b(fh.compressed_size);
-			if (s.readsome(&b[0], fh.compressed_size) != fh.compressed_size)
-				THROW(("Truncated ePub file"));
+			s.read(&b[0], fh.compressed_size);
 			
 			fh.data.assign(&b[0], fh.compressed_size);
 		}
@@ -307,8 +300,7 @@ bool read_next_file(istream& s, ZIPLocalFileHeader& fh)
 		if (bitFlag & kZipLengthAtEndMask)
 		{
 			char b2[16];
-			if (s.readsome(b2, sizeof(b2)) != sizeof(b2))
-				THROW(("Truncated ePub file"));
+			s.read(b2, sizeof(b2));
 
 			uint32 signature;
 			char* p = read(signature, b2);
@@ -1363,7 +1355,8 @@ void MePubDocument::ParseOPF(
 
 				if (FileNameMatches("*.ncx", href))
 				{
-					outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
+					outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0,
+						_("TOC/NCX file should have mimetype application/x-dtbncx+xml"));
 					mTOCFile = href;
 					continue;
 				}
