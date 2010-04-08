@@ -87,7 +87,7 @@ MObjectFile::MObjectFile(
 	}
 	catch (std::exception& e)
 	{
-		DisplayError(e);
+//		DisplayError(e);
 		if (mImpl != nil)
 		{
 			mImpl->mTextSize = 0;

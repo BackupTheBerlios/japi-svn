@@ -18,6 +18,7 @@
 // for our handler objects
 #if not defined(BOOST_PP_IS_ITERATING)
 
+#include <iostream>
 #include <boost/preprocessor.hpp>
 #include <memory>
 #include <string>
@@ -299,13 +300,20 @@ struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
 					gpointer		inData)
 				{
 					R result = R();
-					
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
+
+					try
 					{
-						handler.mSendingGObject = inObject;
-						result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+						MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+						
+						if (handler.mHandler.get() != nil)
+						{
+							handler.mSendingGObject = inObject;
+							result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+						}
+					}
+					catch (...)
+					{
+						std::cerr << "caught exception in GCallback" << std::endl;
 					}
 					
 					return result;
@@ -329,12 +337,19 @@ struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
 					BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
 					gpointer		inData)
 				{
-					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-					
-					if (handler.mHandler.get() != nil)
+					try
 					{
-						handler.mSendingGObject = inObject;
-						handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+						MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+						
+						if (handler.mHandler.get() != nil)
+						{
+							handler.mSendingGObject = inObject;
+							handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+						}
+					}
+					catch (...)
+					{
+						std::cerr << "caught exception in GCallback" << std::endl;
 					}
 				}
 };

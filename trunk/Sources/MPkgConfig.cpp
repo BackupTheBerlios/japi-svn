@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <sstream>
 #include <fcntl.h>
 
@@ -18,12 +19,63 @@
 #include "MPreferences.h"
 #include "MError.h"
 
+#define foreach BOOST_FOREACH
+
 using namespace std;
 namespace ba = boost::algorithm;
 
 extern char** environ;
 
 namespace {
+
+class MArgv
+{
+  public:
+					MArgv();
+					~MArgv();
+
+	void			push_back(const char* s);
+	void			push_back(const string& s);
+	
+					operator char**();
+
+  private:
+	vector<char*>	mArgs;
+};
+
+MArgv::MArgv()
+{
+}
+
+MArgv::~MArgv()
+{
+	foreach (char* p, mArgs)
+		delete[] p;
+}
+
+void MArgv::push_back(const char* p)
+{
+	assert(p);
+	if (p != nil)
+	{
+		char* n = new char[strlen(p) + 1];
+		strcpy(n, p);
+		mArgs.push_back(n);
+	}
+}
+
+void MArgv::push_back(const string& p)
+{
+	char* n = new char[p.length() + 1];
+	strcpy(n, p.c_str());
+	mArgs.push_back(n);
+}
+
+MArgv::operator char**()
+{
+	mArgs.push_back(nil);
+	return &mArgs[0];
+}
 
 void LocateCommand(
 	const string&		inCommand,
@@ -66,7 +118,7 @@ void LocateCommand(
 
 static void RunCommand(
 	const fs::path&		cmd,
-	const char*			argv[],
+	char*				argv[],
 	string&				outResult)
 {
 	// OK, now start it.
@@ -108,13 +160,7 @@ static void RunCommand(
 			close(sink);
 		}
 		
-		vector<char*> av;
-		for (const char** a = argv; *a; ++a)
-			av.push_back(strdup(*a));
-		av.push_back(nil);
-
-		(void)execve(cmd.string().c_str(),
-			&av[0], environ);
+		(void)execve(cmd.string().c_str(), argv, environ);
 
 		cerr << "execution of " << argv[0] << " failed: " << strerror(errno) << endl;
 		exit(-1);
@@ -214,12 +260,10 @@ void GetPkgConfigResult(
 	fs::path cmd;
 	LocateCommand("pkg-config", cmd);
 	
-	const char* args[] = {
-		cmd.filename().c_str(),
-		inInfo,
-		inPackage.c_str(),
-		NULL
-	};
+	MArgv args;
+	args.push_back(cmd.filename());
+	args.push_back(inInfo);
+	args.push_back(inPackage);
 
 	string s;
 	RunCommand(cmd, args, s);
@@ -243,11 +287,9 @@ void GetCompilerPaths(
 	
 	// get the list of libraries search dirs
 	{
-		const char* args[] = {
-			cmd.filename().c_str(),
-			"-v",
-			NULL
-		};
+		MArgv args;
+		args.push_back(cmd.filename());
+		args.push_back("-v");
 	
 		string s;
 		RunCommand(cmd, args, s);
@@ -281,11 +323,9 @@ void GetCompilerPaths(
 
 	// get the list of libraries search dirs
 	{
-		const char* args[] = {
-			cmd.filename().c_str(),
-			"-print-search-dirs",
-			NULL
-		};
+		MArgv args;
+		args.push_back(cmd.filename());
+		args.push_back("-print-search-dirs");
 	
 		string s;
 		RunCommand(cmd, args, s);
@@ -323,14 +363,13 @@ void GetToolConfigResult(
 	fs::path cmd;
 	LocateCommand(inTool, cmd);
 	
-	vector<const char*> argv;
-	argv.push_back(inTool.c_str());
+	MArgv argv;
+	argv.push_back(inTool);
 	for (const char*const* a = inArgs; *a != nil; ++a)
 		argv.push_back(*a);
-	argv.push_back(nil);
 
 	string s;
-	RunCommand(cmd, &argv[0], s);
+	RunCommand(cmd, argv, s);
 	ParseString(s, outFlags);
 //
 //cout << "tool: " << inTool << endl
@@ -344,13 +383,12 @@ void GetPkgConfigPackagesList(
 	fs::path cmd;
 	LocateCommand("pkg-config", cmd);
 	
-	vector<const char*> argv;
+	MArgv argv;
 	argv.push_back("pkg-config");
 	argv.push_back("--list-all");
-	argv.push_back(nil);
 
 	string s;
-	RunCommand(cmd, &argv[0], s);
+	RunCommand(cmd, argv, s);
 	
 	stringstream ss(s);
 	while (not ss.eof())

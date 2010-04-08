@@ -320,12 +320,22 @@ void MLocalFileSaver::DoSave()
 		save = eAskOverwriteNewer();
 
 	fs::ofstream file(path, ios::trunc|ios::binary);
-#pragma message("Check if file is actually open")
-	eWriteFile(file);
 	
-	eFileWritten();
-	
-	SetFileInfo(false, fs::last_write_time(path));
+	try
+	{
+		if (not file.is_open())
+			THROW(("Could not open file %s for writing", path.leaf().c_str()));
+		
+		eWriteFile(file);
+		
+		eFileWritten();
+		
+		SetFileInfo(false, fs::last_write_time(path));
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 	
 	delete this;
 }

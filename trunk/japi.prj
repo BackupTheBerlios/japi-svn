@@ -219,9 +219,9 @@
         <define>NDEBUG</define>
       </defines>
       <cflags>
-        <cflag>-O3</cflag>
         <cflag>-pthread</cflag>
         <cflag>-std=c++0x</cflag>
+        <cflag>-O2</cflag>
       </cflags>
       <warnings>
         <warning>all</warning>

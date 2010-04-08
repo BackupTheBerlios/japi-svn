@@ -83,6 +83,7 @@ MTextView::MTextView(
 	, mVScrollBar(inVScrollBar)
 	, mHScrollBar(inHScrollBar)
 	, mLineHeight(10)
+	, mLastCaretBlinkTime(0)
 	, mCaretVisible(false)
 	, mDrawForDragImage(false)
 	, mCaret(0)
