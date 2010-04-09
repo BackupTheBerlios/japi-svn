@@ -71,6 +71,9 @@ class MTextBuffer
 	void		SetEncoding(
 					MEncoding		inEncoding);
 
+	bool		HasBOM() const										{ return mBOM; }
+	void		SetHasBOM(bool inBOM)								{ mBOM = inBOM; }
+
 	class iterator;
 
 	class ref

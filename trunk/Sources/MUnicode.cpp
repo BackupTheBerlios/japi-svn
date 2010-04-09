@@ -285,9 +285,9 @@ MEncoder* MEncoder::GetEncoder(MEncoding inEncoding)
 			encoder = new MEncoderImpl<kEncodingUTF16BE>();
 			break;
 		
-//		case kEncodingUTF16LE:
-//			encoder = new MEncoderImpl<kEncodingUTF16LE>();
-//			break;
+		case kEncodingUTF16LE:
+			encoder = new MEncoderImpl<kEncodingUTF16LE>();
+			break;
 		
 		case kEncodingUCS2:
 			encoder = new MEncoderImpl<kEncodingUCS2>();

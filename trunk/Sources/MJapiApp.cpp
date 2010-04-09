@@ -59,7 +59,7 @@ const char
 	kAppName[] = "Japi",
 	kVersionString[] = "0.9.8";
 
-MJapieApp* gApp;
+MJapiApp* gApp;
 fs::path gExecutablePath, gPrefixPath;
 
 const char
@@ -73,9 +73,9 @@ const uint32
 
 // --------------------------------------------------------------------
 
-MJapieApp::MJapieApp()
+MJapiApp::MJapiApp()
 	: MHandler(nil)
-	, eUpdateSpecialMenu(this, &MJapieApp::UpdateSpecialMenu)
+	, eUpdateSpecialMenu(this, &MJapiApp::UpdateSpecialMenu)
 	, mSocketFD(-1)
 	, mQuit(false)
 	, mQuitPending(false)
@@ -85,13 +85,13 @@ MJapieApp::MJapieApp()
 	gApp = this;
 }
 
-MJapieApp::~MJapieApp()
+MJapiApp::~MJapiApp()
 {
 	if (mSocketFD >= 0)
 		close(mSocketFD);
 }
 
-bool MJapieApp::ProcessCommand(
+bool MJapiApp::ProcessCommand(
 	uint32			inCommand,
 	const MMenu*	inMenu,
 	uint32			inItemIndex,
@@ -244,7 +244,7 @@ bool MJapieApp::ProcessCommand(
 	return result;
 }
 
-bool MJapieApp::UpdateCommandStatus(
+bool MJapiApp::UpdateCommandStatus(
 	uint32			inCommand,
 	MMenu*			inMenu,
 	uint32			inItemIndex,
@@ -283,7 +283,7 @@ bool MJapieApp::UpdateCommandStatus(
 	return result;
 }
 
-void MJapieApp::UpdateSpecialMenu(
+void MJapiApp::UpdateSpecialMenu(
 	const std::string&	inName,
 	MMenu*				inMenu)
 {
@@ -299,7 +299,7 @@ void MJapieApp::UpdateSpecialMenu(
 		PRINT(("Unknown special menu %s", inName.c_str()));
 }
 
-void MJapieApp::UpdateWindowMenu(
+void MJapiApp::UpdateWindowMenu(
 	MMenu*				inMenu)
 {
 	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
@@ -336,7 +336,7 @@ void MJapieApp::UpdateWindowMenu(
 	}	
 }
 
-void MJapieApp::UpdateTemplateMenu(
+void MJapiApp::UpdateTemplateMenu(
 	MMenu*				inMenu)
 {
 	const uint32 kStandardNewMenuItems = 4;
@@ -355,7 +355,7 @@ void MJapieApp::UpdateTemplateMenu(
 	}
 }
 
-void MJapieApp::UpdateScriptsMenu(
+void MJapiApp::UpdateScriptsMenu(
 	MMenu*				inMenu)
 {
 	inMenu->RemoveItems(0, inMenu->CountItems());
@@ -370,7 +370,7 @@ void MJapieApp::UpdateScriptsMenu(
 	}
 }
 
-void MJapieApp::UpdateEPubMenu(
+void MJapiApp::UpdateEPubMenu(
 	MMenu*				inMenu)
 {
 	inMenu->RemoveItems(0, inMenu->CountItems());
@@ -383,7 +383,7 @@ void MJapieApp::UpdateEPubMenu(
 	}
 }
 
-void MJapieApp::DoSelectWindowFromWindowMenu(
+void MJapiApp::DoSelectWindowFromWindowMenu(
 	uint32				inIndex)
 {
 	MDocument* doc = MDocument::GetFirstDocument();
@@ -395,7 +395,7 @@ void MJapieApp::DoSelectWindowFromWindowMenu(
 		DisplayDocument(doc);	
 }	
 
-void MJapieApp::RunEventLoop()
+void MJapiApp::RunEventLoop()
 {
 	try
 	{
@@ -411,9 +411,9 @@ void MJapieApp::RunEventLoop()
 	}
 	catch (...) {}
 
-	uint32 snooper = gtk_key_snooper_install(&MJapieApp::Snooper, nil);
+	uint32 snooper = gtk_key_snooper_install(&MJapiApp::Snooper, nil);
 	
-	g_timeout_add(50, &MJapieApp::Timeout, nil);
+	g_timeout_add(50, &MJapiApp::Timeout, nil);
 
 	gdk_threads_enter();
 	gtk_main();
@@ -422,7 +422,7 @@ void MJapieApp::RunEventLoop()
 	gtk_key_snooper_remove(snooper);
 }
 
-gint MJapieApp::Snooper(
+gint MJapiApp::Snooper(
 	GtkWidget*		inGrabWidget,
 	GdkEventKey*	inEvent,
 	gpointer		inFuncData)
@@ -454,7 +454,7 @@ gint MJapieApp::Snooper(
 	return result;
 }
 
-void MJapieApp::DoSaveAll()
+void MJapiApp::DoSaveAll()
 {
 	MDocument* doc = MDocument::GetFirstDocument();
 	
@@ -482,7 +482,7 @@ void MJapieApp::DoSaveAll()
 	}
 }
 
-void MJapieApp::DoCloseAll(
+void MJapiApp::DoCloseAll(
 	MCloseReason		inAction)
 {
 	// first close all that can be closed
@@ -542,7 +542,7 @@ void MJapieApp::DoCloseAll(
 	}
 }
 
-void MJapieApp::DoQuit()
+void MJapiApp::DoQuit()
 {
 	if (MProject::Instance() != nil)
 	{
@@ -559,7 +559,7 @@ void MJapieApp::DoQuit()
 	}
 }
 
-MDocWindow* MJapieApp::DisplayDocument(
+MDocWindow* MJapiApp::DisplayDocument(
 	MDocument*		inDocument)
 {
 	MDocWindow* result = MDocWindow::FindWindowForDocument(inDocument);
@@ -582,13 +582,13 @@ MDocWindow* MJapieApp::DisplayDocument(
 	return result;
 }
 
-void MJapieApp::DoNew()
+void MJapiApp::DoNew()
 {
 	MDocument* doc = MDocument::Create<MTextDocument>(MFile());
 	DisplayDocument(doc);
 }
 
-void MJapieApp::DoNewProject()
+void MJapiApp::DoNewProject()
 {
 	GtkWidget *dialog;
 	
@@ -667,7 +667,7 @@ void MJapieApp::DoNewProject()
 	gtk_widget_destroy(dialog);
 }
 
-void MJapieApp::DoNewEPub()
+void MJapiApp::DoNewEPub()
 {
 	unique_ptr<MePubDocument> epub(new MePubDocument());
 	epub->InitializeNew();
@@ -680,7 +680,7 @@ void MJapieApp::DoNewEPub()
 	w.release();
 }
 
-void MJapieApp::ImportOEB()
+void MJapiApp::ImportOEB()
 {
 	MFile oeb;
 	if (ChooseOneFile(oeb))
@@ -697,14 +697,14 @@ void MJapieApp::ImportOEB()
 	}
 }
 
-void MJapieApp::SetCurrentFolder(
+void MJapiApp::SetCurrentFolder(
 	const char*	inFolder)
 {
 	if (inFolder != nil)
 		mCurrentFolder = inFolder;
 }
 
-void MJapieApp::DoOpen()
+void MJapiApp::DoOpen()
 {
 	vector<MFile> urls;
 	
@@ -723,7 +723,7 @@ void MJapieApp::DoOpen()
 // ---------------------------------------------------------------------------
 //	OpenOneDocument
 
-MDocument* MJapieApp::OpenOneDocument(
+MDocument* MJapiApp::OpenOneDocument(
 	const MFile&			inFileRef)
 {
 	if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
@@ -757,7 +757,7 @@ MDocument* MJapieApp::OpenOneDocument(
 // ---------------------------------------------------------------------------
 //	OpenProject
 
-void MJapieApp::OpenProject(
+void MJapiApp::OpenProject(
 	const MFile&		inPath)
 {
 	unique_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
@@ -774,7 +774,7 @@ void MJapieApp::OpenProject(
 // ---------------------------------------------------------------------------
 //	OpenEPub
 
-void MJapieApp::OpenEPub(
+void MJapiApp::OpenEPub(
 	const MFile&		inPath)
 {
 	try
@@ -797,7 +797,7 @@ void MJapieApp::OpenEPub(
 	}
 }
 
-void MJapieApp::DoOpenTemplate(
+void MJapiApp::DoOpenTemplate(
 	const string&		inTemplate)
 {
 	fs::ifstream file(gTemplatesDir / inTemplate, ios::binary);
@@ -817,7 +817,7 @@ void MJapieApp::DoOpenTemplate(
 	DisplayDocument(doc);
 }
 
-void MJapieApp::ShowWorksheet()
+void MJapiApp::ShowWorksheet()
 {
 	fs::path worksheet = gPrefsDir / "Worksheet";
 	
@@ -838,7 +838,7 @@ void MJapieApp::ShowWorksheet()
 		MTextDocument::SetWorksheet(static_cast<MTextDocument*>(doc));
 }
 
-gboolean MJapieApp::Timeout(
+gboolean MJapiApp::Timeout(
 	gpointer		inData)
 {
 	gdk_threads_enter();
@@ -854,7 +854,7 @@ gboolean MJapieApp::Timeout(
 	return true;
 }
 
-void MJapieApp::Pulse()
+void MJapiApp::Pulse()
 {
 	MWindow::RecycleWindows();
 	
@@ -914,7 +914,7 @@ struct MSockMsg
 	int32		length;
 };
 
-void MJapieApp::ProcessSocketMessages()
+void MJapiApp::ProcessSocketMessages()
 {
 	int fd = accept(mSocketFD, nil, nil);
 	
@@ -1013,7 +1013,7 @@ int OpenSocket(
 	
 }
 
-bool MJapieApp::IsServer()
+bool MJapiApp::IsServer()
 {
 	bool isServer = false;
 
@@ -1094,12 +1094,12 @@ bool MJapieApp::IsServer()
 	return isServer;
 }
 
-bool MJapieApp::IsClient()
+bool MJapiApp::IsClient()
 {
 	return mSocketFD >= 0;
 }
 
-void MJapieApp::ProcessArgv(
+void MJapiApp::ProcessArgv(
 	bool				inReadStdin,
 	MFilesToOpenList&	inDocs)
 {
@@ -1114,7 +1114,7 @@ void MJapieApp::ProcessArgv(
 	if (inDocs.size() > 0)
 	{
 		msg.msg = 'open';
-		for (MJapieApp::MFilesToOpenList::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+		for (MJapiApp::MFilesToOpenList::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 		{
 			int32 lineNr = d->first;
 			string url = d->second.GetURI();
@@ -1374,7 +1374,7 @@ int main(int argc, char* argv[])
 		
 		// see if we need to open any files from the commandline
 		int32 lineNr = -1;
-		MJapieApp::MFilesToOpenList filesToOpen;
+		MJapiApp::MFilesToOpenList filesToOpen;
 		
 		for (int32 i = optind; i < argc; ++i)
 		{
@@ -1391,7 +1391,7 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-		MJapieApp app;
+		MJapiApp app;
 		
 		if (fork == false or app.IsServer())
 		{

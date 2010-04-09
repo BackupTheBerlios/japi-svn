@@ -29,6 +29,8 @@ MDocument::MDocument(
 	: mFile(inFile)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
+	, mFileLoader(nil)
+	, mFileSaver(nil)
 	, mNext(nil)
 {
 	mNext = sFirst;
@@ -40,11 +42,11 @@ MDocument::MDocument(
 
 MDocument::~MDocument()
 {
-	if (boost::shared_ptr<MFileLoader> loader = mFileLoader.lock())
-		loader->Cancel();
+	if (mFileLoader != nil)
+		mFileLoader->Cancel();
 
-	if (boost::shared_ptr<MFileSaver> saver = mFileSaver.lock())
-		saver->Cancel();
+	if (mFileSaver != nil)
+		mFileSaver->Cancel();
 	
 	if (sFirst == this)
 		sFirst = mNext;
@@ -316,7 +318,10 @@ string MDocument::GetWindowTitle() const
 
 	if (mFile.IsLocal())
 	{
-		result = mFile.GetPath().string();
+		fs::path file = fs::system_complete(mFile.GetPath());
+		
+		result = file.string();
+		NormalizePath(result);
 		
 		// strip off HOME, if any
 		
@@ -340,8 +345,8 @@ void MDocument::IOProgress(float inProgress, const string& inMessage)
 {
 	if (inProgress == -1)	// we're done
 	{
-//		mFileLoader = nil;
-//		mFileSaver = nil;
+		mFileLoader = nil;
+		mFileSaver = nil;
 	}
 }
 
@@ -352,8 +357,8 @@ void MDocument::IOError(const std::string& inError)
 {
 	DisplayError(inError);
 
-//	mFileLoader = nil;
-//	mFileSaver = nil;
+	mFileLoader = nil;
+	mFileSaver = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -370,7 +375,7 @@ bool MDocument::IOAskOverwriteNewer()
 void MDocument::IOFileLoaded()
 {
 	SetModified(false);
-//	mFileLoader = nil;
+	mFileLoader = nil;
 //	eDocumentLoaded(this);
 }
 

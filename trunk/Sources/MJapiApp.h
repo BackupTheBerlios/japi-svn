@@ -22,15 +22,15 @@ class MFile;
 
 // ===========================================================================
 
-class MJapieApp : public MHandler
+class MJapiApp : public MHandler
 {
   public:
 
 	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
 	
-						MJapieApp();
+						MJapiApp();
 	
-						~MJapieApp();
+						~MJapiApp();
 	
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
@@ -147,6 +147,6 @@ class MJapieApp : public MHandler
 	std::string			mCurrentFolder;
 };
 
-extern MJapieApp*	gApp;
+extern MJapiApp*	gApp;
 
 #endif

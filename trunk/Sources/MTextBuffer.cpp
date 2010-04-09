@@ -756,7 +756,32 @@ bool MTextBuffer::GuessEncodingAndCopyData(
 		if (validUtf8)
 			mEncoding = kEncodingUTF8;
 		else
-			mEncoding = kEncodingISO88591;
+		{
+			int mightBeUtf16be = 0, mightBeUtf16le = 0;
+			
+			for (uint32 i = 0; i < inLength; ++i)
+			{
+				char c = txt[i];
+				
+				if (c == 0)
+				{
+					if ((i & 1) == 0)
+						++mightBeUtf16be;
+					else
+						++mightBeUtf16le;
+				}
+				
+				if ((mightBeUtf16le > 20 or mightBeUtf16be > 20) and i < 30)
+					break;
+			}
+
+			if (mightBeUtf16be)
+				mEncoding = kEncodingUTF16BE;
+			else if (mightBeUtf16le)
+				mEncoding = kEncodingUTF16LE;
+			else
+				mEncoding = kEncodingISO88591;
+		}
 	}
 	
 	if (mEncoding == kEncodingUTF8)
@@ -922,7 +947,7 @@ void MTextBuffer::WriteToFile(
 		while (txt.GetOffset() < mLogicalLength)
 		{
 			wchar_t uc = *txt++;
-			
+		
 			if (uc == '\n' and mEOLNKind != eEOLN_UNIX)
 			{
 				encoder->WriteUnicode('\r');
@@ -2045,30 +2070,16 @@ wchar_t MTextBuffer::GetWChar(
 	uint32		inOffset) const
 {
 	wchar_t result = 0x0FFFD;
-	uint32 length = GetNextCharLength(inOffset);
 	
-	switch (length)
-	{
-		case 1:	if ((GetChar(inOffset) & 0x0080) == 0)		result = GetChar(inOffset++);					break;
-		case 2:	if ((GetChar(inOffset) & 0x00E0) == 0x00C0)	result = (GetChar(inOffset++) & 0x001F) <<  6;	break;
-		case 3: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x000F) << 12;	break;
-		case 4: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0007) << 18;	break;
-		case 5: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0003) << 24;	break;
-		case 6: if ((GetChar(inOffset) & 0x00E0) == 0x00C0) result = (GetChar(inOffset++) & 0x0001) << 30;	break;
-	}
-	
-	if (result != 0xFFFD)
-	{
-		++inOffset;
-		switch (length)
-		{
-			case 6:	result |= (GetChar(inOffset++) & 0x003F) << 24;
-			case 5:	result |= (GetChar(inOffset++) & 0x003F) << 18;
-			case 4:	result |= (GetChar(inOffset++) & 0x003F) << 12;
-			case 3:	result |= (GetChar(inOffset++) & 0x003F) <<  6;
-			case 2:	result |= (GetChar(inOffset++) & 0x003F);
-		}
-	}
+	char ch = GetChar(inOffset);
+	if ((ch & 0x080) == 0)
+		result = static_cast<wchar_t>(ch);
+	else if ((ch & 0x0E0) == 0x0C0)
+		result = static_cast<wchar_t>(((ch & 0x01F) << 6) | (GetChar(inOffset + 1) & 0x03F));
+	else if ((ch & 0x0F0) == 0x0E0)
+		result = static_cast<wchar_t>(((ch & 0x00F) << 12) | ((GetChar(inOffset + 1) & 0x03F) << 6) | (GetChar(inOffset + 2) & 0x03F));
+	else if ((ch & 0x0F8) == 0x0F0)
+		result = static_cast<wchar_t>(((ch & 0x007) << 18) | ((GetChar(inOffset + 1) & 0x03F) << 12) | ((GetChar(inOffset + 2) & 0x03F) << 6) | (GetChar(inOffset + 3) & 0x03F));
 	
 	return result;
 }

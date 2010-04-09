@@ -15,7 +15,7 @@
 #include "MColor.h"
 #include <string>
 
-const uint32			kJapieSignature = 'Japi';
+const uint32			kJapiSignature = 'Japi';
 
 extern bool				gAutoIndent;
 extern bool				gSmartIndent;

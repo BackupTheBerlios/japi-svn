@@ -136,22 +136,22 @@ MEncodingTraits<kEncodingUTF8>::WriteUnicode(
 	else if (inUnicode < 0x0800)
 	{
 		*inText++ = static_cast<char> (0x0c0 | (inUnicode >> 6));
-		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x3f));
+		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x03f));
 		result = 2;
 	}
 	else if (inUnicode < 0x00010000)
 	{
 		*inText++ = static_cast<char> (0x0e0 | (inUnicode >> 12));
-		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 6) & 0x3f));
-		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x3f));
+		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 6) & 0x03f));
+		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x03f));
 		result = 3;
 	}
 	else
 	{
 		*inText++ = static_cast<char> (0x0f0 | (inUnicode >> 18));
-		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 12) & 0x3f));
-		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 6) & 0x3f));
-		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x3f));
+		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 12) & 0x03f));
+		*inText++ = static_cast<char> (0x080 | ((inUnicode >> 6) & 0x03f));
+		*inText++ = static_cast<char> (0x080 | (inUnicode & 0x03f));
 		result = 4;
 	}
 	
@@ -171,8 +171,8 @@ MEncodingTraits<kEncodingUTF16BE>::GetNextCharLength(
 		static_cast<unsigned char>(*inText) <= 0x0DB)
 	{
 		inText += 2;
-		if (static_cast<unsigned char>(*inText) >= 0xDC and
-			static_cast<unsigned char>(*inText) <= 0xDF)
+		if (static_cast<unsigned char>(*inText) >= 0x0DC and
+			static_cast<unsigned char>(*inText) <= 0x0DF)
 		{
 			result = 4;
 		}
@@ -195,15 +195,15 @@ MEncodingTraits<kEncodingUTF16BE>::ReadUnicode(
 	outUnicode = static_cast<wchar_t>((ch1 << 8) | ch2);
 	outLength = 2;
 	
-	if (outUnicode >= 0xD800 and outUnicode <= 0xDBFF)
+	if (outUnicode >= 0x0D800 and outUnicode <= 0x0DBFF)
 	{
 		ch1 = static_cast<unsigned char>(*iter++);
 		ch2 = static_cast<unsigned char>(*iter++);
 		
 		wchar_t c = static_cast<wchar_t>((ch1 << 8) | ch2);
-		if (c >= 0xDC00 and c <= 0xDFFF)
+		if (c >= 0x0DC00 and c <= 0x0DFFF)
 		{
-			outUnicode = (outUnicode - 0xD800) * 0x400 + (c - 0xDC00) + 0x10000;
+			outUnicode = (outUnicode - 0x0D800) * 0x0400 + (c - 0x0DC00) + 0x010000;
 			outLength = 4;
 		}
 	}
@@ -218,7 +218,7 @@ MEncodingTraits<kEncodingUTF16BE>::WriteUnicode(
 {
 	uint32 result;
 	
-	if (inUnicode <= 0xFFFF)
+	if (inUnicode <= 0x0FFFF)
 	{
 		*inText++ = static_cast<char>(inUnicode >> 8);
 		*inText++ = static_cast<char>(inUnicode & 0x0ff);
@@ -227,8 +227,8 @@ MEncodingTraits<kEncodingUTF16BE>::WriteUnicode(
 	}
 	else
 	{
-		wchar_t h = (inUnicode - 0x10000) / 0x400 + 0xD800;
-		wchar_t l = (inUnicode - 0x10000) % 0x400 + 0xDC00;
+		wchar_t h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
+		wchar_t l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
 
 		*inText++ = static_cast<char>(h >> 8);
 		*inText++ = static_cast<char>(h & 0x0ff);
@@ -254,8 +254,8 @@ MEncodingTraits<kEncodingUTF16LE>::GetNextCharLength(
 		static_cast<unsigned char>(*(inText + 1)) <= 0x0DB)
 	{
 		inText += 2;
-		if (static_cast<unsigned char>(*(inText + 1)) >= 0xDC and
-			static_cast<unsigned char>(*(inText + 1)) <= 0xDF)
+		if (static_cast<unsigned char>(*(inText + 1)) >= 0x0DC and
+			static_cast<unsigned char>(*(inText + 1)) <= 0x0DF)
 		{
 			result = 4;
 		}
@@ -278,15 +278,15 @@ MEncodingTraits<kEncodingUTF16LE>::ReadUnicode(
 	outUnicode = static_cast<wchar_t>((ch1 << 8) | ch2);
 	outLength = 2;
 	
-	if (outUnicode >= 0xD800 and outUnicode <= 0xDBFF)
+	if (outUnicode >= 0x0D800 and outUnicode <= 0x0DBFF)
 	{
 		ch2 = static_cast<unsigned char>(*iter++);
 		ch1 = static_cast<unsigned char>(*iter++);
 		
 		wchar_t c = static_cast<wchar_t>((ch1 << 8) | ch2);
-		if (c >= 0xDC00 and c <= 0xDFFF)
+		if (c >= 0x0DC00 and c <= 0x0DFFF)
 		{
-			outUnicode = (outUnicode - 0xD800) * 0x400 + (c - 0xDC00) + 0x10000;
+			outUnicode = (outUnicode - 0x0D800) * 0x0400 + (c - 0x0DC00) + 0x010000;
 			outLength = 4;
 		}
 	}
@@ -301,7 +301,7 @@ MEncodingTraits<kEncodingUTF16LE>::WriteUnicode(
 {
 	uint32 result;
 	
-	if (inUnicode <= 0xFFFF)
+	if (inUnicode <= 0x0FFFF)
 	{
 		*inText++ = static_cast<char>(inUnicode & 0x0ff);
 		*inText++ = static_cast<char>(inUnicode >> 8);
@@ -310,8 +310,8 @@ MEncodingTraits<kEncodingUTF16LE>::WriteUnicode(
 	}
 	else
 	{
-		wchar_t h = (inUnicode - 0x10000) / 0x400 + 0xD800;
-		wchar_t l = (inUnicode - 0x10000) % 0x400 + 0xDC00;
+		wchar_t h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
+		wchar_t l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
 
 		*inText++ = static_cast<char>(h & 0x0ff);
 		*inText++ = static_cast<char>(h >> 8);
@@ -414,7 +414,7 @@ MEncodingTraits<kEncodingISO88591>::ReadUnicode(
 	uint32&				outLength,
 	wchar_t&			outUnicode)
 {
-	outUnicode = *inText;
+	outUnicode = static_cast<unsigned char>(*inText);
 	outLength = 1;
 }
 

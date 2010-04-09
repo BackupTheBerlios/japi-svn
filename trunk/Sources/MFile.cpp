@@ -249,20 +249,51 @@ MLocalFileLoader::MLocalFileLoader(
 
 void MLocalFileLoader::DoLoad()
 {
-	fs::path path(mFile.GetPath());
+	try
+	{
+		fs::path path(mFile.GetPath());
+	
+		if (not fs::exists(path))
+			THROW(("File %s does not exist", path.string().c_str())); 
+		
+		double modTime = fs::last_write_time(path);
+        bool readOnly = false;
 
-	if (not fs::exists(path))
-		THROW(("File %s does not exist", path.string().c_str())); 
-	
-	double modTime = fs::last_write_time(path);
-	bool readOnly = false;
-	
-	fs::ifstream file(path);
-	eReadFile(file);
-	
-	SetFileInfo(readOnly, modTime);
-	
-	eFileLoaded();
+		struct stat st;
+
+		if (stat(path.string().c_str(), &st) == 0)
+		{
+			// fetch user&group
+			unsigned int gid = getgid();
+			unsigned int uid = getuid();
+			
+			readOnly = not ((uid == st.st_uid and (S_IWUSR & st.st_mode)) or
+							(gid == st.st_gid and (S_IWGRP & st.st_mode)) or
+							(S_IWOTH & st.st_mode));
+			
+			if (readOnly && S_IWGRP & st.st_mode)
+			{
+				int ngroups = getgroups(0, nil);
+				if (ngroups > 0)
+				{
+					vector<gid_t> groups(ngroups);
+					if (getgroups(ngroups, &groups[0]) == 0)
+						readOnly = find(groups.begin(), groups.end(), st.st_gid) == groups.end();
+				}
+			}
+		}
+		
+		fs::ifstream file(path);
+		eReadFile(file);
+		
+		SetFileInfo(readOnly, modTime);
+		
+		eFileLoaded();
+	}
+	catch (exception& e)
+	{
+		eError(e.what());
+	}
 	
 	delete this;
 }
@@ -312,17 +343,17 @@ MLocalFileSaver::MLocalFileSaver(
 
 void MLocalFileSaver::DoSave()
 {
-	fs::path path = mFile.GetPath();
-	
-	bool save = true;
-	
-	if (fs::exists(path) and fs::last_write_time(path) > mFile.GetModDate())
-		save = eAskOverwriteNewer();
-
-	fs::ofstream file(path, ios::trunc|ios::binary);
-	
 	try
 	{
+		fs::path path = mFile.GetPath();
+		
+		bool save = true;
+		
+		if (fs::exists(path) and fs::last_write_time(path) > mFile.GetModDate())
+			save = eAskOverwriteNewer();
+	
+		fs::ofstream file(path, ios::trunc|ios::binary);
+		
 		if (not file.is_open())
 			THROW(("Could not open file %s for writing", path.leaf().c_str()));
 		
@@ -334,7 +365,7 @@ void MLocalFileSaver::DoSave()
 	}
 	catch (exception& e)
 	{
-		DisplayError(e);
+		eError(e.what());
 	}
 	
 	delete this;
@@ -508,6 +539,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
+			eError("SSH Channel Timeout");
 			break;
 	}
 }
@@ -619,6 +651,7 @@ void MSftpFileSaver::SFTPChannelEvent(
 
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
+			eError("SSH Channel Timeout");
 			break;
 	}
 }

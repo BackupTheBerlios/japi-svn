@@ -121,7 +121,16 @@ const uint32
 	cmd_SaveInEPub =			'AdtE',
 	cmd_EPubShowInBrowser =		'ePht',
 	
-	cmd_MakeXHTML =				'MkXH';
+	cmd_MakeXHTML =				'MkXH',
+	
+	cmd_EncodingUTF8 =			'Utf8',
+	cmd_EncodingUTF16BE =		'16BE',
+	cmd_EncodingUTF16LE =		'16LE',
+	cmd_EncodingISO8859_1 =		'8591',
+	
+	cmd_LineEndLF =				'LeLF',
+	cmd_LineEndCR =				'LeCR',
+	cmd_LineEndCRLF =			'LeCL';
 
 #ifndef NDEBUG
 const uint32 cmd_Test =			'Test';

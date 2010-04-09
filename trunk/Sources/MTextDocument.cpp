@@ -4646,6 +4646,34 @@ bool MTextDocument::ProcessCommand(
 			MakeXHTML();
 			break;
 	
+		case cmd_EncodingUTF8:
+			SetEncoding(kEncodingUTF8);
+			break;
+
+		case cmd_EncodingUTF16BE:
+			SetEncoding(kEncodingUTF16BE);
+			break;
+
+		case cmd_EncodingUTF16LE:
+			SetEncoding(kEncodingUTF16LE);
+			break;
+
+		case cmd_EncodingISO8859_1:
+			SetEncoding(kEncodingISO88591);
+			break;
+
+		case cmd_LineEndLF:
+			SetEOLNKind(eEOLN_UNIX);
+			break;
+
+		case cmd_LineEndCR:
+			SetEOLNKind(eEOLN_MAC);
+			break;
+
+		case cmd_LineEndCRLF:
+			SetEOLNKind(eEOLN_DOS);
+			break;
+
 		default:
 			result = false;
 			break;
@@ -4808,6 +4836,34 @@ bool MTextDocument::UpdateCommandStatus(
 			outEnabled = mTargetTextView != nil;
 			break;
 
+		case cmd_EncodingUTF8:
+			outChecked = GetEncoding() == kEncodingUTF8;
+			break;
+
+		case cmd_EncodingUTF16BE:
+			outChecked = GetEncoding() == kEncodingUTF16BE;
+			break;
+
+		case cmd_EncodingUTF16LE:
+			outChecked = GetEncoding() == kEncodingUTF16LE;
+			break;
+
+		case cmd_EncodingISO8859_1:
+			outChecked = GetEncoding() == kEncodingISO88591;
+			break;
+
+		case cmd_LineEndLF:
+			outChecked = GetEOLNKind() == eEOLN_UNIX;
+			break;
+
+		case cmd_LineEndCR:
+			outChecked = GetEOLNKind() == eEOLN_MAC;
+			break;
+
+		case cmd_LineEndCRLF:
+			outChecked = GetEOLNKind() == eEOLN_DOS;
+			break;
+
 		default:
 			result = false;
 			break;
@@ -4885,4 +4941,30 @@ void MTextDocument::MakeXHTML()
 	SetLanguage("XML");
 	
 	FinishAction();
+}
+
+void MTextDocument::SetEOLNKind(
+	EOLNKind		inKind)
+{
+	if (mFile.ReadOnly() and not mWarnedReadOnly)
+	{
+		DisplayAlert("read-only-alert");
+		mWarnedReadOnly = true;
+	}
+	
+	mText.SetEOLNKind(inKind);
+	SetModified(true);
+}
+
+void MTextDocument::SetEncoding(
+	MEncoding		inEncoding)
+{
+	if (mFile.ReadOnly() and not mWarnedReadOnly)
+	{
+		DisplayAlert("read-only-alert");
+		mWarnedReadOnly = true;
+	}
+	
+	mText.SetEncoding(inEncoding);
+	SetModified(true);
 }

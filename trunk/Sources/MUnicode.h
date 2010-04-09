@@ -166,9 +166,6 @@ class MDecoder
 	uint32				mLength;
 };
 
-//template<typename String1, typename String2>
-//void Convert(const String1& inSrc, String2& outDst);
-
 #include "MUnicode.inl"
 
 #endif // MUNICODE_H

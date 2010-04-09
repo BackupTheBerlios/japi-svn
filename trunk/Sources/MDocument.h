@@ -146,8 +146,8 @@ class MDocument
 	bool				mDirty;
 
   private:
-	boost::weak_ptr<MFileLoader>		mFileLoader;
-	boost::weak_ptr<MFileSaver>			mFileSaver;
+	MFileLoader*		mFileLoader;
+	MFileSaver*			mFileSaver;
 
 	MDocument*			mNext;
 	static MDocument*	sFirst;

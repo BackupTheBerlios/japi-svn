@@ -83,11 +83,9 @@ class MFile
 	
 	MFile				GetParent() const;
 	
-	boost::shared_ptr<MFileLoader>
-						Load();
+	MFileLoader*		Load();
 
-	boost::shared_ptr<MFileSaver>
-						Save();
+	MFileSaver*			Save();
 
 	bool				IsValid() const;
 
@@ -133,7 +131,7 @@ std::ostream& operator<<(std::ostream& lhs, const MFile& rhs);
 // --------------------------------------------------------------------
 // MFileLoader, used to load the contents of a file.
 
-class MFileLoader : public boost::shared_from_this<MFileLoader>
+class MFileLoader
 {
   public:
 
@@ -169,7 +167,7 @@ class MFileLoader : public boost::shared_from_this<MFileLoader>
 // --------------------------------------------------------------------
 // MFileSaver, used to save data to a file.
 
-class MFileSaver : public boost::shared_from_this<MFileSaver>
+class MFileSaver
 {
   public:
 

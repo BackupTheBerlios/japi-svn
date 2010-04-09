@@ -75,6 +75,18 @@
 		</menu>
 		<item label="Convert into XHTML" cmd='MkXH' />
 		<!--item label="Bestandsinfo…" cmd='DocI'/-->
+		<item label="-" />
+		<menu id='encodingmenu' label="Text Encoding">
+			<item label="UTF-8" cmd='Utf8' check='radio' />
+			<item label="UTF-16 (Big Endian)" cmd='16BE' check='radio' />
+			<item label="UTF-16 (Little Endian)" cmd='16LE' check='radio' />
+			<item label="ISO-8859-1" cmd='8591' check='radio' />
+		</menu>
+		<menu id="lineendtype" label="Line End">
+			<item label="Unix (LF)" cmd='LeLF' check='radio' />
+			<item label="DOS (CRLF)" cmd='LeCL' check='radio' />
+			<item label="Mac (CR)" cmd='LeCR' check='radio' />
+		</menu>
 	</menu>
 	<menu id='' label="Find">
 		<item label="Fast Find" cmd='FFnd'/>

@@ -274,8 +274,12 @@ class MTextDocument : public MDocument
 											inLanguage);
 
 	EOLNKind			GetEOLNKind() const					{ return mText.GetEOLNKind(); }
+	void				SetEOLNKind(
+							EOLNKind		inKind);
 
 	MEncoding			GetEncoding() const					{ return mText.GetEncoding(); }
+	void				SetEncoding(
+							MEncoding		inEncoding);
 
 	uint32				GetCharsPerTab() const				{ return mCharsPerTab; }
 

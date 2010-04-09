@@ -114,7 +114,6 @@
       <link>boost_filesystem</link>
       <link>boost_iostreams</link>
       <link>crypto</link>
-      <link>expat</link>
       <link>pcre</link>
       <link>pcrecpp</link>
       <link>uuid</link>
