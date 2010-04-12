@@ -43,7 +43,7 @@ GtkWidget* CreateAlertWithArgs(
 	xml::document doc(data);
 	
 	// build an alert
-	xml::element* root = doc.root();
+	xml::element* root = doc.find_first("/alert");
 	
 	if (root->qname() != "alert")
 		THROW(("Invalid resource for alert %s, first tag should be <alert>", inResourceName));

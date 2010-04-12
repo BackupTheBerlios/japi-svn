@@ -289,9 +289,9 @@ MMenu* MMenu::CreateFromResource(
 	xml::document doc(data);
 	
 	// build a menu from the resource XML
-	xml::element* root = doc.root();
+	xml::element* root = doc.find_first("/menu");
 
-	if (root->qname() == "menu")
+	if (root != nil)
 		result = Create(root);
 
 	return result;
@@ -671,12 +671,7 @@ void MMenubar::Initialize(
 	xml::document doc(data);
 	
 	// build a menubar from the resource XML
-	xml::element* root = doc.root();
-
-	if (root->qname() != "menubar")
-		THROW(("Menubar resource %s is invalid, should start with <menubar> tag", inResourceName));
-
-	foreach (xml::element* menu, root->find("menu"))
+	foreach (xml::element* menu, doc.find("/menubar/menu"))
 	{
 		MMenu* obj = CreateMenu(menu);
 		AddMenu(obj);

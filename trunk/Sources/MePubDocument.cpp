@@ -427,7 +427,7 @@ void deflate(
 	ZIPLocalFileHeader&	outFileHeader)
 {
 	xml::document doc;
-	doc.root(inXML);
+	doc.root_node()->child_element(inXML);
 	
 	outFileHeader.data.clear();
 	
@@ -658,7 +658,7 @@ void MePubDocument::ImportOEB(
 
 	xml::document opf(opfFile);
 	MMessageList problems;
-	ParseOPF(fs::path("OEBPS"), opf.root(), problems);
+	ParseOPF(fs::path("OEBPS"), opf.root_node()->child_element(), problems);
 
 	fs::path dir = inOEB.GetPath().parent_path();
 	
@@ -754,9 +754,9 @@ void MePubDocument::ReadFile(
 		if (path == "META-INF/container.xml")
 		{
 			xml::document container(fh.data);
-			xml::element* root = container.root();
+			xml::element* root = container.root_node()->child_element();
 			
-			if (root->local_name() != "container" or root->ns_name() != kContainerNS)
+			if (root->name() != "container" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported container.xml file"));
 			
 			xml::element* n = root->find_first("rootfiles");
@@ -775,14 +775,14 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/encryption.xml")
 		{
 			xml::document encryption(fh.data);
-			xml::element* root = encryption.root();
+			xml::element* root = encryption.root_node()->child_element();
 			
-			if (root->local_name() != "encryption" or root->ns_name() != kContainerNS)
+			if (root->name() != "encryption" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
 			
 			foreach (xml::element* n, root->children<xml::element>())
 			{
-				if (n->local_name() != "EncryptedData")
+				if (n->name() != "EncryptedData")
 					continue;
 				
 				xml::element* cd = n->find_first("CipherData");
@@ -800,9 +800,9 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/rights.xml")
 		{
 			xml::document rights(fh.data);
-			xml::element* root = rights.root();
+			xml::element* root = rights.root_node()->child_element();
 			
-			if (root->local_name() != "rights" or root->ns_name() != kAdobeAdeptNS)
+			if (root->name() != "rights" or root->ns() != kAdobeAdeptNS)
 			{
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported rights.xml file"));
 				continue;
@@ -842,7 +842,7 @@ void MePubDocument::ReadFile(
 
 	xml::document opf(content[mRootFile]);
 	
-	ParseOPF(mRootFile.parent_path(), opf.root(), problems);
+	ParseOPF(mRootFile.parent_path(), opf.root_node()->child_element(), problems);
 	
 	// decrypt all the files, if we can
 	if (keyDecrypted and not encrypted.empty())
@@ -861,7 +861,7 @@ void MePubDocument::ReadFile(
 		try
 		{
 			xml::document ncx(content[mTOCFile]);
-			ParseNCX(ncx.root());
+			ParseNCX(ncx.root_node()->child_element());
 		}
 		catch (exception& e)
 		{
@@ -1251,7 +1251,7 @@ void MePubDocument::ParseOPF(
 	xml::element*		inOPF,
 	MMessageList&		outProblems)
 {
-	if (inOPF->local_name() != "package")
+	if (inOPF->name() != "package")
 		THROW(("Not an OPF file, root item should be package"));
 	
 	// fetch the unique-identifier
@@ -1278,14 +1278,14 @@ void MePubDocument::ParseOPF(
 		// collect all the Dublin Core information
 		foreach (xml::element* dc, metadata->children<xml::element>())
 		{
-			string name = dc->local_name();
+			string name = dc->name();
 			
-			if (oldDC or dc->ns_name() == "http://purl.org/dc/elements/1.0/")
+			if (oldDC or dc->ns() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
-			else if (dc->ns_name() != "http://purl.org/dc/elements/1.1/" and
-				dc->ns_name() != "http://www.idpf.org/2007/opf")
+			else if (dc->ns() != "http://purl.org/dc/elements/1.1/" and
+				dc->ns() != "http://www.idpf.org/2007/opf")
 			{
-				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns_name());
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns());
 //				continue;
 			}
 			
@@ -1301,7 +1301,7 @@ void MePubDocument::ParseOPF(
 				{
 					mDocumentID = content;
 					mDocumentIDScheme = dc->get_attribute("opf:scheme");
-					if (mDocumentIDScheme.empty() and dc->ns_name() == "http://purl.org/dc/elements/1.0/")
+					if (mDocumentIDScheme.empty() and dc->ns() == "http://purl.org/dc/elements/1.0/")
 						mDocumentIDScheme = dc->get_attribute("scheme");
 				}
 			}
@@ -1340,7 +1340,7 @@ void MePubDocument::ParseOPF(
 	{
 		foreach (xml::element* item, manifest->children<xml::element>())
 		{
-			if (item->local_name() != "item") // or item->ns_name() != "http://www.idpf.org/2007/opf")
+			if (item->name() != "item") // or item->ns() != "http://www.idpf.org/2007/opf")
 				continue;
 	
 			fs::path href = inDirectory / item->get_attribute("href");
@@ -1401,7 +1401,7 @@ void MePubDocument::ParseOPF(
 	{
 		foreach (xml::element* item, spine->children<xml::element>())
 		{
-			if (item->local_name() != "itemref" or item->ns_name() != "http://www.idpf.org/2007/opf")
+			if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
 				continue;
 			
 			string idref = item->get_attribute("idref");
@@ -1425,7 +1425,7 @@ void MePubDocument::ParseNCX(
 
 	foreach (xml::element* n, navMap->children<xml::element>())
 	{
-		if (n->local_name() == "navPoint")
+		if (n->name() == "navPoint")
 			ParseNavPoint(&mTOC, n);
 	}
 }
@@ -1434,7 +1434,7 @@ void MePubDocument::ParseNavPoint(
 	MProjectGroup*		inGroup,
 	xml::element*		inNavPoint)
 {
-	assert(inNavPoint->local_name() == "navPoint");
+	assert(inNavPoint->name() == "navPoint");
 	
 	unique_ptr<MePubTOCItem> np;
 
@@ -1465,7 +1465,7 @@ void MePubDocument::ParseNavPoint(
 	
 	foreach (xml::element* n, inNavPoint->children<xml::element>())
 	{
-		if (n->local_name() == "navPoint")
+		if (n->name() == "navPoint")
 			ParseNavPoint(np.get(), n);
 	}
 	

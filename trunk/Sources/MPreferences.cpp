@@ -100,7 +100,7 @@ IniFile::IniFile()
 				vector<preference> pref;
 				
 				xml::document doc(data);
-				xml::deserializer d(doc.root());
+				xml::deserializer d(doc.root_node());
 				d & BOOST_SERIALIZATION_NVP(pref);
 				
 				for (vector<preference>::iterator p = pref.begin(); p != pref.end(); ++p)
@@ -136,23 +136,23 @@ IniFile::~IniFile()
 		{
 			xml::writer w(data);
 			
-			w.write_xml_decl(false);
+			w.xml_decl(false);
 			
-			w.write_start_element("japi-preferences");
+			w.start_element("japi-preferences");
 			
 			for (map<string,vector<string> >::iterator p = mPrefs.begin(); p != mPrefs.end(); ++p)
 			{
-				w.write_start_element("pref");
+				w.start_element("pref");
 
-				w.write_element("name", p->first);
+				w.element("name", p->first);
 				
 				for (vector<string>::iterator v = p->second.begin(); v != p->second.end(); ++v)
-					w.write_element("value", *v);
+					w.element("value", *v);
 				
-				w.write_end_element("pref");
+				w.end_element();
 			}
 			
-			w.write_end_element("japi-preferences");
+			w.end_element();
 		}
 	}
 	catch (exception& e)
