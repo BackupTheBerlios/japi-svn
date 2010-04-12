@@ -624,7 +624,8 @@ MLanguage::IsAutoCompleteChar(
 	wchar_t				inChar,
 	const MTextBuffer&	inText,
 	uint32				inOffset,
-	string&				outCompletionText)
+	string&				outCompletionText,
+	int32&				outCaretDelta)
 {
 	return false;
 }

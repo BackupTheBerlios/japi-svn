@@ -50,7 +50,8 @@ class MLanguageXML : public MLanguage
 						wchar_t				inChar,
 						const MTextBuffer&	inText,
 						uint32				inOffset,
-						std::string&		outCompletionText);
+						std::string&		outCompletionText,
+						int32&				outCaretDelta);
 
 	virtual void	CommentLine(
 						std::string&		ioLine);
@@ -61,6 +62,10 @@ class MLanguageXML : public MLanguage
 	virtual bool	Softwrap() const;
 	
 	static uint32	MatchLanguage(
+						const std::string&	inFile,
+						MTextBuffer&		inText);
+
+	virtual uint16	GetInitialState(
 						const std::string&	inFile,
 						MTextBuffer&		inText);
 

@@ -104,8 +104,9 @@ class MLanguage
 	virtual bool	IsAutoCompleteChar(
 						wchar_t				inChar,
 						const MTextBuffer&	inText,
-						uint32				inOffset,
-						std::string&		outCompletionText);
+						uint32				ioOffset,
+						std::string&		outCompletionText,
+						int32&				outCaretDelta);
 
 	virtual uint16	GetInitialState(
 						const std::string&	inFile,

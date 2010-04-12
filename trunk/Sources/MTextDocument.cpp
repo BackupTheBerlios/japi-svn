@@ -182,7 +182,7 @@ MTextDocument* MTextDocument::GetFirstTextDocument()
 void MTextDocument::SetFileNameHint(
 	const string&	inNameHint)
 {
-	MDocument::SetFile(MFile(fs::path(inNameHint)));
+	MDocument::SetFile(MFile());
 	
 	delete mNamedRange;
 	mNamedRange = nil;
@@ -969,15 +969,17 @@ void MTextDocument::Type(
 		offset = mSelection.GetCaret();
 		
 		string complete;
-		if (mLanguage->IsAutoCompleteChar(typedChar, mText, offset - 1, complete) and
+		int32 delta;
+		
+		if (mLanguage->IsAutoCompleteChar(typedChar, mText, offset - 1, complete, delta) and
 			not complete.empty())
 		{
 			Insert(offset, complete.c_str(), complete.length());
 
 			MSelection s = mText.GetSelectionAfter();
 			if (s.GetCaret() == offset)
-				s.SetCaret(offset + complete.length());
-			ChangeSelection(MSelection(this, offset + complete.length(), offset + complete.length()));
+				s.SetCaret(offset + delta);
+			ChangeSelection(MSelection(this, offset + delta, offset + delta));
 			mText.SetSelectionAfter(s);
 			
 			typedChar = complete[complete.length() - 1];
@@ -2255,6 +2257,7 @@ void MTextDocument::StartAction(
 	const char*		inTitle)
 {
 	mFastFindMode = false;
+
 	if (mCurrentAction != inTitle)
 	{
 		mText.StartAction(inTitle, mSelection);
@@ -2354,6 +2357,7 @@ void MTextDocument::Delete(
 			caret = inOffset;
 		
 		mSelection.Set(anchor, caret);
+		mText.SetSelectionAfter(mSelection);
 
 		uint32 firstLine = OffsetToLine(inOffset);
 		uint32 lastLine = OffsetToLine(inOffset + inLength);

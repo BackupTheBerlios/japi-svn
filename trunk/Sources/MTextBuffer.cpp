@@ -1867,8 +1867,11 @@ void MTextBuffer::ReplaceExpression(
 								if (isdigit(*ch))
 								{
 									uint32 m = *ch - '0';
-									GetText(matches[2 * m], matches[2 * m + 1] - matches[2 * m], s);
-									result += s;
+									if (matches[2 * m] >= 0 and matches[2 * m + 1] > matches[2 * m])
+									{
+										GetText(matches[2 * m], matches[2 * m + 1] - matches[2 * m], s);
+										result += s;
+									}
 								}
 								else
 								{

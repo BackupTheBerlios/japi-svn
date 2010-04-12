@@ -401,3 +401,20 @@ uint32 MSelection::CountLines() const
 //		result = mCaret.mOffset;
 //	return result;
 //}
+
+// debug code
+std::ostream& operator<<(std::ostream& lhs, MSelection& rhs)
+{
+	lhs << "Selection: (";
+	if (rhs.IsBlock())
+		lhs << rhs.GetMinLine() << ',' << rhs.GetMinColumn()
+			<< '-'
+			<< rhs.GetMaxLine() << ',' << rhs.GetMaxColumn();
+	else if (not rhs.IsEmpty())
+		lhs << rhs.GetMinOffset() << ',' << rhs.GetMaxOffset();
+	else
+		lhs << rhs.GetCaret();
+	lhs << ")";
+	
+	return lhs;
+}

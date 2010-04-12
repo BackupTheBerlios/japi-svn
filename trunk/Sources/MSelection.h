@@ -121,4 +121,8 @@ class MSelection
 	bool			mIsBlock;
 };
 
+// debug code
+#include <iostream>
+std::ostream& operator<<(std::ostream& lhs, MSelection& rhs);
+
 #endif // SELECTION_H

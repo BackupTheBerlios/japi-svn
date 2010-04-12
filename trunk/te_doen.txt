@@ -1,13 +1,6 @@
 ﻿Bugs
 
-- crashend: zoek/vervang:
-	z: \)( const)?\s+{.+
-	v: )$1;
-
-- resources' checkbox in project info dialoogvenster werkt niet
-- read-only file, bij een 'bewaar' geen foutmelding!
 - asynchroon inlezen van bestanden (IOFileLoaded vs Initialize)
-- op echt helemaal naamloos zetten van Nieuw->template
 
 Te doen
 

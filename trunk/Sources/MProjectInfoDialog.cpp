@@ -307,6 +307,10 @@ void MProjectInfoDialog::ValueChanged(
 			GetText(inID, s);
 			mProjectInfo.mOutputDir = s;
 			break;
+
+		case kResourcesControlID:
+			mProjectInfo.mAddResources = IsChecked(kResourcesControlID);
+			break;
 		
 		case kResourceDirControlID:
 			GetText(inID, s);

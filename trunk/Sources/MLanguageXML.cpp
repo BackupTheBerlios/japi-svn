@@ -32,7 +32,10 @@ enum {
 		TAGATTRIBUTE,
 		SPECIAL,
 		CDATA,
-		COMMENT_DTD,
+		PI,
+		DOCTYPE,
+		DOCTYPE_E,
+		COMMENT_START,
 		COMMENT,
 		COMMENT_END
 };
@@ -99,13 +102,35 @@ MLanguageXML::StyleLine(
 					ioState = TAGNAME;
 				}
 				else if (c == '?')
-					;//ioState = COMMENT_DTD;
+				{
+					SetStyle(s, kLTagColor);
+					
+					s = i;
+					while (isalnum(text[i]))
+						++i;
+					
+					if (text + s == "xml" and isspace(text[i]))
+						SetStyle(s, kLKeyWordColor);
+					else
+						SetStyle(s, kLAttribColor);
+					
+					ioState = PI;
+					s = i;
+				}
 				else if (c == '!')
 				{
 					if (text + i == "[CDATA[")
 						ioState = CDATA;
+					else if (text + i == "DOCTYPE ")
+					{
+						SetStyle(s, kLTagColor);
+						s += 2;
+						SetStyle(s, kLKeyWordColor);
+						s += 8;
+						ioState = DOCTYPE;
+					}
 					else
-						ioState = COMMENT_DTD;
+						ioState = COMMENT_START;
 				}
 				else if (c == 0 or c == '\n')
 				{
@@ -116,6 +141,22 @@ MLanguageXML::StyleLine(
 				{
 					--i;
 					ioState = TAG;
+				}
+				break;
+			
+			case PI:
+				if (c == '?' and text[i] == '>')
+				{
+					SetStyle(s, kLStringColor);
+					s = i - 1;
+					SetStyle(s, kLTagColor);
+					s = ++i;
+					ioState = START;
+				}
+				else if (c == 0 or c == '\n')
+				{
+					SetStyle(s, kLStringColor);
+					leave = true;
 				}
 				break;
 			
@@ -217,7 +258,7 @@ MLanguageXML::StyleLine(
 					ioState = START;
 				break;
 			
-			case COMMENT_DTD:
+			case COMMENT_START:
 				if (c == '-' and text[i] == '-' and i == s + 3 and text[i - 2] == '!' and text[i - 3] == '<')
 				{
 					SetStyle(s, kLTagColor);
@@ -237,22 +278,6 @@ MLanguageXML::StyleLine(
 					leave = true;
 				}
 				break;
-
-			case CDATA:
-				if (c == ']' and text[i] == ']' and text[i + 1] == '>')
-				{
-					SetStyle(s, kLStringColor);
-					i += 2;
-					s = i;
-					ioState = START;
-				}
-				else if (c == 0 or c == '\n')
-				{
-					SetStyle(s, kLStringColor);
-					leave = true;
-				}
-				break;
-				
 				
 			case COMMENT:
 				if (c == '-' and text[i] == '-')
@@ -282,9 +307,78 @@ MLanguageXML::StyleLine(
 				}
 				break;
 
+			case CDATA:
+				if (c == ']' and text[i] == ']' and text[i + 1] == '>')
+				{
+					SetStyle(s, kLStringColor);
+					i += 2;
+					s = i;
+					ioState = START;
+				}
+				else if (c == 0 or c == '\n')
+				{
+					SetStyle(s, kLStringColor);
+					leave = true;
+				}
+				break;
+
+			case DOCTYPE:
+				if (c == '<' and text[i] == '!')
+				{
+					if (text + i + 1 == "ELEMENT " or
+						text + i + 1 == "ATTLIST " or
+						text + i + 1 == "ENTITY " or
+						text + i + 1 == "NOTATION ")
+					{
+						SetStyle(s, kLTagColor);
+						s = i;
+						SetStyle(s, kLKeyWordColor);
+						
+						s = i + 7;
+						if (isalnum(text[s]))
+							++s;
+						if (isalnum(text[s]))
+							++s;
+						ioState = DOCTYPE_E;
+					}
+				}
+				else if (c == '>')
+				{
+					SetStyle(s, kLTagColor);
+					ioState = START;
+					s = i;
+				}
+				else if (c == 0 or c == '\n')
+				{
+					SetStyle(s, kLTagColor);
+					leave = true;
+				}
+				break;
+			
+			case DOCTYPE_E:
+				if (c == '>')
+				{
+					SetStyle(s, kLTagColor);
+					s = i;
+					ioState = DOCTYPE;
+				}
+				else if (c == 0 or c == '\n')
+				{
+					SetStyle(s, kLTagColor);
+					leave = true;
+				}
+				break;
+				
 			default:	// error condition, gracefully leave the loop
 				leave = true;
 				break;
+		}
+		
+		if (c == 0 or c == '\n')
+		{
+			if (not leave)
+				PRINT(("hey!"));
+			break;
 		}
 	}
 	
@@ -751,7 +845,8 @@ MLanguageXML::IsAutoCompleteChar(
 	wchar_t				inChar,
 	const MTextBuffer&	inText,
 	uint32				inOffset,
-	string&				outCompletionText)
+	string&				outCompletionText,
+	int32&				outCaretDelta)
 {
 	bool result = false;
 
@@ -766,6 +861,21 @@ MLanguageXML::IsAutoCompleteChar(
 			{
 				result = true;
 				outCompletionText += '>';
+				outCaretDelta = outCompletionText.length();
+			}
+		}
+		else if (inChar == '>' and inOffset > 0)
+		{
+			string name;
+			
+			find_open_name(text, text + inOffset + 1, name);
+			if (not name.empty())
+			{
+				result = true;
+				outCompletionText = "</";
+				outCompletionText += name;
+				outCompletionText += '>';
+				outCaretDelta = 0;
 			}
 		}
 	}
@@ -837,7 +947,10 @@ MLanguageXML::MatchLanguage(
 	if (FileNameMatches("*.xml;*.xslt;*.plist;*.xsd;*.dtd;*.xpgt;*.xhtml", inFile))
 		result += 90;
 
-	if (FileNameMatches("*.mod", inFile))
+	if (FileNameMatches("*.ent;*.dtd", inFile))	// maybe an external DTD file?
+		result += 50;
+
+	if (FileNameMatches("*.mod", inFile))	// I've seen those as well for external DTD
 		result += 5;
 
 	if (result < 90)
@@ -890,3 +1003,14 @@ bool MLanguageXML::Softwrap() const
 {
 	return false;
 }
+
+uint16 MLanguageXML::GetInitialState(
+	const string&		inFile,
+	MTextBuffer&		inText)
+{
+	uint16 result = START;
+	if (FileNameMatches("*.ent;*.dtd", inFile))
+		result = DOCTYPE;
+	return result;
+}
+
