@@ -427,7 +427,7 @@ void deflate(
 	ZIPLocalFileHeader&	outFileHeader)
 {
 	xml::document doc;
-	doc.root_node()->child_element(inXML);
+	doc.child(inXML);
 	
 	outFileHeader.data.clear();
 	
@@ -658,7 +658,7 @@ void MePubDocument::ImportOEB(
 
 	xml::document opf(opfFile);
 	MMessageList problems;
-	ParseOPF(fs::path("OEBPS"), opf.root_node()->child_element(), problems);
+	ParseOPF(fs::path("OEBPS"), opf.child(), problems);
 
 	fs::path dir = inOEB.GetPath().parent_path();
 	
@@ -754,7 +754,7 @@ void MePubDocument::ReadFile(
 		if (path == "META-INF/container.xml")
 		{
 			xml::document container(fh.data);
-			xml::element* root = container.root_node()->child_element();
+			xml::element* root = container.child();
 			
 			if (root->name() != "container" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported container.xml file"));
@@ -775,7 +775,7 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/encryption.xml")
 		{
 			xml::document encryption(fh.data);
-			xml::element* root = encryption.root_node()->child_element();
+			xml::element* root = encryption.child();
 			
 			if (root->name() != "encryption" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
@@ -800,7 +800,7 @@ void MePubDocument::ReadFile(
 		else if (path == "META-INF/rights.xml")
 		{
 			xml::document rights(fh.data);
-			xml::element* root = rights.root_node()->child_element();
+			xml::element* root = rights.child();
 			
 			if (root->name() != "rights" or root->ns() != kAdobeAdeptNS)
 			{
@@ -842,7 +842,7 @@ void MePubDocument::ReadFile(
 
 	xml::document opf(content[mRootFile]);
 	
-	ParseOPF(mRootFile.parent_path(), opf.root_node()->child_element(), problems);
+	ParseOPF(mRootFile.parent_path(), opf.child(), problems);
 	
 	// decrypt all the files, if we can
 	if (keyDecrypted and not encrypted.empty())
@@ -861,7 +861,7 @@ void MePubDocument::ReadFile(
 		try
 		{
 			xml::document ncx(content[mTOCFile]);
-			ParseNCX(ncx.root_node()->child_element());
+			ParseNCX(ncx.child());
 		}
 		catch (exception& e)
 		{

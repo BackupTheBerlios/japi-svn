@@ -131,7 +131,7 @@ void MProject::ReadFile(
 		mName = mProjectFile.filename();
 	
 	xml::document doc(inFile);
-	Read(doc.root_node()->child_element());
+	Read(doc.child());
 }
 
 // ---------------------------------------------------------------------------
@@ -757,7 +757,7 @@ void MProject::WriteFile(
 	projectNode->append(targetsNode);
 	
 	xml::document doc;
-	doc.root_node()->child_element(projectNode);
+	doc.child(projectNode);
 	inFile << doc;
 }
 

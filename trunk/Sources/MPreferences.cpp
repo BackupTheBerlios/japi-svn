@@ -100,20 +100,13 @@ IniFile::IniFile()
 				vector<preference> pref;
 				
 				xml::document doc(data);
-				xml::deserializer d(doc.root_node());
+				xml::deserializer d(doc.child());
 				d & BOOST_SERIALIZATION_NVP(pref);
-				
+
 				for (vector<preference>::iterator p = pref.begin(); p != pref.end(); ++p)
 					mPrefs[p->name] = p->value;
 			}
 		}
-		
-//		GError *err = nil;
-//		if (not g_key_file_load_from_file(mKeyFile, mPrefsFile.string().c_str(),
-//			G_KEY_FILE_NONE, &err))
-//		{
-//			g_error_free(err);
-//		}
 	}
 	catch (exception& e)
 	{
