@@ -24,6 +24,7 @@
 #include <string>
 
 #include "MAlerts.h"
+#include "MError.h"
 
 // shield implementation details in our namespace
 
@@ -159,6 +160,7 @@ class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
 								GtkWidget*		inObject,
 								const char*		inSignalName)
 							{
+								THROW_IF_NIL(inObject);
 								g_signal_connect(G_OBJECT(inObject), inSignalName,
 									G_CALLBACK(&base_class::GCallback), this);
 							}
@@ -167,6 +169,7 @@ class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
 								GObject*		inObject,
 								const char*		inSignalName)
 							{
+								THROW_IF_NIL(inObject);
 								g_signal_connect(inObject, inSignalName,
 									G_CALLBACK(&base_class::GCallback), this);
 							}
@@ -180,6 +183,7 @@ class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
 								inWindow->GetSlotsForHandler(inHandlerName, slots);
 								for (MSignalHandlerArray::iterator slot = slots.begin(); slot != slots.end(); ++slot)
 								{
+									THROW_IF_NIL(slot->first);
 									g_signal_connect(slot->first, slot->second.c_str(),
 										G_CALLBACK(&base_class::GCallback), this);
 								}
@@ -189,6 +193,7 @@ class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
 								GtkWidget*		inObject,
 								const char*		inSignalName)
 							{
+								THROW_IF_NIL(inObject);
 								g_signal_handlers_block_by_func(G_OBJECT(inObject),
 									(void*)G_CALLBACK(&base_class::GCallback), this);
 							}
@@ -197,6 +202,7 @@ class MSlot : public MCallbackNS::MakeCallbackHandler<Function>::type
 								GtkWidget*		inObject,
 								const char*		inSignalName)
 							{
+								THROW_IF_NIL(inObject);
 								g_signal_handlers_unblock_by_func(G_OBJECT(inObject),
 									(void*)G_CALLBACK(&base_class::GCallback), this);
 							}

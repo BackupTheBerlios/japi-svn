@@ -54,12 +54,12 @@ class MProjectInfoDialog : public MDialog
 	MSlot<void()>		eLibPathsChanged;
 
 	void				PkgToggled(
-							gchar*			inPath);
-	MSlot<void(gchar*)>	ePkgToggled;
+							const std::string&	inPkg,
+							bool				inSelected);
+	MEventIn<void(const std::string&,bool)>		ePkgToggled;
 
 	MProject*			mProject;
 	MProjectInfo		mProjectInfo;
-	GtkTreeStore*		mPkgList;
 };
 
 #endif // MFINDANDOPENDIALOG_H

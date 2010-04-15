@@ -25,6 +25,7 @@
 #include "MError.h"
 #include "MPkgConfig.h"
 #include "MStrings.h"
+#include "MList.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -45,6 +46,8 @@ enum {
 	kResourcesControlID			= 'rsrc',
 	kResourceDirControlID		= 'rscd',
 
+	kPackageListControlID		= 'pkgc',
+
 	kSystemPathsListID			= 'sysp',
 	kUserPathsListID			= 'usrp',
 	kLibrariesListID			= 'libp',
@@ -60,6 +63,83 @@ enum {
 //	kDefinesControlID			= 3011,
 //	
 //	kWarningsControlID			= 4001
+};
+
+enum
+{
+	kPkgCheckedColumn,
+	kPkgNameColumn,
+	kPkgDescColumn,
+	
+	kPkgColumnCount	
+};
+
+namespace MPkgColumns
+{
+	struct checked {};
+	struct name {};
+	struct description {};
+}
+
+class MPkgRowItem
+	: public MListRow<
+			MPkgRowItem,
+			MPkgColumns::checked,		bool,
+			MPkgColumns::name,			string,
+			MPkgColumns::description,	string
+		>
+{
+  public:
+					MPkgRowItem(
+						MEventIn<void(const string&,bool)>&
+										inInEvent,
+						const string&	inName,
+						const string&	inDesc,
+						bool			inSelected)
+						: mName(inName)
+						, mDesc(inDesc)
+						, mSelected(inSelected)
+					{
+						AddRoute(inInEvent, ePkgToggled);
+					}
+				
+	void			GetData(
+						const MPkgColumns::name&,
+						string&			outName)
+					{
+						outName = mName;
+					}
+
+	void			GetData(
+						const MPkgColumns::description&,
+						string&			outDesc)
+					{
+						outDesc = mDesc;
+					}
+
+	void			GetData(
+						const MPkgColumns::checked&,
+						bool&			outChecked)
+					{
+						outChecked = mSelected;
+					}
+
+	virtual void	ColumnToggled(
+						uint32			inColumnNr)
+					{
+						mSelected = not mSelected;
+						ePkgToggled(mName, mSelected);
+						RowChanged();
+					}
+
+	virtual void	EmitRowChanged()			{ RowChanged(); }
+	virtual bool	RowDropPossible() const		{ return false; }
+
+	MEventOut<void(const string&,bool)>			ePkgToggled;
+
+  private:
+	string			mName, mDesc;
+	bool			mSelected;
 };
 
 }
@@ -105,8 +185,6 @@ MProjectInfoDialog::~MProjectInfoDialog()
 void MProjectInfoDialog::Initialize(
 	MProject*		inProject)
 {
-//	MView::RegisterSubclass<MListView>();
-
 	mProject = inProject;
 	mProject->GetInfo(mProjectInfo);
 	
@@ -140,39 +218,16 @@ void MProjectInfoDialog::Initialize(
 	vector<pair<string,string> > pkgs;
 	GetPkgConfigPackagesList(pkgs);
 	
-	GtkWidget* list = GetWidget('pkgc');
-	if (list == nil)
-		THROW(("Missing list"));
-	
-	mPkgList = gtk_tree_store_new(3, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(mPkgList));
-
-	GtkCellRenderer* renderer = gtk_cell_renderer_toggle_new();
-	GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
-		"", renderer, "active", 0, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-	ePkgToggled.Connect(G_OBJECT(renderer), "toggled");
-
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		"", renderer, "text", 1, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		"", renderer, "text", 2, nil);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
+	MList<MPkgRowItem>* tocTree = new MList<MPkgRowItem>(GetWidget(kPackageListControlID));
+	tocTree->SetExpandColumn(kPkgDescColumn);
 
 	// fill the list, starting with the perl option
 	bool isChecked = find(
 		mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
 		"perl:default") != mProjectInfo.mPkgConfigPkgs.end();
 	
-	GtkTreeIter iter;
-	gtk_tree_store_append(mPkgList, &iter, nil);
-	gtk_tree_store_set(mPkgList, &iter,
-		0, isChecked, 1, "perl", 2, "Create code that uses an embedded Perl interpreter", -1);
-	
+	tocTree->AppendRow(new MPkgRowItem(ePkgToggled, "perl", "Create code that uses an embedded Perl interpreter", isChecked));
+
 	for (vector<pair<string,string> >::iterator pkg = pkgs.begin(); pkg != pkgs.end(); ++pkg)
 	{
 		string test = "pkg-config:";
@@ -181,10 +236,8 @@ void MProjectInfoDialog::Initialize(
 		isChecked = find(
 			mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
 			test) != mProjectInfo.mPkgConfigPkgs.end();
-		
-		gtk_tree_store_append(mPkgList, &iter, nil);
-		gtk_tree_store_set(mPkgList, &iter,
-			0, isChecked, 1, pkg->first.c_str(), 2, pkg->second.c_str(), -1);
+
+		tocTree->AppendRow(new MPkgRowItem(ePkgToggled, pkg->first, pkg->second, isChecked));
 	}
 	
 	SetEnabled('delt', mProjectInfo.mTargets.size() > 1);
@@ -268,7 +321,7 @@ void MProjectInfoDialog::ValueChanged(
 	MProjectTarget& target = mProjectInfo.mTargets[targetPopup.GetActive()];
 
 	vector<string>& cflags = target.mCFlags;
-//	vector<string>& ldflags = target.mLDFlags;
+	vector<string>& ldflags = target.mLDFlags;
 	
 	string s;
 	
@@ -329,8 +382,12 @@ void MProjectInfoDialog::ValueChanged(
 		
 		case kProfileControlID:
 			cflags.erase(remove(cflags.begin(), cflags.end(), "-pg"), cflags.end());
+			ldflags.erase(remove(ldflags.begin(), ldflags.end(), "-pg"), ldflags.end());
 			if (IsChecked(inID))
+			{
 				cflags.push_back("-pg");
+				ldflags.push_back("-pg");
+			}
 			break;
 		
 		case kPICControlID:
@@ -435,30 +492,19 @@ void MProjectInfoDialog::WarningsChanged()
 }
 
 void MProjectInfoDialog::PkgToggled(
-	gchar*			inPath)
+	const string&			inPackage,
+	bool					inSelected)
 {
-	GtkTreePath* path = gtk_tree_path_new_from_string(inPath);
-	
-	GtkTreeIter iter;
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(mPkgList), &iter, path);
-	gtk_tree_path_free(path);
-
-	bool checked;
-	gchar* pkg;
-	
-	gtk_tree_model_get(GTK_TREE_MODEL(mPkgList), &iter, 0, &checked, 1, &pkg, -1);
-	
-	if (pkg == nil)
-		THROW(("Missing string"));
-	
 	string test = "pkg-config:";
 	
-	if (strcmp(pkg, "perl") == 0)
+	if (inPackage == "perl")
 		test = "perl:default";
 	else
-		test += pkg;
+		test += inPackage;
 	
-	if (checked)
+	if (inSelected)
+		mProjectInfo.mPkgConfigPkgs.push_back(test);
+	else
 	{
 		vector<string>::iterator p = find(
 			mProjectInfo.mPkgConfigPkgs.begin(), mProjectInfo.mPkgConfigPkgs.end(),
@@ -467,12 +513,6 @@ void MProjectInfoDialog::PkgToggled(
 		if (p != mProjectInfo.mPkgConfigPkgs.end())
 			mProjectInfo.mPkgConfigPkgs.erase(p);
 	}
-	else
-		mProjectInfo.mPkgConfigPkgs.push_back(test);
-	
-	g_free(pkg);
-
-	gtk_tree_store_set(mPkgList, &iter, 0, not checked, -1);
 }
 
 void MProjectInfoDialog::AddTarget()

@@ -13,7 +13,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <tr1/tuple>
+#include <boost/tr1/tuple.hpp>
 #include <tr1/type_traits>
 #include <boost/type_traits.hpp>
 
