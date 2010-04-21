@@ -840,7 +840,7 @@ void MWindow::ValueChanged(
 
 void MWindow::Changed()
 {
-	const char* name = gtk_widget_get_name(GTK_WIDGET(mChanged.GetSourceGObject()));
+	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(mChanged.GetSourceGObject()));
 	if (name != nil)
 	{
 		uint32 id = 0;

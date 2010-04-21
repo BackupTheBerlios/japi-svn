@@ -97,6 +97,7 @@ MFindDialog::MFindDialog()
 	, mFindStringChanged(false)
 	, mReplaceStringChanged(false)
 	, mStartDirectoriesChanged(false)
+	, mVisible(false)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
 {	
@@ -166,28 +167,33 @@ bool MFindDialog::ProcessCommand(
 
 bool MFindDialog::DoClose()
 {
-	Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
-	Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
-	Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
-	Preferences::SetInteger("find regular expression", IsChecked(kRegexCheckboxID));
+	if (mVisible)
+	{
+		Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
+		Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
+		Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
+		Preferences::SetInteger("find regular expression", IsChecked(kRegexCheckboxID));
+		
+		SavePosition("find dialog position");
+		
+		Preferences::SetArray("find find strings", mFindStrings);
+		Preferences::SetArray("find replace strings", mReplaceStrings);
+		Preferences::SetArray("find directories", mStartDirectories);
 	
-	SavePosition("find dialog position");
+	//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
+		Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
+		Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
 	
-	Preferences::SetArray("find find strings", mFindStrings);
-	Preferences::SetArray("find replace strings", mReplaceStrings);
-	Preferences::SetArray("find directories", mStartDirectories);
-
-//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
-	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
-	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
-
-	Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
+		Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
+		
+		string s;
+		GetText(kNameFilterEditboxID, s);
+		Preferences::SetString("find name filter", s);
 	
-	string s;
-	GetText(kNameFilterEditboxID, s);
-	Preferences::SetString("find name filter", s);
-
-	Hide();
+		Hide();
+		
+		mVisible = false;
+	}
 	
 	return true;
 }
@@ -198,6 +204,7 @@ void MFindDialog::Select()
 	Show(nil);
 	MWindow::Select();
 	SetFocus(kFindComboboxID);
+	mVisible = true;
 }
 
 bool MFindDialog::OKClicked()

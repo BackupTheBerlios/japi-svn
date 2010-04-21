@@ -58,6 +58,9 @@ class MDiffWindow : public MDialog
 	void				RecalculateDiffs();
 
 	void				RecalculateDiffsForDirs();
+	void				RecalculateDiffsForDirs(
+							const MFile&	inDirA,
+							const MFile&	inDirB);
 	
 	void				DiffSelected();
 
@@ -106,6 +109,7 @@ class MDiffWindow : public MDialog
 	
 	fs::path			mDir1, mDir2;
 	bool				mDir1Inited, mDir2Inited;
+	bool				mRecursive;
 	
 	MDiffScript			mScript;
 	

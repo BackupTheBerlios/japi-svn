@@ -79,7 +79,7 @@ bool MDialog::CancelClicked()
 
 void MDialog::StdBtnClicked()
 {
-	const char* name = gtk_widget_get_name(GTK_WIDGET(mStdBtnClicked.GetSourceGObject()));
+	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(mStdBtnClicked.GetSourceGObject()));
 	if (name != nil)
 	{
 		uint32 id = 0;

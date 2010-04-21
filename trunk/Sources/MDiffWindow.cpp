@@ -29,6 +29,8 @@ enum {
 	kChooseFile1Command	= 'fil1',
 	kChooseFile2Command	= 'fil2',
 	
+	kRecursiveCommand = 'recu',
+	
 	kMergeToFile1Command = 'mrg1',
 	kMergeToFile2Command = 'mrg2'
 };
@@ -47,6 +49,7 @@ MDiffWindow::MDiffWindow(
 	, mDoc2(nil)
 	, mDir1Inited(false)
 	, mDir2Inited(false)
+	, mRecursive(false)
 	, mInvokeRow(this, &MDiffWindow::InvokeRow)
 {
 	GtkWidget* treeView = GetWidget(kListViewID);
@@ -68,6 +71,8 @@ MDiffWindow::MDiffWindow(
 	
 	if (inDocument != nil /*and inDocument->IsSpecified()*/)
 		SetDocument(1, inDocument);
+
+	SetEnabled(kRecursiveCommand, false);
 }
 
 MDiffWindow::~MDiffWindow()
@@ -96,6 +101,11 @@ bool MDiffWindow::ProcessCommand(
 		
 		case kChooseFile2Command:
 			ChooseFile(2);
+			break;
+		
+		case kRecursiveCommand:
+			mRecursive = not mRecursive;
+			RecalculateDiffsForDirs();
 			break;
 		
 		case kMergeToFile1Command:
@@ -223,7 +233,7 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 		if (mDoc1 != nil)
 		{
 			AddRoute(eDocumentClosed, mDoc1->eDocumentClosed);
-			SetButtonTitle(1, inDocument->GetFile().GetFileName());
+			SetButtonTitle(1, inDocument->GetWindowTitle());
 		}
 		else
 			SetButtonTitle(1, _("File 1"));
@@ -238,7 +248,7 @@ void MDiffWindow::SetDocument(int inDocNr, MTextDocument* inDocument)
 		if (mDoc2 != nil)
 		{
 			AddRoute(eDocumentClosed, mDoc2->eDocumentClosed);
-			SetButtonTitle(2, inDocument->GetFile().GetFileName());
+			SetButtonTitle(2, inDocument->GetWindowTitle());
 		}
 		else
 			SetButtonTitle(2, _("File 2"));
@@ -285,7 +295,10 @@ void MDiffWindow::SetDirectory(
 		fs::exists(mDir2) and is_directory(mDir2))
 	{
 		RecalculateDiffsForDirs();
+		SetEnabled(kRecursiveCommand, true);
 	}
+	else
+		SetEnabled(kRecursiveCommand, false);
 
 	Select();
 }
@@ -410,14 +423,25 @@ void MDiffWindow::RecalculateDiffsForDirs()
 
 	ClearList();
 
+	RecalculateDiffsForDirs(MFile(mDir1), MFile(mDir2));
+}
+
+void MDiffWindow::RecalculateDiffsForDirs(
+	const MFile&	inDirA,
+	const MFile&	inDirB)
+{
 	vector<fs::path> a, b;
 	fs::path p;
+
+	int flags = 0;
+	if (mRecursive)
+		flags = kFileIter_ReturnDirectories;
 	
-	MFileIterator iter_a(mDir1, 0);
+	MFileIterator iter_a(inDirA.GetPath(), flags);
 	while (iter_a.Next(p))
 		a.push_back(p);
 	
-	MFileIterator iter_b(mDir2, 0);
+	MFileIterator iter_b(inDirB.GetPath(), flags);
 	while (iter_b.Next(p))
 		b.push_back(p);
 	
@@ -432,8 +456,13 @@ void MDiffWindow::RecalculateDiffsForDirs()
 	{
 		if (ai->leaf() == bi->leaf())
 		{
-			if (FilesDiffer(MFile(*ai), MFile(*bi)))
-				AddDirDiff(ai->leaf(), 0);
+			if (is_directory(*ai) and is_directory(*bi))
+			{
+				if (mRecursive)
+					RecalculateDiffsForDirs(MFile(*ai), MFile(*bi));
+			}
+			else if (is_directory(*ai) or is_directory(*bi) or FilesDiffer(MFile(*ai), MFile(*bi)))
+				AddDirDiff(relative_path(mDir1, *ai).string(), 0);
 
 			++ai;
 			++bi;
@@ -442,12 +471,12 @@ void MDiffWindow::RecalculateDiffsForDirs()
 		{
 			if (ai->leaf() < bi->leaf())
 			{
-				AddDirDiff(ai->leaf(), 1);
+				AddDirDiff(relative_path(mDir1, *ai).string(), 1);
 				++ai;
 			}
 			else
 			{
-				AddDirDiff(bi->leaf(), 2);
+				AddDirDiff(relative_path(mDir2, *bi).string(), 2);
 				++bi;
 			}
 		}
@@ -455,13 +484,13 @@ void MDiffWindow::RecalculateDiffsForDirs()
 	
 	while (ai != a.end())
 	{
-		AddDirDiff(ai->leaf(), 1);
+		AddDirDiff(relative_path(mDir1, *ai).string(), 1);
 		++ai;
 	}
 	
 	while (bi != b.end())
 	{
-		AddDirDiff(bi->leaf(), 2);
+		AddDirDiff(relative_path(mDir2, *bi).string(), 2);
 		++bi;
 	}
 }

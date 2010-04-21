@@ -128,6 +128,7 @@ class MFindDialog : public MDialog
 	bool			mStopFindAll;
 	bool			mUpdatingComboBox;
 	bool			mFindStringChanged, mReplaceStringChanged, mStartDirectoriesChanged;
+	bool			mVisible;
 	StringArray		mFindStrings;
 	StringArray		mReplaceStrings;
 	StringArray		mStartDirectories;

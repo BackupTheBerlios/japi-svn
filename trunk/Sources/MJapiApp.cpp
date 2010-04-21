@@ -499,7 +499,7 @@ void MJapiApp::DoCloseAll(
 		{
 			MController* controller = doc->GetFirstController();
 			
-			assert(controller != nil);
+//			assert(controller != nil);
 			
 			if (controller != nil)
 				(void)controller->TryCloseDocument(inAction);

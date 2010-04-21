@@ -150,7 +150,7 @@ IniFile::~IniFile()
 	}
 	catch (exception& e)
 	{
-		
+		PRINT(("Exception writing prefs file: %s", e.what()));
 	}
 	catch (...) {}
 }
