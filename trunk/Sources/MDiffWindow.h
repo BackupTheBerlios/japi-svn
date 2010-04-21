@@ -110,6 +110,8 @@ class MDiffWindow : public MDialog
 	fs::path			mDir1, mDir2;
 	bool				mDir1Inited, mDir2Inited;
 	bool				mRecursive;
+	bool				mIgnoreWhitespace;
+	std::string			mIgnoreFileNameFilter;
 	
 	MDiffScript			mScript;
 	

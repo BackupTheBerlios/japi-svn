@@ -18,6 +18,7 @@
 #include "MDocWindow.h"
 #include "MStrings.h"
 #include "MJapiApp.h"
+#include "MPreferences.h"
 
 using namespace std;
 
@@ -32,7 +33,14 @@ enum {
 	kRecursiveCommand = 'recu',
 	
 	kMergeToFile1Command = 'mrg1',
-	kMergeToFile2Command = 'mrg2'
+	kMergeToFile2Command = 'mrg2',
+	
+	kInfoButtonCommand	= 'info',
+	
+	kIgnoreWhiteSpaceCommand	= 'whit',
+	kIgnoreFileNameCommand		= 'filt',
+	
+	kInfoBoxID					= 'box2'
 };
 
 }
@@ -73,6 +81,12 @@ MDiffWindow::MDiffWindow(
 		SetDocument(1, inDocument);
 
 	SetEnabled(kRecursiveCommand, false);
+	
+	mIgnoreFileNameFilter = Preferences::GetString("diff-ignore-file-name-filter", ".svn;*.o");
+	SetText(kIgnoreFileNameCommand, mIgnoreFileNameFilter);
+
+	mIgnoreWhitespace = Preferences::GetInteger("diff-ignore-whitespace", 0);
+	SetChecked(kIgnoreWhiteSpaceCommand, mIgnoreWhitespace);
 }
 
 MDiffWindow::~MDiffWindow()
@@ -114,6 +128,20 @@ bool MDiffWindow::ProcessCommand(
 		
 		case kMergeToFile2Command:
 			MergeToFile(2);
+			break;
+		
+		case kInfoButtonCommand:
+			SetVisible(kInfoBoxID, not IsVisible(kInfoBoxID));
+			break;
+		
+		case kIgnoreWhiteSpaceCommand:
+			mIgnoreWhitespace = not mIgnoreWhitespace;
+			Preferences::SetInteger("diff-ignore-whitespace", mIgnoreWhitespace);
+			break;
+		
+		case kIgnoreFileNameCommand:
+			mIgnoreFileNameFilter = GetText(kIgnoreFileNameCommand);
+			Preferences::SetString("diff-ignore-file-name-filter", mIgnoreFileNameFilter);
 			break;
 		
 		default:
@@ -456,13 +484,16 @@ void MDiffWindow::RecalculateDiffsForDirs(
 	{
 		if (ai->leaf() == bi->leaf())
 		{
-			if (is_directory(*ai) and is_directory(*bi))
+			if (not FileNameMatches(mIgnoreFileNameFilter.c_str(), *ai))
 			{
-				if (mRecursive)
-					RecalculateDiffsForDirs(MFile(*ai), MFile(*bi));
+				if (is_directory(*ai) and is_directory(*bi))
+				{
+					if (mRecursive)
+						RecalculateDiffsForDirs(MFile(*ai), MFile(*bi));
+				}
+				else if (is_directory(*ai) or is_directory(*bi) or FilesDiffer(MFile(*ai), MFile(*bi)))
+					AddDirDiff(relative_path(mDir1, *ai).string(), 0);
 			}
-			else if (is_directory(*ai) or is_directory(*bi) or FilesDiffer(MFile(*ai), MFile(*bi)))
-				AddDirDiff(relative_path(mDir1, *ai).string(), 0);
 
 			++ai;
 			++bi;
@@ -471,12 +502,14 @@ void MDiffWindow::RecalculateDiffsForDirs(
 		{
 			if (ai->leaf() < bi->leaf())
 			{
-				AddDirDiff(relative_path(mDir1, *ai).string(), 1);
+				if (not FileNameMatches(mIgnoreFileNameFilter.c_str(), *ai))
+					AddDirDiff(relative_path(mDir1, *ai).string(), 1);
 				++ai;
 			}
 			else
 			{
-				AddDirDiff(relative_path(mDir2, *bi).string(), 2);
+				if (not FileNameMatches(mIgnoreFileNameFilter.c_str(), *bi))
+					AddDirDiff(relative_path(mDir2, *bi).string(), 2);
 				++bi;
 			}
 		}
@@ -484,13 +517,15 @@ void MDiffWindow::RecalculateDiffsForDirs(
 	
 	while (ai != a.end())
 	{
-		AddDirDiff(relative_path(mDir1, *ai).string(), 1);
+		if (not FileNameMatches(mIgnoreFileNameFilter.c_str(), *ai))
+			AddDirDiff(relative_path(mDir1, *ai).string(), 1);
 		++ai;
 	}
 	
 	while (bi != b.end())
 	{
-		AddDirDiff(relative_path(mDir2, *bi).string(), 2);
+		if (not FileNameMatches(mIgnoreFileNameFilter.c_str(), *bi))
+			AddDirDiff(relative_path(mDir2, *bi).string(), 2);
 		++bi;
 	}
 }
