@@ -122,7 +122,7 @@ class MePubDocument : public MDocument
 
 	void				ParseNavPoint(
 							MProjectGroup*		inGroup,
-							zeep::xml::element*	inNavPoint);
+							zeep::xml::element&	inNavPoint);
 
 	zeep::xml::element*	CreateNCX();
 

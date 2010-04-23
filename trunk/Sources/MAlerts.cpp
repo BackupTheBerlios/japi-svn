@@ -56,21 +56,19 @@ GtkWidget* CreateAlertWithArgs(
 	if (root->get_attribute("type") == "warning")
 		type = GTK_MESSAGE_WARNING;
 	
-	xml::element_set elements(root->children<xml::element>());
-	
-	foreach (xml::element* item, elements)
+	foreach (xml::element& item, *root)
 	{
-		if (item->qname() == "message")
-			text = _(item->content());
-		else if (item->qname() == "buttons")
+		if (item.qname() == "message")
+			text = _(item.content());
+		else if (item.qname() == "buttons")
 		{
-			foreach (xml::element* button, item->children<xml::element>())
+			foreach (xml::element& button, item)
 			{
-				if (button->qname() == "button")
+				if (button.qname() == "button")
 				{
-					string label = _(button->get_attribute("title"));
-					uint32 cmd = atoi(button->get_attribute("cmd").c_str());
-					if (button->get_attribute("default") == "true")
+					string label = _(button.get_attribute("title"));
+					uint32 cmd = atoi(button.get_attribute("cmd").c_str());
+					if (button.get_attribute("default") == "true")
 						defaultButton = cmd;
 					
 					btns.push_back(make_pair(label, cmd));

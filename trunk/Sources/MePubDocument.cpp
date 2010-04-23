@@ -780,12 +780,12 @@ void MePubDocument::ReadFile(
 			if (root->name() != "encryption" or root->ns() != kContainerNS)
 				problems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Invalid or unsupported encryption.xml file"));
 			
-			foreach (xml::element* n, root->children<xml::element>())
+			foreach (xml::element& n, *root)
 			{
-				if (n->name() != "EncryptedData")
+				if (n.name() != "EncryptedData")
 					continue;
 				
-				xml::element* cd = n->find_first("CipherData");
+				xml::element* cd = n.find_first("CipherData");
 				if (not cd)
 					continue;
 				
@@ -1276,20 +1276,20 @@ void MePubDocument::ParseOPF(
 		}
 		
 		// collect all the Dublin Core information
-		foreach (xml::element* dc, metadata->children<xml::element>())
+		foreach (xml::element& dc, *metadata)
 		{
-			string name = dc->name();
+			string name = dc.name();
 			
-			if (oldDC or dc->ns() == "http://purl.org/dc/elements/1.0/")
+			if (oldDC or dc.ns() == "http://purl.org/dc/elements/1.0/")
 				ba::to_lower(name);
-			else if (dc->ns() != "http://purl.org/dc/elements/1.1/" and
-				dc->ns() != "http://www.idpf.org/2007/opf")
+			else if (dc.ns() != "http://purl.org/dc/elements/1.1/" and
+				dc.ns() != "http://www.idpf.org/2007/opf")
 			{
-				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc->ns());
+				outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("unsupported dublin core version: ") + dc.ns());
 //				continue;
 			}
 			
-			string content = dc->content();
+			string content = dc.content();
 			ba::trim(content);
 			
 			if (content.empty())
@@ -1297,12 +1297,12 @@ void MePubDocument::ParseOPF(
 			
 			if (name == "identifier")
 			{
-				if (dc->get_attribute("id") == uid)
+				if (dc.get_attribute("id") == uid)
 				{
 					mDocumentID = content;
-					mDocumentIDScheme = dc->get_attribute("opf:scheme");
-					if (mDocumentIDScheme.empty() and dc->ns() == "http://purl.org/dc/elements/1.0/")
-						mDocumentIDScheme = dc->get_attribute("scheme");
+					mDocumentIDScheme = dc.get_attribute("opf:scheme");
+					if (mDocumentIDScheme.empty() and dc.ns() == "http://purl.org/dc/elements/1.0/")
+						mDocumentIDScheme = dc.get_attribute("scheme");
 				}
 			}
 			else if (name == "date")
@@ -1311,10 +1311,10 @@ void MePubDocument::ParseOPF(
 				if (not date.empty())
 					date += '\n';
 				
-				if (dc->get_attribute("opf:event").empty())
+				if (dc.get_attribute("opf:event").empty())
 					date += content;
 				else
-					date += dc->get_attribute("opf:event") + ": " + content;
+					date += dc.get_attribute("opf:event") + ": " + content;
 	
 				mDublinCore[name] = date;
 			}
@@ -1338,16 +1338,16 @@ void MePubDocument::ParseOPF(
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Manifest missing from OPF document"));
 	else
 	{
-		foreach (xml::element* item, manifest->children<xml::element>())
+		foreach (xml::element& item, *manifest)
 		{
-			if (item->name() != "item") // or item->ns() != "http://www.idpf.org/2007/opf")
+			if (item.name() != "item") // or item.ns() != "http://www.idpf.org/2007/opf")
 				continue;
 	
-			fs::path href = inDirectory / item->get_attribute("href");
+			fs::path href = inDirectory / item.get_attribute("href");
 			
 			if (mTOCFile.empty())
 			{
-				if (item->get_attribute("media-type") == "application/x-dtbncx+xml")
+				if (item.get_attribute("media-type") == "application/x-dtbncx+xml")
 				{
 					mTOCFile = href;
 					continue;
@@ -1366,7 +1366,7 @@ void MePubDocument::ParseOPF(
 			
 			unique_ptr<MePubItem> eItem(new MePubItem(href.filename(), group));
 			
-			string id = item->get_attribute("id");
+			string id = item.get_attribute("id");
 			if (id.empty() or not isalpha(id[0]))
 			{
 				if (warnInvalidID)
@@ -1376,7 +1376,7 @@ void MePubDocument::ParseOPF(
 			}
 			eItem->SetID(id);
 			
-			string mediaType = item->get_attribute("media-type");
+			string mediaType = item.get_attribute("media-type");
 			
 			if (mediaType == "text/html")
 			{
@@ -1399,14 +1399,14 @@ void MePubDocument::ParseOPF(
 		outProblems.AddMessage(kMsgKindError, MFile(), 0, 0, 0, _("Spine missing from OPF document"));
 	else
 	{
-		foreach (xml::element* item, spine->children<xml::element>())
+		foreach (xml::element& item, *spine)
 		{
-			if (item->name() != "itemref" or item->ns() != "http://www.idpf.org/2007/opf")
+			if (item.name() != "itemref" or item.ns() != "http://www.idpf.org/2007/opf")
 				continue;
 			
-			string idref = item->get_attribute("idref");
+			string idref = item.get_attribute("idref");
 
-			if (item->get_attribute("linear") == "yes")
+			if (item.get_attribute("linear") == "yes")
 				mLinear.insert(idref);
 		}
 	}
@@ -1423,22 +1423,22 @@ void MePubDocument::ParseNCX(
 	if (not navMap)
 		THROW(("Missing navMap element in NCX file"));
 
-	foreach (xml::element* n, navMap->children<xml::element>())
+	foreach (xml::element& n, *navMap)
 	{
-		if (n->name() == "navPoint")
+		if (n.name() == "navPoint")
 			ParseNavPoint(&mTOC, n);
 	}
 }
 
 void MePubDocument::ParseNavPoint(
 	MProjectGroup*		inGroup,
-	xml::element*		inNavPoint)
+	xml::element&		inNavPoint)
 {
-	assert(inNavPoint->name() == "navPoint");
+	assert(inNavPoint.name() == "navPoint");
 	
 	unique_ptr<MePubTOCItem> np;
 
-	xml::element* label = inNavPoint->find_first("navLabel");
+	xml::element* label = inNavPoint.find_first("navLabel");
 	if (label != nil)
 	{
 		xml::element* name = label->find_first("text");
@@ -1449,23 +1449,23 @@ void MePubDocument::ParseNavPoint(
 	else
 		np.reset(new MePubTOCItem("", inGroup));
 
-	if (not inNavPoint->get_attribute("id").empty())
-		np->SetId(inNavPoint->get_attribute("id"));
+	if (not inNavPoint.get_attribute("id").empty())
+		np->SetId(inNavPoint.get_attribute("id"));
 
-	if (not inNavPoint->get_attribute("playOrder").empty())
-		np->SetPlayOrder(boost::lexical_cast<uint32>(inNavPoint->get_attribute("playOrder")));
+	if (not inNavPoint.get_attribute("playOrder").empty())
+		np->SetPlayOrder(boost::lexical_cast<uint32>(inNavPoint.get_attribute("playOrder")));
 
-	xml::element* content = inNavPoint->find_first("content");
+	xml::element* content = inNavPoint.find_first("content");
 	if (not content)
 		THROW(("Missing content in navPoint"));
 	
 	np->SetSrc(content->get_attribute("src"));
 
-	np->SetClass(inNavPoint->get_attribute("class"));
+	np->SetClass(inNavPoint.get_attribute("class"));
 	
-	foreach (xml::element* n, inNavPoint->children<xml::element>())
+	foreach (xml::element& n, inNavPoint)
 	{
-		if (n->name() == "navPoint")
+		if (n.name() == "navPoint")
 			ParseNavPoint(np.get(), n);
 	}
 	

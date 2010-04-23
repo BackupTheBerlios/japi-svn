@@ -245,11 +245,11 @@ class MProject : public MDocument
 							std::vector<std::string>&		outOptions);
 
 	void				ReadFiles(
-							const zeep::xml::element*		inData,
+							const zeep::xml::element&		inData,
 							MProjectGroup*					inGroup);
 
 	void				ReadResources(
-							const zeep::xml::element*		inData,
+							const zeep::xml::element&		inData,
 							MProjectGroup*					inGroup);
 
 	void				Read(

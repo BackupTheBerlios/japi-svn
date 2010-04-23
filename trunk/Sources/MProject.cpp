@@ -211,14 +211,14 @@ void MProject::ReadOptions(
 //	MProject::ReadResources
 
 void MProject::ReadResources(
-	const xml::element*		inData,
+	const xml::element&		inData,
 	MProjectGroup*			inGroup)
 {
-	foreach (const xml::element* node, inData->children<xml::element>())
+	foreach (const xml::element& node, inData)
 	{		
-		if (node->qname() == "resource")
+		if (node.qname() == "resource")
 		{
-			string fileName = node->content();
+			string fileName = node.content();
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
@@ -237,9 +237,9 @@ void MProject::ReadResources(
 				DisplayError(e);
 			}
 		}
-		else if (node->qname() == "group")
+		else if (node.qname() == "group")
 		{
-			string name = node->get_attribute("name");
+			string name = node.get_attribute("name");
 			
 			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
@@ -254,14 +254,14 @@ void MProject::ReadResources(
 //	MProject::ReadFiles
 
 void MProject::ReadFiles(
-	const xml::element*	inData,
+	const xml::element&	inData,
 	MProjectGroup*		inGroup)
 {
-	foreach (const xml::element* node, inData->children<xml::element>())
+	foreach (const xml::element& node, inData)
 	{
-		if (node->qname() == "file")
+		if (node.qname() == "file")
 		{
-			string fileName = node->content();
+			string fileName = node.content();
 			if (fileName.length() == 0)
 				THROW(("Invalid project file"));
 			
@@ -282,7 +282,7 @@ void MProject::ReadFiles(
 				
 				inGroup->AddProjectItem(new MProjectLib(linkName,
 					shared,
-					node->get_attribute("optional") == "true",
+					node.get_attribute("optional") == "true",
 					inGroup));
 			}
 			else
@@ -306,20 +306,20 @@ void MProject::ReadFiles(
 				}
 			}
 		}
-		else if (node->qname() == "link")
+		else if (node.qname() == "link")
 		{
-			string linkName = node->content();
+			string linkName = node.content();
 			if (linkName.length() == 0)
 				THROW(("Invalid project file"));
 			
 			inGroup->AddProjectItem(new MProjectLib(linkName,
-				node->get_attribute("shared") == "true",
-				node->get_attribute("optional") == "true",
+				node.get_attribute("shared") == "true",
+				node.get_attribute("optional") == "true",
 				inGroup));
 		}
-		else if (node->qname() == "group")
+		else if (node.qname() == "group")
 		{
-			string name = node->get_attribute("name");
+			string name = node.get_attribute("name");
 			
 			unique_ptr<MProjectGroup> group(new MProjectGroup(name, inGroup));
 			
@@ -379,7 +379,7 @@ void MProject::Read(
 	// now we're ready to read the files
 	xml::element* files = inRoot->find_first("files");
 	if (files != nil)
-		ReadFiles(files, &mProjectItems);
+		ReadFiles(*files, &mProjectItems);
 
 	// and the package actions, if any
 	xml::element* resources = inRoot->find_first("resources");
@@ -393,7 +393,7 @@ void MProject::Read(
 		else
 			mProjectInfo.mResourcesDir = "Resources";
 
-		ReadResources(resources, &mPackageItems);
+		ReadResources(*resources, &mPackageItems);
 	}
 	else
 		mProjectInfo.mAddResources = false;

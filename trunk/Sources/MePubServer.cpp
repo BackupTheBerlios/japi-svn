@@ -27,8 +27,8 @@ MePubServer& MePubServer::Instance()
 }
 
 MePubServer::MePubServer()
-	: http::server("0.0.0.0", 9090)
-	, mServerThread(boost::bind(&MePubServer::run, this, "0.0.0.0", 9090, 1))
+	: http::server("0.0.0.0", 9090, 1)
+	, mServerThread(boost::bind(&MePubServer::run, this))
 {
 }
 
