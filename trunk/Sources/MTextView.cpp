@@ -290,6 +290,8 @@ bool MTextView::ScrollToPointer(
 	int32		inY)
 {
 	bool scrolled = false;
+	
+	THROW_IF_NIL(mDocument);
 
 	mDocument->PositionToOffset(inX, inY, mClickCaret);
 
@@ -351,7 +353,7 @@ bool MTextView::OnButtonReleaseEvent(
 {
 	gtk_grab_remove(GetGtkWidget());	
 
-	if (mClickMode == eSelectStartDrag)
+	if (mClickMode == eSelectStartDrag and mDocument != nil)
 		mDocument->Select(mClickAnchor, mClickCaret);
 	
 	mClickMode = eSelectNone;
@@ -363,6 +365,8 @@ bool MTextView::OnButtonReleaseEvent(
 uint32 MTextView::CountPages(
 	MDevice&		inDevice)
 {
+	THROW_IF_NIL(mDocument);
+	
 	MRect bounds = inDevice.GetBounds();
 
 	uint32 wrapWidth = mDocument->GetWrapWidth();
@@ -656,6 +660,8 @@ void MTextView::DrawDragImage(
 	int32&			outX,
 	int32&			outY)
 {
+	THROW_IF_NIL(mDocument);
+
 	MRect bounds;
 	GetBounds(bounds);
 	
@@ -1575,11 +1581,18 @@ bool MTextView::IsPointInSelection(
 	int32			inX,
 	int32			inY)
 {
-	mDocument->SetTargetTextView(this);
+	bool result = false;
 	
-	MRegion rgn;
-	mDocument->GetSelectionRegion(rgn);
-	return rgn.ContainsPoint(inX, inY);
+	if (mDocument != nil)
+	{
+		mDocument->SetTargetTextView(this);
+		
+		MRegion rgn;
+		mDocument->GetSelectionRegion(rgn);
+		result = rgn.ContainsPoint(inX, inY);
+	}
+	
+	return result;
 }
 
 void MTextView::DrawDragHilite(

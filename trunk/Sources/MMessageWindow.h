@@ -19,6 +19,9 @@ enum MMessageKind
 };
 
 struct MMessageItem;
+struct MMessageRow;
+class MListBase;
+class MTextView;
 
 class MMessageList
 {
@@ -55,7 +58,7 @@ class MMessageList
 	struct MMessageListImp*					mImpl;
 };
 
-class MMessageWindow : public MWindow
+class MMessageWindow : public MDocWindow
 {
   public:
 					MMessageWindow(
@@ -94,24 +97,25 @@ class MMessageWindow : public MWindow
 						uint32				inMaxOffset,
 						const std::string&	inMessage);
 
+	void			AddMessageToList(
+						MMessageItem&		inItem);
 
-	void			SelectItem(
-						uint32				inItemNr);
+	void			SelectMsg(
+						MMessageRow*		inRow);
 
-	void			InvokeItem(
-						uint32				inItemNr);
+	void			InvokeMsg(
+						MMessageRow*		inRow);
 
-	void			InvokeRow(
-						GtkTreePath*		inPath,
-						GtkTreeViewColumn*	inColumn);
+	MEventIn<void(MMessageRow*)>			eSelectMsg;
+	MEventIn<void(MMessageRow*)>			eInvokeMsg;
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
-					mInvokeRow;
-
+	MListBase*		mListView;
 	fs::path		mBaseDirectory;
 	MMessageList	mList;
 	std::string		mText;
 	double			mLastAddition;
+	MTextView*		mTextView;
+	GtkWidget*		mSelectionPanel;
 };
 
 #endif

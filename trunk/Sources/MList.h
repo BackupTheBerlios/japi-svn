@@ -363,6 +363,8 @@ class MListBase : public MView
 	virtual void	RemoveRow(
 						MListRowBase*		inRow);
 
+	virtual void	RemoveAll();
+
 	MEventOut<void()>
 					eRowsReordered;
 
@@ -379,6 +381,12 @@ class MListBase : public MView
 	bool			GetTreeIterForRow(
 						MListRowBase*		inRow,
 						GtkTreeIter*		outIter);
+
+	static gboolean	RemoveAllCB(
+						GtkTreeModel*		inModel,
+						GtkTreePath*		inPath,
+						GtkTreeIter*		inIter,
+						gpointer			inData);
 
 	MListRowBase*	GetRowForPath(
 						GtkTreePath*		inPath) const;

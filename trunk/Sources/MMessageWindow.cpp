@@ -19,8 +19,12 @@
 #include "MStrings.h"
 #include "MError.h"
 #include "MJapiApp.h"
+#include "MList.h"
+#include "MTextController.h"
+#include "MTextView.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 namespace
 {
@@ -28,13 +32,6 @@ namespace
 const uint32
 	kListViewID = 'tree';
 	
-enum {
-	kBadgeColumn,
-	kFileColumn,
-	kLineColumn,
-	kTextColumn
-};
-
 //static const Rect
 //	sRect = { 0, 0, 150, 400 };
 
@@ -67,9 +64,9 @@ GdkPixbuf* GetBadge(
 	return sBadges[inKind];
 }
 
-// --------------------------------------------------------------------
-
 }
+
+// --------------------------------------------------------------------
 
 struct MMessageItem
 {
@@ -106,6 +103,79 @@ struct MMessageItem
 
 typedef vector<MMessageItem*>	MMessageItemArray;
 typedef std::vector<MFile>		MFileTable;
+
+enum
+{
+	kIconColumn,
+	kFileColumn,
+	kLineColumn,
+	kMsgColumn,
+	
+	kColumnCount	
+};
+
+namespace MMsgColumns
+{
+	struct icon {};
+	struct file {};
+	struct line {};
+	struct msg {};
+}
+
+class MMessageRow
+	: public MListRow<
+			MMessageRow,
+			MMsgColumns::icon,			GdkPixbuf*,
+			MMsgColumns::file,			string,
+			MMsgColumns::line,			string,
+			MMsgColumns::msg,			string
+		>
+{
+  public:
+					MMessageRow(
+						MMessageItem*	inItem,
+						const string&	inFile)
+						: mItem(inItem)
+						, mFile(inFile)
+					{
+					}
+				
+	void			GetData(
+						const MMsgColumns::icon&,
+						GdkPixbuf*&		outIcon)
+					{
+						outIcon = GetBadge(mItem->mKind);
+					}
+
+	void			GetData(
+						const MMsgColumns::file&,
+						string&			outFile)
+					{
+						outFile = mFile;
+					}
+
+	void			GetData(
+						const MMsgColumns::line,
+						string&			outLine)
+					{
+						if (mItem->mLineNr > 0)
+							outLine = boost::lexical_cast<string>(mItem->mLineNr);
+					}
+
+	void			GetData(
+						const MMsgColumns::msg&,
+						string&			outMsg)
+					{
+						outMsg.assign(mItem->mMessage, mItem->mMessageLength);
+					}
+
+	virtual bool	RowDropPossible() const		{ return false; }
+
+	MMessageItem*	mItem;
+	string			mFile;
+};
+
+// --------------------------------------------------------------------
 
 struct MMessageListImp
 {
@@ -202,51 +272,91 @@ uint32 MMessageList::GetCount() const
 
 MMessageWindow::MMessageWindow(
 	const string& 	inTitle)
-	: MWindow("message-list-window", "window")
+	: MDocWindow("message-list-window")
 	, eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
-	, mInvokeRow(this, &MMessageWindow::InvokeRow)
+	, eSelectMsg(this, &MMessageWindow::SelectMsg)
+	, eInvokeMsg(this, &MMessageWindow::InvokeMsg)
 	, mBaseDirectory("/")
 	, mLastAddition(0)
 {
 	SetTitle(inTitle);
 	
-	GtkWidget* treeView = GetWidget(kListViewID);
-	THROW_IF_NIL((treeView));
-
-	GtkListStore* store = gtk_list_store_new(4,
-		GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
-
-	gtk_tree_view_set_model(GTK_TREE_VIEW(treeView), (GTK_TREE_MODEL(store)));
+	mListView = new MList<MMessageRow>(GetWidget(kListViewID));
+	mListView->SetExpandColumn(kMsgColumn);
 	
-	GtkTreeViewColumn* column = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(column, _("File"));
-
-	GtkCellRenderer* renderer = gtk_cell_renderer_pixbuf_new();
-	gtk_tree_view_column_pack_start(column, renderer, false);
-	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", kBadgeColumn, nil);
-
-	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_column_pack_start(column, renderer, true);
-	gtk_tree_view_column_set_attributes(column, renderer, "text", kFileColumn, nil);
-
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	renderer = gtk_cell_renderer_text_new();
-
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Line"), renderer, "text", kLineColumn, NULL);
-
-	g_object_set(G_OBJECT(renderer), "xalign", 1.0f, NULL);
-	gtk_tree_view_column_set_alignment(column, 1.0f);
-
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
-
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes (
-		_("Message"), renderer, "text", kTextColumn, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(treeView), column);
+	AddRoute(static_cast<MList<MMessageRow>*>(mListView)->eRowSelected, eSelectMsg);
+	AddRoute(static_cast<MList<MMessageRow>*>(mListView)->eRowInvoked, eInvokeMsg);
 	
-	mInvokeRow.Connect(treeView, "row-activated");
+	mListView->SetColumnTitle(kFileColumn, _("File"));
+	mListView->SetColumnTitle(kLineColumn, _("Line"));
+	mListView->SetColumnAlignment(kLineColumn, 1.0f);
+	mListView->SetColumnTitle(kMsgColumn, _("Message"));
+	mListView->SetExpandColumn(kMsgColumn);
+
+	// ----------------------------------------------------------------
+
+	MTextController* textController = new MTextController(this);
+	mController = textController;
+	
+	mMenubar.SetTarget(mController);
+
+	// add status 
+	
+	GtkWidget* statusBar = GetWidget('stat');
+	
+	GtkShadowType shadow_type;
+	gtk_widget_style_get(statusBar, "shadow_type", &shadow_type, nil);
+	
+	// selection status
+
+	GtkWidget* frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	
+	mSelectionPanel = gtk_label_new("1, 1");
+	gtk_label_set_single_line_mode(GTK_LABEL(mSelectionPanel), true);
+	gtk_container_add(GTK_CONTAINER(frame), mSelectionPanel);	
+	
+	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
+	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 0);
+	gtk_widget_set_size_request(mSelectionPanel, 100, -1);
+	
+	// parse popups
+	
+//	mIncludePopup = new MParsePopup(50);
+//	frame = gtk_frame_new(nil);
+//	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+//	gtk_container_add(GTK_CONTAINER(frame), mIncludePopup->GetGtkWidget());
+//	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
+//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 1);
+//	mIncludePopup->SetController(mController, false);
+//	
+//	mParsePopup = new MParsePopup(200);
+//	frame = gtk_frame_new(nil);
+//	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+//	gtk_container_add(GTK_CONTAINER(frame), mParsePopup->GetGtkWidget());
+//	gtk_box_pack_start(GTK_BOX(statusBar), frame, true, true, 0);
+//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 2);	
+//	mParsePopup->SetController(mController, true);
+
+	// hscrollbar
+	GtkWidget* hScrollBar = gtk_hscrollbar_new(nil);
+	frame = gtk_frame_new(nil);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+	gtk_container_add(GTK_CONTAINER(frame), hScrollBar);
+	gtk_box_pack_end(GTK_BOX(statusBar), frame, false, false, 0);
+//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 3);
+	gtk_widget_set_size_request(hScrollBar, 150, -1);
+	
+	gtk_widget_show_all(statusBar);
+	
+	// text view
+	
+    mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'), hScrollBar);
+	textController->AddTextView(mTextView);
+
+	// ----------------------------------------------------------------
+
+	ConnectChildSignals();
 
 	Show();
 }
@@ -259,23 +369,22 @@ void MMessageWindow::AddMessage(
 	uint32				inMaxOffset,
 	const string&		inMessage)
 {
-	mList.AddMessage(inKind, inFile, inLine, inMinOffset, inMaxOffset, inMessage);
+	string msg(inMessage);
+	ba::trim_right(msg);
+	
+	mList.AddMessage(inKind, inFile, inLine, inMinOffset, inMaxOffset, msg);
 
-	GtkWidget* treeView = GetWidget(kListViewID);
-	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
+	AddMessageToList(mList.GetItem(mList.GetCount() - 1));
+}
 
-	string line;
-	if (inLine > 0)
-		line = NumToString(inLine);
+void MMessageWindow::AddMessageToList(
+	MMessageItem&		inItem)
+{
+	string file;
+	if (inItem.mFileNr > 0)
+		file = mList.GetFile(inItem.mFileNr - 1).GetFileName();
 
-	GtkTreeIter iter;
-	gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
-	gtk_list_store_set(GTK_LIST_STORE(store), &iter,
-		kBadgeColumn, GetBadge(inKind),
-		kFileColumn, inFile.GetFileName().c_str(),
-		kLineColumn, line.c_str(),
-		kTextColumn, inMessage.c_str(),
-		-1);
+	mListView->AppendRow(new MMessageRow(&inItem, file), nil);
 }
 
 void MMessageWindow::SetMessages(
@@ -286,93 +395,14 @@ void MMessageWindow::SetMessages(
 	
 	mList = inItems;
 
-	GtkWidget* treeView = GetWidget(kListViewID);
-	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
-
-	GtkTreeIter iter;
-
 	for (uint32 ix = 0; ix < mList.GetCount(); ++ix)
-	{
-		MMessageItem& item = mList.GetItem(ix);
-		
-		string file;
-		if (item.mFileNr > 0)
-			file = mList.GetFile(item.mFileNr - 1).GetFileName();
-		
-		string msg(item.mMessage, item.mMessageLength);
-		boost::trim_right(msg);
-		
-		string line;
-		if (item.mLineNr > 0)
-			line = NumToString(item.mLineNr);
-
-		gtk_list_store_append(GTK_LIST_STORE(store), &iter);  /* Acquire an iterator */
-		gtk_list_store_set(GTK_LIST_STORE(store), &iter,
-			kBadgeColumn, GetBadge(item.mKind),
-			kFileColumn, file.c_str(), 
-			kLineColumn, line.c_str(),
-			kTextColumn, msg.c_str(),
-			-1);
-	}
+		AddMessageToList(mList.GetItem(ix));
 }
 
 void MMessageWindow::SetBaseDirectory(
 	const fs::path&			inBaseDir)
 {
 	mBaseDirectory = inBaseDir;
-}
-
-void MMessageWindow::SelectItem(
-	uint32				inItemNr)
-{
-//	MMessageItem& item = mList.GetItem(inItemNr);
-//	
-//	if (item.mFileNr > 0)
-//	{
-//		MFile url(mList.GetFile(item.mFileNr - 1));
-//		
-//		MTextDocument* doc = MTextDocument::GetDocumentForFile(url, false);
-//		if (doc == nil)
-//		{
-//			doc = new MTextDocument(&url);
-//			doc->DoLoad();
-//		}
-//		
-////		if (doc == mController.GetDocument() or
-////			mController.TryCloseController(kSaveChangesClosingDocument))
-////		{
-////			mController.SetDocument(doc);
-////	
-////			if (item.mMaxOffset > item.mMinOffset)
-////				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
-////			else if (item.mLineNr > 0)
-////				doc->GoToLine(item.mLineNr - 1);
-////		}
-//	}
-////	else
-////		mController.TryCloseController(kSaveChangesClosingDocument);
-}
-
-void MMessageWindow::InvokeItem(
-	uint32				inItemNr)
-{
-	MMessageItem& item = mList.GetItem(inItemNr);
-	
-	if (item.mFileNr > 0)
-	{
-		MFile file = mList.GetFile(item.mFileNr - 1);
-		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(file));
-		
-		if (doc != nil)
-		{
-			MEditWindow::DisplayDocument(doc);
-		
-			if (item.mMaxOffset > item.mMinOffset)
-				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
-			else if (item.mLineNr > 0)
-				doc->GoToLine(item.mLineNr - 1);
-		}
-	}
 }
 
 void MMessageWindow::AddStdErr(
@@ -463,10 +493,7 @@ void MMessageWindow::AddStdErr(
 void MMessageWindow::ClearList()
 {
 	mList = MMessageList();
-
-	GtkWidget* treeView = GetWidget(kListViewID);
-	GtkListStore* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeView)));
-	gtk_list_store_clear(store);
+	mListView->RemoveAll();
 }
 
 void MMessageWindow::DocumentChanged(
@@ -476,29 +503,58 @@ void MMessageWindow::DocumentChanged(
 
 bool MMessageWindow::DoClose()
 {
-//	return mController.TryCloseController(kSaveChangesClosingDocument);
-	return MWindow::DoClose();
+	return mController->TryCloseController(kSaveChangesClosingDocument);
 }
 
-void MMessageWindow::InvokeRow(
-	GtkTreePath*		inPath,
-	GtkTreeViewColumn*	inColumn)
+void MMessageWindow::SelectMsg(
+	MMessageRow*	inItem)
 {
-	int32 item = -1;
-
-	char* path = gtk_tree_path_to_string(inPath);
-	if (path != nil)
-	{
-		item = atoi(path);
-		g_free(path);
-	}
+	MMessageItem& item = *inItem->mItem;
 	
-	if (item >= 0 and item < int32(mList.GetCount()))
+	if (item.mFileNr > 0)
 	{
-		try
+		MFile file = mList.GetFile(item.mFileNr - 1);
+
+		MDocument* doc = MDocument::GetDocumentForFile(file);
+		if (doc == nil)
+			doc = MDocument::Create<MTextDocument>(file);
+		
+		if (doc != nil and
+			(doc == mController->GetDocument() or mController->TryCloseDocument(kSaveChangesClosingDocument)))
 		{
-			InvokeItem(item);
+			MTextDocument* textDoc = dynamic_cast<MTextDocument*>(doc);
+			if (textDoc != nil)
+			{
+				mController->SetDocument(doc);
+			
+				if (item.mMaxOffset > item.mMinOffset)
+					textDoc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
+				else if (item.mLineNr > 0)
+					textDoc->GoToLine(item.mLineNr - 1);
+			}
 		}
-		catch (...) {}
+	}	
+}
+
+void MMessageWindow::InvokeMsg(
+	MMessageRow*	inItem)
+{
+	MMessageItem& item = *inItem->mItem;
+	
+	if (item.mFileNr > 0)
+	{
+		MFile file = mList.GetFile(item.mFileNr - 1);
+		MTextDocument* doc = dynamic_cast<MTextDocument*>(gApp->OpenOneDocument(file));
+		
+		if (doc != nil)
+		{
+			MEditWindow::DisplayDocument(doc);
+		
+			if (item.mMaxOffset > item.mMinOffset)
+				doc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
+			else if (item.mLineNr > 0)
+				doc->GoToLine(item.mLineNr - 1);
+		}
 	}
 }
+

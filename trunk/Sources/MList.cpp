@@ -524,6 +524,24 @@ void MListBase::RemoveRow(
 		gtk_tree_store_remove(mTreeStore, &iter);
 }
 
+gboolean MListBase::RemoveAllCB(
+	GtkTreeModel*		inModel,
+	GtkTreePath*		inPath,
+	GtkTreeIter*		inIter,
+	gpointer			inData)
+{
+	MListRowBase* row = reinterpret_cast<MListBase*>(inData)->GetRowForPath(inPath);
+	delete row;
+	return false;
+}
+
+void MListBase::RemoveAll()
+{
+	gtk_tree_model_foreach(GTK_TREE_MODEL(mTreeStore), &MListBase::RemoveAllCB, this);
+	
+	gtk_tree_store_clear(mTreeStore);
+}
+
 void MListBase::SelectRow(
 	MListRowBase*		inRow)
 {
