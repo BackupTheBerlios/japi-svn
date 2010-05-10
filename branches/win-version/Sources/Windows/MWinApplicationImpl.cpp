@@ -23,9 +23,6 @@ MWinApplicationImpl::MWinApplicationImpl(
 	MApplication*		inApp)
 	: MApplicationImpl(inApp)
 {
-	sInstance = this;
-
-	::SetTimer(NULL, 0, 100, &MWinApplicationImpl::Timer);
 }
 
 MWinApplicationImpl::~MWinApplicationImpl()
@@ -34,6 +31,9 @@ MWinApplicationImpl::~MWinApplicationImpl()
 
 int MWinApplicationImpl::RunEventLoop()
 {
+	sInstance = this;
+	::SetTimer(NULL, 0, 100, &MWinApplicationImpl::Timer);
+
 	MSG message;
 	int result = 0;
 
@@ -52,6 +52,8 @@ int MWinApplicationImpl::RunEventLoop()
 		::DispatchMessageW(&message);
 	}
 
+	sInstance = nil;
+
 	return result;
 }
 
@@ -68,5 +70,7 @@ void CALLBACK MWinApplicationImpl::Timer(
 {
 	// dwTime is based on GetTickCount and GetTickCount
 	// can wrap. So use our own system_time instead
-	sInstance->Pulse();
+
+	if (sInstance != nil)
+		sInstance->Pulse();
 }
