@@ -18,6 +18,14 @@ class MWinApplicationImpl : public MApplicationImpl
 
 	virtual int		RunEventLoop();
 	virtual void	Quit();
+
+  private:
+
+	static MWinApplicationImpl*
+					sInstance;
+
+	static void CALLBACK
+					Timer(HWND /*hwnd*/, UINT /*uMsg*/, UINT /*idEvent*/, DWORD /*dwTime*/);
 };
 
 #endif

@@ -21,7 +21,7 @@ namespace boost {
 class thread;
 }
 
-class MWindow : public MView, public MHandler, public MSlotProviderMixin
+class MWindow : public MView, public MHandler //, public MSlotProviderMixin
 {
   public:
 							MWindow();
@@ -74,10 +74,10 @@ class MWindow : public MView, public MHandler, public MSlotProviderMixin
 	// GtkBuilder support, views should have a name consisting of four characters
 	// and so they are accessible by ID which is a uint32.
 	
-	virtual void	GetSlotsForHandler(
-						const char*			inHandler,
-						MSignalHandlerArray&
-											outSlots);
+	//virtual void	GetSlotsForHandler(
+	//					const char*			inHandler,
+	//					MSignalHandlerArray&
+	//										outSlots);
 	
 	void			SetFocus(
 						uint32				inID);
@@ -163,8 +163,8 @@ class MWindow : public MView, public MHandler, public MSlotProviderMixin
 
   protected:
 
-							MWindow(
-								GtkWidget*		inWindow);
+							//MWindow(
+							//	GtkWidget*		inWindow);
 	
 							MWindow(
 								const char*		inWindowResourceName,
@@ -172,13 +172,13 @@ class MWindow : public MView, public MHandler, public MSlotProviderMixin
 
 	virtual bool			DoClose();
 
-	virtual bool			OnDestroy();
+	//virtual bool			OnDestroy();
 
-	virtual bool			OnDelete(
-								GdkEvent*		inEvent);
+	//virtual bool			OnDelete(
+	//							GdkEvent*		inEvent);
 
-	GtkWidget*				GetWidget(
-								uint32			inID) const;
+	//GtkWidget*				GetWidget(
+	//							uint32			inID) const;
 
 	static const char*		IDToName(
 								uint32			inID,
@@ -193,10 +193,10 @@ class MWindow : public MView, public MHandler, public MSlotProviderMixin
 								MWindow*		inWindow);
 
   private:
-	MSlot<bool()>			mOnDestroy;
-	MSlot<bool(GdkEvent*)>	mOnDelete;
+	//MSlot<bool()>			mOnDestroy;
+	//MSlot<bool(GdkEvent*)>	mOnDelete;
 
-	class MGtkBuilder*		mGtkBuilder;
+	//class MGtkBuilder*		mGtkBuilder;
 	std::string				mTitle;
 	bool					mModified;
 	boost::thread*			mTransitionThread;
@@ -206,23 +206,23 @@ class MWindow : public MView, public MHandler, public MSlotProviderMixin
 	void					TransitionTo(
 								MRect			inPosition);
 
-	virtual void			DoForEach(
-								GtkWidget*		inWidget);
-	
-	static void				DoForEachCallBack(
-								GtkWidget*		inWidget,
-								gpointer		inUserData);
+	//virtual void			DoForEach(
+	//							GtkWidget*		inWidget);
+	//
+	//static void				DoForEachCallBack(
+	//							GtkWidget*		inWidget,
+	//							gpointer		inUserData);
 
-	bool					ChildFocus(
-								GdkEventFocus*	inEvent);
-	
-	MSlot<bool(GdkEventFocus*)>					mChildFocus;
+	//bool					ChildFocus(
+	//							GdkEventFocus*	inEvent);
+	//
+	//MSlot<bool(GdkEventFocus*)>					mChildFocus;
 
 	virtual void			FocusChanged(
 								uint32			inFocussedID);
 
-	MSlot<void()>			mChanged;
-	void					Changed();
+	//MSlot<void()>			mChanged;
+	//void					Changed();
 
 	static MWindow*			sFirst;
 	MWindow*				mNext;

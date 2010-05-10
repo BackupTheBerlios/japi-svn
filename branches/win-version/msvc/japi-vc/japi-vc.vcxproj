@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Boost\include\boost-1_39;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -59,7 +59,7 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Boost\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -87,9 +87,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
+    <ClCompile Include="..\..\Sources\MApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\MHandler.cpp" />
+    <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
+    <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MJapiMain.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

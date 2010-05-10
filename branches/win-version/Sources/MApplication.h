@@ -71,10 +71,12 @@ class MApplication : public MHandler
 	//bool				IsServer();
 	//bool				IsClient();
 
-	void				RunEventLoop();
+	int					RunEventLoop();
 
   private:
-	typedef std::list<MWindow*>		MWindowList;
+	  friend class MApplicationImpl;
+	  
+	  typedef std::list<MWindow*>		MWindowList;
 
 	void				DoQuit();
 	void				DoNew();

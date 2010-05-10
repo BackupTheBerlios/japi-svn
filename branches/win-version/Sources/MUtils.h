@@ -173,19 +173,19 @@ class MValueChanger
 	T			mValue;
 };
 
-class MGdkThreadBlock
-{
-  public:
-	MGdkThreadBlock()
-	{
-		gdk_threads_enter();
-	}
-	
-	~MGdkThreadBlock()
-	{
-		gdk_threads_leave();
-	}
-};
+//class MGdkThreadBlock
+//{
+//  public:
+//	MGdkThreadBlock()
+//	{
+//		gdk_threads_enter();
+//	}
+//	
+//	~MGdkThreadBlock()
+//	{
+//		gdk_threads_leave();
+//	}
+//};
 
 uint16 CalculateCRC(
 	const void*		inData,
@@ -211,7 +211,7 @@ std::string	GetDateTime();
 
 double GetLocalTime();
 
-double GetDoubleClickTime();
+//double GetDoubleClickTime();
 
 bool IsModifierDown(
 	int				inModifierMask);
@@ -221,9 +221,9 @@ void HexDump(
 	uint32			inLength,
 	std::ostream&	outStream);
 
-GdkPixbuf* CreateDot(
-	MColor			inColor,
-	uint32			inSize);
+//GdkPixbuf* CreateDot(
+//	MColor			inColor,
+//	uint32			inSize);
 
 void decode_base64(
 	const std::string&	inString,

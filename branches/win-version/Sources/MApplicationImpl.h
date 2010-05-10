@@ -25,7 +25,10 @@ class MApplicationImpl
 						MApplication* inApp);
 
   protected:
-	MApplication*	mApp;
+
+	  void			Pulse();
+	  
+	  MApplication*	mApp;
 };
 
 #endif

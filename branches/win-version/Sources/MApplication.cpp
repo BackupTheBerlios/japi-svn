@@ -19,6 +19,8 @@
 #include "MApplicationImpl.h"
 #include "MCommands.h"
 #include "MPreferences.h"
+#include "MWindow.h"
+#include "MUtils.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -45,6 +47,8 @@ MApplication::MApplication()
 {
 	// set the global pointing to us
 	gApp = this;
+
+	mInitialized = true;
 }
 
 MApplication::~MApplication()
@@ -212,9 +216,9 @@ void MApplication::DoSelectWindowFromWindowMenu(
 	//	DisplayDocument(doc);	
 }	
 
-void MApplication::RunEventLoop()
+int MApplication::RunEventLoop()
 {
-	mImpl->RunEventLoop();
+	return mImpl->RunEventLoop();
 }
 
 void MApplication::DoSaveAll()
@@ -412,21 +416,20 @@ MDocument* MApplication::OpenOneDocument(
 
 void MApplication::Pulse()
 {
-	//MWindow::RecycleWindows();
+	MWindow::RecycleWindows();
 	//
 	//if (mSocketFD >= 0)
 	//	ProcessSocketMessages();
 
-	//if (gQuit or
-	//	(mInitialized and
-	//	 MWindow::GetFirstWindow() == nil and
-	//	 MProject::Instance() == nil))
-	//{
-	//	DoQuit();
-	//	gQuit = false;	// in case user cancelled the quit
-	//}
-	//else
-	//	eIdle(GetLocalTime());
+	if (gQuit or
+		(mInitialized and
+		 MWindow::GetFirstWindow() == nil))
+	{
+		DoQuit();
+		gQuit = false;	// in case user cancelled the quit
+	}
+	else
+		eIdle(GetLocalTime());
 }
 
 int MApplication::Main(
@@ -454,10 +457,14 @@ int MApplication::Main(
 		result = 1;
 	}
 	
-	foreach (const string& file, vm["file"].as<vector<string> >())
-	{
-		cout << file << endl;
-	}
+	gApp = new MApplication();
+
+	result = gApp->RunEventLoop();
+
+	//foreach (const string& file, vm["file"].as<vector<string> >())
+	//{
+	//	cout << file << endl;
+	//}
 
 	return result;
 }

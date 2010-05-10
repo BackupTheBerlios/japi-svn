@@ -6,13 +6,26 @@
 #include <Windows.h>
 
 #include "MLib.h"
+#include "MUtils.h"
 
 #include "MWinApplicationImpl.h"
+
+MWinApplicationImpl* MWinApplicationImpl::sInstance;
+
+
+MApplicationImpl* MApplicationImpl::Create(
+	MApplication* inApp)
+{
+	return new MWinApplicationImpl(inApp);
+}
 
 MWinApplicationImpl::MWinApplicationImpl(
 	MApplication*		inApp)
 	: MApplicationImpl(inApp)
 {
+	sInstance = this;
+
+	::SetTimer(NULL, 0, 100, &MWinApplicationImpl::Timer);
 }
 
 MWinApplicationImpl::~MWinApplicationImpl()
@@ -37,8 +50,6 @@ int MWinApplicationImpl::RunEventLoop()
 		
 		::TranslateMessage(&message);
 		::DispatchMessageW(&message);
-		
-//		eEndOfEvent(true, this);
 	}
 
 	return result;
@@ -47,4 +58,15 @@ int MWinApplicationImpl::RunEventLoop()
 void MWinApplicationImpl::Quit()
 {
 	::PostQuitMessage(0);
+}
+
+void CALLBACK MWinApplicationImpl::Timer(
+	HWND	hwnd,
+	UINT	uMsg,
+	UINT	idEvent,
+	DWORD	dwTime)
+{
+	// dwTime is based on GetTickCount and GetTickCount
+	// can wrap. So use our own system_time instead
+	sInstance->Pulse();
 }
