@@ -12,15 +12,22 @@ class MWinApplicationImpl : public MApplicationImpl
 {
   public:
 					MWinApplicationImpl(
+						HINSTANCE			inInstance,
 						MApplication*		inApp);
 
 	virtual			~MWinApplicationImpl();
 
+	static MWinApplicationImpl*
+					GetInstance()				{ return sInstance; }
+
 	virtual int		RunEventLoop();
 	virtual void	Quit();
 
+	HINSTANCE		GetHInstance()				{ return mInstance; }
+
   private:
 
+	HINSTANCE		mInstance;
 	static MWinApplicationImpl*
 					sInstance;
 

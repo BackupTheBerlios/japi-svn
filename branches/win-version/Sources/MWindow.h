@@ -17,11 +17,9 @@
 
 #include "MP2PEvents.h"
 
-namespace boost {
-class thread;
-}
+class MWindowImpl;
 
-class MWindow : public MView, public MHandler //, public MSlotProviderMixin
+class MWindow : public MView, public MHandler
 {
   public:
 							MWindow();
@@ -163,8 +161,8 @@ class MWindow : public MView, public MHandler //, public MSlotProviderMixin
 
   protected:
 
-							//MWindow(
-							//	GtkWidget*		inWindow);
+							MWindow(
+								MWindowImpl*	inImpl);
 	
 							MWindow(
 								const char*		inWindowResourceName,
@@ -193,13 +191,10 @@ class MWindow : public MView, public MHandler //, public MSlotProviderMixin
 								MWindow*		inWindow);
 
   private:
-	//MSlot<bool()>			mOnDestroy;
-	//MSlot<bool(GdkEvent*)>	mOnDelete;
 
-	//class MGtkBuilder*		mGtkBuilder;
+	MWindowImpl*			mImpl;
 	std::string				mTitle;
 	bool					mModified;
-	boost::thread*			mTransitionThread;
 
 	void					Init();
 

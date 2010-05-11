@@ -94,6 +94,7 @@
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MJapiMain.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

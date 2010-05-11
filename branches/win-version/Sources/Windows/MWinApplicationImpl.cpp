@@ -16,12 +16,14 @@ MWinApplicationImpl* MWinApplicationImpl::sInstance;
 MApplicationImpl* MApplicationImpl::Create(
 	MApplication* inApp)
 {
-	return new MWinApplicationImpl(inApp);
+	return new MWinApplicationImpl(::GetModuleHandle(nil), inApp);
 }
 
 MWinApplicationImpl::MWinApplicationImpl(
+	HINSTANCE			inInstance,
 	MApplication*		inApp)
 	: MApplicationImpl(inApp)
+	, mInstance(inInstance)
 {
 }
 

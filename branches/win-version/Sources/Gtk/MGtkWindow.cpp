@@ -19,6 +19,112 @@
 
 using namespace std;
 
+
+
+
+//// GtkBuilder support. 
+//
+//class MGtkBuilder
+//{
+//  public:
+//					MGtkBuilder(
+//						const char*		inData,
+//						uint32			inSize);
+//	
+//					~MGtkBuilder();
+//	
+//	void			GetSlotsForHandler(
+//						const char*		inHandlerName,
+//						MSignalHandlerArray&
+//										outSlots);
+//	
+//	GtkWidget*		GetWidget(
+//						const char*		inWidgetName);
+//	
+//  private:
+//
+//	static void		ConnectSignal(
+//						GtkBuilder*		inBuilder,
+//						GObject*		inObject,
+//						const gchar*	inSignalName,
+//						const gchar*	inHandlerName,
+//						GObject*		inConnectObject,
+//						GConnectFlags	inFlags,
+//						gpointer		inUserData);
+//
+//	struct MSignalInfo
+//	{
+//		string		signal;
+//		string		handler;
+//		GObject*	object;
+//	};
+//	
+//	typedef vector<MSignalInfo>	MSignalInfoVector;
+//	
+//	GtkBuilder*		mGtkBuilder;
+//	MSignalInfoVector
+//					mSignalInfo;
+//};
+//
+//MGtkBuilder::MGtkBuilder(
+//	const char*		inData,
+//	uint32			inSize)
+//{
+//	mGtkBuilder = gtk_builder_new();
+//	THROW_IF_NIL(mGtkBuilder);
+//
+//	gtk_builder_set_translation_domain(mGtkBuilder, "japi");
+//
+//	GError* err = nil;
+//	if (not gtk_builder_add_from_string(mGtkBuilder, inData, inSize, &err))
+//	{
+//		string error_message = err->message;
+//		g_error_free(err);
+//		
+//		THROW(("Failed to build window from resource: %s", error_message.c_str()));
+//	}
+//	
+//	gtk_builder_connect_signals_full(mGtkBuilder, &MGtkBuilder::ConnectSignal, this);
+//}
+//
+//MGtkBuilder::~MGtkBuilder()
+//{
+//	g_object_unref(mGtkBuilder);
+//}
+//
+//void MGtkBuilder::ConnectSignal(
+//	GtkBuilder*		inBuilder,
+//	GObject*		inObject,
+//	const gchar*	inSignalName,
+//	const gchar*	inHandlerName,
+//	GObject*		inConnectObject,
+//	GConnectFlags	inFlags,
+//	gpointer		inUserData)
+//{
+//	MGtkBuilder* self = reinterpret_cast<MGtkBuilder*>(inUserData);
+//	
+//	MSignalInfo info = { inSignalName, inHandlerName, inObject };
+//	self->mSignalInfo.push_back(info);
+//}
+//
+//void MGtkBuilder::GetSlotsForHandler(
+//	const char*		inHandlerName,
+//	MSignalHandlerArray&
+//					outSlots)
+//{
+//	foreach (MSignalInfo& info, mSignalInfo)
+//	{
+//		if (info.handler == inHandlerName)
+//			outSlots.push_back(make_pair(info.object, info.signal));
+//	}
+//}
+//
+//GtkWidget* MGtkBuilder::GetWidget(
+//	const char*		inWidgetName)
+//{
+//	return GTK_WIDGET(gtk_builder_get_object(mGtkBuilder, inWidgetName));
+//}
+//
 // --------------------------------------------------------------------
 //
 //	MWindow
@@ -26,19 +132,6 @@ using namespace std;
 
 MWindow* MWindow::sFirst = nil;
 MWindow* MWindow::sRecycle = nil;
-
-MWindow::MWindow(
-	MWindowImpl*	inImpl)
-	: MHandler(gApp)
-	, mImpl(inImpl)
-{
-	Init();
-}
-
-MWindow::~MWindow()
-{
-	//
-}
 
 //MWindow::MWindow()
 //	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
@@ -139,20 +232,7 @@ MWindow::~MWindow()
 //	}
 //#endif
 //}
-
-void MWindow::RecycleWindows()
-{
-	MWindow* w = sRecycle;
-	sRecycle = nil;
-
-	while (w != nil)
-	{
-		MWindow* next = w->mNext;
-		delete w;
-		w = next;
-	}
-}
-
+//
 //void MWindow::ConnectChildSignals()
 //{
 //	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()), &MWindow::DoForEachCallBack, this);
@@ -260,6 +340,19 @@ void MWindow::RecycleWindows()
 //	
 //	return true;
 //}
+
+void MWindow::RecycleWindows()
+{
+	MWindow* w = sRecycle;
+	sRecycle = nil;
+
+	while (w != nil)
+	{
+		MWindow* next = w->mNext;
+		delete w;
+		w = next;
+	}
+}
 
 //bool MWindow::OnDelete(
 //	GdkEvent*		inEvent)
