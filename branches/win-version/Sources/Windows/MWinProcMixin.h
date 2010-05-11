@@ -6,6 +6,9 @@
 #ifndef MWINPROCMIXIN_H
 #define MWINPROCMIXIN_H
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
 #include <string>
 #include <map>
 
@@ -21,15 +24,15 @@ class MWinProcMixin
 	static MWinProcMixin*
 					Fetch(HWND inHandle);
 	
-	virtual void	Create(const MRect& inBounds, const std::string& inTitle);
+	virtual void	Create(const MRect& inBounds, const std::wstring& inTitle);
 
 //	void			SubClass();
 
-	typedef bool (MWinProcMixin::*MWMCall)(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
-						LPARAM inLParam, int& outResult);
+	typedef boost::function<bool(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult)> MWMCall;
 	
-	void			AddHandler(UINT inMessage, MWMCall inHandler)
-						{ mHandlers[inMessage] = inHandler; }
+	void			AddHandler(UINT inMessage, MWMCall inCallback)
+						{ mHandlers[inMessage] = inCallback; }
 
   protected:
 

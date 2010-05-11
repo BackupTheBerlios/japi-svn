@@ -53,49 +53,49 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	outBackground = (HBRUSH)(COLOR_WINDOW + 1);
 }
 
-void MWinWindowImpl::Create(MRect inBounds, const string& inTitle)
+void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 {
 	MWinProcMixin::Create(inBounds, inTitle);
 
 	if (not (mWindow->GetFlags() & kMFixedSize))
 	{
-		const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
-		
-		MRect r;
-		mWindow->GetBounds(r);
-		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
-			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
-			r.x + r.width - kScrollBarWidth, r.y + r.height - kScrollBarWidth,
-			kScrollBarWidth, kScrollBarWidth, GetHandle(),
-			nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
-			nil);
+		//const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
+		//
+		//MRect r;
+		//mWindow->GetBounds(r);
+		//mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
+		//	WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
+		//	r.x + r.width - kScrollBarWidth, r.y + r.height - kScrollBarWidth,
+		//	kScrollBarWidth, kScrollBarWidth, GetHandle(),
+		//	nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
+		//	nil);
 	}
 	
 	if (mWindow->GetFlags() & kMAcceptFileDrops)
 		::DragAcceptFiles(GetHandle(), true);
 
-	AddHandler(WM_CLOSE,			&MWinWindowImpl::WMClose);
-	AddHandler(WM_ACTIVATE,			&MWinWindowImpl::WMActivate);
-	AddHandler(WM_MOUSEACTIVATE,	&MWinWindowImpl::WMMouseActivate);
-	AddHandler(WM_SIZE,				&MWinWindowImpl::WMSize);
-	AddHandler(WM_SIZING,			&MWinWindowImpl::WMSizing);
-	AddHandler(WM_PAINT,			&MWinWindowImpl::WMPaint);
-	AddHandler(WM_INITMENU,			&MWinWindowImpl::WMInitMenu);
-	AddHandler(WM_COMMAND,			&MWinWindowImpl::WMCommand);
-	AddHandler(WM_LBUTTONDOWN,		&MWinWindowImpl::WMMouseDown);
-	AddHandler(WM_MOUSEWHEEL,		&MWinWindowImpl::WMMouseWheel);
-	AddHandler(WM_VSCROLL,			&MWinWindowImpl::WMScroll);
-	AddHandler(WM_HSCROLL,			&MWinWindowImpl::WMScroll);
-	AddHandler(WM_SETFOCUS,			&MWinWindowImpl::WMSetFocus);
-	AddHandler(WM_CONTEXTMENU,		&MWinWindowImpl::WMContextMenu);
-	AddHandler(WM_SETCURSOR,		&MWinWindowImpl::WMSetCursor);
-//	AddHandler(WM_IME_COMPOSITION,	&MWinWindowImpl::WMImeComposition);
+	AddHandler(WM_CLOSE,			boost::bind(&MWinWindowImpl::WMClose, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_ACTIVATE,			boost::bind(&MWinWindowImpl::WMActivate, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_MOUSEACTIVATE,	boost::bind(&MWinWindowImpl::WMMouseActivate, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_LBUTTONDOWN,		boost::bind(&MWinWindowImpl::WMMouseDown, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_MOUSEWHEEL,		boost::bind(&MWinWindowImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_VSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_HSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SETFOCUS,			boost::bind(&MWinWindowImpl::WMSetFocus, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_CONTEXTMENU,		boost::bind(&MWinWindowImpl::WMContextMenu, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SETCURSOR,		boost::bind(&MWinWindowImpl::WMSetCursor, this, _1, _2, _3, _4, _5));
+//	AddHandler(WM_IME_COMPOSITION,	boost::bind(&MWinWindowImpl::WMImeComposition, this, _1, _2, _3, _4, _5));
 //	AddHandler(WM_IME_STARTCOMPOSITION,
-//									&MWinWindowImpl::WMImeStartComposition);
-	AddHandler(WM_IME_REQUEST,		&MWinWindowImpl::WMImeRequest);
-	AddHandler(WM_QUERYENDSESSION,	&MWinWindowImpl::WMQueryEndSession);
-	AddHandler(WM_DROPFILES,		&MWinWindowImpl::WMDropFiles);
-	AddHandler(WM_THEMECHANGED,		&MWinWindowImpl::WMThemeChanged);
+//									boost::bind(&MWinWindowImpl::WMImeStartComposition, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_IME_REQUEST,		boost::bind(&MWinWindowImpl::WMImeRequest, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_QUERYENDSESSION,	boost::bind(&MWinWindowImpl::WMQueryEndSession, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_DROPFILES,		boost::bind(&MWinWindowImpl::WMDropFiles, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_THEMECHANGED,		boost::bind(&MWinWindowImpl::WMThemeChanged, this, _1, _2, _3, _4, _5));
 	
 	RECT clientArea;
 	::GetClientRect(GetHandle(), &clientArea);
@@ -131,12 +131,12 @@ bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*
 {
 	outResult = MA_ACTIVATE;
 	
-	if (not mWindow->IsEnabled())
-	{
-		outResult = MA_NOACTIVATEANDEAT;
-	}
-	else if (LOWORD(inLParam) == HTCLIENT && not mWindow->IsActive())
-	{
+	//if (not mWindow->IsEnabled())
+	//{
+	//	outResult = MA_NOACTIVATEANDEAT;
+	//}
+	//else if (LOWORD(inLParam) == HTCLIENT && not mWindow->IsActive())
+	//{
 		//unsigned long modifiers;
 		//GetModifierState(modifiers, false);
 		//
@@ -160,7 +160,7 @@ bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*
 		//	outResult = MA_NOACTIVATEANDEAT;
 		//else
 		//	outResult = MA_ACTIVATEANDEAT;
-	}
+	//}
 	
 	return true;
 }

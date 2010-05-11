@@ -20,10 +20,10 @@ MWinProcMixin::MWinProcMixin()
 	, mOldWinProc(nil)
 	, mSuppressNextWMChar(false)
 {
-	AddHandler(WM_DESTROY,		&MWinProcMixin::WMDestroy);
-	AddHandler(WM_CHAR,			&MWinProcMixin::WMChar);
-	AddHandler(WM_KEYDOWN,		&MWinProcMixin::WMKeydown);
-	AddHandler(WM_SYSKEYDOWN,	&MWinProcMixin::WMKeydown);
+	AddHandler(WM_DESTROY,		boost::bind(&MWinProcMixin::WMDestroy, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_CHAR,			boost::bind(&MWinProcMixin::WMChar, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_KEYDOWN,		boost::bind(&MWinProcMixin::WMKeydown, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SYSKEYDOWN,	boost::bind(&MWinProcMixin::WMKeydown, this, _1, _2, _3, _4, _5));
 }
 
 MWinProcMixin::~MWinProcMixin()
@@ -48,7 +48,7 @@ MWinProcMixin* MWinProcMixin::Fetch(HWND inHandle)
 	return reinterpret_cast<MWinProcMixin*>(::GetPropW(inHandle, L"m_window_imp"));
 }
 
-void MWinProcMixin::Create(const MRect& inBounds, const string& inTitle)
+void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 {
 	DWORD		style = WS_CHILD | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW;
 	DWORD		exStyle = 0;
@@ -77,7 +77,7 @@ void MWinProcMixin::Create(const MRect& inBounds, const string& inTitle)
 	}
 
 	HWND handle = CreateWindowExW(exStyle,
-		lWndClass.lpszClassName, c2w(inTitle).c_str(),
+		lWndClass.lpszClassName, inTitle.c_str(),
 		style,
 		r.left, r.top, r.right - r.left, r.bottom - r.top,
 		parent, menu, instance, this);
@@ -270,7 +270,7 @@ int	MWinProcMixin::WinProc(HWND inHandle, UINT inMsg, WPARAM inWParam, LPARAM in
 {
 	int result = 0;
 	MHandlerTable::iterator i = mHandlers.find(inMsg);
-	if (i == mHandlers.end() or not (this->*(i->second))(inHandle, inMsg, inWParam, inLParam, result))
+	if (i == mHandlers.end() or not i->second(inHandle, inMsg, inWParam, inLParam, result))
 	{
 		if (mOldWinProc != nil and mOldWinProc != &MWinProcMixin::WinProcCallBack)
 			result = ::CallWindowProcW(mOldWinProc, inHandle, inMsg, inWParam, inLParam);

@@ -17,7 +17,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 					MWinWindowImpl(MWindow* inWindow);
 	virtual			~MWinWindowImpl();
 
-	virtual void	Create(MRect inBounds, const std::string& inTitle);
+	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
 
   protected:
 
