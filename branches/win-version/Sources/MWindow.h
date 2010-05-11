@@ -3,11 +3,6 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-/*	$Id$
-	Copyright Drs M.L. Hekkelman
-	Created 28-09-07 11:20:53
-*/
-
 #ifndef MWINDOW_H
 #define MWINDOW_H
 
@@ -19,13 +14,21 @@
 
 class MWindowImpl;
 
+enum MWindowFlags
+{
+	kMFixedSize				= (1 << 0),
+	kMAcceptFileDrops		= (1 << 1),
+};
+
 class MWindow : public MView, public MHandler
 {
   public:
 							MWindow();
 
 	virtual					~MWindow();
-	
+
+	MWindowFlags			GetFlags() const;
+
 	void					Show();
 	void					Hide();
 	virtual void			Select();

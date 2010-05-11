@@ -6,59 +6,39 @@
 #ifndef MWINPROCMIXIN_H
 #define MWINPROCMIXIN_H
 
-#include <boost/function.hpp>
+#include <string>
+#include <map>
 
 class MWinProcMixin
 {
   public:
-	struct MCreateParams
-	{
-		DWORD		exStyle;
-		std::string	className;
-		std::string	windowName;
-		DWORD		style;
-		int			x;
-		int			y;
-		int			width;
-		int			height;
-		HWND		parent;
-		HMENU		menu;
-	};
-	
-	struct MRegisterParams
-	{
-		DWORD		style;
-		int			wndExtra;
-		HICON		icon;
-		HICON		smallIcon;
-		HCURSOR		cursor;
-		HBRUSH		background;
-	};
-	  
 					MWinProcMixin();
 	virtual			~MWinProcMixin();
-
-	static MWinProcMixin*
-					FetchMixin(HWND inHandle);
-	
-	virtual void	CreateWindow(MRect inBounds, std::string inTitle);
-	virtual void	CreateParams(MCreateParams& ioParams);
-	virtual void	RegisterParams(MRegisterParams& ioParams);
 
 	HWND			GetHandle() const						{ return mHandle; }
 	void			SetHandle(HWND inHandle);
 
-	void			SubClass();
-
-	typedef boost::function<void(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
-						LPARAM inLParam, int& outResult)>	MWinProcCallbackType;
+	static MWinProcMixin*
+					Fetch(HWND inHandle);
 	
-	void			AddHandler(UINT inMessage, MWinProcCallbackType inHandler)
+	virtual void	Create(const MRect& inBounds, const std::string& inTitle);
+
+//	void			SubClass();
+
+	typedef bool (MWinProcMixin::*MWMCall)(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult);
+	
+	void			AddHandler(UINT inMessage, MWMCall inHandler)
 						{ mHandlers[inMessage] = inHandler; }
 
   protected:
 
-	virtual void	CreateHandle(MCreateParams& inParam);
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+	virtual void	RegisterParams(UINT& outStyle, HCURSOR& outCursor,
+						HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
+
+	  //virtual void	CreateHandle(MCreateParams& inParam);
 	
 	virtual bool	WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult);
@@ -67,7 +47,7 @@ class MWinProcMixin
 	virtual bool	WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult);
 
-	virtual bool	DispatchKeyDown(const MKeyDown& inKeyDown);
+//	virtual bool	DispatchKeyDown(const MKeyDown& inKeyDown);
 
 	virtual INT		WinProc(HWND inHWnd, UINT inUMsg,
 						WPARAM inWParam, LPARAM inLParam);
@@ -75,7 +55,7 @@ class MWinProcMixin
 						WPARAM inWParam, LPARAM inLParam);
 	
   private:
-	typedef std::map<UINT,MWinProcCallbackType>				MHandlerTable;
+	typedef std::map<UINT,MWMCall>				MHandlerTable;
 
 	HWND			mHandle;
 	WNDPROC			mOldWinProc;
@@ -85,7 +65,6 @@ class MWinProcMixin
 	static LRESULT CALLBACK
 					WinProcCallBack(HWND inHWnd, UINT inUMsg,
 						WPARAM inWParam, LPARAM inLParam);
-
 };
 
 #endif

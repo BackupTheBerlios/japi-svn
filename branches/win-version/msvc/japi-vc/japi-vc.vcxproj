@@ -93,6 +93,7 @@
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MJapiMain.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
   </ItemGroup>
