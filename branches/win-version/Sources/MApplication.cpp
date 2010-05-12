@@ -47,8 +47,6 @@ MApplication::MApplication()
 {
 	// set the global pointing to us
 	gApp = this;
-
-	mInitialized = true;
 }
 
 MApplication::~MApplication()
@@ -352,6 +350,9 @@ MDocWindow* MApplication::DisplayDocument(
 
 void MApplication::DoNew()
 {
+	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), MWindowFlags(0));
+	w->Select();
+
 	//MDocument* doc = MDocument::Create<MTextDocument>(MFile());
 	//DisplayDocument(doc);
 }
@@ -416,20 +417,28 @@ MDocument* MApplication::OpenOneDocument(
 
 void MApplication::Pulse()
 {
-	MWindow::RecycleWindows();
-	//
-	//if (mSocketFD >= 0)
-	//	ProcessSocketMessages();
-
-	if (gQuit or
-		(mInitialized and
-		 MWindow::GetFirstWindow() == nil))
+	if (not mInitialized)
 	{
-		DoQuit();
-		gQuit = false;	// in case user cancelled the quit
+		DoNew();
+		mInitialized = true;
 	}
 	else
-		eIdle(GetLocalTime());
+	{
+		MWindow::RecycleWindows();
+		//
+		//if (mSocketFD >= 0)
+		//	ProcessSocketMessages();
+
+		if (gQuit or
+			(mInitialized and
+			 MWindow::GetFirstWindow() == nil))
+		{
+			DoQuit();
+			gQuit = false;	// in case user cancelled the quit
+		}
+		else
+			eIdle(GetLocalTime());
+	}
 }
 
 int MApplication::Main(

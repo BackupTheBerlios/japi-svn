@@ -5,10 +5,13 @@
 
 #include <windows.h>
 
+#include <cstdarg>
+
 #include "MLib.h"
 
 #include "MUtils.h"
 #include "MWinUtils.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -157,4 +160,62 @@ string w2c(const wstring& s)
 	}
 
 	return result;
+}
+
+void __debug_printf(const char* inFile, int inLine, const char* inMessage, ...)
+{
+	char msg[1024];
+	
+	va_list vl;
+	va_start(vl, inMessage);
+	vsnprintf(msg, sizeof(msg), inMessage, vl);
+	va_end(vl);
+
+	_CrtDbgReport (_CRT_WARN, inFile, inLine, NULL, msg);
+}
+
+void __signal_throw(
+	const char*		inCode,
+	const char*		inFunction,
+	const char*		inFile,
+	int				inLine)
+{
+	cerr << "Throwing in file " << inFile << " line " << inLine
+		<< " \"" << inFunction << "\": " << endl << inCode << endl;
+	
+	if (StOKToThrow::IsOK())
+		return;
+
+	//GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+	//	GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+	//	"Exception thrown in file '%s', line %d, function: '%s'\n\n"
+	//	"code: %s", inFile, inLine, inFunction, inCode);
+	//
+	//PlaySound("error");
+	//(void)gtk_dialog_run(GTK_DIALOG(dlg));
+	//
+	//gtk_widget_destroy(dlg);
+}
+
+MWinException::MWinException(
+	const char*			inMsg,
+	...)
+{
+	DWORD error = ::GetLastError();
+
+	va_list vl;
+	va_start(vl, inMsg);
+	int n = vsnprintf(mMessage, sizeof(mMessage), inMsg, vl);
+	va_end(vl);
+
+	if (n < sizeof(mMessage))
+		mMessage[n++] = ' ';
+
+	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		nil, error, 0, mMessage, sizeof(mMessage) - n, nil);
+}
+
+void DisplayError(const exception& e)
+{
+	assert(false);
 }

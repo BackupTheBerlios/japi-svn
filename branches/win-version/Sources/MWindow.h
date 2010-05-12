@@ -23,8 +23,12 @@ enum MWindowFlags
 class MWindow : public MView, public MHandler
 {
   public:
-							MWindow();
-
+							MWindow(
+								const std::string&
+												inTitle,
+								const MRect&	inBounds,
+								MWindowFlags	inFlags);
+	
 	virtual					~MWindow();
 
 	MWindowFlags			GetFlags() const;
@@ -164,12 +168,9 @@ class MWindow : public MView, public MHandler
 
   protected:
 
-							MWindow(
-								MWindowImpl*	inImpl);
-	
-							MWindow(
-								const char*		inWindowResourceName,
-								const char*		inRootWidgetName = "window");
+							//MWindow(
+							//	const char*		inWindowResourceName,
+							//	const char*		inRootWidgetName = "window");
 
 	virtual bool			DoClose();
 
@@ -196,8 +197,6 @@ class MWindow : public MView, public MHandler
   private:
 
 	MWindowImpl*			mImpl;
-	std::string				mTitle;
-	bool					mModified;
 
 	void					Init();
 

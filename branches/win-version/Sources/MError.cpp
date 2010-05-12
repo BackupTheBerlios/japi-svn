@@ -3,10 +3,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <iostream>
 #include <cstdarg>
+#include <cstring>
+#include <cstdio>
 
 #include "MError.h"
 #include "MTypes.h"
@@ -20,11 +22,13 @@ using namespace std;
 int StOKToThrow::sOkToThrow = 0;
 #endif
 
+#ifndef _MSC_VER
 MException::MException(
 	int					inErr)
 {
 	snprintf(mMessage, sizeof(mMessage), "OS error %d", inErr);
 }
+#endif
 
 MException::MException(
 	const char*			inMsg,
@@ -34,8 +38,8 @@ MException::MException(
 	va_start(vl, inMsg);
 	vsnprintf(mMessage, sizeof(mMessage), inMsg, vl);
 	va_end(vl);
-
-cerr << endl << endl << "Throwing with msg: " << mMessage << endl << endl;
+	
+	PRINT(("Throwing with msg: %s", mMessage));
 }
 
 const char*	MException::what() const throw()
@@ -45,6 +49,7 @@ const char*	MException::what() const throw()
 
 #ifndef NDEBUG
 
+#ifndef _MSC_VER
 void __m_debug_str(const char* inStr, ...)
 {
 	char msg[1024];
@@ -79,5 +84,6 @@ void __signal_throw(
 	
 	gtk_widget_destroy(dlg);
 }
+#endif
 
 #endif

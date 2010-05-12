@@ -16,6 +16,7 @@
 //#include "MResources.h"
 #include "MError.h"
 #include "MApplication.h"
+#include "MWindowImpl.h"
 
 using namespace std;
 
@@ -27,17 +28,34 @@ using namespace std;
 MWindow* MWindow::sFirst = nil;
 MWindow* MWindow::sRecycle = nil;
 
-MWindow::MWindow(
-	MWindowImpl*	inImpl)
-	: MHandler(gApp)
-	, mImpl(inImpl)
+MWindow::MWindow(const string& inTitle, const MRect& inBounds, MWindowFlags inFlags)
+	: MView(true, false)
+	, MHandler(gApp)
+	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, this))
 {
 	Init();
 }
 
 MWindow::~MWindow()
 {
-	//
+#if DEBUG
+	MWindow* w = sFirst;
+	while (w != nil)
+	{
+		if (w == this)
+		{
+			if (mImpl != nil /*and mImpl->IsValid()*/)
+				PRINT(("Window was not removed from list: %s", mImpl->GetTitle().c_str()));
+			else
+				PRINT(("Window was not removed from list: [deleted]"));
+
+			RemoveWindowFromList(this);
+
+			break;
+		}
+		w = w->mNext;
+	}
+#endif
 }
 
 //MWindow::MWindow()
@@ -105,17 +123,17 @@ MWindow::~MWindow()
 //
 //	Init();
 //}
-//
-//void MWindow::Init()
-//{
-//	mChanged.Connect(this, "on_changed");
-//	mOnDestroy.Connect(GetGtkWidget(), "destroy");
-//	mOnDelete.Connect(GetGtkWidget(), "delete_event");
-//
-//	mNext = sFirst;
-//	sFirst = this;
-//}
-//
+
+void MWindow::Init()
+{
+	//mChanged.Connect(this, "on_changed");
+	//mOnDestroy.Connect(GetGtkWidget(), "destroy");
+	//mOnDelete.Connect(GetGtkWidget(), "delete_event");
+
+	mNext = sFirst;
+	sFirst = this;
+}
+
 //MWindow::~MWindow()
 //{
 //	delete mGtkBuilder;
@@ -157,71 +175,60 @@ void MWindow::RecycleWindows()
 //{
 //	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()), &MWindow::DoForEachCallBack, this);
 //}
-//
-//void MWindow::RemoveWindowFromList(
-//	MWindow*		inWindow)
-//{
-//	if (inWindow == sFirst)
-//		sFirst = inWindow->mNext;
-//	else if (sFirst != nil)
-//	{
-//		MWindow* w = sFirst;
-//		while (w != nil)
-//		{
-//			MWindow* next = w->mNext;
-//			if (next == inWindow)
-//			{
-//				w->mNext = inWindow->mNext;
-//				break;
-//			}
-//			w = next;
-//		}
-//	}
-//}
-//	
-//void MWindow::Show()
-//{
-//	gtk_widget_show(GetGtkWidget());
-//}
-//
-//void MWindow::Hide()
-//{
-//	gtk_widget_hide(GetGtkWidget());
-//}
-//
-//void MWindow::Select()
-//{
-//	if (GDK_IS_WINDOW(GetGtkWidget()->window) and
-//		gdk_window_is_visible(GetGtkWidget()->window))
-//	{
-//		gdk_window_raise(GetGtkWidget()->window);
-//		gtk_window_present(GTK_WINDOW(GetGtkWidget()));
-//	}
-//	else
-//		Show();
-//
-//	TakeFocus();
-//
-////	// trick learned from EEL
-////	gdk_error_trap_push();
-////	XSetInputFocus(GDK_DISPLAY(),
-////		GDK_WINDOW_XWINDOW(gtk_widget_get_window(GetGtkWidget())),
-////		RevertToParent, GDK_CURRENT_TIME);
-////	gdk_flush();
-////	gdk_error_trap_pop ();
-//}
-//
-//bool MWindow::DoClose()
-//{
-//	return true;
-//}
-//
-//void MWindow::Close()
-//{
-//	if (DoClose())
-//		gtk_widget_destroy(GetGtkWidget());
-//}
-//
+
+void MWindow::RemoveWindowFromList(
+	MWindow*		inWindow)
+{
+	if (inWindow == sFirst)
+		sFirst = inWindow->mNext;
+	else if (sFirst != nil)
+	{
+		MWindow* w = sFirst;
+		while (w != nil)
+		{
+			MWindow* next = w->mNext;
+			if (next == inWindow)
+			{
+				w->mNext = inWindow->mNext;
+				break;
+			}
+			w = next;
+		}
+	}
+}
+
+void MWindow::Show()
+{
+	if (not mImpl->Visible())
+		mImpl->Show();
+}
+
+void MWindow::Hide()
+{
+	if (mImpl->Visible())
+		mImpl->Hide();
+}
+
+void MWindow::Select()
+{
+	if (not mImpl->Visible())
+		mImpl->Show();
+	mImpl->Select();
+
+	TakeFocus();
+}
+
+bool MWindow::DoClose()
+{
+	return true;
+}
+
+void MWindow::Close()
+{
+	if (DoClose())
+		mImpl->Close();
+}
+
 //void MWindow::SetTitle(
 //	const string&	inTitle)
 //{
@@ -271,52 +278,52 @@ void MWindow::RecycleWindows()
 //	
 //	return result;
 //}
-//
-//bool MWindow::UpdateCommandStatus(
-//	uint32			inCommand,
-//	MMenu*			inMenu,
-//	uint32			inItemIndex,
-//	bool&			outEnabled,
-//	bool&			outChecked)
-//{
-//	bool result = true;	
-//	
-//	switch (inCommand)
-//	{
-//		case cmd_Close:
-//			outEnabled = true;
-//			break;
-//		
-//		default:
-//			result = MHandler::UpdateCommandStatus(
-//				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
-//	}
-//	
-//	return result;
-//}
-//
-//bool MWindow::ProcessCommand(
-//	uint32			inCommand,
-//	const MMenu*	inMenu,
-//	uint32			inItemIndex,
-//	uint32			inModifiers)
-//{
-//	bool result = true;	
-//	
-//	switch (inCommand)
-//	{
-//		case cmd_Close:
-//			Close();
-//			break;
-//		
-//		default:
-//			result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
-//			break;
-//	}
-//	
-//	return result;
-//}
-//
+
+bool MWindow::UpdateCommandStatus(
+	uint32			inCommand,
+	MMenu*			inMenu,
+	uint32			inItemIndex,
+	bool&			outEnabled,
+	bool&			outChecked)
+{
+	bool result = true;	
+	
+	switch (inCommand)
+	{
+		case cmd_Close:
+			outEnabled = true;
+			break;
+		
+		default:
+			result = MHandler::UpdateCommandStatus(
+				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	}
+	
+	return result;
+}
+
+bool MWindow::ProcessCommand(
+	uint32			inCommand,
+	const MMenu*	inMenu,
+	uint32			inItemIndex,
+	uint32			inModifiers)
+{
+	bool result = true;	
+	
+	switch (inCommand)
+	{
+		case cmd_Close:
+			Close();
+			break;
+		
+		default:
+			result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+			break;
+	}
+	
+	return result;
+}
+
 //void MWindow::GetWindowPosition(
 //	MRect&			outPosition)
 //{
@@ -465,31 +472,31 @@ void MWindow::RecycleWindows()
 //	catch (...) {}
 //	return false;
 //}
-//
-//void MWindow::FocusChanged(
-//	uint32				inFocussedID)
-//{
-//}
-//
-//void MWindow::PutOnDuty(
-//	MHandler*		inHandler)
-//{
-//	MWindow* w = sFirst;
-//	while (w != nil)
-//	{
-//		if (w == this)
-//		{
-//			RemoveWindowFromList(this);
-//
-//			mNext = sFirst;
-//			sFirst = this;
-//
-//			break;
-//		}
-//		w = w->mNext;
-//	}
-//}
-//
+
+void MWindow::FocusChanged(
+	uint32				inFocussedID)
+{
+}
+
+void MWindow::PutOnDuty(
+	MHandler*		inHandler)
+{
+	MWindow* w = sFirst;
+	while (w != nil)
+	{
+		if (w == this)
+		{
+			RemoveWindowFromList(this);
+
+			mNext = sFirst;
+			sFirst = this;
+
+			break;
+		}
+		w = w->mNext;
+	}
+}
+
 //void MWindow::SetFocus(
 //	uint32				inID)
 //{
@@ -738,14 +745,14 @@ void MWindow::RecycleWindows()
 //	assert(GTK_IS_PROGRESS_BAR(wdgt));
 //	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(wdgt), inFraction);
 //}
-//
-//void MWindow::ValueChanged(
-//	uint32				inID)
-//{
-////	char name[5];
-////	cout << "Value Changed for " << IDToName(inID, name) << endl;
-//}
-//
+
+void MWindow::ValueChanged(
+	uint32				inID)
+{
+//	char name[5];
+//	cout << "Value Changed for " << IDToName(inID, name) << endl;
+}
+
 //void MWindow::Changed()
 //{
 //	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(mChanged.GetSourceGObject()));

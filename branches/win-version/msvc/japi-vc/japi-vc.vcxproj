@@ -48,7 +48,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -63,6 +63,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -88,8 +89,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MApplicationImpl.cpp" />
+    <ClCompile Include="..\..\Sources\MError.cpp" />
     <ClCompile Include="..\..\Sources\MHandler.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
+    <ClCompile Include="..\..\Sources\MView.cpp" />
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MJapiMain.cpp" />

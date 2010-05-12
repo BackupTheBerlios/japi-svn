@@ -58,7 +58,7 @@ void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 
 	CreateParams(style, exStyle, className, menu);
 
-	RECT r = { inBounds.x, inBounds.y, inBounds.width - inBounds.x, inBounds.height - inBounds.y };
+	RECT r = { inBounds.x, inBounds.y, inBounds.x + inBounds.width, inBounds.y + inBounds.height };
 	::AdjustWindowRect(&r, style, menu != nil);
 
 	HINSTANCE instance = MWinApplicationImpl::GetInstance()->GetHInstance();
@@ -82,8 +82,7 @@ void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 		r.left, r.top, r.right - r.left, r.bottom - r.top,
 		parent, menu, instance, this);
 	if (handle == nil)
-//		ThrowIfOSErr((::GetLastError()));
-		throw MException("Error creating window");
+		THROW_WIN_ERROR(("Error creating window"));
 
 	assert(mHandle == handle);
 
@@ -100,7 +99,7 @@ void MWinProcMixin::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground)
 {
 	outStyle = CS_VREDRAW | CS_HREDRAW;
-	outCursor = ::LoadCursor(0, IDC_ARROW);
+	outCursor = ::LoadCursorW(0, IDC_ARROW);
 }
 
 bool MWinProcMixin::WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)

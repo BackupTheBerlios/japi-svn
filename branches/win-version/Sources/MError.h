@@ -8,11 +8,11 @@
 
 #include <exception>
 #include <iostream>
+#include <boost/current_function.hpp>
 
 class MException : public std::exception
 {
   public:
-				MException(int inErr);
 				MException(const char* inErrMsg, ...);
 
 	virtual const char*	what() const throw();
@@ -21,6 +21,12 @@ class MException : public std::exception
 				MException() {}
 
 	char		mMessage[1024];
+};
+
+class MWinException : public MException
+{
+  public:
+				MWinException(const char* inErrMsg, ...);
 };
 
 #ifdef NDEBUG
@@ -51,12 +57,12 @@ class StOKToThrow
 };
 
 void __signal_throw(const char* inCode, const char* inFunction, const char* inFile, int inLine);
-void __m_debug_str(const char* inStr, ...);
+void __debug_printf(const char* inFile, int inLine, const char* inMsg, ...);
 //void __report_mach_error(const char* func, mach_error_t e);
 
-#define PRINT(x)	__m_debug_str x
+#define PRINT(x)		__debug_printf(__FILE__, __LINE__, x)
 
-#define	SIGNAL_THROW(a)	__signal_throw(a, __func__, __FILE__, __LINE__);
+#define	SIGNAL_THROW(a)	__signal_throw(a, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__);
 
 #endif
 
@@ -80,6 +86,9 @@ void __m_debug_str(const char* inStr, ...);
 
 #define THROW_EXCEPTION(e) \
 	do { exception _e(e); SIGNAL_THROW(_e.what()) throw _e; } while (false)
+
+#define THROW_WIN_ERROR(e) \
+	do { MWinException _e(e); SIGNAL_THROW(_e.what()); throw _e; } while (false)
 
 #define ASSERT(x, m)		if (not (x)) { SIGNAL_THROW(#x " => " #m); throw MException m; }
 

@@ -17,9 +17,10 @@
 
 using namespace std;
 
-MWinWindowImpl::MWinWindowImpl(MWindow* inWindow)
-	: MWindowImpl(inWindow)
-	, mWindow(inWindow)
+MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow)
+	: MWindowImpl(inFlags, inWindow)
+	, mSizeBox(nil)
+	, mStatus(nil)
 {
 }
 
@@ -34,7 +35,7 @@ void MWinWindowImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 
 	outClassName = L"MWinWindowImpl";
 	outStyle = WS_OVERLAPPEDWINDOW;
-	if (mWindow->GetFlags() | kMFixedSize)
+	if (mFlags | kMFixedSize)
 		outStyle &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
 	outExStyle = 0;
 }
@@ -53,11 +54,11 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	outBackground = (HBRUSH)(COLOR_WINDOW + 1);
 }
 
-void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
+void MWinWindowImpl::Create(const MRect& inBounds, const wstring& inTitle)
 {
 	MWinProcMixin::Create(inBounds, inTitle);
 
-	if (not (mWindow->GetFlags() & kMFixedSize))
+	if (not (mFlags & kMFixedSize))
 	{
 		//const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
 		//
@@ -71,7 +72,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 		//	nil);
 	}
 	
-	if (mWindow->GetFlags() & kMAcceptFileDrops)
+	if (mFlags & kMAcceptFileDrops)
 		::DragAcceptFiles(GetHandle(), true);
 
 	AddHandler(WM_CLOSE,			boost::bind(&MWinWindowImpl::WMClose, this, _1, _2, _3, _4, _5));
@@ -101,6 +102,77 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	::GetClientRect(GetHandle(), &clientArea);
 	//mWindow->SetFrame(MRect(clientArea));
 }
+
+// --------------------------------------------------------------------
+// overrides for MWindowImpl
+
+void MWinWindowImpl::SetTitle(string inTitle)
+{
+	mTitle = inTitle;
+	::SetWindowTextW(GetHandle(), c2w(mTitle).c_str());
+}
+
+string MWinWindowImpl::GetTitle() const
+{
+	return mTitle;
+}
+
+void MWinWindowImpl::Show()
+{
+	::ShowWindow(GetHandle(), SW_RESTORE);
+}
+
+void MWinWindowImpl::Hide()
+{
+	::ShowWindow(GetHandle(), SW_HIDE);
+}
+
+bool MWinWindowImpl::Visible() const
+{
+	return ::IsWindowVisible(GetHandle()) != 0;
+}
+
+void MWinWindowImpl::Select(){}
+void MWinWindowImpl::Close()
+{
+	if (GetHandle() != nil)
+	{
+		if (not ::DestroyWindow(GetHandle()))
+			THROW_WIN_ERROR(("Error destroying window"));
+	}
+}
+
+//virtual void	ActivateSelf();
+//virtual void	DeactivateSelf();
+//virtual void	BeFocus();
+//virtual void	SubFocusChanged();
+	
+void MWinWindowImpl::SetGlobalBounds(MRect inBounds){}
+void MWinWindowImpl::GetGlobalBounds(MRect& outBounds) const{}
+	
+//	virtual void	Invalidate(const HRegion& inRegion){}
+//	virtual void	Validate(const HRegion& inRegion){}
+void MWinWindowImpl::UpdateIfNeeded(bool inFlush){}
+
+void MWinWindowImpl::ScrollBits(MRect inRect, int32 inDeltaH, int32 inDeltaV){}
+	
+bool MWinWindowImpl::GetMouse(int32& outX, int32& outY, unsigned long& outModifiers)
+{
+	return false;
+}
+
+bool MWinWindowImpl::WaitMouseMoved(int32 inX, int32 inY)
+{
+	return false;
+}
+
+//virtual void	ConvertToScreen(HPoint& ioPoint) const{}
+//virtual void	ConvertFromScreen(HPoint& ioPoint) const{}
+//virtual void	ConvertToScreen(HRect& ioRect) const{}
+//virtual void	ConvertFromScreen(HRect& ioRect) const{}
+
+// --------------------------------------------------------------------
+// Windows Message handling
 
 bool MWinWindowImpl::WMClose(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
@@ -633,3 +705,11 @@ bool MWinWindowImpl::WMThemeChanged(HWND inHWnd, UINT inUMsg, WPARAM inWParam, L
 	return true;
 }
 
+// --------------------------------------------------------------------
+
+MWindowImpl* MWindowImpl::Create(string inTitle, MRect inBounds, MWindowFlags inFlags, MWindow* inWindow)
+{
+	MWinWindowImpl* result = new MWinWindowImpl(inFlags, inWindow);
+	result->Create(inBounds, c2w(inTitle));
+	return result;
+}

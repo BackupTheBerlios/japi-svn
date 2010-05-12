@@ -35,11 +35,11 @@ class MDevice
 						MRect				inRect,
 						bool				inCreateOffscreen = false);
 					
-					// create a device for drawing to a printer
-					MDevice(
-						GtkPrintContext*	inPrintContext,
-						MRect				inRect,
-						int32				inPage);
+					//// create a device for drawing to a printer
+					//MDevice(
+					//	GtkPrintContext*	inPrintContext,
+					//	MRect				inRect,
+					//	int32				inPage);
 
 					~MDevice();
 
@@ -73,8 +73,8 @@ class MDevice
 	void			ClipRect(
 						MRect				inRect);
 	
-	void			ClipRegion(
-						MRegion				inRegion);
+	//void			ClipRegion(
+	//					MRegion				inRegion);
 
 	void			EraseRect(
 						MRect				inRect);
@@ -89,11 +89,11 @@ class MDevice
 	void			FillEllipse(
 						MRect				inRect);
 
-	void			DrawImage(
-						cairo_surface_t*	inImage,
-						float				inX,
-						float				inY,
-						float				inShear);
+	//void			DrawImage(
+	//					cairo_surface_t*	inImage,
+	//					float				inX,
+	//					float				inY,
+	//					float				inShear);
 	
 	void			CreateAndUsePattern(
 						MColor				inColor1,
@@ -168,7 +168,7 @@ class MDevice
 	void			MakeTransparent(
 						float				inOpacity);
 
-	GdkPixmap*		GetPixmap() const;
+	//GdkPixmap*		GetPixmap() const;
 
 	void			SetDrawWhiteSpace(
 						bool				inDrawWhiteSpace);

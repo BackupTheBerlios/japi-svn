@@ -248,8 +248,9 @@ class MView
 	//		   guint)>					mDragDataGet;
 	
   private:
-	//GtkWidget*		mGtkWidget;
-	bool			mDragWithin;
+	MView*			mParent;
+	  //GtkWidget*		mGtkWidget;
+	//bool			mDragWithin;
 };
 
 #endif // MVIEW_H

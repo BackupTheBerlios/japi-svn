@@ -8,7 +8,7 @@
 
 #include <string>
 
-std::wstring c2w(std::string& s);
-std::string w2c(std::wstring& s);
+std::wstring c2w(const std::string& s);
+std::string w2c(const std::wstring& s);
 
 #endif

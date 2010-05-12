@@ -14,10 +14,44 @@
 class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 {
   public:
-					MWinWindowImpl(MWindow* inWindow);
+					MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow);
 	virtual			~MWinWindowImpl();
 
-	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
+	virtual void	Create(const MRect& inBounds, const std::wstring& inTitle);
+
+	virtual void	SetTitle(std::string inTitle);
+	virtual std::string
+					GetTitle() const;
+
+	virtual void	Show();
+	virtual void	Hide();
+
+	virtual bool	Visible() const;
+
+	virtual void	Select();
+	virtual void	Close();
+
+	//virtual void	ActivateSelf();
+	//virtual void	DeactivateSelf();
+	//virtual void	BeFocus();
+	//virtual void	SubFocusChanged();
+	
+	virtual void	SetGlobalBounds(MRect inBounds);
+	virtual void	GetGlobalBounds(MRect& outBounds) const;
+	
+//	virtual void	Invalidate(const HRegion& inRegion);
+//	virtual void	Validate(const HRegion& inRegion);
+	virtual void	UpdateIfNeeded(bool inFlush);
+
+	virtual void	ScrollBits(MRect inRect, int32 inDeltaH, int32 inDeltaV);
+	
+	virtual bool	GetMouse(int32& outX, int32& outY, unsigned long& outModifiers);
+	virtual bool	WaitMouseMoved(int32 inX, int32 inY);
+
+	//virtual void	ConvertToScreen(HPoint& ioPoint) const;
+	//virtual void	ConvertFromScreen(HPoint& ioPoint) const;
+	//virtual void	ConvertToScreen(HRect& ioRect) const;
+	//virtual void	ConvertFromScreen(HRect& ioRect) const;
 
   protected:
 
@@ -48,9 +82,9 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMDropFiles(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMThemeChanged(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
-	MWindow*		mWindow;
 	HWND			mSizeBox;
 	HWND			mStatus;
+	std::string		mTitle;
 };
 
 #endif

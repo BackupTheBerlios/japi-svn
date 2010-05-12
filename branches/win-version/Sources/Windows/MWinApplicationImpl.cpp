@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <Windows.h>
+#include <Commctrl.h>
 
 #include "MLib.h"
 #include "MUtils.h"
@@ -25,6 +26,29 @@ MWinApplicationImpl::MWinApplicationImpl(
 	: MApplicationImpl(inApp)
 	, mInstance(inInstance)
 {
+	INITCOMMONCONTROLSEX info = {
+		sizeof(INITCOMMONCONTROLSEX),
+
+		ICC_ANIMATE_CLASS |
+		ICC_BAR_CLASSES |
+		ICC_COOL_CLASSES |
+		ICC_DATE_CLASSES |
+		ICC_HOTKEY_CLASS |
+		ICC_INTERNET_CLASSES |
+		ICC_LINK_CLASS |
+		ICC_LISTVIEW_CLASSES |
+		ICC_NATIVEFNTCTL_CLASS |
+		ICC_PAGESCROLLER_CLASS |
+		ICC_PROGRESS_CLASS |
+		ICC_STANDARD_CLASSES |
+		ICC_TAB_CLASSES |
+		ICC_TREEVIEW_CLASSES |
+		ICC_UPDOWN_CLASS |
+		ICC_USEREX_CLASSES |
+		ICC_WIN95_CLASSES
+	};
+
+	::InitCommonControlsEx(&info);
 }
 
 MWinApplicationImpl::~MWinApplicationImpl()
@@ -73,6 +97,16 @@ void CALLBACK MWinApplicationImpl::Timer(
 	// dwTime is based on GetTickCount and GetTickCount
 	// can wrap. So use our own system_time instead
 
-	if (sInstance != nil)
-		sInstance->Pulse();
+	static bool sInTimer = false;
+	if (not sInTimer)
+	{
+		sInTimer = true;
+		try
+		{
+			if (sInstance != nil)
+				sInstance->Pulse();
+		}
+		catch (...) {}
+		sInTimer = false;
+	}
 }
