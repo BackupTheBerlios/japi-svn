@@ -24,6 +24,8 @@ MWinProcMixin::MWinProcMixin()
 	AddHandler(WM_CHAR,			boost::bind(&MWinProcMixin::WMChar, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_KEYDOWN,		boost::bind(&MWinProcMixin::WMKeydown, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SYSKEYDOWN,	boost::bind(&MWinProcMixin::WMKeydown, this, _1, _2, _3, _4, _5));
+
+	AddHandler(WM_NOTIFY,		boost::bind(&MWinProcMixin::WMNotify, this, _1, _2, _3, _4, _5));
 }
 
 MWinProcMixin::~MWinProcMixin()
@@ -48,7 +50,7 @@ MWinProcMixin* MWinProcMixin::Fetch(HWND inHandle)
 	return reinterpret_cast<MWinProcMixin*>(::GetPropW(inHandle, L"m_window_imp"));
 }
 
-void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
+void MWinProcMixin::Create(MWinProcMixin* inParent, MRect inBounds, const wstring& inTitle)
 {
 	DWORD		style = WS_CHILD | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW;
 	DWORD		exStyle = 0;
@@ -56,10 +58,23 @@ void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 	HMENU		menu = nil;
 	wstring		className;
 
+	if (inParent != nil)
+		parent = inParent->GetHandle();
+
 	CreateParams(style, exStyle, className, menu);
 
-	RECT r = { inBounds.x, inBounds.y, inBounds.x + inBounds.width, inBounds.y + inBounds.height };
-	::AdjustWindowRect(&r, style, menu != nil);
+	if (inBounds.x != CW_USEDEFAULT and inBounds.y != CW_USEDEFAULT)
+	{
+		RECT r = { inBounds.x, inBounds.y, inBounds.x + inBounds.width, inBounds.y + inBounds.height };
+		::AdjustWindowRect(&r, style, menu != nil);
+		inBounds = MRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
+	}
+	else
+	{
+		RECT r = { 0, 0, inBounds.width, inBounds.height };
+		::AdjustWindowRect(&r, style, menu != nil);
+		inBounds = MRect(CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left, r.bottom - r.top);
+	}
 
 	HINSTANCE instance = MWinApplicationImpl::GetInstance()->GetHInstance();
 	WNDCLASSEXW lWndClass = { sizeof(WNDCLASSEXW) };
@@ -67,6 +82,7 @@ void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 
 	if (not ::GetClassInfoExW(instance, lWndClass.lpszClassName, &lWndClass))
 	{
+		lWndClass.lpfnWndProc = &MWinProcMixin::WinProcCallBack;
 		RegisterParams(lWndClass.style, lWndClass.hCursor,
 			lWndClass.hIcon, lWndClass.hIconSm, lWndClass.hbrBackground);
 
@@ -79,12 +95,10 @@ void MWinProcMixin::Create(const MRect& inBounds, const wstring& inTitle)
 	HWND handle = CreateWindowExW(exStyle,
 		lWndClass.lpszClassName, inTitle.c_str(),
 		style,
-		r.left, r.top, r.right - r.left, r.bottom - r.top,
+		inBounds.x, inBounds.y, inBounds.width, inBounds.height,
 		parent, menu, instance, this);
 	if (handle == nil)
 		THROW_WIN_ERROR(("Error creating window"));
-
-	assert(mHandle == handle);
 
 	SetHandle(handle);
 }
@@ -264,6 +278,16 @@ bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 //		result = HHandler::GetFocus()->KeyDown(inKeyDown);
 //	return result;
 //}
+
+bool MWinProcMixin::WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	LPNMHDR msg = reinterpret_cast<LPNMHDR>(inLParam);
+
+	MNotifyHandler h = { msg->hwndFrom, msg->code };
+	MNotificationTable::iterator i = mNotificationHandlers.find(h);
+
+	return i != mNotificationHandlers.end() and i->second(inWParam, inLParam, outResult);
+}
 
 int	MWinProcMixin::WinProc(HWND inHandle, UINT inMsg, WPARAM inWParam, LPARAM inLParam)
 {

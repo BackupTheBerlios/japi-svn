@@ -15,6 +15,9 @@
 
 using namespace std;
 
+char* __S_FILE = "";
+int __S_LINE;
+
 double GetLocalTime()
 {
 	static double sDiff = -1.0;
@@ -162,16 +165,19 @@ string w2c(const wstring& s)
 	return result;
 }
 
-void __debug_printf(const char* inFile, int inLine, const char* inMessage, ...)
+void __debug_printf(const char* inMessage, ...)
 {
-	char msg[1024];
+	char msg[1024] = {0};
 	
 	va_list vl;
 	va_start(vl, inMessage);
-	vsnprintf(msg, sizeof(msg), inMessage, vl);
+	int n = vsnprintf(msg, sizeof(msg), inMessage, vl);
 	va_end(vl);
 
-	_CrtDbgReport (_CRT_WARN, inFile, inLine, NULL, msg);
+	if (n < sizeof(msg) - 1 and msg[n] != '\n')
+		msg[n] = '\n';
+
+	_CrtDbgReport (_CRT_WARN, __S_FILE, __S_LINE, NULL, msg);
 }
 
 void __signal_throw(

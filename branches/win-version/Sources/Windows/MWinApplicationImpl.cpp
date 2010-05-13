@@ -11,6 +11,18 @@
 
 #include "MWinApplicationImpl.h"
 
+#ifdef UNICODE
+#if defined _M_IX86
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_IA64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+#endif
+
 MWinApplicationImpl* MWinApplicationImpl::sInstance;
 
 
@@ -29,13 +41,13 @@ MWinApplicationImpl::MWinApplicationImpl(
 	INITCOMMONCONTROLSEX info = {
 		sizeof(INITCOMMONCONTROLSEX),
 
-		ICC_ANIMATE_CLASS |
+		//ICC_ANIMATE_CLASS |
 		ICC_BAR_CLASSES |
 		ICC_COOL_CLASSES |
-		ICC_DATE_CLASSES |
-		ICC_HOTKEY_CLASS |
-		ICC_INTERNET_CLASSES |
-		ICC_LINK_CLASS |
+		//ICC_DATE_CLASSES |
+		//ICC_HOTKEY_CLASS |
+		//ICC_INTERNET_CLASSES |
+		//ICC_LINK_CLASS |
 		ICC_LISTVIEW_CLASSES |
 		ICC_NATIVEFNTCTL_CLASS |
 		ICC_PAGESCROLLER_CLASS |

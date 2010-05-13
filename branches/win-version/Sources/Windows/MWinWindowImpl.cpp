@@ -14,6 +14,7 @@
 #include "MError.h"
 #include "MWinApplicationImpl.h"
 #include "MWinUtils.h"
+#include "MWinMenu.h"
 
 using namespace std;
 
@@ -21,6 +22,8 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow)
 	: MWindowImpl(inFlags, inWindow)
 	, mSizeBox(nil)
 	, mStatus(nil)
+	, mMinWidth(100)
+	, mMinHeight(100)
 {
 }
 
@@ -28,14 +31,14 @@ MWinWindowImpl::~MWinWindowImpl()
 {
 }
 
-void MWinWindowImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
-	wstring& outClassName, HMENU& outMenu)
+void MWinWindowImpl::CreateParams(DWORD& outStyle,
+	DWORD& outExStyle, wstring& outClassName, HMENU& outMenu)
 {
 	MWinProcMixin::CreateParams(outStyle, outExStyle, outClassName, outMenu);
 
 	outClassName = L"MWinWindowImpl";
 	outStyle = WS_OVERLAPPEDWINDOW;
-	if (mFlags | kMFixedSize)
+	if (mFlags & kMFixedSize)
 		outStyle &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
 	outExStyle = 0;
 }
@@ -54,22 +57,26 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	outBackground = (HBRUSH)(COLOR_WINDOW + 1);
 }
 
-void MWinWindowImpl::Create(const MRect& inBounds, const wstring& inTitle)
+void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 {
-	MWinProcMixin::Create(inBounds, inTitle);
+	if (mFlags & kMPostionDefault)
+		inBounds.x = inBounds.y = CW_USEDEFAULT;
+
+	MWinProcMixin::Create(nil, inBounds, inTitle);
 
 	if (not (mFlags & kMFixedSize))
 	{
-		//const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
-		//
-		//MRect r;
-		//mWindow->GetBounds(r);
-		//mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
-		//	WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
-		//	r.x + r.width - kScrollBarWidth, r.y + r.height - kScrollBarWidth,
-		//	kScrollBarWidth, kScrollBarWidth, GetHandle(),
-		//	nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
-		//	nil);
+//		const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
+		const int kScrollBarWidth = 16;
+		
+		MRect r;
+		mWindow->GetBounds(r);
+		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
+			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
+			r.x + r.width - kScrollBarWidth, r.y + r.height - kScrollBarWidth,
+			kScrollBarWidth, kScrollBarWidth, GetHandle(),
+			nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
+			nil);
 	}
 	
 	if (mFlags & kMAcceptFileDrops)
@@ -77,7 +84,7 @@ void MWinWindowImpl::Create(const MRect& inBounds, const wstring& inTitle)
 
 	AddHandler(WM_CLOSE,			boost::bind(&MWinWindowImpl::WMClose, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_ACTIVATE,			boost::bind(&MWinWindowImpl::WMActivate, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_MOUSEACTIVATE,	boost::bind(&MWinWindowImpl::WMMouseActivate, this, _1, _2, _3, _4, _5));
+	//AddHandler(WM_MOUSEACTIVATE,	boost::bind(&MWinWindowImpl::WMMouseActivate, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
@@ -96,11 +103,13 @@ void MWinWindowImpl::Create(const MRect& inBounds, const wstring& inTitle)
 	AddHandler(WM_IME_REQUEST,		boost::bind(&MWinWindowImpl::WMImeRequest, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_QUERYENDSESSION,	boost::bind(&MWinWindowImpl::WMQueryEndSession, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_DROPFILES,		boost::bind(&MWinWindowImpl::WMDropFiles, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_THEMECHANGED,		boost::bind(&MWinWindowImpl::WMThemeChanged, this, _1, _2, _3, _4, _5));
+	//AddHandler(WM_THEMECHANGED,		boost::bind(&MWinWindowImpl::WMThemeChanged, this, _1, _2, _3, _4, _5));
 	
 	RECT clientArea;
 	::GetClientRect(GetHandle(), &clientArea);
 	//mWindow->SetFrame(MRect(clientArea));
+
+	mMenubar = new MWinMenubar(this, "edit-window-menu");
 }
 
 // --------------------------------------------------------------------
@@ -184,6 +193,8 @@ bool MWinWindowImpl::WMClose(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam
 bool MWinWindowImpl::WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	MWinProcMixin::WMDestroy(inHWnd, inUMsg, inWParam, inLParam, outResult);
+
+	MWindow::RemoveWindowFromList(mWindow);
 	delete mWindow;
 	return true;
 }
@@ -237,31 +248,31 @@ bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*
 	return true;
 }
 
-bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& /*outResult*/)
+bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	if (inWParam != SIZE_MINIMIZED)
 	{
-//		HRect lNewBounds(0, 0, LOWORD(inLParam), HIWORD(inLParam));
-//		HRect lOldBounds;
-//		mWindow->GetBounds(lOldBounds);
-//
-//		if (fSizeBox != nil)
-//		{
-//			int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
-//			
-//			HRect r(lNewBounds);
-//			r.left = r.right - kScrollBarWidth;
-//			r.top = r.bottom - kScrollBarWidth;
-//			
-//			::MoveWindow(fSizeBox, r.left, r.top,
-//				r.GetWidth(), r.GetHeight(), true);
-////			::SetWindowPos(fSizeBox, GetHandle(), lNewBounds.right - kScrollBarWidth,
-////				lNewBounds.bottom - kScrollBarWidth, 0, 0,
-////				SWP_NOZORDER | SWP_NOZORDER);
-//		}
-//		
-//		mWindow->ResizeFrame(0, 0, lNewBounds.right - lOldBounds.right,
-//			lNewBounds.bottom - lOldBounds.bottom);
+		MRect newBounds(0, 0, LOWORD(inLParam), HIWORD(inLParam));
+		MRect oldBounds;
+		mWindow->GetBounds(oldBounds);
+
+		if (mSizeBox != nil)
+		{
+			//int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
+			int kScrollBarWidth = 16;
+
+			MRect r(newBounds);
+			r.x += r.width - kScrollBarWidth;
+			r.y += r.height- kScrollBarWidth;
+			
+			::MoveWindow(mSizeBox, r.x, r.y, r.width, r.height, true);
+//			::SetWindowPos(fSizeBox, GetHandle(), lNewBounds.right - kScrollBarWidth,
+//				lNewBounds.bottom - kScrollBarWidth, 0, 0,
+//				SWP_NOZORDER | SWP_NOZORDER);
+		}
+		
+		//mWindow->ResizeFrame(0, 0, newBounds.right - oldBounds.right,
+		//	newBounds.bottom - oldBounds.bottom);
 	}
 
 	return true;
@@ -271,52 +282,51 @@ bool MWinWindowImpl::WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 {
 	bool result = true;
 
-	//HNativeRect* r = reinterpret_cast<HNativeRect*>(inLParam);
-	//HNativeRect bounds = *r;
+	RECT& r = *reinterpret_cast<RECT*>(inLParam);
 
-	//switch (inWParam)
-	//{
-	//	case WMSZ_LEFT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->left = r->right - mWindow->fMinSize.x;
-	//		break;
-	//	case WMSZ_RIGHT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->right = r->left + mWindow->fMinSize.x;
-	//		break;
-	//	case WMSZ_TOP:
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->top = r->bottom - mWindow->fMinSize.y;
-	//		break;
-	//	case WMSZ_TOPLEFT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->left = r->right - mWindow->fMinSize.x;
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->top = r->bottom - mWindow->fMinSize.y;
-	//		break;
-	//	case WMSZ_TOPRIGHT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->right = r->left + mWindow->fMinSize.x;
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->top = r->bottom - mWindow->fMinSize.y;
-	//		break;
-	//	case WMSZ_BOTTOM:
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->bottom = r->top + mWindow->fMinSize.y;
-	//		break;
-	//	case WMSZ_BOTTOMLEFT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->left = r->right - mWindow->fMinSize.x;
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->bottom = r->top + mWindow->fMinSize.y;
-	//		break;
-	//	case WMSZ_BOTTOMRIGHT:
-	//		if (r->right - r->left < mWindow->fMinSize.x)
-	//			r->right = r->left + mWindow->fMinSize.x;
-	//		if (r->bottom - r->top < mWindow->fMinSize.y)
-	//			r->bottom = r->top + mWindow->fMinSize.y;
-	//		break;
-	//}
+	switch (inWParam)
+	{
+		case WMSZ_LEFT:
+			if (r.right - r.left < mMinWidth)
+				r.left = r.right - mMinWidth;
+			break;
+		case WMSZ_RIGHT:
+			if (r.right - r.left < mMinWidth)
+				r.right = r.left + mMinWidth;
+			break;
+		case WMSZ_TOP:
+			if (r.bottom - r.top < mMinHeight)
+				r.top = r.bottom - mMinHeight;
+			break;
+		case WMSZ_TOPLEFT:
+			if (r.right - r.left < mMinWidth)
+				r.left = r.right - mMinWidth;
+			if (r.bottom - r.top < mMinHeight)
+				r.top = r.bottom - mMinHeight;
+			break;
+		case WMSZ_TOPRIGHT:
+			if (r.right - r.left < mMinWidth)
+				r.right = r.left + mMinWidth;
+			if (r.bottom - r.top < mMinHeight)
+				r.top = r.bottom - mMinHeight;
+			break;
+		case WMSZ_BOTTOM:
+			if (r.bottom - r.top < mMinHeight)
+				r.bottom = r.top + mMinHeight;
+			break;
+		case WMSZ_BOTTOMLEFT:
+			if (r.right - r.left < mMinWidth)
+				r.left = r.right - mMinWidth;
+			if (r.bottom - r.top < mMinHeight)
+				r.bottom = r.top + mMinHeight;
+			break;
+		case WMSZ_BOTTOMRIGHT:
+			if (r.right - r.left < mMinWidth)
+				r.right = r.left + mMinWidth;
+			if (r.bottom - r.top < mMinHeight)
+				r.bottom = r.top + mMinHeight;
+			break;
+	}
 
 	outResult = 1;
 	return result;
@@ -350,7 +360,9 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 	//	::EndPaint (inHWnd, &lPs);
 	//}
 
-	return true;
+	//return true;
+
+	return false;
 }
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)

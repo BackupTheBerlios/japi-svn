@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MLib.h"
+#include "MJapi.h"
 
 #include <iostream>
 #include <algorithm>
@@ -12,7 +12,6 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/foreach.hpp>
-#include <boost/filesystem/fstream.hpp>
 
 #include <zeep/xml/document.hpp>
 
@@ -54,51 +53,225 @@ struct MCommandToString
 	operator const char*() const	{ return mCommandString; }
 };
 
-//struct MRecentItems
-//{
-//	static MRecentItems&
-//						Instance();
-//
-//						operator GtkRecentManager* ()	{ return mRecentMgr; }
-//
-//  private:
-//	
-//						MRecentItems();
-//						~MRecentItems();
-//
-//	GtkRecentManager*	mRecentMgr;
-//};
-//
-//MRecentItems& MRecentItems::Instance()
-//{
-//	static MRecentItems sInstance;
-//	return sInstance;
-//}
-//
-//MRecentItems::MRecentItems()
-//{
-//	mRecentMgr = gtk_recent_manager_get_default();
-//}
-//
-//MRecentItems::~MRecentItems()
-//{
-//	g_object_unref(mRecentMgr);
-//}
+struct MRecentItems
+{
+	static MRecentItems&
+						Instance();
 
+						operator GtkRecentManager* ()	{ return mRecentMgr; }
+
+  private:
+	
+						MRecentItems();
+						~MRecentItems();
+
+	GtkRecentManager*	mRecentMgr;
+};
+
+MRecentItems& MRecentItems::Instance()
+{
+	static MRecentItems sInstance;
+	return sInstance;
+}
+
+MRecentItems::MRecentItems()
+{
+	mRecentMgr = gtk_recent_manager_get_default();
+}
+
+MRecentItems::~MRecentItems()
+{
+	g_object_unref(mRecentMgr);
+}
+
+}
+
+struct MMenuItem
+{
+  public:
+					MMenuItem(
+						MMenu*			inMenu,
+						const string&	inLabel,
+						uint32			inCommand);
+
+					// plain, simple item
+	void			CreateWidget();
+	
+					// radio menu item
+	void			CreateWidget(
+						GSList*&		ioRadioGroup);
+
+	void			CreateCheckWidget();
+
+	void			SetChecked(
+						bool			inChecked);
+
+	void			ItemCallback();
+	
+	void			ItemToggled();
+	
+	void			RecentItemActivated();
+
+	MSlot<void()>	mCallback;
+	MSlot<void()>	mRecentItemActivated;
+
+	GtkWidget*		mGtkMenuItem;
+	string			mLabel;
+	uint32			mCommand;
+	uint32			mIndex;
+	MMenu*			mMenu;
+	MMenu*			mSubMenu;
+	bool			mEnabled;
+	bool			mCanCheck;
+	bool			mChecked;
+	bool			mInhibitCallBack;
+};
+
+MMenuItem::MMenuItem(
+	MMenu*			inMenu,
+	const string&	inLabel,
+	uint32			inCommand)
+	: mCallback(this, &MMenuItem::ItemCallback)
+	, mRecentItemActivated(this, &MMenuItem::RecentItemActivated)
+	, mGtkMenuItem(nil)
+	, mLabel(inLabel)
+	, mCommand(inCommand)
+	, mIndex(0)
+	, mMenu(inMenu)
+	, mSubMenu(nil)
+	, mEnabled(true)
+	, mCanCheck(false)
+	, mChecked(false)
+	, mInhibitCallBack(false)
+{
+}
+
+void MMenuItem::CreateWidget()
+{
+	if (mLabel == "-")
+		mGtkMenuItem = gtk_separator_menu_item_new();
+	else
+	{
+		mGtkMenuItem = gtk_menu_item_new_with_label(_(mLabel.c_str()));
+		if (mCommand != 0)	
+			mCallback.Connect(mGtkMenuItem, "activate");
+	}
+}
+
+void MMenuItem::CreateWidget(
+	GSList*&		ioRadioGroup)
+{
+	mGtkMenuItem = gtk_radio_menu_item_new_with_label(ioRadioGroup, _(mLabel.c_str()));
+
+	ioRadioGroup = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(mGtkMenuItem));
+
+	if (mCommand != 0)
+		mCallback.Connect(mGtkMenuItem, "toggled");
+
+	mCanCheck = true;
+}
+
+void MMenuItem::CreateCheckWidget()
+{
+	mGtkMenuItem = gtk_check_menu_item_new_with_label(_(mLabel.c_str()));
+
+	if (mCommand != 0)
+		mCallback.Connect(mGtkMenuItem, "toggled");
+
+//	mCanCheck = true;
+}
+
+void MMenuItem::ItemCallback()
+{
+	try
+	{
+		if (mMenu != nil and
+			mMenu->GetTarget() != nil and
+			not mInhibitCallBack)
+		{
+			bool process = true;
+			
+			if (mCanCheck)
+			{
+				mChecked = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mGtkMenuItem));
+				process = mChecked;
+			}
+
+			GdkModifierType modifiers;
+			gdk_window_get_pointer(mGtkMenuItem->window, nil, nil, &modifiers);
+
+			if (process and not mMenu->GetTarget()->ProcessCommand(mCommand, mMenu, mIndex, modifiers))
+				PRINT(("Unhandled command: %s", (const char*)MCommandToString(mCommand)));
+		}
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
+	catch (...) {}
+}
+
+void MMenuItem::SetChecked(
+	bool			inChecked)
+{
+	if (inChecked != mChecked and GTK_IS_CHECK_MENU_ITEM(mGtkMenuItem))
+	{
+		mInhibitCallBack = true;
+		mChecked = inChecked;
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mGtkMenuItem), mChecked);
+		mInhibitCallBack = false;
+	}
+}
+
+void MMenuItem::RecentItemActivated()
+{
+	assert(mSubMenu);
+	assert(GTK_IS_RECENT_CHOOSER(mSubMenu->GetGtkMenu()));	
+	
+	char* uri = gtk_recent_chooser_get_current_uri(GTK_RECENT_CHOOSER(mSubMenu->GetGtkMenu()));
+	
+	if (uri != nil)
+	{
+		MFile url(uri, true);
+
+		g_free(uri);
+
+		try
+		{
+			gApp->OpenOneDocument(url);
+		}
+		catch (exception& e)
+		{
+			DisplayError(e);
+		}
+		catch (...) {}
+	}
 }
 
 // --------------------------------------------------------------------
 
 MMenu::MMenu(
 	const string&	inLabel,
-	MMenuImpl*		inMenuImpl)
-	: mImpl(inMenuImpl)
+	GtkWidget*		inMenuWidget)
+	: mOnDestroy(this, &MMenu::OnDestroy)
+	, mOnSelectionDone(this, &MMenu::OnSelectionDone)
+	, mGtkMenu(inMenuWidget)
+	, mLabel(inLabel)
+	, mTarget(nil)
+	, mRadioGroup(nil)
+	, mPopupX(-1)
+	, mPopupY(-1)
 {
+	if (mGtkMenu == nil)
+		mGtkMenu = gtk_menu_new();
+
+	mOnDestroy.Connect(mGtkMenu, "destroy");
 }
 
 MMenu::~MMenu()
 {
-	delete mImpl;
+	for (MMenuItemList::iterator mi = mItems.begin(); mi != mItems.end(); ++mi)
+		delete *mi;
 }
 
 MMenu* MMenu::CreateFromResource(
@@ -106,14 +279,13 @@ MMenu* MMenu::CreateFromResource(
 {
 	MMenu* result = nil;
 	
-	//mrsrc::rsrc rsrc(
-	//	string("Menus/") + inResourceName + ".xml");
-	//
-	//if (not rsrc)
-	//	THROW(("Menu resource not found: %s", inResourceName));
+	mrsrc::rsrc rsrc(
+		string("Menus/") + inResourceName + ".xml");
+	
+	if (not rsrc)
+		THROW(("Menu resource not found: %s", inResourceName));
 
-	//io::stream<io::array_source> data(rsrc.data(), rsrc.size());
-	ifstream data("C:\\Users\\maarten\\projects\\japi\\Resources\\Menus\\" + string(inResourceName) + ".xml");
+	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
 	xml::document doc(data);
 	
 	// build a menu from the resource XML
@@ -136,10 +308,10 @@ MMenu* MMenu::Create(
 
 	MMenu* menu;
 
-	//if (special == "recent")
-	//	menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance()));
-	//else
-	//{
+	if (special == "recent")
+		menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance()));
+	else
+	{
 		menu = new MMenu(label);
 		
 		foreach (xml::element* item, inXMLNode->children<xml::element>())
@@ -172,30 +344,45 @@ MMenu* MMenu::Create(
 			else if (item->qname() == "menu")
 				menu->AppendMenu(Create(item));
 		}
-	//}
+	}
 	
 	return menu;
 }
 
 bool MMenu::IsRecentMenu() const
 {
-	//return GTK_IS_RECENT_CHOOSER_MENU(mGtkMenu);
-	return false;
+	return GTK_IS_RECENT_CHOOSER_MENU(mGtkMenu);
 }
 
-//MMenuItem* MMenu::CreateNewItem(
-//	const string&	inLabel,
-//	uint32			inCommand,
-//	GSList**		ioRadioGroup)
-//{
-//	mImpl->CreateNewItem(inLabel, inCommand, inRadioGroup);
-//}
+MMenuItem* MMenu::CreateNewItem(
+	const string&	inLabel,
+	uint32			inCommand,
+	GSList**		ioRadioGroup)
+{
+	MMenuItem* item = new MMenuItem(this, inLabel, inCommand);
+
+	if (ioRadioGroup != nil)
+		item->CreateWidget(*ioRadioGroup);
+	else
+	{
+		item->CreateWidget();
+		
+		if (inLabel != "-")
+			mRadioGroup = nil;
+	}
+
+	item->mIndex = mItems.size();
+	mItems.push_back(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(mGtkMenu), item->mGtkMenuItem);
+	
+	return item;
+}
 
 void MMenu::AppendItem(
 	const string&	inLabel,
 	uint32			inCommand)
 {
-	mImpl->CreateNewItem(inLabel, inCommand);
+	CreateNewItem(inLabel, inCommand, nil);
 }
 
 void MMenu::AppendRadioItem(

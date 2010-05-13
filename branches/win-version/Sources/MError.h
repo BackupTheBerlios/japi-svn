@@ -57,11 +57,13 @@ class StOKToThrow
 };
 
 void __signal_throw(const char* inCode, const char* inFunction, const char* inFile, int inLine);
-void __debug_printf(const char* inFile, int inLine, const char* inMsg, ...);
+
+extern char*	__S_FILE;
+extern int		__S_LINE;
+void __debug_printf(const char* inMsg, ...);
 //void __report_mach_error(const char* func, mach_error_t e);
 
-#define PRINT(x)		__debug_printf(__FILE__, __LINE__, x)
-
+#define PRINT(x)		do { __S_FILE = __FILE__; __S_LINE = __LINE__; __debug_printf x; } while (false)
 #define	SIGNAL_THROW(a)	__signal_throw(a, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__);
 
 #endif

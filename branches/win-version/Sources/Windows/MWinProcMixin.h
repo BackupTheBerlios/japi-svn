@@ -24,7 +24,8 @@ class MWinProcMixin
 	static MWinProcMixin*
 					Fetch(HWND inHandle);
 	
-	virtual void	Create(const MRect& inBounds, const std::wstring& inTitle);
+	virtual void	Create(MWinProcMixin* inParent, MRect inBounds,
+						const std::wstring& inTitle);
 
 //	void			SubClass();
 
@@ -34,7 +35,16 @@ class MWinProcMixin
 	void			AddHandler(UINT inMessage, MWMCall inCallback)
 						{ mHandlers[inMessage] = inCallback; }
 
-  protected:
+	typedef boost::function<bool(WPARAM inWParam, LPARAM inLParam, int& outResult)> MNotification;
+
+	void			AddNotify(uint32 inCode, HWND inHWND, MNotification inCallback)
+					{
+						MNotifyHandler h = { inHWND, inCode };
+						mNotificationHandlers[h] = inCallback;
+					}
+
+
+protected:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
@@ -49,6 +59,8 @@ class MWinProcMixin
 						LPARAM inLParam, int& outResult);
 	virtual bool	WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult);
+	virtual bool	WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult);
 
 //	virtual bool	DispatchKeyDown(const MKeyDown& inKeyDown);
 
@@ -60,9 +72,22 @@ class MWinProcMixin
   private:
 	typedef std::map<UINT,MWMCall>				MHandlerTable;
 
+	struct MNotifyHandler
+	{
+		HWND			mHWND;
+		UINT			mCode;
+
+		bool			operator<(const MNotifyHandler& rhs) const
+							{ return mHWND < rhs.mHWND or (mHWND == rhs.mHWND and mCode < rhs.mCode);	}
+	};
+
+	typedef std::map<MNotifyHandler,MNotification>		MNotificationTable;
+
 	HWND			mHandle;
 	WNDPROC			mOldWinProc;
 	MHandlerTable	mHandlers;
+	MNotificationTable
+					mNotificationHandlers;
 	bool			mSuppressNextWMChar;
 
 	static LRESULT CALLBACK

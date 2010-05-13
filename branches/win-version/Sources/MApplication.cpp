@@ -350,7 +350,7 @@ MDocWindow* MApplication::DisplayDocument(
 
 void MApplication::DoNew()
 {
-	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), MWindowFlags(0));
+	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), kMPostionDefault);
 	w->Select();
 
 	//MDocument* doc = MDocument::Create<MTextDocument>(MFile());

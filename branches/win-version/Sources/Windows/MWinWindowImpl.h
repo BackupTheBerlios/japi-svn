@@ -11,13 +11,15 @@
 #include "MWindowImpl.h"
 #include "MWinProcMixin.h"
 
+class MWinMenubar;
+
 class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 {
   public:
 					MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow);
 	virtual			~MWinWindowImpl();
 
-	virtual void	Create(const MRect& inBounds, const std::wstring& inTitle);
+	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
 
 	virtual void	SetTitle(std::string inTitle);
 	virtual std::string
@@ -85,6 +87,8 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	HWND			mSizeBox;
 	HWND			mStatus;
 	std::string		mTitle;
+	int32			mMinWidth, mMinHeight;
+	MWinMenubar*	mMenubar;
 };
 
 #endif

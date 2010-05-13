@@ -18,6 +18,7 @@ enum MWindowFlags
 {
 	kMFixedSize				= (1 << 0),
 	kMAcceptFileDrops		= (1 << 1),
+	kMPostionDefault		= (1 << 2),
 };
 
 class MWindow : public MView, public MHandler
@@ -43,6 +44,8 @@ class MWindow : public MView, public MHandler
 	
 	static MWindow*			GetFirstWindow()				{ return sFirst; }
 	MWindow*				GetNextWindow() const			{ return mNext; }
+	static void				RemoveWindowFromList(
+								MWindow*		inWindow);
 		
 	void					SetTitle(
 								const std::string&	inTitle);
@@ -190,9 +193,6 @@ class MWindow : public MView, public MHandler
 
 	virtual void			PutOnDuty(
 								MHandler*		inHandler);
-
-	static void				RemoveWindowFromList(
-								MWindow*		inWindow);
 
   private:
 

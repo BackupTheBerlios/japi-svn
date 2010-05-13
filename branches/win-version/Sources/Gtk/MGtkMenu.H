@@ -7,6 +7,7 @@
 #define MMENU_H
 
 #include <list>
+#include <gdk/gdkkeysyms.h>
 
 #include "MCommands.h"
 #include "MCallbacks.h"
@@ -14,7 +15,9 @@
 
 class MHandler;
 class MFile;
-class MMenuImpl;
+
+struct MMenuItem;
+typedef std::list<MMenuItem*>	MMenuItemList;
 
 namespace zeep { namespace xml { class node; class element; } }
 
@@ -23,7 +26,7 @@ class MMenu
   public:
 					MMenu(
 						const std::string&	inLabel,
-						MMenuImpl*			inMenuImpl = nil);
+						GtkWidget*			inMenuWidget = nil);
 
 	virtual			~MMenu();
 
@@ -68,11 +71,16 @@ class MMenu
 
 	void			UpdateCommandStatus();
 
+	GtkWidget*		GetGtkMenu()			{ return mGtkMenu; }
 	std::string		GetLabel()				{ return mLabel; }
 	MHandler*		GetTarget()				{ return mTarget; }
 	
+	void			SetAcceleratorGroup(
+						GtkAccelGroup*		inAcceleratorGroup);
+
 	void			Popup(
 						MHandler*			inTarget,
+						GdkEventButton*		inEvent,
 						int32				inX,
 						int32				inY,
 						bool				inBottomMenu);
@@ -84,9 +92,30 @@ class MMenu
 	static MMenu*	Create(
 						zeep::xml::element*	inXMLNode);
 
-	MMenuImpl*		mImpl;
+	static void		MenuPosition(
+						GtkMenu*			inMenu,
+						gint*				inX,
+						gint*				inY,
+						gboolean*			inPushIn,
+						gpointer			inUserData);
+
+	MMenuItem*		CreateNewItem(
+						const std::string&	inLabel,
+						uint32				inCommand,
+						GSList**			ioRadioGroup);
+
+	virtual bool	OnDestroy();
+	virtual void	OnSelectionDone();
+
+	MSlot<bool()>	mOnDestroy;
+	MSlot<void()>	mOnSelectionDone;
+
+	GtkWidget*		mGtkMenu;
 	std::string		mLabel;
+	MMenuItemList	mItems;
 	MHandler*		mTarget;
+	GSList*			mRadioGroup;
+	int32			mPopupX, mPopupY;
 };
 
 class MMenubar
@@ -98,6 +127,10 @@ class MMenubar
 	void			AddMenu(
 						MMenu*				inMenu);
 
+	void			Initialize(
+						GtkWidget*			inMBarWidget,
+						const char*			inResourceName);
+
 	void			SetTarget(
 						MHandler*			inTarget);
 
@@ -105,7 +138,14 @@ class MMenubar
 	
 	MMenu*			CreateMenu(
 						zeep::xml::element*	inXMLNode);
+	
+	bool			OnButtonPress(
+						GdkEventButton*		inEvent);
 
+	MSlot<bool(GdkEventButton*)>
+					mOnButtonPressEvent;
+	GtkWidget*		mGtkMenubar;
+	GtkAccelGroup*	mGtkAccel;
 	MHandler*		mTarget;
 	std::list<MMenu*>
 					mMenus;
