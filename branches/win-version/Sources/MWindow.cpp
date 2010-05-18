@@ -28,10 +28,11 @@ using namespace std;
 MWindow* MWindow::sFirst = nil;
 MWindow* MWindow::sRecycle = nil;
 
-MWindow::MWindow(const string& inTitle, const MRect& inBounds, MWindowFlags inFlags)
+MWindow::MWindow(const string& inTitle, const MRect& inBounds,
+		MWindowFlags inFlags, const string& inMenu)
 	: MView(true, false)
 	, MHandler(gApp)
-	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, this))
+	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 {
 	Init();
 }

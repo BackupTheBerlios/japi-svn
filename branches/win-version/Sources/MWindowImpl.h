@@ -11,7 +11,9 @@
 class MWindowImpl
 {
   public:
-	static MWindowImpl*	Create(std::string inTitle, MRect inBounds, MWindowFlags inFlags, MWindow* inWindow);
+	static MWindowImpl*	Create(const std::string& inTitle, MRect inBounds,
+							MWindowFlags inFlags, const std::string& inMenu,
+							MWindow* inWindow);
 	  
 	virtual				~MWindowImpl() {}
 

@@ -11,12 +11,11 @@
 #include "MWindowImpl.h"
 #include "MWinProcMixin.h"
 
-class MWinMenubar;
-
 class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 {
   public:
-					MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow);
+					MWinWindowImpl(MWindowFlags inFlags,
+						const std::string& inMenu, MWindow* inWindow);
 	virtual			~MWinWindowImpl();
 
 	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
@@ -72,7 +71,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMInitMenu(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
-	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMMenuCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
@@ -84,13 +83,12 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMImeRequest(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMQueryEndSession(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMDropFiles(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
-	virtual bool	WMThemeChanged(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
 	HWND			mSizeBox;
 	HWND			mStatus;
 	std::string		mTitle;
 	int32			mMinWidth, mMinHeight;
-	MWinMenubar*	mMenubar;
+	MMenu*			mMenubar;
 };
 
 #endif

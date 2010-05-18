@@ -8,6 +8,9 @@
 #undef CreateWindow
 #undef GetNextWindow
 
+#include "zeep/xml/document.hpp"
+#include <boost/filesystem/fstream.hpp>
+
 #include "MLib.h"
 #include "MWinWindowImpl.h"
 #include "MWindow.h"
@@ -17,14 +20,30 @@
 #include "MWinMenu.h"
 
 using namespace std;
+using namespace zeep;
 
-MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, MWindow* inWindow)
+MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
+		MWindow* inWindow)
 	: MWindowImpl(inFlags, inWindow)
 	, mSizeBox(nil)
 	, mStatus(nil)
 	, mMinWidth(100)
 	, mMinHeight(100)
+	, mMenubar(nil)
 {
+	if (not inMenu.empty())
+	{
+		//mrsrc::rsrc rsrc(string("Menus/") + inResourceName + ".xml");
+		//
+		//if (not rsrc)
+		//	THROW(("Menu resource not found: %s", inResourceName));
+
+		//io::stream<io::array_source> data(rsrc.data(), rsrc.size());
+		ifstream data("C:\\Users\\maarten\\projects\\japi\\Resources\\Menus\\" + string(inMenu) + ".xml");
+		xml::document doc(data);
+	
+		mMenubar = MMenu::Create(doc.child());
+	}
 }
 
 MWinWindowImpl::~MWinWindowImpl()
@@ -41,6 +60,9 @@ void MWinWindowImpl::CreateParams(DWORD& outStyle,
 	if (mFlags & kMFixedSize)
 		outStyle &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
 	outExStyle = 0;
+
+	if (mMenubar != nil)
+		outMenu = static_cast<MWinMenuImpl*>(mMenubar->impl())->GetHandle();
 }
 
 void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
@@ -89,7 +111,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_LBUTTONDOWN,		boost::bind(&MWinWindowImpl::WMMouseDown, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MOUSEWHEEL,		boost::bind(&MWinWindowImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_VSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
@@ -103,13 +125,13 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_IME_REQUEST,		boost::bind(&MWinWindowImpl::WMImeRequest, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_QUERYENDSESSION,	boost::bind(&MWinWindowImpl::WMQueryEndSession, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_DROPFILES,		boost::bind(&MWinWindowImpl::WMDropFiles, this, _1, _2, _3, _4, _5));
-	//AddHandler(WM_THEMECHANGED,		boost::bind(&MWinWindowImpl::WMThemeChanged, this, _1, _2, _3, _4, _5));
 	
 	RECT clientArea;
 	::GetClientRect(GetHandle(), &clientArea);
 	//mWindow->SetFrame(MRect(clientArea));
 
-	mMenubar = new MWinMenubar(this, "edit-window-menu");
+	if (mMenubar != nil)
+		mMenubar->SetTarget(mWindow);
 }
 
 // --------------------------------------------------------------------
@@ -368,42 +390,19 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
-	//if (MHandler::GetFocus() and
-	//	MHandler::GetUpdateCommandStatus() and
-	//	mMenubar != nil)
-	//{
-	//	MHandler::GetFocus()->UpdateMenu(*fMenubar);
-	//	MHandler::SetUpdateCommandStatus(false);
-	//}
-
+	mMenubar->UpdateCommandStatus();
 	return false;
 }
 
-bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
+bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	outResult = 1;
 	bool result = false;
 
-	//if (inLParam != nil)
-	//{
-	//	HNativeControlNodeImp* imp =
-	//		HNativeControlNodeImp::FetchControlNodeImp((HWND)inLParam);
+	uint32 index = inWParam;
+	MMenu* menu = MWinMenuImpl::Lookup((HMENU)inLParam);
 
-	//	if (imp != nil)
-	//	{
-	//		outResult = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam);
-	//		result = true;
-	//	}
-	//}
-	//else
-	//{
-	//	HMessage msg (inWParam);
-	//	
-	//	if (HHandler::GetFocus())
-	//		result = HHandler::GetFocus()->HandleMessage(msg);
-	//	else
-	//		result = HHandler::GetTopHandler()->HandleMessage(msg);
-	//}
+	mWindow->ProcessCommand(menu->GetItemCommand(index), menu, index, 0);
 
 	return result;
 }
@@ -706,23 +705,12 @@ bool MWinWindowImpl::WMDropFiles(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	return true;
 }
 
-bool MWinWindowImpl::WMThemeChanged(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
-{
-	//InitThemeMachine(true);
-////This code sample illustrates the two calls.
-//case WM_THEMECHANGED:
-//     CloseThemeData (hTheme);
-//     hTheme = OpenThemeData (hwnd, L"MyClassName");
-
-	outResult = 0;
-	return true;
-}
-
 // --------------------------------------------------------------------
 
-MWindowImpl* MWindowImpl::Create(string inTitle, MRect inBounds, MWindowFlags inFlags, MWindow* inWindow)
+MWindowImpl* MWindowImpl::Create(const string& inTitle, MRect inBounds,
+	MWindowFlags inFlags, const string& inMenu, MWindow* inWindow)
 {
-	MWinWindowImpl* result = new MWinWindowImpl(inFlags, inWindow);
+	MWinWindowImpl* result = new MWinWindowImpl(inFlags, inMenu, inWindow);
 	result->Create(inBounds, c2w(inTitle));
 	return result;
 }

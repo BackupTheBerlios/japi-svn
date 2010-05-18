@@ -24,11 +24,9 @@ enum MWindowFlags
 class MWindow : public MView, public MHandler
 {
   public:
-							MWindow(
-								const std::string&
-												inTitle,
-								const MRect&	inBounds,
-								MWindowFlags	inFlags);
+							MWindow(const std::string& inTitle,
+								const MRect& inBounds, MWindowFlags inFlags,
+								const std::string& inMenu);
 	
 	virtual					~MWindow();
 

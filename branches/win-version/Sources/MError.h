@@ -89,8 +89,13 @@ void __debug_printf(const char* inMsg, ...);
 #define THROW_EXCEPTION(e) \
 	do { exception _e(e); SIGNAL_THROW(_e.what()) throw _e; } while (false)
 
+#ifdef _MSC_VER
 #define THROW_WIN_ERROR(e) \
 	do { MWinException _e(e); SIGNAL_THROW(_e.what()); throw _e; } while (false)
+
+#define THROW_IF_WIN_ERROR(e) \
+	do { if ((e) == FALSE) THROW_WIN_ERROR("Windows error returned for " #e); } while (false)
+#endif
 
 #define ASSERT(x, m)		if (not (x)) { SIGNAL_THROW(#x " => " #m); throw MException m; }
 

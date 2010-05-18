@@ -23,7 +23,7 @@ class MMenu
   public:
 					MMenu(
 						const std::string&	inLabel,
-						MMenuImpl*			inMenuImpl = nil);
+						bool				inPopup);
 
 	virtual			~MMenu();
 
@@ -59,6 +59,9 @@ class MMenu
 	std::string		GetItemLabel(
 						uint32				inIndex) const;
 
+	uint32			GetItemCommand(
+						uint32				inIndex) const;
+
 	bool			GetRecentItem(
 						uint32				inIndex,
 						MFile&				outURL) const;
@@ -81,6 +84,8 @@ class MMenu
 	
 	static MMenu*	Create(
 						zeep::xml::element*	inXMLNode);
+
+	MMenuImpl*		impl() const			{ return mImpl; }
 
   protected:
 
