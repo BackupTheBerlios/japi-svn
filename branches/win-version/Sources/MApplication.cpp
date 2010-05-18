@@ -38,6 +38,23 @@ fs::path gExecutablePath, gPrefixPath;
 
 // --------------------------------------------------------------------
 
+MApplicationImpl::MApplicationImpl(
+	MApplication*		inApp)
+	: mApp(inApp)
+{
+}
+
+MApplicationImpl::~MApplicationImpl()
+{
+}
+
+void MApplicationImpl::Pulse()
+{
+	mApp->Pulse();
+}
+
+// --------------------------------------------------------------------
+
 MApplication::MApplication()
 	: MHandler(nil)
 	, mImpl(MApplicationImpl::Create(this))

@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <sstream>
 #include <cassert>
@@ -26,10 +26,10 @@ MDocWindow::MDocWindow(
 	, mController(nil)
 	, mMenubar(this)
 {
-	GdkGeometry geom = {};
-	geom.min_width = 300;
-	geom.min_height = 100;
-	gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);
+	//GdkGeometry geom = {};
+	//geom.min_width = 300;
+	//geom.min_height = 100;
+	//gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);
 }
 
 MDocWindow::~MDocWindow()

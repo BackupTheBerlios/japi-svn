@@ -88,7 +88,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
-    <ClCompile Include="..\..\Sources\MApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\MController.cpp" />
     <ClCompile Include="..\..\Sources\MDocument.cpp" />
     <ClCompile Include="..\..\Sources\MDocWindow.cpp" />
