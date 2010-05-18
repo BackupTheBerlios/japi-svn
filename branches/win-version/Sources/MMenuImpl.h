@@ -17,6 +17,12 @@ public:
 							const std::string&	inLabel,
 							uint32				inCommand) = 0;
 
+	virtual void		Popup(
+							MHandler*			inHandler,
+							int32				inX,
+							int32				inY,
+							bool				inBottomMenu) = 0;
+
 	static MMenuImpl*	Create();
 };
 

@@ -8,15 +8,18 @@
 
 #include "MWinProcMixin.h"
 class MWinWindowImpl;
+class MMenu;
 
 class MWinMenubar : public MWinProcMixin
 {
-public:
+  public:
 					MWinMenubar(
 						MWinWindowImpl*	inWindowImpl,
 						const char*		inMenuResource);
-	
-protected:
+
+					~MWinMenubar();
+
+  protected:
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
 	virtual void	RegisterParams(UINT& outStyle, HCURSOR& outCursor,
@@ -25,6 +28,8 @@ protected:
 	bool			NDropDown(WPARAM inWParam, LPARAM inLParam, int& outResult);
 
 	MWinWindowImpl*	mWindowImpl;
+	std::vector<MMenu*>
+					mMenus;
 };
 
 #endif

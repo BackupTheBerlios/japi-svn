@@ -18,6 +18,7 @@
 
 #include "zeep/xml/document.hpp"
 
+#include "MMenu.h"
 #include "MWinMenu.h"
 #include "MMenuImpl.h"
 #include "MWinWindowImpl.h"
@@ -36,13 +37,22 @@ public:
 	virtual void	CreateNewItem(
 						const string&	inLabel,
 						uint32			inCommand);
+
+	virtual void	Popup(
+						MHandler*		inHandler,
+						int32			inX,
+						int32			inY,
+						bool			inBottomMenu);
 private:
 	HMENU			mMenu;
 };
 
-MWinMenuImpl::MWinMenuImpl()
+MWinMenuImpl::MWinMenuImpl(bool inPopup)
 {
-	mMenu = ::CreatePopupMenu();
+	if (inPopup)
+		mMenu = ::CreatePopupMenu();
+	else
+		mMenu = ::CreateMenu();
 }
 
 MWinMenuImpl::~MWinMenuImpl()
@@ -56,6 +66,7 @@ void MWinMenuImpl::CreateNewItem(
 {
 	/* Add it to the fMenuHandle */
 	MENUITEMINFOW lWinItem = { sizeof(MENUITEMINFOW) };
+	wstring label = c2w(inLabel);
 	
 	if (inLabel == "-")
 	{
@@ -64,13 +75,27 @@ void MWinMenuImpl::CreateNewItem(
 	}
 	else
 	{
-		lWinItem.fType = MFT_STRING;
 		lWinItem.fMask = MIIM_ID | MIIM_TYPE;
+		lWinItem.fType = MFT_STRING;
 		lWinItem.wID = inCommand;
-		wstring label = c2w(inLabel);
 		lWinItem.dwTypeData = (LPWSTR)label.c_str();
 	}
 	::InsertMenuItemW(mMenu, ::GetMenuItemCount(mMenu) + 1, TRUE, &lWinItem);
+}
+
+void MWinMenuImpl::Popup(
+	MHandler*		inHandler,
+	int32			inX,
+	int32			inY,
+	bool			inBottomMenu)
+{
+	MWindow* window = dynamic_cast<MWindow*>(inHandler);
+	if (window != nil)
+	{
+		MWinWindowImpl* impl = dynamic_cast<MWinWindowImpl*>(window->GetImpl());
+
+		::TrackPopupMenuEx(mMenu, TPM_NONOTIFY, inX, inY, impl->GetHandle(), nil);
+	}
 }
 
 MMenuImpl* MMenuImpl::Create()
@@ -119,6 +144,8 @@ MWinMenubar::MWinMenubar(MWinWindowImpl* inWindowImpl, const char* inMenuResourc
 		};
 
 		buttons.push_back(btn);
+
+		mMenus.push_back(MMenu::Create(menu));
 	}
 	
     // Add buttons.
@@ -128,6 +155,12 @@ MWinMenubar::MWinMenubar(MWinWindowImpl* inWindowImpl, const char* inMenuResourc
     // Tell the toolbar to resize itself, and show it.
     ::SendMessage(GetHandle(), TB_AUTOSIZE, 0, 0);
     ::ShowWindow(GetHandle(), TRUE);
+}
+
+MWinMenubar::~MWinMenubar()
+{
+	foreach (MMenu* menu, mMenus)
+		delete menu;
 }
 
 void MWinMenubar::CreateParams(DWORD& outStyle, DWORD& outExStyle,
@@ -157,37 +190,9 @@ bool MWinMenubar::NDropDown(WPARAM inWParam, LPARAM inLParam, int& outResult)
 	::MapWindowPoints(GetHandle(), HWND_DESKTOP, (LPPOINT)&rc, 2);                         
     
 	MMenu* menu = mMenus[toolbar->iItem];
-	uint32 cmd;
 
-	if (menu != nil and menu->Popup(rc.left, rc.bottom, cmd))
-	{
-
-		// Set up the popup menu.
-		// Set rcExclude equal to the button rectangle so that if the toolbar 
-		// is too close to the bottom of the screen, the menu will appear above 
-		// the button rather than below it. 
-		TPMPARAMS tpm;
-		tpm.cbSize = sizeof(TPMPARAMS);
-		tpm.rcExclude = rc;
-      
-		// Show the menu and wait for input. 
-		// If the user selects an item, its WM_COMMAND is sent.
-		::TrackPopupMenuEx(hPopupMenu,
-			TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_VERTICAL,               
-			rc.left, rc.bottom, mWindowImpl->GetHandle(), &tpm); 
-
-
-	}
-
-
-	//// Get the menu.
-	//HMENU hMenuLoaded = LoadMenu(g_hinst, MAKEINTRESOURCE(IDR_POPUP)); 
-//      
-	//// Get the submenu for the first menu item.
-	//HMENU hPopupMenu = GetSubMenu(hMenuLoaded, 0);
-
-
-	//DestroyMenu(hMenuLoaded);
+	if (menu != nil)
+		menu->Popup(mWindowImpl->GetWindow(), rc.left, rc.bottom, false);
 
 	outResult = 0;
 	return true;

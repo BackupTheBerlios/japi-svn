@@ -130,13 +130,13 @@ class MJapiApp : public MHandler
 		
 	void				Pulse();
 	
-	static gboolean		Timeout(
-							gpointer			inData);
+	//static gboolean		Timeout(
+	//						gpointer			inData);
 
-	static gint			Snooper(
-							GtkWidget*			inGrabWidget,
-							GdkEventKey*		inEvent,
-							gpointer			inFuncData); 
+	//static gint			Snooper(
+	//						GtkWidget*			inGrabWidget,
+	//						GdkEventKey*		inEvent,
+	//						gpointer			inFuncData); 
 
 	void				ProcessSocketMessages();
 

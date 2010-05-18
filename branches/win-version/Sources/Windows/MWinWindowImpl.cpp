@@ -275,7 +275,8 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 		//	newBounds.bottom - oldBounds.bottom);
 	}
 
-	return true;
+//	return true;
+	return false;
 }
 
 bool MWinWindowImpl::WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)

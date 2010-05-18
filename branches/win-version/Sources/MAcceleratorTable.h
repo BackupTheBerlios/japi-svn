@@ -28,9 +28,9 @@ class MAcceleratorTable
 						uint32&			outKeyValue,
 						uint32&			outModifiers);
 	
-	bool			IsAcceleratorKey(
-						GdkEventKey*	inEvent,
-						uint32&			outCommand);
+	//bool			IsAcceleratorKey(
+	//					GdkEventKey*	inEvent,
+	//					uint32&			outCommand);
 
 	bool			IsNavigationKey(
 						uint32			inKeyValue,

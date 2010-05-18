@@ -169,6 +169,8 @@ class MWindow : public MView, public MHandler
 	
 	static void				RecycleWindows();
 
+	MWindowImpl*	GetImpl() const			{ return mImpl; }
+
   protected:
 
 							//MWindow(

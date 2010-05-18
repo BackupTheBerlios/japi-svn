@@ -55,6 +55,8 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	//virtual void	ConvertToScreen(HRect& ioRect) const;
 	//virtual void	ConvertFromScreen(HRect& ioRect) const;
 
+	MWindow*		GetWindow() const						{ return mWindow; }
+
   protected:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,

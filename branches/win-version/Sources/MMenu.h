@@ -79,10 +79,10 @@ class MMenu
 	
 	bool			IsRecentMenu() const;
 	
-  protected:
-
 	static MMenu*	Create(
 						zeep::xml::element*	inXMLNode);
+
+  protected:
 
 	MMenuImpl*		mImpl;
 	std::string		mLabel;

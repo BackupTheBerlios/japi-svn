@@ -102,8 +102,6 @@ class MPatriciaTree
 	uint32				mCount;
 };
 
-#pragma mark -
-
 template<class T>
 void* MPatriciaTree<T>::MNode::operator new(size_t inItemSize, size_t inKeyLength)
 {
@@ -191,8 +189,6 @@ typename MPatriciaTree<T>::MNode* MPatriciaTree<T>::MNode::Create(
 //void MPatriciaTree<T>::iterator::increment()
 //{
 //}
-
-#pragma mark -
 
 template<class T>
 MPatriciaTree<T>::MPatriciaTree()
