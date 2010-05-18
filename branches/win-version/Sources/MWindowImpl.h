@@ -18,7 +18,7 @@ class MWindowImpl
 	virtual				~MWindowImpl() {}
 
 	virtual void		SetTitle(std::string inTitle) = 0;
-	virtual std::string	GetTitle() const = 0;
+	//virtual std::string	GetTitle() const = 0;
 
 	virtual void		Show() = 0;
 	virtual void		Hide() = 0;
@@ -33,8 +33,8 @@ class MWindowImpl
 	//virtual void		BeFocus();
 	//virtual void		SubFocusChanged();
 	
-	virtual void		SetGlobalBounds(MRect inBounds) = 0;
-	virtual void		GetGlobalBounds(MRect& outBounds) const = 0;
+	virtual void		SetWindowPosition(MRect inBounds, bool inTransition) = 0;
+	virtual void		GetWindowPosition(MRect& outBounds) const = 0;
 	
 //	virtual void		Invalidate(const HRegion& inRegion) = 0;
 //	virtual void		Validate(const HRegion& inRegion) = 0;

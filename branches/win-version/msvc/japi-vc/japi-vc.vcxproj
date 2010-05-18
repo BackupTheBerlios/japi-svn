@@ -89,14 +89,17 @@
   <ItemGroup>
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MApplicationImpl.cpp" />
+    <ClCompile Include="..\..\Sources\MController.cpp" />
+    <ClCompile Include="..\..\Sources\MDocument.cpp" />
+    <ClCompile Include="..\..\Sources\MDocWindow.cpp" />
     <ClCompile Include="..\..\Sources\MError.cpp" />
     <ClCompile Include="..\..\Sources\MHandler.cpp" />
     <ClCompile Include="..\..\Sources\MMenu.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
     <ClCompile Include="..\..\Sources\MView.cpp" />
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MJapiMain.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />

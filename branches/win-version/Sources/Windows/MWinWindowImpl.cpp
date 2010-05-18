@@ -139,14 +139,13 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 
 void MWinWindowImpl::SetTitle(string inTitle)
 {
-	mTitle = inTitle;
-	::SetWindowTextW(GetHandle(), c2w(mTitle).c_str());
+	::SetWindowTextW(GetHandle(), c2w(inTitle).c_str());
 }
 
-string MWinWindowImpl::GetTitle() const
-{
-	return mTitle;
-}
+//string MWinWindowImpl::GetTitle() const
+//{
+//	return mTitle;
+//}
 
 void MWinWindowImpl::Show()
 {
@@ -178,8 +177,23 @@ void MWinWindowImpl::Close()
 //virtual void	BeFocus();
 //virtual void	SubFocusChanged();
 	
-void MWinWindowImpl::SetGlobalBounds(MRect inBounds){}
-void MWinWindowImpl::GetGlobalBounds(MRect& outBounds) const{}
+void MWinWindowImpl::SetWindowPosition(MRect inBounds, bool inTransition)
+{
+	//HRect sb;
+	//HScreen::GetBounds(sb);
+	//
+	//if (sb.Intersects(inBounds))
+
+	::MoveWindow(GetHandle(), inBounds.x, inBounds.y,
+		inBounds.width, inBounds.height, TRUE);
+}
+
+void MWinWindowImpl::GetWindowPosition(MRect& outBounds) const
+{
+	RECT r;
+	::GetWindowRect(GetHandle(), &r);
+	outBounds = MRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
+}
 	
 //	virtual void	Invalidate(const HRegion& inRegion){}
 //	virtual void	Validate(const HRegion& inRegion){}

@@ -225,3 +225,11 @@ void DisplayError(const exception& e)
 {
 	assert(false);
 }
+
+string GetHome()
+{
+	const char* HOME = getenv("HOME");
+	if (HOME == nil)
+		HOME = "";
+	return HOME;
+}

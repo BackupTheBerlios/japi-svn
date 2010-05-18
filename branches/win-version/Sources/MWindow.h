@@ -196,8 +196,6 @@ class MWindow : public MView, public MHandler
 
   private:
 
-	MWindowImpl*			mImpl;
-
 	void					Init();
 
 	void					TransitionTo(
@@ -220,6 +218,10 @@ class MWindow : public MView, public MHandler
 
 	//MSlot<void()>			mChanged;
 	//void					Changed();
+
+	MWindowImpl*			mImpl;
+	std::string				mTitle;
+	bool					mModified;
 
 	static MWindow*			sFirst;
 	MWindow*				mNext;

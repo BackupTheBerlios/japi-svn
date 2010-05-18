@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <cstring>
 #include <boost/algorithm/string.hpp>
@@ -324,11 +324,10 @@ string MDocument::GetWindowTitle() const
 		NormalizePath(result);
 		
 		// strip off HOME, if any
-		
-		const char* HOME = getenv("HOME");
-		if (HOME != nil and ba::starts_with(result, HOME))
+		string home = GetHome();
+		if (not home.empty() and ba::starts_with(result, home))
 		{
-			result.erase(0, strlen(HOME));
+			result.erase(0, home.length());
 			result.insert(0, "~");
 		}
 	}

@@ -46,7 +46,7 @@ MWindow::~MWindow()
 		if (w == this)
 		{
 			if (mImpl != nil /*and mImpl->IsValid()*/)
-				PRINT(("Window was not removed from list: %s", mImpl->GetTitle().c_str()));
+				PRINT(("Window was not removed from list: %s", mTitle.c_str()));
 			else
 				PRINT(("Window was not removed from list: [deleted]"));
 
@@ -172,11 +172,6 @@ void MWindow::RecycleWindows()
 	}
 }
 
-//void MWindow::ConnectChildSignals()
-//{
-//	gtk_container_foreach(GTK_CONTAINER(GetGtkWidget()), &MWindow::DoForEachCallBack, this);
-//}
-
 void MWindow::RemoveWindowFromList(
 	MWindow*		inWindow)
 {
@@ -230,55 +225,31 @@ void MWindow::Close()
 		mImpl->Close();
 }
 
-//void MWindow::SetTitle(
-//	const string&	inTitle)
-//{
-//	mTitle = inTitle;
-//	
-//	if (mModified)
-//		gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), (mTitle + " *").c_str());
-//	else
-//		gtk_window_set_title(GTK_WINDOW(GetGtkWidget()), mTitle.c_str());
-//}
-//
-//string MWindow::GetTitle() const
-//{
-//	return mTitle;
-//}
-//
-//void MWindow::SetModifiedMarkInTitle(
-//	bool		inModified)
-//{
-//	if (mModified != inModified)
-//	{
-//		mModified = inModified;
-//		SetTitle(mTitle);
-//	}
-//}
-//
-//bool MWindow::OnDestroy()
-//{
-//	RemoveWindowFromList(this);
-//
-//	eWindowClosed(this);
-//	
-//	// and put window in the queue to be recycled at next event
-//	mNext = sRecycle;
-//	sRecycle = this;
-//	
-//	return true;
-//}
+void MWindow::SetTitle(
+	const string&	inTitle)
+{
+	mTitle = inTitle;
+	
+	if (mModified)
+		mImpl->SetTitle(mTitle + "*");
+	else
+		mImpl->SetTitle(mTitle);
+}
 
-//bool MWindow::OnDelete(
-//	GdkEvent*		inEvent)
-//{
-//	bool result = true;
-//
-//	if (DoClose())
-//		result = false;
-//	
-//	return result;
-//}
+string MWindow::GetTitle() const
+{
+	return mTitle;
+}
+
+void MWindow::SetModifiedMarkInTitle(
+	bool		inModified)
+{
+	if (mModified != inModified)
+	{
+		mModified = inModified;
+		SetTitle(mTitle);
+	}
+}
 
 bool MWindow::UpdateCommandStatus(
 	uint32			inCommand,
@@ -325,40 +296,19 @@ bool MWindow::ProcessCommand(
 	return result;
 }
 
-//void MWindow::GetWindowPosition(
-//	MRect&			outPosition)
-//{
-//	int x, y;
-//	gtk_window_get_position(GTK_WINDOW(GetGtkWidget()), &x, &y);
-//	
-//	int w, h;
-//	gtk_window_get_size(GTK_WINDOW(GetGtkWidget()), &w, &h);
-//	
-//	outPosition = MRect(x, y, w, h);
-//}
-//
-//void MWindow::SetWindowPosition(
-//	const MRect&	inPosition,
-//	bool			inTransition)
-//{
-//	if (inTransition)
-//	{
-//		if (mTransitionThread != nil)
-//			THROW(("SetWindowPosition called to fast"));
-//		
-//		mTransitionThread =
-//			new boost::thread(boost::bind(&MWindow::TransitionTo, this, inPosition));
-//	}
-//	else
-//	{
-//		gtk_window_move(GTK_WINDOW(GetGtkWidget()),
-//			inPosition.x, inPosition.y);
-//	
-//		gtk_window_resize(GTK_WINDOW(GetGtkWidget()),
-//			inPosition.width, inPosition.height);
-//	}
-//}
-//
+void MWindow::GetWindowPosition(
+	MRect&			outPosition)
+{
+	mImpl->GetWindowPosition(outPosition);
+}
+
+void MWindow::SetWindowPosition(
+	const MRect&	inPosition,
+	bool			inTransition)
+{
+	mImpl->SetWindowPosition(inPosition, inTransition);
+}
+
 //// try to be nice to those with multiple monitors:
 //
 //void MWindow::GetMaxPosition(

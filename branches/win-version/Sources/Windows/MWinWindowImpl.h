@@ -21,8 +21,8 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
 
 	virtual void	SetTitle(std::string inTitle);
-	virtual std::string
-					GetTitle() const;
+	//virtual std::string
+	//				GetTitle() const;
 
 	virtual void	Show();
 	virtual void	Hide();
@@ -37,8 +37,8 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	//virtual void	BeFocus();
 	//virtual void	SubFocusChanged();
 	
-	virtual void	SetGlobalBounds(MRect inBounds);
-	virtual void	GetGlobalBounds(MRect& outBounds) const;
+	virtual void	SetWindowPosition(MRect inBounds, bool inTransition);
+	virtual void	GetWindowPosition(MRect& outBounds) const;
 	
 //	virtual void	Invalidate(const HRegion& inRegion);
 //	virtual void	Validate(const HRegion& inRegion);
@@ -86,7 +86,6 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 
 	HWND			mSizeBox;
 	HWND			mStatus;
-	std::string		mTitle;
 	int32			mMinWidth, mMinHeight;
 	MMenu*			mMenubar;
 };
