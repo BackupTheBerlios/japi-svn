@@ -56,13 +56,13 @@ struct MEncodingTraits
 	void		ReadUnicode(
 					const ByteIterator	inText,
 					uint32&				outLength,
-					wchar_t&			outUnicode);
+					unicode&			outUnicode);
 
 	template<class ByteIterator>
 	static
 	uint32		WriteUnicode(
 					ByteIterator&		inText,
-					wchar_t				inUnicode);
+					unicode				inUnicode);
 };
 
 enum WordBreakClass
@@ -80,7 +80,7 @@ enum WordBreakClass
 	eWB_None
 };
 
-WordBreakClass GetWordBreakClass(wchar_t inUnicode);
+WordBreakClass GetWordBreakClass(unicode inUnicode);
 
 enum CharBreakClass
 {
@@ -98,13 +98,13 @@ enum CharBreakClass
 
 extern const bool kCharBreakTable[10][10];
 
-CharBreakClass GetCharBreakClass(wchar_t inUnicode);
+CharBreakClass GetCharBreakClass(unicode inUnicode);
 
-bool IsSpace(wchar_t inChar);
-bool IsAlpha(wchar_t inChar);
-bool IsNum(wchar_t inChar);
-bool IsAlnum(wchar_t inChar);
-bool IsCombining(wchar_t inChar);
+bool IsSpace(unicode inChar);
+bool IsAlpha(unicode inChar);
+bool IsNum(unicode inChar);
+bool IsAlnum(unicode inChar);
+bool IsCombining(unicode inChar);
 
 std::string::iterator next_cursor_position(
 	std::string::iterator	inStart,
@@ -117,8 +117,8 @@ std::string::iterator next_line_break(
 // one byte character set utilities
 namespace MUnicodeMapping
 {
-wchar_t GetUnicode(MEncoding inEncoding, char inByte);
-char GetChar(MEncoding inEncoding, wchar_t inChar);
+unicode GetUnicode(MEncoding inEncoding, char inByte);
+char GetChar(MEncoding inEncoding, unicode inChar);
 }
 
 class MEncoder
@@ -126,7 +126,7 @@ class MEncoder
   public:
 	virtual				~MEncoder() {}
 	
-	virtual void		WriteUnicode(wchar_t inUnicode) = 0;
+	virtual void		WriteUnicode(unicode inUnicode) = 0;
 
 	void				SetText(const std::string& inText);
 	void				SetText(const std::wstring& inText);
@@ -148,7 +148,7 @@ class MDecoder
   public:
 	virtual				~MDecoder() {}
 	
-	virtual bool		ReadUnicode(wchar_t& outUnicode) = 0;
+	virtual bool		ReadUnicode(unicode& outUnicode) = 0;
 
 	void				GetText(std::string& outText);
 	void				GetText(std::wstring& outText);

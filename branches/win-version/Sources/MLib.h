@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef MJAPI_H
-#define MJAPI_H
+#ifndef MLIB_H
+#define MLIB_H
 
 #if defined(_MSC_VER)
 #include <ciso646>

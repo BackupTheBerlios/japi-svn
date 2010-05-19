@@ -199,7 +199,7 @@ class MTextBuffer
 	uint32		GetPrevCharLength(
 					uint32			inOffset) const;
 
-	wchar_t		GetWChar(
+	unicode		GetWChar(
 					uint32			inOffset) const;
 
 	char		GetChar(
@@ -330,7 +330,7 @@ class MTextBuffer
 						char			inChar);
 
 	void			push_back(
-						wchar_t			inUnicode);
+						unicode			inUnicode);
 	
 	void			reserve(
 						uint32			inSize);
@@ -417,7 +417,7 @@ inline void MTextBuffer::push_back(
 }
 
 inline void MTextBuffer::push_back(
-	uint32		inUnicode)
+	unicode		inUnicode)
 {
 	if (inUnicode < 0x080)
 	{

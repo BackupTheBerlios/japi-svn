@@ -8,7 +8,7 @@
 	Created Monday July 12 2004 21:45:58
 */
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <sstream>
 #include <cassert>
@@ -46,7 +46,7 @@ const bool kCharBreakTable[10][10] = {
 
 using namespace std;
 
-const wchar_t kMacOSRomanChars[] = {
+const unicode kMacOSRomanChars[] = {
 	0x0000,  0x0001,  0x0002,  0x0003,  0x0004,  0x0005,  0x0006,  0x0007,  
 	0x0008,  0x0009,  0x000A,  0x000B,  0x000C,  0x000D,  0x000E,  0x000F,  
 	0x0010,  0x0011,  0x0012,  0x0013,  0x0014,  0x0015,  0x0016,  0x0017,  
@@ -84,12 +84,12 @@ const wchar_t kMacOSRomanChars[] = {
 namespace MUnicodeMapping
 {
 
-wchar_t GetUnicode(MEncoding inEncoding, char inByte)
+unicode GetUnicode(MEncoding inEncoding, char inByte)
 {
 	return kMacOSRomanChars[static_cast<uint8>(inByte)];
 }
 
-char GetChar(MEncoding inEncoding, wchar_t inChar)
+char GetChar(MEncoding inEncoding, unicode inChar)
 {
 	char result = 0;
 	
@@ -112,7 +112,7 @@ char GetChar(MEncoding inEncoding, wchar_t inChar)
 
 }
 
-WordBreakClass GetWordBreakClass(wchar_t inUnicode)
+WordBreakClass GetWordBreakClass(unicode inUnicode)
 {
 	WordBreakClass result = eWB_Other;
 	
@@ -136,62 +136,62 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 		
 		default:
 		{
-			switch (g_unichar_type(inUnicode))
-			{
-				case G_UNICODE_LOWERCASE_LETTER: // General category "Letter, Lowercase" (Ll)
-				case G_UNICODE_MODIFIER_LETTER: // General category "Letter, Modifier" (Lm)
-				case G_UNICODE_OTHER_LETTER: // General category "Letter, Other" (Lo)
-				case G_UNICODE_TITLECASE_LETTER: // General category "Letter, Titlecase" (Lt)
-				case G_UNICODE_UPPERCASE_LETTER: // General category "Letter, Uppercase" (Lu)
-				case G_UNICODE_DECIMAL_NUMBER: // General category "Number, Decimal Digit" (Nd)
-				case G_UNICODE_LETTER_NUMBER: // General category "Number, Letter" (Nl)
-				case G_UNICODE_OTHER_NUMBER: // General category "Number, Other" (No)
-				{
-					if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
-						result = eWB_Hira;
-					else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
-						result = eWB_Kata;
-					else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
-						result = eWB_Han;
-					else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
-						result = eWB_Han;
-					else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
-						result = eWB_Han;
-					else
-						result = eWB_Let;
-					break;
-				}
+			//switch (g_unichar_type(inUnicode))
+			//{
+			//	case G_UNICODE_LOWERCASE_LETTER: // General category "Letter, Lowercase" (Ll)
+			//	case G_UNICODE_MODIFIER_LETTER: // General category "Letter, Modifier" (Lm)
+			//	case G_UNICODE_OTHER_LETTER: // General category "Letter, Other" (Lo)
+			//	case G_UNICODE_TITLECASE_LETTER: // General category "Letter, Titlecase" (Lt)
+			//	case G_UNICODE_UPPERCASE_LETTER: // General category "Letter, Uppercase" (Lu)
+			//	case G_UNICODE_DECIMAL_NUMBER: // General category "Number, Decimal Digit" (Nd)
+			//	case G_UNICODE_LETTER_NUMBER: // General category "Number, Letter" (Nl)
+			//	case G_UNICODE_OTHER_NUMBER: // General category "Number, Other" (No)
+			//	{
+			//		if (inUnicode >= 0x003040 and inUnicode <= 0x00309f)
+			//			result = eWB_Hira;
+			//		else if (inUnicode >= 0x0030a0 and inUnicode <= 0x0030ff)
+			//			result = eWB_Kata;
+			//		else if (inUnicode >= 0x004e00 and inUnicode <= 0x009fff)
+			//			result = eWB_Han;
+			//		else if (inUnicode >= 0x003400 and inUnicode <= 0x004DFF)
+			//			result = eWB_Han;
+			//		else if (inUnicode >= 0x00F900 and inUnicode <= 0x00FAFF)
+			//			result = eWB_Han;
+			//		else
+			//			result = eWB_Let;
+			//		break;
+			//	}
 
-				case G_UNICODE_COMBINING_MARK: // General category "Mark, Spacing Combining" (Mc)
-					result = eWB_Com;
-					break;
+			//	case G_UNICODE_COMBINING_MARK: // General category "Mark, Spacing Combining" (Mc)
+			//		result = eWB_Com;
+			//		break;
 
-				case G_UNICODE_LINE_SEPARATOR: // General category "Separator, Line" (Zl)
-				case G_UNICODE_PARAGRAPH_SEPARATOR: // General category "Separator, Paragraph" (Zp)
-				case G_UNICODE_SPACE_SEPARATOR: // General category "Separator, Space" (Zs)
-					result = eWB_Sep;
-					break;
-				
-				case G_UNICODE_CONTROL: // General category "Other, Control" (Cc)
-				case G_UNICODE_FORMAT: // General category "Other, Format" (Cf)
-				case G_UNICODE_UNASSIGNED: // General category "Other, Not Assigned" (Cn)
-				case G_UNICODE_PRIVATE_USE: // General category "Other, Private Use" (Co)
-				case G_UNICODE_SURROGATE: // General category "Other, Surrogate" (Cs)
-				case G_UNICODE_ENCLOSING_MARK: // General category "Mark, Enclosing" (Me)
-				case G_UNICODE_NON_SPACING_MARK: // General category "Mark, Nonspacing" (Mn)
-				case G_UNICODE_CONNECT_PUNCTUATION: // General category "Punctuation, Connector" (Pc)
-				case G_UNICODE_DASH_PUNCTUATION: // General category "Punctuation, Dash" (Pd)
-				case G_UNICODE_CLOSE_PUNCTUATION: // General category "Punctuation, Close" (Pe)
-				case G_UNICODE_FINAL_PUNCTUATION: // General category "Punctuation, Final quote" (Pf)
-				case G_UNICODE_INITIAL_PUNCTUATION: // General category "Punctuation, Initial quote" (Pi)
-				case G_UNICODE_OTHER_PUNCTUATION: // General category "Punctuation, Other" (Po)
-				case G_UNICODE_OPEN_PUNCTUATION: // General category "Punctuation, Open" (Ps)
-				case G_UNICODE_CURRENCY_SYMBOL: // General category "Symbol, Currency" (Sc)
-				case G_UNICODE_MODIFIER_SYMBOL: // General category "Symbol, Modifier" (Sk)
-				case G_UNICODE_MATH_SYMBOL: // General category "Symbol, Math" (Sm)
-				case G_UNICODE_OTHER_SYMBOL: // General category "Symbol, Other" (So)
-					break;
-			}
+			//	case G_UNICODE_LINE_SEPARATOR: // General category "Separator, Line" (Zl)
+			//	case G_UNICODE_PARAGRAPH_SEPARATOR: // General category "Separator, Paragraph" (Zp)
+			//	case G_UNICODE_SPACE_SEPARATOR: // General category "Separator, Space" (Zs)
+			//		result = eWB_Sep;
+			//		break;
+			//	
+			//	case G_UNICODE_CONTROL: // General category "Other, Control" (Cc)
+			//	case G_UNICODE_FORMAT: // General category "Other, Format" (Cf)
+			//	case G_UNICODE_UNASSIGNED: // General category "Other, Not Assigned" (Cn)
+			//	case G_UNICODE_PRIVATE_USE: // General category "Other, Private Use" (Co)
+			//	case G_UNICODE_SURROGATE: // General category "Other, Surrogate" (Cs)
+			//	case G_UNICODE_ENCLOSING_MARK: // General category "Mark, Enclosing" (Me)
+			//	case G_UNICODE_NON_SPACING_MARK: // General category "Mark, Nonspacing" (Mn)
+			//	case G_UNICODE_CONNECT_PUNCTUATION: // General category "Punctuation, Connector" (Pc)
+			//	case G_UNICODE_DASH_PUNCTUATION: // General category "Punctuation, Dash" (Pd)
+			//	case G_UNICODE_CLOSE_PUNCTUATION: // General category "Punctuation, Close" (Pe)
+			//	case G_UNICODE_FINAL_PUNCTUATION: // General category "Punctuation, Final quote" (Pf)
+			//	case G_UNICODE_INITIAL_PUNCTUATION: // General category "Punctuation, Initial quote" (Pi)
+			//	case G_UNICODE_OTHER_PUNCTUATION: // General category "Punctuation, Other" (Po)
+			//	case G_UNICODE_OPEN_PUNCTUATION: // General category "Punctuation, Open" (Ps)
+			//	case G_UNICODE_CURRENCY_SYMBOL: // General category "Symbol, Currency" (Sc)
+			//	case G_UNICODE_MODIFIER_SYMBOL: // General category "Symbol, Modifier" (Sk)
+			//	case G_UNICODE_MATH_SYMBOL: // General category "Symbol, Math" (Sm)
+			//	case G_UNICODE_OTHER_SYMBOL: // General category "Symbol, Other" (So)
+			//		break;
+			//}
 		}
 	}
 	
@@ -199,7 +199,7 @@ WordBreakClass GetWordBreakClass(wchar_t inUnicode)
 }
 
 CharBreakClass GetCharBreakClass(
-	wchar_t		inUnicode)
+	unicode		inUnicode)
 {
 	CharBreakClass result = kCBC_Other;
 	
@@ -216,29 +216,29 @@ CharBreakClass GetCharBreakClass(
 }
 
 bool IsSpace(
-	wchar_t		inUnicode)
+	unicode		inUnicode)
 {
 	return g_unichar_isspace(inUnicode);
 }
 
 bool IsAlpha(
-	wchar_t		inUnicode)
+	unicode		inUnicode)
 {
 	return inUnicode == '_' or g_unichar_isalpha(inUnicode);
 }
 
 bool IsNum(
-	wchar_t		inUnicode)
+	unicode		inUnicode)
 {
 	return g_unichar_isdigit(inUnicode);
 }
 
-bool IsAlnum(wchar_t inUnicode)
+bool IsAlnum(unicode inUnicode)
 {
 	return inUnicode == '_' or g_unichar_isalnum(inUnicode);
 }
 
-bool IsCombining(wchar_t inUnicode)
+bool IsCombining(unicode inUnicode)
 {
 	return g_unichar_type(inUnicode) == G_UNICODE_COMBINING_MARK;
 }
@@ -249,7 +249,7 @@ class MEncoderImpl : public MEncoder
 	typedef MEncodingTraits<ENCODING>	traits;
   public:
 	
-	virtual void	WriteUnicode(wchar_t inUnicode)
+	virtual void	WriteUnicode(unicode inUnicode)
 					{
 						back_insert_iterator<vector<char> > iter(mBuffer);
 						traits::WriteUnicode(iter, inUnicode);
@@ -261,7 +261,7 @@ void MEncoder::SetText(const string& inText)
 	MDecoder* decoder = MDecoder::GetDecoder(kEncodingUTF8,
 		inText.c_str(), inText.length());
 	
-	wchar_t uc;
+	unicode uc;
 	while (decoder->ReadUnicode(uc))
 		WriteUnicode(uc);
 }
@@ -322,7 +322,7 @@ class MDecoderImpl : public MDecoder
 					{
 					}
 	
-	virtual bool	ReadUnicode(wchar_t& outUnicode)
+	virtual bool	ReadUnicode(unicode& outUnicode)
 					{
 						bool result = false;
 						if (mLength > 0)
@@ -382,7 +382,7 @@ MDecoder* MDecoder::GetDecoder(MEncoding inEncoding, const void* inBuffer, uint3
 
 void MDecoder::GetText(string& outText)
 {
-	wchar_t uc;
+	unicode uc;
 	
 	MEncodingTraits<kEncodingUTF8> traits;
 	vector<char> b;
@@ -396,7 +396,7 @@ void MDecoder::GetText(string& outText)
 
 void MDecoder::GetText(wstring& outText)
 {
-	wchar_t uc;
+	unicode uc;
 	
 	outText.clear();
 	
@@ -411,7 +411,7 @@ string::iterator next_cursor_position(
 	string::iterator result = inEnd;
 
 	uint32 length;
-	wchar_t ch;
+	unicode ch;
 	
 	MEncodingTraits<kEncodingUTF8>::ReadUnicode(inStart, length, ch);
 	CharBreakClass c1 = GetCharBreakClass(ch);
@@ -575,7 +575,7 @@ string::iterator next_line_break(
 /* JT */ { 	DBK, 	PBK, 	IBK, 	IBK, 	IBK, 	PBK, 	PBK, 	PBK, 	DBK, 	IBK, 	DBK, 	DBK, 	DBK, 	IBK, 	IBK, 	IBK, 	DBK, 	DBK, 	PBK, 	CIB, 	PBK, 	DBK, 	DBK, 	DBK, 	DBK, 	IBK },
 		};
 
-	wchar_t uc;
+	unicode uc;
 	uint32 cl;
 	
 	typedef MEncodingTraits<kEncodingUTF8> enc;

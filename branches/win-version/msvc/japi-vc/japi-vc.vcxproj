@@ -102,6 +102,8 @@
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
+    <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
+    <ClCompile Include="..\..\Sources\MUnicode.cpp" />
     <ClCompile Include="..\..\Sources\MView.cpp" />
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />

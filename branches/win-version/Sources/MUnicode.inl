@@ -66,18 +66,18 @@ void
 MEncodingTraits<kEncodingUTF8>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
 	outUnicode = 0x0FFFD;
 	outLength = 1;
 	
 	if ((*inText & 0x080) == 0)
 	{
-		outUnicode = static_cast<wchar_t>(*inText);
+		outUnicode = static_cast<unicode>(*inText);
 	}
 	else if ((*inText & 0x0E0) == 0x0C0)
 	{
-		outUnicode = static_cast<wchar_t>(((inText[0] & 0x01F) << 6) | (inText[1] & 0x03F));
+		outUnicode = static_cast<unicode>(((inText[0] & 0x01F) << 6) | (inText[1] & 0x03F));
 		outLength = 2;
 		
 		if (outUnicode < 0x080 or (inText[1] & 0x000c0) != 0x00080)
@@ -88,7 +88,7 @@ MEncodingTraits<kEncodingUTF8>::ReadUnicode(
 	}
 	else if ((*inText & 0x0F0) == 0x0E0)
 	{
-		outUnicode = static_cast<wchar_t>(((inText[0] & 0x00F) << 12) | ((inText[1] & 0x03F) << 6) | (inText[2] & 0x03F));
+		outUnicode = static_cast<unicode>(((inText[0] & 0x00F) << 12) | ((inText[1] & 0x03F) << 6) | (inText[2] & 0x03F));
 		outLength = 3;
 
 		if (outUnicode < 0x000000800 or (inText[1] & 0x000c0) != 0x00080 or (inText[2] & 0x000c0) != 0x00080)
@@ -99,7 +99,7 @@ MEncodingTraits<kEncodingUTF8>::ReadUnicode(
 	}
 	else if ((*inText & 0x0F8) == 0x0F0)
 	{
-		outUnicode = static_cast<wchar_t>(((inText[0] & 0x007) << 18) | ((inText[1] & 0x03F) << 12) | ((inText[2] & 0x03F) << 6) | (inText[3] & 0x03F));
+		outUnicode = static_cast<unicode>(((inText[0] & 0x007) << 18) | ((inText[1] & 0x03F) << 12) | ((inText[2] & 0x03F) << 6) | (inText[3] & 0x03F));
 		outLength = 4;
 
 		if (outUnicode < 0x00001000 or (inText[1] & 0x000c0) != 0x00080 or (inText[2] & 0x000c0) != 0x00080 or
@@ -116,7 +116,7 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingUTF8>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	uint32 result = 0;
 	
@@ -186,13 +186,13 @@ void
 MEncodingTraits<kEncodingUTF16BE>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
 	ByteIterator iter(inText);
 
 	unsigned char ch1 = static_cast<unsigned char>(*iter++);
 	unsigned char ch2 = static_cast<unsigned char>(*iter++);
-	outUnicode = static_cast<wchar_t>((ch1 << 8) | ch2);
+	outUnicode = static_cast<unicode>((ch1 << 8) | ch2);
 	outLength = 2;
 	
 	if (outUnicode >= 0x0D800 and outUnicode <= 0x0DBFF)
@@ -200,7 +200,7 @@ MEncodingTraits<kEncodingUTF16BE>::ReadUnicode(
 		ch1 = static_cast<unsigned char>(*iter++);
 		ch2 = static_cast<unsigned char>(*iter++);
 		
-		wchar_t c = static_cast<wchar_t>((ch1 << 8) | ch2);
+		unicode c = static_cast<unicode>((ch1 << 8) | ch2);
 		if (c >= 0x0DC00 and c <= 0x0DFFF)
 		{
 			outUnicode = (outUnicode - 0x0D800) * 0x0400 + (c - 0x0DC00) + 0x010000;
@@ -214,7 +214,7 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingUTF16BE>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	uint32 result;
 	
@@ -227,8 +227,8 @@ MEncodingTraits<kEncodingUTF16BE>::WriteUnicode(
 	}
 	else
 	{
-		wchar_t h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
-		wchar_t l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
+		unicode h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
+		unicode l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
 
 		*inText++ = static_cast<char>(h >> 8);
 		*inText++ = static_cast<char>(h & 0x0ff);
@@ -269,13 +269,13 @@ void
 MEncodingTraits<kEncodingUTF16LE>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
 	ByteIterator iter(inText);
 
 	unsigned char ch2 = static_cast<unsigned char>(*iter++);
 	unsigned char ch1 = static_cast<unsigned char>(*iter++);
-	outUnicode = static_cast<wchar_t>((ch1 << 8) | ch2);
+	outUnicode = static_cast<unicode>((ch1 << 8) | ch2);
 	outLength = 2;
 	
 	if (outUnicode >= 0x0D800 and outUnicode <= 0x0DBFF)
@@ -283,7 +283,7 @@ MEncodingTraits<kEncodingUTF16LE>::ReadUnicode(
 		ch2 = static_cast<unsigned char>(*iter++);
 		ch1 = static_cast<unsigned char>(*iter++);
 		
-		wchar_t c = static_cast<wchar_t>((ch1 << 8) | ch2);
+		unicode c = static_cast<unicode>((ch1 << 8) | ch2);
 		if (c >= 0x0DC00 and c <= 0x0DFFF)
 		{
 			outUnicode = (outUnicode - 0x0D800) * 0x0400 + (c - 0x0DC00) + 0x010000;
@@ -297,7 +297,7 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingUTF16LE>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	uint32 result;
 	
@@ -310,8 +310,8 @@ MEncodingTraits<kEncodingUTF16LE>::WriteUnicode(
 	}
 	else
 	{
-		wchar_t h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
-		wchar_t l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
+		unicode h = (inUnicode - 0x010000) / 0x0400 + 0x0D800;
+		unicode l = (inUnicode - 0x010000) % 0x0400 + 0x0DC00;
 
 		*inText++ = static_cast<char>(h & 0x0ff);
 		*inText++ = static_cast<char>(h >> 8);
@@ -324,7 +324,7 @@ MEncodingTraits<kEncodingUTF16LE>::WriteUnicode(
 	return result;
 }
 
-// wchar_t
+// unicode
 
 template<>
 template<class ByteIterator>
@@ -332,7 +332,7 @@ uint32
 MEncodingTraits<kEncodingUCS2>::GetNextCharLength(
 	ByteIterator		inText)
 {
-	return sizeof(wchar_t);
+	return sizeof(unicode);
 }
 
 template<>
@@ -341,10 +341,10 @@ void
 MEncodingTraits<kEncodingUCS2>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
-	std::copy(inText, inText + sizeof(wchar_t), reinterpret_cast<char*>(&outUnicode));
-	outLength = sizeof(wchar_t);
+	std::copy(inText, inText + sizeof(unicode), reinterpret_cast<char*>(&outUnicode));
+	outLength = sizeof(unicode);
 }
 
 template<>
@@ -352,11 +352,11 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingUCS2>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	char* p = reinterpret_cast<char*>(&inUnicode);
-	std::copy(p, p + sizeof(wchar_t), inText);
-	return sizeof(wchar_t);
+	std::copy(p, p + sizeof(unicode), inText);
+	return sizeof(unicode);
 }
 
 // MacOS Roman
@@ -376,7 +376,7 @@ void
 MEncodingTraits<kEncodingMacOSRoman>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
 	outUnicode = MUnicodeMapping::GetUnicode(kEncodingMacOSRoman, *inText);
 	outLength = 1;
@@ -387,7 +387,7 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingMacOSRoman>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	char ch = MUnicodeMapping::GetChar(kEncodingMacOSRoman, inUnicode);
 	*inText++ = ch;
@@ -412,7 +412,7 @@ void
 MEncodingTraits<kEncodingISO88591>::ReadUnicode(
 	ByteIterator		inText,
 	uint32&				outLength,
-	wchar_t&			outUnicode)
+	unicode&			outUnicode)
 {
 	outUnicode = static_cast<unsigned char>(*inText);
 	outLength = 1;
@@ -423,7 +423,7 @@ template<class ByteIterator>
 uint32
 MEncodingTraits<kEncodingISO88591>::WriteUnicode(
 	ByteIterator&		inText,
-	wchar_t				inUnicode)
+	unicode				inUnicode)
 {
 	*inText++ = static_cast<char>(inUnicode);
 	return 1;

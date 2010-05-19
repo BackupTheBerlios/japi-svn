@@ -14,7 +14,7 @@
 #include <set>
 #include <limits>
 #include <sstream>
-#include <unistd.h>
+//#include <unistd.h>
 
 // for some weird reason the BOOST_ASSERT's wreak havoc here...
 #if DEBUG
@@ -23,7 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <pcre.h>
+//#include <pcre.h>
 
 #include "MTextBuffer.h"
 #include "MSelection.h"
@@ -102,8 +102,8 @@ const char* kPCRE_ERR_STR[] = {
 
 const uint32 kBlockSize = 10240;
 
-class wc_iterator : public boost::iterator_facade<wc_iterator, const wchar_t,
-	boost::bidirectional_traversal_tag, const wchar_t>
+class wc_iterator : public boost::iterator_facade<wc_iterator, const unicode,
+	boost::bidirectional_traversal_tag, const unicode>
 {
   public:
 					wc_iterator(const MTextBuffer* inBuffer, uint32 inOffset) : mBuffer(inBuffer), mOffset(inOffset) {}
@@ -115,7 +115,7 @@ class wc_iterator : public boost::iterator_facade<wc_iterator, const wchar_t,
   private:
 	friend class boost::iterator_core_access;
 
-	wchar_t			dereference() const							{ return mBuffer->GetWChar(mOffset); }
+	unicode			dereference() const							{ return mBuffer->GetWChar(mOffset); }
 
 	void			increment()									{ mOffset += mBuffer->GetNextCharLength(mOffset); }
 	void			decrement()									{ mOffset -= mBuffer->GetPrevCharLength(mOffset); }
@@ -265,7 +265,7 @@ MicroAction::DoDelete(
 {
 	mSavedText = new char[inLength];
 	mOffset = inOffset;
-	mLength = -inLength;
+	mLength = -static_cast<int32>(inLength);
 
 	inBuffer.GetText(mOffset, mSavedText, inLength);
 	inBuffer.DeleteSelf(mOffset, inLength);
@@ -511,7 +511,7 @@ MTextBuffer::MTextBuffer()
 	else
 		mEncoding = kEncodingUTF8;
 	
-	mBOM = Preferences::GetInteger("add bom", 0);
+	mBOM = Preferences::GetInteger("add bom", 0) != 0;
 
 	s = Preferences::GetString("newline char", "LF");
 	if (s == "CR")
@@ -530,7 +530,7 @@ MTextBuffer::MTextBuffer(
 	, mGapOffset(0)
 {
 	mEncoding = kEncodingUTF8;
-	mBOM = Preferences::GetInteger("add bom", 0);
+	mBOM = Preferences::GetInteger("add bom", 0) != 0;
 
 	string s = Preferences::GetString("newline char", "LF");
 	
@@ -597,26 +597,36 @@ void MTextBuffer::ReadFromFile(
 	if (len > numeric_limits<uint32>::max())
 		THROW(("File too large to open"));
 
-	auto_array<char> data(new char[len]);
-	b->sgetn(data.get(), len);
-
-	// Now find out what this data contains.
-	
-	mEncoding = kEncodingUnknown;
-	mBOM = false;
-	
-	if (GuessEncodingAndCopyData(data.get(), len))
+	char* data = new char[len];
+	try
 	{
-		mData = data.release();
+		b->sgetn(data, len);
+
+		// Now find out what this data contains.
+	
+		mEncoding = kEncodingUnknown;
+		mBOM = false;
+	
+		if (GuessEncodingAndCopyData(data, len))
+		{
+			mData = data;
 		
-		mPhysicalLength = len;
+			mPhysicalLength = len;
 
-		if (mBOM)
-			len -= 3;
+			if (mBOM)
+				len -= 3;
 
-		mLogicalLength = len;
+			mLogicalLength = len;
 
-		mGapOffset = 0;
+			mGapOffset = 0;
+		}
+		else
+			delete[] data;
+	}
+	catch (...)
+	{
+		delete[] data;
+		throw;
 	}
 	
 	GuessLineEndCharacter();
@@ -802,7 +812,7 @@ bool MTextBuffer::GuessEncodingAndCopyData(
 				break;
 		}	
 	
-		wchar_t uc;
+		unicode uc;
 		while (decoder->ReadUnicode(uc))
 			push_back(uc);
 	}
@@ -946,7 +956,7 @@ void MTextBuffer::WriteToFile(
 		
 		while (txt.GetOffset() < mLogicalLength)
 		{
-			wchar_t uc = *txt++;
+			unicode uc = *txt++;
 		
 			if (uc == '\n' and mEOLNKind != eEOLN_UNIX)
 			{
@@ -1222,7 +1232,7 @@ uint32 MTextBuffer::NextCursorPosition(
 				if (result >= mLogicalLength)
 					break;
 				
-				wchar_t unicode = *c;
+				unicode unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -1239,7 +1249,7 @@ uint32 MTextBuffer::NextCursorPosition(
 				if (result >= mLogicalLength)
 					break;
 				
-				wchar_t unicode = *c;
+				unicode unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -1312,7 +1322,7 @@ uint32 MTextBuffer::PreviousCursorPosition(
 					break;
 				
 				--c;
-				wchar_t unicode = *c;
+				unicode unicode = *c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
 				state = kWordBreakStateTableForKeyboard[uint8(state)][cl];
@@ -1324,7 +1334,7 @@ uint32 MTextBuffer::PreviousCursorPosition(
 			while (result < mLogicalLength and state >= 0)
 			{
 				result = c.GetOffset();
-				wchar_t unicode = *c;
+				unicode unicode = *c;
 				++c;
 
 				WordBreakClass cl = GetWordBreakClass(unicode);
@@ -2069,20 +2079,20 @@ uint32 MTextBuffer::GetPrevCharLength(
 	return result;
 }
 
-wchar_t MTextBuffer::GetWChar(
+unicode MTextBuffer::GetWChar(
 	uint32		inOffset) const
 {
-	wchar_t result = 0x0FFFD;
+	unicode result = 0x0FFFD;
 	
 	char ch = GetChar(inOffset);
 	if ((ch & 0x080) == 0)
-		result = static_cast<wchar_t>(ch);
+		result = static_cast<unicode>(ch);
 	else if ((ch & 0x0E0) == 0x0C0)
-		result = static_cast<wchar_t>(((ch & 0x01F) << 6) | (GetChar(inOffset + 1) & 0x03F));
+		result = static_cast<unicode>(((ch & 0x01F) << 6) | (GetChar(inOffset + 1) & 0x03F));
 	else if ((ch & 0x0F0) == 0x0E0)
-		result = static_cast<wchar_t>(((ch & 0x00F) << 12) | ((GetChar(inOffset + 1) & 0x03F) << 6) | (GetChar(inOffset + 2) & 0x03F));
+		result = static_cast<unicode>(((ch & 0x00F) << 12) | ((GetChar(inOffset + 1) & 0x03F) << 6) | (GetChar(inOffset + 2) & 0x03F));
 	else if ((ch & 0x0F8) == 0x0F0)
-		result = static_cast<wchar_t>(((ch & 0x007) << 18) | ((GetChar(inOffset + 1) & 0x03F) << 12) | ((GetChar(inOffset + 2) & 0x03F) << 6) | (GetChar(inOffset + 3) & 0x03F));
+		result = static_cast<unicode>(((ch & 0x007) << 18) | ((GetChar(inOffset + 1) & 0x03F) << 12) | ((GetChar(inOffset + 2) & 0x03F) << 6) | (GetChar(inOffset + 3) & 0x03F));
 	
 	return result;
 }

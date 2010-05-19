@@ -7,6 +7,7 @@
 #define MJAPI_H
 
 #include "MLib.h"
+
 #include "MTypes.h"
 
 extern const char kAppName[], kVersionString[];
