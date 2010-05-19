@@ -204,6 +204,23 @@ void __signal_throw(
 }
 
 MWinException::MWinException(
+	int32				inHResult,
+	const char*			inMsg,
+	...)
+{
+	va_list vl;
+	va_start(vl, inMsg);
+	int n = vsnprintf(mMessage, sizeof(mMessage), inMsg, vl);
+	va_end(vl);
+
+	if (n < sizeof(mMessage))
+		mMessage[n++] = ' ';
+
+	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		nil, inHResult, 0, mMessage + n, sizeof(mMessage) - n, nil);
+}
+
+MWinException::MWinException(
 	const char*			inMsg,
 	...)
 {
@@ -218,15 +235,15 @@ MWinException::MWinException(
 		mMessage[n++] = ' ';
 
 	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		nil, error, 0, mMessage, sizeof(mMessage) - n, nil);
+		nil, error, 0, mMessage + n, sizeof(mMessage) - n, nil);
 }
 
-void DisplayError(const exception& e)
-{
-	assert(false);
-}
+//void DisplayError(const exception& e)
+//{
+//	assert(false);
+//}
 
-string GetHome()
+string GetHomeDirectory()
 {
 	const char* HOME = getenv("HOME");
 	if (HOME == nil)

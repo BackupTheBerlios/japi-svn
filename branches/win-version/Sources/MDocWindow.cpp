@@ -24,7 +24,7 @@ MDocWindow::MDocWindow(
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
 	, mController(nil)
-	, mMenubar(this)
+	//, mMenubar(this)
 {
 	//GdkGeometry geom = {};
 	//geom.min_width = 300;

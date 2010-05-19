@@ -18,6 +18,7 @@
 #include "MApplication.h"
 #include "MApplicationImpl.h"
 #include "MCommands.h"
+#include "MDocument.h"
 #include "MPreferences.h"
 #include "MWindow.h"
 #include "MUtils.h"
@@ -383,18 +384,18 @@ void MApplication::SetCurrentFolder(
 
 void MApplication::DoOpen()
 {
-	//vector<MFile> urls;
-	//
-	//MDocument* doc = nil;
-	//
-	//if (ChooseFiles(false, urls))
-	//{
-	//	for (vector<MFile>::iterator url = urls.begin(); url != urls.end(); ++url)
-	//		doc = OpenOneDocument(*url);
-	//}
-	//
-	//if (doc != nil)
-	//	DisplayDocument(doc); 
+	vector<MFile> urls;
+	
+	MDocument* doc = nil;
+	
+	if (ChooseFiles(false, urls))
+	{
+		for (vector<MFile>::iterator url = urls.begin(); url != urls.end(); ++url)
+			doc = OpenOneDocument(*url);
+	}
+	
+	if (doc != nil)
+		DisplayDocument(doc); 
 }
 
 // ---------------------------------------------------------------------------
@@ -403,13 +404,13 @@ void MApplication::DoOpen()
 MDocument* MApplication::OpenOneDocument(
 	const MFile&			inFileRef)
 {
-	//if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
-	//	THROW(("Cannot open a directory"));
-	//
-	//MDocument* doc = MDocument::GetDocumentForFile(inFileRef);
-	//
-	//if (doc == nil)
-	//{
+	if (inFileRef.IsLocal() and fs::is_directory(inFileRef.GetPath()))
+		THROW(("Cannot open a directory"));
+	
+	MDocument* doc = MDocument::GetDocumentForFile(inFileRef);
+	
+	if (doc == nil)
+	{
 	//	if (FileNameMatches("*.prj", inFileRef))
 	//	{
 	//		if (not inFileRef.IsLocal())
@@ -420,16 +421,15 @@ MDocument* MApplication::OpenOneDocument(
 	//		OpenEPub(inFileRef);
 	//	else
 	//		doc = MDocument::Create<MTextDocument>(inFileRef);
-	//}
-	//
-	//if (doc != nil)
-	//{
-	//	DisplayDocument(doc);
-	//	MMenu::AddToRecentMenu(inFileRef);
-	//}
-	//
-	//return doc;
-	return nil;
+	}
+	
+	if (doc != nil)
+	{
+		DisplayDocument(doc);
+		//MMenu::AddToRecentMenu(inFileRef);
+	}
+	
+	return doc;
 }
 
 void MApplication::Pulse()

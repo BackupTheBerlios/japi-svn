@@ -38,6 +38,8 @@ MWinApplicationImpl::MWinApplicationImpl(
 	: MApplicationImpl(inApp)
 	, mInstance(inInstance)
 {
+    HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
 	INITCOMMONCONTROLSEX info = {
 		sizeof(INITCOMMONCONTROLSEX),
 

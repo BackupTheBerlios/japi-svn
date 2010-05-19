@@ -324,7 +324,7 @@ string MDocument::GetWindowTitle() const
 		NormalizePath(result);
 		
 		// strip off HOME, if any
-		string home = GetHome();
+		string home = GetHomeDirectory();
 		if (not home.empty() and ba::starts_with(result, home))
 		{
 			result.erase(0, home.length());

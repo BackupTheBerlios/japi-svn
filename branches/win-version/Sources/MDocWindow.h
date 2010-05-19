@@ -72,7 +72,7 @@ class MDocWindow : public MWindow
   protected:
 
 	MController*		mController;
-	MMenubar			mMenubar;
+	//MMenubar			mMenubar;
 
 	virtual				~MDocWindow();
 };

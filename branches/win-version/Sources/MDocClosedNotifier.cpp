@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <iostream>
 
@@ -24,7 +24,6 @@ MDocClosedNotifier::MDocClosedNotifier(
 {
 	mImpl->mRefCount = 1;
 	mImpl->mFD = inFD;
-////PRINT(("%s: %d", __func__, mImpl->mFD));
 }
 
 MDocClosedNotifier::MDocClosedNotifier(
@@ -32,19 +31,16 @@ MDocClosedNotifier::MDocClosedNotifier(
 {
 	mImpl = inRHS.mImpl;
 	++mImpl->mRefCount;
-//PRINT(("%s: %d", __func__, mImpl->mFD));
 }
 
 MDocClosedNotifier&	MDocClosedNotifier::operator=(
 	const MDocClosedNotifier&	inRHS)
 {
-//PRINT(("%s: %d", __func__, mImpl->mFD));
 	if (this != &inRHS)
 	{
 		if (--mImpl->mRefCount <= 0)
 		{
-//PRINT(("closing"));
-			close(mImpl->mFD);
+			//close(mImpl->mFD);
 			delete mImpl;
 		}
 		
@@ -52,23 +48,19 @@ MDocClosedNotifier&	MDocClosedNotifier::operator=(
 		++mImpl->mRefCount;
 	}
 	
-//PRINT(("%s: %d", __func__, mImpl->mFD));
 	return *this;	
 }
 
 MDocClosedNotifier::~MDocClosedNotifier()
 {
-//PRINT(("%s: %d", __func__, mImpl->mFD));
 	if (--mImpl->mRefCount <= 0)
 	{
-//PRINT(("closing"));
-		close(mImpl->mFD);
+		//close(mImpl->mFD);
 		delete mImpl;
 	}
 }
 
 int MDocClosedNotifier::GetFD() const
 {
-//PRINT(("%s: %d", __func__, mImpl->mFD));
 	return mImpl->mFD;
 }

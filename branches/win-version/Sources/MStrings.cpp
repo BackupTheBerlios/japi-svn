@@ -3,9 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
-#include <libintl.h>
+//#include <libintl.h>
 
 #include "MStrings.h"
 
@@ -14,7 +14,7 @@ using namespace std;
 const char* GetLocalisedString(
 				const char* inString)
 {
-	const char* result = dgettext("japi", inString);
+	const char* result = nil; //dgettext("japi", inString);
 
 	if (result == nil)
 		result = inString;

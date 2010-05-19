@@ -8,16 +8,15 @@
 	Created Sunday July 25 2004 21:07:42
 */
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <boost/filesystem/fstream.hpp>
-#include <glib.h>
 
 #include <sys/stat.h>
 
 #include "MGlobals.h"
 #include "MPreferences.h"
-#include "MLanguage.h"
+//#include "MLanguage.h"
 #include "MResources.h"
 
 using namespace std;
@@ -61,7 +60,7 @@ uint32			gCharsPerTab = 4;
 uint32			gSpacesPerTab = 4;
 uint32			gFontSize = 10;
 std::string		gFontName = "Monaco";
-MColor			gLanguageColors[kLStyleCount];
+//MColor			gLanguageColors[kLStyleCount];
 MColor			gHiliteColor, gInactiveHiliteColor;
 MColor			gCurrentLineColor, gMarkedLineColor;
 MColor			gPCLineColor, gBreakpointColor;
@@ -73,14 +72,14 @@ fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
 void InitGlobals()
 {
-	gPrefsDir = g_get_user_config_dir();
-	gPrefsDir /= "japi";
+	//gPrefsDir = g_get_user_config_dir();
+	//gPrefsDir /= "japi";
 	
-	const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
-	if (templatesDir != nil)
-		gTemplatesDir = fs::system_complete(templatesDir) / "japi";
-	else
-		gTemplatesDir = gPrefsDir / "Templates";
+	//const char* templatesDir = g_get_user_special_dir(G_USER_DIRECTORY_TEMPLATES);
+	//if (templatesDir != nil)
+	//	gTemplatesDir = fs::system_complete(templatesDir) / "japi";
+	//else
+	//	gTemplatesDir = gPrefsDir / "Templates";
 
 	gScriptsDir = gPrefsDir / "Scripts";
 		
@@ -96,15 +95,15 @@ void InitGlobals()
 	gFontSize = Preferences::GetInteger("fontsize", gFontSize);
 	gFontName = Preferences::GetString("fontname", gFontName);
 	
-	gLanguageColors[kLTextColor] =			Preferences::GetColor("text color", kTextColor);
-	gLanguageColors[kLKeyWordColor] =		Preferences::GetColor("keyword color", kKeyWordColor);
-	gLanguageColors[kLPreProcessorColor] =	Preferences::GetColor("preprocessor color", kPreProcessorColor);
-	gLanguageColors[kLCharConstColor] =		Preferences::GetColor("char const color", kCharConstColor);
-	gLanguageColors[kLCommentColor] =		Preferences::GetColor("comment color", kCommentColor);
-	gLanguageColors[kLStringColor] =		Preferences::GetColor("string color", kStringColor);
-	gLanguageColors[kLTagColor] =			Preferences::GetColor("tag color", kTagColor);
-	gLanguageColors[kLAttribColor] =		Preferences::GetColor("attribute color", kAttribColor);
-	gLanguageColors[kLInvisiblesColor] =	Preferences::GetColor("invisibles color", kInvisiblesColor);
+	//gLanguageColors[kLTextColor] =			Preferences::GetColor("text color", kTextColor);
+	//gLanguageColors[kLKeyWordColor] =		Preferences::GetColor("keyword color", kKeyWordColor);
+	//gLanguageColors[kLPreProcessorColor] =	Preferences::GetColor("preprocessor color", kPreProcessorColor);
+	//gLanguageColors[kLCharConstColor] =		Preferences::GetColor("char const color", kCharConstColor);
+	//gLanguageColors[kLCommentColor] =		Preferences::GetColor("comment color", kCommentColor);
+	//gLanguageColors[kLStringColor] =		Preferences::GetColor("string color", kStringColor);
+	//gLanguageColors[kLTagColor] =			Preferences::GetColor("tag color", kTagColor);
+	//gLanguageColors[kLAttribColor] =		Preferences::GetColor("attribute color", kAttribColor);
+	//gLanguageColors[kLInvisiblesColor] =	Preferences::GetColor("invisibles color", kInvisiblesColor);
 
 	gHiliteColor = Preferences::GetColor("hilite color", kHiliteColor);
 	gInactiveHiliteColor = Preferences::GetColor("inactive hilite color", kInactiveHighlightColor);
@@ -131,19 +130,19 @@ void InitGlobals()
 	if (not fs::exists(gScriptsDir))
 		fs::create_directory(gScriptsDir);
 
-	mrsrc::rsrc_list scripts = mrsrc::rsrc("Scripts").children();
-	for (mrsrc::rsrc_list::iterator t = scripts.begin(); t != scripts.end(); ++t)
-	{
-		if (t->size() == 0 or fs::exists(gScriptsDir / t->name()))
-			continue;
-		
-		fs::path file(gScriptsDir / t->name());
-		
-		fs::ofstream f(file);
-		f.write(t->data(), t->size());
-		
-		chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
-	}
+	//mrsrc::rsrc_list scripts = mrsrc::rsrc("Scripts").children();
+	//for (mrsrc::rsrc_list::iterator t = scripts.begin(); t != scripts.end(); ++t)
+	//{
+	//	if (t->size() == 0 or fs::exists(gScriptsDir / t->name()))
+	//		continue;
+	//	
+	//	fs::path file(gScriptsDir / t->name());
+	//	
+	//	fs::ofstream f(file);
+	//	f.write(t->data(), t->size());
+	//	
+	//	//chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
+	//}
 	
 	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs", gConcurrentJobs);
 }
@@ -162,10 +161,10 @@ void SaveGlobals()
 	Preferences::SetString("fontname", gFontName);
 	Preferences::SetInteger("tab enters spaces", gTabEntersSpaces);
 
-	for (uint32 ix = 0; ix < kLStyleCount; ++ix)
-	{
-//		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
-	}
+//	for (uint32 ix = 0; ix < kLStyleCount; ++ix)
+//	{
+////		gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
+//	}
 	
 	Preferences::SetInteger("concurrent-jobs", gConcurrentJobs);
 }

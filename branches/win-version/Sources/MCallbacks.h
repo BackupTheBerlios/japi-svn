@@ -284,81 +284,81 @@ struct Handler<Derived, Owner, void(BOOST_PP_ENUM_PARAMS(N,T))> : public Handler
 										}
 };
 
-////
-////	And now the callback handlers
-////
-//template<class CallbackIn, typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
-//struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
-//{
-//	std::unique_ptr<CallbackIn>	mHandler;
-//	GObject*					mSendingGObject;
 //
-//	R			operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
-//				{
-//					if (mHandler.get() != nil)
-//						return mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
-//					return R();
-//				}
+//	And now the callback handlers
 //
-//	static R	GCallback(
-//					GObject*		inObject,
-//					BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
-//					gpointer		inData)
-//				{
-//					R result = R();
-//
-//					try
-//					{
-//						MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-//						
-//						if (handler.mHandler.get() != nil)
-//						{
-//							handler.mSendingGObject = inObject;
-//							result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
-//						}
-//					}
-//					catch (...)
-//					{
-//						std::cerr << "caught exception in GCallback" << std::endl;
-//					}
-//					
-//					return result;
-//				}
-//};
-//
-//template<class CallbackIn BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
-//struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
-//{
-//	std::unique_ptr<CallbackIn>	mHandler;
-//	GObject*					mSendingGObject;
-//
-//	void		operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
-//				{
-//					if (mHandler.get() != nil)
-//						mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
-//				}
-//
-//	static void	GCallback(
-//					GObject*		inObject,
-//					BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
-//					gpointer		inData)
-//				{
-//					try
-//					{
-//						MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
-//						
-//						if (handler.mHandler.get() != nil)
-//						{
-//							handler.mSendingGObject = inObject;
-//							handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
-//						}
-//					}
-//					catch (...)
-//					{
-//						std::cerr << "caught exception in GCallback" << std::endl;
-//					}
-//				}
-//};
+template<class CallbackIn, typename R BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct MCallbackOutHandler<CallbackIn, R(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	std::unique_ptr<CallbackIn>	mHandler;
+	//GObject*					mSendingGObject;
+
+	R			operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+				{
+					if (mHandler.get() != nil)
+						return mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+					return R();
+				}
+
+	//static R	GCallback(
+	//				GObject*		inObject,
+	//				BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
+	//				gpointer		inData)
+	//			{
+	//				R result = R();
+
+	//				try
+	//				{
+	//					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+	//					
+	//					if (handler.mHandler.get() != nil)
+	//					{
+	//						handler.mSendingGObject = inObject;
+	//						result = handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+	//					}
+	//				}
+	//				catch (...)
+	//				{
+	//					std::cerr << "caught exception in GCallback" << std::endl;
+	//				}
+	//				
+	//				return result;
+	//			}
+};
+
+template<class CallbackIn BOOST_PP_COMMA_IF(N) BOOST_PP_ENUM_PARAMS(N,typename T)>
+struct MCallbackOutHandler<CallbackIn, void(BOOST_PP_ENUM_PARAMS(N,T))>
+{
+	std::unique_ptr<CallbackIn>	mHandler;
+	//GObject*					mSendingGObject;
+
+	void		operator() (BOOST_PP_ENUM_BINARY_PARAMS(N,T,a))
+				{
+					if (mHandler.get() != nil)
+						mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+				}
+
+	//static void	GCallback(
+	//				GObject*		inObject,
+	//				BOOST_PP_ENUM_BINARY_PARAMS(N,T,a) BOOST_PP_COMMA_IF(N)
+	//				gpointer		inData)
+	//			{
+	//				try
+	//				{
+	//					MCallbackOutHandler& handler = *reinterpret_cast<MCallbackOutHandler*>(inData);
+	//					
+	//					if (handler.mHandler.get() != nil)
+	//					{
+	//						handler.mSendingGObject = inObject;
+	//						handler.mHandler->DoCallback(BOOST_PP_ENUM_PARAMS(N,a));
+	//					}
+	//				}
+	//				catch (...)
+	//				{
+	//					std::cerr << "caught exception in GCallback" << std::endl;
+	//				}
+	//			}
+};
 
 #endif
 

@@ -337,7 +337,7 @@ void MMenu::SetTarget(
 
 void MMenu::UpdateCommandStatus()
 {
-	for (int i = 0; i < CountItems(); ++i)
+	for (uint32 i = 0; i < CountItems(); ++i)
 	{
 		MMenu* subMenu = mImpl->GetSubmenu(i);
 		if (subMenu != nil)

@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
 #include <sstream>
 #include <iomanip>
@@ -36,13 +36,13 @@ MColor::MColor(
 	blue = inOther.blue;
 }
 
-MColor::MColor(
-	const GdkColor&	inOther)
-{
-	red = inOther.red >> 8;
-	green = inOther.green >> 8;
-	blue = inOther.blue >> 8;
-}
+//MColor::MColor(
+//	const GdkColor&	inOther)
+//{
+//	red = inOther.red >> 8;
+//	green = inOther.green >> 8;
+//	blue = inOther.blue >> 8;
+//}
 
 MColor::MColor(
 	const char*		inHex)
@@ -69,14 +69,14 @@ MColor& MColor::operator=(
 	return *this;
 }
 
-MColor::operator GdkColor() const
-{
-	GdkColor result = {};
-	result.red = red << 8 | red;
-	result.green = green << 8 | green;
-	result.blue = blue << 8 | blue;
-	return result;
-}
+//MColor::operator GdkColor() const
+//{
+//	GdkColor result = {};
+//	result.red = red << 8 | red;
+//	result.green = green << 8 | green;
+//	result.blue = blue << 8 | blue;
+//	return result;
+//}
 
 string MColor::hex() const
 {

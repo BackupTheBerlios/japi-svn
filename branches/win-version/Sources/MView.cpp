@@ -73,7 +73,7 @@ MView::MView(
 //		gtk_widget_set_size_request(mGtkWidget, inWidth, inHeight);
 //}
 
-//MView::MView()
+MView::MView()
 //	: mFocusInEvent(this, &MView::OnFocusInEvent)
 //	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
 //	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
@@ -91,8 +91,8 @@ MView::MView(
 //	, mDragDataDelete(this, &MView::OnDragDataDelete)
 //	, mDragDataGet(this, &MView::OnDragDataGet)
 //	, mGtkWidget(nil)
-//{
-//}
+{
+}
 
 //void MView::SetWidget(
 //	GtkWidget*		inWidget,

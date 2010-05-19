@@ -171,9 +171,9 @@ class MWindow : public MView, public MHandler
 
   protected:
 
-							//MWindow(
-							//	const char*		inWindowResourceName,
-							//	const char*		inRootWidgetName = "window");
+							MWindow(
+								const char*		inWindowResourceName,
+								const char*		inRootWidgetName = "window");
 
 	virtual bool			DoClose();
 

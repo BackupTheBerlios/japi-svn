@@ -37,28 +37,6 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 	Init();
 }
 
-MWindow::~MWindow()
-{
-#if DEBUG
-	MWindow* w = sFirst;
-	while (w != nil)
-	{
-		if (w == this)
-		{
-			if (mImpl != nil /*and mImpl->IsValid()*/)
-				PRINT(("Window was not removed from list: %s", mTitle.c_str()));
-			else
-				PRINT(("Window was not removed from list: [deleted]"));
-
-			RemoveWindowFromList(this);
-
-			break;
-		}
-		w = w->mNext;
-	}
-#endif
-}
-
 //MWindow::MWindow()
 //	: MView(gtk_window_new(GTK_WINDOW_TOPLEVEL), false)
 //	, MHandler(gApp)
@@ -87,43 +65,65 @@ MWindow::~MWindow()
 //{
 //	Init();
 //}
-//
-//MWindow::MWindow(
-//	const char*		inWindowResourceName,
-//	const char*		inRootWidgetName)
-//	: MHandler(gApp)
-//	, mOnDestroy(this, &MWindow::OnDestroy)
-//	, mOnDelete(this, &MWindow::OnDelete)
-//	, mGtkBuilder(nil)
-//	, mModified(false)
-//	, mTransitionThread(nil)
-//	, mChildFocus(this, &MWindow::ChildFocus)
-//	, mChanged(this, &MWindow::Changed)
-//{
-//	mrsrc::rsrc rsrc;
-//	
-//	if (strcmp(inRootWidgetName, "dialog") == 0)
-//		rsrc = mrsrc::rsrc(
-//			string("Dialogs/") + inWindowResourceName + ".ui");
-//	else
-//		rsrc = mrsrc::rsrc(
-//			string("Windows/") + inWindowResourceName + ".ui");
-//	
-//	if (not rsrc)
-//		THROW(("Could not load dialog resource %s", inWindowResourceName));
-//
-//	mGtkBuilder = new MGtkBuilder(rsrc.data(), rsrc.size());
-//	
-//	GtkWidget* w = mGtkBuilder->GetWidget(inRootWidgetName);
-//	if (w == nil)
-//		THROW(("Failed to extract root widget from gtk-builder data (%s)", inRootWidgetName));
-//	
-//	SetWidget(w, false, false);
-//
-//	gtk_container_foreach(GTK_CONTAINER(w), &MWindow::DoForEachCallBack, this);
-//
-//	Init();
-//}
+
+MWindow::MWindow(
+	const char*		inWindowResourceName,
+	const char*		inRootWidgetName)
+	: MHandler(gApp)
+	//, mOnDestroy(this, &MWindow::OnDestroy)
+	//, mOnDelete(this, &MWindow::OnDelete)
+	//, mGtkBuilder(nil)
+	, mModified(false)
+	//, mTransitionThread(nil)
+	//, mChildFocus(this, &MWindow::ChildFocus)
+	//, mChanged(this, &MWindow::Changed)
+{
+	//mrsrc::rsrc rsrc;
+	//
+	//if (strcmp(inRootWidgetName, "dialog") == 0)
+	//	rsrc = mrsrc::rsrc(
+	//		string("Dialogs/") + inWindowResourceName + ".ui");
+	//else
+	//	rsrc = mrsrc::rsrc(
+	//		string("Windows/") + inWindowResourceName + ".ui");
+	//
+	//if (not rsrc)
+	//	THROW(("Could not load dialog resource %s", inWindowResourceName));
+
+	//mGtkBuilder = new MGtkBuilder(rsrc.data(), rsrc.size());
+	//
+	//GtkWidget* w = mGtkBuilder->GetWidget(inRootWidgetName);
+	//if (w == nil)
+	//	THROW(("Failed to extract root widget from gtk-builder data (%s)", inRootWidgetName));
+	//
+	//SetWidget(w, false, false);
+
+	//gtk_container_foreach(GTK_CONTAINER(w), &MWindow::DoForEachCallBack, this);
+
+	Init();
+}
+
+MWindow::~MWindow()
+{
+#if DEBUG
+	MWindow* w = sFirst;
+	while (w != nil)
+	{
+		if (w == this)
+		{
+			if (mImpl != nil /*and mImpl->IsValid()*/)
+				PRINT(("Window was not removed from list: %s", mTitle.c_str()));
+			else
+				PRINT(("Window was not removed from list: [deleted]"));
+
+			RemoveWindowFromList(this);
+
+			break;
+		}
+		w = w->mNext;
+	}
+#endif
+}
 
 void MWindow::Init()
 {

@@ -23,11 +23,14 @@ class MException : public std::exception
 	char		mMessage[1024];
 };
 
+#ifdef _MSC_VER
 class MWinException : public MException
 {
   public:
 				MWinException(const char* inErrMsg, ...);
+				MWinException(int32 inHResult, const char* inErrMsg, ...);
 };
+#endif
 
 #ifdef NDEBUG
 
@@ -95,6 +98,10 @@ void __debug_printf(const char* inMsg, ...);
 
 #define THROW_IF_WIN_ERROR(e) \
 	do { if ((e) == FALSE) THROW_WIN_ERROR("Windows error returned for " #e); } while (false)
+
+#define THROW_IF_HRESULT_ERROR(e) \
+	do { HRESULT _hr = (e); if (_hr != S_OK) throw MWinException(_hr, "Error in calling COM code '%s'", #e); } while (false)
+
 #endif
 
 #define ASSERT(x, m)		if (not (x)) { SIGNAL_THROW(#x " => " #m); throw MException m; }

@@ -3,20 +3,20 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
-#include <unistd.h>
+//#include <unistd.h>
 #include <cstring>
 
 #include <sys/stat.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <stack>
 #include <fstream>
 #include <cassert>
 #include <cerrno>
 #include <limits>
 
-#include <pcrecpp.h>
+//#include <pcrecpp.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -32,7 +32,7 @@
 #include "MStrings.h"
 #include "MJapiApp.h"
 #include "MPreferences.h"
-#include "MSftpChannel.h"
+//#include "MSftpChannel.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -261,27 +261,27 @@ void MLocalFileLoader::DoLoad()
 
 		struct stat st;
 
-		if (stat(path.string().c_str(), &st) == 0)
-		{
-			// fetch user&group
-			unsigned int gid = getgid();
-			unsigned int uid = getuid();
-			
-			readOnly = not ((uid == st.st_uid and (S_IWUSR & st.st_mode)) or
-							(gid == st.st_gid and (S_IWGRP & st.st_mode)) or
-							(S_IWOTH & st.st_mode));
-			
-			if (readOnly && S_IWGRP & st.st_mode)
-			{
-				int ngroups = getgroups(0, nil);
-				if (ngroups > 0)
-				{
-					vector<gid_t> groups(ngroups);
-					if (getgroups(ngroups, &groups[0]) == 0)
-						readOnly = find(groups.begin(), groups.end(), st.st_gid) == groups.end();
-				}
-			}
-		}
+		//if (stat(path.string().c_str(), &st) == 0)
+		//{
+		//	// fetch user&group
+		//	unsigned int gid = getgid();
+		//	unsigned int uid = getuid();
+		//	
+		//	readOnly = not ((uid == st.st_uid and (S_IWUSR & st.st_mode)) or
+		//					(gid == st.st_gid and (S_IWGRP & st.st_mode)) or
+		//					(S_IWOTH & st.st_mode));
+		//	
+		//	if (readOnly && S_IWGRP & st.st_mode)
+		//	{
+		//		int ngroups = getgroups(0, nil);
+		//		if (ngroups > 0)
+		//		{
+		//			vector<gid_t> groups(ngroups);
+		//			if (getgroups(ngroups, &groups[0]) == 0)
+		//				readOnly = find(groups.begin(), groups.end(), st.st_gid) == groups.end();
+		//		}
+		//	}
+		//}
 		
 		fs::ifstream file(path);
 		eReadFile(file);
@@ -442,6 +442,7 @@ struct MPathImp : public MFileImp
 	fs::path				mPath;
 };
 
+#if 0
 // --------------------------------------------------------------------
 // SFTP implementations
 
@@ -765,6 +766,8 @@ struct MSftpImp : public MFileImp
 	fs::path				mFilePath;
 };
 
+#endif
+
 // --------------------------------------------------------------------
 
 MFile::MFile()
@@ -817,38 +820,38 @@ MFileImp* CreateFileImpForURI(
 	
 	MFileImp* result = nil;
 
-	pcrecpp::RE re("^(\\w+)://(.+)");
-	string scheme, path;
-	
-	if (re.FullMatch(inURI, &scheme, &path))
-	{
-		URLDecode(path);
-		
-		if (scheme == "file")
-			result = new MPathImp(fs::system_complete(path));
-		else if (scheme == "sftp" or scheme == "ssh")
-		{
-			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
-			
-			string s1, s2, username, password, host, port, file;
+	//pcrecpp::RE re("^(\\w+)://(.+)");
+	//string scheme, path;
+	//
+	//if (re.FullMatch(inURI, &scheme, &path))
+	//{
+	//	URLDecode(path);
+	//	
+	//	if (scheme == "file")
+	//		result = new MPathImp(fs::system_complete(path));
+	//	else if (scheme == "sftp" or scheme == "ssh")
+	//	{
+	//		pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
+	//		
+	//		string s1, s2, username, password, host, port, file;
 
-			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
-			{
-				if (port.empty())
-					port = "22";
+	//		if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
+	//		{
+	//			if (port.empty())
+	//				port = "22";
 
-				if (isAbsoluteURI)
-					file.insert(file.begin(), '/');
+	//			if (isAbsoluteURI)
+	//				file.insert(file.begin(), '/');
 
-				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
-			}
-			else
-				THROW(("Malformed URL: '%s'", inURI));
-		}
-		else
-			THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
-	}
-	else // assume it is a simple path
+	//			result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
+	//		}
+	//		else
+	//			THROW(("Malformed URL: '%s'", inURI));
+	//	}
+	//	else
+	//		THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
+	//}
+	//else // assume it is a simple path
 		result = new MPathImp(fs::system_complete(inURI));
 	
 	return result;
@@ -974,9 +977,9 @@ string MFile::GetHost() const
 {
 	string result;
 	
-	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	if (imp != nil)
-		result = imp->GetHost();
+	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	//if (imp != nil)
+	//	result = imp->GetHost();
 	
 	return result;
 }
@@ -985,9 +988,9 @@ string MFile::GetUser() const
 {
 	string result;
 	
-	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	if (imp != nil)
-		result = imp->GetUser();
+	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	//if (imp != nil)
+	//	result = imp->GetUser();
 	
 	return result;
 }
@@ -996,9 +999,9 @@ uint16 MFile::GetPort() const
 {
 	uint16 result = 22;
 	
-	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	if (imp != nil)
-		result = imp->GetPort() ;
+	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	//if (imp != nil)
+	//	result = imp->GetPort() ;
 	
 	return result;
 }
@@ -1057,31 +1060,31 @@ bool MFile::ReadOnly() const
 	return mReadOnly;
 }
 
-ssize_t MFile::ReadAttribute(
+int32 MFile::ReadAttribute(
 	const char*			inName,
 	void*				outData,
-	size_t				inDataSize) const
+	uint32				inDataSize) const
 {
-	ssize_t result = 0;
+	int32 result = 0;
 	
-	if (IsLocal())
-		result = read_attribute(GetPath(), inName, outData, inDataSize);
+	//if (IsLocal())
+	//	result = read_attribute(GetPath(), inName, outData, inDataSize);
 	
 	return result;
 }
 
-size_t MFile::WriteAttribute(
+int32 MFile::WriteAttribute(
 	const char*			inName,
 	const void*			inData,
-	size_t				inDataSize) const
+	uint32				inDataSize) const
 {
-	size_t result = 0;
+	uint32 result = 0;
 	
-	if (IsLocal())
-	{
-		write_attribute(GetPath(), inName, inData, inDataSize);
-		result = inDataSize;
-	}
+	//if (IsLocal())
+	//{
+	//	write_attribute(GetPath(), inName, inData, inDataSize);
+	//	result = inDataSize;
+	//}
 	
 	return result;
 }
@@ -1209,11 +1212,12 @@ bool FileNameMatches(
 
 // ------------------------------------------------------------
 
+#if 0
 struct MFileIteratorImp
 {
 	struct MInfo
 	{
-		fs::path			mParent;
+		fs::path		mParent;
 		DIR*			mDIR;
 		struct dirent	mEntry;
 	};
@@ -1375,16 +1379,19 @@ bool MDeepFileIteratorImp::Next(
 	return result;
 }
 
+#endif
+
 MFileIterator::MFileIterator(
 	const fs::path&	inDirectory,
 	uint32			inFlags)
+	: mImpl(nil)
 {
-	if (inFlags & kFileIter_Deep)
-		mImpl = new MDeepFileIteratorImp(inDirectory);
-	else
-		mImpl = new MSingleFileIteratorImp(inDirectory);
-	
-	mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
+	//if (inFlags & kFileIter_Deep)
+	//	mImpl = new MDeepFileIteratorImp(inDirectory);
+	//else
+	//	mImpl = new MSingleFileIteratorImp(inDirectory);
+	//
+	//mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
 }
 
 MFileIterator::~MFileIterator()
@@ -1395,13 +1402,14 @@ MFileIterator::~MFileIterator()
 bool MFileIterator::Next(
 	fs::path&			outFile)
 {
-	return mImpl->Next(outFile);
+	//return mImpl->Next(outFile);
+	return false;
 }
 
 void MFileIterator::SetFilter(
 	const string&	inFilter)
 {
-	mImpl->mFilter = inFilter;
+	//mImpl->mFilter = inFilter;
 }
 
 // ----------------------------------------------------------------------------
@@ -1442,208 +1450,6 @@ fs::path relative_path(const fs::path& inFromDir, const fs::path& inFile)
 	return result;
 }
 
-bool ChooseDirectory(
-	fs::path&	outDirectory)
-{
-	GtkWidget* dialog = nil;
-	bool result = false;
-
-	try
-	{
-		dialog = 
-			gtk_file_chooser_dialog_new(_("Select Folder"), nil,
-				GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				NULL);
-		
-		THROW_IF_NIL(dialog);
-	
-		string currentFolder = gApp->GetCurrentFolder();
-	
-		if (currentFolder.length() > 0)
-		{
-			gtk_file_chooser_set_current_folder_uri(
-				GTK_FILE_CHOOSER(dialog), currentFolder.c_str());
-		}
-		
-		if (fs::exists(outDirectory) and outDirectory != fs::path())
-		{
-			gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(dialog),
-				outDirectory.string().c_str());
-		}
-		
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
-			if (uri != nil)
-			{
-				MFile url(uri, true);
-				outDirectory = url.GetPath();
-	
-				g_free(uri);
-	
-				result = true;
-			}
-//
-//			gApp->SetCurrentFolder(
-//				gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
-		}
-	}
-	catch (exception& e)
-	{
-		if (dialog)
-			gtk_widget_destroy(dialog);
-		
-		throw;
-	}
-	
-	gtk_widget_destroy(dialog);
-
-	return result;
-}
-
-//bool ChooseDirectory(
-//	fs::path&			outDirectory)
-//{
-//	bool result = true; 
-//	
-//	MFile dir(outDirectory);
-//
-//	if (ChooseDirectory(dir))
-//	{
-//		outDirectory = dir.GetPath();
-//		result = true;
-//	}
-//	
-//	return result; 
-//}
-
-bool ChooseOneFile(
-	MFile&	ioFile)
-{
-	GtkWidget* dialog = nil;
-	bool result = false;
-	
-	try
-	{
-		dialog = 
-			gtk_file_chooser_dialog_new(_("Select File"), nil,
-				GTK_FILE_CHOOSER_ACTION_OPEN,
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				NULL);
-		
-		THROW_IF_NIL(dialog);
-	
-		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), false);
-		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), false);
-		
-		if (ioFile.IsValid())
-		{
-			gtk_file_chooser_select_uri(GTK_FILE_CHOOSER(dialog),
-				ioFile.GetURI().c_str());
-		}
-		else if (gApp->GetCurrentFolder().length() > 0)
-		{
-			gtk_file_chooser_set_current_folder_uri(
-				GTK_FILE_CHOOSER(dialog), gApp->GetCurrentFolder().c_str());
-		}
-		
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			char* uri = gtk_file_chooser_get_uri(GTK_FILE_CHOOSER(dialog));
-			if (uri != nil)
-			{
-				ioFile = MFile(uri, true);
-				g_free(uri);
-	
-				gApp->SetCurrentFolder(
-					gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog)));
-	
-				result = true;
-			}
-		}
-	}
-	catch (exception& e)
-	{
-		if (dialog)
-			gtk_widget_destroy(dialog);
-		
-		throw;
-	}
-	
-	gtk_widget_destroy(dialog);
-	
-	return result;
-}
-
-bool ChooseFiles(
-	bool				inLocalOnly,
-	std::vector<MFile>&	outFiles)
-{
-	GtkWidget* dialog = nil;
-	
-	try
-	{
-		dialog = 
-			gtk_file_chooser_dialog_new(_("Open"), nil,
-				GTK_FILE_CHOOSER_ACTION_OPEN,
-				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				NULL);
-		
-		THROW_IF_NIL(dialog);
-	
-		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
-		gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(dialog), inLocalOnly);
-		
-		if (gApp->GetCurrentFolder().length() > 0)
-		{
-			gtk_file_chooser_set_current_folder_uri(
-				GTK_FILE_CHOOSER(dialog), gApp->GetCurrentFolder().c_str());
-		}
-		
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			GSList* uris = gtk_file_chooser_get_uris(GTK_FILE_CHOOSER(dialog));	
-			
-			GSList* file = uris;	
-			
-			while (file != nil)
-			{
-				MFile url(reinterpret_cast<char*>(file->data), true);
-
-				g_free(file->data);
-				file->data = nil;
-
-				outFiles.push_back(url);
-
-				file = file->next;
-			}
-			
-			g_slist_free(uris);
-		}
-		
-		char* cwd = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(dialog));
-		if (cwd != nil)
-		{
-			gApp->SetCurrentFolder(cwd);
-			g_free(cwd);
-		}
-	}
-	catch (exception& e)
-	{
-		if (dialog)
-			gtk_widget_destroy(dialog);
-		
-		throw;
-	}
-	
-	gtk_widget_destroy(dialog);
-	
-	return outFiles.size() > 0;
-}
 
 void NormalizePath(
 	fs::path&	ioPath)

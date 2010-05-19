@@ -417,7 +417,7 @@ inline void MTextBuffer::push_back(
 }
 
 inline void MTextBuffer::push_back(
-	wchar_t		inUnicode)
+	uint32		inUnicode)
 {
 	if (inUnicode < 0x080)
 	{
