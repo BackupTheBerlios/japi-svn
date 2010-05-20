@@ -997,16 +997,16 @@ void MTextBuffer::InsertSelf(
 	if (mData == nil or mLogicalLength + inLength > mPhysicalLength)
 	{
 		uint32 newLength = ((mLogicalLength + inLength) / kBlockSize + 1) * kBlockSize;
-		auto_array<char> tmp(new char[newLength]);
+		char* tmp = new char[newLength];
 		
 		if (mData != nil)
 		{
 			MoveGapTo(mLogicalLength);
-			memcpy(tmp.get(), mData, mLogicalLength);
+			memcpy(tmp, mData, mLogicalLength);
 			delete[] mData;
 		}
 		
-		mData = tmp.release();
+		mData = tmp;
 		mPhysicalLength = newLength;
 	}
 

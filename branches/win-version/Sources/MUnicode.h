@@ -93,12 +93,58 @@ enum CharBreakClass
 	kCBC_T,
 	kCBC_LV,
 	kCBC_LVT,
-	kCBC_Other
+	kCBC_Other,
+
+	kCBC_Prepend,
+	kCBC_SpacingMark
 };
 
 extern const bool kCharBreakTable[10][10];
 
 CharBreakClass GetCharBreakClass(unicode inUnicode);
+
+enum LineBreakClass {
+	kLBC_OpenPunctuation,
+	kLBC_ClosePunctuation,
+	kLBC_CloseParenthesis,
+	kLBC_Quotation,
+	kLBC_NonBreaking,
+	kLBC_Nonstarter,
+	kLBC_Exlamation,
+	kLBC_SymbolAllowingBreakAfter,
+	kLBC_InfixNumericSeparator,
+	kLBC_PrefixNumeric,
+	kLBC_PostfixNumeric,
+	kLBC_Numeric,
+	kLBC_Alphabetic,
+	kLBC_Ideographic,
+	kLBC_Inseperable,
+	kLBC_Hyphen,
+	kLBC_BreakAfter,
+	kLBC_BreakBefor,
+	kLBC_BreakOpportunityBeforeAndAfter,
+	kLBC_ZeroWidthSpace,
+	kLBC_CombiningMark,
+	kLBC_WordJoiner,
+	kLBC_HangulLVSyllable,
+	kLBC_HangulLVTSyllable,
+	kLBC_HangulLJamo,
+	kLBC_HangulVJamo,
+	kLBC_HangulTJamo,
+
+	kLBC_MandatoryBreak,
+	kLBC_CarriageReturn,
+	kLBC_LineFeed,
+	kLBC_NextLine,
+	kLBC_Surrogate,
+	kLBC_Space,
+	kLBC_ContigentBreakOpportunity,
+	kLBC_Ambiguous,
+	kLBC_ComplexContext,
+	kLBC_Unknown
+};
+
+LineBreakClass GetLineBreakClass(unicode inUnicode);
 
 bool IsSpace(unicode inChar);
 bool IsAlpha(unicode inChar);
