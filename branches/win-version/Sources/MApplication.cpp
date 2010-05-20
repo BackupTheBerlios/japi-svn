@@ -420,7 +420,7 @@ MDocument* MApplication::OpenOneDocument(
 	//	else if (FileNameMatches("*.epub", inFileRef))
 	//		OpenEPub(inFileRef);
 	//	else
-			doc = MDocument::Create<MTextDocument>(inFileRef);
+			//doc = MDocument::Create<MTextDocument>(inFileRef);
 	}
 	
 	if (doc != nil)

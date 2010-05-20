@@ -23,7 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-//#include <pcre.h>
+#include "pcre.h"
 
 #include "MTextBuffer.h"
 #include "MSelection.h"
@@ -2102,16 +2102,16 @@ void MTextBuffer::reserve(
 {
 	if (inSize > mPhysicalLength)
 	{
-		auto_array<char> tmp(new char[inSize]);
+		char* tmp = new char[inSize];
 		
 		if (mData != nil)
 		{
 			MoveGapTo(mLogicalLength);
-			memcpy(tmp.get(), mData, mLogicalLength);
+			memcpy(tmp, mData, mLogicalLength);
 			delete[] mData;
 		}
 		
-		mData = tmp.release();
+		mData = tmp;
 		mPhysicalLength = inSize;
 	}
 }

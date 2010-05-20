@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;$(SolutionDir)\..\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -59,11 +59,11 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;C:\Users\Maarten\projects\pcre\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -91,6 +91,7 @@
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MColor.cpp" />
     <ClCompile Include="..\..\Sources\MController.cpp" />
+    <ClCompile Include="..\..\Sources\MDevice.cpp" />
     <ClCompile Include="..\..\Sources\MDocClosedNotifier.cpp" />
     <ClCompile Include="..\..\Sources\MDocument.cpp" />
     <ClCompile Include="..\..\Sources\MDocWindow.cpp" />
@@ -101,6 +102,7 @@
     <ClCompile Include="..\..\Sources\MMenu.cpp" />
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
+    <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
     <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
     <ClCompile Include="..\..\Sources\MUnicode.cpp" />
@@ -108,6 +110,7 @@
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinDevice.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinFile.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp" />

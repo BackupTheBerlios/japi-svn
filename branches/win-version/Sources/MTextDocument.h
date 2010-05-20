@@ -196,8 +196,8 @@ class MTextDocument : public MDocument
 	
 	MSelection			GetSelection() const				{ return mSelection; }
 
-	void				GetSelectionRegion(
-							MRegion&		outRegion) const;
+	//void				GetSelectionRegion(
+	//						MRegion&		outRegion) const;
 
 	void				GetSelectedText(
 							std::string&	outText) const;
@@ -397,8 +397,8 @@ class MTextDocument : public MDocument
 	const MTextInputAreaInfo&
 						GetTextInputAreaInfo() const		{ return mTextInputAreaInfo; }
 
-	void				OnKeyPressEvent(
-							GdkEventKey*	inEvent);
+	//void				OnKeyPressEvent(
+	//						GdkEventKey*	inEvent);
 	
 	void				OnCommit(
 							const char*		inText,

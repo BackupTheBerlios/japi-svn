@@ -49,6 +49,41 @@ struct MRect
 					int32				inDeltaY);
 };
 
+class MRegion
+{
+public:
+				MRegion();
+				MRegion(
+					const MRect&		inRect);
+				MRegion(
+					const MRegion&		inRegion);
+	MRegion&	operator=(
+					const MRegion&		inRegion);
+
+				~MRegion();
+
+				// Intersection
+	MRegion&	operator&(
+					const MRegion&		inRegion);
+
+	MRegion&	operator&(
+					const MRect&		inRect);
+
+				// Union
+	MRegion&	operator|(
+					const MRegion&		inRegion);
+
+	MRegion&	operator|(
+					const MRect&		inRect);
+
+				// test for empty region
+				operator bool() const;
+
+private:
+	struct MRegionImpl*
+				mImpl;
+};
+
 //struct MRegion
 //{
 //				MRegion()

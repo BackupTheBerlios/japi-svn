@@ -10,8 +10,6 @@
 #include <fcntl.h>
 #include <iostream>
 
-#include <gdk/gdkkeysyms.h>
-
 #include <boost/bind.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
