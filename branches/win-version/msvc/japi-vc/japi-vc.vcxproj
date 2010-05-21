@@ -59,11 +59,11 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;C:\Users\Maarten\projects\pcre\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;C:\Users\maarten\projects\pcre\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,9 +102,7 @@
     <ClCompile Include="..\..\Sources\MMenu.cpp" />
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
-    <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
-    <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
     <ClCompile Include="..\..\Sources\MUnicode.cpp" />
     <ClCompile Include="..\..\Sources\MView.cpp" />
     <ClCompile Include="..\..\Sources\MWindow.cpp" />

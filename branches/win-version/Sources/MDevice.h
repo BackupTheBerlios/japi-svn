@@ -73,8 +73,8 @@ class MDevice
 	void			ClipRect(
 						MRect				inRect);
 	
-	void			ClipRegion(
-						MRegion				inRegion);
+	//void			ClipRegion(
+	//					MRegion				inRegion);
 
 	void			EraseRect(
 						MRect				inRect);

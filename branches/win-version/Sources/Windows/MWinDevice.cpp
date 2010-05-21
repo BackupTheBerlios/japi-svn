@@ -66,8 +66,8 @@ class MWinDeviceImpl : public MDeviceImp
 	virtual void			ClipRect(
 								MRect				inRect);
 
-	virtual void			ClipRegion(
-								MRegion				inRegion);
+	//virtual void			ClipRegion(
+	//							MRegion				inRegion);
 
 	virtual void			EraseRect(
 								MRect				inRect);
@@ -200,6 +200,8 @@ class MWinDeviceImpl : public MDeviceImp
 							mState;
 };
 
+ID2D1Factory*	MWinDeviceImpl::sD2DFactory;
+
 MWinDeviceImpl::MWinDeviceImpl(
 	MView*		inView,
 	MRect		inBounds,
@@ -221,6 +223,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 		::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(inBounds.width, inBounds.height)),
 		&mRenderTarget));
 
+	mRenderTarget->BeginDraw();
+
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
 }
@@ -240,7 +244,10 @@ MWinDeviceImpl::~MWinDeviceImpl()
 	}
 
 	if (mRenderTarget != nil)
+	{
+		mRenderTarget->EndDraw();
 		mRenderTarget->Release();
+	}
 }
 
 void MWinDeviceImpl::Save()
@@ -331,10 +338,10 @@ void MWinDeviceImpl::ClipRect(
 {
 }
 
-void MWinDeviceImpl::ClipRegion(
-	MRegion				inRegion)
-{
-}
+//void MWinDeviceImpl::ClipRegion(
+//	MRegion				inRegion)
+//{
+//}
 
 void MWinDeviceImpl::EraseRect(
 	MRect				inRect)
@@ -1244,3 +1251,12 @@ void MWinDeviceImpl::BreakLines(
 //{
 //	mDrawWhiteSpace = inDrawWhiteSpace;
 //}
+
+
+MDeviceImp* MDeviceImp::Create(
+	MView*				inView,
+	MRect				inRect,
+	bool				inCreateOffscreen)
+{
+	return new MWinDeviceImpl(inView, inRect, inCreateOffscreen);
+}

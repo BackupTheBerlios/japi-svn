@@ -46,9 +46,9 @@ MView::MView(
 	//SetWidget(inWidget, inCanActivate, inCanDraw);
 }
 
-//MView::MView(
-//	int32		inWidth,
-//	int32		inHeight)
+MView::MView(
+	int32		inWidth,
+	int32		inHeight)
 //	: mFocusInEvent(this, &MView::OnFocusInEvent)
 //	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
 //	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
@@ -66,12 +66,12 @@ MView::MView(
 //	, mDragDataDelete(this, &MView::OnDragDataDelete)
 //	, mDragDataGet(this, &MView::OnDragDataGet)
 //	, mGtkWidget(nil)
-//{
+{
 //	SetWidget(gtk_drawing_area_new(), true, true);
 //	
 //	if (inWidth > 0 or inHeight > 0)
 //		gtk_widget_set_size_request(mGtkWidget, inWidth, inHeight);
-//}
+}
 
 MView::MView()
 //	: mFocusInEvent(this, &MView::OnFocusInEvent)
@@ -127,6 +127,12 @@ MView::MView()
 
 MView::~MView()
 {
+}
+
+void MView::SetParent(
+	MView*			inParent)
+{
+	mParent = inParent;
 }
 
 MWindow* MView::GetWindow() const

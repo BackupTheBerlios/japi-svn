@@ -159,6 +159,7 @@ void MWindow::Init()
 //#endif
 //}
 
+
 void MWindow::RecycleWindows()
 {
 	MWindow* w = sRecycle;
@@ -191,6 +192,11 @@ void MWindow::RemoveWindowFromList(
 			w = next;
 		}
 	}
+}
+
+MWindow* MWindow::GetWindow() const
+{
+	return const_cast<MWindow*>(this);
 }
 
 void MWindow::Show()

@@ -117,11 +117,11 @@ void MDevice::ClipRect(
 	mImpl->ClipRect(inRect);
 }
 
-void MDevice::ClipRegion(
-	MRegion		inRegion)
-{
-	mImpl->ClipRegion(inRegion);
-}
+//void MDevice::ClipRegion(
+//	MRegion		inRegion)
+//{
+//	mImpl->ClipRegion(inRegion);
+//}
 
 void MDevice::EraseRect(
 	MRect		inRect)

@@ -18,6 +18,7 @@
 #include "MWinApplicationImpl.h"
 #include "MWinUtils.h"
 #include "MWinMenu.h"
+#include "MDevice.h"
 
 using namespace std;
 using namespace zeep;
@@ -371,33 +372,45 @@ bool MWinWindowImpl::WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 
 bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
-	///* Get the 'dirty' rect */
-	//HNativeRect lUpdateRect;
-	//if (::GetUpdateRect (inHWnd, &lUpdateRect, FALSE) == TRUE)
-	//{
-	//	/* Fill a PAINTSTRUCT. No background erase */
-	//	PAINTSTRUCT lPs;
-	//	lPs.hdc = ::GetDC (inHWnd);
-	//	lPs.fErase = FALSE;
-	//	lPs.rcPaint = lUpdateRect;
+	/* Get the 'dirty' rect */
+	RECT lUpdateRect;
+	if (::GetUpdateRect(inHWnd, &lUpdateRect, FALSE) == TRUE)
+	{
+		MView view(100, 100);
+		view.SetParent(mWindow);
 
-	//	/* Convert the native rect to a HRegion */
-	//	HRect updateRect(lUpdateRect);
-	//	HRegion lUpdateRegion(updateRect);
-	//	
-	//	/* BeginPaint and call the Node redraw */ 
-	//	::BeginPaint (inHWnd, &lPs);
-	//	try
-	//	{
-	//		mWindow->RedrawAll(lUpdateRegion);
-	//	}
-	//	catch (...)
-	//	{
-	//	}
-	//	::EndPaint (inHWnd, &lPs);
-	//}
+		MRect update(lUpdateRect.left, lUpdateRect.top, lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
+		MDevice dev(&view, update, false);
 
-	//return true;
+		MColor c1 = kBlack, c2 = kWhite;
+
+		dev.CreateAndUsePattern(c1, c2);
+
+		dev.FillRect(MRect(10, 10, 50, 50));
+
+		///* Fill a PAINTSTRUCT. No background erase */
+		//PAINTSTRUCT lPs;
+		//lPs.hdc = ::GetDC (inHWnd);
+		//lPs.fErase = FALSE;
+		//lPs.rcPaint = lUpdateRect;
+
+		///* Convert the native rect to a HRegion */
+		//HRect updateRect(lUpdateRect);
+		//HRegion lUpdateRegion(updateRect);
+		//
+		///* BeginPaint and call the Node redraw */ 
+		//::BeginPaint (inHWnd, &lPs);
+		//try
+		//{
+		//	mWindow->RedrawAll(lUpdateRegion);
+		//}
+		//catch (...)
+		//{
+		//}
+		//::EndPaint (inHWnd, &lPs);
+	}
+
+	return true;
 
 	return false;
 }

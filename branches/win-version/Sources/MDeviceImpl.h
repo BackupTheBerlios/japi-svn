@@ -45,8 +45,8 @@ class MDeviceImp
 	virtual void			ClipRect(
 								MRect				inRect)					{}
 
-	virtual void			ClipRegion(
-								MRegion				inRegion)				{}
+	//virtual void			ClipRegion(
+	//							MRegion				inRegion)				{}
 
 	virtual void			EraseRect(
 								MRect				inRect)					{}
@@ -118,7 +118,7 @@ class MDeviceImp
 								int32				inPosition,
 								uint32&				outIndex)				{ return false; }
 	
-	virtual uint32			GetTextWidth();
+	virtual uint32			GetTextWidth()									{ return 0; }
 	
 	virtual void			DrawText(
 								float				inX,

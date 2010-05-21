@@ -216,8 +216,15 @@ MWinException::MWinException(
 	if (n < sizeof(mMessage))
 		mMessage[n++] = ' ';
 
-	::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		nil, inHResult, 0, mMessage + n, sizeof(mMessage) - n, nil);
+	wchar_t buffer[1024];
+
+	int m = ::FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		nil, inHResult, 0, buffer, sizeof(buffer) / sizeof(wchar_t), nil);
+	buffer[m] = 0;
+	
+	string err = w2c(buffer);
+	copy(err.begin(), err.end(), mMessage + n);
+	mMessage[n + m] = 0;
 }
 
 MWinException::MWinException(

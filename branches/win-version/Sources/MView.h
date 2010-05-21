@@ -36,9 +36,12 @@ class MView
 
 	virtual			~MView();
 
+	virtual void	SetParent(
+						MView*			inParent);
+
 	//GtkWidget*		GetGtkWidget() const		{ return mGtkWidget; }
 
-	MWindow*		GetWindow() const;
+	virtual MWindow*GetWindow() const;
 
 	void			GetBounds(
 						MRect&			outBounds) const;

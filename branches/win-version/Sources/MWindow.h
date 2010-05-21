@@ -30,6 +30,8 @@ class MWindow : public MView, public MHandler
 	
 	virtual					~MWindow();
 
+	virtual MWindow*		GetWindow() const;
+
 	MWindowFlags			GetFlags() const;
 
 	void					Show();
