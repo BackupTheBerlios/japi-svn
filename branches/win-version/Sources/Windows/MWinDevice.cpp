@@ -218,15 +218,20 @@ MWinDeviceImpl::MWinDeviceImpl(
 
 	HWND hwnd = static_cast<MWinWindowImpl*>(window->GetImpl())->GetHandle();
 
+	RECT r;
+	::GetWindowRect(hwnd, &r);
+
 	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
 		::D2D1::RenderTargetProperties(),
-		::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(inBounds.width, inBounds.height)),
+		::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(r.right - r.left, r.bottom - r.top)),
 		&mRenderTarget));
 
 	mRenderTarget->BeginDraw();
 
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
+
+	EraseRect(inBounds);
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
@@ -380,9 +385,15 @@ void MWinDeviceImpl::FillEllipse(
 	assert(mForeBrush);
 	assert(mRenderTarget);
 
+	float radius;
+	if (inRect.height < inRect.width)
+		radius = inRect.height / 2.f;
+	else
+		radius = inRect.width / 2.f;
+
 	D2D1_ROUNDED_RECT r =
 		D2D1::RoundedRect(D2D1::RectF(inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height),
-		inRect.width / 2.f, inRect.height / 2.f);
+		radius, radius);
 
 	mRenderTarget->FillRoundedRectangle(r, mForeBrush);
 }
@@ -423,11 +434,17 @@ void MWinDeviceImpl::CreateAndUsePattern(
 
 	ID2D1Bitmap* bitmap;
 	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateBitmap(D2D1::SizeU(8, 8), data, 32,
-		D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UINT)), &bitmap));
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+		), &bitmap));
 
-	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateBitmapBrush(bitmap, &brush));
+	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateBitmapBrush(
+		bitmap,
+		D2D1::BitmapBrushProperties(D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
+		D2D1::BrushProperties(1.0f, D2D1::Matrix3x2F::Rotation(45.f)),
+		&brush));
 
-	brush->SetTransform(D2D1::Matrix3x2F::Rotation(45.f));
+	//brush->SetTransform(D2D1::Matrix3x2F::Rotation(45.f));
 
 	if (mForeBrush != nil)
 		mForeBrush->Release();

@@ -370,23 +370,41 @@ bool MWinWindowImpl::WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 	return result;
 }
 
-bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
+bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
 {
 	/* Get the 'dirty' rect */
 	RECT lUpdateRect;
 	if (::GetUpdateRect(inHWnd, &lUpdateRect, FALSE) == TRUE)
 	{
-		MView view(100, 100);
-		view.SetParent(mWindow);
+		{
+			MRect bounds;
+			GetWindowPosition(bounds);
 
-		MRect update(lUpdateRect.left, lUpdateRect.top, lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
-		MDevice dev(&view, update, false);
+			MView view(bounds.width, bounds.height);
+			view.SetParent(mWindow);
 
-		MColor c1 = kBlack, c2 = kWhite;
+			MRect update(lUpdateRect.left, lUpdateRect.top, lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
 
-		dev.CreateAndUsePattern(c1, c2);
+			bounds.x = bounds.y = 0;
+			MDevice dev(&view, bounds, false);
 
-		dev.FillRect(MRect(10, 10, 50, 50));
+			MColor c1("#efff7f"), c2("#ffffcc");
+
+			dev.CreateAndUsePattern(c1, c2);
+
+			dev.FillRect(MRect(10, 10, 50, 50));
+
+			//dev.SetForeColor(c1);
+			dev.FillRect(MRect(10, 60, 50, 50));
+
+			//dev.SetForeColor(c2);
+			dev.FillEllipse(MRect(100, 100, 50, 14));
+
+			//dev.SetForeColor(c1);
+			dev.FillEllipse(MRect(100, 114, 50, 14));
+		}
+
+		::ValidateRect(GetHandle(), &lUpdateRect);
 
 		///* Fill a PAINTSTRUCT. No background erase */
 		//PAINTSTRUCT lPs;
@@ -410,9 +428,9 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 		//::EndPaint (inHWnd, &lPs);
 	}
 
-	return true;
+	outResult = 0;
 
-	return false;
+	return true;
 }
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
