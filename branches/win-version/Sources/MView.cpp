@@ -17,6 +17,7 @@
 #include "MError.h"
 #include "MUtils.h"
 #include "MDevice.h"
+#include "MViewImpl.h"
 
 using namespace std;
 

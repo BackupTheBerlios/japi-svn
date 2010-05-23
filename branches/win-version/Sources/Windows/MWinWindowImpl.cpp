@@ -388,20 +388,22 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 			bounds.x = bounds.y = 0;
 			MDevice dev(&view, bounds, false);
 
+			dev.DrawString("Hallo, wereld!", 10, 5);
+
 			MColor c1("#efff7f"), c2("#ffffcc");
 
-			dev.CreateAndUsePattern(c1, c2);
+//			dev.FillRect(MRect(10, 10, 50, 50));
 
-			dev.FillRect(MRect(10, 10, 50, 50));
-
-			//dev.SetForeColor(c1);
+			dev.SetForeColor(c1);
 			dev.FillRect(MRect(10, 60, 50, 50));
 
-			//dev.SetForeColor(c2);
+			dev.SetForeColor(c2);
 			dev.FillEllipse(MRect(100, 100, 50, 14));
 
-			//dev.SetForeColor(c1);
-			dev.FillEllipse(MRect(100, 114, 50, 14));
+			dev.CreateAndUsePattern(c1, c2);
+			dev.FillEllipse(MRect(100, 128, 50, 14));
+
+
 		}
 
 		::ValidateRect(GetHandle(), &lUpdateRect);

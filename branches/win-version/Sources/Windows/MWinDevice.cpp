@@ -5,6 +5,7 @@
 
 #include <windows.h>
 #include <d2d1.h>
+#include <dwrite.h>
 
 #undef GetNextWindow
 #undef ClipRegion
@@ -22,6 +23,7 @@
 #include "MError.h"
 #include "MUnicode.h"
 #include "MError.h"
+#include "MWinUtils.h"
 
 using namespace std;
 
@@ -191,7 +193,10 @@ class MWinDeviceImpl : public MDeviceImp
 	//uint32					mSpaceGlyph, mTabGlyph, mNewLineGlyph;
 
 	static ID2D1Factory*	sD2DFactory;
+	static IDWriteFactory*	sDWFactory;
+
 	ID2D1HwndRenderTarget*	mRenderTarget;
+	IDWriteTextFormat*		mTextFormat;
 
 	ID2D1Brush*				mForeBrush;
 	ID2D1Brush*				mBackBrush;
@@ -201,25 +206,33 @@ class MWinDeviceImpl : public MDeviceImp
 };
 
 ID2D1Factory*	MWinDeviceImpl::sD2DFactory;
+IDWriteFactory*	MWinDeviceImpl::sDWFactory;
 
 MWinDeviceImpl::MWinDeviceImpl(
 	MView*		inView,
 	MRect		inBounds,
 	bool		inOffscreen)
 	: mRenderTarget(nil)
+	, mTextFormat(nil)
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 {
 	if (sD2DFactory == nil)
 		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
 
+	if (sDWFactory == nil)
+		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
+	        DWRITE_FACTORY_TYPE_SHARED,
+	        __uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&sDWFactory)));
+	
 	MWindow* window = inView->GetWindow();
 	THROW_IF_NIL(window);
 
 	HWND hwnd = static_cast<MWinWindowImpl*>(window->GetImpl())->GetHandle();
 
 	RECT r;
-	::GetWindowRect(hwnd, &r);
+	::GetClientRect(hwnd, &r);
 
 	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
 		::D2D1::RenderTargetProperties(),
@@ -247,6 +260,9 @@ MWinDeviceImpl::~MWinDeviceImpl()
 		mState.top()->Release();
 		mState.pop();
 	}
+
+	if (mTextFormat != nil)
+		mTextFormat->Release();
 
 	if (mRenderTarget != nil)
 	{
@@ -444,7 +460,7 @@ void MWinDeviceImpl::CreateAndUsePattern(
 		D2D1::BrushProperties(1.0f, D2D1::Matrix3x2F::Rotation(45.f)),
 		&brush));
 
-	//brush->SetTransform(D2D1::Matrix3x2F::Rotation(45.f));
+	bitmap->Release();
 
 	if (mForeBrush != nil)
 		mForeBrush->Release();
@@ -526,6 +542,25 @@ void MWinDeviceImpl::DrawString(
 	uint32				inTruncateWidth,
 	MAlignment			inAlign)
 {
+	if (mTextFormat == nil)
+		THROW_IF_HRESULT_ERROR(
+			sDWFactory->CreateTextFormat(
+				L"Consolas",                // Font family name.
+				NULL,                       // Font collection (NULL sets it to use the system font collection).
+				DWRITE_FONT_WEIGHT_REGULAR,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				13.333333f,
+				L"en-us",
+				&mTextFormat
+			));
+
+	wstring s(c2w(inText));
+
+	mRenderTarget->DrawTextW(s.c_str(), s.length(),
+		mTextFormat,
+		D2D1::RectF(inX, inY, 200, 14),
+		mForeBrush);
 }
 
 uint32 MWinDeviceImpl::GetStringWidth(
@@ -544,6 +579,20 @@ uint32 MWinDeviceImpl::GetStringWidth(
 void MWinDeviceImpl::SetText(
 	const string&		inText)
 {
+	if (mTextFormat == nil)
+		THROW_IF_HRESULT_ERROR(
+			sDWFactory->CreateTextFormat(
+				L"Consolas",                // Font family name.
+				NULL,                       // Font collection (NULL sets it to use the system font collection).
+				DWRITE_FONT_WEIGHT_REGULAR,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				72.0f,
+				L"en-us",
+				&mTextFormat
+			));
+
+
 	//pango_layout_set_text(mPangoLayout, inText.c_str(), inText.length());
 	//mTextEndsWithNewLine = inText.length() > 0 and inText[inText.length() - 1] == '\n';
 
