@@ -169,6 +169,8 @@ class MWinDeviceImpl : public MDeviceImp
 	///* Should be a member of HDevice. Not of the imp! */
 	//HPoint			fBackOffset;
 
+	IDWriteTextFormat*		GetTextFormat();
+	  
 	/* Device context */
 	HDC						mDC;
 	//HBITMAP					mOffscreenBitmap;
@@ -177,29 +179,19 @@ class MWinDeviceImpl : public MDeviceImp
 	HPEN					mForePen;
 	//bool					mPrinting;
 
-	//PangoItem*				Itemize(
-	//							const char*			inText,
-	//							PangoAttrList*		inAttrs);
-
-	//void					GetWhiteSpaceGlyphs(
-	//							uint32&				outSpace,
-	//							uint32&				outTab,
-	//							uint32&				outNL);
-
-	//PangoLayout*			mPangoLayout;
-	//PangoFontDescription*	mFont;
-	//PangoFontMetrics*		mMetrics;
-	//bool					mTextEndsWithNewLine;
-	//uint32					mSpaceGlyph, mTabGlyph, mNewLineGlyph;
-
 	static ID2D1Factory*	sD2DFactory;
 	static IDWriteFactory*	sDWFactory;
 
 	ID2D1HwndRenderTarget*	mRenderTarget;
 	IDWriteTextFormat*		mTextFormat;
+	IDWriteTextLayout*		mTextLayout;
 
 	ID2D1Brush*				mForeBrush;
 	ID2D1Brush*				mBackBrush;
+	wstring					mFont;
+	float					mFontSize;
+
+	float					mDpiScaleX, mDpiScaleY;
 
 	stack<ID2D1DrawingStateBlock*>
 							mState;
@@ -214,8 +206,11 @@ MWinDeviceImpl::MWinDeviceImpl(
 	bool		inOffscreen)
 	: mRenderTarget(nil)
 	, mTextFormat(nil)
+	, MTextLayout(nil)
 	, mForeBrush(nil)
 	, mBackBrush(nil)
+	, mFont(L"Consolas")
+	, mFontSize(10.f * 96.f / 72.f)
 {
 	if (sD2DFactory == nil)
 		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
@@ -233,6 +228,11 @@ MWinDeviceImpl::MWinDeviceImpl(
 
 	RECT r;
 	::GetClientRect(hwnd, &r);
+
+	HDC dc = ::GetDC(hwnd);
+	mDpiScaleX = ::GetDeviceCaps(dc, LOGPIXELSX) / 96.0f;
+	mDpiScaleY = ::GetDeviceCaps(dc, LOGPIXELSY) / 96.0f;
+	::ReleaseDC(0, dc);
 
 	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
 		::D2D1::RenderTargetProperties(),
@@ -260,6 +260,9 @@ MWinDeviceImpl::~MWinDeviceImpl()
 		mState.top()->Release();
 		mState.pop();
 	}
+
+	if (mTextLayout != nil)
+		mTextLayout->Release();
 
 	if (mTextFormat != nil)
 		mTextFormat->Release();
@@ -296,6 +299,23 @@ void MWinDeviceImpl::SetOrigin(
 void MWinDeviceImpl::SetFont(
 	const string&		inFont)
 {
+	string::const_iterator e = inFont.end();
+
+	int size = 0, n = 1;
+	while (e != inFont.begin() and isdigit(*--e))
+	{
+		--e;
+		size += n * (*e - '0');
+		n *= 10;
+	}
+
+	if (e == inFont.end() or e == inFont.begin() or *e != ' ')
+		THROW(("Error in specified font"));
+
+	--e;
+	
+	mFont = c2w(inFont.substr(0, e - inFont.begin()));
+	mFontSize = size * 96.f / 72.f;
 }
 
 void MWinDeviceImpl::SetForeColor(
@@ -492,8 +512,29 @@ void MWinDeviceImpl::CreateAndUsePattern(
 //	return mMetrics;
 //}
 
+IDWriteTextFormat* MWinDeviceImpl::GetTextFormat()
+{
+	if (mTextFormat == nil)
+	{
+		THROW_IF_HRESULT_ERROR(
+			sDWFactory->CreateTextFormat(
+				mFont.c_str(),                // Font family name.
+				NULL,                       // Font collection (NULL sets it to use the system font collection).
+				DWRITE_FONT_WEIGHT_REGULAR,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				mFontSize,
+				L"en-us",
+				&mTextFormat
+			));
+	}
+	
+	return mTextFormat;
+}
+
 uint32 MWinDeviceImpl::GetAscent()
 {
+
 	uint32 result = 10;
 
 	//PangoFontMetrics* metrics = GetMetrics();
@@ -542,23 +583,9 @@ void MWinDeviceImpl::DrawString(
 	uint32				inTruncateWidth,
 	MAlignment			inAlign)
 {
-	if (mTextFormat == nil)
-		THROW_IF_HRESULT_ERROR(
-			sDWFactory->CreateTextFormat(
-				L"Consolas",                // Font family name.
-				NULL,                       // Font collection (NULL sets it to use the system font collection).
-				DWRITE_FONT_WEIGHT_REGULAR,
-				DWRITE_FONT_STYLE_NORMAL,
-				DWRITE_FONT_STRETCH_NORMAL,
-				13.333333f,
-				L"en-us",
-				&mTextFormat
-			));
-
 	wstring s(c2w(inText));
-
 	mRenderTarget->DrawTextW(s.c_str(), s.length(),
-		mTextFormat,
+		GetTextFormat(),
 		D2D1::RectF(inX, inY, 200, 14),
 		mForeBrush);
 }
@@ -579,45 +606,28 @@ uint32 MWinDeviceImpl::GetStringWidth(
 void MWinDeviceImpl::SetText(
 	const string&		inText)
 {
-	if (mTextFormat == nil)
-		THROW_IF_HRESULT_ERROR(
-			sDWFactory->CreateTextFormat(
-				L"Consolas",                // Font family name.
-				NULL,                       // Font collection (NULL sets it to use the system font collection).
-				DWRITE_FONT_WEIGHT_REGULAR,
-				DWRITE_FONT_STYLE_NORMAL,
-				DWRITE_FONT_STRETCH_NORMAL,
-				72.0f,
-				L"en-us",
-				&mTextFormat
-			));
+	if (mTextLayout != nil)
+		mTextLayout->Release();
 
+	wstring s(c2w(inText));
 
-	//pango_layout_set_text(mPangoLayout, inText.c_str(), inText.length());
-	//mTextEndsWithNewLine = inText.length() > 0 and inText[inText.length() - 1] == '\n';
-
-	//// reset attributes
-	//PangoAttrList* attrs = pango_attr_list_new();
-	//pango_layout_set_attributes(mPangoLayout, attrs);
-	//pango_attr_list_unref(attrs);
+	THROW_IF_HRESULT_ERROR(
+		sDWFactory->CreateTextLayout(
+			s.c_str(),
+			s.length(),
+			GetTextFormat(),
+			99999.0f,
+			99999.0f,
+			&mTextLayout
+		));
 }
 
 void MWinDeviceImpl::SetTabStops(
 	uint32				inTabWidth)
 {
-	//PangoTabArray* tabs = pango_tab_array_new(2, false);
-	//
-	//uint32 next = inTabWidth;
-	//
-	//for (uint32 x = 0; x < 2; ++x)
-	//{
-	//	pango_tab_array_set_tab(tabs, x, PANGO_TAB_LEFT, next * PANGO_SCALE);
-	//	next += inTabWidth;
-	//}
-	//
-	//pango_layout_set_tabs(mPangoLayout, tabs);
-	//
-	//pango_tab_array_free(tabs);
+	if (mTextLayout == nil)
+		THROW(("SetText must be called first!"));
+	mTextLayout->SetIncrementalTabStop(inTabWidth * 96.f / 72.f);
 }
 
 void MWinDeviceImpl::SetTextColors(
@@ -625,6 +635,7 @@ void MWinDeviceImpl::SetTextColors(
 	uint32				inColors[],
 	uint32				inOffsets[])
 {
+
 	//PangoAttrList* attrs = pango_attr_list_new();
 
 	//for (uint32 ix = 0; ix < inColorCount; ++ix)
