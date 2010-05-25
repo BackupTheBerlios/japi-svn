@@ -67,10 +67,11 @@
       <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>perl $(SolutionDir)\..\Resources\MakeRes.pl $(SolutionDir)\MJapi.res</Command>
+      <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\..\Resources\MakeRes.pl $(SolutionDir)\MJapi.rc $(SolutionDir)\..\..\Resources\</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>$(SolutionDir)MJapi.res;%(Outputs)</Outputs>
+      <Outputs>$(SolutionDir)MJapi.rc;%(Outputs)</Outputs>
+      <Inputs>$(SolutionDir)\..\..\Resources\MakeRes.pl;%(Inputs)</Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,6 +127,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\CTestView.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MJapi.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
