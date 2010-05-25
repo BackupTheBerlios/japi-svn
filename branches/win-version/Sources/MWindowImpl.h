@@ -36,9 +36,9 @@ class MWindowImpl
 	virtual void		SetWindowPosition(MRect inBounds, bool inTransition) = 0;
 	virtual void		GetWindowPosition(MRect& outBounds) const = 0;
 	
-//	virtual void		Invalidate(const HRegion& inRegion) = 0;
-//	virtual void		Validate(const HRegion& inRegion) = 0;
-	virtual void		UpdateIfNeeded(bool inFlush) = 0;
+	virtual void		Invalidate(MRect inRect) = 0;
+	virtual void		Validate(MRect inRect) = 0;
+	virtual void		UpdateNow() = 0;
 
 	virtual void		Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV) = 0;
 	

@@ -40,9 +40,9 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual void	SetWindowPosition(MRect inBounds, bool inTransition);
 	virtual void	GetWindowPosition(MRect& outBounds) const;
 	
-//	virtual void	Invalidate(const HRegion& inRegion);
-//	virtual void	Validate(const HRegion& inRegion);
-	virtual void	UpdateIfNeeded(bool inFlush);
+	virtual void	Invalidate(MRect inRect);
+	virtual void	Validate(MRect inRect);
+	virtual void	UpdateNow();
 
 	virtual void	Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV);
 	

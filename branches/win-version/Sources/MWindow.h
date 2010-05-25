@@ -34,10 +34,12 @@ class MWindow : public MView, public MHandler
 
 	MWindowFlags			GetFlags() const;
 
-	void					Show();
-	void					Hide();
+	virtual void			Show();
 	virtual void			Select();
 	
+	virtual void			Activate();
+	virtual void			Deactivate();
+
 	void					Close();
 	
 	void					Beep();
@@ -225,6 +227,9 @@ class MWindow : public MView, public MHandler
 
 	//MSlot<void()>			mChanged;
 	//void					Changed();
+
+	virtual void			ShowSelf();
+	virtual void			HideSelf();
 
 	MWindowImpl*			mImpl;
 	std::string				mTitle;

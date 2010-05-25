@@ -211,12 +211,22 @@ void MWinWindowImpl::GetWindowPosition(MRect& outBounds) const
 	outBounds = MRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
 }
 	
-//	virtual void	Invalidate(const HRegion& inRegion){}
-//	virtual void	Validate(const HRegion& inRegion){}
-void MWinWindowImpl::UpdateIfNeeded(bool inFlush)
+void MWinWindowImpl::Invalidate(MRect inRect)
+{
+	RECT r = { inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height };
+	::InvalidateRect(GetHandle(), &r, false);
+}
+
+void MWinWindowImpl::Validate(MRect inRect)
+{
+	RECT r = { inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height };
+	::ValidateRect(GetHandle(), &r);
+}
+
+void MWinWindowImpl::UpdateNow()
 {
 	/* Force a direct WM_PAINT */
-	::UpdateWindow (GetHandle());
+	::UpdateWindow(GetHandle());
 }
 
 void MWinWindowImpl::Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV)

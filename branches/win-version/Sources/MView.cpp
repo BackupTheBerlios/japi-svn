@@ -811,15 +811,15 @@ void MView::GetMouse(
 	int32&			outX,
 	int32&			outY) const
 {
-	//gtk_widget_get_pointer(mGtkWidget, &outX, &outY);
+	if (mParent != nil)
+	{
+		mParent->GetMouse(outX, outY);
+		ConvertFromParent(outX, outY);
+	}
 }
 
 uint32 MView::GetModifiers() const
 {
-	//GdkModifierType modifiers;
-	//gdk_window_get_pointer(mGtkWidget->window, nil, nil, &modifiers);
-	//return modifiers & gtk_accelerator_get_default_mod_mask();
-
 	uint32 result = 0;
 
 	MWindow* w = GetWindow();

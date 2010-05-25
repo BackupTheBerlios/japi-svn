@@ -135,14 +135,22 @@ MWindow* MWindow::GetWindow() const
 
 void MWindow::Show()
 {
-	if (not mImpl->Visible())
-		mImpl->Show();
+	if (mVisible == eTriStateOff)
+	{
+		mVisible = eTriStateOn;
+		MView::Show();
+		ShowSelf();
+	}
 }
 
-void MWindow::Hide()
+void MWindow::ShowSelf()
 {
-	if (mImpl->Visible())
-		mImpl->Hide();
+	mImpl->Show();
+}
+
+void MWindow::HideSelf()
+{
+	mImpl->Hide();
 }
 
 void MWindow::Select()
@@ -152,6 +160,39 @@ void MWindow::Select()
 	mImpl->Select();
 
 	TakeFocus();
+}
+
+void MWindow::Activate()
+{
+	MWindow* curTop = MWindow::GetFirstWindow();
+	
+	if (mActive == eTriStateOff and IsVisible())
+	{
+		mActive = eTriStateOn;
+		ActivateSelf();
+		MView::Activate();
+	}
+
+	//if (not IsInCommandChain())
+	//	RestoreFocus();
+
+	//if (not IsInCommandChain())
+	//	SwitchFocus(this);
+
+	if (curTop and
+		curTop != this and
+		curTop->IsActive())
+	{
+		curTop->Deactivate();
+	}
+}
+
+void MWindow::Deactivate()
+{
+	MView::Deactivate();
+
+	//if (IsInCommandChain())
+	//	SwitchFocus(mSuperHandler);
 }
 
 bool MWindow::DoClose()
