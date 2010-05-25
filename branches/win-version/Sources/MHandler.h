@@ -72,15 +72,9 @@ class MHandler
 	
 	typedef std::list<MHandler*>	MHandlerList;
 	
-	enum TriState {
-		eTriStateOn,
-		eTriStateOff,
-		eTriStateLatent	
-	};
-	
 	MHandler*			mSuper;
 	MHandlerList		mSubHandlers;
-	TriState			mOnCommandChain;
+	MTriState			mOnCommandChain;
 	
 	static MHandler*	sFocus;
 };

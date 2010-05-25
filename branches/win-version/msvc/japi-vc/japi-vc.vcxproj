@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Sources\CTestView.cpp" />
     <ClCompile Include="..\..\Sources\MAlerts.cpp" />
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MColor.cpp" />
@@ -115,6 +116,9 @@
     <ClCompile Include="..\..\Sources\Windows\MWinResources.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Sources\CTestView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

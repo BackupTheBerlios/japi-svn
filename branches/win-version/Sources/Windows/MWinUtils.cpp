@@ -39,7 +39,7 @@ double GetLocalTime()
 			li.HighPart = tm.dwHighDateTime;
 		
 			// Prevent Ping Pong comment. VC cannot convert UNSIGNED int64 to double. SIGNED is ok. (No more long)
-			sDiff = static_cast<int64>(li.QuadPart);
+			sDiff = static_cast<double>(static_cast<int64>(li.QuadPart));
 			sDiff /= 1e7;
 		}
 	}	
@@ -49,7 +49,7 @@ double GetLocalTime()
 	li.LowPart = tm.dwLowDateTime;
 	li.HighPart = tm.dwHighDateTime;
 	
-	double result = static_cast<__int64> (li.QuadPart);
+	double result = static_cast<double>(static_cast<__int64> (li.QuadPart));
 	result /= 1e7;
 	return result - sDiff;
 }
@@ -256,4 +256,48 @@ string GetHomeDirectory()
 	if (HOME == nil)
 		HOME = "";
 	return HOME;
+}
+
+void delay(double inSeconds)
+{
+	if (inSeconds > 0.0)
+		::Sleep(static_cast<unsigned long>(inSeconds * 1000));
+}
+
+void GetModifierState(unsigned long& outModifiers, bool inAsync)
+{
+	outModifiers = 0;
+	if (inAsync)
+	{
+		if (::GetAsyncKeyState(VK_SHIFT) & 0x8000)
+			outModifiers |= kShiftKey;
+		if (::GetAsyncKeyState(VK_CONTROL) & 0x8000)
+			outModifiers |= kControlKey;
+		if (::GetAsyncKeyState(VK_MENU) & 0x8000)
+			outModifiers |= kOptionKey;
+		if (::GetAsyncKeyState(VK_LWIN) & 0x8000 ||
+			::GetAsyncKeyState(VK_RWIN) & 0x8000)
+			outModifiers |= kCmdKey;
+		if (::GetKeyState(VK_CAPITAL) & 0x0001)
+			outModifiers |= kAlphaLock;
+	}
+	else
+	{
+		if (::GetKeyState(VK_SHIFT) & 0x8000)
+			outModifiers |= kShiftKey;
+		if (::GetKeyState(VK_CONTROL) & 0x8000)
+			outModifiers |= kControlKey;
+		if (::GetKeyState(VK_MENU) & 0x8000)
+			outModifiers |= kOptionKey;
+		if (::GetKeyState(VK_LWIN) & 0x8000 ||
+			::GetKeyState(VK_RWIN) & 0x8000)
+			outModifiers |= kCmdKey;
+		if (::GetKeyState(VK_CAPITAL) & 0x0001)
+			outModifiers |= kAlphaLock;
+	}
+}
+
+double GetDblClickTime()
+{
+	return ::GetDoubleClickTime() / 1000.0;
 }

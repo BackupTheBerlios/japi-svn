@@ -4,11 +4,13 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 /*	$Id$
-	Copyright Drs M.L. Hekkelman
-	Created 28-09-07 11:18:30
+	Copyright Drs M.L. HekkelmanCreated 28-09-07 11:18:30
 */
 
 #include "MLib.h"
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #include <iostream>
 #include <cassert>
@@ -17,117 +19,39 @@
 #include "MError.h"
 #include "MUtils.h"
 #include "MDevice.h"
-#include "MViewImpl.h"
 
 using namespace std;
 
 MView::MView(
-	//GtkWidget*		inWidget,
-	bool			inCanActivate,
-	bool			inCanDraw)
-	: mParent(nil)
-	//: mFocusInEvent(this, &MView::OnFocusInEvent)
-	//, mFocusOutEvent(this, &MView::OnFocusOutEvent)
-	//, mButtonPressEvent(this, &MView::OnButtonPressEvent)
-	//, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
-	//, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
-	//, mKeyPressEvent(this, &MView::OnKeyPressEvent)
-	//, mConfigureEvent(this, &MView::OnConfigureEvent)
-	//, mScrollEvent(this, &MView::OnScrollEvent)
-	//, mRealize(this, &MView::OnRealize)
-	//, mExposeEvent(this, &MView::OnExposeEvent)
-	//, mPopupMenu(this, &MView::OnPopupMenu)
-	//, mDragDataReceived(this, &MView::OnDragDataReceived)
-	//, mDragMotion(this, &MView::OnDragMotion)
-	//, mDragLeave(this, &MView::OnDragLeave)
-	//, mDragDataDelete(this, &MView::OnDragDataDelete)
-	//, mDragDataGet(this, &MView::OnDragDataGet)
-	//, mGtkWidget(nil)
-{
-	//SetWidget(inWidget, inCanActivate, inCanDraw);
-}
-
-MView::MView(
-	int32		inWidth,
-	int32		inHeight)
-//	: mFocusInEvent(this, &MView::OnFocusInEvent)
-//	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
-//	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
-//	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
-//	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
-//	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
-//	, mConfigureEvent(this, &MView::OnConfigureEvent)
-//	, mScrollEvent(this, &MView::OnScrollEvent)
-//	, mRealize(this, &MView::OnRealize)
-//	, mExposeEvent(this, &MView::OnExposeEvent)
-//	, mPopupMenu(this, &MView::OnPopupMenu)
-//	, mDragDataReceived(this, &MView::OnDragDataReceived)
-//	, mDragMotion(this, &MView::OnDragMotion)
-//	, mDragLeave(this, &MView::OnDragLeave)
-//	, mDragDataDelete(this, &MView::OnDragDataDelete)
-//	, mDragDataGet(this, &MView::OnDragDataGet)
-//	, mGtkWidget(nil)
-{
-//	SetWidget(gtk_drawing_area_new(), true, true);
-//	
-//	if (inWidth > 0 or inHeight > 0)
-//		gtk_widget_set_size_request(mGtkWidget, inWidth, inHeight);
-}
-
-MView::MView()
-//	: mFocusInEvent(this, &MView::OnFocusInEvent)
-//	, mFocusOutEvent(this, &MView::OnFocusOutEvent)
-//	, mButtonPressEvent(this, &MView::OnButtonPressEvent)
-//	, mMotionNotifyEvent(this, &MView::OnMotionNotifyEvent)
-//	, mButtonReleaseEvent(this, &MView::OnButtonReleaseEvent)
-//	, mKeyPressEvent(this, &MView::OnKeyPressEvent)
-//	, mConfigureEvent(this, &MView::OnConfigureEvent)
-//	, mScrollEvent(this, &MView::OnScrollEvent)
-//	, mRealize(this, &MView::OnRealize)
-//	, mExposeEvent(this, &MView::OnExposeEvent)
-//	, mPopupMenu(this, &MView::OnPopupMenu)
-//	, mDragDataReceived(this, &MView::OnDragDataReceived)
-//	, mDragMotion(this, &MView::OnDragMotion)
-//	, mDragLeave(this, &MView::OnDragLeave)
-//	, mDragDataDelete(this, &MView::OnDragDataDelete)
-//	, mDragDataGet(this, &MView::OnDragDataGet)
-//	, mGtkWidget(nil)
+	uint32			inID,
+	MRect			inBounds)
+	: mID(inID)
+	, mBounds(inBounds)
+	, mFrame(inBounds)
+	, mParent(nil)
+	, mWillDraw(true)
+	, mActive(eTriStateOn)
+	, mVisible(eTriStateOn)
+	, mEnabled(eTriStateOn)
+	, mBindLeft(true)
+	, mBindTop(true)
+	, mBindRight(true)
+	, mBindBottom(true)
 {
 }
-
-//void MView::SetWidget(
-//	GtkWidget*		inWidget,
-//	bool			inCanActivate,
-//	bool			inCanDraw)
-//{
-//	assert(mGtkWidget == nil);
-//	
-//	mGtkWidget = inWidget;
-//	
-//	if (inCanActivate)
-//	{
-//		GTK_WIDGET_SET_FLAGS(mGtkWidget, GTK_CAN_FOCUS);
-//		
-//		mFocusInEvent.Connect(mGtkWidget, "focus-in-event");
-//		mFocusOutEvent.Connect(mGtkWidget, "focus-out-event");
-//		mButtonPressEvent.Connect(mGtkWidget, "button-press-event");
-//		mMotionNotifyEvent.Connect(mGtkWidget, "motion-notify-event");
-//		mButtonReleaseEvent.Connect(mGtkWidget, "button-release-event");
-//		mKeyPressEvent.Connect(mGtkWidget, "key-press-event");
-//		mConfigureEvent.Connect(mGtkWidget, "configure-event");
-//		mScrollEvent.Connect(mGtkWidget, "scroll-event");
-//		mRealize.Connect(mGtkWidget, "realize");
-//		mPopupMenu.Connect(mGtkWidget, "popup-menu");
-//	}
-//	
-//	if (inCanDraw)
-//		mExposeEvent.Connect(mGtkWidget, "expose-event");
-//	
-//	g_object_set_data(G_OBJECT(mGtkWidget), "m-view", this);
-//}
 
 MView::~MView()
 {
+	while (mChildren.size() > 0)
+	{
+		MView* v = mChildren.back();
+		v->mParent = nil;
+		mChildren.pop_back();
+		delete v;
+	}
+
+	if (mParent != nil)
+		mParent->RemoveChild(this);
 }
 
 void MView::SetParent(
@@ -136,142 +60,171 @@ void MView::SetParent(
 	mParent = inParent;
 }
 
+void MView::AddChild(MView* inView)
+{
+	mChildren.push_back(inView);
+	inView->mParent = this;
+
+	if (mEnabled == eTriStateOn)
+		inView->SuperEnable();
+	else
+		inView->SuperDisable();
+
+	if (mActive == eTriStateOn)
+		inView->SuperActivate();
+	else
+		inView->SuperDeactivate();
+
+	if (mVisible == eTriStateOn)
+		inView->SuperShow();
+	else
+		inView->SuperHide();
+	
+	if (GetWindow() != nil)
+		inView->AddedToWindow();
+}
+
+void MView::AddedToWindow()
+{
+	foreach (MView* child, mChildren)
+		child->AddedToWindow();
+}
+
+void MView::RemoveChild(MView* inView)
+{
+	MViewList::iterator i = std::find(mChildren.begin(), mChildren.end(), inView);
+	if (i != mChildren.end())
+	{
+		MView* child = *i;
+		mChildren.erase(i);
+		child->mParent = nil;
+	}
+}
+
 MWindow* MView::GetWindow() const
 {
 	MWindow* result = nil;
 	if (mParent != nil)
 		result = mParent->GetWindow();
 	return result;
-
-	//GtkWidget* widget = mGtkWidget;
-	//while (widget != nil and not GTK_IS_WINDOW(widget))
-	//	widget = gtk_widget_get_parent(widget);
-	//
-	//MView* view = reinterpret_cast<MView*>(g_object_get_data(G_OBJECT(widget), "m-view"));
-	//
-	//MWindow* result = nil;
-	//if (view != nil)
-	//	result = dynamic_cast<MWindow*>(view);
-	//
-	//return result;
 }
 
 void MView::GetBounds(
 	MRect&			outBounds) const
 {
-	//GtkWidget* parent = gtk_widget_get_parent(mGtkWidget);
-	//if (GTK_IS_VIEWPORT(parent))
-	//{
-	//	outBounds = parent->allocation;
-	//	
-	//	outBounds.x = outBounds.y = 0;
-	//	
-	//	gtk_widget_translate_coordinates(parent, mGtkWidget,
-	//		outBounds.x, outBounds.y,
-	//		&outBounds.x, &outBounds.y);
-	//}
-	//else
-	//{
-	//	outBounds = mGtkWidget->allocation;
-	//	outBounds.x = outBounds.y = 0;
-	//}
+	outBounds = mBounds;
 }
 
 void MView::SetBounds(
 	const MRect&	inBounds)
 {
-	//GtkRequisition r = { inBounds.width, inBounds.height };
-	//gtk_widget_size_request(mGtkWidget, &r);
+	mBounds = inBounds;
 }
 
-void MView::ResizeTo(
-	int32			inWidth,
-	int32			inHeight)
+void MView::GetFrame(
+	MRect&			outFrame) const
 {
-	//gtk_widget_set_size_request(GetGtkWidget(), inWidth, inHeight);
+	outFrame = mFrame;
 }
 
-void MView::ConvertToGlobal(
-	int32&			ioX,
-	int32&			ioY)
+void MView::SetFrame(
+	const MRect&	inFrame)
 {
-	//GtkWidget* w = mGtkWidget; 
-	//GtkWidget* toplevel = gtk_widget_get_toplevel(mGtkWidget);
-	//if (GTK_WIDGET_TOPLEVEL(toplevel))
-	//{
-	//	gtk_widget_translate_coordinates(mGtkWidget, toplevel, ioX, ioY, &ioX, &ioY);
-	//	w = toplevel;
-	//}
+	mFrame = inFrame;
+}
 
-	//int32 ox, oy;
-	//
-	//gdk_window_get_position(w->window, &ox, &oy);
-	//ioX += ox;
-	//ioY += oy;
+void MView::ResizeFrame(
+	int32			inXDelta,
+	int32			inYDelta,
+	int32			inWidthDelta,
+	int32			inHeightDelta)
+{
+	if (mWillDraw)
+		Invalidate();
+
+	MRect newBounds = mBounds;
+	newBounds.width += inWidthDelta;
+	newBounds.height += inHeightDelta;
+
+	MRect newFrame = mFrame;
+	newFrame.x += inXDelta;
+	newFrame.y += inYDelta;
+	newFrame.width += inWidthDelta;
+	newFrame.height += inHeightDelta;
+
+	mFrame = newFrame;
+	mBounds = newBounds;
+
+	foreach (MView* child, mChildren)
+	{
+		int32 dx = 0, dy = 0, dw = 0, dh = 0;
+		
+		if (child->mBindLeft)
+		{
+			if (child->mBindRight)
+				dw = inXDelta + inWidthDelta;
+		}
+		else if (child->mBindRight)
+		{
+			dx = inWidthDelta;
+		}
+		
+		if (child->mBindTop)
+		{
+			if (child->mBindBottom)
+				dh = inYDelta + inHeightDelta;
+		}
+		else if (child->mBindBottom)
+		{
+			dy = inHeightDelta;
+		}
+
+		if (dx or dy or dw or dh)
+			child->ResizeFrame(dx, dy, dw, dh);
+		else
+			child->Invalidate();
+	}
+
+	if (mWillDraw)
+		Invalidate();
 }
 
 void MView::Invalidate()
 {
-	//gtk_widget_queue_draw(mGtkWidget);
+	Invalidate(mBounds);
 }
 
 void MView::Invalidate(
-	const MRect&	inRect)
+	MRect		inRect)
 {
-	//gtk_widget_queue_draw_area(mGtkWidget,
-	//	inRect.x, inRect.y, inRect.width, inRect.height);
+	if (mParent != nil)
+	{
+		ConvertToParent(inRect.x, inRect.y);
+		inRect &= mFrame;
+		if (inRect)
+			mParent->Invalidate(inRect);
+	}
 }
 
 void MView::Scroll(
 	int32			inX,
 	int32			inY)
 {
-//	if (GDK_IS_WINDOW(mGtkWidget->window))
-//	{
-////		GdkEvent* event;
-////		while ((event = gdk_event_get_graphics_expose(mGtkWidget->window)) != nil)
-////		{
-////			gtk_widget_send_expose(mGtkWidget, event);
-////			if (event->expose.count == 0)
-////			{
-////				gdk_event_free(event);
-////				break;
-////			}
-////			gdk_event_free(event);
-////		}
-//	
-//		gdk_window_scroll(mGtkWidget->window, inX, inY);
-//	}
+	Scroll(mBounds, inX, inY);
 }
 
 void MView::Scroll(
-	const MRect&	inRect,
+	MRect			inRect,
 	int32			inX,
 	int32			inY)
 {
-//	if (GDK_IS_WINDOW(mGtkWidget->window))
-//	{
-////		GdkEvent* event;
-////		while ((event = gdk_event_get_graphics_expose(mGtkWidget->window)) != nil)
-////		{
-////			gtk_widget_send_expose(mGtkWidget, event);
-////			if (event->expose.count == 0)
-////			{
-////				gdk_event_free(event);
-////				break;
-////			}
-////			gdk_event_free(event);
-////		}
-//		
-//		MRect b;
-//		GetBounds(b);
-//
-//		GdkRectangle gr = { inRect.x, inRect.y, inRect.width, inRect.height };
-//
-//		GdkRegion* rgn = gdk_region_rectangle(&gr);
-//		gdk_window_move_region(mGtkWidget->window, rgn, inX, inY);
-//		gdk_region_destroy(rgn);
-//	}
+	if (mParent != nil)
+	{
+		ConvertToParent(inRect.x, inRect.y);
+		inRect &= mFrame;
+		if (inRect)
+			mParent->Scroll(inRect, inX, inY);
+	}
 }
 
 void MView::UpdateNow()
@@ -339,8 +292,242 @@ void MView::Add(
 	//inSubView->Added();
 }
 
-void MView::Added()
+bool MView::ActivateOnClick(int32 inX, int32 inY, uint32 inModifiers)
 {
+	return true;
+}
+
+void MView::Click(int32 inX, int32 inY, uint32 inModifiers)
+{
+	PRINT(("Click at %d,%d", inX, inY));
+}
+
+void MView::Show()
+{
+	if (mVisible == eTriStateOff)
+	{
+		if (mParent and mParent->IsVisible())
+		{
+			mVisible = eTriStateOn;
+			Invalidate();
+			ShowSelf();
+		}
+		else
+			mVisible = eTriStateLatent;
+	}
+
+	if (mVisible == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperShow();
+	}
+}
+
+void MView::SuperShow()
+{
+	if (mVisible == eTriStateLatent)
+	{
+		mVisible = eTriStateOn;
+		ShowSelf();
+	}
+
+	if (mVisible == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperShow();
+	}
+}
+
+void MView::ShowSelf()
+{
+}
+
+void MView::Hide()
+{
+	if (mVisible == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperHide();
+	}
+
+	if (mVisible != eTriStateOff)
+	{
+		Invalidate();
+
+		bool wasVisible = (mVisible == eTriStateOn);
+		mVisible = eTriStateOff;
+		if (wasVisible)
+			HideSelf();
+	}
+}
+
+void MView::SuperHide()
+{
+	if (mVisible == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperHide();
+
+		mVisible = eTriStateLatent;
+		HideSelf();
+	}
+}
+
+void MView::HideSelf()
+{
+}
+
+bool MView::IsVisible() const
+{
+	return mVisible == eTriStateOn;
+}
+
+void MView::Enable()
+{
+	if (mEnabled == eTriStateOff)
+	{
+		if (mParent != nil and mParent->mEnabled == eTriStateOn)
+		{
+			mEnabled = eTriStateOn;
+			EnableSelf();
+		}
+		else
+			mEnabled = eTriStateLatent;
+	}
+	
+	if (mEnabled == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperEnable();
+	}
+}
+
+void MView::SuperEnable()
+{
+	if (mEnabled == eTriStateLatent)
+	{
+		mEnabled = eTriStateOn;
+		EnableSelf();
+	}
+	
+	if (mEnabled == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperEnable();
+	}
+}
+
+void MView::EnableSelf()
+{
+}
+
+void MView::Disable()
+{
+	if (mEnabled == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperDisable();
+	}
+
+	bool wasEnabled = (mEnabled == eTriStateOn);
+	mEnabled = eTriStateOff;
+	if (wasEnabled)
+		DisableSelf();
+}
+
+void MView::SuperDisable()
+{
+	if (mEnabled == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperDisable();
+
+		mEnabled = eTriStateLatent;
+		DisableSelf();
+	}
+}
+
+void MView::DisableSelf()
+{
+}
+
+bool MView::IsEnabled() const
+{
+	return (mEnabled == eTriStateOn) and IsVisible();
+}
+
+void MView::Activate()
+{
+	if (mActive == eTriStateOff)
+	{
+		if (mParent != nil and mParent->mActive == eTriStateOn)
+		{
+			mActive = eTriStateOn;
+			ActivateSelf();
+		}
+		else
+			mActive = eTriStateLatent;
+	}
+
+	if (mActive == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperActivate();
+	}
+}
+
+void MView::SuperActivate()
+{	
+	if (mActive == eTriStateLatent)
+	{
+		mActive = eTriStateOn;
+		ActivateSelf();
+	}
+	
+	if (mActive == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperActivate();
+	}
+}
+
+void MView::ActivateSelf()
+{
+}
+
+void MView::Deactivate()
+{
+	if (mActive == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperDeactivate();
+	}
+
+	bool wasActive = (mActive == eTriStateOn);
+	mActive = eTriStateOff;
+	if (wasActive)
+		DeactivateSelf();
+}
+
+void MView::SuperDeactivate()
+{
+	if (mActive == eTriStateOn)
+	{
+		foreach (MView* child, mChildren)
+			child->SuperDeactivate();
+
+		mActive = eTriStateLatent;
+		DeactivateSelf();
+	}
+}
+
+void MView::DeactivateSelf()
+{
+}
+
+bool MView::IsActive() const
+{
+	return (mActive == eTriStateOn) and IsVisible();
 }
 
 //bool MView::OnRealize()
@@ -429,13 +616,6 @@ void MView::Added()
 //
 //	return true;
 //}
-
-void MView::Draw(
-	MDevice&		inDevice,
-	MRect			inUpdate)
-{
-	// do nothing
-}
 
 // Drag and Drop support
 
@@ -660,3 +840,93 @@ uint32 MView::CountPages(
 //{
 //	PRINT(("Show Popup Menu"));
 //}
+
+MView* MView::FindSubView(int32 inX, int32 inY)
+{
+	MView* result = this;
+
+	foreach (MView* view, mChildren)
+	{
+		if (view->mVisible and view->mFrame.ContainsPoint(inX, inY))
+		{
+			ConvertFromParent(inX, inY);
+			result = view->FindSubView(inX, inY);
+			break;
+		}
+	}
+	
+	return result;
+}
+
+void MView::ConvertToParent(int32& ioX, int32& ioY) const
+{
+	assert(mParent);
+	ioX += mFrame.x - mBounds.x;
+	ioY += mFrame.y - mBounds.y;
+}
+
+void MView::ConvertFromParent(int32& ioX, int32& ioY) const
+{
+	assert(mParent);
+	ioX -= mFrame.x - mBounds.x;
+	ioY -= mFrame.y - mBounds.y;
+}
+
+void MView::ConvertToWindow(int32& ioX, int32& ioY) const
+{
+	if (mParent != nil)
+	{
+		ConvertToParent(ioX, ioY);
+		mParent->ConvertToWindow(ioX, ioY);
+	}
+}
+
+void MView::ConvertFromWindow(int32& ioX, int32& ioY) const
+{
+	if (mParent != nil)
+	{
+		mParent->ConvertFromWindow(ioX, ioY);
+		ConvertFromParent(ioX, ioY);
+	}
+}
+
+void MView::ConvertToScreen(int32& ioX, int32& ioY) const
+{
+	ConvertToParent(ioX, ioY);
+	if (mParent != nil)
+		mParent->ConvertToScreen(ioX, ioY);
+}
+
+void MView::ConvertFromScreen(int32& ioX, int32& ioY) const
+{
+	if (mParent != nil)
+		mParent->ConvertFromScreen(ioX, ioY);
+	ConvertFromParent(ioX, ioY);
+}
+
+void MView::RedrawAll(
+	MRect			inUpdate)
+{
+	inUpdate &= mBounds;
+
+	if (not IsVisible() or not inUpdate)
+		return;
+
+	if (mWillDraw)
+		Draw(inUpdate);
+
+	foreach (MView* child, mChildren)
+	{
+		MRect r = inUpdate;
+
+		child->ConvertFromParent(r.x, r.y);
+		child->RedrawAll(r);
+	}
+}
+
+void MView::Draw(
+	MRect			inUpdate)
+{
+	// do nothing
+}
+

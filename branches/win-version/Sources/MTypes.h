@@ -47,6 +47,19 @@ struct MRect
 	void		InsetBy(
 					int32				inDeltaX,
 					int32				inDeltaY);
+
+				// Intersection
+	MRect&		operator&(
+					const MRect&		inRegion);
+	MRect&		operator&=(
+					const MRect&		inRegion);
+
+				// Union
+	MRect&		operator|=(
+					const MRect&		inRegion);
+
+				// test for empty rectangle
+				operator bool() const;
 };
 
 class MRegion
@@ -138,6 +151,12 @@ private:
 //	GdkRegion*	mGdkRegion;	
 //};
 
+enum MTriState {
+	eTriStateOn,
+	eTriStateOff,
+	eTriStateLatent	
+};
+
 enum MDirection
 {
 	kDirectionForward = 1,
@@ -160,6 +179,18 @@ enum MScrollMessage
 	kScrollReturnAfterKiss,
 	kScrollForDiff,
 	kScrollToPC
+};
+
+enum {	// modifier keys
+	kCmdKey						 = 1 << 0,
+	kShiftKey 					 = 1 << 1,
+	kOptionKey					 = 1 << 2,
+	kControlKey					 = 1 << 3,
+	kAlphaLock					 = 1 << 4,
+	kNumPad 					 = 1 << 5,
+	kRightShiftKey				 = 1 << 6,
+	kRightOptionKey				 = 1 << 7,
+	kRightControlKey			 = 1 << 8
 };
 
 extern const char kHexChars[];
@@ -278,5 +309,77 @@ inline void MRect::InsetBy(
 		height = 0;
 	}
 }
+
+inline MRect& MRect::operator&=(
+	const MRect&		inRhs)
+{
+	int32 nx = x;
+	if (nx < inRhs.x)
+		nx = inRhs.x;
+
+	int32 ny = y;
+	if (ny < inRhs.y)
+		ny = inRhs.y;
+	
+	int32 nx2 = x + width;
+	if (nx2 > inRhs.x + inRhs.width)
+		nx2 = inRhs.x + inRhs.width;
+	
+	int32 ny2 = y + height;
+	if (ny2 > inRhs.y + inRhs.height)
+		ny2 = inRhs.y + inRhs.height;
+	
+	x = nx;
+	y = ny;
+
+	width = nx2 - nx;
+	if (width < 0)
+		width = 0;
+
+	height = ny2 - ny;
+	if (height < 0)
+		height = 0;
+
+	return *this;
+}
+
+inline MRect& MRect::operator|=(
+	const MRect&		inRhs)
+{
+	int32 nx = x;
+	if (nx > inRhs.x)
+		nx = inRhs.x;
+
+	int32 ny = y;
+	if (ny > inRhs.y)
+		ny = inRhs.y;
+	
+	int32 nx2 = x + width;
+	if (nx2 < inRhs.x + inRhs.width)
+		nx2 = inRhs.x + inRhs.width;
+	
+	int32 ny2 = y + height;
+	if (ny2 < inRhs.y + inRhs.height)
+		ny2 = inRhs.y + inRhs.height;
+	
+	x = nx;
+	y = ny;
+
+	width = nx2 - nx;
+	if (width < 0)
+		width = 0;
+
+	height = ny2 - ny;
+	if (height < 0)
+		height = 0;
+
+	return *this;
+}
+
+inline MRect::operator bool() const
+{
+	return width > 0 and height > 0;
+}
+
 
 #endif

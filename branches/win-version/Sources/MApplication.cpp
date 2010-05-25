@@ -23,6 +23,8 @@
 #include "MWindow.h"
 #include "MUtils.h"
 
+#include "CTestView.h"
+
 using namespace std;
 namespace ba = boost::algorithm;
 namespace po = boost::program_options;
@@ -369,6 +371,9 @@ MDocWindow* MApplication::DisplayDocument(
 void MApplication::DoNew()
 {
 	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), kMPostionDefault, "edit-window-menu");
+
+	w->AddChild(new CTestView(MRect(0, 0, 180, 180)));
+
 	w->Select();
 
 	//MDocument* doc = MDocument::Create<MTextDocument>(MFile());

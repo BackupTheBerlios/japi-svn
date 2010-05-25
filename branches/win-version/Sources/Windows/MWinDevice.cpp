@@ -206,7 +206,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 	bool		inOffscreen)
 	: mRenderTarget(nil)
 	, mTextFormat(nil)
-	, MTextLayout(nil)
+	, mTextLayout(nil)
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 	, mFont(L"Consolas")

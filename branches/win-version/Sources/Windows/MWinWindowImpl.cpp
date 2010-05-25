@@ -7,6 +7,7 @@
 
 #undef CreateWindow
 #undef GetNextWindow
+#undef GetTopWindow
 
 #include "zeep/xml/document.hpp"
 #include <boost/filesystem/fstream.hpp>
@@ -16,6 +17,7 @@
 #include "MWindow.h"
 #include "MError.h"
 #include "MWinApplicationImpl.h"
+#include "MUtils.h"
 #include "MWinUtils.h"
 #include "MWinMenu.h"
 #include "MDevice.h"
@@ -129,7 +131,8 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	
 	RECT clientArea;
 	::GetClientRect(GetHandle(), &clientArea);
-	//mWindow->SetFrame(MRect(clientArea));
+
+	mWindow->SetFrame(MRect(clientArea.left, clientArea.top, clientArea.right - clientArea.left, clientArea.bottom - clientArea.top));
 
 	if (mMenubar != nil)
 		mMenubar->SetTarget(mWindow);
@@ -163,7 +166,19 @@ bool MWinWindowImpl::Visible() const
 	return ::IsWindowVisible(GetHandle()) != 0;
 }
 
-void MWinWindowImpl::Select(){}
+void MWinWindowImpl::Select()
+{
+	WINDOWPLACEMENT pl = { 0 };
+	pl.length = sizeof(pl);
+	if (::GetWindowPlacement(GetHandle(), &pl) and ::IsIconic(GetHandle()))
+	{
+		pl.showCmd = SW_RESTORE;
+		::SetWindowPlacement(GetHandle(), &pl);
+	}
+
+	::SetActiveWindow(GetHandle());
+}
+
 void MWinWindowImpl::Close()
 {
 	if (GetHandle() != nil)
@@ -198,24 +213,106 @@ void MWinWindowImpl::GetWindowPosition(MRect& outBounds) const
 	
 //	virtual void	Invalidate(const HRegion& inRegion){}
 //	virtual void	Validate(const HRegion& inRegion){}
-void MWinWindowImpl::UpdateIfNeeded(bool inFlush){}
+void MWinWindowImpl::UpdateIfNeeded(bool inFlush)
+{
+	/* Force a direct WM_PAINT */
+	::UpdateWindow (GetHandle());
+}
 
-void MWinWindowImpl::ScrollBits(MRect inRect, int32 inDeltaH, int32 inDeltaV){}
+void MWinWindowImpl::Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV)
+{
+	RECT r = { inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height };
+	::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
+}
 	
 bool MWinWindowImpl::GetMouse(int32& outX, int32& outY, unsigned long& outModifiers)
 {
-	return false;
+	POINT lPoint;
+	::GetCursorPos(&lPoint);
+	::ScreenToClient(GetHandle(), &lPoint);
+
+	int button = VK_LBUTTON;
+	if (::GetSystemMetrics(SM_SWAPBUTTON))
+		button = VK_RBUTTON;
+
+	bool result = (::GetAsyncKeyState(button) & 0x8000) != 0;
+	
+	if (result and
+		mLastGetMouseX == lPoint.x and
+		mLastGetMouseY == lPoint.y)
+	{
+		::delay(0.02);
+		::GetCursorPos(&lPoint);
+		::ScreenToClient(GetHandle(), &lPoint);
+		
+		result = (::GetAsyncKeyState(button) & 0x8000) != 0;
+	}
+	
+	outX = lPoint.x;
+	outY = lPoint.y;
+	
+	mLastGetMouseX = lPoint.x;
+	mLastGetMouseY = lPoint.y;
+
+	::GetModifierState(outModifiers, true);
+
+	return result;
 }
 
 bool MWinWindowImpl::WaitMouseMoved(int32 inX, int32 inY)
 {
-	return false;
+	bool result = false;
+
+	if (mWindow->IsActive())
+	{
+		POINT w = { inX, inY };
+		result = ::DragDetect(GetHandle(), w) != 0;
+	}
+	else if (MWindow::GetFirstWindow() and MWindow::GetFirstWindow()->IsActive())
+	{
+		double test = GetLocalTime() + 0.5;
+		
+		for (;;)
+		{
+			if (GetLocalTime() > test)
+			{
+				result = true;
+				break;
+			}
+			
+			int32 x, y;
+			unsigned long mod;
+			
+			if (not GetMouse(x, y, mod))
+				break;
+			
+			if (std::abs(x - inX) > 2 or
+				std::abs(y - inY) > 2)
+			{
+				result = true;
+				break;
+			}
+		}
+	}
+
+	return result;
 }
 
-//virtual void	ConvertToScreen(HPoint& ioPoint) const{}
-//virtual void	ConvertFromScreen(HPoint& ioPoint) const{}
-//virtual void	ConvertToScreen(HRect& ioRect) const{}
-//virtual void	ConvertFromScreen(HRect& ioRect) const{}
+void MWinWindowImpl::ConvertToScreen(int32& ioX, int32& ioY) const
+{
+	POINT p = { ioX, ioY };
+	::ClientToScreen(GetHandle(), &p);
+	ioX = p.x;
+	ioY = p.y;
+}
+
+void MWinWindowImpl::ConvertFromScreen(int32& ioX, int32& ioY) const
+{
+	POINT p = { ioX, ioY };
+	::ScreenToClient(GetHandle(), &p);
+	ioX = p.x;
+	ioY = p.y;
+}
 
 // --------------------------------------------------------------------
 // Windows Message handling
@@ -238,10 +335,10 @@ bool MWinWindowImpl::WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 
 bool MWinWindowImpl::WMActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM /*inLParam*/, int& /*outResult*/)
 {
-	//if (LOWORD(inWParam) == WA_INACTIVE)
-	//	mWindow->Deactivate ();
-	//else if (mWindow->IsEnabled())
-	//	mWindow->Activate();
+	if (LOWORD(inWParam) == WA_INACTIVE)
+		mWindow->Deactivate ();
+	else if (mWindow->IsEnabled())
+		mWindow->Activate();
 	//else
 	//	beep();
 	return true;
@@ -251,36 +348,37 @@ bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*
 {
 	outResult = MA_ACTIVATE;
 	
-	//if (not mWindow->IsEnabled())
-	//{
-	//	outResult = MA_NOACTIVATEANDEAT;
-	//}
-	//else if (LOWORD(inLParam) == HTCLIENT && not mWindow->IsActive())
-	//{
-		//unsigned long modifiers;
-		//GetModifierState(modifiers, false);
-		//
-		//POINT lPoint;
-		//::GetCursorPos (&lPoint);
-		//::ScreenToClient (GetHandle(), &lPoint);
+	if (not mWindow->IsEnabled())
+	{
+		outResult = MA_NOACTIVATEANDEAT;
+	}
+	else if (LOWORD(inLParam) == HTCLIENT and not mWindow->IsActive())
+	{
+		unsigned long modifiers;
+		GetModifierState(modifiers, false);
+		
+		POINT lPoint;
+		::GetCursorPos(&lPoint);
+		::ScreenToClient(GetHandle(), &lPoint);
 
-		//HPoint where(lPoint.x, lPoint.y);
-		//
-		//HNode* node;
-		//
-		//if (HNode::GetGrabbingNode())
+		MView* view;
+		
+		//if (MView::GetGrabbingNode())
 		//	node = HNode::GetGrabbingNode();
 		//else
-		//	node = mWindow->FindSubPane(where);
-		//assert(node != nil);
-		//
-		//node->ConvertFromWindow(where);
-		//
-		//if (node->ActivateClick(where, modifiers))
-		//	outResult = MA_NOACTIVATEANDEAT;
-		//else
-		//	outResult = MA_ACTIVATEANDEAT;
-	//}
+			view = mWindow->FindSubView(lPoint.x, lPoint.y);
+		assert(view != nil);
+		
+		int32 x = lPoint.x;
+		int32 y = lPoint.y;
+		
+		view->ConvertFromWindow(x, y);
+		
+		if (view->ActivateOnClick(x, y, modifiers))
+			outResult = MA_ACTIVATEANDEAT;
+		else
+			outResult = MA_NOACTIVATEANDEAT;
+	}
 	
 	return true;
 }
@@ -308,8 +406,8 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
 		
-		//mWindow->ResizeFrame(0, 0, newBounds.right - oldBounds.right,
-		//	newBounds.bottom - oldBounds.bottom);
+		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
+			newBounds.height - oldBounds.height);
 	}
 
 //	return true;
@@ -376,58 +474,12 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 	RECT lUpdateRect;
 	if (::GetUpdateRect(inHWnd, &lUpdateRect, FALSE) == TRUE)
 	{
-		{
-			MRect bounds;
-			GetWindowPosition(bounds);
+		MRect update(lUpdateRect.left, lUpdateRect.top,
+			lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
 
-			MView view(bounds.width, bounds.height);
-			view.SetParent(mWindow);
-
-			MRect update(lUpdateRect.left, lUpdateRect.top, lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
-
-			bounds.x = bounds.y = 0;
-			MDevice dev(&view, bounds, false);
-
-			dev.DrawString("Hallo, wereld!", 10, 5);
-
-			MColor c1("#efff7f"), c2("#ffffcc");
-
-//			dev.FillRect(MRect(10, 10, 50, 50));
-
-			dev.SetForeColor(c1);
-			dev.FillRect(MRect(10, 60, 50, 50));
-
-			dev.SetForeColor(c2);
-			dev.FillEllipse(MRect(100, 100, 50, 14));
-
-			dev.CreateAndUsePattern(c1, c2);
-			dev.FillEllipse(MRect(100, 128, 50, 14));
-
-
-		}
+		mWindow->RedrawAll(update);
 
 		::ValidateRect(GetHandle(), &lUpdateRect);
-
-		///* Fill a PAINTSTRUCT. No background erase */
-		//PAINTSTRUCT lPs;
-		//lPs.hdc = ::GetDC (inHWnd);
-		//lPs.fErase = FALSE;
-		//lPs.rcPaint = lUpdateRect;
-
-		///* Convert the native rect to a HRegion */
-		//HRect updateRect(lUpdateRect);
-		//HRegion lUpdateRegion(updateRect);
-		//
-		///* BeginPaint and call the Node redraw */ 
-		//::BeginPaint (inHWnd, &lPs);
-		//try
-		//{
-		//	mWindow->RedrawAll(lUpdateRegion);
-		//}
-		//catch (...)
-		//{
-		//}
-		//::EndPaint (inHWnd, &lPs);
 	}
 
 	outResult = 0;
@@ -456,38 +508,38 @@ bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam
 
 bool MWinWindowImpl::WMMouseDown(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& /*outResult*/)
 {
-	//unsigned long modifiers;
-	//GetModifierState(modifiers, false);
-	//
-	//HPoint where;
-	//where.x = LOWORD(inLParam);
-	//where.y = HIWORD(inLParam);
-	//
-	//HNode* node;
-	//
+	unsigned long modifiers;
+	::GetModifierState(modifiers, false);
+	
+	int32 x = LOWORD(inLParam);
+	int32 y = HIWORD(inLParam);
+	
+	MView* view;
+	
 	//if (HNode::GetGrabbingNode())
 	//	node = HNode::GetGrabbingNode();
 	//else
-	//	node = mWindow->FindSubPane(where);
-	//assert(node != nil);
+		view = mWindow->FindSubView(x, y);
+	assert(view != nil);
 
-	//double when = ::GetMessageTime();
-	//if (when >= HNode::sfLastClickTime + 1000 * ::get_dbl_time() ||
-	//	HNode::sfLastClickNode != node)
-	//{
-	//	HNode::sfClickCount = 1;
-	//}
-	//else
-	//	HNode::sfClickCount = (HNode::sfClickCount % 3) + 1;
+	static MView* sLastClickView = nil;
+	static double sLastClickTime = 0;
+	static uint32 sClickCount = 0;
 
-	//HNode::sfLastClickTime = when;
-	//HNode::sfLastClickNode = node;
-	//
-	//if (node)
-	//{
-	//	node->ConvertFromWindow(where);
-	//	node->Click(where, modifiers);
-	//}
+	double when = ::GetMessageTime();
+	if (when >= sLastClickTime + ::GetDblClickTime() or sLastClickView != view)
+		sClickCount = 1;
+	else
+		sClickCount = (sClickCount % 3) + 1;
+
+	sLastClickTime = when;
+	sLastClickView = view;
+	
+	if (view)
+	{
+		view->ConvertFromWindow(x, y);
+		view->Click(x, y, modifiers);
+	}
 
 	return true;
 }

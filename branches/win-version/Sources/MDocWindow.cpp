@@ -17,19 +17,14 @@ using namespace std;
 // ------------------------------------------------------------------
 //
 
-MDocWindow::MDocWindow(
-	const char*		inResource)
-	: MWindow(inResource)
+MDocWindow::MDocWindow(const string& inTitle, const MRect& inBounds,
+		MWindowFlags inFlags, const string& inMenu)
+	: MWindow(inTitle, inBounds, inFlags, inMenu)
 	, eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
 	, mController(nil)
-	//, mMenubar(this)
 {
-	//GdkGeometry geom = {};
-	//geom.min_width = 300;
-	//geom.min_height = 100;
-	//gtk_window_set_geometry_hints(GTK_WINDOW(GetGtkWidget()), nil, &geom, GDK_HINT_MIN_SIZE);
 }
 
 MDocWindow::~MDocWindow()

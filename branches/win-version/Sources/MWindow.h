@@ -87,95 +87,100 @@ class MWindow : public MView, public MHandler
 	//					MSignalHandlerArray&
 	//										outSlots);
 	
-	void			SetFocus(
-						uint32				inID);
-	
-	void			GetText(
-						uint32				inID,
-						std::string&		outText) const	{ outText = GetText(inID); }
+	//void			SetFocus(
+	//					uint32				inID);
+	//
+	//void			GetText(
+	//					uint32				inID,
+	//					std::string&		outText) const	{ outText = GetText(inID); }
 
-	std::string		GetText(
-						uint32				inID) const;
+	//std::string		GetText(
+	//					uint32				inID) const;
 
-	void			SetText(
-						uint32				inID,
-						const std::string&	inText);
+	//void			SetText(
+	//					uint32				inID,
+	//					const std::string&	inText);
 
-	void			SetPasswordField(
-						uint32				inID,
-						bool				isVisible);
+	//void			SetPasswordField(
+	//					uint32				inID,
+	//					bool				isVisible);
 
-	int32			GetValue(
-						uint32				inID) const;
+	//int32			GetValue(
+	//					uint32				inID) const;
 
-	void			SetValue(
-						uint32				inID,
-						int32				inValue);
+	//void			SetValue(
+	//					uint32				inID,
+	//					int32				inValue);
 
-	// for comboboxes
-	void			GetValues(
-						uint32				inID,
-						std::vector<std::string>& 
-											outValues) const;
+	//// for comboboxes
+	//void			GetValues(
+	//					uint32				inID,
+	//					std::vector<std::string>& 
+	//										outValues) const;
 
-	void			SetValues(
-						uint32				inID,
-						const std::vector<std::string>&
-											inValues);
+	//void			SetValues(
+	//					uint32				inID,
+	//					const std::vector<std::string>&
+	//										inValues);
 
-	void			SetColor(
-						uint32				inID,
-						MColor				inColor);
+	//void			SetColor(
+	//					uint32				inID,
+	//					MColor				inColor);
 
-	MColor			GetColor(
-						uint32				inID) const;
+	//MColor			GetColor(
+	//					uint32				inID) const;
 
-	bool			IsChecked(
-						uint32				inID) const;
+	//bool			IsChecked(
+	//					uint32				inID) const;
 
-	void			SetChecked(
-						uint32				inID,
-						bool				inOn);
+	//void			SetChecked(
+	//					uint32				inID,
+	//					bool				inOn);
 
-	bool			IsVisible(
-						uint32				inID) const;
+	//bool			IsVisible(
+	//					uint32				inID) const;
 
-	void			SetVisible(
-						uint32				inID,
-						bool				inVisible);
+	//void			SetVisible(
+	//					uint32				inID,
+	//					bool				inVisible);
 
-	bool			IsEnabled(
-						uint32				inID) const;
-	
-	void			SetEnabled(
-						uint32				inID,
-						bool				inEnabled);
+	//bool			IsEnabled(
+	//					uint32				inID) const;
+	//
+	//void			SetEnabled(
+	//					uint32				inID,
+	//					bool				inEnabled);
 
-	bool			IsExpanded(
-						uint32				inID) const;
-	
-	void			SetExpanded(
-						uint32				inID,
-						bool				inExpanded);
+	//bool			IsExpanded(
+	//					uint32				inID) const;
+	//
+	//void			SetExpanded(
+	//					uint32				inID,
+	//					bool				inExpanded);
 
-	void			SetProgressFraction(
-						uint32				inID,
-						float				inFraction);
+	//void			SetProgressFraction(
+	//					uint32				inID,
+	//					float				inFraction);
 
-	virtual void	ValueChanged(
-						uint32				inID);
+	//virtual void	ValueChanged(
+	//					uint32				inID);
 
 	// window recycling, called by application for now
 	
-	static void				RecycleWindows();
+	static void		RecycleWindows();
 
 	MWindowImpl*	GetImpl() const			{ return mImpl; }
 
-  protected:
+	// coordinate manipulations
+	virtual void	ConvertToScreen(int32& ioX, int32& ioY) const;
+	virtual void	ConvertFromScreen(int32& ioX, int32& ioY) const;
 
-							MWindow(
-								const char*		inWindowResourceName,
-								const char*		inRootWidgetName = "window");
+	virtual void	Scroll(
+						MRect			inRect,
+						int32			inX,
+						int32			inY);
+
+  protected:
 
 	virtual bool			DoClose();
 

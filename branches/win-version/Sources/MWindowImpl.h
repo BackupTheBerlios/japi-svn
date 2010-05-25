@@ -40,15 +40,13 @@ class MWindowImpl
 //	virtual void		Validate(const HRegion& inRegion) = 0;
 	virtual void		UpdateIfNeeded(bool inFlush) = 0;
 
-	virtual void		ScrollBits(MRect inRect, int32 inDeltaH, int32 inDeltaV) = 0;
+	virtual void		Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV) = 0;
 	
 	virtual bool		GetMouse(int32& outX, int32& outY, unsigned long& outModifiers) = 0;
 	virtual bool		WaitMouseMoved(int32 inX, int32 inY) = 0;
 
-	//virtual void		ConvertToScreen(HPoint& ioPoint) const = 0;
-	//virtual void		ConvertFromScreen(HPoint& ioPoint) const = 0;
-	//virtual void		ConvertToScreen(HRect& ioRect) const = 0;
-	//virtual void		ConvertFromScreen(HRect& ioRect) const = 0;
+	virtual void		ConvertToScreen(int32& ioX, int32& ioY) const = 0;
+	virtual void		ConvertFromScreen(int32& ioX, int32& ioY) const = 0;
 
   protected:
 						MWindowImpl(MWindowFlags inFlags, MWindow* inWindow)

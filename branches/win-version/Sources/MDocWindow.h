@@ -15,7 +15,9 @@ class MDocWindow : public MWindow
 {
   public:
 						MDocWindow(
-							const char*		inResource);
+							const std::string& inTitle,
+							const MRect& inBounds, MWindowFlags inFlags,
+							const std::string& inMenu);
 
 	static MDocWindow*	FindWindowForDocument(
 							MDocument*		inDocument);

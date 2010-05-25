@@ -213,7 +213,11 @@ std::string	GetDateTime();
 
 double GetLocalTime();
 
-//double GetDoubleClickTime();
+void delay(double inSeconds);
+
+double GetDblClickTime();
+
+void GetModifierState(unsigned long& outModifiers, bool inAsync);
 
 bool IsModifierDown(
 	int				inModifierMask);

@@ -44,15 +44,13 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 //	virtual void	Validate(const HRegion& inRegion);
 	virtual void	UpdateIfNeeded(bool inFlush);
 
-	virtual void	ScrollBits(MRect inRect, int32 inDeltaH, int32 inDeltaV);
+	virtual void	Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV);
 	
 	virtual bool	GetMouse(int32& outX, int32& outY, unsigned long& outModifiers);
 	virtual bool	WaitMouseMoved(int32 inX, int32 inY);
 
-	//virtual void	ConvertToScreen(HPoint& ioPoint) const;
-	//virtual void	ConvertFromScreen(HPoint& ioPoint) const;
-	//virtual void	ConvertToScreen(HRect& ioRect) const;
-	//virtual void	ConvertFromScreen(HRect& ioRect) const;
+	virtual void	ConvertToScreen(int32& ioX, int32& ioY) const;
+	virtual void	ConvertFromScreen(int32& ioX, int32& ioY) const;
 
 	MWindow*		GetWindow() const						{ return mWindow; }
 
@@ -88,6 +86,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	HWND			mStatus;
 	int32			mMinWidth, mMinHeight;
 	MMenu*			mMenubar;
+	int32			mLastGetMouseX, mLastGetMouseY;
 };
 
 #endif
