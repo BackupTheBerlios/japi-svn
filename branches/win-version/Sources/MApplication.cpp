@@ -24,6 +24,7 @@
 #include "MUtils.h"
 
 #include "CTestView.h"
+#include "MControls.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -372,7 +373,16 @@ void MApplication::DoNew()
 {
 	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), kMPostionDefault, "edit-window-menu");
 
-	w->AddChild(new CTestView(MRect(0, 0, 180, 180)));
+	//w->AddChild(new CTestView(MRect(0, 0, 180, 180)));
+
+	MRect bounds(10, 10, 75, 23);
+
+	MButton* button = new MButton('okok', bounds, "OK");
+
+	button->Show();
+	button->Enable();
+
+	w->AddChild(button);
 
 	w->Select();
 

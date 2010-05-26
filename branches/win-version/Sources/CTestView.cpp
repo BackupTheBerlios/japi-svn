@@ -1,10 +1,25 @@
 #include "MJapi.h"
 #include "CTestView.h"
 #include "MDevice.h"
+#include "MControls.h"
 
 CTestView::CTestView(MRect inRect)
 	: MView('test', inRect)
 {
+	MRect bounds;
+	GetBounds(bounds);
+
+	bounds.x = 10;
+	bounds.y += bounds.height - 30;
+	bounds.width = 75;
+	bounds.height = 23;
+
+	MButton* button = new MButton('okok', bounds, "OK");
+
+	button->Show();
+	button->Enable();
+
+	AddChild(button);
 }
 
 void CTestView::Draw(MRect inUpdate)

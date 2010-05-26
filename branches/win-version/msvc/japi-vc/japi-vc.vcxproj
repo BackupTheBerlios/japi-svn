@@ -43,7 +43,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-    <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Build</CustomBuildBeforeTargets>
+    <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">BuildGenerateSources</CustomBuildBeforeTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -64,13 +64,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\..\Resources\MakeRes.pl $(SolutionDir)\MJapi.rc $(SolutionDir)\..\..\Resources\</Command>
+      <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\..\Resources\MakeRes.pl --rc-dir=$(SolutionDir)\Rsrc --rc-file=MJapi.rc --rc-rsrc=$(SolutionDir)\..\..\Resources\</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>$(SolutionDir)MJapi.rc;%(Outputs)</Outputs>
+      <Outputs>$(SolutionDir)\Rsrc\MJapi.rc;%(Outputs)</Outputs>
       <Inputs>$(SolutionDir)\..\..\Resources\MakeRes.pl;%(Inputs)</Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -100,6 +100,7 @@
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MColor.cpp" />
     <ClCompile Include="..\..\Sources\MController.cpp" />
+    <ClCompile Include="..\..\Sources\MControls.cpp" />
     <ClCompile Include="..\..\Sources\MDevice.cpp" />
     <ClCompile Include="..\..\Sources\MDocClosedNotifier.cpp" />
     <ClCompile Include="..\..\Sources\MDocument.cpp" />
@@ -117,6 +118,7 @@
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinControlsImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinDevice.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinFile.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp" />
@@ -129,7 +131,7 @@
     <ClInclude Include="..\..\Sources\CTestView.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MJapi.rc" />
+    <ResourceCompile Include="Rsrc\MJapi.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

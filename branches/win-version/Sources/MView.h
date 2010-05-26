@@ -40,6 +40,8 @@ class MView
 
 	virtual			~MView();
 
+	virtual MView*	GetParent() const;
+
 	virtual void	SetParent(
 						MView*			inParent);
 

@@ -3,38 +3,50 @@
 use Win32;
 use strict;
 use warnings;
+use File::Copy;
+use XML::Simple;
+use Getopt::Long;
 
-my $res = shift;
-my $dir = shift;
+my $rcDir = "msvc/japi-vc/Rsrc/";
+my $rcFile = "MJapi.rc";
+my $rcRsrc = "Resources";
 
-my @list = &read_rsrc_list($dir, "");
+my $result = GetOptions(
+	"rc-dir=s"	=> \$rcDir,
+	"rc-file=s"	=> \$rcFile,
+	"rc-rsrc=s"	=> \$rcRsrc);
 
-my $out;
-open($out, ">$res") or die "Could not open output file $res\n";
+die "No such directory ($rcDir)\n" unless -d $rcDir;
+die "No such directory ($rcRsrc)\n" unless -d $rcRsrc;
+
+my @list = &read_rsrc_list($rcRsrc, "");
+
+my ($rc, $ix, $ixtext);
+open($rc, ">$rcDir/$rcFile") or die "Could not open rc file: $!\n";
+open($ix, ">", \$ixtext) or die "Could not open ix: $!\n";
+
+print $rc "1\tMRSRCIX\tix.xml\n";
+print $ix "<rsrc-ix>\n";
 
 my $n = 1;
 foreach my $r (@list)
 {
-	$r =~ s|/|\\|g;
-	
-	print $out "$n\tMYRSRC\n{\n";
+	$r =~ s|^/||;
 
-	my $fh;
-	open($fh, "<$r") or die "Could not open resource file $r\n";
-	while (my $line = <$fh>)
-	{
-		chomp($line);
-		$line =~ s|"|\\"|g;
-		
-		print $out "\"$line\",\n";
-	}
-	
-	print $out "}\n";
-	
+	copy("$rcRsrc/$r", "$rcDir/$n.xml") or die "Copy $rcRsrc/$r to $rcDir/$n.xml failed: $!\n";
+	print $rc "$n\tMRSRC\t$n.xml\n";
+	print $ix "  <rsrc name='$r' nr='$n'/>\n";
 	++$n;
 }
 
-close($out);
+print $ix "</rsrc-ix>";
+
+close($rc);
+close($ix);
+
+open($ix, ">$rcDir/ix.xml") or die "Could not open index file: $!\n";
+print $ix $ixtext;
+close($ix);
 
 
 sub read_rsrc_list()
@@ -51,8 +63,8 @@ sub read_rsrc_list()
 		
 		my $p = "$dir/$e";
 		
-		push @result, $p if (-f $p);
-		push @result, &read_rsrc_list($p, "$root\\$e") if (-d $p);
+		push @result, "$root/$e" if (-f $p);
+		push @result, &read_rsrc_list($p, "$root/$e") if (-d $p);
 	}
 	closedir($dh);
 	

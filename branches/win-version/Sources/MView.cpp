@@ -54,6 +54,11 @@ MView::~MView()
 		mParent->RemoveChild(this);
 }
 
+MView* MView::GetParent() const
+{
+	return mParent;
+}
+
 void MView::SetParent(
 	MView*			inParent)
 {

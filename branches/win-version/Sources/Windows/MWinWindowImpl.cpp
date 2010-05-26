@@ -10,6 +10,8 @@
 #undef GetTopWindow
 
 #include "zeep/xml/document.hpp"
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/filesystem/fstream.hpp>
 
 #include "MLib.h"
@@ -17,13 +19,16 @@
 #include "MWindow.h"
 #include "MError.h"
 #include "MWinApplicationImpl.h"
+#include "MWinControlsImpl.h"
 #include "MUtils.h"
 #include "MWinUtils.h"
 #include "MWinMenu.h"
 #include "MDevice.h"
+#include "MResources.h"
 
 using namespace std;
 using namespace zeep;
+namespace io = boost::iostreams;
 
 MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 		MWindow* inWindow)
@@ -36,13 +41,13 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 {
 	if (not inMenu.empty())
 	{
-		//mrsrc::rsrc rsrc(string("Menus/") + inResourceName + ".xml");
-		//
-		//if (not rsrc)
-		//	THROW(("Menu resource not found: %s", inResourceName));
+		mrsrc::rsrc rsrc(string("Menus/") + inMenu + ".xml");
+		
+		if (not rsrc)
+			THROW(("Menu resource not found: %s", inMenu));
 
-		//io::stream<io::array_source> data(rsrc.data(), rsrc.size());
-		ifstream data("C:\\Users\\maarten\\projects\\japi\\Resources\\Menus\\" + string(inMenu) + ".xml");
+		io::stream<io::array_source> data(rsrc.data(), rsrc.size());
+		
 		xml::document doc(data);
 	
 		mMenubar = MMenu::Create(doc.child());
@@ -114,6 +119,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_LBUTTONDOWN,		boost::bind(&MWinWindowImpl::WMMouseDown, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MOUSEWHEEL,		boost::bind(&MWinWindowImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
@@ -500,6 +506,37 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
 	mMenubar->UpdateCommandStatus();
+	return false;
+}
+
+bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	outResult = 1;
+	bool result = false;
+
+	if (inLParam != nil)
+	{
+		MWinControlImpl* imp =
+			MWinControlImpl::FetchControlImpl((HWND)inLParam);
+
+		if (imp != nil)
+		{
+			outResult = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam);
+			result = true;
+		}
+	}
+	//else
+	//{
+	//	HMessage msg (inWParam);
+	//	
+	//	if (HHandler::GetFocus())
+	//		result = HHandler::GetFocus()->HandleMessage(msg);
+	//	else
+	//		result = HHandler::GetTopHandler()->HandleMessage(msg);
+	//}
+
+	return result;
+	
 	return false;
 }
 

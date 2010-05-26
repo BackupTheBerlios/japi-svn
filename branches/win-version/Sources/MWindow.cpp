@@ -13,7 +13,6 @@
 
 #include "MCommands.h"
 #include "MWindow.h"
-//#include "MResources.h"
 #include "MError.h"
 #include "MApplication.h"
 #include "MWindowImpl.h"
