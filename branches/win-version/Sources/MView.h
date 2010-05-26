@@ -68,6 +68,9 @@ class MView
 	void			SetFrame(
 						const MRect&	inFrame);
 
+	void			SetBindings(bool inFollowLeft, bool inFollowTop,
+						bool inFollowRight, bool inFollowBottom);
+
 	virtual void	ResizeFrame(
 						int32			inXDelta,
 						int32			inYDelta,
@@ -117,9 +120,6 @@ class MView
 						int32			inY);
 
 	void			UpdateNow();
-
-	virtual void	Add(
-						MView*			inSubView);
 
 	void			SetCursor(
 						MCursor			inCursor);

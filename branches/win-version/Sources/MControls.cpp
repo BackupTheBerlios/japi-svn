@@ -20,10 +20,17 @@ MControl::~MControl()
 {
 }
 
+void MControl::Draw(
+	MRect			inUpdate)
+{
+	mImpl->Draw(inUpdate);
+}
+
 void MControl::ResizeFrame(int32 inXDelta, int32 inYDelta,
 	int32 inWidthDelta, int32 inHeightDelta)
 {
-	mImpl->ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
+	MView::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
+	mImpl->FrameResized();
 }
 
 long MControl::GetValue() const
@@ -105,6 +112,13 @@ void MControl::AddedToWindow()
 
 MButton::MButton(uint32 inID, MRect inBounds, const string& inLabel)
 	: MControl(inID, inBounds, MControlImpl::CreateButton(this, inLabel))
+{
+}
+
+// --------------------------------------------------------------------
+
+MScrollbar::MScrollbar(uint32 inID, MRect inBounds)
+	: MControl(inID, inBounds, MControlImpl::CreateScrollbar(this))
 {
 }
 

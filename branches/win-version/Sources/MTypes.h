@@ -170,6 +170,7 @@ enum MScrollMessage
 	kScrollToEnd,
 	kScrollToCaret,
 	kScrollToSelection,
+	kScrollToThumb,
 	kScrollCenterSelection,
 	kScrollLineUp,
 	kScrollLineDown,

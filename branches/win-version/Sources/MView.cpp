@@ -35,8 +35,8 @@ MView::MView(
 	, mEnabled(eTriStateOn)
 	, mBindLeft(true)
 	, mBindTop(true)
-	, mBindRight(true)
-	, mBindBottom(true)
+	, mBindRight(false)
+	, mBindBottom(false)
 {
 }
 
@@ -138,6 +138,15 @@ void MView::SetFrame(
 	mFrame = inFrame;
 }
 
+void MView::SetBindings(bool inFollowLeft, bool inFollowTop,
+	bool inFollowRight, bool inFollowBottom)
+{
+	mBindLeft = inFollowLeft;
+	mBindTop = inFollowTop;
+	mBindRight = inFollowRight;
+	mBindBottom = inFollowBottom;
+}
+
 void MView::ResizeFrame(
 	int32			inXDelta,
 	int32			inYDelta,
@@ -234,13 +243,8 @@ void MView::Scroll(
 
 void MView::UpdateNow()
 {
-	//GtkWidget* w = mGtkWidget; 
-	//GtkWidget* toplevel = gtk_widget_get_toplevel(mGtkWidget);
-
-	//if (GTK_WIDGET_TOPLEVEL(toplevel))
-	//	w = toplevel;
-
-	//gdk_window_process_all_updates();
+	if (mParent != nil)
+		mParent->UpdateNow();
 }
 
 void MView::SetCursor(
@@ -287,14 +291,6 @@ void MView::SetCursor(
 void MView::ObscureCursor()
 {
 	SetCursor(eBlankCursor);
-}
-
-void MView::Add(
-	MView*			inSubView)
-{
-	//assert(GTK_IS_CONTAINER(GetGtkWidget()));
-	//gtk_container_add(GTK_CONTAINER(GetGtkWidget()), inSubView->GetGtkWidget());
-	//inSubView->Added();
 }
 
 bool MView::ActivateOnClick(int32 inX, int32 inY, uint32 inModifiers)

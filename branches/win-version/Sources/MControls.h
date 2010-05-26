@@ -24,6 +24,9 @@ public:
 						int32			inWidthDelta,
 						int32			inHeightDelta);
 
+	virtual void	Draw(
+						MRect			inUpdate);
+
 	virtual long	GetValue() const;
 	virtual void	SetValue(long inValue);
 	
@@ -68,6 +71,17 @@ public:
 
 	MEventOut<void()>
 					eClicked;
+};
+
+extern const int kScrollBarWidth;
+
+class MScrollbar : public MControl
+{
+public:
+					MScrollbar(uint32 inID, MRect inBounds);
+
+	MEventOut<void(MScrollMessage)>
+					eScroll;
 };
 
 #endif

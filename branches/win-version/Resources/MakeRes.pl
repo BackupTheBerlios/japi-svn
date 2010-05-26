@@ -4,7 +4,6 @@ use Win32;
 use strict;
 use warnings;
 use File::Copy;
-use XML::Simple;
 use Getopt::Long;
 
 my $rcDir = "msvc/japi-vc/Rsrc/";

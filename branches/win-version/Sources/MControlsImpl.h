@@ -17,8 +17,8 @@ public:
 
 	//virtual void	Embed(HNode* /*inParent*/)					{}
 	virtual void	AddedToWindow()								{}
-	virtual void	ResizeFrame(long,long,long,long)			{}
-	virtual void	Draw(MRect /*inBounds*/)					{}
+	virtual void	FrameResized()								{}
+	virtual void	Draw(MRect inBounds)						{}
 	virtual void	Click(int32 inX, int32 inY)					{}
 	virtual void	ActivateSelf()								{}
 	virtual void	DeactivateSelf()							{}

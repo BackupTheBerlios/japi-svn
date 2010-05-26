@@ -61,8 +61,6 @@ protected:
 						LPARAM inLParam, int& outResult);
 	virtual bool	WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult);
-	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
-						LPARAM inLParam, int& outResult);
 
 //	virtual bool	DispatchKeyDown(const MKeyDown& inKeyDown);
 

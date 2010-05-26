@@ -80,7 +80,7 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	
 	HINSTANCE inst = MWinApplicationImpl::GetInstance()->GetHInstance();
 	
-	outStyle = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+	outStyle = CS_HREDRAW | CS_VREDRAW;
 	//outIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	outCursor = ::LoadCursor(NULL, IDC_ARROW);
@@ -96,9 +96,6 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 
 	if (not (mFlags & kMFixedSize))
 	{
-//		const int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
-		const int kScrollBarWidth = 16;
-		
 		MRect r;
 		mWindow->GetBounds(r);
 		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
@@ -493,13 +490,27 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 		MRect update(lUpdateRect.left, lUpdateRect.top,
 			lUpdateRect.right - lUpdateRect.left, lUpdateRect.bottom - lUpdateRect.top);
 
-		mWindow->RedrawAll(update);
+		// Fill a PAINTSTRUCT. No background erase
+		PAINTSTRUCT lPs;
+		lPs.hdc = ::GetDC(inHWnd);
+		lPs.fErase = FALSE;
+		lPs.rcPaint = lUpdateRect;
 
-		::ValidateRect(GetHandle(), &lUpdateRect);
+		// BeginPaint and call the Node redraw 
+		::BeginPaint(inHWnd, &lPs);
+
+		try
+		{
+			mWindow->RedrawAll(update);
+		}
+		catch (...)
+		{
+		}
+
+		::EndPaint(inHWnd, &lPs);
 	}
 
 	outResult = 0;
-
 	return true;
 }
 
@@ -520,10 +531,7 @@ bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 			MWinControlImpl::FetchControlImpl((HWND)inLParam);
 
 		if (imp != nil)
-		{
-			outResult = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam);
-			result = true;
-		}
+			result = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam, outResult);
 	}
 	//else
 	//{
@@ -621,14 +629,17 @@ bool MWinWindowImpl::WMMouseWheel(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWPa
 	return true;
 }
 
-bool MWinWindowImpl::WMScroll(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
+bool MWinWindowImpl::WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	//HWinScrollBarImp* scrollBarImp = dynamic_cast<HWinScrollBarImp*>(
-	//	HNativeControlNodeImp::FetchControlNodeImp((HWND)inLParam));
-	//if (scrollBarImp)
-	//	outResult = scrollBarImp->Scroll(inHWnd, WM_VSCROLL, inWParam, inLParam);
+	MScrollbarImpl* scrollbarImpl = dynamic_cast<MScrollbarImpl*>(
+		MWinControlImpl::FetchControlImpl((HWND)inLParam));
 
-	return true;
+	bool result = false;
+
+	if (scrollbarImpl != nil)
+		result = scrollbarImpl->WMScroll(inHWnd, inUMsg, inWParam, inLParam, outResult);
+
+	return result;
 }
 
 bool MWinWindowImpl::WMSetFocus(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)

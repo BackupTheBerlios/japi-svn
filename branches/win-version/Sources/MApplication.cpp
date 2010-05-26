@@ -373,8 +373,6 @@ void MApplication::DoNew()
 {
 	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), kMPostionDefault, "edit-window-menu");
 
-	//w->AddChild(new CTestView(MRect(0, 0, 180, 180)));
-
 	MRect bounds(10, 10, 75, 23);
 
 	MButton* button = new MButton('okok', bounds, "OK");
@@ -383,6 +381,17 @@ void MApplication::DoNew()
 	button->Enable();
 
 	w->AddChild(button);
+
+	w->GetBounds(bounds);
+	bounds.x += bounds.width - kScrollBarWidth;
+	bounds.width = 16;
+	bounds.height -= kScrollBarWidth;
+	MScrollbar* scrollbar = new MScrollbar('vscl', bounds);
+	scrollbar->SetBindings(false, true, true, true);
+	w->AddChild(scrollbar);
+
+	w->AddChild(new CTestView(MRect(10, 40, 180, 180)));
+
 
 	w->Select();
 

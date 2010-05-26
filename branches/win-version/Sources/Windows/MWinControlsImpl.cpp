@@ -17,6 +17,8 @@
 
 using namespace std;
 
+const int kScrollBarWidth = 16;
+
 MWinControlImpl::MWinControlImpl(MControl* inControl, const string& inLabel)
 	: MControlImpl(inControl)
 	, mLabel(inLabel)
@@ -29,7 +31,7 @@ MWinControlImpl::~MWinControlImpl()
 
 MWinControlImpl* MWinControlImpl::FetchControlImpl(HWND inHWND)
 {
-	
+	return reinterpret_cast<MWinControlImpl*>(::GetPropW(inHWND, L"control_impl"));
 }
 
 string MWinControlImpl::GetText() const
@@ -41,7 +43,7 @@ string MWinControlImpl::GetText() const
 		const int kBufferSize = 1024;
 		vector<wchar_t> buf(kBufferSize);
 
-		int n = ::GetWindowTextW(GetHandle(), &buf[0], kBufferSize);
+		::GetWindowTextW(GetHandle(), &buf[0], kBufferSize);
 
 		result = w2c(&buf[0]);
 	}
@@ -101,6 +103,24 @@ void MWinControlImpl::HideSelf()
 	::ShowWindow(GetHandle(), SW_HIDE);
 }
 
+void MWinControlImpl::Draw(MRect inUpdate)
+{
+}
+
+void MWinControlImpl::FrameResized()
+{
+	if (GetHandle() != nil)
+	{
+		MRect bounds;
+		MWinProcMixin* parent;
+		
+		GetParentAndBounds(parent, bounds);
+
+		::MoveWindow(GetHandle(), bounds.x, bounds.y,
+			bounds.width, bounds.height, false);
+	}
+}
+
 void MWinControlImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	wstring& outClassName, HMENU& outMenu)
 {
@@ -150,27 +170,24 @@ void MWinControlImpl::AddedToWindow()
 	MRect bounds;
 
 	GetParentAndBounds(parent, bounds);
-	bounds.width = 75;
-	bounds.height = 23;
 
 	Create(parent, bounds, c2w(GetText()));
 
-	::SetWindowLongW(GetHandle(), 
+	::SetPropW(GetHandle(), L"control_impl", this);
 
 	// set the font to the theme font
-
-	HTHEME hTheme = ::OpenThemeData(GetHandle(), VSCLASS_TEXTSTYLE);
-	if (hTheme != nil)
+	HTHEME theme = ::OpenThemeData(GetHandle(), VSCLASS_TEXTSTYLE);
+	if (theme != nil)
 	{
 		LOGFONT font;
-		if (::GetThemeSysFont(hTheme, TMT_CAPTIONFONT, &font) == S_OK)
+		if (::GetThemeSysFont(theme, TMT_CAPTIONFONT, &font) == S_OK)
 		{
 			HFONT hFont = ::CreateFontIndirectW(&font);
 			if (hFont != nil)
 				::SendMessageW(GetHandle(), WM_SETFONT, (WPARAM)hFont, MAKELPARAM(true, 0));
 		}
 
-		::CloseThemeData(hTheme);
+		::CloseThemeData(theme);
 	}
 	
 	if (mControl->IsVisible())
@@ -193,21 +210,184 @@ void MButtonImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	outClassName = L"BUTTON";
 }
 
-void MButtonImpl::AddedToWindow()
+bool MWinControlImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	MWinControlImpl::AddedToWindow();
+	bool result = false;
 
-	AddNotify(BN_CLICKED, GetHandle(), boost::bind(&MButtonImpl::BNClicked, this, _1, _2, _3));
-}
+	if (inMsg == BN_CLICKED)
+	{
+		MButton* button = dynamic_cast<MButton*>(mControl);
+		if (button != nil)
+			button->eClicked();
 
-bool MButtonImpl::BNClicked(WPARAM inWParam, LPARAM inLParam, int& outResult)
-{
-	PRINT(("Clicked!"));
-	outResult = 1;
-	return true;
+		outResult = 1;
+		result = true;
+	}
+
+	return result;
 }
 
 MControlImpl* MControlImpl::CreateButton(MControl* inControl, const string& inLabel)
 {
 	return new MButtonImpl(inControl, inLabel);
 }
+
+// --------------------------------------------------------------------
+
+MScrollbarImpl::MScrollbarImpl(MControl* inControl)
+	: MWinControlImpl(inControl)
+{
+}
+
+void MScrollbarImpl::ShowSelf()
+{
+	::ShowScrollBar(GetHandle(), SB_CTL, TRUE);
+}
+
+void MScrollbarImpl::HideSelf()
+{
+	::ShowScrollBar(GetHandle(), SB_CTL, FALSE);
+}
+
+void MScrollbarImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"SCROLLBAR";
+	outStyle = WS_CHILD;
+
+	MRect bounds;
+	mControl->GetBounds(bounds);
+
+	if (bounds.width > bounds.height)
+		outStyle |= SBS_HORZ;
+	else
+		outStyle |= SBS_VERT;
+}
+
+long MScrollbarImpl::GetValue() const
+{
+	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_POS };
+	
+	if (GetHandle() != nil)
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+
+	return info.nPos;
+}
+
+void MScrollbarImpl::SetValue(long inValue)
+{
+	if (GetHandle() != nil)
+	{
+		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_POS };
+		info.nPos = inValue;
+		
+		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+	}
+}
+
+long MScrollbarImpl::GetMinValue() const
+{
+	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
+	
+	if (GetHandle() != nil)
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+
+	return info.nMin;
+}
+
+void MScrollbarImpl::SetMinValue(long inValue)
+{
+	if (GetHandle() != nil)
+	{
+		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
+	
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+		info.nMin = inValue;
+		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+	}
+}
+
+long MScrollbarImpl::GetMaxValue() const
+{
+	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
+	if (GetHandle() != nil)
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+
+	return info.nMax;
+}
+
+void MScrollbarImpl::SetMaxValue(long inValue)
+{
+	if (GetHandle() != nil)
+	{
+		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
+	
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+		info.nMax = inValue;
+		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+	}
+}
+
+bool MScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool result = false;
+
+	MScrollbar* scrollbar = dynamic_cast<MScrollbar*>(mControl);
+
+	if (scrollbar != nil and (inUMsg == WM_HSCROLL or inUMsg == WM_VSCROLL))
+	{
+		outResult = 0;
+		result = true;
+
+		switch (LOWORD(inWParam))
+		{
+			case SB_LINEDOWN:
+				scrollbar->eScroll(kScrollLineDown);
+				break;
+			case SB_LINEUP:
+				scrollbar->eScroll(kScrollLineUp);
+				break;
+			case SB_PAGEDOWN:
+				scrollbar->eScroll(kScrollPageDown);
+				break;
+			case SB_PAGEUP:
+				scrollbar->eScroll(kScrollPageUp);
+				break;
+			case SB_THUMBTRACK:
+			{
+				SCROLLINFO info = { sizeof(info), SIF_TRACKPOS };
+				::GetScrollInfo(GetHandle(), SB_CTL, &info);
+				SetValue(info.nTrackPos);
+				scrollbar->eScroll(kScrollToThumb);
+				break;
+			}
+		}
+		mControl->GetWindow()->UpdateNow();
+	}
+
+	return result;
+}
+
+//void MScrollbarImpl::SetViewSize(long inViewSize)
+//{
+//#if 0
+//	SCROLLINFO info = { 0 };
+//	
+//	info.cbSize = sizeof(info);
+//	info.fMask = SIF_PAGE;
+//	
+//	::GetScrollInfo(GetHandle(), SB_CTL, &info);
+//	
+//	info.nPage = inViewSize;
+//	
+//	::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+//#endif
+//}
+
+MControlImpl* MControlImpl::CreateScrollbar(MControl* inControl)
+{
+	return new MScrollbarImpl(inControl);
+}
+

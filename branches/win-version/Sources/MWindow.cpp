@@ -33,6 +33,8 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 {
+	mBounds.x = mBounds.y = 0;
+
 	Init();
 }
 
@@ -67,31 +69,6 @@ void MWindow::Init()
 	mNext = sFirst;
 	sFirst = this;
 }
-
-//MWindow::~MWindow()
-//{
-//	delete mGtkBuilder;
-//
-//#if DEBUG
-//	MWindow* w = sFirst;
-//	while (w != nil)
-//	{
-//		if (w == this)
-//		{
-//			if (GTK_IS_WINDOW(GetGtkWidget()))
-//				PRINT(("Window was not removed from list: %s", gtk_window_get_title(GTK_WINDOW(GetGtkWidget()))));
-//			else
-//				PRINT(("Window was not removed from list: [deleted]"));
-//
-//			RemoveWindowFromList(this);
-//
-//			break;
-//		}
-//		w = w->mNext;
-//	}
-//#endif
-//}
-
 
 void MWindow::RecycleWindows()
 {

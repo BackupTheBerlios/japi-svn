@@ -25,8 +25,8 @@ public:
 
 	////virtual void	Embed(HNode* /*inParent*/)					{}
 	virtual void	AddedToWindow();
-	//virtual void	ResizeFrame(long,long,long,long)			{}
-	//virtual void	Draw(MRect /*inBounds*/)					{}
+	virtual void	FrameResized();
+	virtual void	Draw(MRect inBounds);
 	//virtual void	Click(int32 inX, int32 inY)					{}
 	virtual void	ActivateSelf();
 	virtual void	DeactivateSelf();
@@ -54,8 +54,8 @@ public:
 	//
 	////virtual bool	AllowBeFocus(HHandler* /*inNewFocus*/)		{ return false; }
 	////virtual bool	AllowDontBeFocus(HHandler* /*inNewFocus*/)	{ return true; }
-	////virtual void	BeFocus()									{}
-	////virtual void	DontBeFocus()								{}
+	//virtual void	BeFocus();
+	//virtual void	DontBeFocus();
 
 	////virtual void	InsertText(std::string /*inText*/)			{ assert(false); }
 	////virtual void	SetPasswordChar(HUnicode inUnicode)			{ assert(false); }
@@ -84,11 +84,30 @@ class MButtonImpl : public MWinControlImpl
 public:
 					MButtonImpl(MControl* inControl, const std::string& inLabel);
 
-					virtual void	AddedToWindow();
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+
+};
+
+class MScrollbarImpl : public MWinControlImpl
+{
+public:
+					MScrollbarImpl(MControl* inControl);
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
 
+	virtual void	ShowSelf();
+	virtual void	HideSelf();
+
+	virtual long	GetValue() const;
+	virtual void	SetValue(long inValue);
+	virtual long	GetMinValue() const;
+	virtual void	SetMinValue(long inValue);
+	virtual long	GetMaxValue() const;
+	virtual void	SetMaxValue(long inValue);
+
+	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
 #endif
