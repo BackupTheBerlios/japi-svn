@@ -15,6 +15,8 @@ void CTestView::Draw(MRect inUpdate)
 
 	MDevice dev(this, bounds, false);
 
+	dev.EraseRect(bounds);
+
 	dev.DrawString("Hallo, wereld!", 10, 5);
 
 	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");

@@ -183,6 +183,8 @@ class MWinDeviceImpl : public MDeviceImp
 	static IDWriteFactory*	sDWFactory;
 
 	ID2D1HwndRenderTarget*	mRenderTarget;
+	ID2D1Layer*				mClipLayer;
+
 	IDWriteTextFormat*		mTextFormat;
 	IDWriteTextLayout*		mTextLayout;
 
@@ -205,6 +207,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 	MRect		inBounds,
 	bool		inOffscreen)
 	: mRenderTarget(nil)
+	, mClipLayer(nil)
 	, mTextFormat(nil)
 	, mTextLayout(nil)
 	, mForeBrush(nil)
@@ -224,22 +227,37 @@ MWinDeviceImpl::MWinDeviceImpl(
 	MWindow* window = inView->GetWindow();
 	THROW_IF_NIL(window);
 
-	HWND hwnd = static_cast<MWinWindowImpl*>(window->GetImpl())->GetHandle();
+	MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
+	mRenderTarget = windowImpl->GetRenderTarget();
+	if (mRenderTarget == nil)
+	{
+		HWND hwnd = windowImpl->GetHandle();
 
-	RECT r;
-	::GetClientRect(hwnd, &r);
+		RECT r;
+		::GetClientRect(hwnd, &r);
 
-	HDC dc = ::GetDC(hwnd);
-	mDpiScaleX = ::GetDeviceCaps(dc, LOGPIXELSX) / 96.0f;
-	mDpiScaleY = ::GetDeviceCaps(dc, LOGPIXELSY) / 96.0f;
-	::ReleaseDC(0, dc);
+		HDC dc = ::GetDC(hwnd);
+		mDpiScaleX = ::GetDeviceCaps(dc, LOGPIXELSX) / 96.0f;
+		mDpiScaleY = ::GetDeviceCaps(dc, LOGPIXELSY) / 96.0f;
+		::ReleaseDC(0, dc);
 
-	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
-		::D2D1::RenderTargetProperties(),
-		::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(r.right - r.left, r.bottom - r.top)),
-		&mRenderTarget));
+		THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
+			::D2D1::RenderTargetProperties(),
+			::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(r.right - r.left, r.bottom - r.top)),
+			&mRenderTarget));
+
+		windowImpl->SetRenderTarget(mRenderTarget);
+	}
+
+	MRect bounds;
+	inView->GetBounds(bounds);
+	inView->ConvertToParent(bounds.x, bounds.y);
+	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(bounds.x, bounds.y));
 
 	mRenderTarget->BeginDraw();
+
+	if (inBounds)
+		ClipRect(inBounds);
 
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
@@ -267,10 +285,22 @@ MWinDeviceImpl::~MWinDeviceImpl()
 	if (mTextFormat != nil)
 		mTextFormat->Release();
 
+	if (mClipLayer != nil)
+	{
+		mRenderTarget->PopLayer();
+		mClipLayer->Release();
+	}
+
 	if (mRenderTarget != nil)
 	{
-		mRenderTarget->EndDraw();
-		mRenderTarget->Release();
+		HRESULT e = mRenderTarget->EndDraw();
+		if (e == D2DERR_RECREATE_TARGET)
+		{
+			MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(
+				MWinWindowImpl::Fetch(mRenderTarget->GetHwnd()));
+			wi->SetRenderTarget(nil);
+			throw 0;
+		}
 	}
 }
 
@@ -315,7 +345,7 @@ void MWinDeviceImpl::SetFont(
 	--e;
 	
 	mFont = c2w(inFont.substr(0, e - inFont.begin()));
-	mFontSize = size * 96.f / 72.f;
+	mFontSize = mDpiScaleY * size * 96.f / 72.f;
 }
 
 void MWinDeviceImpl::SetForeColor(
@@ -377,6 +407,19 @@ MColor MWinDeviceImpl::GetBackColor() const
 void MWinDeviceImpl::ClipRect(
 	MRect				inRect)
 {
+	if (mClipLayer != nil)
+	{
+		mRenderTarget->PopLayer();
+		mClipLayer->Release();
+	}
+
+	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateLayer(&mClipLayer));
+
+    // Push the layer with the geometric mask.
+	mRenderTarget->PushLayer(
+		D2D1::LayerParameters(D2D1::RectF(inRect.x, inRect.y,
+			inRect.x + inRect.width, inRect.y + inRect.height)),
+		mClipLayer);
 }
 
 //void MWinDeviceImpl::ClipRegion(

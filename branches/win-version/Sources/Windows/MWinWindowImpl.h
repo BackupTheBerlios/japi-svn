@@ -11,6 +11,8 @@
 #include "MWindowImpl.h"
 #include "MWinProcMixin.h"
 
+interface ID2D1HwndRenderTarget;
+
 class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 {
   public:
@@ -54,6 +56,11 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 
 	MWindow*		GetWindow() const						{ return mWindow; }
 
+	ID2D1HwndRenderTarget*
+					GetRenderTarget() const					{ return mRenderTarget; }
+	void			SetRenderTarget(
+						ID2D1HwndRenderTarget* inTarget);
+
   protected:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
@@ -68,6 +75,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMSize(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMSizing(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMEraseBkgnd(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMInitMenu(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMMenuCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
@@ -88,6 +96,8 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	int32			mMinWidth, mMinHeight;
 	MMenu*			mMenubar;
 	int32			mLastGetMouseX, mLastGetMouseY;
+	ID2D1HwndRenderTarget*
+					mRenderTarget;
 };
 
 #endif

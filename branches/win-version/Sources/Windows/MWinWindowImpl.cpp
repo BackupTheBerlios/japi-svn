@@ -4,6 +4,8 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <Windows.h>
+#include <d2d1.h>
+#include <dwrite.h>
 
 #undef CreateWindow
 #undef GetNextWindow
@@ -38,6 +40,7 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 	, mMinWidth(100)
 	, mMinHeight(100)
 	, mMenubar(nil)
+	, mRenderTarget(nil)
 {
 	if (not inMenu.empty())
 	{
@@ -56,6 +59,8 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 
 MWinWindowImpl::~MWinWindowImpl()
 {
+	if (mRenderTarget != nil)
+		mRenderTarget->Release();
 }
 
 void MWinWindowImpl::CreateParams(DWORD& outStyle,
@@ -115,6 +120,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
@@ -139,6 +145,15 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 
 	if (mMenubar != nil)
 		mMenubar->SetTarget(mWindow);
+}
+
+void MWinWindowImpl::SetRenderTarget(
+	ID2D1HwndRenderTarget* inTarget)
+{
+	if (mRenderTarget != nil)
+		mRenderTarget->Release();
+
+	mRenderTarget = inTarget;
 }
 
 // --------------------------------------------------------------------
@@ -418,6 +433,9 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 //				lNewBounds.bottom - kScrollBarWidth, 0, 0,
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
+
+		if (mRenderTarget != nil)
+			mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
 		
 		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
 			newBounds.height - oldBounds.height);
@@ -513,6 +531,18 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 	outResult = 0;
 	return true;
 }
+
+bool MWinWindowImpl::WMEraseBkgnd(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
+{
+	bool result = false;
+	if (mRenderTarget != nil)
+	{
+		outResult = 1;
+		result = true;
+	}
+	return result;
+}
+
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
