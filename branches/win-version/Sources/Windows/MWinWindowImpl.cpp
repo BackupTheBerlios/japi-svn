@@ -105,8 +105,8 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 		mWindow->GetBounds(r);
 		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
 			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
-			r.x + r.width - kScrollBarWidth, r.y + r.height - kScrollBarWidth,
-			kScrollBarWidth, kScrollBarWidth, GetHandle(),
+			r.x + r.width - kScrollbarWidth, r.y + r.height - kScrollbarWidth,
+			kScrollbarWidth, kScrollbarWidth, GetHandle(),
 			nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
 			nil);
 	}
@@ -421,16 +421,16 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 
 		if (mSizeBox != nil)
 		{
-			//int kScrollBarWidth = HScrollBarNode::GetScrollBarWidth();
-			int kScrollBarWidth = 16;
+			//int kScrollbarWidth = HScrollBarNode::GetScrollBarWidth();
+			int kScrollbarWidth = 16;
 
 			MRect r(newBounds);
-			r.x += r.width - kScrollBarWidth;
-			r.y += r.height- kScrollBarWidth;
+			r.x += r.width - kScrollbarWidth;
+			r.y += r.height- kScrollbarWidth;
 			
 			::MoveWindow(mSizeBox, r.x, r.y, r.width, r.height, true);
-//			::SetWindowPos(fSizeBox, GetHandle(), lNewBounds.right - kScrollBarWidth,
-//				lNewBounds.bottom - kScrollBarWidth, 0, 0,
+//			::SetWindowPos(fSizeBox, GetHandle(), lNewBounds.right - kScrollbarWidth,
+//				lNewBounds.bottom - kScrollbarWidth, 0, 0,
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
 

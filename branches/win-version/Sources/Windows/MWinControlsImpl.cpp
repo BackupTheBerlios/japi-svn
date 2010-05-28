@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int kScrollBarWidth = 16;
+const int kScrollbarWidth = 16;
 
 MWinControlImpl::MWinControlImpl(MControl* inControl, const string& inLabel)
 	: MControlImpl(inControl)

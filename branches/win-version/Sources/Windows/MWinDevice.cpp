@@ -249,10 +249,10 @@ MWinDeviceImpl::MWinDeviceImpl(
 		windowImpl->SetRenderTarget(mRenderTarget);
 	}
 
-	MRect bounds;
-	inView->GetBounds(bounds);
-	inView->ConvertToParent(bounds.x, bounds.y);
-	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(bounds.x, bounds.y));
+	MRect frame;
+	inView->GetFrame(frame);
+	inView->ConvertToWindow(frame.x, frame.y);
+	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(frame.x, frame.y));
 
 	mRenderTarget->BeginDraw();
 

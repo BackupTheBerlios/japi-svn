@@ -21,8 +21,6 @@ void CTestView::Draw(MRect inUpdate)
 
 	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");
 
-//			dev.FillRect(MRect(10, 10, 50, 50));
-
 	dev.SetForeColor(c3);
 	dev.FillRect(MRect(10, 60, 50, 50));
 
@@ -32,16 +30,14 @@ void CTestView::Draw(MRect inUpdate)
 	dev.CreateAndUsePattern(c1, c2);
 	dev.FillEllipse(MRect(100, 128, 50, 14));
 
-	MRect r = bounds;
-	r.x += bounds.width - 10;
-	r.y += bounds.height - 10;
-	r.width = 10;
-	r.height = 10;
+	MRect r(120, 120, 10, 10);
 
-	if (r)
+	dev.SetForeColor(c1);
+	while (r & bounds)
 	{
-		dev.SetForeColor(c1);
 		dev.FillRect(r);
+		r.x += 10;
+		r.y += 10;
 	}
 }
 

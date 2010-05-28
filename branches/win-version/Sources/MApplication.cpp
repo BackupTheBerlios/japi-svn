@@ -383,14 +383,20 @@ void MApplication::DoNew()
 	w->AddChild(button);
 
 	w->GetBounds(bounds);
-	bounds.x += bounds.width - kScrollBarWidth;
-	bounds.width = 16;
-	bounds.height -= kScrollBarWidth;
-	MScrollbar* scrollbar = new MScrollbar('vscl', bounds);
-	scrollbar->SetBindings(false, true, true, true);
-	w->AddChild(scrollbar);
+	bounds.y += 43;
+	bounds.height -= 43 + kScrollbarWidth;
 
-	w->AddChild(new CTestView(MRect(10, 40, 180, 180)));
+	MView* v = new MViewScroller('scrl', new CTestView(bounds), false, true);
+	v->SetBindings(true, true, true, true);
+	w->AddChild(v);
+
+	////bounds.width = 16;
+	////bounds.height -= kScrollbarWidth;
+	////MScrollbar* scrollbar = new MScrollbar('vscl', bounds);
+	////scrollbar->SetBindings(false, true, true, true);
+	////w->AddChild(scrollbar);
+
+	//w->AddChild(new CTestView(MRect(10, 40, 180, 180)));
 
 
 	w->Select();

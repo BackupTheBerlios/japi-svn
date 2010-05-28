@@ -73,7 +73,7 @@ public:
 					eClicked;
 };
 
-extern const int kScrollBarWidth;
+extern const int kScrollbarWidth;
 
 class MScrollbar : public MControl
 {

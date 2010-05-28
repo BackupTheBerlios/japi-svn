@@ -13,10 +13,13 @@
 
 #include <list>
 #include "MCallbacks.h"
+#include "MP2PEvents.h"
 
 class MWindow;
 class MDevice;
 class MView;
+class MViewScroller;
+class MScrollbar;
 
 typedef std::list<MView*> MViewList;
 
@@ -55,6 +58,9 @@ class MView
 
 	virtual MWindow*
 					GetWindow() const;
+
+	virtual void	SetViewScroller(
+						MViewScroller*	inScroller);
 
 	void			GetBounds(
 						MRect&			outBounds) const;
@@ -110,12 +116,20 @@ class MView
 	void			Invalidate(
 						MRect			inRect);
 
-	virtual void	Scroll(
-						MRect			inRect,
+	virtual void	ScrollBy(
+						int32			inDeltaX,
+						int32			inDeltaY);
+
+	virtual void	ScrollTo(
 						int32			inX,
 						int32			inY);
 
-	void			Scroll(
+	virtual void	GetScrollPosition(
+						int32&			outX,
+						int32&			outY) const;
+
+	virtual void	ScrollRect(
+						MRect			inRect,
 						int32			inX,
 						int32			inY);
 
@@ -167,12 +181,43 @@ class MView
 	uint32			mID;
 	MRect			mBounds, mFrame;
 	MView*			mParent;
+	MViewScroller*	mScroller;
 	MViewList		mChildren;
 	bool			mWillDraw;
 	bool			mBindLeft, mBindTop, mBindRight, mBindBottom;
 	MTriState		mActive;
 	MTriState		mVisible;
 	MTriState		mEnabled;
+};
+
+class MViewScroller : public MView
+{
+public:
+					MViewScroller(uint32 inID, MView* inTarget,
+						bool inHScrollbar, bool inVScrollbar);
+
+	virtual void	AdjustScrollbars();
+
+	MScrollbar*		GetHScrollbar() const					{ return mHScrollbar; }
+	MScrollbar*		GetVScrollbar() const					{ return mVScrollbar; }
+
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
+
+protected:
+
+	MView*			mTarget;
+	MScrollbar*		mHScrollbar;
+	MScrollbar*		mVScrollbar;
+
+	virtual void	VScroll(MScrollMessage inScrollMsg);
+	virtual void	HScroll(MScrollMessage inScrollMsg);
+
+	MEventIn<void(MScrollMessage)> eVScroll;
+	MEventIn<void(MScrollMessage)> eHScroll;
 };
 
 #endif // MVIEW_H
