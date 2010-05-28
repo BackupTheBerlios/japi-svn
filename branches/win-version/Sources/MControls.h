@@ -57,7 +57,7 @@ protected:
 
 	virtual void	AddedToWindow();
 
-private:
+protected:
 					MControl(const MControl&);
 	MControl&		operator=(const MControl&);
 
@@ -79,6 +79,8 @@ class MScrollbar : public MControl
 {
 public:
 					MScrollbar(uint32 inID, MRect inBounds);
+
+	virtual void	SetViewSize(int32 inViewSize);
 
 	MEventOut<void(MScrollMessage)>
 					eScroll;

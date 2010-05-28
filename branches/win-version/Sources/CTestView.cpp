@@ -2,6 +2,8 @@
 #include "CTestView.h"
 #include "MDevice.h"
 #include "MControls.h"
+#include "MApplication.h"
+#include "MCommands.h"
 
 CTestView::CTestView(MRect inRect)
 	: MView('test', inRect)
@@ -17,7 +19,7 @@ void CTestView::Draw(MRect inUpdate)
 
 	dev.EraseRect(bounds);
 
-	dev.DrawString("Hallo, wereld!", 10, 5);
+	dev.DrawString("Hallo, wereld!", 10, 10);
 
 	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");
 
@@ -43,5 +45,5 @@ void CTestView::Draw(MRect inUpdate)
 
 void CTestView::Click(int32 inX, int32 inY, uint32 inModifiers)
 {
-
+	gApp->ProcessCommand(cmd_Quit, nil, 0, 0);
 }

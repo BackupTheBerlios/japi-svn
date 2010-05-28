@@ -29,6 +29,8 @@ MView::MView(
 	: mID(inID)
 	, mBounds(0, 0, inBounds.width, inBounds.height)
 	, mFrame(inBounds)
+	, mViewWidth(inBounds.width)
+	, mViewHeight(inBounds.height)
 	, mParent(nil)
 	, mWillDraw(true)
 	, mActive(eTriStateOn)
@@ -146,6 +148,24 @@ void MView::SetFrame(
 	mFrame = inFrame;
 }
 
+void MView::GetViewSize(
+	int32&			outWidth,
+	int32&			outHeight) const
+{
+	outWidth = mViewWidth;
+	outHeight = mViewHeight;
+}
+
+void MView::SetViewSize(
+	int32			inWidth,
+	int32			inHeight)
+{
+	mViewWidth = inWidth;
+	mViewHeight = inHeight;
+	if (mScroller != nil)
+		mScroller->AdjustScrollbars();
+}
+
 void MView::SetBindings(bool inFollowLeft, bool inFollowTop,
 	bool inFollowRight, bool inFollowBottom)
 {
@@ -233,24 +253,24 @@ void MView::Invalidate(
 
 void MView::ScrollBy(int32 inDeltaX, int32 inDeltaY)
 {
-	MScrollbar* Scrollbar = mScroller ? mScroller->GetHScrollbar() : nil;
+	MScrollbar* scrollbar = mScroller ? mScroller->GetHScrollbar() : nil;
 	
-	if (inDeltaX and Scrollbar != nil)
+	if (inDeltaX and scrollbar != nil)
 	{
-		if (inDeltaX + Scrollbar->GetValue() < Scrollbar->GetMinValue())
-			inDeltaX = Scrollbar->GetMinValue() - Scrollbar->GetValue();
-		if (inDeltaX + Scrollbar->GetValue() > Scrollbar->GetMaxValue())
-			inDeltaX = Scrollbar->GetMaxValue() - Scrollbar->GetValue();
+		if (inDeltaX + scrollbar->GetValue() < scrollbar->GetMinValue())
+			inDeltaX = scrollbar->GetMinValue() - scrollbar->GetValue();
+		if (inDeltaX + scrollbar->GetValue() > scrollbar->GetMaxValue())
+			inDeltaX = scrollbar->GetMaxValue() - scrollbar->GetValue();
 	}
 
-	Scrollbar = mScroller ? mScroller->GetVScrollbar() : nil;
+	scrollbar = mScroller ? mScroller->GetVScrollbar() : nil;
 	
-	if (inDeltaY and Scrollbar != nil)
+	if (inDeltaY and scrollbar != nil)
 	{
-		if (inDeltaY + Scrollbar->GetValue() < Scrollbar->GetMinValue())
-			inDeltaY = Scrollbar->GetMinValue() - Scrollbar->GetValue();
-		if (inDeltaY + Scrollbar->GetValue() > Scrollbar->GetMaxValue())
-			inDeltaY = Scrollbar->GetMaxValue() - Scrollbar->GetValue();
+		if (inDeltaY + scrollbar->GetValue() < scrollbar->GetMinValue())
+			inDeltaY = scrollbar->GetMinValue() - scrollbar->GetValue();
+		if (inDeltaY + scrollbar->GetValue() > scrollbar->GetMaxValue())
+			inDeltaY = scrollbar->GetMaxValue() - scrollbar->GetValue();
 	}
 	
 	if (inDeltaX != 0 or inDeltaY != 0)
@@ -988,7 +1008,8 @@ void MView::Draw(
 
 // --------------------------------------------------------------------
 
-MViewScroller::MViewScroller(uint32 inID, MView* inTarget, bool inHScrollbar, bool inVScrollbar)
+MViewScroller::MViewScroller(uint32 inID,
+		MView* inTarget, bool inHScrollbar, bool inVScrollbar)
 	: MView(inID, MRect(0, 0, 0, 0))
 	, mTarget(inTarget)
 	, mHScrollbar(nil)
@@ -996,11 +1017,13 @@ MViewScroller::MViewScroller(uint32 inID, MView* inTarget, bool inHScrollbar, bo
 	, eVScroll(this, &MViewScroller::VScroll)
 	, eHScroll(this, &MViewScroller::HScroll)
 {
+	MRect frame;
+	mTarget->GetFrame(frame);	// our bounds will be the frame of the target
+	SetFrame(frame);
+	
 	MRect bounds;
-	inTarget->GetFrame(bounds);
-
-	SetFrame(bounds);
-	SetBounds(MRect(0, 0, bounds.width, bounds.height));
+	mTarget->GetBounds(bounds);
+	SetBounds(bounds);
 
 	if (inVScrollbar)
 	{
@@ -1015,7 +1038,7 @@ MViewScroller::MViewScroller(uint32 inID, MView* inTarget, bool inHScrollbar, bo
 		AddChild(mVScrollbar);
 		AddRoute(mVScrollbar->eScroll, eVScroll);
 
-		bounds.width -= kScrollbarWidth;
+		frame.width -= kScrollbarWidth;
 	}
 
 	if (inHScrollbar)
@@ -1033,12 +1056,13 @@ MViewScroller::MViewScroller(uint32 inID, MView* inTarget, bool inHScrollbar, bo
 		AddChild(mHScrollbar);
 		AddRoute(mHScrollbar->eScroll, eHScroll);
 
-		bounds.height -= kScrollbarWidth;
+		frame.height -= kScrollbarWidth;
 	}
 
-	bounds.x = bounds.y = 0;
-	mTarget->SetFrame(bounds);
-	mTarget->SetBounds(bounds);
+	frame.x = frame.y = 0;
+	mTarget->SetFrame(frame);
+	mTarget->SetBounds(frame);
+
 	mTarget->SetViewScroller(this);
 	mTarget->SetBindings(true, true, true, true);
 
@@ -1059,43 +1083,34 @@ void MViewScroller::AdjustScrollbars()
 {
 	int32 dx = 0, dy = 0;
 	
-	MRect targetFrame, targetBounds;
-	mTarget->GetFrame(targetFrame);
-	mTarget->GetBounds(targetBounds);
+	int32 viewWidth, viewHeight;
+	mTarget->GetViewSize(viewWidth, viewHeight);
+
+	MRect bounds;
+	mTarget->GetBounds(bounds);
 
 	if (mHScrollbar != nil)
 	{
 		mHScrollbar->SetMinValue(0);
-		mHScrollbar->SetMaxValue(targetFrame.width - targetBounds.width);
-		//mHScrollbar->SetViewSize(fScrollingNode->fViewWidth);
-		mHScrollbar->SetValue(targetBounds.x);
+		mHScrollbar->SetMaxValue(viewWidth - bounds.width);
+		mHScrollbar->SetViewSize(viewWidth);
+		mHScrollbar->SetValue(bounds.x);
 		
-		dx = mHScrollbar->GetValue() - targetBounds.x;
+		dx = mHScrollbar->GetValue() - bounds.x;
 	}
 
 	if (mVScrollbar != nil)
 	{
 		mVScrollbar->SetMinValue(0);
-		mVScrollbar->SetMaxValue(targetFrame.height - targetBounds.height);
-		//mVScrollbar->SetViewSize(fScrollingNode->fViewHeight);
-		mVScrollbar->SetValue(targetBounds.y);
+		mVScrollbar->SetMaxValue(viewHeight - bounds.height);
+		mVScrollbar->SetViewSize(viewHeight);
+		mVScrollbar->SetValue(bounds.y);
 
-		dy = mVScrollbar->GetValue() - targetBounds.y;
+		dy = mVScrollbar->GetValue() - bounds.y;
 	}
 	
 	if (dx != 0 or dy != 0)
-	{
 		mTarget->ScrollBy(dx, dy);
-////		fScrollingNode->ScrollBits(fBounds, -dh, -dv);
-////		
-////		GetWindow()->UpdateIfNeeded();
-//		Invalidate();
-//	
-//		fScrollingNode->fBounds.left += dh;
-//		fScrollingNode->fBounds.top += dv;
-//		fScrollingNode->fBounds.right += dh;
-//		fScrollingNode->fBounds.bottom += dv;
-	}	
 }
 
 void MViewScroller::VScroll(MScrollMessage inScrollMsg)
@@ -1110,15 +1125,19 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 	switch (inScrollMsg)
 	{
 		case kScrollLineUp:
+			dy = -1;
 			break;
 
 		case kScrollLineDown:
+			dy = 1;
 			break;
 
 		case kScrollPageUp:
+			dy = -targetFrame.height;
 			break;
 
 		case kScrollPageDown:
+			dy = targetFrame.height;
 			break;
 
 		case kScrollToThumb:
@@ -1127,7 +1146,7 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 	}
 
 	if (dy != 0)
-		ScrollBy(0, dy);
+		mTarget->ScrollBy(0, dy);
 }
 
 void MViewScroller::HScroll(MScrollMessage inScrollMsg)

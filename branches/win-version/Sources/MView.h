@@ -74,6 +74,14 @@ class MView
 	void			SetFrame(
 						const MRect&	inFrame);
 
+	virtual void	GetViewSize(
+						int32&			outWidth,
+						int32&			outHeight) const;
+
+	virtual void	SetViewSize(
+						int32			inWidth,
+						int32			inHeight);
+
 	void			SetBindings(bool inFollowLeft, bool inFollowTop,
 						bool inFollowRight, bool inFollowBottom);
 
@@ -180,6 +188,7 @@ class MView
 
 	uint32			mID;
 	MRect			mBounds, mFrame;
+	int32			mViewWidth, mViewHeight;
 	MView*			mParent;
 	MViewScroller*	mScroller;
 	MViewList		mChildren;

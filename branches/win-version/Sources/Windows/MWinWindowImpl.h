@@ -46,7 +46,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual void	Validate(MRect inRect);
 	virtual void	UpdateNow();
 
-	virtual void	Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV);
+	virtual void	ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV);
 	
 	virtual bool	GetMouse(int32& outX, int32& outY, unsigned long& outModifiers);
 	virtual bool	WaitMouseMoved(int32 inX, int32 inY);

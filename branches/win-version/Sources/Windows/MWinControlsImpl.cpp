@@ -61,16 +61,6 @@ void MWinControlImpl::SetText(const std::string& inText)
 	::SetWindowTextW(GetHandle(), s.c_str());
 }
 
-long MWinControlImpl::GetValue() const
-{
-	return mValue;
-}
-
-void MWinControlImpl::SetValue(long inValue)
-{
-	mValue = inValue;
-}
-
 void MWinControlImpl::ActivateSelf()
 {
 	::EnableWindow(GetHandle(), mControl->IsActive() and mControl->IsEnabled());
@@ -119,12 +109,6 @@ void MWinControlImpl::FrameResized()
 		::MoveWindow(GetHandle(), bounds.x, bounds.y,
 			bounds.width, bounds.height, false);
 	}
-}
-
-void MWinControlImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
-	wstring& outClassName, HMENU& outMenu)
-{
-	MWinProcMixin::CreateParams(outStyle, outExStyle, outClassName, outMenu);
 }
 
 void MWinControlImpl::GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBounds)
@@ -195,6 +179,8 @@ void MWinControlImpl::AddedToWindow()
 	else
 		HideSelf();
 }
+
+// --------------------------------------------------------------------
 
 MButtonImpl::MButtonImpl(MControl* inControl, const string& inLabel)
 	: MWinControlImpl(inControl, inLabel)

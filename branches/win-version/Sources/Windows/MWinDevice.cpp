@@ -165,13 +165,10 @@ class MWinDeviceImpl : public MDeviceImp
 								bool				inDrawWhiteSpace) {}
 
   protected:
-	
-	///* Should be a member of HDevice. Not of the imp! */
-	//HPoint			fBackOffset;
 
 	IDWriteTextFormat*		GetTextFormat();
-	  
-	/* Device context */
+
+	MView*					mView;
 	HDC						mDC;
 	//HBITMAP					mOffscreenBitmap;
 	int						mDCState;
@@ -206,7 +203,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 	MView*		inView,
 	MRect		inBounds,
 	bool		inOffscreen)
-	: mRenderTarget(nil)
+	: mView(inView)
+	, mRenderTarget(nil)
 	, mClipLayer(nil)
 	, mTextFormat(nil)
 	, mTextLayout(nil)
@@ -249,12 +247,11 @@ MWinDeviceImpl::MWinDeviceImpl(
 		windowImpl->SetRenderTarget(mRenderTarget);
 	}
 
-	MRect frame;
-	inView->GetFrame(frame);
-	inView->ConvertToWindow(frame.x, frame.y);
-	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(frame.x, frame.y));
-
 	mRenderTarget->BeginDraw();
+
+	int32 x = 0, y = 0;
+	inView->ConvertToWindow(x, y);
+	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(x, y));
 
 	if (inBounds)
 		ClipRect(inBounds);
@@ -262,7 +259,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
 
-	EraseRect(inBounds);
+	//EraseRect(inBounds);
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()

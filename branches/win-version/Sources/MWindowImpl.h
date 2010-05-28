@@ -40,7 +40,7 @@ class MWindowImpl
 	virtual void		Validate(MRect inRect) = 0;
 	virtual void		UpdateNow() = 0;
 
-	virtual void		Scroll(MRect inRect, int32 inDeltaH, int32 inDeltaV) = 0;
+	virtual void		ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV) = 0;
 	
 	virtual bool		GetMouse(int32& outX, int32& outY, unsigned long& outModifiers) = 0;
 	virtual bool		WaitMouseMoved(int32 inX, int32 inY) = 0;

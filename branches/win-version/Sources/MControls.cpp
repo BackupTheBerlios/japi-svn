@@ -122,3 +122,7 @@ MScrollbar::MScrollbar(uint32 inID, MRect inBounds)
 {
 }
 
+void MScrollbar::SetViewSize(int32 inViewSize)
+{
+	mImpl->SetViewSize(inViewSize);
+}

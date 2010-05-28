@@ -29,8 +29,8 @@ public:
 	virtual std::string
 					GetText() const	= 0;
 	virtual void	SetText(std::string /*inText*/)				{}
-	virtual long	GetValue() const							= 0;
-	virtual void	SetValue(long inValue)						= 0;
+	virtual long	GetValue() const							{ return 0; }
+	virtual void	SetValue(long inValue)						{}
 	virtual long	GetMinValue() const							{ return 0; }
 	virtual void	SetMinValue(long /*inValue*/)				{ }
 	virtual long	GetMaxValue() const							{ return 0; }
