@@ -296,11 +296,27 @@ void MView::GetScrollPosition(int32& outX, int32& outY) const
 	outY = mBounds.y;
 }
 
-//void MView::SetScrollUnit(HPoint inScrollUnit)
-//{
-//	if (fScroller != nil)
-//		fScroller->SetChildScrollUnit(inScrollUnit);
-//}
+void MView::GetScrollUnit(
+	int32&			outScrollUnitX,
+	int32&			outScrollUnitY) const
+{
+	if (mScroller != nil)
+		mScroller->GetTargetScrollUnit(outScrollUnitX, outScrollUnitY);
+	else if (mParent != nil)
+		mParent->GetScrollUnit(outScrollUnitX, outScrollUnitY);
+	else
+		outScrollUnitX = outScrollUnitY = 1;
+}
+
+void MView::SetScrollUnit(
+	int32			inScrollUnitX,
+	int32			inScrollUnitY)
+{
+	if (mScroller != nil)
+		mScroller->SetTargetScrollUnit(inScrollUnitX, inScrollUnitY);
+	else if (mParent != nil)
+		mParent->SetScrollUnit(inScrollUnitX, inScrollUnitY);
+}
 
 void MView::ScrollRect(
 	MRect			inRect,
@@ -1016,6 +1032,8 @@ MViewScroller::MViewScroller(uint32 inID,
 	, mVScrollbar(nil)
 	, eVScroll(this, &MViewScroller::VScroll)
 	, eHScroll(this, &MViewScroller::HScroll)
+	, mScrollUnitX(1)
+	, mScrollUnitY(1)
 {
 	MRect frame;
 	mTarget->GetFrame(frame);	// our bounds will be the frame of the target
@@ -1092,8 +1110,8 @@ void MViewScroller::AdjustScrollbars()
 	if (mHScrollbar != nil)
 	{
 		mHScrollbar->SetMinValue(0);
-		mHScrollbar->SetMaxValue(viewWidth - bounds.width);
-		mHScrollbar->SetViewSize(viewWidth);
+		mHScrollbar->SetMaxValue(viewWidth);
+		mHScrollbar->SetViewSize(bounds.width);
 		mHScrollbar->SetValue(bounds.x);
 		
 		dx = mHScrollbar->GetValue() - bounds.x;
@@ -1102,8 +1120,8 @@ void MViewScroller::AdjustScrollbars()
 	if (mVScrollbar != nil)
 	{
 		mVScrollbar->SetMinValue(0);
-		mVScrollbar->SetMaxValue(viewHeight - bounds.height);
-		mVScrollbar->SetViewSize(viewHeight);
+		mVScrollbar->SetMaxValue(viewHeight);
+		mVScrollbar->SetViewSize(bounds.height);
 		mVScrollbar->SetValue(bounds.y);
 
 		dy = mVScrollbar->GetValue() - bounds.y;
@@ -1113,35 +1131,56 @@ void MViewScroller::AdjustScrollbars()
 		mTarget->ScrollBy(dx, dy);
 }
 
+void MViewScroller::SetTargetScrollUnit(
+	int32			inScrollUnitX,
+	int32			inScrollUnitY)
+{
+	if (inScrollUnitX < 1 or inScrollUnitY < 1)
+		THROW(("Scroll unit should be larger than one"));
+	mScrollUnitX = inScrollUnitX;
+	mScrollUnitY = inScrollUnitY;
+}
+
+void MViewScroller::GetTargetScrollUnit(
+	int32&			outScrollUnitX,
+	int32&			outScrollUnitY) const
+{
+	outScrollUnitX = mScrollUnitX;
+	outScrollUnitY = mScrollUnitY;
+}
+
 void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 {
 	int32 value = mVScrollbar->GetValue();
 
-	MRect targetFrame;
-	mTarget->GetFrame(targetFrame);
+	MRect frame;
+	mTarget->GetFrame(frame);
+
+	int32 x, y;
+	mTarget->GetScrollPosition(x, y);
 
 	int32 dy = 0;
 
 	switch (inScrollMsg)
 	{
 		case kScrollLineUp:
-			dy = -1;
+			dy = -mScrollUnitY;
 			break;
 
 		case kScrollLineDown:
-			dy = 1;
+			dy = mScrollUnitY;
 			break;
 
 		case kScrollPageUp:
-			dy = -targetFrame.height;
+			dy = -frame.height;
 			break;
 
 		case kScrollPageDown:
-			dy = targetFrame.height;
+			dy = frame.height;
 			break;
 
 		case kScrollToThumb:
-			dy = value - targetFrame.y;
+			dy = value - y;
 			break;
 	}
 
@@ -1151,5 +1190,40 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 
 void MViewScroller::HScroll(MScrollMessage inScrollMsg)
 {
+	int32 value = mVScrollbar->GetValue();
+
+	MRect frame;
+	mTarget->GetFrame(frame);
+
+	int32 x, y;
+	mTarget->GetScrollPosition(x, y);
+
+	int32 dx = 0;
+
+	switch (inScrollMsg)
+	{
+		case kScrollLineUp:
+			dx = -mScrollUnitX;
+			break;
+
+		case kScrollLineDown:
+			dx = mScrollUnitX;
+			break;
+
+		case kScrollPageUp:
+			dx = -frame.height;
+			break;
+
+		case kScrollPageDown:
+			dx = frame.height;
+			break;
+
+		case kScrollToThumb:
+			dx = value - x;
+			break;
+	}
+
+	if (dx != 0)
+		mTarget->ScrollBy(dx, 0);
 }
 

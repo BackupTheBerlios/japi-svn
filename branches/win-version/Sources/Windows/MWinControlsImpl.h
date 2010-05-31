@@ -69,6 +69,8 @@ public:
 	virtual long	GetMaxValue() const;
 	virtual void	SetMaxValue(long inValue);
 
+	virtual void	SetViewSize(long inValue);
+
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 

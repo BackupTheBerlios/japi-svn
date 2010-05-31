@@ -356,21 +356,14 @@ bool MScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARA
 	return result;
 }
 
-//void MScrollbarImpl::SetViewSize(long inViewSize)
-//{
-//#if 0
-//	SCROLLINFO info = { 0 };
-//	
-//	info.cbSize = sizeof(info);
-//	info.fMask = SIF_PAGE;
-//	
-//	::GetScrollInfo(GetHandle(), SB_CTL, &info);
-//	
-//	info.nPage = inViewSize;
-//	
-//	::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
-//#endif
-//}
+void MScrollbarImpl::SetViewSize(long inViewSize)
+{
+	SCROLLINFO info = { sizeof(info), SIF_PAGE };
+	
+	::GetScrollInfo(GetHandle(), SB_CTL, &info);
+	info.nPage = inViewSize;
+	::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+}
 
 MControlImpl* MControlImpl::CreateScrollbar(MControl* inControl)
 {

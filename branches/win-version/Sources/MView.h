@@ -82,6 +82,14 @@ class MView
 						int32			inWidth,
 						int32			inHeight);
 
+	virtual void	GetScrollUnit(
+						int32&			outScrollUnitX,
+						int32&			outScrollUnitY) const;
+
+	virtual void	SetScrollUnit(
+						int32			inScrollUnitX,
+						int32			inScrollUnitY);
+
 	void			SetBindings(bool inFollowLeft, bool inFollowTop,
 						bool inFollowRight, bool inFollowBottom);
 
@@ -216,11 +224,20 @@ public:
 						int32			inWidthDelta,
 						int32			inHeightDelta);
 
+	void			SetTargetScrollUnit(
+						int32			inScrollUnitX,
+						int32			inScrollUnitY);
+
+	void			GetTargetScrollUnit(
+						int32&			outScrollUnitX,
+						int32&			outScrollUnitY) const;
+
 protected:
 
 	MView*			mTarget;
 	MScrollbar*		mHScrollbar;
 	MScrollbar*		mVScrollbar;
+	int32			mScrollUnitX, mScrollUnitY;
 
 	virtual void	VScroll(MScrollMessage inScrollMsg);
 	virtual void	HScroll(MScrollMessage inScrollMsg);
