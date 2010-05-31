@@ -1,0 +1,318 @@
+#!perl
+
+use strict;
+use warnings;
+use Data::Dumper;
+
+$| = 1;
+
+my $kUC_COUNT = 1114112;
+my $kUC_PAGE_COUNT = 4352;
+
+my (%codes, @data);
+
+print STDERR "Initializing array...";
+
+for (my $uc = 0; $uc < $kUC_COUNT; ++$uc) {
+	my %ucd = (
+		'prop'	=> 'kOTHER',
+		'cbc'	=> 'kCBC_Other',
+		'lbc'	=> 'kLBC_Unknown',
+		'upper' => 0,
+		'lower'	=> 0
+	);
+	
+	push @data, \%ucd;
+}
+
+print STDERR " done\n";
+
+# Character Break Classes
+
+my $re = qr/^([0-9A-F]{4,5})(\.\.([0-9A-F]{4,5}))?\s*;\s*(\S+)/;
+
+my %grapheme_const = (
+	'CR'		=> 'kCBC_CR',
+	'LF'		=> 'kCBC_LF',
+	'Control'	=> 'kCBC_Control',
+	'Extend'	=> 'kCBC_Extend',
+	'Prepend'	=> 'kCBC_Prepend',
+	'SpacingMark'
+				=> 'kCBC_SpacingMark',
+	'L'			=> 'kCBC_L',
+	'T'			=> 'kCBC_T',
+	'V'			=> 'kCBC_V',
+	'LV'		=> 'kCBC_LV',
+	'LVT'		=> 'kCBC_LVT'
+);
+
+# OP CL CP QU GL NS EX SY IS PR PO NU AL ID IN HY BA BB B2 ZW CM WJ H2 H3 JL JV JT 
+
+my %linebreak_const = (
+	# used in pair-table
+	'OP'		=> 'kLBC_OpenPunctuation',
+	'CL'		=> 'kLBC_ClosePunctuation',
+	'CP'		=> 'kLBC_CloseParenthesis',
+	'QU'		=> 'kLBC_Quotation',
+	'GL'		=> 'kLBC_NonBreaking',
+	'NS'		=> 'kLBC_Nonstarter',
+	'EX'		=> 'kLBC_Exlamation',
+	'SY'		=> 'kLBC_SymbolAllowingBreakAfter',
+	'IS'		=> 'kLBC_InfixNumericSeparator',
+	'PR'		=> 'kLBC_PrefixNumeric',
+	'PO'		=> 'kLBC_PostfixNumeric',
+	'NU'		=> 'kLBC_Numeric',
+	'AL'		=> 'kLBC_Alphabetic',
+	'ID'		=> 'kLBC_Ideographic',
+	'IN'		=> 'kLBC_Inseperable',
+	'HY'		=> 'kLBC_Hyphen',
+	'BA'		=> 'kLBC_BreakAfter',
+	'BB'		=> 'kLBC_BreakBefor',
+	'B2'		=> 'kLBC_BreakOpportunityBeforeAndAfter',
+	'ZW'		=> 'kLBC_ZeroWidthSpace',
+	'CM'		=> 'kLBC_CombiningMark',
+	'WJ'		=> 'kLBC_WordJoiner',
+	'H2'		=> 'kLBC_HangulLVSyllable',
+	'H3'		=> 'kLBC_HangulLVTSyllable',
+	'JL'		=> 'kLBC_HangulLJamo',
+	'JV'		=> 'kLBC_HangulVJamo',
+	'JT'		=> 'kLBC_HangulTJamo',
+
+	# additional	
+	'BK'		=> 'kLBC_MandatoryBreak',
+	'CR'		=> 'kLBC_CarriageReturn',
+	'LF'		=> 'kLBC_LineFeed',
+	'NL'		=> 'kLBC_NextLine',
+	'SG'		=> 'kLBC_Surrogate',
+	'SP'		=> 'kLBC_Space',
+	'CB'		=> 'kLBC_ContigentBreakOpportunity',
+	'OP'		=> 'kLBC_OpenPunctuation',
+	'AI'		=> 'kLBC_Ambiguous',
+	'SA'		=> 'kLBC_ComplexContext',
+	'XX'		=> 'kLBC_Unknown'
+);
+
+
+print STDERR "Reading GraphemeBreakProperty.txt...";
+
+open IN, "<GraphemeBreakProperty.txt" or die "Could not open GraphemeBreakProperty\n";
+while (my $line = <IN>)
+{
+	if ($line =~ $re) {
+		my $first = hex($1);
+		my $last = $first;
+		$last = hex($3) if defined $3;
+		
+		my $value = $grapheme_const{$4};
+		die "unknown value: $4\n" unless defined $value;
+		
+		foreach my $uc ($first .. $last) {
+			$data[$uc]->{'cbc'} = $value;
+		}
+	}
+}
+close IN;
+
+print STDERR " done\n";
+
+print STDERR "Reading LineBreak.txt...";
+
+open IN, "<LineBreak.txt" or die "Could not open LineBreak.txt\n";
+while (my $line = <IN>)
+{
+	if ($line =~ $re) {
+		my $first = hex($1);
+		my $last = $first;
+		$last = hex($3) if defined $3;
+		
+		my $value = $linebreak_const{$4};
+		die "unknown value: $4\n" unless defined $value;
+		
+		foreach my $uc ($first .. $last) {
+			$data[$uc]->{'lbc'} = $value;
+		}
+	}
+}
+close IN;
+
+print STDERR " done\n";
+
+# Character Property Table
+
+print STDERR "Reading UnicodeData.txt ...";
+
+open IN, "<UnicodeData.txt" or die "Could not open UnicodeData.txt\n";
+while (my $line = <IN>)
+{
+	chomp($line);
+	my @v = split(m/;/, $line);
+	
+	next unless scalar(@v) > 3;
+	
+	my $uc = hex($v[0]);
+
+	my $c1 = substr($v[2], 0, 1);
+	my $c2 = substr($v[2], 1, 1);
+	
+	# character class
+
+	if ($c1 eq 'L') {
+		$data[$uc]->{'prop'} = 'kLETTER';
+	}
+	elsif ($c1 eq 'N') {
+		$data[$uc]->{'prop'} = 'kNUMBER';
+	}
+	elsif ($c1 eq 'M') {
+		$data[$uc]->{'prop'} = 'kCOMBININGMARK';
+	}
+	elsif ($c1 eq 'P') {
+		$data[$uc]->{'prop'} = 'kPUNCTUATION';
+	}
+	elsif ($c1 eq 'S') {
+		$data[$uc]->{'prop'} = 'kSYMBOL';
+	}
+	elsif ($c1 eq 'Z') {
+		$data[$uc]->{'prop'} = 'kSEPARATOR';
+	}
+	elsif ($c1 eq 'C') {
+		$data[$uc]->{'prop'} = 'kCONTROL';
+	}
+	
+	# upper case/lower case mapping
+	
+	$data[$uc]->{'upper'} = hex($v[13]) if defined $v[13];
+	$data[$uc]->{'lower'} = hex($v[14]) if defined $v[14];
+}
+close IN;
+
+print STDERR " done\n";
+
+for (my $uc = hex('0x3400'); $uc <= hex('0x4DB5'); ++$uc) {
+	$data[$uc]->{'prop'} = 'kLETTER';
+}
+
+for (my $uc = hex('0x4E00'); $uc <= hex('0x09FA5'); ++$uc) {
+	$data[$uc]->{'prop'} = 'kLETTER';
+}
+
+for (my $uc = hex('0x0Ac00'); $uc <= hex('0x0D7A3'); ++$uc) {
+	$data[$uc]->{'prop'} = 'kLETTER';
+}
+
+for (my $uc = hex('0x20000'); $uc <= hex('0x2A6D6'); ++$uc) {
+	$data[$uc]->{'prop'} = 'kLETTER';
+}
+
+# we treat an underscore as a letter
+$data[95]->{'prop'} = 'kLETTER';
+
+# now build a table
+
+my $table = new Table();
+
+foreach my $pageNr (0 .. $kUC_PAGE_COUNT - 1)
+{
+	my $page = "\t\t{\n";
+	
+	foreach my $uc ($pageNr * 256 .. ($pageNr + 1) * 256 - 1) {
+		$page .= sprintf("\t\t\t{ 0x%5.5x, 0x%5.5x, %s, %s, %s },\n",
+			$data[$uc]->{'upper'}, $data[$uc]->{'lower'},
+			$data[$uc]->{'cbc'}, $data[$uc]->{'lbc'},
+			$data[$uc]->{'prop'});
+	}
+	
+	$page .= "\t\t},\n";
+	
+	$table->addPage($pageNr, $page);
+}
+
+$table->print_out();
+exit;
+
+package Table;
+
+sub new
+{
+	my $invocant = shift;
+	my $self = {
+		indexCount	=> 0,
+		pageIndex	=> [],
+		pages		=> [],
+		@_
+	};
+	
+	return bless $self, "Table";
+}
+
+sub addPage
+{
+	my ($self, $pageNr, $page) = @_;
+	
+	my $pageIx = -1;
+	
+	for (my $pn = 0; $pn < scalar($self->{'pages'}); ++$pn)
+	{
+		last unless defined @{$self->{'pages'}}[$pn];
+
+		if (@{$self->{'pages'}}[$pn] eq $page)
+		{
+			$pageIx = $pn;
+			last;
+		}
+	}
+	
+	if ($pageIx == -1)
+	{
+		$pageIx = push @{$self->{'pages'}}, $page;
+		$pageIx -= 1;
+	}
+	
+	push @{$self->{'pageIndex'}}, $pageIx;
+}
+
+sub print_out
+{
+	my $self = shift;
+	
+	my $pageIndexSize = scalar(@{$self->{'pageIndex'}});
+	my $pageCount = scalar(@{$self->{'pages'}});
+	
+	print<<EOF;
+
+struct MUnicodeInfoAtom {
+	uint32			upper;
+	uint32			lower;
+	CharBreakClass	cbc;
+	LineBreakClass	lbc;
+	uint8			prop;
+};
+
+typedef MUnicodeInfoAtom	MUnicodeInfoPage[256];
+
+struct MUnicodeInfo {
+	int16				page_index[$pageIndexSize];
+	MUnicodeInfoPage	data[$pageCount];
+} kUnicodeInfo = {
+EOF
+
+	print "\t{";
+	
+	# the index
+	
+	for (my $ix = 0; $ix < $pageIndexSize; ++$ix)
+	{
+		print "\n\t\t" if ($ix % 16) == 0;
+		print @{$self->{'pageIndex'}}[$ix], ", ";
+	}
+	
+	print "\n\t},\n\t{\n";
+
+	# the data pages
+
+	foreach my $page (@{$self->{'pages'}}) {
+		print $page;
+	}
+
+	print "\n\t}\n};\n";
+}
+

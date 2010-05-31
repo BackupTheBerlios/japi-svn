@@ -1,0 +1,8 @@
+<!ELEMENT project (syspaths?, userpaths?, libpaths?, files, targets)>
+<!ELEMENT syspaths (path+)>
+<!ELEMENT userpaths (path+)>
+<!ELEMENT libpaths (path+)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT files (group|file)+>
+<!ELEMENT group (group|file)+>
+<!ELEMENT file (#PCDATA)>
