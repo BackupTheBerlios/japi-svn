@@ -692,6 +692,11 @@ void MWindow::ConvertFromScreen(int32& ioX, int32& ioY) const
 	mImpl->ConvertFromScreen(ioX, ioY);
 }
 
+void MWindow::Invalidate(MRect inRect)
+{
+	mImpl->Invalidate(inRect);
+}
+
 void MWindow::ScrollRect(MRect inRect, int32 inX, int32 inY)
 {
 	mImpl->ScrollRect(inRect, inX, inY);

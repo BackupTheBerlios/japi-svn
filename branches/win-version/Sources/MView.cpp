@@ -952,34 +952,28 @@ MView* MView::FindSubView(int32 inX, int32 inY)
 
 void MView::ConvertToParent(int32& ioX, int32& ioY) const
 {
-	assert(mParent);
 	ioX += mFrame.x - mBounds.x;
 	ioY += mFrame.y - mBounds.y;
 }
 
 void MView::ConvertFromParent(int32& ioX, int32& ioY) const
 {
-	assert(mParent);
 	ioX -= mFrame.x - mBounds.x;
 	ioY -= mFrame.y - mBounds.y;
 }
 
 void MView::ConvertToWindow(int32& ioX, int32& ioY) const
 {
+	ConvertToParent(ioX, ioY);
 	if (mParent != nil)
-	{
-		ConvertToParent(ioX, ioY);
 		mParent->ConvertToWindow(ioX, ioY);
-	}
 }
 
 void MView::ConvertFromWindow(int32& ioX, int32& ioY) const
 {
 	if (mParent != nil)
-	{
 		mParent->ConvertFromWindow(ioX, ioY);
-		ConvertFromParent(ioX, ioY);
-	}
+	ConvertFromParent(ioX, ioY);
 }
 
 void MView::ConvertToScreen(int32& ioX, int32& ioY) const

@@ -129,7 +129,7 @@ class MView
 
 	void			Invalidate();
 
-	void			Invalidate(
+	virtual void	Invalidate(
 						MRect			inRect);
 
 	virtual void	ScrollBy(

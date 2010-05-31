@@ -179,7 +179,8 @@ class MWinDeviceImpl : public MDeviceImp
 	static ID2D1Factory*	sD2DFactory;
 	static IDWriteFactory*	sDWFactory;
 
-	ID2D1HwndRenderTarget*	mRenderTarget;
+	//ID2D1HwndRenderTarget*	mRenderTarget;
+	ID2D1DCRenderTarget*	mRenderTarget;
 	ID2D1Layer*				mClipLayer;
 
 	IDWriteTextFormat*		mTextFormat;
@@ -201,7 +202,7 @@ IDWriteFactory*	MWinDeviceImpl::sDWFactory;
 
 MWinDeviceImpl::MWinDeviceImpl(
 	MView*		inView,
-	MRect		inBounds,
+	MRect		inUpdate,
 	bool		inOffscreen)
 	: mView(inView)
 	, mRenderTarget(nil)
@@ -226,40 +227,40 @@ MWinDeviceImpl::MWinDeviceImpl(
 	THROW_IF_NIL(window);
 
 	MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
-	mRenderTarget = windowImpl->GetRenderTarget();
-	if (mRenderTarget == nil)
-	{
-		HWND hwnd = windowImpl->GetHandle();
 
-		RECT r;
-		::GetClientRect(hwnd, &r);
+	HDC dc = ::GetDC(windowImpl->GetHandle());
 
-		HDC dc = ::GetDC(hwnd);
-		mDpiScaleX = ::GetDeviceCaps(dc, LOGPIXELSX) / 96.0f;
-		mDpiScaleY = ::GetDeviceCaps(dc, LOGPIXELSY) / 96.0f;
-		::ReleaseDC(0, dc);
+	D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		D2D1::PixelFormat(
+			DXGI_FORMAT_B8G8R8A8_UNORM,
+			D2D1_ALPHA_MODE_IGNORE),
+		0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
 
-		THROW_IF_HRESULT_ERROR(sD2DFactory->CreateHwndRenderTarget(
-			::D2D1::RenderTargetProperties(),
-			::D2D1::HwndRenderTargetProperties(hwnd, D2D1::SizeU(r.right - r.left, r.bottom - r.top)),
-			&mRenderTarget));
+	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateDCRenderTarget(&props, &mRenderTarget));
 
-		windowImpl->SetRenderTarget(mRenderTarget);
-	}
+	MRect bounds;
+	inView->GetBounds(bounds);
+	inView->ConvertToWindow(bounds.x, bounds.y);
+
+	RECT r = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
+	mRenderTarget->BindDC(dc, &r);
 
 	mRenderTarget->BeginDraw();
 
 	int32 x = 0, y = 0;
 	inView->ConvertToWindow(x, y);
-	mRenderTarget->SetTransform(D2D1::Matrix3x2F::Translation(x, y));
 
-	if (inBounds)
-		ClipRect(inBounds);
+	mRenderTarget->SetTransform(
+		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
+
+	if (inUpdate)
+		ClipRect(inUpdate);
 
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
 
-	//EraseRect(inBounds);
+	//EraseRect(bounds);
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
@@ -291,13 +292,14 @@ MWinDeviceImpl::~MWinDeviceImpl()
 	if (mRenderTarget != nil)
 	{
 		HRESULT e = mRenderTarget->EndDraw();
-		if (e == D2DERR_RECREATE_TARGET)
-		{
-			MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(
-				MWinWindowImpl::Fetch(mRenderTarget->GetHwnd()));
-			wi->SetRenderTarget(nil);
-			throw 0;
-		}
+		//if (e == D2DERR_RECREATE_TARGET)
+		//{
+		//	MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(
+		//		MWinWindowImpl::Fetch(mRenderTarget->GetHwnd()));
+		//	wi->SetRenderTarget(nil);
+		//	throw 0;
+		//}
+		mRenderTarget->Release();
 	}
 }
 

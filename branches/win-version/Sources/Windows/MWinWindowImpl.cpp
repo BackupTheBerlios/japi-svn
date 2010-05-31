@@ -85,7 +85,7 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	
 	HINSTANCE inst = MWinApplicationImpl::GetInstance()->GetHInstance();
 	
-	outStyle = CS_HREDRAW | CS_VREDRAW;
+	outStyle = 0;// CS_HREDRAW | CS_VREDRAW;
 	//outIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	outCursor = ::LoadCursor(NULL, IDC_ARROW);
@@ -103,7 +103,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	{
 		MRect r;
 		mWindow->GetBounds(r);
-		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
+		mSizeBox = ::CreateWindowExW(0, L"scrollBAR", nil,
 			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
 			r.x + r.width - kScrollbarWidth, r.y + r.height - kScrollbarWidth,
 			kScrollbarWidth, kScrollbarWidth, GetHandle(),

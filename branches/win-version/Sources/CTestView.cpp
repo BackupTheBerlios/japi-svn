@@ -7,6 +7,7 @@
 
 CTestView::CTestView(MRect inRect)
 	: MView('test', inRect)
+	, eAction(this, &CTestView::Action)
 {
 }
 
@@ -15,13 +16,24 @@ void CTestView::Draw(MRect inUpdate)
 	MRect bounds;
 	GetBounds(bounds);
 
+	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");
 	MDevice dev(this, bounds, false);
 
 	dev.EraseRect(bounds);
 
-	dev.DrawString("Hallo, wereld!", 10, 10);
+	MRect r(0, 0, 10, 10);
 
-	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");
+	dev.SetForeColor(c3);
+	while (r.y < bounds.y + bounds.height and
+		   r.x < bounds.x + bounds.width)
+	{
+		dev.FillRect(r);
+		r.x += 10;
+		r.y += 10;
+	}
+
+	dev.SetForeColor(kBlack);
+	dev.DrawString("Hallo, wereld!", 10, 10);
 
 	dev.SetForeColor(c3);
 	dev.FillRect(MRect(10, 60, 50, 50));
@@ -32,18 +44,9 @@ void CTestView::Draw(MRect inUpdate)
 	dev.CreateAndUsePattern(c1, c2);
 	dev.FillEllipse(MRect(100, 128, 50, 14));
 
-	MRect r(120, 120, 10, 10);
-
-	dev.SetForeColor(c1);
-	while (r & bounds)
-	{
-		dev.FillRect(r);
-		r.x += 10;
-		r.y += 10;
-	}
 }
 
-void CTestView::Click(int32 inX, int32 inY, uint32 inModifiers)
+void CTestView::Action()
 {
-	gApp->ProcessCommand(cmd_Quit, nil, 0, 0);
+	Invalidate();
 }

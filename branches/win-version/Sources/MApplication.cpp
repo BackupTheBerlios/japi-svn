@@ -386,10 +386,12 @@ void MApplication::DoNew()
 	bounds.y += 43;
 	bounds.height -= 43 + kScrollbarWidth;
 
-	MView* test = new CTestView(bounds);
+	CTestView* test = new CTestView(bounds);
 	MView* v = new MViewScroller('scrl', test, false, true);
 	v->SetBindings(true, true, true, true);
 	w->AddChild(v);
+
+	AddRoute(test->eAction, button->eClicked);
 
 	test->SetViewSize(300, 300);
 	test->SetScrollUnit(30, 14);

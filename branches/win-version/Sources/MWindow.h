@@ -177,6 +177,9 @@ class MWindow : public MView, public MHandler
 	virtual void	ConvertToScreen(int32& ioX, int32& ioY) const;
 	virtual void	ConvertFromScreen(int32& ioX, int32& ioY) const;
 
+	virtual void	Invalidate(
+						MRect			inRect);
+
 	virtual void	ScrollRect(
 						MRect			inRect,
 						int32			inX,
