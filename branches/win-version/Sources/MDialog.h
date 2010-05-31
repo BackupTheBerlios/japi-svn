@@ -45,8 +45,8 @@ class MDialog : public MWindow
 
   private:
 
-	MSlot<void()>	mStdBtnClicked;
-	void			StdBtnClicked();
+	//MSlot<void()>	mStdBtnClicked;
+	//void			StdBtnClicked();
 
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all

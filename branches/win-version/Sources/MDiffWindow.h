@@ -67,7 +67,7 @@ class MDiffWindow : public MDialog
 	void				DiffInvoked(
 							int32			inDiffNr);
 	
-	MSlot<void()>		mSelected;
+	//MSlot<void()>		mSelected;
 
 	void				SetButtonTitle(
 							int				inButtonNr,
@@ -95,10 +95,10 @@ class MDiffWindow : public MDialog
 	void				SelectRow(
 							int32			inRow);
 
-	void				InvokeRow(
-							GtkTreePath*	inPath,
-							GtkTreeViewColumn*
-											inColumn);
+	//void				InvokeRow(
+	//						GtkTreePath*	inPath,
+	//						GtkTreeViewColumn*
+	//										inColumn);
 
 	void				RemoveRow(
 							int32			inRow);
@@ -125,8 +125,8 @@ class MDiffWindow : public MDialog
 	
 	MDirDiffScript		mDScript;
 
-	MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
-						mInvokeRow;
+	//MSlot<void(GtkTreePath*path, GtkTreeViewColumn*)>
+	//					mInvokeRow;
 };
 
 #endif

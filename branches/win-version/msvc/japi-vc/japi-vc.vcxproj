@@ -113,6 +113,8 @@
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
+    <ClCompile Include="..\..\Sources\MTextDocument.cpp" />
+    <ClCompile Include="..\..\Sources\MTextView.cpp" />
     <ClCompile Include="..\..\Sources\MTypes.cpp" />
     <ClCompile Include="..\..\Sources\MUnicode.cpp" />
     <ClCompile Include="..\..\Sources\MView.cpp" />

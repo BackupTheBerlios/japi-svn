@@ -19,6 +19,10 @@ namespace fs = boost::filesystem;
 class MFileLoader;
 class MFileSaver;
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 // --------------------------------------------------------------------
 // MFile, something like a path or URI.
 

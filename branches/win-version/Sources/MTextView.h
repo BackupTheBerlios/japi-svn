@@ -23,9 +23,8 @@ class MTextView : public MView
 {
   public:
 						MTextView(
-							GtkWidget*			inTextViewWidget,
-							GtkWidget*			inVScrollBar,
-							GtkWidget*			inHScrollBar);
+							uint32				inID,
+							MRect				inBounds);
 						
 	virtual				~MTextView();
 	
@@ -37,14 +36,6 @@ class MTextView : public MView
 
 	void				ScrollForDiff();
 
-	void				ScrollToPosition(
-							int32				inX,
-							int32				inY);
-
-	void				GetScrollPosition(
-							int32&				outX,
-							int32&				outY);
-	
 	void				GetVisibleLineSpan(
 							uint32&				outFirstLine,
 							uint32&				outLastLine) const;
@@ -86,28 +77,15 @@ class MTextView : public MView
 	virtual uint32		CountPages(
 							MDevice&		inDevice);
 
-	virtual bool		OnFocusInEvent(
-							GdkEventFocus*	inEvent);
+	virtual void		EnableSelf();
+	virtual void		DisableSelf();
+	virtual void		ActivateSelf();
+	virtual void		DeactivateSelf();
 
-	virtual bool		OnFocusOutEvent(
-							GdkEventFocus*	inEvent);
-
-	virtual bool		OnButtonPressEvent(
-							GdkEventButton*	inEvent);
-
-	virtual bool		OnMotionNotifyEvent(
-							GdkEventMotion*	inEvent);
-	
-	virtual bool		OnButtonReleaseEvent(
-							GdkEventButton*	inEvent);
-
-	virtual bool		OnScrollEvent(
-							GdkEventScroll*	inEvent);
-	
   public:
 
-	virtual void		OnPopupMenu(
-							GdkEventButton*	inEvent);
+	//virtual void		OnPopupMenu(
+	//						GdkEventButton*	inEvent);
 	
   private:
 
@@ -174,40 +152,40 @@ class MTextView : public MView
 	
 	void				AdjustScrollBars();
 
-	virtual bool		OnKeyPressEvent(
-							GdkEventKey*	inEvent);
-	
-	bool				OnCommit(
-							gchar*			inText);
-	
-	bool				OnDeleteSurrounding(
-							gint			inStart,
-							gint			inLength);
+	//virtual bool		OnKeyPressEvent(
+	//						GdkEventKey*	inEvent);
+	//
+	//bool				OnCommit(
+	//						gchar*			inText);
+	//
+	//bool				OnDeleteSurrounding(
+	//						gint			inStart,
+	//						gint			inLength);
 
-	bool				OnConfigureEvent(
-							GdkEventConfigure*
-											inEvent);
+	//bool				OnConfigureEvent(
+	//						GdkEventConfigure*
+	//										inEvent);
 
-	bool				OnPreeditChanged();
-	
-	bool				OnPreeditEnd();
+	//bool				OnPreeditChanged();
+	//
+	//bool				OnPreeditEnd();
 
-	bool				OnPreeditStart();
-	
-	bool				OnRetrieveSurrounding();
+	//bool				OnPreeditStart();
+	//
+	//bool				OnRetrieveSurrounding();
 
-	void				OnVScrollBarValueChanged();
+	//void				OnVScrollBarValueChanged();
 
-	void				OnHScrollBarValueChanged();
-	
-	MSlot<bool(gchar*)>						slOnCommit;
-	MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
-	MSlot<bool()>							slOnPreeditChanged;
-	MSlot<bool()>							slOnPreeditStart;
-	MSlot<bool()>							slOnPreeditEnd;
-	MSlot<bool()>							slOnRetrieveSurrounding;
-	MSlot<void()>							slOnVScrollBarValueChanged;
-	MSlot<void()>							slOnHScrollBarValueChanged;
+	//void				OnHScrollBarValueChanged();
+	//
+	//MSlot<bool(gchar*)>						slOnCommit;
+	//MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
+	//MSlot<bool()>							slOnPreeditChanged;
+	//MSlot<bool()>							slOnPreeditStart;
+	//MSlot<bool()>							slOnPreeditEnd;
+	//MSlot<bool()>							slOnRetrieveSurrounding;
+	//MSlot<void()>							slOnVScrollBarValueChanged;
+	//MSlot<void()>							slOnHScrollBarValueChanged;
 
 	virtual void		DragEnter();
 	
@@ -230,20 +208,17 @@ class MTextView : public MView
 
 	virtual void		DragDeleteData();
 
-	virtual void		DrawDragImage(
-							GdkPixmap*&		outPixmap,
-							int32&			outX,
-							int32&			outY);
+	//virtual void		DrawDragImage(
+	//						GdkPixmap*&		outPixmap,
+	//						int32&			outX,
+	//						int32&			outY);
 	
 	MController*		mController;
 	MTextDocument*		mDocument;
-	GtkWidget*			mVScrollBar;
-	GtkWidget*			mHScrollBar;
 	int32				mLineHeight;
 	int32				mCharWidth;		// for block selection drawing
 	int32				mDescent;
-	int32				mImageOriginX, mImageOriginY;
-	int32				mSavedOriginX, mSavedOriginY;	// for kissing
+	MRect				mSavedBounds;	// for kissing
 	double				mLastCaretBlinkTime;
 	bool				mCaretVisible;
 	bool				mNeedsDisplay;	// cache this
@@ -267,8 +242,6 @@ class MTextView : public MView
 	}					mClickMode;
 	uint32				mClickAnchor, mClickCaret;
 	uint32				mMinClickAnchor, mMaxClickAnchor;
-	
-	GtkIMContext*		mIMContext;
 	
 	uint32				mDragCaret;
 	bool				mDragIsAcceptable;

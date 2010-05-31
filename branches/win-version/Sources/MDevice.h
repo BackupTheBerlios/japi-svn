@@ -35,12 +35,6 @@ class MDevice
 						MRect				inRect,
 						bool				inCreateOffscreen = false);
 					
-					//// create a device for drawing to a printer
-					//MDevice(
-					//	GtkPrintContext*	inPrintContext,
-					//	MRect				inRect,
-					//	int32				inPage);
-
 					~MDevice();
 
 	void			Save();
@@ -52,10 +46,6 @@ class MDevice
 	int32			GetPageNr() const;
 
 	MRect			GetBounds() const;
-
-	void			SetOrigin(
-						int32				inX,
-						int32				inY);
 
 	void			SetFont(
 						const std::string&	inFont);
@@ -113,9 +103,6 @@ class MDevice
 						float				inY,
 						uint32				inTruncateWidth = 0,
 						MAlignment			inAlign = eAlignNone);
-
-	uint32			GetStringWidth(
-						const std::string&	inText);
 
 	// Text Layout options
 	

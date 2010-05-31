@@ -153,7 +153,7 @@ class MTextDocument : public MDocument
 	
 	static MDocument*	GetWorksheet();
 
-	const char*			GetCWD() const;
+	std::string			GetCWD() const;
 
 	bool				StopRunningShellCommand();
 	

@@ -242,15 +242,15 @@ void MTextDocument::AddNotifier(
 {
 	MDocument::AddNotifier(inNotifier, inRead);
 	
-	if (inRead)
-	{
-		mPreparedForStdOut = true;
-		mDataFD = inNotifier.GetFD();
+	//if (inRead)
+	//{
+	//	mPreparedForStdOut = true;
+	//	mDataFD = inNotifier.GetFD();
 
-		int flags = fcntl(mDataFD, F_GETFL, 0);
-		if (fcntl(mDataFD, F_SETFL, flags | O_NONBLOCK))
-			cerr << _("Failed to set fd non blocking: ") << strerror(errno) << endl;
-	}
+	//	int flags = fcntl(mDataFD, F_GETFL, 0);
+	//	if (fcntl(mDataFD, F_SETFL, flags | O_NONBLOCK))
+	//		cerr << _("Failed to set fd non blocking: ") << strerror(errno) << endl;
+	//}
 }
 
 MController* MTextDocument::GetFirstController() const
@@ -467,20 +467,20 @@ void MTextDocument::SetWorksheet(
 
 // --------------------------------------------------------------------
 
-const char* MTextDocument::GetCWD() const
+string MTextDocument::GetCWD() const
 {
-	const char* result = nil;
+	string result;
 	if (mShell.get() != nil)
-		result = mShell->GetCWD().c_str();
+		result = mShell->GetCWD();
 	else if (mFile.IsValid())
 	{
-		static auto_array<char> cwd(new char[PATH_MAX]);
+		char cwd[PATH_MAX];
 
-		int32 r = mFile.ReadAttribute(kJapieCWD, cwd.get(), PATH_MAX);
+		int32 r = mFile.ReadAttribute(kJapieCWD, cwd, PATH_MAX);
 		if (r > 0 and r < PATH_MAX)
 		{
-			cwd.get()[r] = 0;
-			result = cwd.get();
+			cwd[r] = 0;
+			result = cwd;
 		}
 	}
 	return result;
@@ -523,7 +523,8 @@ void MTextDocument::ReInit()
 	device.SetFont(mFont);
 
 	mLineHeight = device.GetLineHeight();
-	mCharWidth = device.GetStringWidth("          ") / 10;
+	device.SetText("          ");
+	mCharWidth = device.GetTextWidth() / 10;
 	mTabWidth = mCharWidth * mCharsPerTab;
 }
 
@@ -578,7 +579,7 @@ bool MTextDocument::ReadDocState(
 	
 	if (IsSpecified() and Preferences::GetInteger("save state", 1))
 	{
-		ssize_t r = mFile.ReadAttribute(kJapieDocState, &ioDocState, kMDocStateSize);
+		int32 r = mFile.ReadAttribute(kJapieDocState, &ioDocState, kMDocStateSize);
 		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
 		{
 			ioDocState.Swap();
@@ -952,7 +953,7 @@ void MTextDocument::Type(
 			MSelection save(mSelection);
 			ChangeSelection(MSelection(this, offset - 1, offset));
 			eScroll(kScrollForKiss);
-			usleep(250000UL);
+			delay(0.25f);
 			ChangeSelection(save);
 			eScroll(kScrollReturnAfterKiss);
 		}
@@ -1760,10 +1761,10 @@ void MTextDocument::GetLine(
 		
 		assert(start + length <= mText.GetSize());
 		
-		auto_array<char> b(new char[length]);
-		mText.GetText(start, b.get(), length);
+		vector<char> b(length);
+		mText.GetText(start, &b[0], length);
 		
-		outText.assign(b.get(), b.get() + length);
+		outText.assign(&b[0], &b[length]);
 	}
 }
 
@@ -1778,56 +1779,56 @@ void MTextDocument::UpdateDirtyLines()
 		mLineInfo[line].dirty = false;
 }
 
-void MTextDocument::GetSelectionRegion(
-	MRegion&		outRegion) const
-{
-	if (mSelection.IsBlock())
-	{
-		MRect r;
-		
-		r.y = mSelection.GetMinLine() * mLineHeight;
-		r.height = mSelection.CountLines() * mLineHeight;
-		r.x = mSelection.GetMinColumn() * mCharWidth;
-		r.width = (mSelection.GetMaxColumn() - mSelection.GetMinColumn() + 1) * mCharWidth;
-		
-		outRegion += r;
-	}
-	else
-	{
-		uint32 anchor = mSelection.GetAnchor();
-		uint32 caret = mSelection.GetCaret();
-		
-		if (caret < anchor)
-			swap(caret, anchor);
-		
-		uint32 anchorLine = OffsetToLine(anchor);
-		uint32 caretLine = OffsetToLine(caret);
-		
-		for (uint32 line = anchorLine; line <= caretLine; ++line)
-		{
-			MRect r;
-			
-			r.y = line * mLineHeight;
-			r.height = mLineHeight;
-			
-			int32 anchorPos = 0;
-			if (line == anchorLine)
-				OffsetToPosition(anchor, anchorLine, anchorPos);
-	
-			r.x = anchorPos;
-			
-			int32 caretPos = 10000;
-			if (mWrapWidth > 0)
-				caretPos = mWrapWidth;
-			if (line == caretLine)
-				OffsetToPosition(caret, caretLine, caretPos);
-	
-			r.width = caretPos - anchorPos + 1;
-			
-			outRegion += r;
-		}
-	}
-}
+//void MTextDocument::GetSelectionRegion(
+//	MRegion&		outRegion) const
+//{
+//	if (mSelection.IsBlock())
+//	{
+//		MRect r;
+//		
+//		r.y = mSelection.GetMinLine() * mLineHeight;
+//		r.height = mSelection.CountLines() * mLineHeight;
+//		r.x = mSelection.GetMinColumn() * mCharWidth;
+//		r.width = (mSelection.GetMaxColumn() - mSelection.GetMinColumn() + 1) * mCharWidth;
+//		
+//		outRegion += r;
+//	}
+//	else
+//	{
+//		uint32 anchor = mSelection.GetAnchor();
+//		uint32 caret = mSelection.GetCaret();
+//		
+//		if (caret < anchor)
+//			swap(caret, anchor);
+//		
+//		uint32 anchorLine = OffsetToLine(anchor);
+//		uint32 caretLine = OffsetToLine(caret);
+//		
+//		for (uint32 line = anchorLine; line <= caretLine; ++line)
+//		{
+//			MRect r;
+//			
+//			r.y = line * mLineHeight;
+//			r.height = mLineHeight;
+//			
+//			int32 anchorPos = 0;
+//			if (line == anchorLine)
+//				OffsetToPosition(anchor, anchorLine, anchorPos);
+//	
+//			r.x = anchorPos;
+//			
+//			int32 caretPos = 10000;
+//			if (mWrapWidth > 0)
+//				caretPos = mWrapWidth;
+//			if (line == caretLine)
+//				OffsetToPosition(caret, caretLine, caretPos);
+//	
+//			r.width = caretPos - anchorPos + 1;
+//			
+//			outRegion += r;
+//		}
+//	}
+//}
 
 // -----------------------------------------------------------------------------
 // GetSelectedText

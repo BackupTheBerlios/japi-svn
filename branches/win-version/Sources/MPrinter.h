@@ -24,22 +24,22 @@ class MPrinter
 
   private:
 
-	MRect			GetPrintBounds(
-						GtkPrintContext*	inContext);
+	//MRect			GetPrintBounds(
+	//					GtkPrintContext*	inContext);
 
-	void			OnBeginPrint(
-						GtkPrintContext*	inContext);
-	MSlot<void(GtkPrintContext*)>			mBeginPrint;
+	//void			OnBeginPrint(
+	//					GtkPrintContext*	inContext);
+	//MSlot<void(GtkPrintContext*)>			mBeginPrint;
 
-	void			OnDrawPage(
-						GtkPrintContext*	inContext,
-						int32				inPage);
-	MSlot<void(GtkPrintContext*,int32)>		mDrawPage;
+	//void			OnDrawPage(
+	//					GtkPrintContext*	inContext,
+	//					int32				inPage);
+	//MSlot<void(GtkPrintContext*,int32)>		mDrawPage;
 
-	GtkPrintOperation*			mPrint;
+	//GtkPrintOperation*			mPrint;
 	MView*						mPrintedView;
-	static GtkPrintSettings*	sSettings;
-	static GtkPageSetup*		sPageSetup;
+	//static GtkPrintSettings*	sSettings;
+	//static GtkPageSetup*		sPageSetup;
 };
 
 #endif // MPRINTER_H

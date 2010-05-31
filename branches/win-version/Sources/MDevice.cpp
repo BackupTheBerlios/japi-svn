@@ -76,13 +76,6 @@ MRect MDevice::GetBounds() const
 	return mImpl->GetBounds();
 }
 
-void MDevice::SetOrigin(
-	int32				inX,
-	int32				inY)
-{
-	mImpl->SetOrigin(inX, inY);
-}
-
 void MDevice::SetFont(
 	const string&	inFont)
 {
@@ -183,12 +176,6 @@ void MDevice::DrawString(
 	MAlignment		inAlign)
 {
 	mImpl->DrawString(inText, inX, inY, inTruncateWidth, inAlign);
-}
-
-uint32 MDevice::GetStringWidth(
-	const string&		inText)
-{
-	return mImpl->GetStringWidth(inText);
 }
 
 void MDevice::SetText(

@@ -54,7 +54,7 @@ struct MIncludeFile
 	bool						isQuoted;
 };
 
-struct MIncludeFileList : public std::vector<MIncludeFile> {};
+class MIncludeFileList : public std::vector<MIncludeFile> {};
 
 class MLanguage
 {
