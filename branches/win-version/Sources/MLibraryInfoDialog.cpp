@@ -18,7 +18,6 @@
 #include "MPreferences.h"
 #include "MView.h"
 #include "MUnicode.h"
-#include "MGlobals.h"
 #include "MLibraryInfoDialog.h"
 #include "MDevice.h"
 #include "MGtkWrappers.h"

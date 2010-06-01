@@ -10,9 +10,10 @@
 #include <deque>
 
 #include "MTypes.h"
-#include "MHandler.h"
+#include "MApplication.h"
 #include "MP2PEvents.h"
 #include "MController.h"
+#include "MColor.h"
 
 extern const char kAppName[], kVersionString[];
 
@@ -22,7 +23,7 @@ class MFile;
 
 // ===========================================================================
 
-class MJapiApp : public MHandler
+class MJapiApp : public MApplication
 {
   public:
 
@@ -54,8 +55,6 @@ class MJapiApp : public MHandler
 	MDocument*			OpenOneDocument(
 							const MFile&		inFileRef);
 
-	MDocument*			AskOpenOneDocument();
-
 	MDocWindow*			DisplayDocument(
 							MDocument*			inDocument);
 
@@ -75,29 +74,16 @@ class MJapiApp : public MHandler
 	void				SetCurrentFolder(
 							const char*			inFolder);
 
-	MEventOut<void(double)>						eIdle;
-
-	bool				IsServer();
-	bool				IsClient();
-
-	void				ProcessArgv(
-							bool				inReadStdin,
-							MFilesToOpenList&	inFiles);
-	
-	void				RunEventLoop();
-
   private:
 	typedef std::list<MWindow*>		MWindowList;
 
-	void				DoQuit();
+	virtual void		DoQuit();
 
-	void				DoNew();
+	virtual void		DoNew();
 
 	void				DoNewProject();
 
 	void				DoNewEPub();
-
-	void				DoOpen();
 
 	void				DoSaveAll();
 
@@ -128,8 +114,6 @@ class MJapiApp : public MHandler
 
 	void				ShowWorksheet();
 		
-	void				Pulse();
-	
 	//static gboolean		Timeout(
 	//						gpointer			inData);
 
@@ -140,13 +124,11 @@ class MJapiApp : public MHandler
 
 	void				ProcessSocketMessages();
 
+	void				InitGlobals();
+	void				SaveGlobals();
+
 	int					mSocketFD;
-	bool				mQuit;
-	bool				mQuitPending;
-	bool				mInitialized;
 	std::string			mCurrentFolder;
 };
-
-extern MJapiApp*	gApp;
 
 #endif

@@ -71,14 +71,11 @@ class MTextView : public MView
   protected:
 
 	virtual void		Draw(
-							MDevice&		inDevice,
 							MRect			inUpdate);
 
 	virtual uint32		CountPages(
 							MDevice&		inDevice);
 
-	virtual void		EnableSelf();
-	virtual void		DisableSelf();
 	virtual void		ActivateSelf();
 	virtual void		DeactivateSelf();
 
@@ -89,7 +86,7 @@ class MTextView : public MView
 	
   private:
 
-	virtual bool		OnRealize();
+	//virtual bool		OnRealize();
 
 	void				DrawLine(
 							uint32			inLineNr,
@@ -143,10 +140,6 @@ class MTextView : public MView
 							int32			inX,
 							int32			inY);
 
-	void				DoScrollTo(
-							int32			inX,
-							int32			inY);
-	
 	void				DrawDragHilite(
 							MDevice&		inDevice);
 	

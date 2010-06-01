@@ -25,8 +25,10 @@ MDocument* MDocument::sFirst;
 //	MDocument
 
 MDocument::MDocument(
+	MHandler*		inSuper,
 	const MFile&	inFile)
-	: mFile(inFile)
+	: MHandler(inSuper)
+	, mFile(inFile)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
 	, mFileLoader(nil)

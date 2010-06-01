@@ -8,16 +8,16 @@
 #include "MTextController.h"
 #include "MEditWindow.h"
 #include "MTextView.h"
-#include "MFindDialog.h"
-#include "MGoToLineDialog.h"
-#include "MFindAndOpenDialog.h"
-#include "MMarkMatchingDialog.h"
-#include "MQuotedRewrapDialog.h"
-#include "MProject.h"
+//#include "MFindDialog.h"
+//#include "MGoToLineDialog.h"
+//#include "MFindAndOpenDialog.h"
+//#include "MMarkMatchingDialog.h"
+//#include "MQuotedRewrapDialog.h"
+//#include "MProject.h"
 #include "MSound.h"
 #include "MTextDocument.h"
 #include "MJapiApp.h"
-#include "MPrinter.h"
+//#include "MPrinter.h"
 
 using namespace std;
 
@@ -68,9 +68,9 @@ bool MTextController::ProcessCommand(
 	
 		switch (inCommand)
 		{
-			case cmd_Find:
-				MFindDialog::Instance().Select();
-				break;
+			//case cmd_Find:
+			//	MFindDialog::Instance().Select();
+			//	break;
 	
 			case cmd_OpenIncludeFile:
 				DoOpenIncludeFile();
@@ -88,15 +88,15 @@ bool MTextController::ProcessCommand(
 //				new MDocInfoDialog(mDocument, mWindow);
 				break;
 
-			case cmd_QuotedRewrap:
-				new MQuotedRewrapDialog(
-					static_cast<MTextDocument*>(mDocument), GetWindow());
-				break;
+			//case cmd_QuotedRewrap:
+			//	new MQuotedRewrapDialog(
+			//		static_cast<MTextDocument*>(mDocument), GetWindow());
+			//	break;
 
-			case cmd_MarkMatching:
-				new MMarkMatchingDialog(
-					static_cast<MTextDocument*>(mDocument), GetWindow());
-				break;
+			//case cmd_MarkMatching:
+			//	new MMarkMatchingDialog(
+			//		static_cast<MTextDocument*>(mDocument), GetWindow());
+			//	break;
 
 			default:
 				result = false;
@@ -149,18 +149,18 @@ bool MTextController::UpdateCommandStatus(
 
 void MTextController::DoGoToLine()
 {
-	MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
-	
-	if (doc == nil)
-		return;
-	
-	new MGoToLineDialog(doc, mDocWindow);
+	//MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
+	//
+	//if (doc == nil)
+	//	return;
+	//
+	//new MGoToLineDialog(doc, mDocWindow);
 }
 
 bool MTextController::OpenInclude(
 	string		inFileName)
 {
-	MProject* project = MProject::Instance();
+	//MProject* project = MProject::Instance();
 	MFile url;
 
 	if (mDocument != nil)
@@ -176,12 +176,12 @@ bool MTextController::OpenInclude(
 			result = true;
 	}
 	
-	fs::path p;
-	if (not result and project != nil and project->LocateFile(inFileName, true, p))
-	{
-		result = true;
-		url = MFile(p);
-	}
+	//fs::path p;
+	//if (not result and project != nil and project->LocateFile(inFileName, true, p))
+	//{
+	//	result = true;
+	//	url = MFile(p);
+	//}
 	
 	if (result)
 		gApp->OpenOneDocument(url);
@@ -191,55 +191,55 @@ bool MTextController::OpenInclude(
 
 void MTextController::DoOpenIncludeFile()
 {
-	MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
-	
-	if (doc == nil)
-		return;
-	
-	bool result = false;
-	
-	MSelection selection = doc->GetSelection();
-	
-	if (selection.IsEmpty())
-	{
-		new MFindAndOpenDialog(this, mDocWindow);
-		result = true;
-	}
-	else
-	{
-		for (;;)
-		{
-			string s;
-			doc->GetSelectedText(s);
+	//MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
+	//
+	//if (doc == nil)
+	//	return;
+	//
+	//bool result = false;
+	//
+	//MSelection selection = doc->GetSelection();
+	//
+	//if (selection.IsEmpty())
+	//{
+	//	new MFindAndOpenDialog(this, mDocWindow);
+	//	result = true;
+	//}
+	//else
+	//{
+	//	for (;;)
+	//	{
+	//		string s;
+	//		doc->GetSelectedText(s);
 
-			if (OpenInclude(s))
-			{
-				result = true;
-				break;
-			}
-			
-			MTextBuffer& textBuffer = doc->GetTextBuffer();
-			MTextBuffer::iterator i =
-				textBuffer.begin() + selection.GetMaxOffset();
-			
-			if (i.GetOffset() + 2 >= textBuffer.GetSize() or
-				*i != '.' or
-				not IsAlnum(*(i + 1)))
-			{
-				break;
-			}
-			
-			i += 2;
-			
-			while (i != textBuffer.end() and IsAlnum(*i))
-				++i;
-			
-			doc->Select(selection.GetMinOffset(), i.GetOffset());
-		}
-	}
-	
-	if (not result)
-		PlaySound("warning");
+	//		if (OpenInclude(s))
+	//		{
+	//			result = true;
+	//			break;
+	//		}
+	//		
+	//		MTextBuffer& textBuffer = doc->GetTextBuffer();
+	//		MTextBuffer::iterator i =
+	//			textBuffer.begin() + selection.GetMaxOffset();
+	//		
+	//		if (i.GetOffset() + 2 >= textBuffer.GetSize() or
+	//			*i != '.' or
+	//			not IsAlnum(*(i + 1)))
+	//		{
+	//			break;
+	//		}
+	//		
+	//		i += 2;
+	//		
+	//		while (i != textBuffer.end() and IsAlnum(*i))
+	//			++i;
+	//		
+	//		doc->Select(selection.GetMinOffset(), i.GetOffset());
+	//	}
+	//}
+	//
+	//if (not result)
+	//	PlaySound("warning");
 }
 
 void MTextController::DoOpenCounterpart()
@@ -274,16 +274,16 @@ void MTextController::DoOpenCounterpart()
 		if (ext != nil)
 		{
 			name.erase(name.rfind('.') + 1);
-			MProject* project = MProject::Instance();
+			//MProject* project = MProject::Instance();
 		
-			if (project != nil)
-			{
-				for (const char** e = ext; result == false and *e != nil; ++e)
-					result = project->LocateFile(name + *e, true, p);
+			//if (project != nil)
+			//{
+			//	for (const char** e = ext; result == false and *e != nil; ++e)
+			//		result = project->LocateFile(name + *e, true, p);
 
-				if (result)
-					gApp->OpenOneDocument(MFile(p));
-			}
+			//	if (result)
+			//		gApp->OpenOneDocument(MFile(p));
+			//}
 
 			if (not result)
 			{
@@ -299,12 +299,12 @@ void MTextController::DoOpenCounterpart()
 
 void MTextController::DoMarkMatching()
 {
-	MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
-	
-	if (doc == nil)
-		return;
-	
-	new MMarkMatchingDialog(doc, mDocWindow);
+	//MTextDocument* doc = dynamic_cast<MTextDocument*>(mDocument);
+	//
+	//if (doc == nil)
+	//	return;
+	//
+	//new MMarkMatchingDialog(doc, mDocWindow);
 }
 
 bool MTextController::TryCloseDocument(
@@ -333,8 +333,8 @@ void MTextController::Print()
 	
 	uint32 wrapWidth = doc->GetWrapWidth();
 	
-	MPrinter printer(mTextViews.front());
-	printer.DoPrint();
+	//MPrinter printer(mTextViews.front());
+	//printer.DoPrint();
 	
 	doc->SetWrapWidth(wrapWidth);
 }

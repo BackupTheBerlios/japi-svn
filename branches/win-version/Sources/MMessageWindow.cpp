@@ -11,7 +11,6 @@
 
 #include "MMessageWindow.h"
 #include "MDevice.h"
-#include "MGlobals.h"
 #include "MUtils.h"
 #include "MUnicode.h"
 #include "MTextDocument.h"

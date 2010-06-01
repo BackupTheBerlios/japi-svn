@@ -98,6 +98,7 @@
     <ClCompile Include="..\..\Sources\CTestView.cpp" />
     <ClCompile Include="..\..\Sources\MAlerts.cpp" />
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
+    <ClCompile Include="..\..\Sources\MClipboard.cpp" />
     <ClCompile Include="..\..\Sources\MColor.cpp" />
     <ClCompile Include="..\..\Sources\MController.cpp" />
     <ClCompile Include="..\..\Sources\MControls.cpp" />
@@ -105,14 +106,25 @@
     <ClCompile Include="..\..\Sources\MDocClosedNotifier.cpp" />
     <ClCompile Include="..\..\Sources\MDocument.cpp" />
     <ClCompile Include="..\..\Sources\MDocWindow.cpp" />
+    <ClCompile Include="..\..\Sources\MEditWindow.cpp" />
     <ClCompile Include="..\..\Sources\MError.cpp" />
     <ClCompile Include="..\..\Sources\MFile.cpp" />
-    <ClCompile Include="..\..\Sources\MGlobals.cpp" />
     <ClCompile Include="..\..\Sources\MHandler.cpp" />
+    <ClCompile Include="..\..\Sources\MJapiApp.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguage.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguageCpp.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguageHTML.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguagePerl.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguagePython.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguageTeX.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguageXML.cpp" />
     <ClCompile Include="..\..\Sources\MMenu.cpp" />
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
+    <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
+    <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
+    <ClCompile Include="..\..\Sources\MTextController.cpp" />
     <ClCompile Include="..\..\Sources\MTextDocument.cpp" />
     <ClCompile Include="..\..\Sources\MTextView.cpp" />
     <ClCompile Include="..\..\Sources\MTypes.cpp" />
@@ -127,6 +139,7 @@
     <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinResources.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinSound.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
   </ItemGroup>

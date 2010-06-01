@@ -50,20 +50,20 @@ class MApplication : public MHandler
 							uint32				inItemIndex,
 							uint32				inModifiers);
 
-	MDocument*			OpenOneDocument(
+	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
 
-	MDocument*			AskOpenOneDocument();
+	//virtual MDocument*	AskOpenOneDocument();
 
-	MDocWindow*			DisplayDocument(
+	virtual MDocWindow*	DisplayDocument(
 							MDocument*			inDocument);
 
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
-	void				SetCurrentFolder(
+	virtual void		SetCurrentFolder(
 							const std::string&	inFolder)		{ SetCurrentFolder(inFolder.c_str()); }
 
-	void				SetCurrentFolder(
+	virtual void		SetCurrentFolder(
 							const char*			inFolder);
 
 	MEventOut<void(double)>						eIdle;
@@ -73,22 +73,22 @@ class MApplication : public MHandler
 
 	int					RunEventLoop();
 
-  private:
+  protected:
 	  friend class MApplicationImpl;
 	  
 	  typedef std::list<MWindow*>		MWindowList;
 
-	void				DoQuit();
-	void				DoNew();
-	void				DoOpen();
-	void				DoSaveAll();
-	void				DoCloseAll(
+	virtual void		DoQuit();
+	virtual void		DoNew();
+	virtual void		DoOpen();
+	virtual void		DoSaveAll();
+	virtual void		DoCloseAll(
 							MCloseReason		inReason);
-	void				UpdateWindowMenu(
+	virtual void		UpdateWindowMenu(
 							MMenu*				inMenu);
-	void				DoSelectWindowFromWindowMenu(
+	virtual void		DoSelectWindowFromWindowMenu(
 							uint32				inIndex);
-	void				Pulse();
+	virtual void		Pulse();
 
 	MApplicationImpl*	mImpl;
 

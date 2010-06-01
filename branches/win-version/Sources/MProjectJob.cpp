@@ -31,7 +31,6 @@
 #include "MProjectJob.h"
 #include "MObjectFile.h"
 #include "MError.h"
-#include "MGlobals.h"
 
 extern char** environ;
 extern int VERBOSE;

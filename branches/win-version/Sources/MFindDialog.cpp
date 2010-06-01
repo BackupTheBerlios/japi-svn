@@ -19,7 +19,6 @@
 #include "MUtils.h"
 #include "MMessageWindow.h"
 #include "MCommands.h"
-#include "MGlobals.h"
 #include "MStrings.h"
 #include "MProject.h"
 #include "MSound.h"

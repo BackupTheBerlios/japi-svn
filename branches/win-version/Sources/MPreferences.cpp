@@ -17,12 +17,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/convenience.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <cstring>
 
 #include "MTypes.h"
 #include "MPreferences.h"
-#include "MGlobals.h"
+#include "MError.h"
 
 #include <zeep/xml/document.hpp>
 #include <zeep/xml/node.hpp>

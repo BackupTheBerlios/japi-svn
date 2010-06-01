@@ -22,16 +22,15 @@
 #include "MTextView.h"
 #include "MClipboard.h"
 #include "MUnicode.h"
-#include "MGlobals.h"
 #include "MLanguage.h"
-#include "MFindDialog.h"
+//#include "MFindDialog.h"
 #include "MError.h"
 #include "MController.h"
 #include "MStyles.h"
 #include "MPreferences.h"
 #include "MPrefsDialog.h"
-#include "MShell.h"
-#include "MMessageWindow.h"
+//#include "MShell.h"
+//#include "MMessageWindow.h"
 #include "MDevice.h"
 #include "MCommands.h"
 #include "MDocWindow.h"
@@ -41,14 +40,14 @@
 #include "MDevice.h"
 #include "MDocClosedNotifier.h"
 #include "MStrings.h"
-#include "MAcceleratorTable.h"
+//#include "MAcceleratorTable.h"
 #include "MSound.h"
 #include "MAlerts.h"
-#include "MDiffWindow.h"
+//#include "MDiffWindow.h"
 #include "MJapiApp.h"
 #include "MPrinter.h"
-#include "MePubDocument.h"
-#include "MXHTMLTools.h"
+//#include "MePubDocument.h"
+//#include "MXHTMLTools.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -102,8 +101,9 @@ void MDocState::Swap()
 //	MTextDocument
 
 MTextDocument::MTextDocument(
+	MHandler*			inSuper,
 	const MFile&		inFile)
-	: MDocument(inFile)
+	: MDocument(inSuper, inFile)
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -112,14 +112,14 @@ MTextDocument::MTextDocument(
 {
 	Init();
 	
-	AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
+	//AddRoute(ePrefsChanged, MPrefsDialog::ePrefsChanged);
 	AddRoute(eIdle, gApp->eIdle);
 	
 	ReInit();
 }
 
 MTextDocument::MTextDocument()
-	: MDocument(MFile())
+	: MDocument(gApp, MFile())
 	, eBoundsChanged(this, &MTextDocument::BoundsChanged)
 	, ePrefsChanged(this, &MTextDocument::PrefsChanged)
 	, eMsgWindowClosed(this, &MTextDocument::MsgWindowClosed)
@@ -201,7 +201,7 @@ void MTextDocument::SetFileNameHint(
 bool MTextDocument::DoSave()
 {
 	bool result = MDocument::DoSave();
-	MProject::RecheckFiles();
+	//MProject::RecheckFiles();
 	return result;
 }
 
@@ -377,15 +377,15 @@ void MTextDocument::SaveState()
 	
 	mFile.WriteAttribute(kJapieDocState, &state, kMDocStateSize);
 	
-	if (mShell.get() != nil)
-	{
-		string cwd = mShell->GetCWD();
-		
-		mFile.WriteAttribute(kJapieCWD, cwd.c_str(), cwd.length());
-			
-		if (IsWorksheet())
-			Preferences::SetString("worksheet wd", cwd);
-	}
+	//if (mShell.get() != nil)
+	//{
+	//	string cwd = mShell->GetCWD();
+	//	
+	//	mFile.WriteAttribute(kJapieCWD, cwd.c_str(), cwd.length());
+	//		
+	//	if (IsWorksheet())
+	//		Preferences::SetString("worksheet wd", cwd);
+	//}
 }
 
 void MTextDocument::SetText(
@@ -452,16 +452,16 @@ void MTextDocument::SetWorksheet(
 		sWorksheet = inDocument;
 	
 		string cwd = Preferences::GetString("worksheet wd", "");
-		if (cwd.length() > 0)
-		{
-			inDocument->mShell.reset(new MShell(true));
+		//if (cwd.length() > 0)
+		//{
+		//	inDocument->mShell.reset(new MShell(true));
 
-			inDocument->mShell->SetCWD(cwd);
+		//	inDocument->mShell->SetCWD(cwd);
 
-			SetCallback(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
-			SetCallback(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
-			SetCallback(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
-		}
+		//	SetCallback(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
+		//	SetCallback(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
+		//	SetCallback(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
+		//}
 	}		
 }
 
@@ -470,19 +470,19 @@ void MTextDocument::SetWorksheet(
 string MTextDocument::GetCWD() const
 {
 	string result;
-	if (mShell.get() != nil)
-		result = mShell->GetCWD();
-	else if (mFile.IsValid())
-	{
-		char cwd[PATH_MAX];
+	//if (mShell.get() != nil)
+	//	result = mShell->GetCWD();
+	//else if (mFile.IsValid())
+	//{
+	//	char cwd[PATH_MAX];
 
-		int32 r = mFile.ReadAttribute(kJapieCWD, cwd, PATH_MAX);
-		if (r > 0 and r < PATH_MAX)
-		{
-			cwd[r] = 0;
-			result = cwd;
-		}
-	}
+	//	int32 r = mFile.ReadAttribute(kJapieCWD, cwd, PATH_MAX);
+	//	if (r > 0 and r < PATH_MAX)
+	//	{
+	//		cwd[r] = 0;
+	//		result = cwd;
+	//	}
+	//}
 	return result;
 }
 
@@ -490,11 +490,11 @@ bool MTextDocument::StopRunningShellCommand()
 {
 	bool result = false;
 
-	if (mShell.get() != nil and mShell->IsRunning())
-	{
-		mShell->Kill();
-		result = true;
-	}
+	//if (mShell.get() != nil and mShell->IsRunning())
+	//{
+	//	mShell->Kill();
+	//	result = true;
+	//}
 	
 	return result;
 }
@@ -516,7 +516,7 @@ void MTextDocument::Reset()
 
 void MTextDocument::ReInit()
 {
-	mFont = Preferences::GetString("font", "monospace 9");
+	mFont = Preferences::GetString("font", "Consolas 9");
 	
 	MDevice device;
 	
@@ -1303,7 +1303,7 @@ void MTextDocument::SplitAtMarkedLines()
 			mText.GetText(splits[part - 1], splits[part] - splits[part - 1], text);
 			
 			MFile file(parent / (name + '-' + boost::lexical_cast<string>(part) + extension));
-			MTextDocument* newDocument = new MTextDocument(file);
+			MTextDocument* newDocument = new MTextDocument(gApp, file);
 			newDocument->SetText(text.c_str(), text.length());
 			gApp->DisplayDocument(newDocument);
 		}
@@ -2861,8 +2861,8 @@ void MTextDocument::DoFastFind(MDirection inDirection)
 	else if (not mFastFindInited)
 	{
 		mFastFindInited = true;
-		mFastFindWhat = MFindDialog::Instance().GetFindString();
-		MFindDialog::Instance().SetFindString(mFastFindWhat, false);
+		//mFastFindWhat = MFindDialog::Instance().GetFindString();
+		//MFindDialog::Instance().SetFindString(mFastFindWhat, false);
 		FastFind(inDirection);
 	}
 	else
@@ -2891,8 +2891,8 @@ void MTextDocument::FastFindType(const char* inText, uint32 inTextLength)
 		mFastFindWhat.erase(offset, mFastFindWhat.length() - offset);
 	}
 	
-	if (not mFastFindInited)
-		MFindDialog::Instance().SetFindString(mFastFindWhat, false);
+	//if (not mFastFindInited)
+	//	MFindDialog::Instance().SetFindString(mFastFindWhat, false);
 	
 	if (FastFind(mFastFindDirection))
 		mFastFindInited = true;
@@ -2911,7 +2911,7 @@ bool MTextDocument::FastFind(MDirection inDirection)
 	
 	if (result)
 	{
-		MFindDialog::Instance().SetFindString(mFastFindWhat, true);
+		//MFindDialog::Instance().SetFindString(mFastFindWhat, true);
 		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
 	}
 	else
@@ -2922,9 +2922,10 @@ bool MTextDocument::FastFind(MDirection inDirection)
 
 bool MTextDocument::CanReplace()
 {
-	return mText.CanReplace(MFindDialog::Instance().GetFindString(),
-		MFindDialog::Instance().GetRegex(),
-		MFindDialog::Instance().GetIgnoreCase(), mSelection);
+	//return mText.CanReplace(MFindDialog::Instance().GetFindString(),
+	//	MFindDialog::Instance().GetRegex(),
+	//	MFindDialog::Instance().GetIgnoreCase(), mSelection);
+	return false;
 }
 
 void MTextDocument::DoMarkLine()
@@ -2963,43 +2964,45 @@ void MTextDocument::HandleFindDialogCommand(uint32 inCommand)
 
 bool MTextDocument::DoFindFirst()
 {
-	string what = MFindDialog::Instance().GetFindString();
-	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	bool regex = MFindDialog::Instance().GetRegex();
-	uint32 offset = 0;
-	
-	MSelection found(this);
-	bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
-	
-	if (result)
-		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
-	
-	return result;
+	//string what = MFindDialog::Instance().GetFindString();
+	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	//bool regex = MFindDialog::Instance().GetRegex();
+	//uint32 offset = 0;
+	//
+	//MSelection found(this);
+	//bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
+	//
+	//if (result)
+	//	Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
+	//
+	//return result;
+	return false;
 }
 
 bool MTextDocument::DoFindNext(MDirection inDirection)
 {
-	string what = MFindDialog::Instance().GetFindString();
-	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	bool regex = MFindDialog::Instance().GetRegex();
-	uint32 offset;
-	
-	if (inDirection == kDirectionBackward)
-		offset = mSelection.GetMinOffset();
-	else
-		offset = mSelection.GetMaxOffset();
-	
-	MSelection found(this);
-	bool result = mText.Find(offset, what, inDirection, ignoreCase, regex, found);
-	
-	if (result)
-		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
-	
-	return result;
+	//string what = MFindDialog::Instance().GetFindString();
+	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	//bool regex = MFindDialog::Instance().GetRegex();
+	//uint32 offset;
+	//
+	//if (inDirection == kDirectionBackward)
+	//	offset = mSelection.GetMinOffset();
+	//else
+	//	offset = mSelection.GetMaxOffset();
+	//
+	//MSelection found(this);
+	//bool result = mText.Find(offset, what, inDirection, ignoreCase, regex, found);
+	//
+	//if (result)
+	//	Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
+	//
+	//return result;
+	return false;
 }
 
 void MTextDocument::FindAll(string inWhat, bool inIgnoreCase, 
-	bool inRegex, bool inSelection, MMessageList&outHits)
+	bool inRegex, bool inSelection, MMessageList& outHits)
 {
 	if (inSelection and mSelection.IsBlock())
 		THROW(("block selection not supported in Find All"));
@@ -3023,8 +3026,8 @@ void MTextDocument::FindAll(string inWhat, bool inIgnoreCase,
 		GetLine(lineNr, s);
 		boost::trim_right(s);
 		
-		outHits.AddMessage(kMsgKindNone, mFile, lineNr + 1,
-			sel.GetMinOffset(), sel.GetMaxOffset(), s);
+		//outHits.AddMessage(kMsgKindNone, mFile, lineNr + 1,
+		//	sel.GetMinOffset(), sel.GetMaxOffset(), s);
 		
 		minOffset = sel.GetMaxOffset();
 	}
@@ -3055,39 +3058,39 @@ bool MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 	{
 		StartAction(kReplaceAction);
 		
-		string what = MFindDialog::Instance().GetFindString();
-		string replace = MFindDialog::Instance().GetReplaceString();
-		
-		uint32 offset = mSelection.GetMinOffset();
-		
-		if (MFindDialog::Instance().GetRegex())
-		{
-			mText.ReplaceExpression(mSelection, what, MFindDialog::Instance().GetIgnoreCase(),
-				replace, replace);
-		}
+		//string what = MFindDialog::Instance().GetFindString();
+		//string replace = MFindDialog::Instance().GetReplaceString();
+		//
+		//uint32 offset = mSelection.GetMinOffset();
+		//
+		//if (MFindDialog::Instance().GetRegex())
+		//{
+		//	mText.ReplaceExpression(mSelection, what, MFindDialog::Instance().GetIgnoreCase(),
+		//		replace, replace);
+		//}
 
-		ReplaceSelectedText(replace, false, true);
-		FinishAction();
-		
-		if (inFindNext)
-		{
-			bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-			bool regex = MFindDialog::Instance().GetRegex();
-			uint32 nextOffset = offset;
+		//ReplaceSelectedText(replace, false, true);
+		//FinishAction();
+		//
+		//if (inFindNext)
+		//{
+		//	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+		//	bool regex = MFindDialog::Instance().GetRegex();
+		//	uint32 nextOffset = offset;
 
-			if (inDirection == kDirectionForward)
-				nextOffset += replace.length();
-		
-			MSelection found(this);
-			result = mText.Find(nextOffset, what, inDirection, ignoreCase, regex, found);
-			
-			if (result)
-				ChangeSelection(found);
-			else
-				ChangeSelection(offset, offset + replace.length());
+		//	if (inDirection == kDirectionForward)
+		//		nextOffset += replace.length();
+		//
+		//	MSelection found(this);
+		//	result = mText.Find(nextOffset, what, inDirection, ignoreCase, regex, found);
+		//	
+		//	if (result)
+		//		ChangeSelection(found);
+		//	else
+		//		ChangeSelection(offset, offset + replace.length());
 	
-			eScroll(kScrollToSelection);
-		}
+		//	eScroll(kScrollToSelection);
+		//}
 	}
 
 	return result;
@@ -3095,52 +3098,52 @@ bool MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 
 void MTextDocument::DoReplaceAll()
 {
-	uint32 offset = 0, lastMatch = 0, lastOffset = mText.GetSize();
-	string what = MFindDialog::Instance().GetFindString();
-	string replace;
-	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	bool replacedAny = false;
-	bool regex = MFindDialog::Instance().GetRegex();
-	MSelection found(this);
+	//uint32 offset = 0, lastMatch = 0, lastOffset = mText.GetSize();
+	//string what = MFindDialog::Instance().GetFindString();
+	//string replace;
+	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	//bool replacedAny = false;
+	//bool regex = MFindDialog::Instance().GetRegex();
+	//MSelection found(this);
 
-	if (MFindDialog::Instance().GetInSelection())
-	{
-		offset = mSelection.GetMinOffset();
-		lastOffset = mSelection.GetMaxOffset();
-	}
-	
-	while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found)
-		and found.GetMaxOffset() <= lastOffset)
-	{
-		if (not replacedAny)
-		{
-			StartAction(kReplaceAction);
-			replacedAny = true;
-		}
-		
-		offset = found.GetMinOffset();
-		int32 lengthOfSelection = found.GetMaxOffset() - offset;
-		
-		replace = MFindDialog::Instance().GetReplaceString();
-		
-		if (regex)
-		{
-			mText.ReplaceExpression(found, what, MFindDialog::Instance().GetIgnoreCase(),
-				replace, replace);
-		}
-		
-		Delete(offset, found.GetMaxOffset() - offset);
-		Insert(offset, replace);
-		
-		lastMatch = offset;
-		offset += replace.length();
-		lastOffset += replace.length() - lengthOfSelection;
-	}
-	
-	if (replacedAny)
-		Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
-	else
-		PlaySound("warning");
+	//if (MFindDialog::Instance().GetInSelection())
+	//{
+	//	offset = mSelection.GetMinOffset();
+	//	lastOffset = mSelection.GetMaxOffset();
+	//}
+	//
+	//while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found)
+	//	and found.GetMaxOffset() <= lastOffset)
+	//{
+	//	if (not replacedAny)
+	//	{
+	//		StartAction(kReplaceAction);
+	//		replacedAny = true;
+	//	}
+	//	
+	//	offset = found.GetMinOffset();
+	//	int32 lengthOfSelection = found.GetMaxOffset() - offset;
+	//	
+	//	replace = MFindDialog::Instance().GetReplaceString();
+	//	
+	//	if (regex)
+	//	{
+	//		mText.ReplaceExpression(found, what, MFindDialog::Instance().GetIgnoreCase(),
+	//			replace, replace);
+	//	}
+	//	
+	//	Delete(offset, found.GetMaxOffset() - offset);
+	//	Insert(offset, replace);
+	//	
+	//	lastMatch = offset;
+	//	offset += replace.length();
+	//	lastOffset += replace.length() - lengthOfSelection;
+	//}
+	//
+	//if (replacedAny)
+	//	Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
+	//else
+	//	PlaySound("warning");
 }
 
 void MTextDocument::DoComplete(MDirection inDirection)
@@ -3323,17 +3326,17 @@ void MTextDocument::QuotedRewrap(
 
 void MTextDocument::DoApplyScript(const std::string& inScript)
 {
-	if (mShell.get() != nil and mShell->IsRunning())
-		return;
-	
-	if (mShell.get() == nil)
-	{
-		mShell.reset(new MShell(true));
+	//if (mShell.get() != nil and mShell->IsRunning())
+	//	return;
+	//
+	//if (mShell.get() == nil)
+	//{
+	//	mShell.reset(new MShell(true));
 
-		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
-		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
-		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
-	}
+	//	SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+	//	SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+	//	SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+	//}
 	
 	if (mSelection.IsEmpty())
 		SelectAll();
@@ -3343,7 +3346,7 @@ void MTextDocument::DoApplyScript(const std::string& inScript)
 	
 	mPreparedForStdOut = true;
 	StartAction(inScript.c_str());
-	mShell->ExecuteScript((gScriptsDir / inScript).string(), text);
+	//mShell->ExecuteScript((gScriptsDir / inScript).string(), text);
 }
 
 void MTextDocument::GetStyledText(
@@ -3363,12 +3366,15 @@ void MTextDocument::GetStyledText(
 	MDevice&	inDevice,
 	string&		outText) const
 {
+	// shortcut
+	if (inLength == 0)
+		return;
+
 	inDevice.SetFont(mFont);
 	
 	mText.GetText(inOffset, inLength, outText);
-
 	inDevice.SetText(outText);
-	
+
 	if (inLength > 0 and outText[outText.length() - 1] == '\n')
 		outText.erase(outText.length() - 1);
 
@@ -3460,50 +3466,50 @@ void MTextDocument::HashLines(vector<uint32>& outHashes) const
 
 // -- text input methods
 
-// ---------------------------------------------------------------------------
-//	OnKeyPressEvent
-
-void MTextDocument::OnKeyPressEvent(
-	GdkEventKey*		inEvent)
-{
-	bool handled = false;
-
-    uint32 modifiers = inEvent->state & kValidModifiersMask;
-	uint32 keyValue = inEvent->keyval;
-	
-	handled = HandleRawKeydown(keyValue, modifiers);
-	
-	if (not handled and modifiers == 0)
-	{
-		wchar_t ch = gdk_keyval_to_unicode(keyValue);
-		
-		if (ch != 0)
-		{
-			char s[8] = {};
-			char* sp = s;
-			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
-			Type(s, length);
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-//	OnCommit
-
-void MTextDocument::OnCommit(
-	const char*			inText,
-	uint32				inLength)
-{
-	if (mFastFindMode)
-		FastFindType(inText, inLength);
-	else
-	{
-		Type(inText, inLength);
-		mCompletionIndex = -1;
-	}
-	
-	UpdateDirtyLines();
-}
+//// ---------------------------------------------------------------------------
+////	OnKeyPressEvent
+//
+//void MTextDocument::OnKeyPressEvent(
+//	GdkEventKey*		inEvent)
+//{
+//	bool handled = false;
+//
+//    uint32 modifiers = inEvent->state & kValidModifiersMask;
+//	uint32 keyValue = inEvent->keyval;
+//	
+//	handled = HandleRawKeydown(keyValue, modifiers);
+//	
+//	if (not handled and modifiers == 0)
+//	{
+//		wchar_t ch = gdk_keyval_to_unicode(keyValue);
+//		
+//		if (ch != 0)
+//		{
+//			char s[8] = {};
+//			char* sp = s;
+//			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
+//			Type(s, length);
+//		}
+//	}
+//}
+//
+//// ----------------------------------------------------------------------------
+////	OnCommit
+//
+//void MTextDocument::OnCommit(
+//	const char*			inText,
+//	uint32				inLength)
+//{
+//	if (mFastFindMode)
+//		FastFindType(inText, inLength);
+//	else
+//	{
+//		Type(inText, inLength);
+//		mCompletionIndex = -1;
+//	}
+//	
+//	UpdateDirtyLines();
+//}
 
 bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 {
@@ -3967,26 +3973,26 @@ bool MTextDocument::HandleRawKeydown(
 	MKeyCommand keyCommand = kcmd_None;
 	bool handled = false;
 
-	if (MAcceleratorTable::EditKeysInstance().IsNavigationKey(
-			inKeyValue, inModifiers, keyCommand))
-	{
-		HandleKeyCommand(keyCommand);
-		handled = true;
-	}
-	else
-	{
+	//if (MAcceleratorTable::EditKeysInstance().IsNavigationKey(
+	//		inKeyValue, inModifiers, keyCommand))
+	//{
+	//	HandleKeyCommand(keyCommand);
+	//	handled = true;
+	//}
+	//else
+	//{
 		switch (inKeyValue)
 		{
-			case GDK_KP_Enter:
+		case kEnterKeyCode:
 				Reset();
 				Execute();
 				handled = true;
 				break;		
 	
-			case GDK_Return:
+			case kReturnKeyCode:
 				if (mFastFindMode)
 					mFastFindMode = false;
-				else if (inModifiers & GDK_CONTROL_MASK)
+				else if (inModifiers & kControlKey)
 				{
 					Reset();
 					Execute();
@@ -4031,7 +4037,7 @@ bool MTextDocument::HandleRawKeydown(
 				handled = true;
 				break;
 			
-			case GDK_Tab:
+			case kTabKeyCode:
 			{
 				int minLine = mSelection.GetMinLine();
 				int maxLine = mSelection.GetMaxLine();
@@ -4057,41 +4063,41 @@ bool MTextDocument::HandleRawKeydown(
 				break;
 			}
 
-			case GDK_ISO_Left_Tab:
-			{
-				int minLine = mSelection.GetMinLine();
-				int maxLine = mSelection.GetMaxLine();
+			//case GDK_ISO_Left_Tab:
+			//{
+			//	int minLine = mSelection.GetMinLine();
+			//	int maxLine = mSelection.GetMaxLine();
 
-				bool shift = minLine < maxLine;
-				if (not shift)
-				{
-					shift =
-						mSelection.GetMinOffset() == LineStart(minLine) and
-						mSelection.GetMaxOffset() == LineStart(minLine + 1);
-				}
-				
-				if (shift)
-				{
-					DoShiftLeft();
-					handled = true;
-				}
-				break;
-			}
+			//	bool shift = minLine < maxLine;
+			//	if (not shift)
+			//	{
+			//		shift =
+			//			mSelection.GetMinOffset() == LineStart(minLine) and
+			//			mSelection.GetMaxOffset() == LineStart(minLine + 1);
+			//	}
+			//	
+			//	if (shift)
+			//	{
+			//		DoShiftLeft();
+			//		handled = true;
+			//	}
+			//	break;
+			//}
 			
-			case GDK_Escape:
+			case kEscapeKeyCode:
 				mFastFindMode = false;
 	//			updateSelection = false;
-				if (mShell.get() != nil and mShell->IsRunning())
-					mShell->Kill();
+				//if (mShell.get() != nil and mShell->IsRunning())
+				//	mShell->Kill();
 				handled = true;
 				break;
 			
-			case GDK_period:
-				if (inModifiers & GDK_CONTROL_MASK and mShell.get() != nil and mShell->IsRunning())
-					mShell->Kill();
-				else
-					handled = false;
-				break;
+			//case GDK_period:
+			//	if (inModifiers & GDK_CONTROL_MASK and mShell.get() != nil and mShell->IsRunning())
+			//		mShell->Kill();
+			//	else
+			//		handled = false;
+			//	break;
 			
 			default:
 				handled = false;
@@ -4101,7 +4107,7 @@ bool MTextDocument::HandleRawKeydown(
 	
 		if (not handled and keyCommand != kcmd_None)
 			handled = HandleKeyCommand(keyCommand);
-	}
+	//}
 	
 	return handled;
 }
@@ -4119,8 +4125,8 @@ void MTextDocument::ShellStatusIn(bool inActive)
 	
 	if (not inActive)
 	{
-		string cwd = mShell->GetCWD();
-		eBaseDirChanged(fs::path(cwd));
+		//string cwd = mShell->GetCWD();
+		//eBaseDirChanged(fs::path(cwd));
 	}
 }
 
@@ -4162,20 +4168,20 @@ void MTextDocument::StdErr(const char* inText, uint32 inSize)
 {
 	if (mStdErrWindow == nil)
 	{
-		mStdErrWindow = new MMessageWindow(_("Output from stderr"));
-		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+		//mStdErrWindow = new MMessageWindow(_("Output from stderr"));
+		//AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
-	else if (not mStdErrWindowSelected)
-		mStdErrWindow->Select();
+	//else if (not mStdErrWindowSelected)
+	//	mStdErrWindow->Select();
 
-	mStdErrWindow->SetBaseDirectory(fs::path(mShell->GetCWD()));
+	//mStdErrWindow->SetBaseDirectory(fs::path(mShell->GetCWD()));
 
-	mStdErrWindow->AddStdErr(inText, inSize);
+	//mStdErrWindow->AddStdErr(inText, inSize);
 }
 
 void MTextDocument::MsgWindowClosed(MWindow* inWindow)
 {
-	assert(inWindow == mStdErrWindow);
+	//assert(inWindow == mStdErrWindow);
 	mStdErrWindow = nil;
 }
 
@@ -4192,35 +4198,35 @@ void MTextDocument::Execute()
 	string s;
 	GetSelectedText(s);
 	
-	if (mShell.get() == nil)
-	{
-		mShell.reset(new MShell(true));
+	//if (mShell.get() == nil)
+	//{
+	//	mShell.reset(new MShell(true));
 
-		if (IsSpecified())
-		{
-			char cwd[1024] = { 0 };
-			ssize_t size = mFile.ReadAttribute(kJapieCWD, cwd, sizeof(cwd));
-			if (size > 0)
-			{
-				string d(cwd, size);
-				mShell->SetCWD(d);
-			}
-			else
-				mShell->SetCWD(mFile.GetPath().parent_path().string());
-		}
-		
-		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
-		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
-		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
-	}
+	//	if (IsSpecified())
+	//	{
+	//		char cwd[1024] = { 0 };
+	//		int32 size = mFile.ReadAttribute(kJapieCWD, cwd, sizeof(cwd));
+	//		if (size > 0)
+	//		{
+	//			string d(cwd, size);
+	//			mShell->SetCWD(d);
+	//		}
+	//		else
+	//			mShell->SetCWD(mFile.GetPath().parent_path().string());
+	//	}
+	//	
+	//	SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+	//	SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+	//	SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+	//}
 
 	mPreparedForStdOut = false;
 	mStdErrWindowSelected = false;
 	
-	if (mStdErrWindow != nil)
-		mStdErrWindow->ClearList();
+	//if (mStdErrWindow != nil)
+	//	mStdErrWindow->ClearList();
 	
-	mShell->Execute(s);
+	//mShell->Execute(s);
 }
 
 void MTextDocument::Idle(
@@ -4237,15 +4243,15 @@ void MTextDocument::Idle(
 		mNeedReparse = false;
 	}
 	
-	if (mDataFD >= 0)
-	{
-		char buffer[10240];
-		int r = read(mDataFD, buffer, sizeof(buffer));
-		if (r == 0 or (r < 0 and errno != EAGAIN))
-			mDataFD = -1;
-		else if (r > 0)
-			StdOut(buffer, r);
-	}
+	//if (mDataFD >= 0)
+	//{
+	//	char buffer[10240];
+	//	int r = read(mDataFD, buffer, sizeof(buffer));
+	//	if (r == 0 or (r < 0 and errno != EAGAIN))
+	//		mDataFD = -1;
+	//	else if (r > 0)
+	//		StdOut(buffer, r);
+	//}
 }
 
 // ---------------------------------------------------------------------------
@@ -4328,18 +4334,18 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 		
 		if (not found)
 		{
-			MProject* project = MProject::Instance();
-			fs::path p;
-			
-			if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-				gApp->OpenOneDocument(MFile(p));
-			else if (mFile.IsValid())
-			{
-				MFile path = mFile.GetParent() / file.name;
-				
-				if (path.Exists())
-					gApp->OpenOneDocument(path);
-			}
+			//MProject* project = MProject::Instance();
+			//fs::path p;
+			//
+			//if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
+			//	gApp->OpenOneDocument(MFile(p));
+			//else if (mFile.IsValid())
+			//{
+			//	MFile path = mFile.GetParent() / file.name;
+			//	
+			//	if (path.Exists())
+			//		gApp->OpenOneDocument(path);
+			//}
 		}
 	}
 }
@@ -4354,21 +4360,21 @@ bool MTextDocument::ProcessCommand(
 	uint32			inModifiers)
 {
 	bool result = true;
-	MProject* project = MProject::Instance();
+	MProject* project = nil; //MProject::Instance();
 
 	string s;
 	
 	switch (inCommand)
 	{
-		case cmd_SaveInEPub:
-		{
-			MePubDocument* epub = MePubDocument::GetFirstEPubDocument();
-			while (epub != nil and inItemIndex-- > 0)
-				epub = epub->GetNextEPubDocument();
-			if (epub != nil)
-				epub->AddDocument(this);
-			break;
-		}
+		//case cmd_SaveInEPub:
+		//{
+		//	MePubDocument* epub = MePubDocument::GetFirstEPubDocument();
+		//	while (epub != nil and inItemIndex-- > 0)
+		//		epub = epub->GetNextEPubDocument();
+		//	if (epub != nil)
+		//		epub->AddDocument(this);
+		//	break;
+		//}
 		
 		case cmd_Undo:
 			DoUndo();
@@ -4447,7 +4453,7 @@ bool MTextDocument::ProcessCommand(
 			break;
 
 		case cmd_Find:
-			MFindDialog::Instance().Select();
+			//MFindDialog::Instance().Select();
 			break;
 
 		case cmd_FindNext:
@@ -4461,12 +4467,12 @@ bool MTextDocument::ProcessCommand(
 		
 		case cmd_EnterSearchString:
 			GetSelectedText(s);
-			MFindDialog::Instance().SetFindString(s, false);
+			//MFindDialog::Instance().SetFindString(s, false);
 			break;
 
 		case cmd_EnterReplaceString:
 			GetSelectedText(s);
-			MFindDialog::Instance().SetReplaceString(s);
+			//MFindDialog::Instance().SetReplaceString(s);
 			break;
 
 		case cmd_Replace:
@@ -4553,49 +4559,49 @@ bool MTextDocument::ProcessCommand(
 			SelectIncludePopupItem(inItemIndex);
 			break;
 	
-		case cmd_Preprocess:
-			if (project != nil)
-			{
-				MProjectFile* file = project->GetProjectFileForPath(
-					GetFile().GetPath());
-				
-				if (file != nil)
-					project->Preprocess(vector<MProjectFile*>(1, file));
-			}
-			break;
-			
-		case cmd_CheckSyntax:
-			if (project != nil)
-			{
-				MProjectFile* file = project->GetProjectFileForPath(
-					GetFile().GetPath());
-				
-				if (file != nil)
-					project->CheckSyntax(vector<MProjectFile*>(1, file));
-			}
-			break;
-			
-		case cmd_Compile:
-			if (project != nil)
-			{
-				MProjectFile* file = project->GetProjectFileForPath(
-					GetFile().GetPath());
-				
-				if (file != nil)
-					project->Compile(vector<MProjectFile*>(1, file));
-			}
-			break;
+		//case cmd_Preprocess:
+		//	if (project != nil)
+		//	{
+		//		MProjectFile* file = project->GetProjectFileForPath(
+		//			GetFile().GetPath());
+		//		
+		//		if (file != nil)
+		//			project->Preprocess(vector<MProjectFile*>(1, file));
+		//	}
+		//	break;
+		//	
+		//case cmd_CheckSyntax:
+		//	if (project != nil)
+		//	{
+		//		MProjectFile* file = project->GetProjectFileForPath(
+		//			GetFile().GetPath());
+		//		
+		//		if (file != nil)
+		//			project->CheckSyntax(vector<MProjectFile*>(1, file));
+		//	}
+		//	break;
+		//	
+		//case cmd_Compile:
+		//	if (project != nil)
+		//	{
+		//		MProjectFile* file = project->GetProjectFileForPath(
+		//			GetFile().GetPath());
+		//		
+		//		if (file != nil)
+		//			project->Compile(vector<MProjectFile*>(1, file));
+		//	}
+		//	break;
 
-		case cmd_Disassemble:
-			if (project != nil)
-			{
-				MProjectFile* file = project->GetProjectFileForPath(
-					GetFile().GetPath());
-				
-				if (file != nil)
-					project->Disassemble(vector<MProjectFile*>(1, file));
-			}
-			break;
+		//case cmd_Disassemble:
+		//	if (project != nil)
+		//	{
+		//		MProjectFile* file = project->GetProjectFileForPath(
+		//			GetFile().GetPath());
+		//		
+		//		if (file != nil)
+		//			project->Disassemble(vector<MProjectFile*>(1, file));
+		//	}
+		//	break;
 
 		case cmd_2CharsPerTab:
 			SetCharsPerTab(2);
@@ -4625,21 +4631,21 @@ bool MTextDocument::ProcessCommand(
 			result = StopRunningShellCommand();
 			break;
 		
-		case cmd_ShowDiffWindow:
-		{
-			unique_ptr<MDiffWindow> w(new MDiffWindow(this));
-			w->Select();
-			w.release();
-			break;
-		}
+		//case cmd_ShowDiffWindow:
+		//{
+		//	unique_ptr<MDiffWindow> w(new MDiffWindow(this));
+		//	w->Select();
+		//	w.release();
+		//	break;
+		//}
 
-		case cmd_Menu:
-			if (mTargetTextView != nil)
-				mTargetTextView->OnPopupMenu(nil);
-			break;
+		//case cmd_Menu:
+		//	if (mTargetTextView != nil)
+		//		mTargetTextView->OnPopupMenu(nil);
+		//	break;
 	
 		case cmd_ApplyScript:
-			if ((inModifiers & GDK_CONTROL_MASK) == 0)
+			if ((inModifiers & kControlKey) == 0)
 				DoApplyScript(inMenu->GetItemLabel(inItemIndex));
 			else
 				result = false;
@@ -4697,7 +4703,7 @@ bool MTextDocument::UpdateCommandStatus(
 {
 	bool result = true;
 
-	MProject* project = MProject::Instance();
+	//MProject* project = MProject::Instance();
 	MLanguage* lang = GetLanguage();
 
 	string title;
@@ -4795,15 +4801,15 @@ bool MTextDocument::UpdateCommandStatus(
 			outChecked = mShowWhiteSpace;
 			break;
 
-		case cmd_Preprocess:
-		case cmd_Compile:
-		case cmd_CheckSyntax:
-		case cmd_Disassemble:
-			outEnabled =
-				project != nil and
-				GetFile().IsLocal() and
-				project->IsFileInProject(GetFile().GetPath());
-			break;
+		//case cmd_Preprocess:
+		//case cmd_Compile:
+		//case cmd_CheckSyntax:
+		//case cmd_Disassemble:
+		//	outEnabled =
+		//		project != nil and
+		//		GetFile().IsLocal() and
+		//		project->IsFileInProject(GetFile().GetPath());
+		//	break;
 		
 		case cmd_2CharsPerTab:
 			outEnabled = true;
@@ -4900,50 +4906,50 @@ void MTextDocument::IOFileWritten()
 
 void MTextDocument::MakeXHTML()
 {
-	StartAction("Convert to XHTML");
-	
-	SelectAll();
-	
-	string text;
-	GetSelectedText(text);
-	
-	MXHTMLTools::Problems problems;
-	MXHTMLTools::ConvertAnyToXHTML(text, problems);
+	//StartAction("Convert to XHTML");
+	//
+	//SelectAll();
+	//
+	//string text;
+	//GetSelectedText(text);
+	//
+	//MXHTMLTools::Problems problems;
+	//MXHTMLTools::ConvertAnyToXHTML(text, problems);
 
-	ReplaceSelectedText(text, false, false);
-	ChangeSelection(MSelection(this, 0, 0));
-	
-	mText.SetEncoding(kEncodingUTF8);
-	mText.SetEOLNKind(eEOLN_UNIX);
+	//ReplaceSelectedText(text, false, false);
+	//ChangeSelection(MSelection(this, 0, 0));
+	//
+	//mText.SetEncoding(kEncodingUTF8);
+	//mText.SetEOLNKind(eEOLN_UNIX);
 
-	if (not problems.empty())
-	{
-		MMessageList messages;
-	
-		for (MXHTMLTools::Problems::iterator p = problems.begin(); p != problems.end(); ++p)
-		{
-			MMessageKind kind;
-			if (p->kind == MXHTMLTools::error)
-				kind = kMsgKindError;
-			else if (p->kind == MXHTMLTools::warning)
-				kind = kMsgKindWarning;
-			else if (p->kind == MXHTMLTools::info)
-				kind = kMsgKindNote;
-			else 
-				kind = kMsgKindNone;
-			
-			uint32 offset = LineAndColumnToOffset(p->line - 1, p->column);
-			messages.AddMessage(kind, GetFile(), p->line, offset, offset + 1, p->message);
-		}
-		
-		MMessageWindow* w = new MMessageWindow(_("Tidy messages"));
-		w->SetMessages(_("Tidy messages"), messages);
-		w->Show();
-	}
-	
-	SetLanguage("XML");
-	
-	FinishAction();
+	//if (not problems.empty())
+	//{
+	//	//MMessageList messages;
+	//
+	//	//for (MXHTMLTools::Problems::iterator p = problems.begin(); p != problems.end(); ++p)
+	//	//{
+	//	//	MMessageKind kind;
+	//	//	if (p->kind == MXHTMLTools::error)
+	//	//		kind = kMsgKindError;
+	//	//	else if (p->kind == MXHTMLTools::warning)
+	//	//		kind = kMsgKindWarning;
+	//	//	else if (p->kind == MXHTMLTools::info)
+	//	//		kind = kMsgKindNote;
+	//	//	else 
+	//	//		kind = kMsgKindNone;
+	//	//	
+	//	//	uint32 offset = LineAndColumnToOffset(p->line - 1, p->column);
+	//	//	messages.AddMessage(kind, GetFile(), p->line, offset, offset + 1, p->message);
+	//	//}
+	//	//
+	//	//MMessageWindow* w = new MMessageWindow(_("Tidy messages"));
+	//	//w->SetMessages(_("Tidy messages"), messages);
+	//	//w->Show();
+	//}
+	//
+	//SetLanguage("XML");
+	//
+	//FinishAction();
 }
 
 void MTextDocument::SetEOLNKind(

@@ -14,12 +14,12 @@
 
 #include <cmath>
 #include <cstring>
+#include <stack>
 
 #include "MDevice.h"
 #include "MDeviceImpl.h"
 #include "MView.h"
 #include "MWinWindowImpl.h"
-#include "MGlobals.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MError.h"
@@ -135,6 +135,8 @@ STDMETHODIMP_(HRESULT) MColouredText::QueryInterface(
 class MWinDeviceImpl : public MDeviceImp
 {
   public:
+							MWinDeviceImpl();
+
 							MWinDeviceImpl(
 								MView*		inView,
 								MRect		inBounds,
@@ -277,7 +279,7 @@ class MWinDeviceImpl : public MDeviceImp
 	wstring					mFont;
 	float					mFontSize;
 
-	float					mDpiScaleX, mDpiScaleY;
+	//float					mDpiScaleX, mDpiScaleY;
 
 	stack<ID2D1DrawingStateBlock*>
 							mState;
@@ -285,6 +287,27 @@ class MWinDeviceImpl : public MDeviceImp
 
 ID2D1Factory*	MWinDeviceImpl::sD2DFactory;
 IDWriteFactory*	MWinDeviceImpl::sDWFactory;
+
+MWinDeviceImpl::MWinDeviceImpl()
+	: mView(nil)
+	, mRenderTarget(nil)
+	, mClipLayer(nil)
+	, mTextFormat(nil)
+	, mTextLayout(nil)
+	, mForeBrush(nil)
+	, mBackBrush(nil)
+	, mFont(L"Consolas")
+	, mFontSize(10.f * 96.f / 72.f)
+{
+	if (sD2DFactory == nil)
+		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
+
+	if (sDWFactory == nil)
+		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
+	        DWRITE_FACTORY_TYPE_SHARED,
+	        __uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&sDWFactory)));
+}
 
 MWinDeviceImpl::MWinDeviceImpl(
 	MView*		inView,
@@ -404,23 +427,21 @@ void MWinDeviceImpl::Restore()
 void MWinDeviceImpl::SetFont(
 	const string&		inFont)
 {
-	string::const_iterator e = inFont.end();
+	string::const_iterator e = inFont.end() - 1;
 
 	int size = 0, n = 1;
-	while (e != inFont.begin() and isdigit(*--e))
+	while (e != inFont.begin() and isdigit(*e))
 	{
-		--e;
 		size += n * (*e - '0');
 		n *= 10;
+		--e;
 	}
 
 	if (e == inFont.end() or e == inFont.begin() or *e != ' ')
 		THROW(("Error in specified font"));
 
-	--e;
-	
 	mFont = c2w(inFont.substr(0, e - inFont.begin()));
-	mFontSize = mDpiScaleY * size * 96.f / 72.f;
+	mFontSize = /*mDpiScaleY*/ 1.0f * size * 96.f / 72.f;
 }
 
 void MWinDeviceImpl::SetForeColor(
@@ -628,25 +649,18 @@ IDWriteTextFormat* MWinDeviceImpl::GetTextFormat()
 
 uint32 MWinDeviceImpl::GetAscent()
 {
-
-	uint32 result = 10;
-
-	//PangoFontMetrics* metrics = GetMetrics();
-	//if (metrics != nil)
-	//	result = pango_font_metrics_get_ascent(metrics) / PANGO_SCALE;
-
-	return result;
+	DWRITE_LINE_SPACING_METHOD method;
+	float spacing, baseline;
+	THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
+	return static_cast<uint32>(ceil(baseline));
 }
 
 uint32 MWinDeviceImpl::GetDescent()
 {
-	uint32 result = 2;
-
-	//PangoFontMetrics* metrics = GetMetrics();
-	//if (metrics != nil)
-	//	result = pango_font_metrics_get_descent(metrics) / PANGO_SCALE;
-
-	return result;
+	DWRITE_LINE_SPACING_METHOD method;
+	float spacing, baseline;
+	THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
+	return static_cast<uint32>(ceil(spacing - baseline));
 }
 
 void MWinDeviceImpl::DrawString(
@@ -836,6 +850,13 @@ void MWinDeviceImpl::BreakLines(
 	//}
 }
 
+// --------------------------------------------------------------------
+
+MDeviceImp* MDeviceImp::Create()
+{
+	return new MWinDeviceImpl();
+}
+
 MDeviceImp* MDeviceImp::Create(
 	MView*				inView,
 	MRect				inRect,
@@ -843,3 +864,4 @@ MDeviceImp* MDeviceImp::Create(
 {
 	return new MWinDeviceImpl(inView, inRect, inCreateOffscreen);
 }
+

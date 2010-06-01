@@ -7,7 +7,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "MGlobals.h"
 #include "MPrefsDialog.h"
 #include "MLanguage.h"
 #include "MUtils.h"

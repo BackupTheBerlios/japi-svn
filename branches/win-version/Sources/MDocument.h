@@ -14,22 +14,24 @@
 
 #include "MP2PEvents.h"
 #include "MFile.h"
+#include "MHandler.h"
 
 class MDocClosedNotifier;
 class MController;
 class MDocWindow;
 class MMenu;
 
-class MDocument
+class MDocument : public MHandler
 {
   public:
 	virtual				~MDocument();
 
 	template<class D>
 	static D*			Create(
+							MHandler*			inSuper,
 							const MFile&		inFile)
 						{
-							std::unique_ptr<D> doc(new D(inFile));
+							std::unique_ptr<D> doc(new D(inSuper, inFile));
 							if (inFile.IsValid())
 								doc->DoLoad();
 							return doc.release();
@@ -115,6 +117,7 @@ class MDocument
   protected:
 
 	explicit			MDocument(
+							MHandler*			inSuper,
 							const MFile&		inFile);
 
 	virtual void		DoLoad();

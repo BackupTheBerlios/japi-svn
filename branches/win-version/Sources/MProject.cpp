@@ -26,7 +26,6 @@
 
 #include "MProject.h"
 #include "MDevice.h"
-#include "MGlobals.h"
 #include "MCommands.h"
 #include "MMessageWindow.h"
 #include "MUtils.h"

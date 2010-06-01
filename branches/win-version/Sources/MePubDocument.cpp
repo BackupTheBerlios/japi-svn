@@ -46,7 +46,6 @@
 #include "MFile.h"
 #include "MResources.h"
 #include "MStrings.h"
-#include "MGlobals.h"
 #include "MAlerts.h"
 #include "MUtils.h"
 #include "MMessageWindow.h"

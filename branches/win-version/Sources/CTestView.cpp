@@ -19,6 +19,8 @@ void CTestView::Draw(MRect inUpdate)
 	MColor c1("#efff7f"), c2("#ffffcc"), c3("#ffd281");
 	MDevice dev(this, bounds, false);
 
+	uint32 lineheight = dev.GetLineHeight();
+
 	dev.EraseRect(bounds);
 
 	MRect r(0, 0, 10, 10);
@@ -33,7 +35,13 @@ void CTestView::Draw(MRect inUpdate)
 	}
 
 	dev.SetForeColor(kBlack);
-	dev.DrawString("Hallo, wereld!", 10, 10);
+
+	int32 y = 10;
+	//for (int i = 0; i < 4; ++i)
+	//{
+		dev.DrawString("Hallo, wereld!", 10, y);
+	//	y += lineheight;
+	//}
 
 	dev.SetForeColor(c3);
 	dev.FillRect(MRect(10, 60, 50, 50));

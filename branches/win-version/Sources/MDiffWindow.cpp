@@ -10,7 +10,6 @@
 #include "MFile.h"
 #include "MTextDocument.h"
 #include "MDiffWindow.h"
-#include "MGlobals.h"
 #include "MUtils.h"
 #include "MMenu.h"
 #include "MDevice.h"

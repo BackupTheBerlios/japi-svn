@@ -242,30 +242,30 @@ int MApplication::RunEventLoop()
 
 void MApplication::DoSaveAll()
 {
-	//MDocument* doc = MDocument::GetFirstDocument();
-	//
-	//while (doc != nil)
-	//{
-	//	if (doc->IsSpecified() and doc->IsModified())
-	//		doc->DoSave();
-	//	doc = doc->GetNextDocument();
-	//}
-	//
-	//doc = MDocument::GetFirstDocument();
+	MDocument* doc = MDocument::GetFirstDocument();
+	
+	while (doc != nil)
+	{
+		if (doc->IsSpecified() and doc->IsModified())
+			doc->DoSave();
+		doc = doc->GetNextDocument();
+	}
+	
+	doc = MDocument::GetFirstDocument();
 
-	//while (doc != nil)
-	//{
-	//	if (not doc->IsSpecified() and doc->IsModified())
-	//	{
-	//		MController* controller = doc->GetFirstController();
+	while (doc != nil)
+	{
+		if (not doc->IsSpecified() and doc->IsModified())
+		{
+			MController* controller = doc->GetFirstController();
 
-	//		assert(controller != nil);
-	//		
-	//		controller->SaveDocumentAs();
-	//	}
-	//	
-	//	doc = doc->GetNextDocument();
-	//}
+			assert(controller != nil);
+			
+			controller->SaveDocumentAs();
+		}
+		
+		doc = doc->GetNextDocument();
+	}
 }
 
 void MApplication::DoCloseAll(
@@ -492,43 +492,6 @@ void MApplication::Pulse()
 		else
 			eIdle(GetLocalTime());
 	}
-}
-
-int MApplication::Main(
-	const vector<string>&	inArgs)
-{
-	po::options_description desc("Known options");
-	desc.add_options()
-	    ("help", "Produce help message")
-	    ("verbose", "Produce verbose output")
-		("file", po::value<vector<string> >(), "The file to edit")
-	;
-	
-	po::positional_options_description p;
-	p.add("file", -1);
-
-	po::variables_map vm;
-	po::store(po::command_line_parser(inArgs).options(desc).positional(p).run(), vm);
-	po::notify(vm);
-
-	int result = 0;
-	
-	if (vm.count("help"))
-	{
-		cout << desc;
-		result = 1;
-	}
-	
-	gApp = new MApplication();
-
-	result = gApp->RunEventLoop();
-
-	//foreach (const string& file, vm["file"].as<vector<string> >())
-	//{
-	//	cout << file << endl;
-	//}
-
-	return result;
 }
 
 /*

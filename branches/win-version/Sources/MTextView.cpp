@@ -14,7 +14,6 @@
 #include "MTextView.h"
 #include "MTextDocument.h"
 #include "MController.h"
-#include "MGlobals.h"
 #include "MPreferences.h"
 #include "MDocWindow.h"
 #include "MStyles.h"
@@ -53,10 +52,9 @@ const double
 //	Default constructor
 
 MTextView::MTextView(
-	GtkWidget*		inTextViewWidget,
-	GtkWidget*		inVScrollBar,
-	GtkWidget*		inHScrollBar)
-	: MView(inTextViewWidget, true, true)
+	uint32				inID,
+	MRect				inBounds)
+	: MView(inID, inBounds)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
 	, eScroll(this, &MTextView::ScrollMessage)
@@ -68,20 +66,20 @@ MTextView::MTextView(
 	, eDocumentChanged(this, &MTextView::SetDocument)
 	, eIdle(this, &MTextView::Tick)
 
-	, slOnCommit(this, &MTextView::OnCommit)
-	, slOnDeleteSurrounding(this, &MTextView::OnDeleteSurrounding)
-	, slOnPreeditChanged(this, &MTextView::OnPreeditChanged)
-	, slOnPreeditStart(this, &MTextView::OnPreeditStart)
-	, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
-	, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
-	
-	, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
-	, slOnHScrollBarValueChanged(this, &MTextView::OnHScrollBarValueChanged)
+	//, slOnCommit(this, &MTextView::OnCommit)
+	//, slOnDeleteSurrounding(this, &MTextView::OnDeleteSurrounding)
+	//, slOnPreeditChanged(this, &MTextView::OnPreeditChanged)
+	//, slOnPreeditStart(this, &MTextView::OnPreeditStart)
+	//, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
+	//, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
+	//
+	//, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
+	//, slOnHScrollBarValueChanged(this, &MTextView::OnHScrollBarValueChanged)
 	
 	, mController(nil)
 	, mDocument(nil)
-	, mVScrollBar(inVScrollBar)
-	, mHScrollBar(inHScrollBar)
+	//, mVScrollBar(inVScrollBar)
+	//, mHScrollBar(inHScrollBar)
 	, mLineHeight(10)
 	, mLastCaretBlinkTime(0)
 	, mCaretVisible(false)
@@ -95,33 +93,33 @@ MTextView::MTextView(
 {
 	AddRoute(eIdle, gApp->eIdle);
 	
-	mIMContext = gtk_im_context_simple_new();
-	
-	slOnCommit.Connect(G_OBJECT(mIMContext), "commit");
-	slOnDeleteSurrounding.Connect(G_OBJECT(mIMContext), "delete-surrounding");
-	slOnPreeditChanged.Connect(G_OBJECT(mIMContext), "preedit-changed");
-	slOnPreeditStart.Connect(G_OBJECT(mIMContext), "preedit-start");
-	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
-	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
-	
-//	SetCallback(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
-	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
-	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
+//	mIMContext = gtk_im_context_simple_new();
+//	
+//	slOnCommit.Connect(G_OBJECT(mIMContext), "commit");
+//	slOnDeleteSurrounding.Connect(G_OBJECT(mIMContext), "delete-surrounding");
+//	slOnPreeditChanged.Connect(G_OBJECT(mIMContext), "preedit-changed");
+//	slOnPreeditStart.Connect(G_OBJECT(mIMContext), "preedit-start");
+//	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
+//	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
+//	
+////	SetCallback(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
+//	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
+//	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
 
-	mImageOriginX = mImageOriginY = 0;
+	//mImageOriginX = mImageOriginY = 0;
 	
 	StylesChanged();
 	
-	const GtkTargetEntry targets[] =
-	{
-	    { const_cast<gchar*>("text/uri-list"), 0, DND_TARGET_TYPE_URI_LIST },
-	    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
-	    { const_cast<gchar*>("STRING"), 0, DND_TARGET_TYPE_STRING },
-//	    { const_cast<gchar*>("text/plain"), 0, DND_TARGET_TYPE_TEXT_PLAIN }
-	};
-
-	SetupDragAndDrop(
-		targets, sizeof(targets) / sizeof(GtkTargetEntry));
+//	const GtkTargetEntry targets[] =
+//	{
+//	    { const_cast<gchar*>("text/uri-list"), 0, DND_TARGET_TYPE_URI_LIST },
+//	    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
+//	    { const_cast<gchar*>("STRING"), 0, DND_TARGET_TYPE_STRING },
+////	    { const_cast<gchar*>("text/plain"), 0, DND_TARGET_TYPE_TEXT_PLAIN }
+//	};
+//
+//	SetupDragAndDrop(
+//		targets, sizeof(targets) / sizeof(GtkTargetEntry));
 }
 
 // Destructor
@@ -130,19 +128,19 @@ MTextView::~MTextView()
 {
 }
 
-bool MTextView::OnRealize()
-{
-	bool result = false;
-	
-	if (MView::OnRealize())
-	{
-		gtk_im_context_set_client_window(mIMContext, GetGtkWidget()->window);
-		
-		result = true;
-	}
-	
-	return result;
-}
+//bool MTextView::OnRealize()
+//{
+//	bool result = false;
+//	
+//	if (MView::OnRealize())
+//	{
+//		gtk_im_context_set_client_window(mIMContext, GetGtkWidget()->window);
+//		
+//		result = true;
+//	}
+//	
+//	return result;
+//}
 
 void MTextView::SetController(MController* inController)
 {
@@ -153,137 +151,137 @@ void MTextView::SetController(MController* inController)
 	SetDocument(mController->GetDocument());
 }
 
-bool MTextView::OnButtonPressEvent(
-	GdkEventButton*		inEvent)
-{
-	// short cut
-	if (mDocument == nil or
-		inEvent->button != 1 or
-		inEvent->type != GDK_BUTTON_PRESS or
-		GetLocalTime() < mLastFocusTime + kIsFocusClickDelay)
-	{
-		mLastFocusTime = 0;
-		return MView::OnButtonPressEvent(inEvent);
-	}
-
-	if (mLastClickTime + 250 > inEvent->time)
-		mClickCount = mClickCount % 3 + 1;
-	else
-		mClickCount = 1;
-	mLastClickTime = inEvent->time;
-		
-	switch (mClickCount)
-	{
-		case 1: mClickMode = eSelectRegular; break;
-		case 2: mClickMode = eSelectWords; break;
-		case 3: mClickMode = eSelectLines; break;
-	}
-	
-	mDocument->Reset();
-
-	MSelection selection = mDocument->GetSelection();
-
-	int32 x, y;
-	x = static_cast<int32>(inEvent->x) + mImageOriginX - kLeftMargin;
-	y = static_cast<int32>(inEvent->y) + mImageOriginY;
-	
-	mClickStartX = x;
-	mClickStartY = y;
-
-	uint32 keyModifiers = inEvent->state;
-	
-	if (x < 0)
-		mClickMode = eSelectLines;
-
-	mDocument->PositionToOffset(x, y, mClickCaret);
-
-	if (keyModifiers & GDK_SHIFT_MASK)
-		mClickAnchor = selection.GetAnchor();
-	else
-		mClickAnchor = mClickCaret;
-
-	if (keyModifiers & GDK_CONTROL_MASK)
-		mClickMode = eSelectBlock;
-	
-	mCaretVisible = true;
-	
-	if (mClickMode == eSelectRegular or mClickMode == eSelectBlock)
-	{
-		if (IsPointInSelection(x, y) and IsActive())
-			mClickMode = eSelectStartDrag;
-		else
-			mDocument->Select(mClickAnchor, mClickCaret, mClickMode == eSelectBlock);
-	}
-	else if (mClickMode == eSelectWords)
-	{
-		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
-		mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-	}
-	else if (mClickMode == eSelectLines)
-	{
-		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
-		
-		mDocument->Select(
-			mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
-	}
-
-	gtk_grab_add(GetGtkWidget());
-	
-	mLastScrollTime = 0;
-
-	return true;
-}
-
-bool MTextView::OnMotionNotifyEvent(
-	GdkEventMotion*	inEvent)
-{
-	int32 x, y;
-	GdkModifierType state;
-	
-	if (inEvent->is_hint)
-		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
-	else
-	{
-		x = static_cast<int32>(inEvent->x);
-		y = static_cast<int32>(inEvent->y);
-		state = GdkModifierType(inEvent->state);
-	}
-
-	x += mImageOriginX - kLeftMargin;
-	y += mImageOriginY;
-	
-	if (mClickMode == eSelectStartDrag)
-	{
-		if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
-		{
-			const GtkTargetEntry sources[] =
-			{
-			    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
-			};
-			
-			DragBegin(sources, 1, inEvent);
-
-			mClickMode = eSelectNone;
-		}
-	}
-	else
-	{
-		if (IsPointInSelection(x, y))
-			SetCursor(eNormalCursor);
-		else if (x >= 0)
-			SetCursor(eIBeamCursor);
-		else
-			SetCursor(eRightCursor);
-	
-		if (mClickMode != eSelectNone and IsActive())
-		{
-			if (ScrollToPointer(x, y))
-				mLastScrollTime = GetLocalTime();
-		}
-	}
-	
-	return true;
-}
+//bool MTextView::OnButtonPressEvent(
+//	GdkEventButton*		inEvent)
+//{
+//	// short cut
+//	if (mDocument == nil or
+//		inEvent->button != 1 or
+//		inEvent->type != GDK_BUTTON_PRESS or
+//		GetLocalTime() < mLastFocusTime + kIsFocusClickDelay)
+//	{
+//		mLastFocusTime = 0;
+//		return MView::OnButtonPressEvent(inEvent);
+//	}
+//
+//	if (mLastClickTime + 250 > inEvent->time)
+//		mClickCount = mClickCount % 3 + 1;
+//	else
+//		mClickCount = 1;
+//	mLastClickTime = inEvent->time;
+//		
+//	switch (mClickCount)
+//	{
+//		case 1: mClickMode = eSelectRegular; break;
+//		case 2: mClickMode = eSelectWords; break;
+//		case 3: mClickMode = eSelectLines; break;
+//	}
+//	
+//	mDocument->Reset();
+//
+//	MSelection selection = mDocument->GetSelection();
+//
+//	int32 x, y;
+//	x = static_cast<int32>(inEvent->x) + mImageOriginX - kLeftMargin;
+//	y = static_cast<int32>(inEvent->y) + mImageOriginY;
+//	
+//	mClickStartX = x;
+//	mClickStartY = y;
+//
+//	uint32 keyModifiers = inEvent->state;
+//	
+//	if (x < 0)
+//		mClickMode = eSelectLines;
+//
+//	mDocument->PositionToOffset(x, y, mClickCaret);
+//
+//	if (keyModifiers & GDK_SHIFT_MASK)
+//		mClickAnchor = selection.GetAnchor();
+//	else
+//		mClickAnchor = mClickCaret;
+//
+//	if (keyModifiers & GDK_CONTROL_MASK)
+//		mClickMode = eSelectBlock;
+//	
+//	mCaretVisible = true;
+//	
+//	if (mClickMode == eSelectRegular or mClickMode == eSelectBlock)
+//	{
+//		if (IsPointInSelection(x, y) and IsActive())
+//			mClickMode = eSelectStartDrag;
+//		else
+//			mDocument->Select(mClickAnchor, mClickCaret, mClickMode == eSelectBlock);
+//	}
+//	else if (mClickMode == eSelectWords)
+//	{
+//		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
+//		mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+//	}
+//	else if (mClickMode == eSelectLines)
+//	{
+//		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
+//		
+//		mDocument->Select(
+//			mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+//	}
+//
+//	gtk_grab_add(GetGtkWidget());
+//	
+//	mLastScrollTime = 0;
+//
+//	return true;
+//}
+//
+//bool MTextView::OnMotionNotifyEvent(
+//	GdkEventMotion*	inEvent)
+//{
+//	int32 x, y;
+//	GdkModifierType state;
+//	
+//	if (inEvent->is_hint)
+//		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
+//	else
+//	{
+//		x = static_cast<int32>(inEvent->x);
+//		y = static_cast<int32>(inEvent->y);
+//		state = GdkModifierType(inEvent->state);
+//	}
+//
+//	x += mImageOriginX - kLeftMargin;
+//	y += mImageOriginY;
+//	
+//	if (mClickMode == eSelectStartDrag)
+//	{
+//		if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
+//		{
+//			const GtkTargetEntry sources[] =
+//			{
+//			    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
+//			};
+//			
+//			DragBegin(sources, 1, inEvent);
+//
+//			mClickMode = eSelectNone;
+//		}
+//	}
+//	else
+//	{
+//		if (IsPointInSelection(x, y))
+//			SetCursor(eNormalCursor);
+//		else if (x >= 0)
+//			SetCursor(eIBeamCursor);
+//		else
+//			SetCursor(eRightCursor);
+//	
+//		if (mClickMode != eSelectNone and IsActive())
+//		{
+//			if (ScrollToPointer(x, y))
+//				mLastScrollTime = GetLocalTime();
+//		}
+//	}
+//	
+//	return true;
+//}
 
 bool MTextView::ScrollToPointer(
 	int32		inX,
@@ -348,19 +346,19 @@ bool MTextView::ScrollToPointer(
 	return scrolled;
 }
 	
-bool MTextView::OnButtonReleaseEvent(
-	GdkEventButton*	inEvent)
-{
-	gtk_grab_remove(GetGtkWidget());	
-
-	if (mClickMode == eSelectStartDrag and mDocument != nil)
-		mDocument->Select(mClickAnchor, mClickCaret);
-	
-	mClickMode = eSelectNone;
-	mLastScrollTime = 0;
-
-	return true;
-}
+//bool MTextView::OnButtonReleaseEvent(
+//	GdkEventButton*	inEvent)
+//{
+//	gtk_grab_remove(GetGtkWidget());	
+//
+//	if (mClickMode == eSelectStartDrag and mDocument != nil)
+//		mDocument->Select(mClickAnchor, mClickCaret);
+//	
+//	mClickMode = eSelectNone;
+//	mLastScrollTime = 0;
+//
+//	return true;
+//}
 
 uint32 MTextView::CountPages(
 	MDevice&		inDevice)
@@ -386,14 +384,18 @@ uint32 MTextView::CountPages(
 }
 
 void MTextView::Draw(
-	MDevice&		inDevice,
 	MRect			inUpdate)
 {
 	if (mDocument == nil)
 		return;
 
-	MValueChanger<int32> saveXOrigin(mImageOriginX, mImageOriginX);
-	MValueChanger<int32> saveYOrigin(mImageOriginY, mImageOriginY);
+	MDevice dev(this, inUpdate, false);
+
+	MRect bounds;
+	GetBounds(bounds);
+
+	MValueChanger<int32> saveXOrigin(bounds.x, bounds.x);
+	MValueChanger<int32> saveYOrigin(bounds.y, bounds.y);
 
 	MValueChanger<int32> saveDescent(mDescent, mDescent);
 	MValueChanger<int32> saveLineHeight(mLineHeight, mLineHeight);
@@ -401,34 +403,34 @@ void MTextView::Draw(
 
 	mNeedsDisplay = false;
 
-	MRect bounds = inDevice.GetBounds();
-
-	if (inDevice.IsPrinting())
+	if (dev.IsPrinting())
 	{
-		inDevice.SetFont(mDocument->GetFont());
+		dev.SetFont(mDocument->GetFont());
 		
-		mDescent = inDevice.GetDescent();
-		mLineHeight = inDevice.GetAscent() + mDescent + inDevice.GetLeading();
-		mCharWidth = inDevice.GetStringWidth("          ") / 10;
+		mDescent = dev.GetDescent();
+		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
+
+		dev.SetText("          ");
+		mCharWidth = dev.GetTextWidth() / 10;
 		
 		uint32 linesPerPage = bounds.height / mLineHeight;
 
-		mImageOriginX = 0;
-		mImageOriginY = linesPerPage * inDevice.GetPageNr() * mLineHeight;
+		bounds.x = 0;
+		bounds.y = linesPerPage * dev.GetPageNr() * mLineHeight;
 		
-		inDevice.SetOrigin(bounds.x, bounds.y);
-		inUpdate.x = 0;
-		inUpdate.y = 0;
+		//dev.SetOrigin(bounds.x, bounds.y);
+		//inUpdate.x = 0;
+		//inUpdate.y = 0;
 		
 		mDocument->SetWrapWidth(bounds.width);
 	}
 	else
-		inDevice.EraseRect(bounds);
+		dev.EraseRect(bounds);
 	
 	if (mDocument->GetShowWhiteSpace())
-		inDevice.SetDrawWhiteSpace(true);
+		dev.SetDrawWhiteSpace(true);
 	
-	int32 minLine = (mImageOriginY + inUpdate.y) / mLineHeight - 1;
+	int32 minLine = (bounds.y + inUpdate.y) / mLineHeight - 1;
 	if (minLine < 0)
 		minLine = 0;
 	
@@ -438,13 +440,13 @@ void MTextView::Draw(
 
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
-		MRect lineRect(0, line * mLineHeight - mImageOriginY, bounds.width + mImageOriginX, mLineHeight);
+		MRect lineRect(0, line * mLineHeight - bounds.y, bounds.width + bounds.x, mLineHeight);
 		if (inUpdate.Intersects(lineRect))
-			DrawLine(line, inDevice, lineRect);
+			DrawLine(line, dev, lineRect);
 	}
 
-	if (IsWithinDrag())
-		DrawDragHilite(inDevice);
+	//if (IsWithinDrag())
+	//	DrawDragHilite(dev);
 }
 
 void MTextView::DrawLine(
@@ -464,9 +466,6 @@ void MTextView::DrawLine(
 	int32 indent = mDocument->GetLineIndentWidth(inLineNr);
 
 	MDeviceContextSaver save(inDevice);
-
-	if (mImageOriginX != 0)
-		inDevice.SetOrigin(-mImageOriginX, 0);
 
 	int32 y = inLineRect.y;
 	int32 x = inLineRect.x + indent;
@@ -637,14 +636,14 @@ void MTextView::DrawLine(
 		inDevice.DrawText(x, y);
 	}
 	
-	if (IsWithinDrag())
-	{
-		caretLine = mDocument->OffsetToLine(mDragCaret);
-		caretColumn = mDragCaret - mDocument->LineStart(caretLine);
-		
-		if (caretLine == inLineNr and mCaretVisible)
-			drawCaret = true;
-	}
+	//if (IsWithinDrag())
+	//{
+	//	caretLine = mDocument->OffsetToLine(mDragCaret);
+	//	caretColumn = mDragCaret - mDocument->LineStart(caretLine);
+	//	
+	//	if (caretLine == inLineNr and mCaretVisible)
+	//		drawCaret = true;
+	//}
 
 	if (drawCaret)
 	{
@@ -655,190 +654,178 @@ void MTextView::DrawLine(
 	}
 }
 
-void MTextView::DrawDragImage(
-	GdkPixmap*&		outPixmap,
-	int32&			outX,
-	int32&			outY)
-{
-	THROW_IF_NIL(mDocument);
+//void MTextView::DrawDragImage(
+//	GdkPixmap*&		outPixmap,
+//	int32&			outX,
+//	int32&			outY)
+//{
+//	THROW_IF_NIL(mDocument);
+//
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	MValueChanger<bool> saveFlag(mDrawForDragImage, true);
+//	
+//	MSelection selection = mDocument->GetSelection();
+//	
+//	uint32 minLine = (mImageOriginY + bounds.y) / mLineHeight;
+//	if (minLine < selection.GetMinLine())
+//		minLine = selection.GetMinLine();
+//
+//	MRect lr = GetLineRect(minLine);
+//	outX -= lr.x;
+//	outY -= lr.y;
+//	
+//	uint32 maxLine = minLine + bounds.height / mLineHeight + 2;
+//	if (maxLine > selection.GetMaxLine())
+//		maxLine = selection.GetMaxLine();
+//
+//	bounds = MRect(0, 0, bounds.width, (maxLine - minLine + 1) * mLineHeight);
+//	MDevice dev(this, bounds, true);
+//	dev.EraseRect(bounds);
+//	
+//	MRegion rgn;
+//	mDocument->GetSelectionRegion(rgn);
+//	rgn.OffsetBy(-mImageOriginX + kLeftMargin, -(minLine * mLineHeight));
+//	dev.ClipRegion(rgn);
+//
+//	lr = bounds;
+//	lr.height = mLineHeight;
+//
+//	for (uint32  line= minLine; line <= maxLine; ++line)
+//	{
+//		DrawLine(line, dev, lr);
+//		lr.y += mLineHeight;
+//	}
+//	
+//	dev.MakeTransparent(0.35);
+//	outPixmap = dev.GetPixmap();
+//}
 
-	MRect bounds;
-	GetBounds(bounds);
-	
-	MValueChanger<bool> saveFlag(mDrawForDragImage, true);
-	
-	MSelection selection = mDocument->GetSelection();
-	
-	uint32 minLine = (mImageOriginY + bounds.y) / mLineHeight;
-	if (minLine < selection.GetMinLine())
-		minLine = selection.GetMinLine();
+//void MTextView::AdjustScrollBars()
+//{
+//	uint32 width = 10, height = 10;
+//	
+//	if (mDocument != nil)
+//	{
+//		width = mDocument->GuessMaxWidth();
+//		height = mDocument->CountLines() * mLineHeight;
+//	}
+//	
+//	MRect bounds;
+//	GetBounds(bounds);
+//	
+//	uint32 linesPerPage = bounds.height / mLineHeight;
+//
+//	GtkAdjustment* adj = gtk_range_get_adjustment(GTK_RANGE(mVScrollBar));
+//	
+//	if (adj != nil)
+//	{
+//		adj->lower = 0;
+//		adj->upper = height;
+//		adj->step_increment = mLineHeight;
+//		adj->page_increment = linesPerPage * mLineHeight;
+//		adj->page_size = bounds.height;
+//		adj->value = mImageOriginY;
+//		
+//		gtk_adjustment_changed(adj);
+//	}
+//	
+//	if (width == 0)
+//		gtk_widget_hide(mHScrollBar);
+//	else
+//	{
+//		gtk_widget_show(mHScrollBar);
+//	
+//		adj = gtk_range_get_adjustment(GTK_RANGE(mHScrollBar));
+//		
+//		if (adj != nil)
+//		{
+//			adj->lower = 0;
+//			adj->upper = width + (bounds.width / 2);
+//			adj->step_increment = mCharWidth;
+//			adj->page_increment = bounds.width / 2;
+//			adj->page_size = bounds.width;
+//			adj->value = mImageOriginX;
+//			
+//			gtk_adjustment_changed(adj);
+//		}
+//	}
+//}
 
-	MRect lr = GetLineRect(minLine);
-	outX -= lr.x;
-	outY -= lr.y;
-	
-	uint32 maxLine = minLine + bounds.height / mLineHeight + 2;
-	if (maxLine > selection.GetMaxLine())
-		maxLine = selection.GetMaxLine();
+//bool MTextView::OnConfigureEvent(
+//	GdkEventConfigure*	inEvent)
+//{
+//	AdjustScrollBars();
+//	
+//	eBoundsChanged();
+//	
+//	return false;
+//}
 
-	bounds = MRect(0, 0, bounds.width, (maxLine - minLine + 1) * mLineHeight);
-	MDevice dev(this, bounds, true);
-	dev.EraseRect(bounds);
-	
-	MRegion rgn;
-	mDocument->GetSelectionRegion(rgn);
-	rgn.OffsetBy(-mImageOriginX + kLeftMargin, -(minLine * mLineHeight));
-	dev.ClipRegion(rgn);
+//void MTextView::ScrollTo(
+//	int32			inX,
+//	int32			inY)
+//{
+//	if (mDocument != nil and mDocument->GetSoftwrap())
+//		inX = 0;
+//	
+//	int32 dx = inX - mImageOriginX;
+//	int32 dy = inY - mImageOriginY;
+//	
+//	Scroll(-dx, -dy);
+//	
+//	mImageOriginX = inX;
+//	mImageOriginY = inY;
+//	
+//	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
+//	gtk_range_set_value(GTK_RANGE(mHScrollBar), inX);
+//}
 
-	lr = bounds;
-	lr.height = mLineHeight;
+//void MTextView::ScrollToPosition(
+//	int32			inX,
+//	int32			inY)
+//{
+//	ScrollTo(inX, inY);
+//}
+//
+//void MTextView::GetScrollPosition(
+//	int32&				outX,
+//	int32&				outY)
+//{
+//	outX = mImageOriginX;
+//	outY = mImageOriginY;
+//}
 
-	for (uint32  line= minLine; line <= maxLine; ++line)
-	{
-		DrawLine(line, dev, lr);
-		lr.y += mLineHeight;
-	}
-	
-	dev.MakeTransparent(0.35);
-	outPixmap = dev.GetPixmap();
-}
-
-void MTextView::OnVScrollBarValueChanged()
-{
-	DoScrollTo(mImageOriginX, 
-		static_cast<int32>(gtk_range_get_value(GTK_RANGE(mVScrollBar))));
-}
-
-void MTextView::OnHScrollBarValueChanged()
-{
-	DoScrollTo(
-		static_cast<int32>(gtk_range_get_value(GTK_RANGE(mHScrollBar))),
-		mImageOriginY);
-}
-
-void MTextView::AdjustScrollBars()
-{
-	uint32 width = 10, height = 10;
-	
-	if (mDocument != nil)
-	{
-		width = mDocument->GuessMaxWidth();
-		height = mDocument->CountLines() * mLineHeight;
-	}
-	
-	MRect bounds;
-	GetBounds(bounds);
-	
-	uint32 linesPerPage = bounds.height / mLineHeight;
-
-	GtkAdjustment* adj = gtk_range_get_adjustment(GTK_RANGE(mVScrollBar));
-	
-	if (adj != nil)
-	{
-		adj->lower = 0;
-		adj->upper = height;
-		adj->step_increment = mLineHeight;
-		adj->page_increment = linesPerPage * mLineHeight;
-		adj->page_size = bounds.height;
-		adj->value = mImageOriginY;
-		
-		gtk_adjustment_changed(adj);
-	}
-	
-	if (width == 0)
-		gtk_widget_hide(mHScrollBar);
-	else
-	{
-		gtk_widget_show(mHScrollBar);
-	
-		adj = gtk_range_get_adjustment(GTK_RANGE(mHScrollBar));
-		
-		if (adj != nil)
-		{
-			adj->lower = 0;
-			adj->upper = width + (bounds.width / 2);
-			adj->step_increment = mCharWidth;
-			adj->page_increment = bounds.width / 2;
-			adj->page_size = bounds.width;
-			adj->value = mImageOriginX;
-			
-			gtk_adjustment_changed(adj);
-		}
-	}
-}
-
-bool MTextView::OnConfigureEvent(
-	GdkEventConfigure*	inEvent)
-{
-	AdjustScrollBars();
-	
-	eBoundsChanged();
-	
-	return false;
-}
-
-void MTextView::DoScrollTo(
-	int32			inX,
-	int32			inY)
-{
-	if (mDocument != nil and mDocument->GetSoftwrap())
-		inX = 0;
-	
-	int32 dx = inX - mImageOriginX;
-	int32 dy = inY - mImageOriginY;
-	
-	Scroll(-dx, -dy);
-	
-	mImageOriginX = inX;
-	mImageOriginY = inY;
-	
-	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
-	gtk_range_set_value(GTK_RANGE(mHScrollBar), inX);
-}
-
-void MTextView::ScrollToPosition(
-	int32			inX,
-	int32			inY)
-{
-	DoScrollTo(inX, inY);
-}
-
-void MTextView::GetScrollPosition(
-	int32&				outX,
-	int32&				outY)
-{
-	outX = mImageOriginX;
-	outY = mImageOriginY;
-}
-
-bool MTextView::OnScrollEvent(
-	GdkEventScroll*		inEvent)
-{
-	switch (inEvent->direction)
-	{
-		case GDK_SCROLL_UP:
-			for (int i = 0; i < 3; ++i)
-				ScrollMessage(kScrollLineDown);
-			break; 
-
-		case GDK_SCROLL_DOWN:
-			for (int i = 0; i < 3; ++i)
-				ScrollMessage(kScrollLineUp);
-			break; 
-
-		case GDK_SCROLL_LEFT:
-			break;
-
-		case GDK_SCROLL_RIGHT:
-			break; 
-	}	
-		
-	return true;
-}
+//bool MTextView::OnScrollEvent(
+//	GdkEventScroll*		inEvent)
+//{
+//	switch (inEvent->direction)
+//	{
+//		case GDK_SCROLL_UP:
+//			for (int i = 0; i < 3; ++i)
+//				ScrollMessage(kScrollLineDown);
+//			break; 
+//
+//		case GDK_SCROLL_DOWN:
+//			for (int i = 0; i < 3; ++i)
+//				ScrollMessage(kScrollLineUp);
+//			break; 
+//
+//		case GDK_SCROLL_LEFT:
+//			break;
+//
+//		case GDK_SCROLL_RIGHT:
+//			break; 
+//	}	
+//		
+//	return true;
+//}
 
 void MTextView::LineCountChanged()
 {
-	AdjustScrollBars();
+	if (mScroller != nil)
+		mScroller->AdjustScrollbars();
 }
 
 void MTextView::Tick(
@@ -849,23 +836,23 @@ void MTextView::Tick(
 	
 	MValueChanger<bool> change(mInTick, true);
 
-	if (mLastScrollTime > 0 and
-		mLastScrollTime + kScrollDelay < inTime)
-	{
-		int32 x, y;
-		GdkModifierType state;
-		gdk_window_get_pointer(GetGtkWidget()->window, &x, &y, &state);
-	
-		x += mImageOriginX - kLeftMargin;
-		y += mImageOriginY;
-		
-		if (ScrollToPointer(x, y))
-			mLastScrollTime = inTime;
-		else
-			mLastScrollTime = 0;
-		
-		return;
-	}
+	//if (mLastScrollTime > 0 and
+	//	mLastScrollTime + kScrollDelay < inTime)
+	//{
+	//	int32 x, y;
+	//	GdkModifierType state;
+	//	gdk_window_get_pointer(GetGtkWidget()->window, &x, &y, &state);
+	//
+	//	x += mImageOriginX - kLeftMargin;
+	//	y += mImageOriginY;
+	//	
+	//	if (ScrollToPointer(x, y))
+	//		mLastScrollTime = inTime;
+	//	else
+	//		mLastScrollTime = 0;
+	//	
+	//	return;
+	//}
 	
 	if (inTime < mLastCaretBlinkTime + kCaretBlinkTime)
 		return;
@@ -874,32 +861,32 @@ void MTextView::Tick(
 	
 	MSelection sel = mDocument->GetSelection();
 
-	if (IsWithinDrag() and mDragIsAcceptable)
-	{
-		InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-		mCaretVisible = not mCaretVisible;
-	}
-	else
-	{
-		uint32 caret = sel.GetCaret();
-		
-		if (mCaret != caret)
-		{
-			InvalidateLine(mDocument->OffsetToLine(mCaret));
-			mCaret = caret;
-		}
+	//if (IsWithinDrag() and mDragIsAcceptable)
+	//{
+	//	InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+	//	mCaretVisible = not mCaretVisible;
+	//}
+	//else
+	//{
+	//	uint32 caret = sel.GetCaret();
+	//	
+	//	if (mCaret != caret)
+	//	{
+	//		InvalidateLine(mDocument->OffsetToLine(mCaret));
+	//		mCaret = caret;
+	//	}
 
-		if ((not IsActive() and mCaretVisible) or
-			(IsActive() and (sel.IsEmpty() or mCaretVisible)))
-		{
-			if (mDocument->GetFastFindMode())
-				mCaretVisible = true;
-			else
-				mCaretVisible = not mCaretVisible;
-	
-			InvalidateLine(mDocument->OffsetToLine(mCaret));
-		}
-	}
+	//	if ((not IsActive() and mCaretVisible) or
+	//		(IsActive() and (sel.IsEmpty() or mCaretVisible)))
+	//	{
+	//		if (mDocument->GetFastFindMode())
+	//			mCaretVisible = true;
+	//		else
+	//			mCaretVisible = not mCaretVisible;
+	//
+	//		InvalidateLine(mDocument->OffsetToLine(mCaret));
+	//	}
+	//}
 }
 
 void MTextView::SelectionChanged(
@@ -924,10 +911,11 @@ MRect MTextView::GetLineRect(
 	
 	GetBounds(result);
 
+	result.width += result.x;
 	result.x = 0;
-	result.y = inLineNr * mLineHeight - mImageOriginY;
+
+	result.y = inLineNr * mLineHeight;
 	result.height = mLineHeight;
-	result.width += mImageOriginX;
 	
 	return result;
 }
@@ -939,14 +927,14 @@ void MTextView::InvalidateDirtyLines()
 {
 	assert(mDocument);
 	
-	MRect frame;
-	GetBounds(frame);
+	MRect bounds;
+	GetBounds(bounds);
 
-	uint32 minLine = static_cast<uint32>((mImageOriginY + frame.y) / mLineHeight);
+	uint32 minLine = static_cast<uint32>(bounds.y / mLineHeight);
 	if (minLine > 0)
 		--minLine;
 	
-	uint32 maxLine = static_cast<uint32>(minLine + frame.height / mLineHeight + 1);
+	uint32 maxLine = static_cast<uint32>(minLine + bounds.height / mLineHeight + 1);
 	if (maxLine >= mDocument->CountLines() and mDocument->CountLines() > 0)
 		maxLine = mDocument->CountLines() - 1;
 	
@@ -997,17 +985,17 @@ void MTextView::ScrollMessage(MScrollMessage inCommand)
 {
 	assert(mDocument);
 	
-	MRect frame;
-	GetBounds(frame);
+	MRect bounds;
+	GetBounds(bounds);
 
-	int32 x = mImageOriginX, y = mImageOriginY;
+	int32 x = 0, y = 0;
 	
 	uint32 lineCount = mDocument->CountLines();
-	uint32 linesPerPage = static_cast<uint32>(frame.height / mLineHeight);
+	uint32 linesPerPage = static_cast<uint32>(bounds.height / mLineHeight);
 	if (linesPerPage > 1)
 		--linesPerPage;
 	
-	int32 maxLoc = (lineCount * mLineHeight) - frame.height;
+	int32 maxLoc = (lineCount * mLineHeight) - bounds.height;
 	if (maxLoc < 0)
 		maxLoc = 0;
 	
@@ -1015,12 +1003,12 @@ void MTextView::ScrollMessage(MScrollMessage inCommand)
 	{
 		case kScrollToStart:
 			y = 0;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 		
 		case kScrollToEnd:
 			y = maxLoc;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 		
 		case kScrollToCaret:
@@ -1039,39 +1027,38 @@ void MTextView::ScrollMessage(MScrollMessage inCommand)
 			y += mLineHeight;
 			if (y > maxLoc)
 				y = maxLoc;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 
 		case kScrollLineDown:
 			y -= mLineHeight;
 			if (y < 0)
 				y = 0;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 
 		case kScrollPageUp:
 			y -= (linesPerPage * mLineHeight);
 			if (y < 0)
 				y = 0;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 
 		case kScrollPageDown:
 			y += (linesPerPage * mLineHeight);
 			if (y > maxLoc)
 				y = maxLoc;
-			DoScrollTo(x, y);
+			ScrollTo(x, y);
 			break;
 		
 		case kScrollForKiss:
-			mSavedOriginX = mImageOriginX;
-			mSavedOriginY = mImageOriginY;
+			mSavedBounds = bounds;
 			ScrollToSelection(false);
 			UpdateNow();
 			break;
 		
 		case kScrollReturnAfterKiss:
-			DoScrollTo(mSavedOriginX, mSavedOriginY);
+			ScrollTo(mSavedBounds.x, mSavedBounds.y);
 			break;
 		
 		case kScrollForDiff:
@@ -1101,7 +1088,7 @@ bool MTextView::ScrollToCaret(
 	
 	int32 top, bottom;
 
-	top = mImageOriginY;
+	top = bounds.y;
 	bottom = top + bounds.height;
 	
 	if (inScrollForDrag)
@@ -1115,9 +1102,9 @@ bool MTextView::ScrollToCaret(
 	
 	uint32 caret;
 	
-	if (IsWithinDrag())
-		caret = mDragCaret;
-	else
+	//if (IsWithinDrag())
+	//	caret = mDragCaret;
+	//else
 		caret = selection.GetCaret();
 	
 	uint32 line;
@@ -1126,8 +1113,8 @@ bool MTextView::ScrollToCaret(
 	mDocument->OffsetToPosition(caret, line, x);
 	y = line * mLineHeight;
 	
-	if (not IsWithinDrag())
-	{
+	//if (not IsWithinDrag())
+	//{
 		if (selection.GetAnchor() < caret and
 			line < mDocument->CountLines() and
 			mDocument->LineStart(line) == caret)
@@ -1135,71 +1122,71 @@ bool MTextView::ScrollToCaret(
 			--line;
 			y -= mLineHeight;
 		}
-	}
+	//}
 	
 	int32 newX, newY;
-	newX = mImageOriginX;
-	newY = mImageOriginY;
+	newX = bounds.x;
+	newY = bounds.y;
 	
 	if (y < top)
 	{
 		newY = line * mLineHeight;
-		if (IsWithinDrag())
-			newY -= mLineHeight;
+		//if (IsWithinDrag())
+		//	newY -= mLineHeight;
 	}
 	else if (y + mLineHeight > bottom)
 	{
 		newY = (line + 1) * mLineHeight - (bottom - top) + 2;
-		if (IsWithinDrag())
-			newY += mLineHeight;
+		//if (IsWithinDrag())
+		//	newY += mLineHeight;
 	}
 	
 	if (x < 3 or (mDocument != nil and mDocument->GetSoftwrap()))
 		newX = 0;
-	else if (x < mImageOriginX)
-		newX = mImageOriginX;
-	else if (x > mImageOriginX + bounds.width - 3 - kLeftMargin)
+	else if (x < bounds.x)
+		newX = bounds.x;
+	else if (x > bounds.x + bounds.width - 3 - kLeftMargin)
 		newX = x - bounds.width + 3 + kLeftMargin;
 	
 	bool result = false;
 	
-	if (newX != mImageOriginX or newY != mImageOriginY)
+	if (newX != bounds.x or newY != bounds.y)
 	{
-		int32 dx = mImageOriginX - newX;
-		int32 dy = mImageOriginY - newY;
+		int32 dx = bounds.x- newX;
+		int32 dy = bounds.y- newY;
 		
-		if (IsWithinDrag())
-		{
-			if (dx)
-			{
-				MRect r(bounds);
+		//if (IsWithinDrag())
+		//{
+		//	if (dx)
+		//	{
+		//		MRect r(bounds);
 
-				if (dx < 0)
-					r.x += r.width - 4;
-				r.width = 4;
+		//		if (dx < 0)
+		//			r.x += r.width - 4;
+		//		r.width = 4;
 
-				InvalidateRect(r);
-			}
+		//		InvalidateRect(r);
+		//	}
 
-			if (dy)
-			{
-				MRect r(bounds);
+		//	if (dy)
+		//	{
+		//		MRect r(bounds);
 
-				if (dy < 0)
-					r.y += r.height - 4;
-				r.height = 4;
+		//		if (dy < 0)
+		//			r.y += r.height - 4;
+		//		r.height = 4;
 
-				InvalidateRect(r);
-			}
-		}
+		//		InvalidateRect(r);
+		//	}
+		//}
 
-		DoScrollTo(newX, newY);
+		ScrollTo(newX, newY);
 
-		if (IsWithinDrag())
-		{
-			MDevice dev(this, bounds);
-			DrawDragHilite(dev);
-		}
+		//if (IsWithinDrag())
+		//{
+		//	MDevice dev(this, bounds);
+		//	DrawDragHilite(dev);
+		//}
 		
 		result = true;
 	}
@@ -1248,7 +1235,7 @@ void MTextView::ScrollToLine(
 
 		y = inLineNr * mLineHeight;
 		
-		DoScrollTo(0, y);
+		ScrollTo(0, y);
 	}
 }
 
@@ -1273,7 +1260,7 @@ void MTextView::ScrollToSelection(
 		line = selection.GetMinLine();
 		y = line * mLineHeight;
 		
-		if (y < mImageOriginY)
+		if (y < bounds.y)
 			inForceCenter = true;
 	}
 			
@@ -1282,7 +1269,7 @@ void MTextView::ScrollToSelection(
 		line = selection.GetMaxLine();
 		y = (line + 1) * mLineHeight;
 	 
-		if (y > mImageOriginY + bounds.height)
+		if (y > bounds.y+ bounds.height)
 			inForceCenter = true;
 	}
 
@@ -1301,7 +1288,7 @@ void MTextView::ScrollToSelection(
 		x = 0;
 		y = line * mLineHeight;
 		
-		DoScrollTo(x, y);
+		ScrollTo(x, y);
 	}
    
 	ScrollToCaret();
@@ -1320,7 +1307,7 @@ void MTextView::ScrollToSelection(
 //		if (center < mImageOriginX + 10 or
 //			center > mImageOriginX + bounds.width - 10)
 //		{
-//			DoScrollTo(mImageOriginX + (center - bounds.width) / 2, mImageOriginY);
+//			ScrollTo(mImageOriginX + (center - bounds.width) / 2, mImageOriginY);
 //		}
 //	}
 }
@@ -1348,8 +1335,8 @@ void MTextView::ScrollForDiff()
 	if (y < 0)
 		y = 0;
 	
-	if (y != mImageOriginY)
-		DoScrollTo(mImageOriginX, y);
+	if (y != bounds.y)
+		ScrollTo(bounds.x, y);
 }
 
 // -----------------------------------------------------------------------------
@@ -1365,7 +1352,7 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	MRect r = bounds;
 
 	// the top of the scrolling rect
-	r.y = inFromLine * mLineHeight - mImageOriginY;
+	r.y = inFromLine * mLineHeight - bounds.y;
 	if (r.y < bounds.y)
 		r.y = bounds.y;
 	
@@ -1384,10 +1371,10 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	if (r.height > 0 and
 		r.y <= bounds.height and
 		r.y + r.height >= 0 and
-		fabs(dy) < bounds.height and
+		std::abs(dy) < bounds.height and
 		not mNeedsDisplay)
 	{
-		Scroll(r, 0, dy);
+		ScrollRect(r, 0, dy);
 		
 		if (dy < 0)
 		{
@@ -1407,14 +1394,13 @@ void MTextView::GetVisibleLineSpan(
 	MRect bounds;
 	GetBounds(bounds);
 	
-	outFirstLine = static_cast<uint32>(mImageOriginY / mLineHeight);
-	outLastLine = static_cast<uint32>((mImageOriginY + bounds.height) / mLineHeight);
+	outFirstLine = static_cast<uint32>(bounds.y / mLineHeight);
+	outLastLine = static_cast<uint32>((bounds.y + bounds.height) / mLineHeight);
 	if (outLastLine > 0)
 		--outLastLine;
 }
 
-bool MTextView::OnFocusInEvent(
-	GdkEventFocus*	inEvent)
+void MTextView::ActivateSelf()
 {
 	Invalidate();
 
@@ -1423,34 +1409,29 @@ bool MTextView::OnFocusInEvent(
 		mDocument->SetTargetTextView(this);
 		mDocument->MakeFirstDocument();
 		
-		gtk_im_context_focus_in(mIMContext);
+		//gtk_im_context_focus_in(mIMContext);
 	
 		mLastFocusTime = GetLocalTime();
 	}
 	
 	if (mController != nil)
 		mController->TakeFocus();
-	
-	return true;
 }
 
-bool MTextView::OnFocusOutEvent(
-	GdkEventFocus*	inEvent)
+void MTextView::DeactivateSelf()
 {
 	mNeedsDisplay = true;
 	Invalidate();
 
 	if (mDocument != nil)
 	{
-		gtk_im_context_focus_out(mIMContext);
+		//gtk_im_context_focus_out(mIMContext);
 		
 		mDocument->Reset();
 	}
 
 	if (mController != nil)
 		mController->ReleaseFocus();
-
-	return true;
 }
 
 void MTextView::DragEnter()
@@ -1467,11 +1448,14 @@ bool MTextView::DragWithin(
 	int32			inY)
 {
 	mDragIsAcceptable = true;
+
+	MRect bounds;
+	GetBounds(bounds);
 	
 	uint32 caret;
-	mDocument->PositionToOffset(inX + mImageOriginX, inY + mImageOriginY, caret);
+	mDocument->PositionToOffset(inX + bounds.x, inY + bounds.y, caret);
 
-	if (IsPointInSelection(inX + mImageOriginX, inY + mImageOriginY) or
+	if (IsPointInSelection(inX + bounds.x, inY + bounds.y) or
 		mDocument->IsReadOnly())
 	{
 		mDragIsAcceptable = false;
@@ -1587,9 +1571,9 @@ bool MTextView::IsPointInSelection(
 	{
 		mDocument->SetTargetTextView(this);
 		
-		MRegion rgn;
-		mDocument->GetSelectionRegion(rgn);
-		result = rgn.ContainsPoint(inX, inY);
+		//MRegion rgn;
+		//mDocument->GetSelectionRegion(rgn);
+		//result = rgn.ContainsPoint(inX, inY);
 	}
 	
 	return result;
@@ -1627,7 +1611,9 @@ void MTextView::StylesChanged()
 		mDocument->GetStyledText(0, dev, txt);
 		mDescent = dev.GetDescent();
 		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
-		mCharWidth = dev.GetStringWidth("          ") / 10;
+
+		dev.SetText("          ");
+		mCharWidth = dev.GetTextWidth() / 10;
 	}
 	else
 	{
@@ -1675,72 +1661,72 @@ void MTextView::SetDocument(MDocument* inDocument)
 	}
 }
 
-bool MTextView::OnKeyPressEvent(
-	GdkEventKey*	inEvent)
-{
-	if (gtk_im_context_filter_keypress(mIMContext, inEvent) == false)
-		mDocument->OnKeyPressEvent(inEvent);
-	
-	return true;
-}
+//bool MTextView::OnKeyPressEvent(
+//	GdkEventKey*	inEvent)
+//{
+//	if (gtk_im_context_filter_keypress(mIMContext, inEvent) == false)
+//		mDocument->OnKeyPressEvent(inEvent);
+//	
+//	return true;
+//}
 
-bool MTextView::OnCommit(
-	gchar*			inText)
-{
-	if (mDocument != nil)
-		mDocument->OnCommit(inText, strlen(inText));
-
-	return true;
-}
-
-bool MTextView::OnDeleteSurrounding(
-	gint			inStart,
-	gint			inLength)
-{
-	cout << "OnDeleteSurrounding" << endl;
-	return true;
-}
-
-bool MTextView::OnPreeditChanged()
-{
-	cout << "OnPreeditChanged" << endl;
-	return true;
-}
-
-bool MTextView::OnPreeditEnd()
-{
-	cout << "OnPreeditEnd" << endl;
-	return true;
-}
-
-bool MTextView::OnPreeditStart()
-{
-	cout << "OnPreeditStart" << endl;
-	return true;
-}
-
-bool MTextView::OnRetrieveSurrounding()
-{
-	cout << "OnRetrieveSurrounding" << endl;
-	return true;
-}
-
-void MTextView::OnPopupMenu(
-	GdkEventButton*	inEvent)
-{
-	int32 x = 0, y = 0;
-	
-	if (inEvent != nil)
-	{
-		x = static_cast<int32>(inEvent->x);
-		y = static_cast<int32>(inEvent->y);
-	}
-
-	ConvertToGlobal(x, y);
-
-	MMenu* popup = MMenu::CreateFromResource("text-view-context-menu");
-	
-	if (popup != nil)
-		popup->Popup(mController, inEvent, x, y, true);
-}
-
+//bool MTextView::OnCommit(
+//	gchar*			inText)
+//{
+//	if (mDocument != nil)
+//		mDocument->OnCommit(inText, strlen(inText));
+//
+//	return true;
+//}
+//
+//bool MTextView::OnDeleteSurrounding(
+//	gint			inStart,
+//	gint			inLength)
+//{
+//	cout << "OnDeleteSurrounding" << endl;
+//	return true;
+//}
+//
+//bool MTextView::OnPreeditChanged()
+//{
+//	cout << "OnPreeditChanged" << endl;
+//	return true;
+//}
+//
+//bool MTextView::OnPreeditEnd()
+//{
+//	cout << "OnPreeditEnd" << endl;
+//	return true;
+//}
+//
+//bool MTextView::OnPreeditStart()
+//{
+//	cout << "OnPreeditStart" << endl;
+//	return true;
+//}
+//
+//bool MTextView::OnRetrieveSurrounding()
+//{
+//	cout << "OnRetrieveSurrounding" << endl;
+//	return true;
+//}
+//
+//void MTextView::OnPopupMenu(
+//	GdkEventButton*	inEvent)
+//{
+//	int32 x = 0, y = 0;
+//	
+//	if (inEvent != nil)
+//	{
+//		x = static_cast<int32>(inEvent->x);
+//		y = static_cast<int32>(inEvent->y);
+//	}
+//
+//	ConvertToGlobal(x, y);
+//
+//	MMenu* popup = MMenu::CreateFromResource("text-view-context-menu");
+//	
+//	if (popup != nil)
+//		popup->Popup(mController, inEvent, x, y, true);
+//}
+//

@@ -55,7 +55,7 @@ class MEditWindow : public MDocWindow
 							std::string		inMessage);
 	
 	MTextView*			mTextView;
-	GtkWidget*			mSelectionPanel;
+	//GtkWidget*			mSelectionPanel;
 	MParsePopup*		mParsePopup;
 	MParsePopup*		mIncludePopup;
 	MSSHProgress*		mSSHProgress;

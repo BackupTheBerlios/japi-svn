@@ -11,7 +11,6 @@
 #include "MDevice.h"
 #include "MView.h"
 #include "MWindow.h"
-#include "MGlobals.h"
 #include "MError.h"
 #include "MUnicode.h"
 

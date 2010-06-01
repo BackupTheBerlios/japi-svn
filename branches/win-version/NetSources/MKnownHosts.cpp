@@ -15,7 +15,6 @@
 #include <boost/filesystem/fstream.hpp>
 
 #include "MKnownHosts.h"
-#include "MGlobals.h"
 #include "MUtils.h"
 #include "MError.h"
 #include "MAlerts.h"

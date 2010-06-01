@@ -196,6 +196,47 @@ enum {	// modifier keys
 	kRightControlKey			 = 1 << 8
 };
 
+enum {	// key codes
+	kNullKeyCode 				= 0,
+	kHomeKeyCode 				= 1,
+	kEnterKeyCode				= 3,
+	kEndKeyCode					= 4,
+	kHelpKeyCode 				= 5,
+	kBellKeyCode 				= 7,
+	kBackspaceKeyCode			= 8,
+	kTabKeyCode					= 9,
+	kLineFeedKeyCode 			= 10,
+	kVerticalTabKeyCode			= 11,
+	kPageUpKeyCode				= 11,
+	kFormFeedKeyCode 			= 12,
+	kPageDownKeyCode 			= 12,
+	kReturnKeyCode				= 13,
+	kFunctionKeyKeyCode			= 16,
+	kEscapeKeyCode				= 27,
+	kClearKeyCode				= 27,
+	kLeftArrowKeyCode			= 28,
+	kRightArrowKeyCode			= 29,
+	kUpArrowKeyCode				= 30,
+	kDownArrowKeyCode			= 31,
+	kSpaceKeyCode				= 32,
+	kDeleteKeyCode				= 127,
+	kF1KeyCode					= 0x0101,
+	kF2KeyCode					= 0x0102,
+	kF3KeyCode					= 0x0103,
+	kF4KeyCode					= 0x0104,
+	kF5KeyCode					= 0x0105,
+	kF6KeyCode					= 0x0106,
+	kF7KeyCode					= 0x0107,
+	kF8KeyCode					= 0x0108,
+	kF9KeyCode					= 0x0109,
+	kF10KeyCode					= 0x010a,
+	kF11KeyCode					= 0x010b,
+	kF12KeyCode					= 0x010c,
+	kF13KeyCode					= 0x010d,
+	kF14KeyCode					= 0x010e,
+	kF15KeyCode					= 0x010f
+};
+
 extern const char kHexChars[];
 
 template<class T>

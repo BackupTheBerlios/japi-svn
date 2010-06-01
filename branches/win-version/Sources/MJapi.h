@@ -9,7 +9,31 @@
 #include "MLib.h"
 
 #include "MTypes.h"
+#include "MColor.h"
 
 extern const char kAppName[], kVersionString[];
+
+// ===========================================================================
+//	Japi specific globals
+
+extern bool				gAutoIndent;
+extern bool				gSmartIndent;
+extern bool				gKiss;
+extern bool				gSmoothFonts;
+extern bool				gShowInvisibles;
+extern bool				gTabEntersSpaces;
+extern bool				gPlaySounds;
+extern uint32			gCharsPerTab;
+extern uint32			gSpacesPerTab;
+extern uint32			gConcurrentJobs;
+
+extern boost::filesystem::path
+						gTemplatesDir, gScriptsDir;
+
+extern MColor			gLanguageColors[];
+extern MColor			gHiliteColor, gInactiveHiliteColor;
+extern MColor			gCurrentLineColor, gMarkedLineColor;
+extern MColor			gPCLineColor, gBreakpointColor;
+extern MColor			gWhiteSpaceColor;
 
 #endif
