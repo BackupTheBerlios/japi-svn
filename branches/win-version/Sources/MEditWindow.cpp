@@ -16,6 +16,7 @@
 #include "MMenu.h"
 #include "MFile.h"
 #include "MResources.h"
+#include "MControls.h"
 
 using namespace std;
 
@@ -226,11 +227,23 @@ MEditWindow::MEditWindow()
 //	
 //	gtk_widget_show_all(statusBar);
 
-	// text view
-
 	MRect bounds;
+
+	// status bar
+	GetBounds(bounds);
+	bounds.y += bounds.height - kScrollbarWidth;
+	bounds.height = kScrollbarWidth;
+	MStatusbar* statusbar = new MStatusbar('stat', bounds);
+	AddChild(statusbar);
+	statusbar->GetFrame(bounds);
+
+	int32 statusbarHeight = bounds.height;
+
+	// text view
 	GetBounds(bounds);
 	
+	bounds.height -= statusbarHeight;
+
     mTextView = new MTextView('text', bounds);
 	MViewScroller* scroller = new MViewScroller('scrl', mTextView, false, true);
 	scroller->SetBindings(true, true, true, true);

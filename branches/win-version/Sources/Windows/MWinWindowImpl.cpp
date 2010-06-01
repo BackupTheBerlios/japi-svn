@@ -103,7 +103,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	{
 		MRect r;
 		mWindow->GetBounds(r);
-		mSizeBox = ::CreateWindowExW(0, L"scrollBAR", nil,
+		mSizeBox = ::CreateWindowExW(0, L"SCROLLBAR", nil,
 			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN,
 			r.x + r.width - kScrollbarWidth, r.y + r.height - kScrollbarWidth,
 			kScrollbarWidth, kScrollbarWidth, GetHandle(),

@@ -606,7 +606,9 @@ class MWinDeviceImpl : public MDeviceImp
 	virtual uint32			GetAscent();
 	
 	virtual uint32			GetDescent();
-	
+
+	virtual uint32			GetLineHeight();
+
 	virtual void			DrawString(
 								const string&		inText,
 								float				inX,
@@ -1049,8 +1051,6 @@ void MWinDeviceImpl::CreateAndUsePattern(
 void MWinDeviceImpl::SetFont(
 	const string&		inFont)
 {
-	PRINT(("SetFont(%s)", inFont.c_str()));
-
 	string::const_iterator e = inFont.end() - 1;
 
 	int size = 0, n = 1;
@@ -1123,7 +1123,7 @@ void MWinDeviceImpl::CreateTextFormat()
 		if (mFontFamily.empty())
 		{
 			mFontFamily = L"Consolas";
-			mFontSize = 12;
+			mFontSize = 10 * 96.f / 72.f;
 		}
 
 		THROW_IF_HRESULT_ERROR(
@@ -1148,11 +1148,6 @@ uint32 MWinDeviceImpl::GetAscent()
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
 	return static_cast<uint32>(ceil(metrics.ascent * mFontSize / metrics.designUnitsPerEm));
-
-	//DWRITE_LINE_SPACING_METHOD method;
-	//float spacing, baseline;
-	//THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
-	//return static_cast<uint32>(ceil(baseline));
 }
 
 uint32 MWinDeviceImpl::GetDescent()
@@ -1163,11 +1158,17 @@ uint32 MWinDeviceImpl::GetDescent()
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
 	return static_cast<uint32>(ceil(metrics.descent * mFontSize / metrics.designUnitsPerEm));
+}
 
-	//DWRITE_LINE_SPACING_METHOD method;
-	//float spacing, baseline;
-	//THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
-	//return static_cast<uint32>(ceil(spacing - baseline));
+uint32 MWinDeviceImpl::GetLineHeight()
+{
+	if (not mFont)
+		SetFont("Consolas 10");
+
+	DWRITE_FONT_METRICS metrics;
+	mFont->GetMetrics(&metrics);
+	return static_cast<uint32>(
+		ceil((metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm));
 }
 
 void MWinDeviceImpl::DrawString(
@@ -1347,9 +1348,21 @@ void MWinDeviceImpl::IndexToPosition(
 	bool				inTrailing,
 	int32&				outPosition)
 {
-	//PangoRectangle r;
-	//pango_layout_index_to_pos(mPangoLayout, inIndex, &r);
-	//outPosition = r.x / PANGO_SCALE;
+    // Translate text character offset to point x,y.
+    DWRITE_HIT_TEST_METRICS caretMetrics;
+    float caretX = 0, caretY = 0;
+
+	if (mTextLayout != nil and inIndex < mTextIndex.size())
+	{
+		int32 offset = mTextIndex[inIndex];
+
+		mTextLayout->HitTestTextPosition(
+			offset, inTrailing, &caretX, &caretY, &caretMetrics);
+
+		outPosition = static_cast<uint32>(caretX + 0.5f);
+	}
+	else
+		outPosition = 0;
 }
 
 bool MWinDeviceImpl::PositionToIndex(
@@ -1405,8 +1418,10 @@ void MWinDeviceImpl::DrawCaret(
 
 	if (mTextLayout != nil)
 	{
+		int32 offset = mTextIndex[inOffset];
+
 		mTextLayout->HitTestTextPosition(
-			inOffset, inOffset > 0, // trailing if nonzero, else leading edge
+			offset, offset > 0, // trailing if nonzero, else leading edge
 			&caretX, &caretY, &caretMetrics);
 	}
 	else
@@ -1418,12 +1433,15 @@ void MWinDeviceImpl::DrawCaret(
 	::SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caretIntThickness, FALSE);
     const float caretThickness = float(caretIntThickness);
 
-    mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+	SetForeColor(kBlack);
+
+	D2D1_ANTIALIAS_MODE savedMode = mRenderTarget->GetAntialiasMode();
+	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	mRenderTarget->FillRectangle(
-		D2D1::RectF(inX + caretX - caretThickness, inY + caretY,
-					inX + caretX + caretThickness, inY + caretY + caretMetrics.height),
+		D2D1::RectF(inX + caretX - caretThickness / 2, inY + caretY,
+					inX + caretX + caretThickness / 2, inY + caretY + caretMetrics.height),
 		mForeBrush);
-	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+	mRenderTarget->SetAntialiasMode(savedMode);
 }
 
 void MWinDeviceImpl::BreakLines(

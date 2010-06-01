@@ -86,4 +86,10 @@ public:
 					eScroll;
 };
 
+class MStatusbar : public MControl
+{
+public:
+					MStatusbar(uint32 inID, MRect inBounds);
+};
+
 #endif

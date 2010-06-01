@@ -173,6 +173,19 @@ void MWinControlImpl::AddedToWindow()
 
 		::CloseThemeData(theme);
 	}
+
+	RECT r;
+	::GetClientRect(GetHandle(), &r);
+	if (r.right - r.left != bounds.width or
+		r.bottom - r.top != bounds.height)
+	{
+		::MapWindowPoints(GetHandle(), parent->GetHandle(), (LPPOINT)&r, 2);
+
+		mControl->ResizeFrame(
+			bounds.x - r.left, bounds.y - r.top,
+			(r.right - r.left) - bounds.width,
+			(r.bottom - r.top) - bounds.height);
+	}
 	
 	if (mControl->IsVisible())
 		ShowSelf();
@@ -370,3 +383,24 @@ MControlImpl* MControlImpl::CreateScrollbar(MControl* inControl)
 	return new MScrollbarImpl(inControl);
 }
 
+// --------------------------------------------------------------------
+
+MStatusbarImpl::MStatusbarImpl(MControl* inControl)
+	: MWinControlImpl(inControl)
+{
+}
+
+void MStatusbarImpl::CreateParams(
+	DWORD& outStyle, DWORD& outExStyle, wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+
+	outClassName = STATUSCLASSNAME;
+	outStyle = WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP;
+	outExStyle = 0;//WS_EX_CLIENTEDGE;
+}
+
+MControlImpl* MControlImpl::CreateStatusbar(MControl* inControl)
+{
+	return new MStatusbarImpl(inControl);
+}

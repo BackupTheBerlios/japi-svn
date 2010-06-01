@@ -64,6 +64,7 @@ public:
 
 	static MControlImpl*	CreateButton(MControl* inControl, const std::string& inLabel);
 	static MControlImpl*	CreateScrollbar(MControl* inControl);
+	static MControlImpl*	CreateStatusbar(MControl* inControl);
 
 protected:
 	MControl*		mControl;

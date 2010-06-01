@@ -74,4 +74,15 @@ public:
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
+class MStatusbarImpl : public MWinControlImpl
+{
+public:
+					MStatusbarImpl(MControl* inControl);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+};
+
+
+
 #endif

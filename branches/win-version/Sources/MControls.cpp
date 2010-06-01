@@ -126,3 +126,12 @@ void MScrollbar::SetViewSize(int32 inViewSize)
 {
 	mImpl->SetViewSize(inViewSize);
 }
+
+// --------------------------------------------------------------------
+
+MStatusbar::MStatusbar(uint32 inID, MRect inBounds)
+	: MControl(inID, inBounds, MControlImpl::CreateStatusbar(this))
+{
+	SetBindings(true, false, true, true);
+}
+

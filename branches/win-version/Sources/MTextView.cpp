@@ -824,8 +824,7 @@ void MTextView::DrawLine(
 
 void MTextView::LineCountChanged()
 {
-	if (mScroller != nil)
-		mScroller->AdjustScrollbars();
+	SetViewSize(100, mLineHeight * mDocument->CountLines());
 }
 
 void MTextView::Tick(
@@ -1620,6 +1619,8 @@ void MTextView::StylesChanged()
 		mLineHeight = 10;	// reasonable guess
 		mCharWidth = 6;
 	}
+
+	SetScrollUnit(100, mLineHeight);
 }
 
 void MTextView::DocumentClosed(
