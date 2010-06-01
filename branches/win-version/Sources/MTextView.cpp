@@ -868,24 +868,24 @@ void MTextView::Tick(
 	//}
 	//else
 	//{
-	//	uint32 caret = sel.GetCaret();
-	//	
-	//	if (mCaret != caret)
-	//	{
-	//		InvalidateLine(mDocument->OffsetToLine(mCaret));
-	//		mCaret = caret;
-	//	}
+		uint32 caret = sel.GetCaret();
+		
+		if (mCaret != caret)
+		{
+			InvalidateLine(mDocument->OffsetToLine(mCaret));
+			mCaret = caret;
+		}
 
-	//	if ((not IsActive() and mCaretVisible) or
-	//		(IsActive() and (sel.IsEmpty() or mCaretVisible)))
-	//	{
-	//		if (mDocument->GetFastFindMode())
-	//			mCaretVisible = true;
-	//		else
-	//			mCaretVisible = not mCaretVisible;
-	//
-	//		InvalidateLine(mDocument->OffsetToLine(mCaret));
-	//	}
+		if ((not IsActive() and mCaretVisible) or
+			(IsActive() and (sel.IsEmpty() or mCaretVisible)))
+		{
+			if (mDocument->GetFastFindMode())
+				mCaretVisible = true;
+			else
+				mCaretVisible = not mCaretVisible;
+	
+			InvalidateLine(mDocument->OffsetToLine(mCaret));
+		}
 	//}
 }
 

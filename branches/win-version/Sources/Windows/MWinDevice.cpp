@@ -1399,6 +1399,31 @@ void MWinDeviceImpl::DrawCaret(
 	float				inY,
 	uint32				inOffset)
 {
+    // Translate text character offset to point x,y.
+    DWRITE_HIT_TEST_METRICS caretMetrics;
+    float caretX = 0, caretY = 0;
+
+	if (mTextLayout != nil)
+	{
+		mTextLayout->HitTestTextPosition(
+			inOffset, inOffset > 0, // trailing if nonzero, else leading edge
+			&caretX, &caretY, &caretMetrics);
+	}
+	else
+		caretMetrics.height = GetLineHeight();
+
+    // The default thickness of 1 pixel is almost _too_ thin on modern large monitors,
+    // but we'll use it.
+    DWORD caretIntThickness = 2;
+	::SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caretIntThickness, FALSE);
+    const float caretThickness = float(caretIntThickness);
+
+    mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+	mRenderTarget->FillRectangle(
+		D2D1::RectF(inX + caretX - caretThickness, inY + caretY,
+					inX + caretX + caretThickness, inY + caretY + caretMetrics.height),
+		mForeBrush);
+	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 }
 
 void MWinDeviceImpl::BreakLines(
