@@ -11,4 +11,91 @@
 std::wstring c2w(const std::string& s);
 std::string w2c(const std::wstring& s);
 
+template<typename T>
+class MComPtr
+{
+public:
+			MComPtr()
+				: mPtr(nil) {}
+
+			MComPtr(
+				const MComPtr&	rhs)
+				: mPtr(rhs.mPtr)
+			{
+				mPtr->AddRef();
+			}
+
+	template<class C>
+	MComPtr&
+			operator=(const MComPtr<C>& rhs)
+			{
+				if ((const void*)this != (const void*)&rhs)
+				{
+					if (mPtr != nil)
+						mPtr->Release();
+					
+					mPtr = rhs.get();
+					
+					if (mPtr != nil)
+						mPtr->AddRef();
+				}
+
+				return *this;
+			}
+
+			~MComPtr()
+			{
+				if (mPtr != nil)
+					mPtr->Release();
+			}
+
+			operator T*() const
+			{
+				return mPtr;
+			}
+
+	T*		operator->() const
+			{
+				return mPtr;
+			}
+
+	T**		operator &()
+			{
+				if (mPtr != nil)
+					mPtr->Release();
+				
+				mPtr = nil;
+				return &mPtr;
+			}
+
+	void	reset(
+				T*		inPtr)
+			{
+				if (mPtr != nil)
+					mPtr->Release();
+
+				mPtr = inPtr;
+			}
+
+	T*		get() const
+			{
+				return mPtr;
+			}
+
+	T*		release()
+			{
+				T* result = mPtr;
+				mPtr = nil;
+				return result;
+			}
+
+			operator bool() const
+			{
+				return mPtr != nil;
+			}
+
+private:
+	T*		mPtr;
+};
+
 #endif

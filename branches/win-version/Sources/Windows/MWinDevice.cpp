@@ -24,6 +24,7 @@
 #include "MUnicode.h"
 #include "MError.h"
 #include "MWinUtils.h"
+#include "MPreferences.h"
 
 using namespace std;
 
@@ -107,6 +108,416 @@ STDMETHODIMP_(HRESULT) MColouredText::QueryInterface(
 	void**		ppvObject)
 {
     if (__uuidof(MColouredText) == riid)
+    {
+        *ppvObject = this;
+    }
+    else if (__uuidof(IUnknown) == riid)
+    {
+        *ppvObject = this;
+    }
+    else
+    {
+        *ppvObject = NULL;
+        return E_FAIL;
+    }
+
+    AddRef();
+
+    return S_OK;
+}
+
+
+class MTextRenderer : public IDWriteTextRenderer
+{
+public:
+    MTextRenderer(
+        ID2D1Factory* pD2DFactory, 
+        ID2D1RenderTarget* pRT
+        );
+
+    ~MTextRenderer();
+
+    STDMETHOD(IsPixelSnappingDisabled)(
+        __maybenull void* clientDrawingContext,
+        __out BOOL* isDisabled
+        );
+
+    STDMETHOD(GetCurrentTransform)(
+        __maybenull void* clientDrawingContext,
+        __out DWRITE_MATRIX* transform
+        );
+
+    STDMETHOD(GetPixelsPerDip)(
+        __maybenull void* clientDrawingContext,
+        __out FLOAT* pixelsPerDip
+        );
+
+    STDMETHOD(DrawGlyphRun)(
+        __maybenull void* clientDrawingContext,
+        FLOAT baselineOriginX,
+        FLOAT baselineOriginY,
+        DWRITE_MEASURING_MODE measuringMode,
+        __in DWRITE_GLYPH_RUN const* glyphRun,
+        __in DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription,
+        IUnknown* clientDrawingEffect
+        );
+
+    STDMETHOD(DrawUnderline)(
+        __maybenull void* clientDrawingContext,
+        FLOAT baselineOriginX,
+        FLOAT baselineOriginY,
+        __in DWRITE_UNDERLINE const* underline,
+        IUnknown* clientDrawingEffect
+        );
+
+    STDMETHOD(DrawStrikethrough)(
+        __maybenull void* clientDrawingContext,
+        FLOAT baselineOriginX,
+        FLOAT baselineOriginY,
+        __in DWRITE_STRIKETHROUGH const* strikethrough,
+        IUnknown* clientDrawingEffect
+        );
+
+    STDMETHOD(DrawInlineObject)(
+        __maybenull void* clientDrawingContext,
+        FLOAT originX,
+        FLOAT originY,
+        IDWriteInlineObject* inlineObject,
+        BOOL isSideways,
+        BOOL isRightToLeft,
+        IUnknown* clientDrawingEffect
+        );
+
+public:
+    unsigned long STDMETHODCALLTYPE AddRef();
+    unsigned long STDMETHODCALLTYPE Release();
+    HRESULT STDMETHODCALLTYPE QueryInterface(
+        IID const& riid,
+        void** ppvObject
+    );
+
+private:
+    uint32					mRefCount;
+    ID2D1Factory*			mD2DFactory;
+    ID2D1RenderTarget*		mRenderTarget;
+};
+
+MTextRenderer::MTextRenderer(
+    ID2D1Factory*		inD2DFactory, 
+    ID2D1RenderTarget*	inRenderTarget)
+	: mRefCount(0)
+	, mD2DFactory(inD2DFactory)
+	, mRenderTarget(inRenderTarget)
+{
+    mD2DFactory->AddRef();
+    mRenderTarget->AddRef();
+}
+
+MTextRenderer::~MTextRenderer()
+{
+	if (mD2DFactory != nil)
+		mD2DFactory->Release();
+
+	if (mRenderTarget != nil)
+		mRenderTarget->Release();
+}
+
+STDMETHODIMP MTextRenderer::DrawGlyphRun(
+    void*					clientDrawingContext,
+    FLOAT					baselineOriginX,
+    FLOAT					baselineOriginY,
+    DWRITE_MEASURING_MODE	measuringMode,
+    DWRITE_GLYPH_RUN const* glyphRun,
+    DWRITE_GLYPH_RUN_DESCRIPTION const*
+							glyphRunDescription,
+    IUnknown*				clientDrawingEffect)
+{
+	ID2D1SolidColorBrush* pBrush = NULL;
+
+    HRESULT hr = mRenderTarget->CreateSolidColorBrush(
+                D2D1::ColorF(
+                D2D1::ColorF::Black
+                ),
+                &pBrush);
+
+	mRenderTarget->DrawGlyphRun(D2D1::Point2(baselineOriginX, baselineOriginY),
+        glyphRun,
+        pBrush,
+        measuringMode);
+
+	pBrush->Release();
+
+	return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::DrawUnderline(
+    __maybenull void* clientDrawingContext,
+    FLOAT baselineOriginX,
+    FLOAT baselineOriginY,
+    __in DWRITE_UNDERLINE const* underline,
+    IUnknown* clientDrawingEffect
+    )
+{
+    //HRESULT hr;
+
+    //D2D1_RECT_F rect = D2D1::RectF(
+    //    0,
+    //    underline->offset,
+    //    underline->width,
+    //    underline->offset + underline->thickness
+    //    );
+
+    //ID2D1RectangleGeometry* pRectangleGeometry = NULL;
+    //hr = mD2DFactory->CreateRectangleGeometry(
+    //        &rect, 
+    //        &pRectangleGeometry
+    //        );
+
+    //// Initialize a matrix to translate the origin of the underline
+    //D2D1::Matrix3x2F const matrix = D2D1::Matrix3x2F(
+    //    1.0f, 0.0f,
+    //    0.0f, 1.0f,
+    //    baselineOriginX, baselineOriginY
+    //    );
+
+    //ID2D1TransformedGeometry* pTransformedGeometry = NULL;
+    //if (SUCCEEDED(hr))
+    //{
+    //    hr = mD2DFactory->CreateTransformedGeometry(
+    //        pRectangleGeometry,
+    //        &matrix,
+    //        &pTransformedGeometry
+    //        );
+    //}
+
+    //ID2D1SolidColorBrush* pBrush = NULL;
+
+    //// If there is a drawing effect create a color brush using it, otherwise create a black brush.
+    //if (clientDrawingEffect != NULL)
+    //{
+    //    // Go from IUnknown to ColorDrawingEffect.
+    //    ColorDrawingEffect *colorDrawingEffect;
+
+    //    clientDrawingEffect->QueryInterface(__uuidof(ColorDrawingEffect), reinterpret_cast<void**>(&colorDrawingEffect));
+
+    //    // Get the color from the ColorDrawingEffect object.
+    //    D2D1_COLOR_F color;
+
+    //    colorDrawingEffect->GetColor(&color);
+
+    //    // Create the brush using the color pecified by our ColorDrawingEffect object.
+    //    if (SUCCEEDED(hr))
+    //    {
+    //        hr = mRenderTarget->CreateSolidColorBrush(
+    //            color,
+    //            &pBrush);
+    //    }
+
+    //    SafeRelease(&colorDrawingEffect);
+    //}
+    //else
+    //{
+    //    // Create a black brush.
+    //    if (SUCCEEDED(hr))
+    //    {
+    //        hr = mRenderTarget->CreateSolidColorBrush(
+    //            D2D1::ColorF(
+    //            D2D1::ColorF::Black
+    //            ),
+    //            &pBrush);
+    //    }
+    //}
+
+    //// Draw the outline of the rectangle
+    //mRenderTarget->DrawGeometry(
+    //    pTransformedGeometry,
+    //    pBrush
+    //    );
+
+    //// Fill in the rectangle
+    //mRenderTarget->FillGeometry(
+    //    pTransformedGeometry,
+    //    pBrush
+    //    );
+
+    //SafeRelease(&pRectangleGeometry);
+    //SafeRelease(&pTransformedGeometry);
+    //SafeRelease(&pBrush);
+
+    return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::DrawStrikethrough(
+    __maybenull void* clientDrawingContext,
+    FLOAT baselineOriginX,
+    FLOAT baselineOriginY,
+    __in DWRITE_STRIKETHROUGH const* strikethrough,
+    IUnknown* clientDrawingEffect
+    )
+{
+//    HRESULT hr;
+//
+//    D2D1_RECT_F rect = D2D1::RectF(
+//        0,
+//        strikethrough->offset,
+//        strikethrough->width,
+//        strikethrough->offset + strikethrough->thickness
+//        );
+//
+//    ID2D1RectangleGeometry* pRectangleGeometry = NULL;
+//    hr = mD2DFactory->CreateRectangleGeometry(
+//            &rect, 
+//            &pRectangleGeometry
+//            );
+//
+//    // Initialize a matrix to translate the origin of the strikethrough
+//    D2D1::Matrix3x2F const matrix = D2D1::Matrix3x2F(
+//        1.0f, 0.0f,
+//        0.0f, 1.0f,
+//        baselineOriginX, baselineOriginY
+//        );
+//
+//    ID2D1TransformedGeometry* pTransformedGeometry = NULL;
+//    if (SUCCEEDED(hr))
+//    {
+//        hr = mD2DFactory->CreateTransformedGeometry(
+//            pRectangleGeometry,
+//            &matrix,
+//            &pTransformedGeometry
+//            );
+//    }
+//
+//ID2D1SolidColorBrush* pBrush = NULL;
+//
+//    // If there is a drawing effect create a color brush using it, otherwise create a black brush.
+//    if (clientDrawingEffect != NULL)
+//    {
+//        // Go from IUnknown to ColorDrawingEffect.
+//        ColorDrawingEffect *colorDrawingEffect;
+//
+//        clientDrawingEffect->QueryInterface(__uuidof(ColorDrawingEffect), reinterpret_cast<void**>(&colorDrawingEffect));
+//
+//        // Get the color from the ColorDrawingEffect object.
+//        D2D1_COLOR_F color;
+//
+//        colorDrawingEffect->GetColor(&color);
+//
+//        // Create the brush using the color pecified by our ColorDrawingEffect object.
+//        if (SUCCEEDED(hr))
+//        {
+//            hr = mRenderTarget->CreateSolidColorBrush(
+//                color,
+//                &pBrush);
+//        }
+//
+//        SafeRelease(&colorDrawingEffect);
+//    }
+//    else
+//    {
+//        // Create a black brush.
+//        if (SUCCEEDED(hr))
+//        {
+//            hr = mRenderTarget->CreateSolidColorBrush(
+//                D2D1::ColorF(
+//                D2D1::ColorF::Black
+//                ),
+//                &pBrush);
+//        }
+//    }
+//
+//    // Draw the outline of the rectangle
+//    mRenderTarget->DrawGeometry(
+//        pTransformedGeometry,
+//        pBrush
+//        );
+//
+//    // Fill in the rectangle
+//    mRenderTarget->FillGeometry(
+//        pTransformedGeometry,
+//        pBrush
+//        );
+//
+//    SafeRelease(&pRectangleGeometry);
+//    SafeRelease(&pTransformedGeometry);
+//    SafeRelease(&pBrush);
+
+    return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::DrawInlineObject(
+    __maybenull void* clientDrawingContext,
+    FLOAT originX,
+    FLOAT originY,
+    IDWriteInlineObject* inlineObject,
+    BOOL isSideways,
+    BOOL isRightToLeft,
+    IUnknown* clientDrawingEffect
+    )
+{
+    // Not implemented
+    return E_NOTIMPL;
+}
+
+STDMETHODIMP_(unsigned long) MTextRenderer::AddRef()
+{
+    return InterlockedIncrement(&mRefCount);
+}
+
+STDMETHODIMP_(unsigned long) MTextRenderer::Release()
+{
+    unsigned long newCount = InterlockedDecrement(&mRefCount);
+
+    if (newCount == 0)
+    {
+        delete this;
+        return 0;
+    }
+
+    return newCount;
+}
+
+STDMETHODIMP MTextRenderer::IsPixelSnappingDisabled(
+    __maybenull void* clientDrawingContext,
+    __out BOOL* isDisabled
+    )
+{
+    *isDisabled = FALSE;
+    return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::GetCurrentTransform(
+    __maybenull void* clientDrawingContext,
+    __out DWRITE_MATRIX* transform
+    )
+{
+    //forward the render target's transform
+    mRenderTarget->GetTransform(reinterpret_cast<D2D1_MATRIX_3X2_F*>(transform));
+    return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::GetPixelsPerDip(
+    __maybenull void* clientDrawingContext,
+    __out FLOAT* pixelsPerDip
+    )
+{
+    float x, yUnused;
+
+    mRenderTarget->GetDpi(&x, &yUnused);
+    *pixelsPerDip = x / 96;
+
+    return S_OK;
+}
+
+STDMETHODIMP MTextRenderer::QueryInterface(
+    IID const& riid,
+    void** ppvObject
+    )
+{
+    if (__uuidof(IDWriteTextRenderer) == riid)
+    {
+        *ppvObject = this;
+    }
+    else if (__uuidof(IDWritePixelSnapping) == riid)
     {
         *ppvObject = this;
     }
@@ -254,7 +665,9 @@ class MWinDeviceImpl : public MDeviceImp
 
   protected:
 
-	IDWriteTextFormat*		GetTextFormat();
+	void					InitGlobals();
+	void					CreateTextFormat();
+	void					LookupFont(const wstring& inFamily);
 
 	MView*					mView;
 	HDC						mDC;
@@ -266,18 +679,24 @@ class MWinDeviceImpl : public MDeviceImp
 
 	static ID2D1Factory*	sD2DFactory;
 	static IDWriteFactory*	sDWFactory;
+	static wstring			sLocale;
 
-	//ID2D1HwndRenderTarget*	mRenderTarget;
 	ID2D1DCRenderTarget*	mRenderTarget;
 	ID2D1Layer*				mClipLayer;
-
 	IDWriteTextFormat*		mTextFormat;
 	IDWriteTextLayout*		mTextLayout;
-
 	ID2D1Brush*				mForeBrush;
 	ID2D1Brush*				mBackBrush;
-	wstring					mFont;
+
+	wstring					mFontFamily;
 	float					mFontSize;
+	IDWriteFont*			mFont;
+
+	MTextRenderer*			mTextRenderer;
+
+	// converted text (from UTF8 to UTF16)
+	wstring					mText;
+	vector<uint16>			mTextIndex;		// from string to wstring
 
 	//float					mDpiScaleX, mDpiScaleY;
 
@@ -287,6 +706,28 @@ class MWinDeviceImpl : public MDeviceImp
 
 ID2D1Factory*	MWinDeviceImpl::sD2DFactory;
 IDWriteFactory*	MWinDeviceImpl::sDWFactory;
+wstring			MWinDeviceImpl::sLocale;
+
+void MWinDeviceImpl::InitGlobals()
+{
+	if (sLocale.empty())
+	{
+        wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
+        if (::GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
+			sLocale = localeName;
+		else
+			sLocale = L"en-us";
+	}
+
+	if (sD2DFactory == nil)
+		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
+
+	if (sDWFactory == nil)
+		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
+	        DWRITE_FACTORY_TYPE_SHARED,
+	        __uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&sDWFactory)));
+}
 
 MWinDeviceImpl::MWinDeviceImpl()
 	: mView(nil)
@@ -296,17 +737,10 @@ MWinDeviceImpl::MWinDeviceImpl()
 	, mTextLayout(nil)
 	, mForeBrush(nil)
 	, mBackBrush(nil)
-	, mFont(L"Consolas")
-	, mFontSize(10.f * 96.f / 72.f)
+	, mFont(nil)
+	, mTextRenderer(nil)
 {
-	if (sD2DFactory == nil)
-		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
-
-	if (sDWFactory == nil)
-		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
-	        DWRITE_FACTORY_TYPE_SHARED,
-	        __uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown**>(&sDWFactory)));
+	InitGlobals();
 }
 
 MWinDeviceImpl::MWinDeviceImpl(
@@ -320,17 +754,10 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mTextLayout(nil)
 	, mForeBrush(nil)
 	, mBackBrush(nil)
-	, mFont(L"Consolas")
-	, mFontSize(10.f * 96.f / 72.f)
+	, mFont(nil)
+	, mTextRenderer(nil)
 {
-	if (sD2DFactory == nil)
-		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
-
-	if (sDWFactory == nil)
-		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
-	        DWRITE_FACTORY_TYPE_SHARED,
-	        __uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown**>(&sDWFactory)));
+	InitGlobals();
 	
 	MWindow* window = inView->GetWindow();
 	THROW_IF_NIL(window);
@@ -362,6 +789,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 	mRenderTarget->SetTransform(
 		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
 
+	mTextRenderer = new MTextRenderer(sD2DFactory, mRenderTarget);
+
 	if (inUpdate)
 		ClipRect(inUpdate);
 
@@ -371,6 +800,12 @@ MWinDeviceImpl::MWinDeviceImpl(
 
 MWinDeviceImpl::~MWinDeviceImpl()
 {
+	if (mTextRenderer != nil)
+		mTextRenderer->Release();
+
+	if (mFont != nil)
+		mFont->Release();
+	
 	if (mForeBrush != nil)
 		mForeBrush->Release();
 
@@ -424,26 +859,6 @@ void MWinDeviceImpl::Restore()
 	mState.pop();
 }
 
-void MWinDeviceImpl::SetFont(
-	const string&		inFont)
-{
-	string::const_iterator e = inFont.end() - 1;
-
-	int size = 0, n = 1;
-	while (e != inFont.begin() and isdigit(*e))
-	{
-		size += n * (*e - '0');
-		n *= 10;
-		--e;
-	}
-
-	if (e == inFont.end() or e == inFont.begin() or *e != ' ')
-		THROW(("Error in specified font"));
-
-	mFont = c2w(inFont.substr(0, e - inFont.begin()));
-	mFontSize = /*mDpiScaleY*/ 1.0f * size * 96.f / 72.f;
-}
-
 void MWinDeviceImpl::SetForeColor(
 	MColor				inColor)
 {
@@ -461,12 +876,14 @@ MColor MWinDeviceImpl::GetForeColor() const
 {
 	MColor result;
 
-	ID2D1SolidColorBrush* brush = dynamic_cast<ID2D1SolidColorBrush*>(mForeBrush);
+	ID2D1SolidColorBrush* brush;
+	mForeBrush->QueryInterface(&brush);
 
 	if (brush != nil)
 	{
 		D2D1_COLOR_F color = brush->GetColor();
 		result = MColor(color.r * 255, color.g * 255, color.b * 255 /*, color.a * 255*/);
+		brush->Release();
 	}
 
 	return result;
@@ -489,12 +906,14 @@ MColor MWinDeviceImpl::GetBackColor() const
 {
 	MColor result;
 
-	ID2D1SolidColorBrush* brush = dynamic_cast<ID2D1SolidColorBrush*>(mBackBrush);
+	ID2D1SolidColorBrush* brush;
+	mBackBrush->QueryInterface(&brush);
 
 	if (brush != nil)
 	{
 		D2D1_COLOR_F color = brush->GetColor();
 		result = MColor(color.r * 255, color.g * 255, color.b * 255 /*, color.a * 255*/);
+		brush->Release();
 	}
 
 	return result;
@@ -627,40 +1046,128 @@ void MWinDeviceImpl::CreateAndUsePattern(
 	mForeBrush = brush;
 }
 
-IDWriteTextFormat* MWinDeviceImpl::GetTextFormat()
+void MWinDeviceImpl::SetFont(
+	const string&		inFont)
+{
+	PRINT(("SetFont(%s)", inFont.c_str()));
+
+	string::const_iterator e = inFont.end() - 1;
+
+	int size = 0, n = 1;
+	while (e != inFont.begin() and isdigit(*e))
+	{
+		size += n * (*e - '0');
+		n *= 10;
+		--e;
+	}
+
+	if (e == inFont.end() or e == inFont.begin() or *e != ' ')
+		THROW(("Error in specified font"));
+
+	mFontFamily = c2w(inFont.substr(0, e - inFont.begin()));
+	mFontSize = size * 96.f / 72.f;
+
+	// OK, so that's what the user requested, now find something suitable
+	LookupFont(mFontFamily);
+}
+
+void MWinDeviceImpl::LookupFont(const wstring& inFamily)
+{
+	if (mFont != nil)
+		mFont->Release();
+	
+	mFont = nil;
+
+	IDWriteFontCollection* pFontCollection = nil;
+	THROW_IF_HRESULT_ERROR(sDWFactory->GetSystemFontCollection(&pFontCollection));
+	uint32 familyCount = pFontCollection->GetFontFamilyCount();
+
+    for (uint32 i = 0; i < familyCount; ++i)
+    {
+        IDWriteFontFamily* pFontFamily = nil;
+		THROW_IF_HRESULT_ERROR(pFontCollection->GetFontFamily(i, &pFontFamily));
+
+		IDWriteLocalizedStrings* pFamilyNames = nil;
+		THROW_IF_HRESULT_ERROR(pFontFamily->GetFamilyNames(&pFamilyNames));
+
+        uint32 index = 0;
+		BOOL exists = false;
+        
+		THROW_IF_HRESULT_ERROR(pFamilyNames->FindLocaleName(sLocale.c_str(), &index, &exists));
+        
+        // If the specified locale doesn't exist, select the first on the list.
+        if (not exists)
+            index = 0;
+
+        UINT32 length = 0;
+		THROW_IF_HRESULT_ERROR(pFamilyNames->GetStringLength(index, &length));
+		
+		vector<wchar_t> name(length + 1);
+		THROW_IF_HRESULT_ERROR(pFamilyNames->GetString(index, &name[0], length+1));
+
+		pFamilyNames->Release();
+
+		if (inFamily == &name[0])
+			pFontFamily->GetFont(index, &mFont);
+
+		pFontFamily->Release();
+    }
+
+	pFontCollection->Release();
+}
+
+void MWinDeviceImpl::CreateTextFormat()
 {
 	if (mTextFormat == nil)
 	{
+		if (mFontFamily.empty())
+		{
+			mFontFamily = L"Consolas";
+			mFontSize = 12;
+		}
+
 		THROW_IF_HRESULT_ERROR(
 			sDWFactory->CreateTextFormat(
-				mFont.c_str(),                // Font family name.
-				NULL,                       // Font collection (NULL sets it to use the system font collection).
+				mFontFamily.c_str(),                // Font family name.
+				NULL,		                       // Font collection (NULL sets it to use the system font collection).
 				DWRITE_FONT_WEIGHT_REGULAR,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
 				mFontSize,
-				L"en-us",
+				sLocale.c_str(),
 				&mTextFormat
 			));
 	}
-	
-	return mTextFormat;
 }
 
 uint32 MWinDeviceImpl::GetAscent()
 {
-	DWRITE_LINE_SPACING_METHOD method;
-	float spacing, baseline;
-	THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
-	return static_cast<uint32>(ceil(baseline));
+	if (not mFont)
+		SetFont("Consolas 10");
+
+	DWRITE_FONT_METRICS metrics;
+	mFont->GetMetrics(&metrics);
+	return static_cast<uint32>(ceil(metrics.ascent * mFontSize / metrics.designUnitsPerEm));
+
+	//DWRITE_LINE_SPACING_METHOD method;
+	//float spacing, baseline;
+	//THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
+	//return static_cast<uint32>(ceil(baseline));
 }
 
 uint32 MWinDeviceImpl::GetDescent()
 {
-	DWRITE_LINE_SPACING_METHOD method;
-	float spacing, baseline;
-	THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
-	return static_cast<uint32>(ceil(spacing - baseline));
+	if (not mFont)
+		SetFont("Consolas 10");
+
+	DWRITE_FONT_METRICS metrics;
+	mFont->GetMetrics(&metrics);
+	return static_cast<uint32>(ceil(metrics.descent * mFontSize / metrics.designUnitsPerEm));
+
+	//DWRITE_LINE_SPACING_METHOD method;
+	//float spacing, baseline;
+	//THROW_IF_HRESULT_ERROR(GetTextFormat()->GetLineSpacing(&method, &spacing, &baseline));
+	//return static_cast<uint32>(ceil(spacing - baseline));
 }
 
 void MWinDeviceImpl::DrawString(
@@ -670,9 +1177,11 @@ void MWinDeviceImpl::DrawString(
 	uint32				inTruncateWidth,
 	MAlignment			inAlign)
 {
+	CreateTextFormat();
+
 	wstring s(c2w(inText));
 	mRenderTarget->DrawTextW(s.c_str(), s.length(),
-		GetTextFormat(),
+		mTextFormat,
 		D2D1::RectF(inX, inY, 200, 14),
 		mForeBrush);
 }
@@ -680,16 +1189,82 @@ void MWinDeviceImpl::DrawString(
 void MWinDeviceImpl::SetText(
 	const string&		inText)
 {
+	CreateTextFormat();
+
+	//wstring s(c2w(inText));
+	mText.clear();
+	mText.reserve(inText.length());
+
+	mTextIndex.clear();
+	mTextIndex.reserve(inText.length());
+
+	for (string::const_iterator i = inText.begin(); i != inText.end(); ++i)
+	{
+		uint32 ch = static_cast<unsigned char>(*i);
+		mTextIndex.push_back(mText.length());
+
+		if (ch & 0x0080)
+		{
+			if ((ch & 0x0E0) == 0x0C0)
+			{
+				uint32 ch1 = static_cast<unsigned char>(*(i + 1));
+				if ((ch1 & 0x0c0) == 0x080)
+				{
+					ch = ((ch & 0x01f) << 6) | (ch1 & 0x03f);
+					i += 1;
+					mTextIndex.push_back(mText.length());
+				}
+			}
+			else if ((ch & 0x0F0) == 0x0E0)
+			{
+				uint32 ch1 = static_cast<unsigned char>(*(i + 1));
+				uint32 ch2 = static_cast<unsigned char>(*(i + 2));
+				if ((ch1 & 0x0c0) == 0x080 and (ch2 & 0x0c0) == 0x080)
+				{
+					ch = ((ch & 0x00F) << 12) | ((ch1 & 0x03F) << 6) | (ch2 & 0x03F);
+					i += 2;
+					mTextIndex.push_back(mText.length());
+					mTextIndex.push_back(mText.length());
+				}
+			}
+			else if ((ch & 0x0F8) == 0x0F0)
+			{
+				uint32 ch1 = static_cast<unsigned char>(*(i + 1));
+				uint32 ch2 = static_cast<unsigned char>(*(i + 2));
+				uint32 ch3 = static_cast<unsigned char>(*(i + 3));
+				if ((ch1 & 0x0c0) == 0x080 and (ch2 & 0x0c0) == 0x080 and (ch3 & 0x0c0) == 0x080)
+				{
+					ch = ((ch & 0x007) << 18) | ((ch1 & 0x03F) << 12) | ((ch2 & 0x03F) << 6) | (ch3 & 0x03F);
+					i += 3;
+					mTextIndex.push_back(mText.length());
+					mTextIndex.push_back(mText.length());
+					mTextIndex.push_back(mText.length());
+				}
+			}
+		}
+
+		if (ch <= 0x0FFFF)
+			mText += static_cast<wchar_t>(ch);
+		else
+		{
+			wchar_t h = (ch - 0x010000) / 0x0400 + 0x0D800;
+			wchar_t l = (ch - 0x010000) % 0x0400 + 0x0DC00;
+
+			mText += h;
+			mText += l;
+		}
+	}
+
 	if (mTextLayout != nil)
 		mTextLayout->Release();
 
-	wstring s(c2w(inText));
+	mTextLayout = nil;
 
 	THROW_IF_HRESULT_ERROR(
 		sDWFactory->CreateTextLayout(
-			s.c_str(),
-			s.length(),
-			GetTextFormat(),
+			mText.c_str(),
+			mText.length(),
+			mTextFormat,
 			99999.0f,
 			99999.0f,
 			&mTextLayout
@@ -701,7 +1276,7 @@ void MWinDeviceImpl::SetTabStops(
 {
 	if (mTextLayout == nil)
 		THROW(("SetText must be called first!"));
-	mTextLayout->SetIncrementalTabStop(inTabWidth * 96.f / 72.f);
+	mTextLayout->SetIncrementalTabStop(inTabWidth /** 96.f / 72.f*/);
 }
 
 void MWinDeviceImpl::SetTextColors(
@@ -805,19 +1380,18 @@ bool MWinDeviceImpl::PositionToIndex(
 
 uint32 MWinDeviceImpl::GetTextWidth()
 {
-	//PangoRectangle r;
-	//
-	//pango_layout_get_pixel_extents(mPangoLayout, nil, &r);
-	//
-	//return r.width;
+	DWRITE_TEXT_METRICS metrics;
+	THROW_IF_HRESULT_ERROR(mTextLayout->GetMetrics(&metrics));
 
-	return 0;
+	return static_cast<uint32>(ceil(metrics.widthIncludingTrailingWhitespace));
 }
 
 void MWinDeviceImpl::DrawText(
 	float				inX,
 	float				inY)
 {
+	if (mTextLayout != nil)
+		mTextLayout->Draw(nil, mTextRenderer, inX, inY);
 }
 
 void MWinDeviceImpl::DrawCaret(

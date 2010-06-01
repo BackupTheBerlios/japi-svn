@@ -21,37 +21,6 @@
 #include "MFile.h"
 #include "MWinUtils.h"
 
-template<typename T>
-class MComPtr
-{
-public:
-			MComPtr()
-				: mPtr(nil) {}
-			~MComPtr()
-			{
-				if (mPtr != nil)
-					mPtr->Release();
-			}
-
-			operator T*()
-			{
-				return mPtr;
-			}
-
-	T*		operator->()
-			{
-				return mPtr;
-			}
-
-	T**		operator &()
-			{
-				return &mPtr;
-			}
-
-private:
-	T*		mPtr;
-};
-
 using namespace std;
 
 class CDialogEventHandler : public IFileDialogEvents,

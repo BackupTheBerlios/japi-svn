@@ -516,7 +516,7 @@ void MTextDocument::Reset()
 
 void MTextDocument::ReInit()
 {
-	mFont = Preferences::GetString("font", "Consolas 9");
+	mFont = Preferences::GetString("font", "Consolas 10");
 	
 	MDevice device;
 	
