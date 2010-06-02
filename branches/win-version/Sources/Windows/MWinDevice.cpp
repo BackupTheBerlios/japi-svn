@@ -5,6 +5,7 @@
 
 #include <windows.h>
 #include <d2d1.h>
+#include <d2d1helper.h>
 #include <dwrite.h>
 
 #undef GetNextWindow
@@ -237,7 +238,8 @@ STDMETHODIMP MTextRenderer::DrawGlyphRun(
 	D2D1::ColorF color = D2D1::ColorF::Black;
 
 	MTextColor* textColor = nil;
-	clientDrawingEffect->QueryInterface(&textColor);
+	if (clientDrawingEffect != nil)
+		clientDrawingEffect->QueryInterface(&textColor);
 
 	if (textColor != nil)
 	{
@@ -705,6 +707,8 @@ class MWinDeviceImpl : public MDeviceImp
 	// converted text (from UTF8 to UTF16)
 	wstring					mText;
 	vector<uint16>			mTextIndex;		// from string to wstring
+	MColor					mSelectionColor;
+	uint32					mSelectionStart, mSelectionLength;
 
 	//float					mDpiScaleX, mDpiScaleY;
 
@@ -746,6 +750,7 @@ MWinDeviceImpl::MWinDeviceImpl()
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 	, mFont(nil)
+	, mSelectionLength(0)
 {
 	InitGlobals();
 }
@@ -762,6 +767,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 	, mFont(nil)
+	, mSelectionLength(0)
 {
 	InitGlobals();
 	
@@ -1210,12 +1216,13 @@ void MWinDeviceImpl::SetText(
 {
 	CreateTextFormat();
 
-	//wstring s(c2w(inText));
 	mText.clear();
 	mText.reserve(inText.length());
 
 	mTextIndex.clear();
 	mTextIndex.reserve(inText.length());
+
+	mSelectionLength = 0;
 
 	for (string::const_iterator i = inText.begin(); i != inText.end(); ++i)
 	{
@@ -1326,30 +1333,9 @@ void MWinDeviceImpl::SetTextSelection(
 	uint32				inLength,
 	MColor				inSelectionColor)
 {
-	//uint16 red = inSelectionColor.red << 8 | inSelectionColor.red;
-	//uint16 green = inSelectionColor.green << 8 | inSelectionColor.green;
-	//uint16 blue = inSelectionColor.blue << 8 | inSelectionColor.blue;
-	//
-	//PangoAttribute* attr = pango_attr_background_new(red, green, blue);
-	//attr->start_index = inStart;
-	//attr->end_index = inStart + inLength;
-	//
-	//PangoAttrList* attrs = pango_layout_get_attributes(mPangoLayout);
-	//
-	//if (attrs == nil)
-	//{
-	//	attrs = pango_attr_list_new();
-	//	pango_attr_list_insert(attrs, attr);
-	//}
-	//else
-	//{
-	//	attrs = pango_attr_list_copy(attrs);
-	//	pango_attr_list_change(attrs, attr);
-	//}
-	//
-	//pango_layout_set_attributes(mPangoLayout, attrs);
-	//
-	//pango_attr_list_unref(attrs);
+	mSelectionColor = inSelectionColor;
+	mSelectionStart = mTextIndex[inStart];
+	mSelectionLength = mTextIndex[inStart + inLength] - mSelectionStart;
 }
 
 void MWinDeviceImpl::IndexToPosition(
@@ -1378,26 +1364,30 @@ bool MWinDeviceImpl::PositionToIndex(
 	int32				inPosition,
 	uint32&				outIndex)
 {
-	//int index, trailing;
-	//
-	//bool result = pango_layout_xy_to_index(mPangoLayout,
-	//	inPosition * PANGO_SCALE, 0, &index, &trailing); 
+	BOOL isTrailingHit, isInside;
+    DWRITE_HIT_TEST_METRICS caretMetrics;
 
-	//MEncodingTraits<kEncodingUTF8> enc;
-	//const char* text = pango_layout_get_text(mPangoLayout);	
+    //// Remap display coordinates to actual.
+    //DWRITE_MATRIX matrix;
+    //GetInverseViewMatrix(&matrix);
 
-	//while (trailing-- > 0)
-	//{
-	//	uint32 n = enc.GetNextCharLength(text); 
-	//	text += n;
-	//	index += n;
-	//}
-	//
-	//outIndex = index;
+    //float transformedX = (x * matrix.m11 + y * matrix.m21 + matrix.dx);
+    //float transformedY = (x * matrix.m12 + y * matrix.m22 + matrix.dy);
 
-	//return result;
+	float x = inPosition;
+	float y = GetAscent();
 
-	return false;
+	mTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
+	outIndex = caretMetrics.textPosition;
+
+    //// Update current selection according to click or mouse drag.
+    //SetSelection(
+    //    isTrailingHit ? SetSelectionModeAbsoluteTrailing : SetSelectionModeAbsoluteLeading,
+    //    caretMetrics.textPosition,
+    //    extendSelection
+    //    );
+
+    return true;
 }
 
 float MWinDeviceImpl::GetTextWidth()
@@ -1414,6 +1404,57 @@ void MWinDeviceImpl::DrawText(
 {
 	if (mTextLayout != nil)
 	{
+		if (mSelectionLength > 0)
+		{
+			ID2D1SolidColorBrush* selectionColorBrush;
+			THROW_IF_HRESULT_ERROR(mRenderTarget->CreateSolidColorBrush(
+				D2D1::ColorF(mSelectionColor.red / 255.f, mSelectionColor.green / 255.f, mSelectionColor.blue / 255.f),
+				&selectionColorBrush));
+
+			DWRITE_TEXT_RANGE caretRange = { mSelectionStart, mSelectionLength };
+			UINT32 actualHitTestCount = 0;
+
+			// Determine actual number of hit-test ranges
+			mTextLayout->HitTestTextRange(caretRange.startPosition, caretRange.length,
+				inX, inY, NULL, 0, &actualHitTestCount);
+
+			// Allocate enough room to return all hit-test metrics.
+			std::vector<DWRITE_HIT_TEST_METRICS> hitTestMetrics(actualHitTestCount);
+
+			mTextLayout->HitTestTextRange(caretRange.startPosition, caretRange.length,
+				inX, inY, &hitTestMetrics[0], static_cast<UINT32>(hitTestMetrics.size()),
+				&actualHitTestCount);
+
+			// Draw the selection ranges behind the text.
+			if (actualHitTestCount > 0)
+			{
+				// Note that an ideal layout will return fractional values,
+				// so you may see slivers between the selection ranges due
+				// to the per-primitive antialiasing of the edges unless
+				// it is disabled (better for performance anyway).
+
+				D2D1_ANTIALIAS_MODE savedMode = mRenderTarget->GetAntialiasMode();
+				mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+
+				for (size_t i = 0; i < actualHitTestCount; ++i)
+				{
+					const DWRITE_HIT_TEST_METRICS& htm = hitTestMetrics[i];
+					D2D1_RECT_F highlightRect = {
+						htm.left,
+						htm.top,
+						(htm.left + htm.width),
+						(htm.top  + htm.height)
+					};
+            
+					mRenderTarget->FillRectangle(highlightRect, selectionColorBrush);
+				}
+
+				mRenderTarget->SetAntialiasMode(savedMode);
+			}
+
+			selectionColorBrush->Release();
+		}
+
 		MTextRenderer renderer(sD2DFactory, mRenderTarget);
 		mTextLayout->Draw(nil, &renderer, inX, inY);
 	}
@@ -1430,11 +1471,15 @@ void MWinDeviceImpl::DrawCaret(
 
 	if (mTextLayout != nil)
 	{
-		int32 offset = mTextIndex[inOffset];
+		int32 offset;
+
+		if (inOffset < mTextIndex.size())
+			offset = mTextIndex[inOffset];
+		else
+			offset = mText.length() + 1;
 
 		mTextLayout->HitTestTextPosition(
-			offset, offset > 0, // trailing if nonzero, else leading edge
-			&caretX, &caretY, &caretMetrics);
+			offset, false, &caretX, &caretY, &caretMetrics);
 	}
 	else
 		caretMetrics.height = GetLineHeight();

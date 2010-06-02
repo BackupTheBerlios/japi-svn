@@ -62,7 +62,8 @@ protected:
 	virtual bool	WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult);
 
-//	virtual bool	DispatchKeyDown(const MKeyDown& inKeyDown);
+	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText);
 
 	virtual INT		WinProc(HWND inHWnd, UINT inUMsg,
 						WPARAM inWParam, LPARAM inLParam);

@@ -40,7 +40,7 @@
 #include "MDevice.h"
 #include "MDocClosedNotifier.h"
 #include "MStrings.h"
-//#include "MAcceleratorTable.h"
+#include "MAcceleratorTable.h"
 #include "MSound.h"
 #include "MAlerts.h"
 //#include "MDiffWindow.h"
@@ -3465,33 +3465,27 @@ void MTextDocument::HashLines(vector<uint32>& outHashes) const
 
 // -- text input methods
 
-//// ---------------------------------------------------------------------------
-////	OnKeyPressEvent
-//
-//void MTextDocument::OnKeyPressEvent(
-//	GdkEventKey*		inEvent)
-//{
-//	bool handled = false;
-//
-//    uint32 modifiers = inEvent->state & kValidModifiersMask;
-//	uint32 keyValue = inEvent->keyval;
-//	
-//	handled = HandleRawKeydown(keyValue, modifiers);
-//	
-//	if (not handled and modifiers == 0)
-//	{
-//		wchar_t ch = gdk_keyval_to_unicode(keyValue);
-//		
-//		if (ch != 0)
-//		{
-//			char s[8] = {};
-//			char* sp = s;
-//			uint32 length = MEncodingTraits<kEncodingUTF8>::WriteUnicode(sp, ch);
-//			Type(s, length);
-//		}
-//	}
-//}
-//
+// ---------------------------------------------------------------------------
+//	HandleKeydown
+
+bool MTextDocument::HandleKeydown(
+	uint32			inKeyCode,
+	uint32			inModifiers,
+	const string&	inText)
+{
+	bool handled = false;
+
+	handled = HandleRawKeydown(inKeyCode, inModifiers);
+	
+	if (not handled and inModifiers == 0 and not inText.empty())
+	{
+		Type(inText.c_str(), inText.length());
+		handled = true;
+	}
+
+	return handled;
+}
+
 //// ----------------------------------------------------------------------------
 ////	OnCommit
 //
@@ -3972,17 +3966,17 @@ bool MTextDocument::HandleRawKeydown(
 	MKeyCommand keyCommand = kcmd_None;
 	bool handled = false;
 
-	//if (MAcceleratorTable::EditKeysInstance().IsNavigationKey(
-	//		inKeyValue, inModifiers, keyCommand))
-	//{
-	//	HandleKeyCommand(keyCommand);
-	//	handled = true;
-	//}
-	//else
-	//{
+	if (MAcceleratorTable::EditKeysInstance().IsNavigationKey(
+			inKeyValue, inModifiers, keyCommand))
+	{
+		HandleKeyCommand(keyCommand);
+		handled = true;
+	}
+	else
+	{
 		switch (inKeyValue)
 		{
-		case kEnterKeyCode:
+			case kEnterKeyCode:
 				Reset();
 				Execute();
 				handled = true;
@@ -4106,7 +4100,7 @@ bool MTextDocument::HandleRawKeydown(
 	
 		if (not handled and keyCommand != kcmd_None)
 			handled = HandleKeyCommand(keyCommand);
-	//}
+	}
 	
 	return handled;
 }

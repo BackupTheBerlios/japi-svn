@@ -153,6 +153,19 @@ bool MController::UpdateCommandStatus(
 	return result;
 }
 
+bool MController::HandleKeydown(
+	uint32			inKeyCode,
+	uint32			inModifiers,
+	const string&	inText)
+{
+	bool handled = false;
+	if (mDocument != nil)
+		handled = mDocument->HandleKeydown(inKeyCode, inModifiers, inText);
+	if (not handled)
+		handled = MHandler::HandleKeydown(inKeyCode, inModifiers, inText);
+	return handled;
+}
+
 bool MController::TryCloseDocument(
 	MCloseReason		inAction)
 {

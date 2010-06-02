@@ -165,6 +165,9 @@
     <ClCompile Include="..\..\Sources\Windows\MWinSound.cpp">
       <Filter>Source Files\MainLib\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp">
+      <Filter>Source Files\MainLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Rsrc\MJapi.rc">

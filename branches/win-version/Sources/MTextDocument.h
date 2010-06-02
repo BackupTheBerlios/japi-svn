@@ -99,6 +99,12 @@ class MTextDocument : public MDocument
 							uint32			inItemIndex,
 							uint32			inModifiers);
 
+	virtual bool		HandleKeydown(
+							uint32			inKeyCode,
+							uint32			inModifiers,
+							const std::string&
+											inText);
+
 	uint32				GetWrapWidth() const					{ return mWrapWidth; }
 
 	void				SetWrapWidth(

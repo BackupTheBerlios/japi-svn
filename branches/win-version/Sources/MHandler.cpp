@@ -7,6 +7,8 @@
 
 #include "MHandler.h"
 
+using namespace std;
+
 MHandler* MHandler::sFocus = nil;
 
 MHandler::MHandler(
@@ -235,5 +237,16 @@ void MHandler::TakeChainOffDuty(
 
 	}
 	while (handler != nil);
+}
+
+bool MHandler::HandleKeydown(
+	uint32			inKeyCode,
+	uint32			inModifiers,
+	const string&	inText)
+{
+	bool result = false;
+	if (mSuper != nil)
+		result = mSuper->HandleKeydown(inKeyCode, inModifiers, inText);
+	return result;
 }
 

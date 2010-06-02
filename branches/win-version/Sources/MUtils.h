@@ -217,7 +217,7 @@ void delay(double inSeconds);
 
 double GetDblClickTime();
 
-void GetModifierState(unsigned long& outModifiers, bool inAsync);
+void GetModifierState(uint32& outModifiers, bool inAsync);
 
 bool IsModifierDown(
 	int				inModifierMask);

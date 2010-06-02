@@ -312,6 +312,17 @@ bool MDocument::ProcessCommand(
 }
 
 // ---------------------------------------------------------------------------
+//	HandleKeydown
+
+bool MDocument::HandleKeydown(
+	uint32			inKeyCode,
+	uint32			inModifiers,
+	const string&	inText)
+{
+	return false;
+}
+
+// ---------------------------------------------------------------------------
 //	GetWindowTitle
 
 string MDocument::GetWindowTitle() const

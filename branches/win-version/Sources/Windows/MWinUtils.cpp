@@ -264,7 +264,7 @@ void delay(double inSeconds)
 		::Sleep(static_cast<unsigned long>(inSeconds * 1000));
 }
 
-void GetModifierState(unsigned long& outModifiers, bool inAsync)
+void GetModifierState(uint32& outModifiers, bool inAsync)
 {
 	outModifiers = 0;
 	if (inAsync)

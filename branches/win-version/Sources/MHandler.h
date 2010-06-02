@@ -31,6 +31,12 @@ class MHandler
 							uint32			inItemIndex,
 							uint32			inModifiers);
 
+	virtual bool		HandleKeydown(
+							uint32			inKeyCode,
+							uint32			inModifiers,
+							const std::string&
+											inText);
+
 	void				SetSuper(
 							MHandler*		inSuper);
 

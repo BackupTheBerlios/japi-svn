@@ -253,7 +253,7 @@ void MWinWindowImpl::ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV)
 	::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
 }
 	
-bool MWinWindowImpl::GetMouse(int32& outX, int32& outY, unsigned long& outModifiers)
+bool MWinWindowImpl::GetMouse(int32& outX, int32& outY, uint32& outModifiers)
 {
 	POINT lPoint;
 	::GetCursorPos(&lPoint);
@@ -309,7 +309,7 @@ bool MWinWindowImpl::WaitMouseMoved(int32 inX, int32 inY)
 			}
 			
 			int32 x, y;
-			unsigned long mod;
+			uint32 mod;
 			
 			if (not GetMouse(x, y, mod))
 				break;
@@ -384,7 +384,7 @@ bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*
 	}
 	else if (LOWORD(inLParam) == HTCLIENT and not mWindow->IsActive())
 	{
-		unsigned long modifiers;
+		uint32 modifiers;
 		GetModifierState(modifiers, false);
 		
 		POINT lPoint;
@@ -595,7 +595,7 @@ bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam
 
 bool MWinWindowImpl::WMMouseDown(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& /*outResult*/)
 {
-	unsigned long modifiers;
+	uint32 modifiers;
 	::GetModifierState(modifiers, false);
 	
 	int32 x = LOWORD(inLParam);

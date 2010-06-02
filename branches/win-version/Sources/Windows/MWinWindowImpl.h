@@ -48,7 +48,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 
 	virtual void	ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV);
 	
-	virtual bool	GetMouse(int32& outX, int32& outY, unsigned long& outModifiers);
+	virtual bool	GetMouse(int32& outX, int32& outY, uint32& outModifiers);
 	virtual bool	WaitMouseMoved(int32 inX, int32 inY);
 
 	virtual void	ConvertToScreen(int32& ioX, int32& ioY) const;

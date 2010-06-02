@@ -96,6 +96,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\CTestView.cpp" />
+    <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp" />
     <ClCompile Include="..\..\Sources\MAlerts.cpp" />
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
     <ClCompile Include="..\..\Sources\MClipboard.cpp" />

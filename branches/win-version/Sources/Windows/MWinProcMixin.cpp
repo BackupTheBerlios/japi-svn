@@ -11,7 +11,9 @@
 #include "MWinProcMixin.h"
 #include "MError.h"
 #include "MWinApplicationImpl.h"
+#include "MUtils.h"
 #include "MWinUtils.h"
+#include "MUnicode.h"
 
 using namespace std;
 
@@ -131,38 +133,21 @@ bool MWinProcMixin::WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inL
 		result = true;
 	else
 	{
-		//HKeyDown keyDown;
-		//
-		//char txt[8] = "";
+		uint32 keyCode = 0, modifiers = 0;
+		
+		wchar_t ch = inWParam;
+		wstring text(&ch, 1);
 	
-		//if (IsWindowUnicode(inHWnd))
-		//	keyDown.text_length = static_cast<unsigned short>(
-		//		HEncodingTraits<enc_UTF8>::
-		//		InsertUnicode(txt, static_cast<HUnicode>(inWParam)));
-		//else
-		//{
-		//	unsigned long s1 = 1, s2 = 8;
-		//	char ch = static_cast<char>(inWParam);
-		//
-		//	HEncoder::FetchEncoder(enc_Native)->
-		//		EncodeToUTF8(&ch, s1, txt, s2);
-		//	
-		//	keyDown.text_length = static_cast<unsigned short>(s2);
-		//}
-	
-		//keyDown.text = txt;
-		//keyDown.key_code = static_cast<unsigned short>(inWParam);
-		//
-		//GetModifierState(keyDown.modifiers, false);
-		//if (inLParam & (1 << 24))
-		//	keyDown.modifiers |= kNumPad;
-		//
-		//outResult = 1;
-		//if (DispatchKeyDown(keyDown))
-		//{
+		GetModifierState(modifiers, false);
+		if (inLParam & (1 << 24))
+			modifiers |= kNumPad;
+		
+		outResult = 1;
+		if (DispatchKeyDown(keyCode, modifiers, w2c(text)))
+		{
 			result = true;
 			outResult = 0;
-		//}
+		}
 	}
 	
 	return result;
@@ -170,114 +155,110 @@ bool MWinProcMixin::WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inL
 
 bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	//HKeyDown keyDown;
-	//
-	//keyDown.text = "";
-	//keyDown.text_length = 0;
-	//keyDown.key_code = 0;
-	//
-	//GetModifierState(keyDown.modifiers, false);
-	//if (inLParam & (1 << 24))
-	//	keyDown.modifiers |= kNumPad;
-	//
-	//switch (inWParam)
-	//{
-	//	case VK_HOME:
-	//		keyDown.key_code = kHHomeKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_ESCAPE:
-	//		keyDown.key_code = kHEscapeKeyCode;
-	//		break;
-	//	case VK_END:
-	//		keyDown.key_code = kHEndKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_NEXT:
-	//		keyDown.key_code = kHPageDownKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_PRIOR:
-	//		keyDown.key_code = kHPageUpKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_LEFT:
-	//		keyDown.key_code = kHLeftArrowKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_RIGHT:
-	//		keyDown.key_code = kHRightArrowKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_UP:
-	//		keyDown.key_code = kHUpArrowKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_DOWN:
-	//		keyDown.key_code = kHDownArrowKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_DELETE:
-	//		keyDown.key_code = kHDeleteKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_INSERT:
-	//		keyDown.key_code = kHHelpKeyCode;
-	//		keyDown.modifiers ^= kNumPad;
-	//		break;
-	//	case VK_CONTROL:
-	//	case VK_SHIFT:
-	//		keyDown.key_code = 0;
-	//		break;
-	//	case VK_TAB:
-	//		if (keyDown.modifiers & kControlKey)
-	//			keyDown.key_code = kHTabKeyCode;
-	//		break;
-	//	case VK_BACK:
-	//		if (keyDown.modifiers & kControlKey)
-	//			keyDown.key_code = kHBackspaceKeyCode;
-	//		break;
-	//	case VK_RETURN:
-	//		if (keyDown.modifiers & kControlKey)
-	//			keyDown.key_code = kHReturnKeyCode;
-	//		break;
-	//	default:
-	//		if (inWParam >= VK_F1 && inWParam <= VK_F24)
-	//			keyDown.key_code = static_cast<unsigned short>(
-	//				0x0101 + inWParam - VK_F1);
-	//		else if (IsWindowUnicode(inHWnd))
-	//			keyDown.key_code = static_cast<unsigned short>(
-	//				::MapVirtualKeyW(inWParam, 2));
-	//		else
-	//			keyDown.key_code = static_cast<unsigned short>(
-	//				::MapVirtualKeyA(inWParam, 2));
-	//		break;
-	//}
+	uint32 keyCode = 0, modifiers = 0;
+	string text;
+
+	GetModifierState(modifiers, false);
+	if (inLParam & (1 << 24))
+		modifiers |= kNumPad;
+	
+	switch (inWParam)
+	{
+		case VK_HOME:
+			keyCode = kHomeKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_ESCAPE:
+			keyCode = kEscapeKeyCode;
+			break;
+		case VK_END:
+			keyCode = kEndKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_NEXT:
+			keyCode = kPageDownKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_PRIOR:
+			keyCode = kPageUpKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_LEFT:
+			keyCode = kLeftArrowKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_RIGHT:
+			keyCode = kRightArrowKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_UP:
+			keyCode = kUpArrowKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_DOWN:
+			keyCode = kDownArrowKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_DELETE:
+			keyCode = kDeleteKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_INSERT:
+			keyCode = kHelpKeyCode;
+			modifiers ^= kNumPad;
+			break;
+		case VK_CONTROL:
+		case VK_SHIFT:
+			keyCode = 0;
+			break;
+		case VK_TAB:
+			if (modifiers & kControlKey)
+				keyCode = kTabKeyCode;
+			break;
+		case VK_BACK:
+			if (modifiers & kControlKey)
+				keyCode = kBackspaceKeyCode;
+			break;
+		case VK_RETURN:
+			if (modifiers & kControlKey)
+				keyCode = kReturnKeyCode;
+			break;
+		default:
+			if (inWParam >= VK_F1 and inWParam <= VK_F24)
+				keyCode = static_cast<unsigned short>(
+					0x0101 + inWParam - VK_F1);
+			else
+				keyCode = static_cast<unsigned short>(
+					::MapVirtualKeyW(inWParam, 2));
+			break;
+	}
 	
 	bool result = false;
 	outResult = 1;
 	mSuppressNextWMChar = true;
 	
-	//if (keyDown.key_code != 0 && DispatchKeyDown(keyDown))
-	//{
-	//	result = true;
-	//	outResult = 0;
-	//}
-	//else
-	//	fSuppressNextWMChar = false;
+	if (keyCode != 0 and DispatchKeyDown(keyCode, modifiers, text))
+	{
+		result = true;
+		outResult = 0;
+	}
+	else
+		mSuppressNextWMChar = false;
 	
 	return result;
 }
 
-//bool HWinProcMixin::DispatchKeyDown(const HKeyDown& inKeyDown)
-//{
-//	bool result = false;
-//	if (HHandler::GetGrabbingHandler())
-//		result = HHandler::GetGrabbingHandler()->KeyDown(inKeyDown);
-//	else if (HHandler::GetFocus())
-//		result = HHandler::GetFocus()->KeyDown(inKeyDown);
-//	return result;
-//}
+bool MWinProcMixin::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+	const string& inText)
+{
+	bool result = false;
+	//if (HHandler::GetGrabbingHandler())
+	//	result = HHandler::GetGrabbingHandler()->KeyDown(inKeyDown);
+	//else
+		if (MHandler::GetFocus())
+		result = MHandler::GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
+	return result;
+}
 
 bool MWinProcMixin::WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
