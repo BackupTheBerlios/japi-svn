@@ -163,7 +163,7 @@ using namespace std;
 //
 
 MEditWindow::MEditWindow()
-	: MDocWindow("Untitled", MRect(0, 0, 200, 200), kMPostionDefault, "edit-window-menu")
+	: MDocWindow("Untitled", MRect(0, 0, 600, 600), kMPostionDefault, "edit-window-menu")
 	, eSelectionChanged(this, &MEditWindow::SelectionChanged)
 	, eShellStatus(this, &MEditWindow::ShellStatus)
 	, eSSHProgress(this, &MEditWindow::SSHProgress)

@@ -182,7 +182,7 @@ void MWinControlImpl::AddedToWindow()
 		::MapWindowPoints(GetHandle(), parent->GetHandle(), (LPPOINT)&r, 2);
 
 		mControl->ResizeFrame(
-			bounds.x - r.left, bounds.y - r.top,
+			r.left - bounds.x, r.top - bounds.y,
 			(r.right - r.left) - bounds.width,
 			(r.bottom - r.top) - bounds.height);
 	}
@@ -404,3 +404,4 @@ MControlImpl* MControlImpl::CreateStatusbar(MControl* inControl)
 {
 	return new MStatusbarImpl(inControl);
 }
+

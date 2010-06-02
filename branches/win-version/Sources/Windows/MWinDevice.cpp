@@ -31,15 +31,15 @@ using namespace std;
 namespace
 {
 
-class DECLSPEC_UUID("e91eb6be-6cb7-11df-b6a6-001b21124f0d") MColouredText : public IUnknown
+class DECLSPEC_UUID("e91eb6be-6cb7-11df-b6a6-001b21124f0d") MTextColor : public IUnknown
 {
 public:
-						MColouredText();
-						MColouredText(const D2D1_COLOR_F& inColour);
-						~MColouredText();
+						MTextColor();
+						MTextColor(const MColor& inColor);
+						~MTextColor();
 
-    STDMETHOD(GetColour)(D2D1_COLOR_F* inColour);
-    STDMETHOD(SetColour)(const D2D1_COLOR_F& outColour);
+    STDMETHOD(GetColor)(D2D1_COLOR_F* inColor);
+    STDMETHOD(SetColor)(const D2D1_COLOR_F& outColor);
 
 public:
     unsigned long STDMETHODCALLTYPE AddRef();
@@ -52,45 +52,45 @@ public:
 
 private:
     unsigned long	mRefCount;
-    D2D1_COLOR_F	mColour;
+    D2D1_COLOR_F	mColor;
 };
 
-MColouredText::MColouredText()
+MTextColor::MTextColor()
 	: mRefCount(0)
 {
 }
 
-MColouredText::MColouredText(
-		const D2D1_COLOR_F& inColour)
+MTextColor::MTextColor(
+		const MColor& inColor)
 	: mRefCount(0)
-	, mColour(inColour)
+{
+	mColor = D2D1::ColorF(inColor.red / 255.f, inColor.green / 255.f, inColor.blue / 255.f);
+}
+
+MTextColor::~MTextColor()
 {
 }
 
-MColouredText::~MColouredText()
+STDMETHODIMP MTextColor::GetColor(
+	D2D1_COLOR_F*		outColor)
 {
-}
-
-STDMETHODIMP MColouredText::GetColour(
-	D2D1_COLOR_F*		outColour)
-{
-	*outColour = mColour;
+	*outColor = mColor;
 	return S_OK;
 }
 
-STDMETHODIMP MColouredText::SetColour(
-	const D2D1_COLOR_F&	inColour)
+STDMETHODIMP MTextColor::SetColor(
+	const D2D1_COLOR_F&	inColor)
 {
-	mColour = inColour;
+	mColor = inColor;
 	return S_OK;
 }
 
-STDMETHODIMP_(unsigned long) MColouredText::AddRef()
+STDMETHODIMP_(unsigned long) MTextColor::AddRef()
 {
 	return InterlockedIncrement(&mRefCount);
 }
 
-STDMETHODIMP_(unsigned long) MColouredText::Release()
+STDMETHODIMP_(unsigned long) MTextColor::Release()
 {
 	unsigned long newCount = InterlockedDecrement(&mRefCount);
     
@@ -103,11 +103,11 @@ STDMETHODIMP_(unsigned long) MColouredText::Release()
     return newCount;
 }
 
-STDMETHODIMP_(HRESULT) MColouredText::QueryInterface(
+STDMETHODIMP_(HRESULT) MTextColor::QueryInterface(
 	IID const&	riid,
 	void**		ppvObject)
 {
-    if (__uuidof(MColouredText) == riid)
+    if (__uuidof(MTextColor) == riid)
     {
         *ppvObject = this;
     }
@@ -234,17 +234,22 @@ STDMETHODIMP MTextRenderer::DrawGlyphRun(
 {
 	ID2D1SolidColorBrush* pBrush = NULL;
 
-    HRESULT hr = mRenderTarget->CreateSolidColorBrush(
-                D2D1::ColorF(
-                D2D1::ColorF::Black
-                ),
-                &pBrush);
+	D2D1::ColorF color = D2D1::ColorF::Black;
 
+	MTextColor* textColor = nil;
+	clientDrawingEffect->QueryInterface(&textColor);
+
+	if (textColor != nil)
+	{
+		textColor->GetColor(&color);
+		textColor->Release();
+	}
+
+    HRESULT hr = mRenderTarget->CreateSolidColorBrush(color, &pBrush);
 	mRenderTarget->DrawGlyphRun(D2D1::Point2(baselineOriginX, baselineOriginY),
         glyphRun,
         pBrush,
         measuringMode);
-
 	pBrush->Release();
 
 	return S_OK;
@@ -603,11 +608,13 @@ class MWinDeviceImpl : public MDeviceImp
 								MColor				inColor1,
 								MColor				inColor2);
 	
-	virtual uint32			GetAscent();
+	virtual float			GetAscent();
 	
-	virtual uint32			GetDescent();
+	virtual float			GetDescent();
 
-	virtual uint32			GetLineHeight();
+	virtual float			GetLineHeight();
+
+	virtual float			GetXWidth();
 
 	virtual void			DrawString(
 								const string&		inText,
@@ -621,12 +628,13 @@ class MWinDeviceImpl : public MDeviceImp
 								const string&		inText);
 	
 	virtual void			SetTabStops(
-								uint32				inTabWidth);
+								float				inTabWidth);
 	
 	virtual void			SetTextColors(
 								uint32				inColorCount,
-								uint32				inColors[],
-								uint32				inOffsets[]);
+								uint32				inColorIndices[],
+								uint32				inOffsets[],
+								MColor				inColors[]);
 
 	virtual void			SetTextSelection(
 								uint32				inStart,
@@ -642,7 +650,7 @@ class MWinDeviceImpl : public MDeviceImp
 								int32				inPosition,
 								uint32&				outIndex);
 	
-	virtual uint32			GetTextWidth();
+	virtual float			GetTextWidth();
 	
 	virtual void			DrawText(
 								float				inX,
@@ -694,8 +702,6 @@ class MWinDeviceImpl : public MDeviceImp
 	float					mFontSize;
 	IDWriteFont*			mFont;
 
-	MTextRenderer*			mTextRenderer;
-
 	// converted text (from UTF8 to UTF16)
 	wstring					mText;
 	vector<uint16>			mTextIndex;		// from string to wstring
@@ -740,7 +746,6 @@ MWinDeviceImpl::MWinDeviceImpl()
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 	, mFont(nil)
-	, mTextRenderer(nil)
 {
 	InitGlobals();
 }
@@ -757,7 +762,6 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mForeBrush(nil)
 	, mBackBrush(nil)
 	, mFont(nil)
-	, mTextRenderer(nil)
 {
 	InitGlobals();
 	
@@ -791,8 +795,6 @@ MWinDeviceImpl::MWinDeviceImpl(
 	mRenderTarget->SetTransform(
 		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
 
-	mTextRenderer = new MTextRenderer(sD2DFactory, mRenderTarget);
-
 	if (inUpdate)
 		ClipRect(inUpdate);
 
@@ -802,9 +804,6 @@ MWinDeviceImpl::MWinDeviceImpl(
 
 MWinDeviceImpl::~MWinDeviceImpl()
 {
-	if (mTextRenderer != nil)
-		mTextRenderer->Release();
-
 	if (mFont != nil)
 		mFont->Release();
 	
@@ -1140,35 +1139,54 @@ void MWinDeviceImpl::CreateTextFormat()
 	}
 }
 
-uint32 MWinDeviceImpl::GetAscent()
+float MWinDeviceImpl::GetAscent()
 {
 	if (not mFont)
 		SetFont("Consolas 10");
 
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
-	return static_cast<uint32>(ceil(metrics.ascent * mFontSize / metrics.designUnitsPerEm));
+	return metrics.ascent * mFontSize / metrics.designUnitsPerEm;
 }
 
-uint32 MWinDeviceImpl::GetDescent()
+float MWinDeviceImpl::GetDescent()
 {
 	if (not mFont)
 		SetFont("Consolas 10");
 
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
-	return static_cast<uint32>(ceil(metrics.descent * mFontSize / metrics.designUnitsPerEm));
+	return metrics.descent * mFontSize / metrics.designUnitsPerEm;
 }
 
-uint32 MWinDeviceImpl::GetLineHeight()
+float MWinDeviceImpl::GetLineHeight()
 {
 	if (not mFont)
 		SetFont("Consolas 10");
 
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
-	return static_cast<uint32>(
-		ceil((metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm));
+	return (metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm;
+}
+
+float MWinDeviceImpl::GetXWidth()
+{
+	if (not mFont)
+		SetFont("Consolas 10");
+
+	CreateTextFormat();
+
+	IDWriteTextLayout* layout = nil;
+
+	THROW_IF_HRESULT_ERROR(
+		sDWFactory->CreateTextLayout(L"x", 1, mTextFormat, 99999.0f, 99999.0f, &layout));
+
+	DWRITE_TEXT_METRICS metrics;
+	THROW_IF_HRESULT_ERROR(layout->GetMetrics(&metrics));
+
+	layout->Release();
+
+	return metrics.width;
 }
 
 void MWinDeviceImpl::DrawString(
@@ -1273,7 +1291,7 @@ void MWinDeviceImpl::SetText(
 }
 
 void MWinDeviceImpl::SetTabStops(
-	uint32				inTabWidth)
+	float				inTabWidth)
 {
 	if (mTextLayout == nil)
 		THROW(("SetText must be called first!"));
@@ -1282,34 +1300,25 @@ void MWinDeviceImpl::SetTabStops(
 
 void MWinDeviceImpl::SetTextColors(
 	uint32				inColorCount,
-	uint32				inColors[],
-	uint32				inOffsets[])
+	uint32				inColorIndices[],
+	uint32				inOffsets[],
+	MColor				inColors[])
 {
+	for (uint32 ix = 0; ix < inColorCount; ++ix)
+	{
+		MColor c = inColors[inColorIndices[ix]];
+		
+		MTextColor* color = new MTextColor(c);
 
-	//PangoAttrList* attrs = pango_attr_list_new();
-
-	//for (uint32 ix = 0; ix < inColorCount; ++ix)
-	//{
-	//	MColor c = gLanguageColors[inColors[ix]];
-	//	
-	//	uint16 red = c.red << 8 | c.red;
-	//	uint16 green = c.green << 8 | c.green;
-	//	uint16 blue = c.blue << 8 | c.blue;
-	//	
-	//	PangoAttribute* attr = pango_attr_foreground_new(red, green, blue);
-	//	attr->start_index = inOffsets[ix];
-	//	
-	//	if (ix == inColorCount - 1)
-	//		attr->end_index = -1;
-	//	else
-	//		attr->end_index = inOffsets[ix + 1];
-	//	
-	//	pango_attr_list_insert(attrs, attr);
-	//}
-	//
-	//pango_layout_set_attributes(mPangoLayout, attrs);
-	//
-	//pango_attr_list_unref(attrs);
+		DWRITE_TEXT_RANGE range;
+		range.startPosition = mTextIndex[inOffsets[ix]];
+		if (ix == inColorCount - 1)
+			range.length = mText.length() - range.startPosition;
+		else
+			range.length = mTextIndex[inOffsets[ix + 1]] - range.startPosition;
+		
+		mTextLayout->SetDrawingEffect(color, range);
+	}
 }
 
 void MWinDeviceImpl::SetTextSelection(
@@ -1391,12 +1400,12 @@ bool MWinDeviceImpl::PositionToIndex(
 	return false;
 }
 
-uint32 MWinDeviceImpl::GetTextWidth()
+float MWinDeviceImpl::GetTextWidth()
 {
 	DWRITE_TEXT_METRICS metrics;
 	THROW_IF_HRESULT_ERROR(mTextLayout->GetMetrics(&metrics));
 
-	return static_cast<uint32>(ceil(metrics.widthIncludingTrailingWhitespace));
+	return metrics.widthIncludingTrailingWhitespace;
 }
 
 void MWinDeviceImpl::DrawText(
@@ -1404,7 +1413,10 @@ void MWinDeviceImpl::DrawText(
 	float				inY)
 {
 	if (mTextLayout != nil)
-		mTextLayout->Draw(nil, mTextRenderer, inX, inY);
+	{
+		MTextRenderer renderer(sD2DFactory, mRenderTarget);
+		mTextLayout->Draw(nil, &renderer, inX, inY);
+	}
 }
 
 void MWinDeviceImpl::DrawCaret(

@@ -565,8 +565,8 @@ class MTextDocument : public MDocument
 	MLineInfoArray				mLineInfo;
 	std::string					mFont;
 	uint32						mLineHeight;
-	uint32						mCharWidth;	// to be able to calculate tab widths
-	uint32						mTabWidth;
+	float						mCharWidth;	// to be able to calculate tab widths
+	float						mTabWidth;
 	uint32						mCharsPerTab;
 	MSelection					mSelection;
 	int32						mWalkOffset;

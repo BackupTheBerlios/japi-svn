@@ -66,17 +66,19 @@ struct MRecognizer
 							string			inWord,
 							set<string>&	inKeys,
 							vector<string>&	outWords);
-	
-	union MTransition
+
+#ifdef _MSC_VER
+#pragma pack(4)
+#endif
+	struct MTransition
 	{
-		struct
-		{
-			bool		last	: 1;
-			uint32		dest	: 15;
-			uint8		term	: 8;
-			uint8		attr	: 8;
-		}				b;
-		uint32			d;
+		int				last	: 1;
+		unsigned int	dest	: 15;
+		unsigned int	term	: 8;
+		unsigned int	attr	: 8;
+
+		bool			operator!=(const MTransition& rhs) const	{ return d() != rhs.d(); }
+		uint32			d() const									{ return *reinterpret_cast<const uint32*>(this); }
 	};
 	
 	typedef vector<MTransition>	MAutomaton;
@@ -117,7 +119,6 @@ struct MRecognizer
 
 const MRecognizer::MTransition MRecognizer::kNullTransition = {};
 
-
 MRecognizer::MHashTable::MHashTable()
 	: mTable(new uint32[kHashTableSize])
 	, mLastPos(-1)
@@ -136,7 +137,7 @@ uint32 MRecognizer::MHashTable::Hash(MTransition* inStates, uint32 inStateCount)
 	uint32 r = 0;
 
 	for (uint32 i = 0; i < inStateCount; ++i)
-		r += inStates[i].d;
+		r += inStates[i].d();
 	
 	return ((r * kHashMagicNumber1) >> kHashMagicNumber2) % kHashTableSize;
 }
@@ -147,7 +148,7 @@ uint32 MRecognizer::MHashTable::Lookup(
 	if (inStateCount == 0)
 		inStates[inStateCount++] = kNullTransition;
 	
-	inStates[inStateCount - 1].b.last = true;
+	inStates[inStateCount - 1].last = true;
 
 	uint32 addr = Hash(inStates, inStateCount);
 	bool found = false;
@@ -160,7 +161,7 @@ uint32 MRecognizer::MHashTable::Lookup(
 			
 			for (uint32 i = 0; i < inStateCount; ++i)
 			{
-				if (ioAutomaton[mBuckets[ix].mAddr + i].d != inStates[i].d)
+				if (ioAutomaton[mBuckets[ix].mAddr + i] != inStates[i])
 				{
 					found = false;
 					break;
@@ -251,9 +252,9 @@ void MRecognizer::CreateAutomaton()
 		{
 			MTransition new_trans = {};
 
-			new_trans.b.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
-			new_trans.b.term = is_terminal[i];
-			new_trans.b.attr = s0[--i];
+			new_trans.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
+			new_trans.term = is_terminal[i];
+			new_trans.attr = s0[--i];
 			
 			larval_state[i][l_state_len[i]++] = new_trans;
 		}
@@ -273,9 +274,9 @@ void MRecognizer::CreateAutomaton()
 	{
 		MTransition new_trans = {};
 
-		new_trans.b.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
-		new_trans.b.term = is_terminal[i];
-		new_trans.b.attr = s0[--i];
+		new_trans.dest = ht.Lookup(larval_state[i], l_state_len[i], mAutomaton);
+		new_trans.term = is_terminal[i];
+		new_trans.attr = s0[--i];
 		
 		larval_state[i][l_state_len[i]++] = new_trans;
 	}
@@ -283,7 +284,7 @@ void MRecognizer::CreateAutomaton()
 	uint32 start_state = ht.Lookup(larval_state[0], l_state_len[0], mAutomaton);
 	
 	MTransition t = { };
-	t.b.dest = start_state;
+	t.dest = start_state;
 	mAutomaton.push_back(t);
 	
 	mData.reset(nil);
@@ -300,14 +301,14 @@ uint32 MRecognizer::Move(uint8 inChar, uint32 inState)
 		if (state == 0)
 			state = mAutomaton.size() - 1;
 		
-		state = mAutomaton[state].b.dest;
+		state = mAutomaton[state].dest;
 		
 		if (state > mAutomaton.size())
 			THROW(("Error, state out of bounds"));
 		
-		while (mAutomaton[state].b.attr != inChar)
+		while (mAutomaton[state].attr != inChar)
 		{
-			if (mAutomaton[state].b.last)
+			if (mAutomaton[state].last)
 			{
 				result = 0;
 				break;
@@ -330,7 +331,7 @@ uint8 MRecognizer::IsKeyWord(uint32 inState)
 {
 	uint8 result = 0;
 	if (inState > 0 and inState < mAutomaton.size())
-		result = mAutomaton[inState - 1].b.term;
+		result = mAutomaton[inState - 1].term;
 	return result;
 }
 
@@ -339,13 +340,13 @@ void MRecognizer::CollectKeyWordsBeginningWith(
 	vector<string>&	ioStrings)
 {
 	bool match = true;
-	uint32 state = mAutomaton[mAutomaton.size() - 1].b.dest;
+	uint32 state = mAutomaton[mAutomaton.size() - 1].dest;
 	
 	for (uint32 i = 0; state != 0 and match and i < inPattern.length(); ++i)
 	{
-		while (mAutomaton[state].b.attr != inPattern[i])
+		while (mAutomaton[state].attr != inPattern[i])
 		{
-			if (mAutomaton[state].b.last)
+			if (mAutomaton[state].last)
 			{
 				match = false;
 				break;
@@ -354,8 +355,8 @@ void MRecognizer::CollectKeyWordsBeginningWith(
 			++state;
 		}
 		
-		if (match and mAutomaton[state].b.attr == inPattern[i])
-			state = mAutomaton[state].b.dest;
+		if (match and mAutomaton[state].attr == inPattern[i])
+			state = mAutomaton[state].dest;
 		else
 			match = false;
 	}
@@ -380,9 +381,9 @@ void MRecognizer::CollectKeyWordsStartingFromState(
 
 	for (;;)
 	{
-		char ch = mAutomaton[state].b.attr;
+		char ch = mAutomaton[state].attr;
 
-		if (mAutomaton[state].b.term)
+		if (mAutomaton[state].term)
 		{
 			string word = inWord + ch;
 			if (inKeys.count(word) == 0)
@@ -392,13 +393,13 @@ void MRecognizer::CollectKeyWordsStartingFromState(
 			}
 		}
 
-		if (mAutomaton[state].b.dest != 0)
+		if (mAutomaton[state].dest != 0)
 		{
 			CollectKeyWordsStartingFromState(
-				mAutomaton[state].b.dest, inWord + ch, inKeys, outWords);
+				mAutomaton[state].dest, inWord + ch, inKeys, outWords);
 		}
 
-		if (mAutomaton[state].b.last)
+		if (mAutomaton[state].last)
 			break;
 
 		++state;

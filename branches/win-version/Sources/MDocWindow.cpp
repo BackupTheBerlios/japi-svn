@@ -120,8 +120,6 @@ void MDocWindow::DocumentChanged(
 
 		ModifiedChanged(inDocument->IsModified());
 	}
-	else
-		Close();
 }
 
 void MDocWindow::ModifiedChanged(

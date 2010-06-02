@@ -146,6 +146,8 @@ void MView::SetFrame(
 	const MRect&	inFrame)
 {
 	mFrame = inFrame;
+	mBounds.width = inFrame.width;
+	mBounds.height = inFrame.height;
 }
 
 void MView::GetViewSize(
@@ -257,28 +259,32 @@ void MView::ScrollBy(int32 inDeltaX, int32 inDeltaY)
 	
 	if (inDeltaX and scrollbar != nil)
 	{
-		if (inDeltaX + scrollbar->GetValue() < scrollbar->GetMinValue())
-			inDeltaX = scrollbar->GetMinValue() - scrollbar->GetValue();
-		if (inDeltaX + scrollbar->GetValue() > scrollbar->GetMaxValue())
-			inDeltaX = scrollbar->GetMaxValue() - scrollbar->GetValue();
+		int32 value = scrollbar->GetValue();
+
+		if (inDeltaX + value < scrollbar->GetMinValue())
+			inDeltaX = scrollbar->GetMinValue() - value;
+		if (inDeltaX + value > scrollbar->GetMaxValue())
+			inDeltaX = scrollbar->GetMaxValue() - value;
 	}
 
 	scrollbar = mScroller ? mScroller->GetVScrollbar() : nil;
 	
 	if (inDeltaY and scrollbar != nil)
 	{
-		if (inDeltaY + scrollbar->GetValue() < scrollbar->GetMinValue())
-			inDeltaY = scrollbar->GetMinValue() - scrollbar->GetValue();
-		if (inDeltaY + scrollbar->GetValue() > scrollbar->GetMaxValue())
-			inDeltaY = scrollbar->GetMaxValue() - scrollbar->GetValue();
+		int32 value = scrollbar->GetValue();
+
+		if (inDeltaY + value < scrollbar->GetMinValue())
+			inDeltaY = scrollbar->GetMinValue() - value;
+		if (inDeltaY + value > scrollbar->GetMaxValue())
+			inDeltaY = scrollbar->GetMaxValue() - value;
 	}
 	
 	if (inDeltaX != 0 or inDeltaY != 0)
 	{
+		ScrollRect(mBounds, -inDeltaX, -inDeltaY);
+
 		mBounds.x += inDeltaX;
 		mBounds.y += inDeltaY;
-
-		ScrollRect(mBounds, -inDeltaX, -inDeltaY);
 
 		if (mScroller != nil)
 			mScroller->AdjustScrollbars();

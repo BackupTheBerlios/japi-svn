@@ -73,13 +73,15 @@ class MDeviceImp
 	
 	//PangoFontMetrics*		GetMetrics();
 
-	virtual uint32			GetAscent()										{ return 10; }
+	virtual float			GetAscent()										{ return 10; }
 	
-	virtual uint32			GetDescent()									{ return 2; }
+	virtual float			GetDescent()									{ return 2; }
 	
-	virtual uint32			GetLeading()									{ return 0; }
+	virtual float			GetLeading()									{ return 0; }
 	
-	virtual uint32			GetLineHeight()									{ return GetAscent() + GetDescent() + GetLeading(); }
+	virtual float			GetLineHeight()									{ return GetAscent() + GetDescent() + GetLeading(); }
+
+	virtual float			GetXWidth()										{ return 8; }
 
 	virtual void			DrawString(
 								const std::string&	inText,
@@ -97,12 +99,13 @@ class MDeviceImp
 								const std::string&	inText)					{}
 	
 	virtual void			SetTabStops(
-								uint32				inTabWidth)				{}
+								float				inTabWidth)				{}
 	
 	virtual void			SetTextColors(
 								uint32				inColorCount,
-								uint32				inColors[],
-								uint32				inOffsets[])			{}
+								uint32				inColorIndices[],
+								uint32				inOffsets[],
+								MColor				inColors[])				{}
 
 	virtual void			SetTextSelection(
 								uint32				inStart,
@@ -118,7 +121,7 @@ class MDeviceImp
 								int32				inPosition,
 								uint32&				outIndex)				{ return false; }
 	
-	virtual uint32			GetTextWidth()									{ return 0; }
+	virtual float			GetTextWidth()									{ return 0; }
 	
 	virtual void			DrawText(
 								float				inX,

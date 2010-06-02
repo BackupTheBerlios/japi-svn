@@ -147,24 +147,29 @@ void MDevice::CreateAndUsePattern(
 	mImpl->CreateAndUsePattern(inColor1, inColor2);
 }
 
-uint32 MDevice::GetAscent() const
+float MDevice::GetAscent() const
 {
 	return mImpl->GetAscent();
 }
 
-uint32 MDevice::GetDescent() const
+float MDevice::GetDescent() const
 {
 	return mImpl->GetDescent();
 }
 
-uint32 MDevice::GetLeading() const
+float MDevice::GetLeading() const
 {
 	return mImpl->GetLeading();
 }
 
-uint32 MDevice::GetLineHeight() const
+float MDevice::GetLineHeight() const
 {
 	return mImpl->GetLineHeight();
+}
+
+float MDevice::GetXWidth() const
+{
+	return mImpl->GetXWidth();
 }
 
 void MDevice::DrawString(
@@ -184,17 +189,18 @@ void MDevice::SetText(
 }
 
 void MDevice::SetTabStops(
-	uint32			inTabWidth)
+	float			inTabWidth)
 {
 	mImpl->SetTabStops(inTabWidth);
 }
 
 void MDevice::SetTextColors(
-	uint32			inColorCount,
-	uint32			inColors[],
-	uint32			inOffsets[])
+	uint32				inColorCount,
+	uint32				inColorIndices[],
+	uint32				inOffsets[],
+	MColor				inColors[])
 {
-	mImpl->SetTextColors(inColorCount, inColors, inOffsets);
+	mImpl->SetTextColors(inColorCount, inColorIndices, inOffsets, inColors);
 }
 
 void MDevice::SetTextSelection(
@@ -227,7 +233,7 @@ void MDevice::DrawText(
 	mImpl->DrawText(inX, inY);
 }
 
-uint32 MDevice::GetTextWidth()
+float MDevice::GetTextWidth() const
 {
 	return mImpl->GetTextWidth();
 }

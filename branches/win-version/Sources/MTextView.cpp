@@ -374,7 +374,7 @@ uint32 MTextView::CountPages(
 
 	inDevice.SetFont(mDocument->GetFont());
 
-	uint32 lineHeight = inDevice.GetAscent() + inDevice.GetDescent() + inDevice.GetLeading();
+	uint32 lineHeight = static_cast<uint32>(ceil(inDevice.GetLineHeight()));
 	
 	uint32 linesPerPage = bounds.height / lineHeight;
 	if (linesPerPage == 0 or lines == 0)
@@ -408,10 +408,8 @@ void MTextView::Draw(
 		dev.SetFont(mDocument->GetFont());
 		
 		mDescent = dev.GetDescent();
-		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
-
-		dev.SetText("          ");
-		mCharWidth = dev.GetTextWidth() / 10;
+		mLineHeight = dev.GetLineHeight();
+		mCharWidth = dev.GetXWidth();
 		
 		uint32 linesPerPage = bounds.height / mLineHeight;
 
@@ -430,7 +428,7 @@ void MTextView::Draw(
 	if (mDocument->GetShowWhiteSpace())
 		dev.SetDrawWhiteSpace(true);
 	
-	int32 minLine = (bounds.y + inUpdate.y) / mLineHeight - 1;
+	int32 minLine = inUpdate.y / mLineHeight - 1;
 	if (minLine < 0)
 		minLine = 0;
 	
@@ -440,7 +438,7 @@ void MTextView::Draw(
 
 	for (uint32 line = minLine; line <= maxLine; ++line)
 	{
-		MRect lineRect(0, line * mLineHeight - bounds.y, bounds.width + bounds.x, mLineHeight);
+		MRect lineRect(0, line * mLineHeight, bounds.width + bounds.x, mLineHeight);
 		if (inUpdate.Intersects(lineRect))
 			DrawLine(line, dev, lineRect);
 	}
@@ -1610,9 +1608,7 @@ void MTextView::StylesChanged()
 		mDocument->GetStyledText(0, dev, txt);
 		mDescent = dev.GetDescent();
 		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
-
-		dev.SetText("          ");
-		mCharWidth = dev.GetTextWidth() / 10;
+		mCharWidth = dev.GetXWidth();
 	}
 	else
 	{

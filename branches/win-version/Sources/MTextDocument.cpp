@@ -523,8 +523,7 @@ void MTextDocument::ReInit()
 	device.SetFont(mFont);
 
 	mLineHeight = device.GetLineHeight();
-	device.SetText("          ");
-	mCharWidth = device.GetTextWidth() / 10;
+	mCharWidth = device.GetXWidth();
 	mTabWidth = mCharWidth * mCharsPerTab;
 }
 
@@ -3386,7 +3385,7 @@ void MTextDocument::GetStyledText(
 		uint32 count = mLanguage->StyleLine(
 			mText, inOffset, inLength, inState, styles, offsets);
 
-		inDevice.SetTextColors(count, styles, offsets);
+		inDevice.SetTextColors(count, styles, offsets, gLanguageColors);
 	}
 
 	inDevice.SetTabStops(mTabWidth);

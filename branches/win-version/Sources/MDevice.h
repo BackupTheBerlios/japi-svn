@@ -89,13 +89,15 @@ class MDevice
 						MColor				inColor1,
 						MColor				inColor2);
 	
-	uint32			GetAscent() const;
+	float			GetAscent() const;
 	
-	uint32			GetDescent() const;
+	float			GetDescent() const;
 	
-	uint32			GetLeading() const;
+	float			GetLeading() const;
 	
-	uint32			GetLineHeight() const;
+	float			GetLineHeight() const;
+
+	float			GetXWidth() const;
 
 	void			DrawString(
 						const std::string&	inText,
@@ -105,17 +107,19 @@ class MDevice
 						MAlignment			inAlign = eAlignNone);
 
 	// Text Layout options
-	
 	void			SetText(
 						const std::string&	inText);
 	
+	float			GetTextWidth() const;
+
 	void			SetTabStops(
-						uint32				inTabWidth);
+						float				inTabWidth);
 	
 	void			SetTextColors(
 						uint32				inColorCount,
-						uint32				inColors[],
-						uint32				inOffsets[]);
+						uint32				inColorIndices[],
+						uint32				inOffsets[],
+						MColor				inColors[]);
 
 	void			SetTextSelection(
 						uint32				inStart,
@@ -135,8 +139,6 @@ class MDevice
 	bool			PositionToIndex(
 						int32				inPosition,
 						uint32&				outIndex);
-	
-	uint32			GetTextWidth();
 	
 	void			DrawText(
 						float				inX,

@@ -74,6 +74,7 @@ MLanguageCpp::Init()
 	AddKeywords(keywords);
 	AddKeywords(preprocessorSymbols);
 	AddKeywords(my_keywords);
+
 	GenerateDFA();
 }
 
@@ -113,7 +114,7 @@ MLanguageCpp::StyleLine(
 				{
 					ioState = PRAGMA1;
 				}
-				else if (isalpha(c) or c == '_')
+				else if (IsAlpha(c) or c == '_')
 				{
 					kws = Move(c, 1);
 					ioState = IDENT;
@@ -166,7 +167,7 @@ MLanguageCpp::StyleLine(
 				break;
 			
 			case IDENT:
-				if (not isalnum(c) and c != '_')
+				if (not IsAlnum(c) and c != '_')
 				{
 					int kwc;
 
@@ -573,14 +574,14 @@ static inline bool
 isidentf(
 	wchar_t		inChar)
 {
-	return isalpha(inChar) or inChar == '_';
+	return inChar == '_' or IsAlpha(inChar);
 }
 
 static inline bool
 isident(
 	wchar_t		inChar)
 {
-	return isalnum(inChar) or inChar == '_';
+	return inChar == '_' or IsAlnum(inChar);
 }
 
 MTextPtr
@@ -720,7 +721,7 @@ MLanguageCpp::ParseComment(
 {
 	do
 	{
-		while (isspace (*inText))
+		while (*inText > 0 and isspace(*inText))
 			++inText;
 		
 		if (*inText == '/')
@@ -819,14 +820,14 @@ MLanguageCpp::ParsePreProcessor(
 {
 	string name;
 
-	while (isspace(*inText))
+	while (*inText > 0 and isspace(*inText))
 		++inText;
 	
 	if (inText == "include")
 	{
 		inText += 7;
 
-		while (isspace(*inText))
+		while (*inText > 0 and isspace(*inText))
 			++inText;
 
 		if (*inText == '"')
@@ -854,14 +855,14 @@ MLanguageCpp::ParsePreProcessor(
 	{
 		inText += 6;
 		
-		while (isspace(*inText))
+		while (*inText > 0 and isspace(*inText))
 			++inText;
 		
 		if (inText == "mark")
 		{
 			inText += 4;
 			
-			while (isspace(*inText))
+			while (*inText > 0 and isspace(*inText))
 				++inText;
 			
 			MNamedRange ns;
@@ -958,7 +959,7 @@ MTextPtr MLanguageCpp::ParseType(
 		
 		while (*inText)
 		{
-			while (isalpha(*inText))	// skip keyword
+			while (IsAlpha(*inText))	// skip keyword
 				++inText;
 			inText = ParseComment(inText);
 			

@@ -42,7 +42,7 @@ MSaverMixin::MSaverMixin()
 	, mClosePending(false)
 	, mCloseAllPending(false)
 	, mQuitPending(false)
-	//, mDialog(nil)
+	, mDialog(nil)
 {
 	mNext = sFirst;
 	sFirst = this;
@@ -50,34 +50,34 @@ MSaverMixin::MSaverMixin()
 
 MSaverMixin::~MSaverMixin()
 {
-	//assert(mDialog == nil);
-	//assert(sFirst != nil);
-	//
-	//if (sFirst == this)
-	//	sFirst = mNext;
-	//else
-	//{
-	//	MSaverMixin* m = sFirst;
-	//	while (m != nil and m->mNext != this)
-	//		m = m->mNext;
-	//	
-	//	assert(m != nil);
-	//	
-	//	m->mNext = mNext;
-	//}
-	//
+	assert(mDialog == nil);
+	assert(sFirst != nil);
+	
+	if (sFirst == this)
+		sFirst = mNext;
+	else
+	{
+		MSaverMixin* m = sFirst;
+		while (m != nil and m->mNext != this)
+			m = m->mNext;
+		
+		assert(m != nil);
+		
+		m->mNext = mNext;
+	}
+
 	//if (mDialog != nil)
 	//	gtk_widget_destroy(mDialog);
 
-	//mDialog = nil;
+	mDialog = nil;
 }
 	
 bool MSaverMixin::IsNavDialogVisible()
 {
 	MSaverMixin* m = sFirst;
 
-	//while (m != nil and m->mDialog == nil)
-	//	m = m->mNext;
+	while (m != nil and m->mDialog == nil)
+		m = m->mNext;
 	
 	return m != nil;
 }

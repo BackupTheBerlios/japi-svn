@@ -10,6 +10,7 @@
 
 class MFile;
 class MWindow;
+class MDialog;
 
 enum MCloseReason {
 	kSaveChangesClosingDocument,
@@ -64,7 +65,7 @@ class MSaverMixin
 	bool				mClosePending;
 	bool				mCloseAllPending;
 	bool				mQuitPending;
-	//GtkWidget*			mDialog;
+	MDialog*			mDialog;
 };
 
 #endif

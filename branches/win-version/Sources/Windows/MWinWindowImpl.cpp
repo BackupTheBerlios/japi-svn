@@ -354,11 +354,13 @@ bool MWinWindowImpl::WMClose(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam
 // Destroy (delete) myself and notify some others,
 bool MWinWindowImpl::WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	MWinProcMixin::WMDestroy(inHWnd, inUMsg, inWParam, inLParam, outResult);
-
-	MWindow::RemoveWindowFromList(mWindow);
-	delete mWindow;
-	return true;
+	bool result = MWinProcMixin::WMDestroy(inHWnd, inUMsg, inWParam, inLParam, outResult);
+	if (result)
+	{
+		delete mWindow;
+		mWindow = nil;
+	}
+	return result;
 }
 
 bool MWinWindowImpl::WMActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM /*inLParam*/, int& /*outResult*/)
