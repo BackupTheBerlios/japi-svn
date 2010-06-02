@@ -11,6 +11,7 @@
 #include "MDocWindow.h"
 #include "MDocWindow.h"
 #include "MStrings.h"
+#include "MApplication.h"
 
 using namespace std;
 
@@ -23,28 +24,23 @@ MDocWindow::MDocWindow(const string& inTitle, const MRect& inBounds,
 	, eModifiedChanged(this, &MDocWindow::ModifiedChanged)
 	, eFileSpecChanged(this, &MDocWindow::FileSpecChanged)
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
-	, mController(nil)
+	, mController(this)
 {
 }
 
 MDocWindow::~MDocWindow()
 {
-	delete mController;
 }
 
-void MDocWindow::Initialize(
+void MDocWindow::SetDocument(
 	MDocument*		inDocument)
 {
-	if (mController == nil)
-		mController = new MController(this);
-	
-	mController->SetWindow(this);
-	mController->SetDocument(inDocument);
+	mController.SetDocument(inDocument);
 }
 
 bool MDocWindow::DoClose()
 {
-	return mController->TryCloseController(kSaveChangesClosingDocument);
+	return mController.TryCloseController(kSaveChangesClosingDocument);
 }
 
 MDocWindow* MDocWindow::FindWindowForDocument(MDocument* inDocument)
@@ -99,7 +95,7 @@ bool MDocWindow::ProcessCommand(
 
 MDocument* MDocWindow::GetDocument()
 {
-	return mController->GetDocument();
+	return mController.GetDocument();
 }
 
 void MDocWindow::SaveState()
@@ -132,7 +128,7 @@ void MDocWindow::FileSpecChanged(
 	MDocument*		inDocument,
 	const MFile&		inFile)
 {
-	MDocument* doc = mController->GetDocument();
+	MDocument* doc = mController.GetDocument();
 
 	if (doc != nil)
 	{
@@ -161,7 +157,3 @@ void MDocWindow::RemoveRoutes(
 	RemoveRoute(inDocument->eFileSpecChanged, eFileSpecChanged);
 }
 
-void MDocWindow::BeFocus()
-{
-	mController->TakeFocus();
-}

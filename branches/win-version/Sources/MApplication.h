@@ -55,7 +55,7 @@ class MApplication : public MHandler
 
 	//virtual MDocument*	AskOpenOneDocument();
 
-	virtual MDocWindow*	DisplayDocument(
+	virtual MWindow*	DisplayDocument(
 							MDocument*			inDocument);
 
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }

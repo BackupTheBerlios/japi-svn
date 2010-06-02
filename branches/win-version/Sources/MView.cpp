@@ -385,6 +385,18 @@ void MView::SetCursor(
 	//	gdk_window_set_cursor(mGtkWidget->window, gGdkCursors[inCursor]);
 }
 
+void MView::AdjustCursor(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	if (mParent != nil)
+	{
+		ConvertToParent(inX, inY);
+		mParent->AdjustCursor(inX, inY, inModifiers);
+	}
+}
+
 void MView::ObscureCursor()
 {
 	SetCursor(eBlankCursor);

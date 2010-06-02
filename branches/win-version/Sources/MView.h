@@ -151,6 +151,11 @@ class MView
 
 	void			UpdateNow();
 
+	virtual void	AdjustCursor(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
 	void			SetCursor(
 						MCursor			inCursor);
 

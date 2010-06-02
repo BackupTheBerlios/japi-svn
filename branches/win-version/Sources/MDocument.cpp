@@ -230,9 +230,9 @@ MController* MDocument::GetFirstController() const
 // ---------------------------------------------------------------------------
 //	GetWindow
 
-MDocWindow* MDocument::GetWindow() const
+MWindow* MDocument::GetWindow() const
 {
-	MDocWindow* result = nil;
+	MWindow* result = nil;
 	MController* controller = GetFirstController();
 	
 	if (controller != nil)

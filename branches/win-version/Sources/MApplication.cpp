@@ -23,7 +23,6 @@
 #include "MWindow.h"
 #include "MUtils.h"
 
-#include "CTestView.h"
 #include "MControls.h"
 
 using namespace std;
@@ -345,11 +344,11 @@ void MApplication::DoQuit()
 	//}
 }
 
-MDocWindow* MApplication::DisplayDocument(
+MWindow* MApplication::DisplayDocument(
 	MDocument*		inDocument)
 {
-	//MDocWindow* result = MDocWindow::FindWindowForDocument(inDocument);
-	//
+	MWindow* result = nil; //MDocWindow::FindWindowForDocument(inDocument);
+	
 	//if (result == nil)
 	//{
 	//	if (dynamic_cast<MTextDocument*>(inDocument) != nil)
@@ -361,54 +360,15 @@ MDocWindow* MApplication::DisplayDocument(
 	//		result = e;
 	//	}
 	//}
-	//
-	//if (result != nil)
-	//	result->Select();
-	//
-	//return result;
-	return nil;
+	
+	if (result != nil)
+		result->Select();
+	
+	return result;
 }
 
 void MApplication::DoNew()
 {
-	MWindow* w = new MWindow("Aap noot mies", MRect(10, 10, 210, 210), kMPostionDefault, "edit-window-menu");
-
-	MRect bounds(10, 10, 75, 23);
-
-	MButton* button = new MButton('okok', bounds, "OK");
-
-	button->Show();
-	button->Enable();
-
-	w->AddChild(button);
-
-	w->GetBounds(bounds);
-	bounds.y += 43;
-	bounds.height -= 43 + kScrollbarWidth;
-
-	CTestView* test = new CTestView(bounds);
-	MView* v = new MViewScroller('scrl', test, false, true);
-	v->SetBindings(true, true, true, true);
-	w->AddChild(v);
-
-	AddRoute(test->eAction, button->eClicked);
-
-	test->SetViewSize(300, 300);
-	test->SetScrollUnit(30, 14);
-
-	////bounds.width = 16;
-	////bounds.height -= kScrollbarWidth;
-	////MScrollbar* scrollbar = new MScrollbar('vscl', bounds);
-	////scrollbar->SetBindings(false, true, true, true);
-	////w->AddChild(scrollbar);
-
-	//w->AddChild(new CTestView(MRect(10, 40, 180, 180)));
-
-
-	w->Select();
-
-	//MDocument* doc = MDocument::Create<MTextDocument>(MFile());
-	//DisplayDocument(doc);
 }
 
 void MApplication::SetCurrentFolder(

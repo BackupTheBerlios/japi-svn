@@ -5,19 +5,21 @@
 
 #include "MLib.h"
 
-#include "MDocWindow.h"
+#include "MWindow.h"
+#include "MCommands.h"
 #include "MDocument.h"
 #include "MPreferences.h"
+#include "MApplication.h"
 
 using namespace std;
 
 MController::MController(
-	MHandler*	inSuper)
-	: MHandler(inSuper)
+	MWindow*	inWindow)
+	: MHandler(gApp)
 	, mDocument(nil)
+	, mWindow(inWindow)
+	, mCloseOnNavTerminate(false)
 {
-	if (dynamic_cast<MDocWindow*>(inSuper) != nil)
-		SetWindow(static_cast<MDocWindow*>(inSuper));
 }
 
 MController::~MController()
@@ -25,33 +27,21 @@ MController::~MController()
 	assert(mDocument == nil);
 }
 
-void MController::SetWindow(
-	MDocWindow*		inWindow)
-{
-	SetSuper(inWindow);
-	
-	mDocWindow = inWindow;
-	
-	AddRoute(eDocumentChanged, mDocWindow->eDocumentChanged);
-}
-
 void MController::SetDocument(
 	MDocument*		inDocument)
 {
-	assert(mDocWindow);
-	
 	if (inDocument != mDocument)
 	{
 		if (mDocument != nil)
 		{
-			try
-			{
-				if (mDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
-					mDocWindow->SaveState();
-			}
-			catch (...) {}
-			
-			mDocWindow->RemoveRoutes(mDocument);
+			//try
+			//{
+			//	if (mDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
+			//		mWindow->SaveState();
+			//}
+			//catch (...) {}
+			//
+			//mDocWindow->RemoveRoutes(mDocument);
 			mDocument->RemoveController(this);
 		}
 		
@@ -60,7 +50,7 @@ void MController::SetDocument(
 		if (mDocument != nil)
 		{
 			mDocument->AddController(this);
-			mDocWindow->AddRoutes(mDocument);
+			//mDocWindow->AddRoutes(mDocument);
 		}
 		
 		eDocumentChanged(mDocument);
@@ -183,9 +173,9 @@ bool MController::TryCloseDocument(
 			if (mDocument->IsSpecified())
 				name = mDocument->GetFile().GetFileName();
 			else
-				name = mDocWindow->GetTitle();
+				name = mWindow->GetTitle();
 			
-			MSaverMixin::TryCloseDocument(inAction, name, mDocWindow);
+			MSaverMixin::TryCloseDocument(inAction, name, mWindow);
 		}
 	}
 	
@@ -219,9 +209,9 @@ void MController::SaveDocumentAs()
 	if (mDocument->IsSpecified())
 		name = mDocument->GetFile().GetFileName();
 	else
-		name = mDocWindow->GetTitle();
+		name = mWindow->GetTitle();
 	
-	MSaverMixin::SaveDocumentAs(mDocWindow, name);
+	MSaverMixin::SaveDocumentAs(mWindow, name);
 }
 
 void MController::TryDiscardChanges()
@@ -229,7 +219,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mDocWindow);
+	MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mWindow);
 }
 
 bool MController::SaveDocument()

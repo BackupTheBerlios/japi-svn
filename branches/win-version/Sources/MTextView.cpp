@@ -1410,9 +1410,6 @@ void MTextView::ActivateSelf()
 	
 		mLastFocusTime = GetLocalTime();
 	}
-	
-	if (mController != nil)
-		mController->TakeFocus();
 }
 
 void MTextView::DeactivateSelf()
@@ -1426,9 +1423,6 @@ void MTextView::DeactivateSelf()
 		
 		mDocument->Reset();
 	}
-
-	if (mController != nil)
-		mController->ReleaseFocus();
 }
 
 void MTextView::DragEnter()

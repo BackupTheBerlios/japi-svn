@@ -55,7 +55,7 @@ class MJapiApp : public MApplication
 	MDocument*			OpenOneDocument(
 							const MFile&		inFileRef);
 
-	MDocWindow*			DisplayDocument(
+	MWindow*			DisplayDocument(
 							MDocument*			inDocument);
 
 	void				OpenProject(

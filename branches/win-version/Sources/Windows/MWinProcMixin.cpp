@@ -251,13 +251,7 @@ bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 bool MWinProcMixin::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
 	const string& inText)
 {
-	bool result = false;
-	//if (HHandler::GetGrabbingHandler())
-	//	result = HHandler::GetGrabbingHandler()->KeyDown(inKeyDown);
-	//else
-		if (MHandler::GetFocus())
-		result = MHandler::GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
-	return result;
+	return false;
 }
 
 bool MWinProcMixin::WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)

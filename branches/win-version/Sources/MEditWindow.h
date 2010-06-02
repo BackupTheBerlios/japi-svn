@@ -26,7 +26,7 @@ class MEditWindow : public MDocWindow
 	static MEditWindow*	FindWindowForDocument(
 							MDocument*		inDocument);
 
-	virtual void		Initialize(
+	virtual void		SetDocument(
 							MDocument*		inDocument);
 
 	virtual void		SaveState();
@@ -55,7 +55,6 @@ class MEditWindow : public MDocWindow
 							std::string		inMessage);
 	
 	MTextView*			mTextView;
-	//GtkWidget*			mSelectionPanel;
 	MParsePopup*		mParsePopup;
 	MParsePopup*		mIncludePopup;
 	MSSHProgress*		mSSHProgress;

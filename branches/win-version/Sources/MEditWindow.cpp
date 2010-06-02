@@ -173,8 +173,8 @@ MEditWindow::MEditWindow()
 	, mIncludePopup(nil)
 	, mSSHProgress(nil)
 {
-	MTextController* textController = new MTextController(this);
-	mController = textController;
+	//MTextController* textController = new MTextController(this);
+	//mController = textController;
 	
 	//mMenubar.SetTarget(mController);
 
@@ -248,7 +248,7 @@ MEditWindow::MEditWindow()
 	MViewScroller* scroller = new MViewScroller('scrl', mTextView, false, true);
 	scroller->SetBindings(true, true, true, true);
 	AddChild(scroller);
-	textController->AddTextView(mTextView);
+	//textController->AddTextView(mTextView);
 	
 	//ConnectChildSignals();
 
@@ -262,10 +262,10 @@ MEditWindow::~MEditWindow()
 	//delete mSSHProgress;
 }
 
-void MEditWindow::Initialize(
+void MEditWindow::SetDocument(
 	MDocument*		inDocument)
 {
-	MDocWindow::Initialize(inDocument);
+	MDocWindow::SetDocument(inDocument);
 	
 	MTextDocument* doc = dynamic_cast<MTextDocument*>(inDocument);
 	
@@ -294,7 +294,7 @@ void MEditWindow::Initialize(
 
 void MEditWindow::SaveState()
 {
-	MTextDocument* doc = dynamic_cast<MTextDocument*>(mController->GetDocument());
+	MTextDocument* doc = static_cast<MTextDocument*>(mController.GetDocument());
 	doc->SaveState();
 }
 
@@ -325,7 +325,7 @@ MEditWindow* MEditWindow::DisplayDocument(MDocument* inDocument)
 	if (w == nil)
 	{
 		w = new MEditWindow;
-		w->Initialize(inDocument);
+		w->SetDocument(inDocument);
 		w->Show();
 	}
 	

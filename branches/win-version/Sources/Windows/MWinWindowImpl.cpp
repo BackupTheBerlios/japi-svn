@@ -208,8 +208,6 @@ void MWinWindowImpl::Close()
 
 //virtual void	ActivateSelf();
 //virtual void	DeactivateSelf();
-//virtual void	BeFocus();
-//virtual void	SubFocusChanged();
 	
 void MWinWindowImpl::SetWindowPosition(MRect inBounds, bool inTransition)
 {
@@ -340,6 +338,12 @@ void MWinWindowImpl::ConvertFromScreen(int32& ioX, int32& ioY) const
 	::ScreenToClient(GetHandle(), &p);
 	ioX = p.x;
 	ioY = p.y;
+}
+
+bool MWinWindowImpl::DispatchKeyDown(uint32 inKeyCode,
+	uint32 inModifiers, const string& inText)
+{
+	return mWindow->HandleKeydown(inKeyCode, inModifiers, inText);
 }
 
 // --------------------------------------------------------------------
@@ -565,19 +569,14 @@ bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 		if (imp != nil)
 			result = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam, outResult);
 	}
-	//else
-	//{
-	//	HMessage msg (inWParam);
-	//	
-	//	if (HHandler::GetFocus())
-	//		result = HHandler::GetFocus()->HandleMessage(msg);
-	//	else
-	//		result = HHandler::GetTopHandler()->HandleMessage(msg);
-	//}
+	else
+	{
+		uint32 modifiers;
+		GetModifierState(modifiers, false);
+		result = mWindow->ProcessCommand(inWParam, nil, 0, modifiers);
+	}
 
 	return result;
-	
-	return false;
 }
 
 bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
@@ -722,30 +721,30 @@ bool MWinWindowImpl::WMContextMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*in
 bool MWinWindowImpl::WMSetCursor(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
 	bool handled = false;
-	//try
-	//{
-	//	HPoint where;
-	//	unsigned long modifiers;
-	//	
-	//	GetMouse(where, modifiers);
-	//	
-	//	HNode* node;
-	//	if (HNode::GetGrabbingNode())
-	//		node = HNode::GetGrabbingNode();
-	//	else
-	//		node = mWindow->FindSubPane(where);
+	try
+	{
+		int32 x, y;
+		uint32 modifiers;
+		
+		GetMouse(x, y, modifiers);
+		
+		MView* view;
+		//if (HNode::GetGrabbingNode())
+		//	node = HNode::GetGrabbingNode();
+		//else
+			view = mWindow->FindSubView(x, y);
 
-	//		// if node == mWindow defproc should handle setcursor
-	//	if (node && node != mWindow && node->IsActive())
-	//	{
-	//		node->ConvertFromWindow(where);
-	//		node->AdjustCursor(where, modifiers);
-	//		handled = true;
-	//	}
-	//}
-	//catch (...)
-	//{
-	//}
+			// if node == mWindow defproc should handle setcursor
+		if (view != nil and view != mWindow and view->IsActive())
+		{
+			view->ConvertFromWindow(x, y);
+			view->AdjustCursor(x, y, modifiers);
+			handled = true;
+		}
+	}
+	catch (...)
+	{
+	}
 
 	return handled;
 }
@@ -849,7 +848,7 @@ bool MWinWindowImpl::WMQueryEndSession(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM 
 	//if (gApp->Quit())
 	//	outResult = 1;
 	//else
-	//	outResult = 0;
+		outResult = 0;
 	return true;
 }
 

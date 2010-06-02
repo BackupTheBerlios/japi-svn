@@ -134,8 +134,6 @@ void MWindow::Select()
 	if (not mImpl->Visible())
 		mImpl->Show();
 	mImpl->Select();
-
-	TakeFocus();
 }
 
 void MWindow::Activate()
@@ -148,12 +146,6 @@ void MWindow::Activate()
 		ActivateSelf();
 		MView::Activate();
 	}
-
-	//if (not IsInCommandChain())
-	//	RestoreFocus();
-
-	//if (not IsInCommandChain())
-	//	SwitchFocus(this);
 
 	if (curTop and
 		curTop != this and

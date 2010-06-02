@@ -23,8 +23,11 @@ class MDocWindow : public MWindow
 							MDocument*		inDocument);
 	
 	MEventIn<void(bool)>					eModifiedChanged;
-	MEventIn<void(MDocument*, const MFile&)>	eFileSpecChanged;
+	MEventIn<void(MDocument*, const MFile&)>eFileSpecChanged;
 	MEventIn<void(MDocument*)>				eDocumentChanged;
+
+	void				SetDocument(
+							MDocument*		inDocument);
 
 	MDocument*			GetDocument();
 
@@ -37,14 +40,9 @@ class MDocWindow : public MWindow
 	virtual void		RemoveRoutes(
 							MDocument*		inDocument);
 
-	virtual void		BeFocus();
-
-  protected:
+protected:
 
 	static std::string	GetUntitledTitle();
-
-	virtual void		Initialize(
-							MDocument*		inDocument);
 
 	virtual void		DocumentChanged(
 							MDocument*		inDocument);
@@ -73,8 +71,7 @@ class MDocWindow : public MWindow
 	
   protected:
 
-	MController*		mController;
-	//MMenubar			mMenubar;
+	MController			mController;
 
 	virtual				~MDocWindow();
 };

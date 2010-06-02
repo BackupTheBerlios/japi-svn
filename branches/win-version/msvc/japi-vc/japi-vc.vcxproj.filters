@@ -114,9 +114,6 @@
     <ClCompile Include="..\..\Sources\MTypes.cpp">
       <Filter>Source Files\MainLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\CTestView.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\MTextDocument.cpp">
       <Filter>Source Files\Japi</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
     <ClCompile Include="..\..\Sources\MEditWindow.cpp">
       <Filter>Source Files\Japi</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\MTextController.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\MClipboard.cpp">
       <Filter>Source Files\Japi</Filter>
     </ClCompile>
@@ -173,10 +167,5 @@
     <ResourceCompile Include="Rsrc\MJapi.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Sources\CTestView.h">
-      <Filter>Source Files\Japi</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

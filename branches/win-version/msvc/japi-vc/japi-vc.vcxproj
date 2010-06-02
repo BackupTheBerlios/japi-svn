@@ -95,7 +95,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Sources\CTestView.cpp" />
     <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp" />
     <ClCompile Include="..\..\Sources\MAlerts.cpp" />
     <ClCompile Include="..\..\Sources\MApplication.cpp" />
@@ -125,7 +124,6 @@
     <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
     <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
-    <ClCompile Include="..\..\Sources\MTextController.cpp" />
     <ClCompile Include="..\..\Sources\MTextDocument.cpp" />
     <ClCompile Include="..\..\Sources\MTextView.cpp" />
     <ClCompile Include="..\..\Sources\MTypes.cpp" />
@@ -143,9 +141,6 @@
     <ClCompile Include="..\..\Sources\Windows\MWinSound.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Sources\CTestView.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Rsrc\MJapi.rc" />

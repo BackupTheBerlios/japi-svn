@@ -91,6 +91,9 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMQueryEndSession(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMDropFiles(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
+	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText);
+
 	HWND			mSizeBox;
 	HWND			mStatus;
 	int32			mMinWidth, mMinHeight;

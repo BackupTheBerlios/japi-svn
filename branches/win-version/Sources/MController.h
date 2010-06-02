@@ -20,26 +20,22 @@
 
 class MDocument;
 class MWindow;
-class MDocWindow;
 class MFile;
 
 class MController : public MHandler, public MSaverMixin
 {
   public:
 						MController(
-							MHandler*		inSuper);
+							MWindow*		inWindow);
 
 						~MController();
-
-	void				SetWindow(
-							MDocWindow*		inWindow);
 
 	void				SetDocument(
 							MDocument*		inDocument);
 
 	MDocument*			GetDocument() const				{ return mDocument; }
 	
-	MDocWindow*			GetWindow() const				{ return mDocWindow; }
+	MWindow*			GetWindow() const				{ return mWindow; }
 	
 	bool				SaveDocument();
 
@@ -89,7 +85,7 @@ class MController : public MHandler, public MSaverMixin
 	MController&		operator=(const MController&);
 
 	MDocument*			mDocument;
-	MDocWindow*			mDocWindow;
+	MWindow*			mWindow;
 	bool				mCloseOnNavTerminate;
 };
 

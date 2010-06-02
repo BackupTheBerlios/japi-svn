@@ -18,7 +18,7 @@
 
 class MDocClosedNotifier;
 class MController;
-class MDocWindow;
+class MWindow;
 class MMenu;
 
 class MDocument : public MHandler
@@ -74,7 +74,7 @@ class MDocument : public MHandler
 
 	uint32				CountControllers() const			{ return mControllers.size(); }
 	
-	MDocWindow*			GetWindow() const;
+	MWindow*			GetWindow() const;
 	
 	virtual MController*
 						GetFirstController() const;
