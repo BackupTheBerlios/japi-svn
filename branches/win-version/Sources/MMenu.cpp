@@ -109,14 +109,13 @@ MMenu* MMenu::CreateFromResource(
 {
 	MMenu* result = nil;
 	
-	//mrsrc::rsrc rsrc(
-	//	string("Menus/") + inResourceName + ".xml");
-	//
-	//if (not rsrc)
-	//	THROW(("Menu resource not found: %s", inResourceName));
+	mrsrc::rsrc rsrc(
+		string("Menus/") + inResourceName + ".xml");
+	
+	if (not rsrc)
+		THROW(("Menu resource not found: %s", inResourceName));
 
-	//io::stream<io::array_source> data(rsrc.data(), rsrc.size());
-	ifstream data("C:\\Users\\maarten\\projects\\japi\\Resources\\Menus\\" + string(inResourceName) + ".xml");
+	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
 	xml::document doc(data);
 	
 	// build a menu from the resource XML

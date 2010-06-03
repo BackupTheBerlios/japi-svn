@@ -13,6 +13,18 @@
 
 using namespace std;
 
+namespace {
+
+const int32
+	kAskSaveChanges_Save = 3,
+	kAskSaveChanges_Cancel = 2,
+	kAskSaveChanges_DontSave = 1,
+	
+	kDiscardChanges_Discard = 1,
+	kDiscardChanges_Cancel = 2;
+
+}
+
 MController::MController(
 	MWindow*	inWindow)
 	: MHandler(gApp)
@@ -175,7 +187,25 @@ bool MController::TryCloseDocument(
 			else
 				name = mWindow->GetTitle();
 			
-			MSaverMixin::TryCloseDocument(inAction, name, mWindow);
+			mWindow->Select();
+
+			switch (DisplayAlert("save-changes-alert", name))
+			{
+				case kAskSaveChanges_Save:
+					if (SaveDocument())
+					{
+						CloseAfterNavigationDialog();
+						result = true;
+					}
+					break;
+
+				case kAskSaveChanges_Cancel:
+					break;
+
+				case kAskSaveChanges_DontSave:
+					result = true;
+					break;
+			}
 		}
 	}
 	
@@ -219,7 +249,11 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mWindow);
+	//MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mWindow);
+	mWindow->Select();
+
+	if (DisplayAlert("discard-changes-alert", mDocument->GetFile().GetFileName()) == 1/*kDiscardChanges_Discard*/)
+		RevertDocument();
 }
 
 bool MController::SaveDocument()

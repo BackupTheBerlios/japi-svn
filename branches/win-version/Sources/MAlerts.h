@@ -8,6 +8,9 @@
 
 #include <sstream>
 #include <vector>
+#include <boost/lexical_cast.hpp>
+
+class MWindow;
 
 void DisplayError(
 	const std::exception&	inException);
@@ -15,77 +18,75 @@ void DisplayError(
 void DisplayError(
 	const std::string&		inError);
 
-//GtkWidget* CreateAlertWithArgs(
-//	const char* 				inResourceName,
-//	std::vector<std::string>&	inArgs);
-//
-int32 DisplayAlertWithArgs(
-	const char*					inResourceName,
-	std::vector<std::string>&	inArgs);
+// the actual implementation
 
-template<class T>
-inline 
-void AddArgument(
-	std::vector<std::string>&	inArgs,
-	const T&					inArg)
+int32 DisplayAlert(
+	MWindow*					inParent,
+	const std::string&			inResourceName,
+	std::vector<std::string>&	inArguments);
+
+#if 0
+
+template<class T, typename... Args>
+int32 DisplayAlert(
+	const std::string&			inResourceName,
+	std::vector<std::string>&	inArguments,
+	const T&					inArgument,
+	const Args&...				inMoreArguments)
 {
-	std::stringstream s;
-	s << inArg;
-	inArgs.push_back(s.str());
+	inArguments.push_back(boost::lexical_cast<std::string>(inArgument));
+	return DisplayAlert(inResourceName, inArguments, inMoreArguments...);
 }
 
-inline
+#else
+
+inline int32 DisplayAlert(
+	MWindow*					inParent,
+	const std::string&			inResourceName)
+{
+	return DisplayAlert(inParent, inResourceName, std::vector<std::string>());
+}
+
+template<class T0>
 int32 DisplayAlert(
-	const char*			inResourceName)
+	MWindow*					inParent,
+	const std::string&			inResourceName,
+	const T0&					inArgument0)
 {
 	std::vector<std::string> args;
-	return DisplayAlertWithArgs(inResourceName, args);
+	args.push_back(boost::lexical_cast<std::string>(inArgument0));
+	return DisplayAlert(inParent, inResourceName, args);
 }
 
-template<class T1>
+template<class T0, class T1>
 int32 DisplayAlert(
-	const char*			inResourceName,
-	const T1&			inArg1)
+	MWindow*					inParent,
+	const std::string&			inResourceName,
+	const T0&					inArgument0,
+	const T1&					inArgument1)
 {
 	std::vector<std::string> args;
-	AddArgument(args, inArg1);
-	return DisplayAlertWithArgs(inResourceName, args);
+	args.push_back(boost::lexical_cast<std::string>(inArgument0));
+	args.push_back(boost::lexical_cast<std::string>(inArgument1));
+	return DisplayAlert(inParent, inResourceName, args);
 }
 
-template<class T1, class T2>
+template<class T0, class T1, class T2>
 int32 DisplayAlert(
-	const char*			inResourceName,
-	const T1&			inArg1,
-	const T2&			inArg2)
+	MWindow*					inParent,
+	const std::string&			inResourceName,
+	std::vector<std::string>&	inArguments,
+	const T0&					inArgument0,
+	const T1&					inArgument1,
+	const T2&					inArgument2)
 {
 	std::vector<std::string> args;
-	AddArgument(args, inArg1);
-	AddArgument(args, inArg2);
-	return DisplayAlertWithArgs(inResourceName, args);
+	args.push_back(boost::lexical_cast<std::string>(inArgument0));
+	args.push_back(boost::lexical_cast<std::string>(inArgument1));
+	args.push_back(boost::lexical_cast<std::string>(inArgument2));
+	return DisplayAlert(inParent, inResourceName, args);
 }
 
-template<class T1, class T2, class T3>
-int32 DisplayAlert(
-	const char*			inResourceName,
-	const T1&			inArg1,
-	const T2&			inArg2,
-	const T3&			inArg3)
-{
-	std::vector<std::string> args;
-	AddArgument(args, inArg1);
-	AddArgument(args, inArg2);
-	AddArgument(args, inArg3);
-	return DisplayAlertWithArgs(inResourceName, args);
-}
-
-//template<class T1>
-//GtkWidget* CreateAlert(
-//	const char*			inResourceName,
-//	const T1&			inArg1)
-//{
-//	std::vector<std::string> args;
-//	AddArgument(args, inArg1);
-//	return CreateAlertWithArgs(inResourceName, args);
-//}
+#endif
 
 #endif

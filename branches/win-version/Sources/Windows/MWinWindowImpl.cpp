@@ -27,6 +27,7 @@
 #include "MWinMenu.h"
 #include "MDevice.h"
 #include "MResources.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 using namespace zeep;
@@ -351,7 +352,19 @@ void MWinWindowImpl::ConvertFromScreen(int32& ioX, int32& ioY) const
 bool MWinWindowImpl::DispatchKeyDown(uint32 inKeyCode,
 	uint32 inModifiers, const string& inText)
 {
-	return mWindow->GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
+	bool result = false;
+	uint32 cmd;
+
+	if (MAcceleratorTable::Instance().IsAcceleratorKey(inKeyCode, inModifiers, cmd))
+	{
+		result = true;
+
+		mWindow->GetFocus()->ProcessCommand(cmd, nil, 0, inModifiers);
+	}
+	else
+		result = mWindow->GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
+	
+	return result;
 }
 
 // --------------------------------------------------------------------
@@ -625,8 +638,6 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	}
 
 	mLastClickTime = GetLocalTime();
-
-	PRINT(("click %d", mClickCount));
 
 	if (mMousedView != nil)
 	{

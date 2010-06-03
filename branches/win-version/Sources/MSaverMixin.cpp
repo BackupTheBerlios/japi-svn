@@ -113,10 +113,11 @@ void MSaverMixin::TryDiscardChanges(
 {
 	inParentWindow->Select();
 
-	//if (mDialog != nil)
-	//	return;
+	if (mDialog != nil)
+		return;
 
-	//mDialog = CreateAlert("discard-changes-alert", inDocumentName);
+	if (DisplayAlert("discard-changes-alert", inDocumentName) == kDiscardChanges_Discard)
+		RevertDocument();
 	//
 	//slClose.Connect(mDialog, "close");
 	//slDiscardResponse.Connect(mDialog, "response");

@@ -162,6 +162,9 @@
     <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp">
       <Filter>Source Files\MainLib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Windows\MWinAlerts.cpp">
+      <Filter>Source Files\MainLib\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Rsrc\MJapi.rc">

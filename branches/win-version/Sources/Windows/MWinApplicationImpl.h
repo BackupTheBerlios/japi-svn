@@ -19,11 +19,12 @@ class MWinApplicationImpl : public MApplicationImpl
 
 	static MWinApplicationImpl*
 					GetInstance()				{ return sInstance; }
+	static HINSTANCE
+					GetHInstance()				{ return sInstance->mInstance; }
 
 	virtual int		RunEventLoop();
 	virtual void	Quit();
 
-	HINSTANCE		GetHInstance()				{ return mInstance; }
 
   private:
 

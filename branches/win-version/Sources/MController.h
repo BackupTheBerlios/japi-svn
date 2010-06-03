@@ -15,14 +15,13 @@
 #define MCONTROLLER_H
 
 #include "MHandler.h"
-#include "MSaverMixin.h"
 #include "MP2PEvents.h"
 
 class MDocument;
 class MWindow;
 class MFile;
 
-class MController : public MHandler, public MSaverMixin
+class MController : public MHandler
 {
   public:
 						MController(

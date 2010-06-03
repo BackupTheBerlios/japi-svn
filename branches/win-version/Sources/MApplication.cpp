@@ -110,7 +110,7 @@ bool MApplication::ProcessCommand(
 		//	break;
 		
 		case cmd_Quit:
-			if (not MSaverMixin::IsNavDialogVisible())
+			//if (not MSaverMixin::IsNavDialogVisible())
 				DoQuit();
 			break;
 		

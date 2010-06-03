@@ -131,6 +131,7 @@
     <ClCompile Include="..\..\Sources\MView.cpp" />
     <ClCompile Include="..\..\Sources\MWindow.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />
+    <ClCompile Include="..\..\Sources\Windows\MWinAlerts.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinControlsImpl.cpp" />
     <ClCompile Include="..\..\Sources\Windows\MWinDevice.cpp" />

@@ -134,44 +134,12 @@ int32 DisplayAlertWithArgs(
 void DisplayError(
 	const exception&	inErr)
 {
-	assert(false);
-	//{
-	//	StOKToThrow ok;
-	//	PlaySound("error");
-	//}
-	//
-	//try
-	//{
-	//	DisplayAlert("exception-alert", inErr.what());
-	//}
-	//catch (...)
-	//{
-	//	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-	//		GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, "%s", inErr.what());
-	//	gtk_dialog_run(GTK_DIALOG(dlg));
-	//	gtk_widget_destroy(dlg);
-	//}
+	DisplayAlert(nil, "error-alert", inErr.what());
 }
 
 void DisplayError(
 	const string&		inErr)
 {
-	assert(false);
-	//{
-	//	StOKToThrow ok;
-	//	PlaySound("error");
-	//}
-	//
-	//try
-	//{
-	//	DisplayAlert("error-alert", inErr.c_str());
-	//}
-	//catch (...)
-	//{
-	//	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-	//		GTK_MESSAGE_ERROR, GTK_BUTTONS_NONE, "%s", inErr.c_str());
-	//	gtk_dialog_run(GTK_DIALOG(dlg));
-	//	gtk_widget_destroy(dlg);
-	//}
+	DisplayAlert(nil, "error-alert", inErr);
 }
 

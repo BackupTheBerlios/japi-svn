@@ -81,8 +81,21 @@ bool MDocWindow::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	return MWindow::UpdateCommandStatus(
-		inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+	bool handled = true;
+
+	switch (inCommand)
+	{
+		//case cmd_Close:
+		//	outEnabled = true;
+		//	break;
+
+		default:
+			handled = MWindow::UpdateCommandStatus(
+				inCommand, inMenu, inItemIndex, outEnabled, outChecked);
+			break;
+	}
+
+	return handled;
 }
 
 bool MDocWindow::ProcessCommand(
@@ -91,7 +104,20 @@ bool MDocWindow::ProcessCommand(
 	uint32			inItemIndex,
 	uint32			inModifiers)
 {
-	return MWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+	bool handled = true;
+
+	switch (inCommand)
+	{
+		//case cmd_Close:
+		//	
+		//	break;
+
+		default:
+			handled = MWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+			break;
+	}
+
+	return handled;
 }
 
 MDocument* MDocWindow::GetDocument()

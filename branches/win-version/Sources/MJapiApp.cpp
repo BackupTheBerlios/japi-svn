@@ -114,6 +114,62 @@ MJapiApp::MJapiApp()
 	, mSocketFD(-1)
 {
 	InitGlobals();
+
+	MAcceleratorTable& at = MAcceleratorTable::Instance();
+
+	at.RegisterAcceleratorKey(cmd_New, 'N', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Open, 'O', kControlKey);
+	at.RegisterAcceleratorKey(cmd_OpenIncludeFile, 'D', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_SwitchHeaderSource, '1', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Close, 'W', kControlKey);
+	at.RegisterAcceleratorKey(cmd_CloseAll, 'W', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Save, 'S', kControlKey);
+	at.RegisterAcceleratorKey(cmd_SaveAll, 'S', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Quit, 'Q', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Undo, 'Z', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Redo, 'Z', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Cut, 'X', kControlKey);
+	at.RegisterAcceleratorKey(cmd_CutAppend, 'X', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Copy, 'C', kControlKey);
+	at.RegisterAcceleratorKey(cmd_CopyAppend, 'C', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Paste, 'V', kControlKey);
+	at.RegisterAcceleratorKey(cmd_PasteNext, 'V', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_SelectAll, 'A', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Balance, 'B', kControlKey);
+	at.RegisterAcceleratorKey(cmd_ShiftLeft, '[', kControlKey);
+	at.RegisterAcceleratorKey(cmd_ShiftRight, ']', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Comment, '\'', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Uncomment, '\'', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_FastFind, 'I', kControlKey);
+	at.RegisterAcceleratorKey(cmd_FastFindBW, 'I', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Find, 'F', kControlKey);
+	at.RegisterAcceleratorKey(cmd_FindNext, 'G', kControlKey);
+	at.RegisterAcceleratorKey(cmd_FindPrev, 'G', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_FindInNextFile, 'J', kControlKey);
+	at.RegisterAcceleratorKey(cmd_EnterSearchString, 'E', kControlKey);
+	at.RegisterAcceleratorKey(cmd_EnterReplaceString, 'E', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_Replace, '=', kControlKey);
+	at.RegisterAcceleratorKey(cmd_ReplaceAll, '=', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_ReplaceFindNext, 'T', kControlKey);
+	at.RegisterAcceleratorKey(cmd_ReplaceFindPrev, 'T', kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_CompleteLookingBack, kTabKeyCode, kControlKey);
+	at.RegisterAcceleratorKey(cmd_CompleteLookingFwd, kTabKeyCode, kControlKey | kShiftKey);
+	at.RegisterAcceleratorKey(cmd_GoToLine, ',', kControlKey);
+	at.RegisterAcceleratorKey(cmd_JumpToNextMark, kF2KeyCode, 0);
+	at.RegisterAcceleratorKey(cmd_JumpToPrevMark, kF2KeyCode, kShiftKey);
+	at.RegisterAcceleratorKey(cmd_MarkLine, kF1KeyCode, 0);
+	
+	at.RegisterAcceleratorKey(cmd_BringUpToDate, 'U', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Compile, 'K', kControlKey);
+	at.RegisterAcceleratorKey(cmd_CheckSyntax, ';', kControlKey);
+	at.RegisterAcceleratorKey(cmd_Make, 'M', kControlKey | kShiftKey);
+	
+	at.RegisterAcceleratorKey(cmd_Worksheet, '0', kControlKey);
+
+	at.RegisterAcceleratorKey(cmd_Stop, '.', kControlKey);
+			//
+//	at.RegisterAcceleratorKey(cmd_Menu, GDK_Menu, 0);
+//	at.RegisterAcceleratorKey(cmd_Menu, GDK_F10, kShiftKey);
 }
 
 MJapiApp::~MJapiApp()

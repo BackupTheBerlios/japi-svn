@@ -159,7 +159,8 @@ bool MDocument::DoSaveAs(
 
 void MDocument::RevertDocument()
 {
-	DoLoad();
+	if (IsSpecified())
+		DoLoad();
 }
 
 // ---------------------------------------------------------------------------

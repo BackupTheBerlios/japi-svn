@@ -61,68 +61,8 @@ struct MAcceleratorTableImp
 
 MAcceleratorTable& MAcceleratorTable::Instance()
 {
-	static unique_ptr<MAcceleratorTable>	sInstance;
-	
-	if (sInstance.get() == nil)
-	{
-		sInstance.reset(new MAcceleratorTable);
-
-		//sInstance->RegisterAcceleratorKey(cmd_New, GDK_N, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Open, GDK_O, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_OpenIncludeFile, GDK_D, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_SwitchHeaderSource, GDK_1, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Close, GDK_W, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CloseAll, GDK_W, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Save, GDK_S, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_SaveAll, GDK_S, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Quit, GDK_Q, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Undo, GDK_Z, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Redo, GDK_Z, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Cut, GDK_X, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CutAppend, GDK_X, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Copy, GDK_C, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CopyAppend, GDK_C, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Paste, GDK_V, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_PasteNext, GDK_V, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_SelectAll, GDK_A, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Balance, GDK_B, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_ShiftLeft, GDK_bracketleft, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_ShiftRight, GDK_bracketright, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Comment, GDK_apostrophe, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Uncomment, GDK_apostrophe, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_FastFind, GDK_I, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_FastFindBW, GDK_i, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Find, GDK_F, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_FindNext, GDK_G, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_FindPrev, GDK_g, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_FindInNextFile, GDK_J, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_EnterSearchString, GDK_E, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_EnterReplaceString, GDK_e, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Replace, GDK_equal, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_ReplaceAll, GDK_equal, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_ReplaceFindNext, GDK_T, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_ReplaceFindPrev, GDK_t, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CompleteLookingBack, GDK_Tab, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CompleteLookingFwd, GDK_Tab, kControlKey | kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_GoToLine, GDK_comma, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_JumpToNextMark, GDK_F2, 0);
-		//sInstance->RegisterAcceleratorKey(cmd_JumpToPrevMark, GDK_F2, kShiftKey);
-		//sInstance->RegisterAcceleratorKey(cmd_MarkLine, GDK_F1, 0);
-	
-		//sInstance->RegisterAcceleratorKey(cmd_BringUpToDate, GDK_U, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Compile, GDK_K, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_CheckSyntax, GDK_semicolon, kControlKey);
-		//sInstance->RegisterAcceleratorKey(cmd_Make, GDK_M, kControlKey | kShiftKey);
-	
-		//sInstance->RegisterAcceleratorKey(cmd_Worksheet, GDK_0, kControlKey);
-
-		//sInstance->RegisterAcceleratorKey(cmd_Stop, GDK_period, kControlKey);
-		//
-		//sInstance->RegisterAcceleratorKey(cmd_Menu, GDK_Menu, 0);
-		//sInstance->RegisterAcceleratorKey(cmd_Menu, GDK_F10, kShiftKey);
-	}
-
-	return *sInstance.get();
+	static MAcceleratorTable sInstance;
+	return sInstance;
 }
 
 MAcceleratorTable&
@@ -271,40 +211,38 @@ bool MAcceleratorTable::GetAcceleratorKeyForCommand(
 	return result;
 }
 
-//bool MAcceleratorTable::IsAcceleratorKey(
-//	GdkEventKey*	inEvent,
-//	uint32&			outCommand)
-//{
-//	bool result = false;
-//
-//	int keyval = inEvent->keyval;
-//	int modifiers = inEvent->state & kValidModifiersMask;
-//
-////	PRINT(("IsAcceleratorKey for %10.10s %c-%c-%c-%c (%x - %x)",
-////		gdk_keyval_name(keyval),
-////		inEvent->state & kControlKey ? 'C' : '_',
-////		inEvent->state & kShiftKey ? 'S' : '_',
-////		inEvent->state & kOptionKey ? '1' : '_',
-////		inEvent->state & GDK_MOD2_MASK ? '2' : '_',
-////		inEvent->state, modifiers));
-//
-//	int64 key = (int64(keyval) << 32) | modifiers;
-//
-//	MAccelCombo kc;
-//	kc.key = key;
-//
-//	set<MAccelCombo>::iterator a = mImpl->mTable.find(kc);	
-//	if (a != mImpl->mTable.end())
-//	{
-//		outCommand = a->command;
-//		result = true;
-//	}
-//	
-////	if (result)
-////		PRINT(("cmd is %s", (const char*)MCommandToString(outCommand)));
-//	
-//	return result;
-//}
+bool MAcceleratorTable::IsAcceleratorKey(
+	uint32			inKeyCode,
+	uint32			inModifiers,
+	uint32&			outCommand)
+{
+	bool result = false;
+
+//	PRINT(("IsAcceleratorKey for %10.10s %c-%c-%c-%c (%x - %x)",
+//		gdk_keyval_name(keyval),
+//		inEvent->state & kControlKey ? 'C' : '_',
+//		inEvent->state & kShiftKey ? 'S' : '_',
+//		inEvent->state & kOptionKey ? '1' : '_',
+//		inEvent->state & GDK_MOD2_MASK ? '2' : '_',
+//		inEvent->state, modifiers));
+
+	int64 key = (int64(inKeyCode) << 32) | inModifiers;
+
+	MAccelCombo kc;
+	kc.key = key;
+
+	set<MAccelCombo>::iterator a = mImpl->mTable.find(kc);	
+	if (a != mImpl->mTable.end())
+	{
+		outCommand = a->command;
+		result = true;
+	}
+	
+//	if (result)
+//		PRINT(("cmd is %s", (const char*)MCommandToString(outCommand)));
+	
+	return result;
+}
 
 bool MAcceleratorTable::IsNavigationKey(
 	uint32			inKeyValue,
