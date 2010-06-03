@@ -85,7 +85,6 @@ MTextView::MTextView(
 	, mCaretVisible(false)
 	, mDrawForDragImage(false)
 	, mCaret(0)
-	, mLastClickTime(0)
 	, mLastScrollTime(0)
 	, mLastFocusTime(0)
 	, mInTick(false)
@@ -148,87 +147,127 @@ void MTextView::SetController(MController* inController)
 	AddRoute(eDocumentChanged, mController->eDocumentChanged);
 }
 
-//bool MTextView::OnButtonPressEvent(
-//	GdkEventButton*		inEvent)
-//{
-//	// short cut
-//	if (mDocument == nil or
-//		inEvent->button != 1 or
-//		inEvent->type != GDK_BUTTON_PRESS or
-//		GetLocalTime() < mLastFocusTime + kIsFocusClickDelay)
-//	{
-//		mLastFocusTime = 0;
-//		return MView::OnButtonPressEvent(inEvent);
-//	}
-//
-//	if (mLastClickTime + 250 > inEvent->time)
-//		mClickCount = mClickCount % 3 + 1;
-//	else
-//		mClickCount = 1;
-//	mLastClickTime = inEvent->time;
-//		
-//	switch (mClickCount)
-//	{
-//		case 1: mClickMode = eSelectRegular; break;
-//		case 2: mClickMode = eSelectWords; break;
-//		case 3: mClickMode = eSelectLines; break;
-//	}
-//	
-//	mDocument->Reset();
-//
-//	MSelection selection = mDocument->GetSelection();
-//
-//	int32 x, y;
-//	x = static_cast<int32>(inEvent->x) + mImageOriginX - kLeftMargin;
-//	y = static_cast<int32>(inEvent->y) + mImageOriginY;
-//	
-//	mClickStartX = x;
-//	mClickStartY = y;
-//
-//	uint32 keyModifiers = inEvent->state;
-//	
-//	if (x < 0)
-//		mClickMode = eSelectLines;
-//
-//	mDocument->PositionToOffset(x, y, mClickCaret);
-//
-//	if (keyModifiers & GDK_SHIFT_MASK)
-//		mClickAnchor = selection.GetAnchor();
-//	else
-//		mClickAnchor = mClickCaret;
-//
-//	if (keyModifiers & GDK_CONTROL_MASK)
-//		mClickMode = eSelectBlock;
-//	
-//	mCaretVisible = true;
-//	
-//	if (mClickMode == eSelectRegular or mClickMode == eSelectBlock)
-//	{
-//		if (IsPointInSelection(x, y) and IsActive())
-//			mClickMode = eSelectStartDrag;
-//		else
-//			mDocument->Select(mClickAnchor, mClickCaret, mClickMode == eSelectBlock);
-//	}
-//	else if (mClickMode == eSelectWords)
-//	{
-//		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
-//		mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-//	}
-//	else if (mClickMode == eSelectLines)
-//	{
-//		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
-//		
-//		mDocument->Select(
-//			mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
-//	}
-//
-//	gtk_grab_add(GetGtkWidget());
-//	
-//	mLastScrollTime = 0;
-//
-//	return true;
-//}
-//
+void MTextView::MouseDown(
+	int32			inX,
+	int32			inY,
+	uint32			inClickCount,
+	uint32			inModifiers)
+{
+	// short cut
+	if (mDocument == nil)
+		return;
+
+	inX -= kLeftMargin;
+
+	switch (inClickCount)
+	{
+		case 1: mClickMode = eSelectRegular; break;
+		case 2: mClickMode = eSelectWords; break;
+		case 3: mClickMode = eSelectLines; break;
+	}
+	
+	mDocument->Reset();
+
+	MSelection selection = mDocument->GetSelection();
+
+	mClickStartX = inX;
+	mClickStartY = inY;
+
+	if (inX < 0)
+		mClickMode = eSelectLines;
+
+	mDocument->PositionToOffset(inX, inY, mClickCaret);
+
+	if (inModifiers & kShiftKey)
+		mClickAnchor = selection.GetAnchor();
+	else
+		mClickAnchor = mClickCaret;
+
+	if (inModifiers & kControlKey)
+		mClickMode = eSelectBlock;
+	
+	mCaretVisible = true;
+	
+	if (mClickMode == eSelectRegular or mClickMode == eSelectBlock)
+	{
+		if (IsPointInSelection(inX, inY) and IsActive())
+			mClickMode = eSelectStartDrag;
+		else
+			mDocument->Select(mClickAnchor, mClickCaret, mClickMode == eSelectBlock);
+	}
+	else if (mClickMode == eSelectWords)
+	{
+		mDocument->FindWord(mClickCaret, mMinClickAnchor, mMaxClickAnchor);
+		mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+	}
+	else if (mClickMode == eSelectLines)
+	{
+		mClickAnchor = mClickCaret = mDocument->OffsetToLine(mClickCaret);
+		
+		mDocument->Select(
+			mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+	}
+	
+	mLastScrollTime = 0;
+}
+
+void MTextView::MouseMove(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	inX -= kLeftMargin;
+	
+	if (mClickMode == eSelectStartDrag)
+	{
+		//if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
+		//{
+		//	const GtkTargetEntry sources[] =
+		//	{
+		//	    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
+		//	};
+		//	
+		//	DragBegin(sources, 1, inEvent);
+
+		//	mClickMode = eSelectNone;
+		//}
+	}
+	else
+	{
+		if (IsPointInSelection(inX, inY))
+			SetCursor(eNormalCursor);
+		else if (inX >= 0)
+			SetCursor(eIBeamCursor);
+		else
+			SetCursor(eRightCursor);
+	
+		if (mClickMode != eSelectNone and IsActive())
+		{
+			if (ScrollToPointer(inX, inY))
+				mLastScrollTime = GetLocalTime();
+		}
+	}
+}
+
+void MTextView::MouseExit(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+}
+
+void MTextView::MouseUp(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	if (mClickMode == eSelectStartDrag and mDocument != nil)
+		mDocument->Select(mClickAnchor, mClickCaret);
+	
+	mClickMode = eSelectNone;
+	mLastScrollTime = 0;
+}
+
 //bool MTextView::OnMotionNotifyEvent(
 //	GdkEventMotion*	inEvent)
 //{
@@ -343,20 +382,6 @@ bool MTextView::ScrollToPointer(
 	return scrolled;
 }
 	
-//bool MTextView::OnButtonReleaseEvent(
-//	GdkEventButton*	inEvent)
-//{
-//	gtk_grab_remove(GetGtkWidget());	
-//
-//	if (mClickMode == eSelectStartDrag and mDocument != nil)
-//		mDocument->Select(mClickAnchor, mClickCaret);
-//	
-//	mClickMode = eSelectNone;
-//	mLastScrollTime = 0;
-//
-//	return true;
-//}
-
 uint32 MTextView::CountPages(
 	MDevice&		inDevice)
 {

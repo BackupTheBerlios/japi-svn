@@ -407,10 +407,43 @@ bool MView::ActivateOnClick(int32 inX, int32 inY, uint32 inModifiers)
 	return true;
 }
 
-void MView::Click(int32 inX, int32 inY, uint32 inModifiers)
+void MView::MouseDown(
+	int32			inX,
+	int32			inY,
+	uint32			inClickCount,
+	uint32			inModifiers)
 {
-	PRINT(("Click at %d,%d", inX, inY));
+	PRINT(("MouseDown at %d,%d", inX, inY));
 }
+
+void MView::MouseMove(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	//PRINT(("MouseMove at %d,%d", inX, inY));
+}
+
+void MView::MouseExit(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	//PRINT(("MouseExit at %d,%d", inX, inY));
+}
+
+void MView::MouseUp(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	PRINT(("MouseUp at %d,%d", inX, inY));
+}
+
+//void MView::Click(int32 inX, int32 inY, uint32 inModifiers)
+//{
+//	PRINT(("Click at %d,%d", inX, inY));
+//}
 
 void MView::Show()
 {
@@ -957,7 +990,7 @@ MView* MView::FindSubView(int32 inX, int32 inY)
 
 	foreach (MView* view, mChildren)
 	{
-		if (view->mVisible and view->mFrame.ContainsPoint(inX, inY))
+		if (view->IsVisible() and view->mFrame.ContainsPoint(inX, inY))
 		{
 			ConvertFromParent(inX, inY);
 			result = view->FindSubView(inX, inY);

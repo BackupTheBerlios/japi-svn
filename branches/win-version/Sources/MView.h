@@ -104,7 +104,23 @@ class MView
 						int32			inY,
 						uint32			inModifiers);
 
-	virtual void	Click(
+	virtual void	MouseDown(
+						int32			inX,
+						int32			inY,
+						uint32			inClickCount,
+						uint32			inModifiers);
+
+	virtual void	MouseMove(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
+	virtual void	MouseExit(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
+	virtual void	MouseUp(
 						int32			inX,
 						int32			inY,
 						uint32			inModifiers);

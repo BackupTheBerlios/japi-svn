@@ -41,6 +41,9 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 	, mMinHeight(100)
 	, mMenubar(nil)
 	, mRenderTarget(nil)
+	, mMousedView(nil)
+	, mClickCount(0)
+	, mLastClickTime(0)
 {
 	if (not inMenu.empty())
 	{
@@ -125,6 +128,11 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_LBUTTONDOWN,		boost::bind(&MWinWindowImpl::WMMouseDown, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_LBUTTONDBLCLK,	boost::bind(&MWinWindowImpl::WMMouseDown, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_LBUTTONUP,		boost::bind(&MWinWindowImpl::WMMouseUp, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_MOUSEMOVE,		boost::bind(&MWinWindowImpl::WMMouseMove, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_MOUSELEAVE,		boost::bind(&MWinWindowImpl::WMMouseExit, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_CAPTURECHANGED,	boost::bind(&MWinWindowImpl::WMMouseExit, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MOUSEWHEEL,		boost::bind(&MWinWindowImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_VSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_HSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
@@ -591,39 +599,89 @@ bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam
 	return result;
 }
 
-bool MWinWindowImpl::WMMouseDown(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& /*outResult*/)
+bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
+	::SetFocus(inHWnd);
+	::SetCapture(inHWnd);
+
 	uint32 modifiers;
 	::GetModifierState(modifiers, false);
 	
 	int32 x = LOWORD(inLParam);
 	int32 y = HIWORD(inLParam);
-	
-	MView* view;
-	
-	//if (HNode::GetGrabbingNode())
-	//	node = HNode::GetGrabbingNode();
-	//else
-		view = mWindow->FindSubView(x, y);
-	assert(view != nil);
 
-	static MView* sLastClickView = nil;
-	static double sLastClickTime = 0;
-	static uint32 sClickCount = 0;
-
-	double when = ::GetMessageTime();
-	if (when >= sLastClickTime + ::GetDblClickTime() or sLastClickView != view)
-		sClickCount = 1;
-	else
-		sClickCount = (sClickCount % 3) + 1;
-
-	sLastClickTime = when;
-	sLastClickView = view;
-	
-	if (view)
+	MView* mousedView = mWindow->FindSubView(x, y);
+	if (mousedView == mMousedView)
 	{
-		view->ConvertFromWindow(x, y);
-		view->Click(x, y, modifiers);
+		if (mLastClickTime + GetDblClickTime() > GetLocalTime())
+			mClickCount = mClickCount % 3 + 1;
+		else
+			mClickCount = 1;
+	}
+	else
+	{
+		mClickCount = 1;
+		mMousedView = mousedView;
+	}
+
+	mLastClickTime = GetLocalTime();
+
+	PRINT(("click %d", mClickCount));
+
+	if (mMousedView != nil)
+	{
+		mMousedView->ConvertFromWindow(x, y);
+		mMousedView->MouseDown(x, y, mClickCount, modifiers);
+	}
+
+	return true;
+}
+
+bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	if (mMousedView)
+	{
+		uint32 modifiers;
+		::GetModifierState(modifiers, false);
+	
+		int32 x = LOWORD(inLParam);
+		int32 y = HIWORD(inLParam);
+		
+		mMousedView->MouseMove(x, y, modifiers);
+	}
+
+	return true;
+}
+
+bool MWinWindowImpl::WMMouseExit(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	if (mMousedView)
+	{
+		uint32 modifiers;
+		::GetModifierState(modifiers, false);
+	
+		int32 x = LOWORD(inLParam);
+		int32 y = HIWORD(inLParam);
+		
+		mMousedView->MouseExit(x, y, modifiers);
+	}
+
+	return true;
+}
+
+bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	::ReleaseCapture();
+
+	if (mMousedView)
+	{
+		uint32 modifiers;
+		::GetModifierState(modifiers, false);
+	
+		int32 x = LOWORD(inLParam);
+		int32 y = HIWORD(inLParam);
+		
+		mMousedView->MouseUp(x, y, modifiers);
 	}
 
 	return true;

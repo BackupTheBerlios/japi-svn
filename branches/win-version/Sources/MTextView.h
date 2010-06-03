@@ -81,6 +81,27 @@ class MTextView : public MView
 
   public:
 
+	virtual void	MouseDown(
+						int32			inX,
+						int32			inY,
+						uint32			inClickCount,
+						uint32			inModifiers);
+
+	virtual void	MouseMove(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
+	virtual void	MouseExit(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
+	virtual void	MouseUp(
+						int32			inX,
+						int32			inY,
+						uint32			inModifiers);
+
 	//virtual void		OnPopupMenu(
 	//						GdkEventButton*	inEvent);
 	
@@ -218,8 +239,6 @@ class MTextView : public MView
 	bool				mDrawForDragImage;
 	bool				mTrackCursorInTick;
 	uint32				mCaret;		// our cache of the current caret position
-	uint32				mClickCount;
-	uint32				mLastClickTime;
 	double				mLastScrollTime;
 	double				mLastFocusTime;
 	bool				mInTick;
