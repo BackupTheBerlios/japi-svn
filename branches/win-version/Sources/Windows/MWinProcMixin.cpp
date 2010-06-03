@@ -52,7 +52,7 @@ MWinProcMixin* MWinProcMixin::Fetch(HWND inHandle)
 	return reinterpret_cast<MWinProcMixin*>(::GetPropW(inHandle, L"m_window_imp"));
 }
 
-void MWinProcMixin::Create(MWinProcMixin* inParent, MRect inBounds, const wstring& inTitle)
+void MWinProcMixin::CreateHandle(MWinProcMixin* inParent, MRect inBounds, const wstring& inTitle)
 {
 	DWORD		style = WS_CHILD | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW;
 	DWORD		exStyle = 0;
@@ -262,6 +262,11 @@ bool MWinProcMixin::WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM i
 	MNotificationTable::iterator i = mNotificationHandlers.find(h);
 
 	return i != mNotificationHandlers.end() and i->second(inWParam, inLParam, outResult);
+}
+
+bool MWinProcMixin::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	return false;
 }
 
 int	MWinProcMixin::WinProc(HWND inHandle, UINT inMsg, WPARAM inWParam, LPARAM inLParam)

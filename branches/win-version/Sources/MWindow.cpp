@@ -32,6 +32,7 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 	: MView('root', inBounds)
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
+	, mFocus(this)
 {
 	mBounds.x = mBounds.y = 0;
 
@@ -138,8 +139,6 @@ void MWindow::Select()
 
 void MWindow::Activate()
 {
-	MWindow* curTop = MWindow::GetFirstWindow();
-	
 	if (mActive == eTriStateOff and IsVisible())
 	{
 		mActive = eTriStateOn;
@@ -147,20 +146,31 @@ void MWindow::Activate()
 		MView::Activate();
 	}
 
-	if (curTop and
-		curTop != this and
-		curTop->IsActive())
+	if (sFirst != this)
 	{
-		curTop->Deactivate();
+		if (sFirst->IsActive())
+			sFirst->Deactivate();
+
+		MWindow* w = sFirst;
+		while (w != nil)
+		{
+			if (w == this)
+			{
+				RemoveWindowFromList(this);
+
+				mNext = sFirst;
+				sFirst = this;
+
+				break;
+			}
+			w = w->mNext;
+		}
 	}
 }
 
 void MWindow::Deactivate()
 {
 	MView::Deactivate();
-
-	//if (IsInCommandChain())
-	//	SwitchFocus(mSuperHandler);
 }
 
 bool MWindow::DoClose()
@@ -372,30 +382,6 @@ void MWindow::SetWindowPosition(
 //	catch (...) {}
 //	return false;
 //}
-
-void MWindow::FocusChanged(
-	uint32				inFocussedID)
-{
-}
-
-void MWindow::PutOnDuty(
-	MHandler*		inHandler)
-{
-	MWindow* w = sFirst;
-	while (w != nil)
-	{
-		if (w == this)
-		{
-			RemoveWindowFromList(this);
-
-			mNext = sFirst;
-			sFirst = this;
-
-			break;
-		}
-		w = w->mNext;
-	}
-}
 
 //void MWindow::SetFocus(
 //	uint32				inID)

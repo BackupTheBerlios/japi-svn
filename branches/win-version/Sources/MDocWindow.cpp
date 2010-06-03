@@ -26,6 +26,7 @@ MDocWindow::MDocWindow(const string& inTitle, const MRect& inBounds,
 	, eDocumentChanged(this, &MDocWindow::DocumentChanged)
 	, mController(this)
 {
+	SetFocus(&mController);
 }
 
 MDocWindow::~MDocWindow()

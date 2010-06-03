@@ -144,11 +144,8 @@ MTextView::~MTextView()
 
 void MTextView::SetController(MController* inController)
 {
-	assert(mController == nil);
-	
 	mController = inController;
-	
-	SetDocument(mController->GetDocument());
+	AddRoute(eDocumentChanged, mController->eDocumentChanged);
 }
 
 //bool MTextView::OnButtonPressEvent(

@@ -8,14 +8,14 @@
 
 #include "MControls.h"
 
+template<class CONTROL>
 class MControlImpl
 {
 public:
-					MControlImpl(MControl* inControl)
+					MControlImpl(CONTROL* inControl)
 						: mControl(inControl)					{}
 	virtual			~MControlImpl()								{}
 
-	//virtual void	Embed(HNode* /*inParent*/)					{}
 	virtual void	AddedToWindow()								{}
 	virtual void	FrameResized()								{}
 	virtual void	Draw(MRect inBounds)						{}
@@ -26,48 +26,53 @@ public:
 	virtual void	DisableSelf()								{}
 	virtual void	ShowSelf()									{}
 	virtual void	HideSelf()									{}
-	virtual std::string
-					GetText() const	= 0;
-	virtual void	SetText(std::string /*inText*/)				{}
-	virtual long	GetValue() const							{ return 0; }
-	virtual void	SetValue(long inValue)						{}
-	virtual long	GetMinValue() const							{ return 0; }
-	virtual void	SetMinValue(long /*inValue*/)				{ }
-	virtual long	GetMaxValue() const							{ return 0; }
-	virtual void	SetMaxValue(long /*inValue*/)				{ }
-	virtual void	SimulateClick()								{}
-	virtual void	SetViewSize(long /*inViewSize*/)			{}
-	virtual void	Idle()										{}
-	
-	void			SetControl(MControl* inControl);
-	
-	//virtual void	SetFont(const HFont& /*inFont*/)			{}
-	virtual void	MakeDefault(bool /*inDefault*/)				{}
-	
-	//virtual bool	AllowBeFocus(HHandler* /*inNewFocus*/)		{ return false; }
-	//virtual bool	AllowDontBeFocus(HHandler* /*inNewFocus*/)	{ return true; }
-	//virtual void	BeFocus()									{}
-	//virtual void	DontBeFocus()								{}
-
-	//virtual void	InsertText(std::string /*inText*/)			{ assert(false); }
-	//virtual void	SetPasswordChar(HUnicode inUnicode)			{ assert(false); }
-	//
-	//virtual int		CountItems() const							{ return 0; }
-	//virtual std::string
-	//				ItemAt(int /*index*/) const					{ assert(false); return kEmptyString; }
-	//virtual void	AddItem(std::string /*inText*/)				{ assert(false); }
-	//virtual void	AddSeparatorItem()							{ assert(false); }
-	//virtual void	RemoveItems(int /*inFromIndex*/)			{ assert(false); }
-
-	//virtual void	GetFontForSelection(HFont& /*outFont*/)		{ }
-	//virtual void	SelectFont(const HFont& /*inFont*/)			{ }
-
-	static MControlImpl*	CreateButton(MControl* inControl, const std::string& inLabel);
-	static MControlImpl*	CreateScrollbar(MControl* inControl);
-	static MControlImpl*	CreateStatusbar(MControl* inControl);
 
 protected:
-	MControl*		mControl;
+	CONTROL*		mControl;
+};
+
+class MScrollbarImpl : public MControlImpl<MScrollbar>
+{
+public:
+					MScrollbarImpl(MScrollbar* inControl)
+						: MControlImpl(inControl)				{}
+
+	virtual int32	GetValue() const = 0;
+	virtual void	SetValue(int32 inValue) = 0;
+	virtual int32	GetMinValue() const = 0;
+	virtual void	SetMinValue(int32 inValue) = 0;
+	virtual int32	GetMaxValue() const = 0;
+	virtual void	SetMaxValue(int32 inValue) = 0;
+
+	virtual void	SetViewSize(int32 inViewSize) = 0;
+
+	static MScrollbarImpl*
+					Create(MScrollbar* inControl);
+};
+
+class MButtonImpl : public MControlImpl<MButton>
+{
+public:
+					MButtonImpl(MButton* inButton)
+						: MControlImpl(inButton)				{}
+
+	virtual void	SimulateClick() = 0;
+	virtual void	MakeDefault(bool inDefault) = 0;
+
+	static MButtonImpl*
+					Create(MButton* inButton, const std::string& inLabel);
+};
+
+class MStatusbarImpl : public MControlImpl<MStatusbar>
+{
+public:
+					MStatusbarImpl(MStatusbar* inStatusbar)
+						: MControlImpl(inStatusbar)				{}
+
+	virtual void	SetStatusText(uint32 inPartNr, const std::string& inText, bool inBorder) = 0;
+
+	static MStatusbarImpl*
+					Create(MStatusbar* inStatusbar, uint32 inPartCount, int32 inPartWidths[]);
 };
 
 #endif

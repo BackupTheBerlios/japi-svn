@@ -172,6 +172,7 @@ MEditWindow::MEditWindow()
 	, mParsePopup(nil)
 	, mIncludePopup(nil)
 	, mSSHProgress(nil)
+	, mStatusbar(nil)
 {
 	//MTextController* textController = new MTextController(this);
 	//mController = textController;
@@ -233,9 +234,11 @@ MEditWindow::MEditWindow()
 	GetBounds(bounds);
 	bounds.y += bounds.height - kScrollbarWidth;
 	bounds.height = kScrollbarWidth;
-	MStatusbar* statusbar = new MStatusbar('stat', bounds);
-	AddChild(statusbar);
-	statusbar->GetFrame(bounds);
+
+	int32 partWidths[4] = { 100, -1 };
+	mStatusbar = new MStatusbar('stat', bounds, 2, partWidths);
+	AddChild(mStatusbar);
+	mStatusbar->GetFrame(bounds);
 
 	int32 statusbarHeight = bounds.height;
 
@@ -249,6 +252,9 @@ MEditWindow::MEditWindow()
 	scroller->SetBindings(true, true, true, true);
 	AddChild(scroller);
 	//textController->AddTextView(mTextView);
+
+	mTextView->SetController(&mController);
+	SetFocus(&mController);
 	
 	//ConnectChildSignals();
 
@@ -265,7 +271,11 @@ MEditWindow::~MEditWindow()
 void MEditWindow::SetDocument(
 	MDocument*		inDocument)
 {
+	RemoveRoutes(inDocument);
+
 	MDocWindow::SetDocument(inDocument);
+
+	AddRoutes(inDocument);
 	
 	MTextDocument* doc = dynamic_cast<MTextDocument*>(inDocument);
 	
@@ -352,9 +362,10 @@ void MEditWindow::SelectionChanged(
 	}
 	catch (...) {}
 
-	//if (GTK_IS_LABEL(mSelectionPanel))
-	//	gtk_label_set_text(GTK_LABEL(mSelectionPanel), str.str().c_str());
-	
+	mStatusbar->SetStatusText(0, str.str(), false);
+	mStatusbar->SetStatusText(1, inRangeName, false);
+	//mStatusbar->SetStatusText(3, "", true);
+
 	//mParsePopup->SetText(inRangeName);
 }
 

@@ -19,22 +19,20 @@ using namespace std;
 
 const int kScrollbarWidth = 16;
 
-MWinControlImpl::MWinControlImpl(MControl* inControl, const string& inLabel)
-	: MControlImpl(inControl)
+template<class CONTROL>
+MWinControlImpl<CONTROL>::MWinControlImpl(CONTROL* inControl, const string& inLabel)
+	: CONTROL::MImpl(inControl)
 	, mLabel(inLabel)
 {
 }
 
-MWinControlImpl::~MWinControlImpl()
+template<class CONTROL>
+MWinControlImpl<CONTROL>::~MWinControlImpl()
 {
 }
 
-MWinControlImpl* MWinControlImpl::FetchControlImpl(HWND inHWND)
-{
-	return reinterpret_cast<MWinControlImpl*>(::GetPropW(inHWND, L"control_impl"));
-}
-
-string MWinControlImpl::GetText() const
+template<class CONTROL>
+string MWinControlImpl<CONTROL>::GetText() const
 {
 	string result;
 
@@ -53,7 +51,8 @@ string MWinControlImpl::GetText() const
 	return result;
 }
 
-void MWinControlImpl::SetText(const std::string& inText)
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::SetText(const std::string& inText)
 {
 	mLabel = inText;
 
@@ -61,43 +60,51 @@ void MWinControlImpl::SetText(const std::string& inText)
 	::SetWindowTextW(GetHandle(), s.c_str());
 }
 
-void MWinControlImpl::ActivateSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::ActivateSelf()
 {
 	::EnableWindow(GetHandle(), mControl->IsActive() and mControl->IsEnabled());
 }
 
-void MWinControlImpl::DeactivateSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::DeactivateSelf()
 {
 	if (::IsWindowEnabled(GetHandle()))
 		::EnableWindow(GetHandle(), false);
 }
 
-void MWinControlImpl::EnableSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::EnableSelf()
 {
 	::EnableWindow(GetHandle(), mControl->IsActive() and mControl->IsEnabled());
 }
 
-void MWinControlImpl::DisableSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::DisableSelf()
 {
 	if (::IsWindowEnabled(GetHandle()))
 		::EnableWindow(GetHandle(), false);
 }
 
-void MWinControlImpl::ShowSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::ShowSelf()
 {
 	::ShowWindow(GetHandle(), SW_SHOW);
 }
 
-void MWinControlImpl::HideSelf()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::HideSelf()
 {
 	::ShowWindow(GetHandle(), SW_HIDE);
 }
 
-void MWinControlImpl::Draw(MRect inUpdate)
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::Draw(MRect inUpdate)
 {
 }
 
-void MWinControlImpl::FrameResized()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::FrameResized()
 {
 	if (GetHandle() != nil)
 	{
@@ -111,7 +118,8 @@ void MWinControlImpl::FrameResized()
 	}
 }
 
-void MWinControlImpl::GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBounds)
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBounds)
 {
 	MView* view = mControl;
 	MView* parent = view->GetParent();
@@ -122,19 +130,21 @@ void MWinControlImpl::GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBo
 	{
 		view->ConvertToParent(outBounds.x, outBounds.y);
 		
-		MControl* ctl = dynamic_cast<MControl*>(parent);
-		
-		if (ctl != nil)
-		{
-			MWinControlImpl* impl =
-				dynamic_cast<MWinControlImpl*>(ctl->GetImpl());
-			
-			if (impl != nil)
-			{
-				outParent = impl;
-				break;
-			}
-		}
+		// for now we don't support embedding of controls in controls...
+
+		//MControl* ctl = dynamic_cast<MControl*>(parent);
+		//
+		//if (ctl != nil)
+		//{
+		//	MWinControlImpl* impl =
+		//		dynamic_cast<MWinControlImpl*>(ctl->GetImpl());
+		//	
+		//	if (impl != nil)
+		//	{
+		//		outParent = impl;
+		//		break;
+		//	}
+		//}
 		
 		MWindow* window = dynamic_cast<MWindow*>(parent);
 		if (window != nil)
@@ -148,16 +158,15 @@ void MWinControlImpl::GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBo
 	}
 }
 
-void MWinControlImpl::AddedToWindow()
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::AddedToWindow()
 {
 	MWinProcMixin* parent;
 	MRect bounds;
 
 	GetParentAndBounds(parent, bounds);
 
-	Create(parent, bounds, c2w(GetText()));
-
-	::SetPropW(GetHandle(), L"control_impl", this);
+	CreateHandle(parent, bounds, c2w(GetText()));
 
 	// set the font to the theme font
 	HTHEME theme = ::OpenThemeData(GetHandle(), VSCLASS_TEXTSTYLE);
@@ -195,12 +204,12 @@ void MWinControlImpl::AddedToWindow()
 
 // --------------------------------------------------------------------
 
-MButtonImpl::MButtonImpl(MControl* inControl, const string& inLabel)
-	: MWinControlImpl(inControl, inLabel)
+MWinButtonImpl::MWinButtonImpl(MButton* inButton, const string& inLabel)
+	: MWinControlImpl(inButton, inLabel)
 {
 }
 
-void MButtonImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+void MWinButtonImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	wstring& outClassName, HMENU& outMenu)
 {
 	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
@@ -209,15 +218,13 @@ void MButtonImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	outClassName = L"BUTTON";
 }
 
-bool MWinControlImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+bool MWinButtonImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	bool result = false;
 
 	if (inMsg == BN_CLICKED)
 	{
-		MButton* button = dynamic_cast<MButton*>(mControl);
-		if (button != nil)
-			button->eClicked();
+		mControl->eClicked();
 
 		outResult = 1;
 		result = true;
@@ -226,29 +233,38 @@ bool MWinControlImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM
 	return result;
 }
 
-MControlImpl* MControlImpl::CreateButton(MControl* inControl, const string& inLabel)
+void MWinButtonImpl::SimulateClick()
 {
-	return new MButtonImpl(inControl, inLabel);
+	mControl->eClicked();
+}
+
+void MWinButtonImpl::MakeDefault(bool inDefault)
+{
+}
+
+MButtonImpl* MButtonImpl::Create(MButton* inButton, const string& inLabel)
+{
+	return new MWinButtonImpl(inButton, inLabel);
 }
 
 // --------------------------------------------------------------------
 
-MScrollbarImpl::MScrollbarImpl(MControl* inControl)
-	: MWinControlImpl(inControl)
+MWinScrollbarImpl::MWinScrollbarImpl(MScrollbar* inScrollbar)
+	: MWinControlImpl(inScrollbar, "")
 {
 }
 
-void MScrollbarImpl::ShowSelf()
+void MWinScrollbarImpl::ShowSelf()
 {
 	::ShowScrollBar(GetHandle(), SB_CTL, TRUE);
 }
 
-void MScrollbarImpl::HideSelf()
+void MWinScrollbarImpl::HideSelf()
 {
 	::ShowScrollBar(GetHandle(), SB_CTL, FALSE);
 }
 
-void MScrollbarImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+void MWinScrollbarImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	wstring& outClassName, HMENU& outMenu)
 {
 	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
@@ -265,7 +281,7 @@ void MScrollbarImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 		outStyle |= SBS_VERT;
 }
 
-long MScrollbarImpl::GetValue() const
+int32 MWinScrollbarImpl::GetValue() const
 {
 	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_POS };
 	
@@ -275,7 +291,7 @@ long MScrollbarImpl::GetValue() const
 	return info.nPos;
 }
 
-void MScrollbarImpl::SetValue(long inValue)
+void MWinScrollbarImpl::SetValue(int32 inValue)
 {
 	if (GetHandle() != nil)
 	{
@@ -286,7 +302,7 @@ void MScrollbarImpl::SetValue(long inValue)
 	}
 }
 
-long MScrollbarImpl::GetMinValue() const
+int32 MWinScrollbarImpl::GetMinValue() const
 {
 	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
 	
@@ -296,7 +312,7 @@ long MScrollbarImpl::GetMinValue() const
 	return info.nMin;
 }
 
-void MScrollbarImpl::SetMinValue(long inValue)
+void MWinScrollbarImpl::SetMinValue(int32 inValue)
 {
 	if (GetHandle() != nil)
 	{
@@ -308,7 +324,7 @@ void MScrollbarImpl::SetMinValue(long inValue)
 	}
 }
 
-long MScrollbarImpl::GetMaxValue() const
+int32 MWinScrollbarImpl::GetMaxValue() const
 {
 	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
 	if (GetHandle() != nil)
@@ -317,7 +333,7 @@ long MScrollbarImpl::GetMaxValue() const
 	return info.nMax;
 }
 
-void MScrollbarImpl::SetMaxValue(long inValue)
+void MWinScrollbarImpl::SetMaxValue(int32 inValue)
 {
 	if (GetHandle() != nil)
 	{
@@ -329,7 +345,7 @@ void MScrollbarImpl::SetMaxValue(long inValue)
 	}
 }
 
-bool MScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+bool MWinScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	bool result = false;
 
@@ -369,7 +385,7 @@ bool MScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARA
 	return result;
 }
 
-void MScrollbarImpl::SetViewSize(long inViewSize)
+void MWinScrollbarImpl::SetViewSize(int32 inViewSize)
 {
 	SCROLLINFO info = { sizeof(info), SIF_PAGE };
 	
@@ -378,19 +394,30 @@ void MScrollbarImpl::SetViewSize(long inViewSize)
 	::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
 }
 
-MControlImpl* MControlImpl::CreateScrollbar(MControl* inControl)
+MScrollbarImpl* MScrollbarImpl::Create(MScrollbar* inScrollbar)
 {
-	return new MScrollbarImpl(inControl);
+	return new MWinScrollbarImpl(inScrollbar);
 }
 
 // --------------------------------------------------------------------
 
-MStatusbarImpl::MStatusbarImpl(MControl* inControl)
-	: MWinControlImpl(inControl)
+MWinStatusbarImpl::MWinStatusbarImpl(MStatusbar* inStatusbar, uint32 inPartCount, int32 inPartWidths[])
+	: MWinControlImpl(inStatusbar, "")
 {
+	int32 offset = 0;
+	for (uint32 p = 0; p < inPartCount; ++p)
+	{
+		if (inPartWidths[p] > 0)
+		{
+			offset += inPartWidths[p];
+			mOffsets.push_back(offset);
+		}
+		else
+			mOffsets.push_back(-1);
+	}
 }
 
-void MStatusbarImpl::CreateParams(
+void MWinStatusbarImpl::CreateParams(
 	DWORD& outStyle, DWORD& outExStyle, wstring& outClassName, HMENU& outMenu)
 {
 	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
@@ -400,8 +427,27 @@ void MStatusbarImpl::CreateParams(
 	outExStyle = 0;//WS_EX_CLIENTEDGE;
 }
 
-MControlImpl* MControlImpl::CreateStatusbar(MControl* inControl)
+void MWinStatusbarImpl::AddedToWindow()
 {
-	return new MStatusbarImpl(inControl);
+	MWinControlImpl::AddedToWindow();
+
+	::SendMessageW(GetHandle(), SB_SETPARTS, mOffsets.size(), (LPARAM)&mOffsets[0]);
+}
+
+void MWinStatusbarImpl::SetStatusText(uint32 inPartNr, const string& inText, bool inBorder)
+{
+	if (inPartNr >= 0 and inPartNr < mOffsets.size())
+	{
+		if (inBorder == false)
+			inPartNr |= SBT_NOBORDERS;
+	
+		wstring text(c2w(inText));
+		::SendMessageW(GetHandle(), SB_SETTEXT, inPartNr, (LPARAM)text.c_str());
+	}
+}
+
+MStatusbarImpl* MStatusbarImpl::Create(MStatusbar* inStatusbar, uint32 inPartCount, int32 inPartWidths[])
+{
+	return new MWinStatusbarImpl(inStatusbar, inPartCount, inPartWidths);
 }
 

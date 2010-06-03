@@ -9,101 +9,113 @@
 
 using namespace std;
 
-MControl::MControl(uint32 inID, MRect inBounds, MControlImpl* inImpl)
+template<class IMPL>
+MControl<IMPL>::MControl(uint32 inID, MRect inBounds, IMPL* inImpl)
 	: MView(inID, inBounds)
 	, MHandler(nil)
 	, mImpl(inImpl)
 {
 }
 
-MControl::~MControl()
+template<class IMPL>
+MControl<IMPL>::~MControl()
 {
 }
 
-void MControl::Draw(
+template<class IMPL>
+void MControl<IMPL>::Draw(
 	MRect			inUpdate)
 {
 	mImpl->Draw(inUpdate);
 }
 
-void MControl::ResizeFrame(int32 inXDelta, int32 inYDelta,
+template<class IMPL>
+void MControl<IMPL>::ResizeFrame(int32 inXDelta, int32 inYDelta,
 	int32 inWidthDelta, int32 inHeightDelta)
 {
 	MView::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
 	mImpl->FrameResized();
 }
 
-long MControl::GetValue() const
-{
-	return mImpl->GetValue();
-}
+//template<class IMPL>
+//long MControl<IMPL>::GetValue() const
+//{
+//	return mImpl->GetValue();
+//}
+//
+//void MControl::SetValue(long inValue)
+//{
+//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetValue(inValue);
+//}
+//	
+//void MControl::SetMinValue(long inMinValue)
+//{
+//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetMinValue(inMinValue);
+//}
+//
+//long MControl::GetMinValue() const
+//{
+//	return dynamic_cast<MValueControlImplMixin*>(mImpl)->GetMinValue();
+//}
+//	
+//void MControl::SetMaxValue(long inMaxValue)
+//{
+//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetMaxValue(inMaxValue);
+//}
+//
+//long MControl::GetMaxValue() const
+//{
+//	return dynamic_cast<MValueControlImplMixin*>(mImpl)->GetMaxValue();
+//}
+//
+//string MControl::GetText() const
+//{
+//	return dynamic_cast<MTextControlImplMixin*>(mImpl)->GetText();
+//}
+//
+//void MControl::SetText(string inText)
+//{
+//	dynamic_cast<MTextControlImplMixin*>(mImpl)->SetText(inText);
+//}
 
-void MControl::SetValue(long inValue)
-{
-	mImpl->SetValue(inValue);
-}
-	
-void MControl::SetMinValue(long inMinValue)
-{
-	mImpl->SetMinValue(inMinValue);
-}
-
-long MControl::GetMinValue() const
-{
-	return mImpl->GetMinValue();
-}
-	
-void MControl::SetMaxValue(long inMaxValue)
-{
-	mImpl->SetMaxValue(inMaxValue);
-}
-
-long MControl::GetMaxValue() const
-{
-	return mImpl->GetMaxValue();
-}
-
-string MControl::GetText() const
-{
-	return mImpl->GetText();
-}
-
-void MControl::SetText(string inText)
-{
-	mImpl->SetText(inText);
-}
-
-void MControl::ActivateSelf()
+template<class IMPL>
+void MControl<IMPL>::ActivateSelf()
 {
 	mImpl->ActivateSelf();
 }
 
-void MControl::DeactivateSelf()
+template<class IMPL>
+void MControl<IMPL>::DeactivateSelf()
 {
 	mImpl->DeactivateSelf();
 }
 
-void MControl::EnableSelf()
+template<class IMPL>
+void MControl<IMPL>::EnableSelf()
 {
 	mImpl->EnableSelf();
 }
 
-void MControl::DisableSelf()
+template<class IMPL>
+void MControl<IMPL>::DisableSelf()
 {
 	mImpl->DisableSelf();
 }
 
-void MControl::ShowSelf()
+template<class IMPL>
+void MControl<IMPL>::ShowSelf()
 {
 	mImpl->ShowSelf();
 }
 
-void MControl::HideSelf()
+template<class IMPL>
+void MControl<IMPL>::HideSelf()
 {
 	mImpl->HideSelf();
 }
 
-void MControl::AddedToWindow()
+template<class IMPL>
+void MControl<IMPL>::AddedToWindow()
 {
 	mImpl->AddedToWindow();
 }
@@ -111,15 +123,45 @@ void MControl::AddedToWindow()
 // --------------------------------------------------------------------
 
 MButton::MButton(uint32 inID, MRect inBounds, const string& inLabel)
-	: MControl(inID, inBounds, MControlImpl::CreateButton(this, inLabel))
+	: MControl<MButtonImpl>(inID, inBounds, MButtonImpl::Create(this, inLabel))
 {
 }
 
 // --------------------------------------------------------------------
 
 MScrollbar::MScrollbar(uint32 inID, MRect inBounds)
-	: MControl(inID, inBounds, MControlImpl::CreateScrollbar(this))
+	: MControl<MScrollbarImpl>(inID, inBounds, MScrollbarImpl::Create(this))
 {
+}
+
+int32 MScrollbar::GetValue() const
+{
+	return mImpl->GetValue();
+}
+
+void MScrollbar::SetValue(int32 inValue)
+{
+	mImpl->SetValue(inValue);
+}
+	
+void MScrollbar::SetMinValue(int32 inMinValue)
+{
+	mImpl->SetMinValue(inMinValue);
+}
+
+int32 MScrollbar::GetMinValue() const
+{
+	return mImpl->GetMinValue();
+}
+	
+void MScrollbar::SetMaxValue(int32 inMaxValue)
+{
+	mImpl->SetMaxValue(inMaxValue);
+}
+
+int32 MScrollbar::GetMaxValue() const
+{
+	return mImpl->GetMaxValue();
 }
 
 void MScrollbar::SetViewSize(int32 inViewSize)
@@ -129,9 +171,13 @@ void MScrollbar::SetViewSize(int32 inViewSize)
 
 // --------------------------------------------------------------------
 
-MStatusbar::MStatusbar(uint32 inID, MRect inBounds)
-	: MControl(inID, inBounds, MControlImpl::CreateStatusbar(this))
+MStatusbar::MStatusbar(uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[])
+	: MControl<MStatusbarImpl>(inID, inBounds, MStatusbarImpl::Create(this, inPartCount, inPartWidths))
 {
 	SetBindings(true, false, true, true);
 }
 
+void MStatusbar::SetStatusText(uint32 inPartNr, const string& inText, bool inBorder)
+{
+	mImpl->SetStatusText(inPartNr, inText, inBorder);
+}

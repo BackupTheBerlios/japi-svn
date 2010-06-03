@@ -10,12 +10,10 @@
 #include "MHandler.h"
 #include "MP2PEvents.h"
 
-class MControlImpl;
-
+template<class I>
 class MControl : public MView, public MHandler
 {
 public:
-
 	virtual			~MControl();
 
 	virtual void	ResizeFrame(
@@ -27,24 +25,11 @@ public:
 	virtual void	Draw(
 						MRect			inUpdate);
 
-	virtual long	GetValue() const;
-	virtual void	SetValue(long inValue);
-	
-	void			SetMinValue(long inMinValue);
-	long			GetMinValue() const;
-	
-	void			SetMaxValue(long inMaxValue);
-	long			GetMaxValue() const;
-
-	virtual std::string
-					GetText() const;
-	virtual void	SetText(std::string inText);
-
-	MControlImpl*	GetImpl() const					{ return mImpl; }
+	I*				GetImpl() const					{ return mImpl; }
 
 protected:
 
-					MControl(uint32 inID, MRect inBounds, MControlImpl* inImpl);
+					MControl(uint32 inID, MRect inBounds, I* inImpl);
 
 	virtual void	ActivateSelf();
 	virtual void	DeactivateSelf();
@@ -61,12 +46,16 @@ protected:
 					MControl(const MControl&);
 	MControl&		operator=(const MControl&);
 
-	MControlImpl*	mImpl;
+	I*				mImpl;
 };
 
-class MButton : public MControl
+class MButtonImpl;
+
+class MButton : public MControl<MButtonImpl>
 {
 public:
+	typedef MButtonImpl		MImpl;
+	
 					MButton(uint32 inID, MRect inBounds, const std::string& inLabel);
 
 	MEventOut<void()>
@@ -74,11 +63,23 @@ public:
 };
 
 extern const int kScrollbarWidth;
+class MScrollbarImpl;
 
-class MScrollbar : public MControl
+class MScrollbar : public MControl<MScrollbarImpl>
 {
 public:
+	typedef MScrollbarImpl		MImpl;
+
 					MScrollbar(uint32 inID, MRect inBounds);
+
+	virtual int32	GetValue() const;
+	virtual void	SetValue(int32 inValue);
+	
+	void			SetMinValue(int32 inMinValue);
+	int32			GetMinValue() const;
+	
+	void			SetMaxValue(int32 inMaxValue);
+	int32			GetMaxValue() const;
 
 	virtual void	SetViewSize(int32 inViewSize);
 
@@ -86,10 +87,16 @@ public:
 					eScroll;
 };
 
-class MStatusbar : public MControl
+class MStatusbarImpl;
+
+class MStatusbar : public MControl<MStatusbarImpl>
 {
 public:
-					MStatusbar(uint32 inID, MRect inBounds);
+	typedef MStatusbarImpl		MImpl;
+
+					MStatusbar(uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
+
+	virtual void	SetStatusText(uint32 inPartNr, const std::string& inText, bool inBorder);
 };
 
 #endif

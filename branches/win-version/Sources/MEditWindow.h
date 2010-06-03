@@ -12,6 +12,7 @@
 class MParsePopup;
 class MSSHProgress;
 class MTextView;
+class MStatusbar;
 
 class MEditWindow : public MDocWindow
 {
@@ -58,6 +59,7 @@ class MEditWindow : public MDocWindow
 	MParsePopup*		mParsePopup;
 	MParsePopup*		mIncludePopup;
 	MSSHProgress*		mSSHProgress;
+	MStatusbar*			mStatusbar;
 };
 
 #endif

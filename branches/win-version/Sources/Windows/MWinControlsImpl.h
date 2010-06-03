@@ -9,16 +9,14 @@
 #include "MControlsImpl.h"
 #include "MWinProcMixin.h"
 
-class MWinControlImpl : public MControlImpl, public MWinProcMixin
+template<class CONTROL>
+class MWinControlImpl : public CONTROL::MImpl, public MWinProcMixin
 {
 public:
-					MWinControlImpl(MControl* inControl, const std::string& inLabel = "");
+					MWinControlImpl(CONTROL* inControl, const std::string& inLabel);
 	virtual			~MWinControlImpl();
 
 	virtual void	GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBounds);
-
-	static MWinControlImpl*
-					FetchControlImpl(HWND inHWND);
 
 	virtual void	AddedToWindow();
 	virtual void	FrameResized();
@@ -33,28 +31,30 @@ public:
 					GetText() const;
 	virtual void	SetText(const std::string& inText);
 
-	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
-
 protected:
 	std::string		mLabel;
 };
 
 // actual implementations
 
-class MButtonImpl : public MWinControlImpl
+class MWinButtonImpl : public MWinControlImpl<MButton>
 {
 public:
-					MButtonImpl(MControl* inControl, const std::string& inLabel);
+					MWinButtonImpl(MButton* inButton, const std::string& inLabel);
+
+	virtual void	SimulateClick();
+	virtual void	MakeDefault(bool inDefault);
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
 
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
-class MScrollbarImpl : public MWinControlImpl
+class MWinScrollbarImpl : public MWinControlImpl<MScrollbar>
 {
 public:
-					MScrollbarImpl(MControl* inControl);
+					MWinScrollbarImpl(MScrollbar* inScrollbar);
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
@@ -62,27 +62,32 @@ public:
 	virtual void	ShowSelf();
 	virtual void	HideSelf();
 
-	virtual long	GetValue() const;
-	virtual void	SetValue(long inValue);
-	virtual long	GetMinValue() const;
-	virtual void	SetMinValue(long inValue);
-	virtual long	GetMaxValue() const;
-	virtual void	SetMaxValue(long inValue);
+	virtual int32	GetValue() const;
+	virtual void	SetValue(int32 inValue);
+	virtual int32	GetMinValue() const;
+	virtual void	SetMinValue(int32 inValue);
+	virtual int32	GetMaxValue() const;
+	virtual void	SetMaxValue(int32 inValue);
 
-	virtual void	SetViewSize(long inValue);
+	virtual void	SetViewSize(int32 inValue);
 
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
-class MStatusbarImpl : public MWinControlImpl
+class MWinStatusbarImpl : public MWinControlImpl<MStatusbar>
 {
 public:
-					MStatusbarImpl(MControl* inControl);
+					MWinStatusbarImpl(MStatusbar* inControl, uint32 inPartCount, int32 inPartWidths[]);
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
+
+	virtual void	SetStatusText(uint32 inPartNr, const std::string& inText, bool inBorder);
+
+	virtual void	AddedToWindow();
+
+private:
+	std::vector<int32>		mOffsets;
 };
-
-
 
 #endif

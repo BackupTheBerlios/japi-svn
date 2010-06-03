@@ -97,7 +97,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	if (mFlags & kMPostionDefault)
 		inBounds.x = inBounds.y = CW_USEDEFAULT;
 
-	MWinProcMixin::Create(nil, inBounds, inTitle);
+	MWinProcMixin::CreateHandle(nil, inBounds, inTitle);
 
 	if (not (mFlags & kMFixedSize))
 	{
@@ -343,7 +343,7 @@ void MWinWindowImpl::ConvertFromScreen(int32& ioX, int32& ioY) const
 bool MWinWindowImpl::DispatchKeyDown(uint32 inKeyCode,
 	uint32 inModifiers, const string& inText)
 {
-	return mWindow->HandleKeydown(inKeyCode, inModifiers, inText);
+	return mWindow->GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
 }
 
 // --------------------------------------------------------------------
@@ -563,8 +563,7 @@ bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 
 	if (inLParam != nil)
 	{
-		MWinControlImpl* imp =
-			MWinControlImpl::FetchControlImpl((HWND)inLParam);
+		MWinProcMixin* imp = MWinProcMixin::Fetch((HWND)inLParam);
 
 		if (imp != nil)
 			result = imp->WMCommand(inHWnd, HIWORD(inWParam), inWParam, inLParam, outResult);
@@ -573,7 +572,7 @@ bool MWinWindowImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 	{
 		uint32 modifiers;
 		GetModifierState(modifiers, false);
-		result = mWindow->ProcessCommand(inWParam, nil, 0, modifiers);
+		result = mWindow->GetFocus()->ProcessCommand(inWParam, nil, 0, modifiers);
 	}
 
 	return result;
@@ -587,7 +586,7 @@ bool MWinWindowImpl::WMMenuCommand(HWND inHWnd, UINT /*inUMsg*/, WPARAM inWParam
 	uint32 index = inWParam;
 	MMenu* menu = MWinMenuImpl::Lookup((HMENU)inLParam);
 
-	mWindow->ProcessCommand(menu->GetItemCommand(index), menu, index, 0);
+	mWindow->GetFocus()->ProcessCommand(menu->GetItemCommand(index), menu, index, 0);
 
 	return result;
 }
@@ -662,8 +661,7 @@ bool MWinWindowImpl::WMMouseWheel(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWPa
 
 bool MWinWindowImpl::WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	MScrollbarImpl* scrollbarImpl = dynamic_cast<MScrollbarImpl*>(
-		MWinControlImpl::FetchControlImpl((HWND)inLParam));
+	MWinScrollbarImpl* scrollbarImpl = dynamic_cast<MWinScrollbarImpl*>(MWinProcMixin::Fetch((HWND)inLParam));
 
 	bool result = false;
 

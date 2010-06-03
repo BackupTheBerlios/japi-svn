@@ -24,7 +24,7 @@ class MWinProcMixin
 	static MWinProcMixin*
 					Fetch(HWND inHandle);
 	
-	virtual void	Create(MWinProcMixin* inParent, MRect inBounds,
+	virtual void	CreateHandle(MWinProcMixin* inParent, MRect inBounds,
 						const std::wstring& inTitle);
 
 //	void			SubClass();
@@ -43,6 +43,8 @@ class MWinProcMixin
 						mNotificationHandlers[h] = inCallback;
 					}
 
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult);
 
 protected:
 
