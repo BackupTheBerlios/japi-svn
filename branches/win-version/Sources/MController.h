@@ -3,14 +3,6 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-/*
-	Model = MDocument
-	View = MTextView
-	Controller = MController
-
-*/
-
-
 #ifndef MCONTROLLER_H
 #define MCONTROLLER_H
 
@@ -20,6 +12,12 @@
 class MDocument;
 class MWindow;
 class MFile;
+
+enum MCloseReason {
+	kSaveChangesClosingDocument,
+	kSaveChangesClosingAllDocuments,
+	kSaveChangesQuittingApplication
+};
 
 class MController : public MHandler
 {

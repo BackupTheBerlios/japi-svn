@@ -7,6 +7,7 @@
 #define MAPPLICATION_H
 
 #include <list>
+#include <vector>
 #include <deque>
 
 #include "MTypes.h"

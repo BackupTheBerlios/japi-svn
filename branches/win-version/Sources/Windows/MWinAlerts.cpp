@@ -15,7 +15,7 @@
 
 #include "MLib.h"
 
-#include "MAlertsImpl.h"
+#include "MAlerts.h"
 #include "MResources.h"
 #include "MError.h"
 #include "MStrings.h"
