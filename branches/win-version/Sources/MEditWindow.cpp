@@ -17,6 +17,7 @@
 #include "MFile.h"
 #include "MResources.h"
 #include "MControls.h"
+#include "MPreferences.h"
 
 using namespace std;
 
@@ -167,6 +168,7 @@ MEditWindow::MEditWindow()
 	, eSelectionChanged(this, &MEditWindow::SelectionChanged)
 	, eShellStatus(this, &MEditWindow::ShellStatus)
 	, eSSHProgress(this, &MEditWindow::SSHProgress)
+	, eSaveState(this, &MEditWindow::SaveState)
 	, mTextView(nil)
 	//, mSelectionPanel(nil)
 	, mParsePopup(nil)
@@ -256,7 +258,7 @@ MEditWindow::MEditWindow()
 	mTextView->SetController(&mController);
 	SetFocus(&mController);
 	
-	//ConnectChildSignals();
+	AddRoute(mController.eAboutToCloseDocument, eSaveState);
 
 	ShellStatus(false);
 }
@@ -302,10 +304,18 @@ void MEditWindow::SetDocument(
 	}
 }
 
-void MEditWindow::SaveState()
+void MEditWindow::SaveState(
+	MDocument*		inDocument)
 {
-	MTextDocument* doc = static_cast<MTextDocument*>(mController.GetDocument());
-	doc->SaveState();
+	try
+	{
+		if (inDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
+		{
+			MTextDocument* doc = static_cast<MTextDocument*>(inDocument);
+			doc->SaveState(this);
+		}
+	}
+	catch (...) {}
 }
 
 MEditWindow* MEditWindow::FindWindowForDocument(MDocument* inDocument)

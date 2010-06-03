@@ -33,9 +33,6 @@
     <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp">
       <Filter>Source Files\MainLib\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\MSaverMixin.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\MWindow.cpp">
       <Filter>Source Files\MainLib</Filter>
     </ClCompile>

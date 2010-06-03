@@ -30,11 +30,13 @@ class MEditWindow : public MDocWindow
 	virtual void		SetDocument(
 							MDocument*		inDocument);
 
-	virtual void		SaveState();
+	virtual void		SaveState(
+							MDocument*		inDocument);
 	
 	MEventIn<void(MSelection,std::string)>	eSelectionChanged;
 	MEventIn<void(bool)>					eShellStatus;
 	MEventIn<void(float,std::string)>		eSSHProgress;
+	MEventIn<void(MDocument*)>				eSaveState;
 
 	virtual void		AddRoutes(
 							MDocument*		inDocument);

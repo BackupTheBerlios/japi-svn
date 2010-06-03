@@ -30,7 +30,6 @@ MController::MController(
 	: MHandler(gApp)
 	, mDocument(nil)
 	, mWindow(inWindow)
-	, mCloseOnNavTerminate(false)
 {
 }
 
@@ -46,14 +45,7 @@ void MController::SetDocument(
 	{
 		if (mDocument != nil)
 		{
-			//try
-			//{
-			//	if (mDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
-			//		mWindow->SaveState();
-			//}
-			//catch (...) {}
-			//
-			//mDocWindow->RemoveRoutes(mDocument);
+			eAboutToCloseDocument(mDocument);
 			mDocument->RemoveController(this);
 		}
 		
@@ -75,11 +67,14 @@ bool MController::ProcessCommand(
 	uint32			inItemIndex,
 	uint32			inModifiers)
 {
-	bool result = true;
+	bool handled = false;
 	
-	if (mDocument == nil or
-		not mDocument->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers))
+	if (mDocument != nil)
+		handled = mDocument->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+
+	if (not handled)
 	{
+		handled = true;
 		switch (inCommand)
 		{
 			case cmd_Close:
@@ -103,12 +98,12 @@ bool MController::ProcessCommand(
 				break;
 				
 			default:
-				result = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
+				handled = MHandler::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
 				break;
 		}
 	}
 	
-	return result;
+	return handled;
 }
 
 bool MController::UpdateCommandStatus(
@@ -118,12 +113,15 @@ bool MController::UpdateCommandStatus(
 	bool&			outEnabled,
 	bool&			outChecked)
 {
-	bool result = true;
+	bool handled = false;
 
-	if (mDocument == nil or
-		not mDocument->UpdateCommandStatus(inCommand, inMenu, inItemIndex,
-				outEnabled, outChecked))
+	if (mDocument == nil)
+		handled = mDocument->UpdateCommandStatus(inCommand, inMenu, inItemIndex,
+					outEnabled, outChecked);
+
+	if (not handled)
 	{
+		handled = true;
 		switch (inCommand)
 		{
 			// always
@@ -146,13 +144,13 @@ bool MController::UpdateCommandStatus(
 				break;
 	
 			default:
-				result = MHandler::UpdateCommandStatus(
+				handled = MHandler::UpdateCommandStatus(
 					inCommand, inMenu, inItemIndex, outEnabled, outChecked);
 				break;
 		}
 	}
 	
-	return result;
+	return handled;
 }
 
 bool MController::HandleKeydown(
@@ -187,9 +185,7 @@ bool MController::TryCloseDocument(
 			else
 				name = mWindow->GetTitle();
 			
-			mWindow->Select();
-
-			switch (DisplayAlert("save-changes-alert", name))
+			switch (DisplayAlert(mWindow, "save-changes-alert", name))
 			{
 				case kAskSaveChanges_Save:
 					if (SaveDocument())
@@ -222,11 +218,7 @@ bool MController::TryCloseController(
 		if (mDocument->CountControllers() > 1 or not mDocument->IsModified())
 			SetDocument(nil);
 		else
-		{
-			TryCloseDocument(inAction);
-			mCloseOnNavTerminate = true;
-			result = false;
-		}
+			result = TryCloseDocument(inAction);
 	}
 	
 	return result;
@@ -241,7 +233,7 @@ void MController::SaveDocumentAs()
 	else
 		name = mWindow->GetTitle();
 	
-	MSaverMixin::SaveDocumentAs(mWindow, name);
+	//MSaverMixin::SaveDocumentAs(mWindow, name);
 }
 
 void MController::TryDiscardChanges()
@@ -250,9 +242,8 @@ void MController::TryDiscardChanges()
 		return;
 
 	//MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mWindow);
-	mWindow->Select();
 
-	if (DisplayAlert("discard-changes-alert", mDocument->GetFile().GetFileName()) == 1/*kDiscardChanges_Discard*/)
+	if (DisplayAlert(mWindow, "discard-changes-alert", mDocument->GetFile().GetFileName()) == 1/*kDiscardChanges_Discard*/)
 		RevertDocument();
 }
 

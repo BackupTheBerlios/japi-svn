@@ -73,6 +73,7 @@ class MController : public MHandler
 											inText);
 
 	MEventOut<void(MDocument*)>		eDocumentChanged;
+	MEventOut<void(MDocument*)>		eAboutToCloseDocument;
 
   protected:
 
@@ -83,7 +84,6 @@ class MController : public MHandler
 
 	MDocument*			mDocument;
 	MWindow*			mWindow;
-	bool				mCloseOnNavTerminate;
 };
 
 #endif

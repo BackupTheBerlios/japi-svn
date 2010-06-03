@@ -330,7 +330,8 @@ void MTextDocument::WriteFile(
 // ---------------------------------------------------------------------------
 //	SaveState
 
-void MTextDocument::SaveState()
+void MTextDocument::SaveState(
+	MWindow*		inWindow)
 {
 	MDocState state = { };
 
@@ -360,15 +361,12 @@ void MTextDocument::SaveState()
 		state.mScrollPosition[1] = static_cast<uint32>(y);
 	}
 
-	if (MWindow* w = MDocWindow::FindWindowForDocument(this))
-	{
-		MRect r;
-		w->GetWindowPosition(r);
-		state.mWindowPosition[0] = r.x;
-		state.mWindowPosition[1] = r.y;
-		state.mWindowSize[0] = r.width;
-		state.mWindowSize[1] = r.height;
-	}
+	MRect r;
+	inWindow->GetWindowPosition(r);
+	state.mWindowPosition[0] = r.x;
+	state.mWindowPosition[1] = r.y;
+	state.mWindowSize[0] = r.width;
+	state.mWindowSize[1] = r.height;
 
 	state.mFlags.mSoftwrap = mSoftwrap;
 	state.mFlags.mTabWidth = mCharsPerTab;
@@ -2285,11 +2283,7 @@ void MTextDocument::Insert(
 	const char*		inText,
 	uint32			inLength)
 {
-	if (mFile.ReadOnly() and not mWarnedReadOnly)
-	{
-		DisplayAlert("read-only-alert");
-		mWarnedReadOnly = true;
-	}
+	CheckReadOnly();
 	
 	if (inLength > 0)
 	{
@@ -2328,11 +2322,7 @@ void MTextDocument::Delete(
 	uint32			inOffset,
 	uint32			inLength)
 {
-	if (mFile.ReadOnly() and not mWarnedReadOnly)
-	{
-		DisplayAlert("read-only-alert");
-		mWarnedReadOnly = true;
-	}
+	CheckReadOnly();
 
 	if (inLength > 0)
 	{
@@ -4948,11 +4938,7 @@ void MTextDocument::MakeXHTML()
 void MTextDocument::SetEOLNKind(
 	EOLNKind		inKind)
 {
-	if (mFile.ReadOnly() and not mWarnedReadOnly)
-	{
-		DisplayAlert("read-only-alert");
-		mWarnedReadOnly = true;
-	}
+	CheckReadOnly();
 	
 	mText.SetEOLNKind(inKind);
 	SetModified(true);
@@ -4961,12 +4947,21 @@ void MTextDocument::SetEOLNKind(
 void MTextDocument::SetEncoding(
 	MEncoding		inEncoding)
 {
-	if (mFile.ReadOnly() and not mWarnedReadOnly)
-	{
-		DisplayAlert("read-only-alert");
-		mWarnedReadOnly = true;
-	}
+	CheckReadOnly();
 	
 	mText.SetEncoding(inEncoding);
 	SetModified(true);
+}
+
+void MTextDocument::CheckReadOnly()
+{
+	if (mFile.ReadOnly() and not mWarnedReadOnly)
+	{
+		MWindow* parent = nil;
+		if (mTargetTextView != nil)
+			parent = mTargetTextView->GetWindow();
+
+		DisplayAlert(parent, "read-only-alert");
+		mWarnedReadOnly = true;
+	}
 }

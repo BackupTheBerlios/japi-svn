@@ -38,6 +38,9 @@ using namespace std;
 namespace io = boost::iostreams;
 namespace ba = boost::algorithm;
 
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize);
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize);
+
 namespace {
 
 // reserved characters in URL's
@@ -1067,8 +1070,8 @@ int32 MFile::ReadAttribute(
 {
 	int32 result = 0;
 	
-	//if (IsLocal())
-	//	result = read_attribute(GetPath(), inName, outData, inDataSize);
+	if (IsLocal())
+		result = read_attribute(GetPath(), inName, outData, inDataSize);
 	
 	return result;
 }
@@ -1080,11 +1083,11 @@ int32 MFile::WriteAttribute(
 {
 	uint32 result = 0;
 	
-	//if (IsLocal())
-	//{
-	//	write_attribute(GetPath(), inName, inData, inDataSize);
-	//	result = inDataSize;
-	//}
+	if (IsLocal())
+	{
+		write_attribute(GetPath(), inName, inData, inDataSize);
+		result = inDataSize;
+	}
 	
 	return result;
 }

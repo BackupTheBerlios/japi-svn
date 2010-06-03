@@ -6,6 +6,9 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 
+#undef GetNextWindow
+#undef GetWindow
+
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/foreach.hpp>
@@ -21,12 +24,14 @@
 #include "MStrings.h"
 #include "MWinUtils.h"
 #include "MWinApplicationImpl.h"
+#include "MWinWindowImpl.h"
 
 using namespace std;
 namespace xml = zeep::xml;
 namespace io = boost::iostreams;
 
 int32 DisplayAlert(
+	MWindow*			inParent,
 	const string&		inResourceName,
 	vector<string>&		inArguments)
 {
@@ -53,6 +58,13 @@ int32 DisplayAlert(
 	list<wstring> buttonLabels;
 
 	config.hInstance = MWinApplicationImpl::GetHInstance();
+
+	if (inParent != nil)
+	{
+		inParent->Select();
+		config.hwndParent = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
+	}
+
 	config.pszMainIcon = TD_INFORMATION_ICON;
 	
 	wstring instruction, content;

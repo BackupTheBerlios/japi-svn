@@ -115,7 +115,8 @@ class MTextDocument : public MDocument
 											inQuoteCharacters,
 							uint32			inWidth);
 
-	virtual void		SaveState();
+	virtual void		SaveState(
+							MWindow*		inWindow);
 
 	MEventOut<void(float,std::string)>			eSSHProgress;
 
@@ -556,7 +557,9 @@ class MTextDocument : public MDocument
 	void				BoundsChanged();
 
 	void				PrefsChanged();
-	
+
+	void				CheckReadOnly();
+
 	void				Execute();
 
 	void				Idle(

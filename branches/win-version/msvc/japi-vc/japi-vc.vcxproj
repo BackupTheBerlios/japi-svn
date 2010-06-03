@@ -120,7 +120,6 @@
     <ClCompile Include="..\..\Sources\MLanguageXML.cpp" />
     <ClCompile Include="..\..\Sources\MMenu.cpp" />
     <ClCompile Include="..\..\Sources\MPreferences.cpp" />
-    <ClCompile Include="..\..\Sources\MSaverMixin.cpp" />
     <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MStrings.cpp" />
     <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />

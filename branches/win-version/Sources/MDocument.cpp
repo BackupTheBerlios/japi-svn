@@ -379,7 +379,7 @@ void MDocument::IOError(const std::string& inError)
 
 bool MDocument::IOAskOverwriteNewer()
 {
-	return DisplayAlert("ask-overwrite-newer", mFile.GetFileName()) == 2;
+	return DisplayAlert(nil, "ask-overwrite-newer", mFile.GetFileName()) == 2;
 }
 
 // ---------------------------------------------------------------------------

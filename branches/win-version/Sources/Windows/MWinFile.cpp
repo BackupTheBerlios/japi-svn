@@ -23,6 +23,58 @@
 
 using namespace std;
 
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+{
+	int32 result = -1;
+
+	wstring path = c2w(inPath.string());
+	path += L":japi";
+
+	unsigned long access = GENERIC_READ;
+	unsigned long shareMode = 0;
+	unsigned long create = OPEN_EXISTING;
+	unsigned long flags = FILE_ATTRIBUTE_NORMAL;
+	
+	HANDLE fd = ::CreateFileW(path.c_str(),
+		access, shareMode, nil, create, flags, nil);
+
+	if (fd >= 0)
+	{
+		DWORD read = 0;
+		if (::ReadFile(fd, outData, inDataSize, &read, nil))
+			result = read;
+		::CloseHandle(fd);
+	}
+
+	return result;
+}
+
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+{
+	int32 result = -1;
+
+	wstring path = c2w(inPath.string());
+	path += L":japi";
+
+	unsigned long access = GENERIC_READ | GENERIC_WRITE;
+	unsigned long shareMode = 0;
+	unsigned long create = OPEN_ALWAYS;
+	unsigned long flags = FILE_ATTRIBUTE_NORMAL;
+	
+	HANDLE fd = ::CreateFileW(path.c_str(),
+		access, shareMode, nil, create, flags, nil);
+
+	if (fd >= 0)
+	{
+		DWORD written = 0;
+		if (::WriteFile(fd, inData, inDataSize, &written, nil))
+			result = written;
+		::CloseHandle(fd);
+	}
+
+	return result;
+}
+
 class CDialogEventHandler : public IFileDialogEvents,
                             public IFileDialogControlEvents
 {
