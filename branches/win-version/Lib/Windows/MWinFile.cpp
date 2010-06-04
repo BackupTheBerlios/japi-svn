@@ -232,8 +232,6 @@ bool Choose(
 		catch (exception& e)
 		{
 			DisplayError(e);
-			result = false;
-			break;
 		}
 
 		::CoTaskMemFree(pszFilePath);

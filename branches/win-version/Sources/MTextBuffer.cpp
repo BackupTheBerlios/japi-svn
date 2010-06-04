@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#define PCRE_STATIC
 #include "pcre.h"
 
 #include "MTextBuffer.h"

@@ -126,7 +126,7 @@ int32 DisplayAlert(
 	config.cButtons = buttons.size();
 
 	int pressedButton;
-	THROW_IF_HRESULT_ERROR(TaskDialogIndirect(&config, &pressedButton, NULL, NULL));
+	THROW_IF_HRESULT_ERROR(::TaskDialogIndirect(&config, &pressedButton, NULL, NULL));
 
 	int result;
 

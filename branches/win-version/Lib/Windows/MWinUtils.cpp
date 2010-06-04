@@ -10,6 +10,7 @@
 #include "MUtils.h"
 #include "MWinUtils.h"
 #include "MError.h"
+#include "MWinApplicationImpl.h"
 
 using namespace std;
 
@@ -163,6 +164,8 @@ string w2c(const wstring& s)
 	return result;
 }
 
+#ifndef NDEBUG
+
 void __debug_printf(const char* inMessage, ...)
 {
 	char msg[1024] = {0};
@@ -184,22 +187,23 @@ void __signal_throw(
 	const char*		inFile,
 	int				inLine)
 {
-	cerr << "Throwing in file " << inFile << " line " << inLine
-		<< " \"" << inFunction << "\": " << endl << inCode << endl;
-	
+	stringstream s;
+	s << "Throwing in file " << inFile << " line " << inLine
+	  << " \"" << inFunction << "\": " << endl << inCode << endl;
+
+	cerr << s.str();
+
 	if (StOKToThrow::IsOK())
 		return;
 
-	//GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-	//	GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-	//	"Exception thrown in file '%s', line %d, function: '%s'\n\n"
-	//	"code: %s", inFile, inLine, inFunction, inCode);
-	//
-	//PlaySound("error");
-	//(void)gtk_dialog_run(GTK_DIALOG(dlg));
-	//
-	//gtk_widget_destroy(dlg);
+	wstring msg(c2w(s.str()));
+
+	TaskDialog(nil, MWinApplicationImpl::GetInstance()->GetHInstance(),
+		L"Japi - Exception Warning", L"An exception was thrown in Japi",
+		msg.c_str(), 0, nil, nil);
 }
+
+#endif
 
 MWinException::MWinException(
 	int32				inHResult,
