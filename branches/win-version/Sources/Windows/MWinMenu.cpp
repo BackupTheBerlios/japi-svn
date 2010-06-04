@@ -16,6 +16,7 @@
 #include "MWinWindowImpl.h"
 #include "MError.h"
 #include "MWinUtils.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 using namespace zeep;
