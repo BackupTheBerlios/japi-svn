@@ -6,12 +6,17 @@
 #ifndef MWINLIB_H
 #define MWINLIB_H
 
+#include <SDKDDKVer.h>
+
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+
 #include <Windows.h>
 #include <d2d1.h>
 #include <dwrite.h>
 #include <CommCtrl.h>
 #include <ShlObj.h>
 #include <Shlwapi.h>
+#include <ShellAPI.h>
 #include <Uxtheme.h>
 #include <vssym32.h>
 

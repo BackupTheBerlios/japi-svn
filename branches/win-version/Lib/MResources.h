@@ -14,34 +14,34 @@
 
 //#include "mrsrc.h"
 
-#include "MObjectFile.h"
+//#include "MObjectFile.h"
 
 // building resource files:
 
-class MResourceFile
-{
-  public:
-			MResourceFile(
-				MTargetCPU			inTarget);
-			
-			~MResourceFile();
-	
-	void	Add(
-				const std::string&	inPath,
-				const void*			inData,
-				uint32				inSize);
-
-	void	Add(
-				const std::string&	inPath,
-				const fs::path&		inFile);
-	
-	void	Write(
-				const fs::path&		inFile);
-
-  private:
-
-	struct MResourceFileImp*		mImpl;
-};
+//class MResourceFile
+//{
+//  public:
+//			MResourceFile(
+//				MTargetCPU			inTarget);
+//			
+//			~MResourceFile();
+//	
+//	void	Add(
+//				const std::string&	inPath,
+//				const void*			inData,
+//				uint32				inSize);
+//
+//	void	Add(
+//				const std::string&	inPath,
+//				const fs::path&		inFile);
+//	
+//	void	Write(
+//				const fs::path&		inFile);
+//
+//  private:
+//
+//	struct MResourceFileImp*		mImpl;
+//};
 
 
 // access to resources

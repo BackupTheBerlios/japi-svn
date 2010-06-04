@@ -48,7 +48,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\..\libzeep;$(SolutionDir)\..\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -59,18 +59,18 @@
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;C:\Users\maarten\projects\pcre\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\Debug;C:\Users\maarten\projects\pcre\lib;$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\..\Resources\MakeRes.pl --rc-dir=$(SolutionDir)\Rsrc --rc-file=MJapi.rc --rc-rsrc=$(SolutionDir)\..\..\Resources\</Command>
+      <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\Resources\MakeRes.pl --rc-dir=$(SolutionDir)\Rsrc --rc-file=MJapi.rc --rc-rsrc=$(SolutionDir)\..\Resources\</Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <Outputs>$(SolutionDir)\Rsrc\MJapi.rc;%(Outputs)</Outputs>
-      <Inputs>$(SolutionDir)\..\..\Resources\MakeRes.pl;%(Inputs)</Inputs>
+      <Inputs>$(SolutionDir)\..\Resources\MakeRes.pl;%(Inputs)</Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -94,21 +94,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp" />
-    <ClCompile Include="..\..\Sources\MAlerts.cpp" />
-    <ClCompile Include="..\..\Sources\MApplication.cpp" />
-    <ClCompile Include="..\..\Sources\MClipboard.cpp" />
-    <ClCompile Include="..\..\Sources\MColor.cpp" />
-    <ClCompile Include="..\..\Sources\MController.cpp" />
-    <ClCompile Include="..\..\Sources\MControls.cpp" />
-    <ClCompile Include="..\..\Sources\MDevice.cpp" />
-    <ClCompile Include="..\..\Sources\MDocClosedNotifier.cpp" />
-    <ClCompile Include="..\..\Sources\MDocument.cpp" />
-    <ClCompile Include="..\..\Sources\MDocWindow.cpp" />
     <ClCompile Include="..\..\Sources\MEditWindow.cpp" />
-    <ClCompile Include="..\..\Sources\MError.cpp" />
-    <ClCompile Include="..\..\Sources\MFile.cpp" />
-    <ClCompile Include="..\..\Sources\MHandler.cpp" />
     <ClCompile Include="..\..\Sources\MJapiApp.cpp" />
     <ClCompile Include="..\..\Sources\MLanguage.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageCpp.cpp" />
@@ -117,32 +103,13 @@
     <ClCompile Include="..\..\Sources\MLanguagePython.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageTeX.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageXML.cpp" />
-    <ClCompile Include="..\..\Sources\MMenu.cpp" />
-    <ClCompile Include="..\..\Sources\MPreferences.cpp" />
     <ClCompile Include="..\..\Sources\MSelection.cpp" />
-    <ClCompile Include="..\..\Sources\MStrings.cpp" />
     <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />
     <ClCompile Include="..\..\Sources\MTextDocument.cpp" />
     <ClCompile Include="..\..\Sources\MTextView.cpp" />
-    <ClCompile Include="..\..\Sources\MTypes.cpp" />
-    <ClCompile Include="..\..\Sources\MUnicode.cpp" />
-    <ClCompile Include="..\..\Sources\MView.cpp" />
-    <ClCompile Include="..\..\Sources\MWindow.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MMain.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinAlerts.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinControlsImpl.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinDevice.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinFile.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinResources.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinSound.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp" />
-    <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Rsrc\MJapi.rc" />
+    <ResourceCompile Include="..\Rsrc\MJapi.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

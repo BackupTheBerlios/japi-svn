@@ -7,23 +7,14 @@
 
 #include "zeep/xml/document.hpp"
 
-#include <sstream>
-#include <list>
-#include <limits>
 #include <map>
-
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 #include <boost/lexical_cast.hpp>
 
-#include "MObjectFile.h"
 #include "MResources.h"
-#include "MPatriciaTree.h"
 #include "MError.h"
 
 using namespace std;

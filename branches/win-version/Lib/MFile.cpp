@@ -30,7 +30,7 @@
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MStrings.h"
-#include "MJapiApp.h"
+//#include "MJapiApp.h"
 #include "MPreferences.h"
 //#include "MSftpChannel.h"
 

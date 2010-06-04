@@ -26,7 +26,6 @@
 #include "MResources.h"
 #include "MUtils.h"
 #include "MError.h"
-#include "MJapiApp.h"
 
 #define foreach BOOST_FOREACH
 

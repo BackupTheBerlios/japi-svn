@@ -13,158 +13,50 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="Source Files\MainLib">
-      <UniqueIdentifier>{5618bfeb-528e-467b-b9a8-43ba46337cdd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Japi">
-      <UniqueIdentifier>{cda3efc6-a11b-4c37-837c-dd7ac6c0affe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\MainLib\Windows">
-      <UniqueIdentifier>{4c09d377-83f6-43b5-ad48-002d9f4feca1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Sources\MApplication.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MHandler.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinApplicationImpl.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MWindow.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinWindowImpl.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinProcMixin.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinUtils.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MError.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MView.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MMenu.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinMenu.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MController.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MDocument.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MDocWindow.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MMain.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MPreferences.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MFile.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinFile.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MDocClosedNotifier.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MColor.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MAlerts.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MStrings.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinResources.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MUnicode.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MDevice.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinDevice.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MControls.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinControlsImpl.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MTypes.cpp">
-      <Filter>Source Files\MainLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MTextDocument.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\MTextView.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MTextBuffer.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MSelection.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguage.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguageCpp.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguageHTML.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguagePerl.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguagePython.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguageTeX.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MLanguageXML.cpp">
-      <Filter>Source Files\Japi</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\MJapiApp.cpp">
-      <Filter>Source Files\Japi</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\MEditWindow.cpp">
-      <Filter>Source Files\Japi</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\MClipboard.cpp">
-      <Filter>Source Files\Japi</Filter>
+    <ClCompile Include="..\..\Sources\MJapiApp.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinSound.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
+    <ClCompile Include="..\..\Sources\MLanguage.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\MAcceleratorTable.cpp">
-      <Filter>Source Files\MainLib</Filter>
+    <ClCompile Include="..\..\Sources\MLanguageCpp.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Windows\MWinAlerts.cpp">
-      <Filter>Source Files\MainLib\Windows</Filter>
+    <ClCompile Include="..\..\Sources\MLanguageHTML.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MLanguagePerl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MLanguagePython.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MLanguageTeX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MLanguageXML.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MSelection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MTextBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\MTextDocument.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Rsrc\MJapi.rc">
+    <ResourceCompile Include="..\Rsrc\MJapi.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

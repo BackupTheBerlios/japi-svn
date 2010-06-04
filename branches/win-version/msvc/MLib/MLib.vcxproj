@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3AB32CE5-F64E-4AE9-BEF1-F72445F555B8}</ProjectGuid>
+    <RootNamespace>MLib</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>MLib.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Lib\MAcceleratorTable.cpp" />
+    <ClCompile Include="..\..\Lib\MAlerts.cpp" />
+    <ClCompile Include="..\..\Lib\MApplication.cpp" />
+    <ClCompile Include="..\..\Lib\MClipboard.cpp" />
+    <ClCompile Include="..\..\Lib\MColor.cpp" />
+    <ClCompile Include="..\..\Lib\MController.cpp" />
+    <ClCompile Include="..\..\Lib\MControls.cpp" />
+    <ClCompile Include="..\..\Lib\MDevice.cpp" />
+    <ClCompile Include="..\..\Lib\MDialog.cpp" />
+    <ClCompile Include="..\..\Lib\MDocClosedNotifier.cpp" />
+    <ClCompile Include="..\..\Lib\MDocument.cpp" />
+    <ClCompile Include="..\..\Lib\MDocWindow.cpp" />
+    <ClCompile Include="..\..\Lib\MError.cpp" />
+    <ClCompile Include="..\..\Lib\MFile.cpp" />
+    <ClCompile Include="..\..\Lib\MHandler.cpp" />
+    <ClCompile Include="..\..\Lib\MList.cpp" />
+    <ClCompile Include="..\..\Lib\MMenu.cpp" />
+    <ClCompile Include="..\..\Lib\MPreferences.cpp" />
+    <ClCompile Include="..\..\Lib\MStrings.cpp" />
+    <ClCompile Include="..\..\Lib\MTypes.cpp" />
+    <ClCompile Include="..\..\Lib\MUnicode.cpp" />
+    <ClCompile Include="..\..\Lib\MUtils.cpp" />
+    <ClCompile Include="..\..\Lib\MView.cpp" />
+    <ClCompile Include="..\..\Lib\MWindow.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Lib\MAcceleratorTable.h" />
+    <ClInclude Include="..\..\Lib\MAlerts.h" />
+    <ClInclude Include="..\..\Lib\MApplication.h" />
+    <ClInclude Include="..\..\Lib\MApplicationImpl.h" />
+    <ClInclude Include="..\..\Lib\MCallbacks.h" />
+    <ClInclude Include="..\..\Lib\MClipboard.h" />
+    <ClInclude Include="..\..\Lib\MColor.h" />
+    <ClInclude Include="..\..\Lib\MCommands.h" />
+    <ClInclude Include="..\..\Lib\MController.h" />
+    <ClInclude Include="..\..\Lib\MControls.h" />
+    <ClInclude Include="..\..\Lib\MControlsImpl.h" />
+    <ClInclude Include="..\..\Lib\MDevice.h" />
+    <ClInclude Include="..\..\Lib\MDeviceImpl.h" />
+    <ClInclude Include="..\..\Lib\MDialog.h" />
+    <ClInclude Include="..\..\Lib\MDocClosedNotifier.h" />
+    <ClInclude Include="..\..\Lib\MDocument.h" />
+    <ClInclude Include="..\..\Lib\MDocWindow.h" />
+    <ClInclude Include="..\..\Lib\MError.h" />
+    <ClInclude Include="..\..\Lib\MFile.h" />
+    <ClInclude Include="..\..\Lib\MFileImp.h" />
+    <ClInclude Include="..\..\Lib\MHandler.h" />
+    <ClInclude Include="..\..\Lib\MLib.h" />
+    <ClInclude Include="..\..\Lib\MList.h" />
+    <ClInclude Include="..\..\Lib\MMenu.h" />
+    <ClInclude Include="..\..\Lib\MMenuImpl.h" />
+    <ClInclude Include="..\..\Lib\MP2PEvents.h" />
+    <ClInclude Include="..\..\Lib\MPreferences.h" />
+    <ClInclude Include="..\..\Lib\MPrinter.h" />
+    <ClInclude Include="..\..\Lib\MResources.h" />
+    <ClInclude Include="..\..\Lib\mrsrc.h" />
+    <ClInclude Include="..\..\Lib\MSound.h" />
+    <ClInclude Include="..\..\Lib\MStrings.h" />
+    <ClInclude Include="..\..\Lib\MTypes.h" />
+    <ClInclude Include="..\..\Lib\MUnicode.h" />
+    <ClInclude Include="..\..\Lib\MUnicodeTables.h" />
+    <ClInclude Include="..\..\Lib\MUtils.h" />
+    <ClInclude Include="..\..\Lib\MView.h" />
+    <ClInclude Include="..\..\Lib\MWindow.h" />
+    <ClInclude Include="..\..\Lib\MWindowImpl.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

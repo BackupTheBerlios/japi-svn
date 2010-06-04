@@ -107,6 +107,10 @@ uint32			gConcurrentJobs = 2;
 
 fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
+#ifndef NDEBUG
+int VERBOSE;
+#endif
+
 // --------------------------------------------------------------------
 
 MJapiApp::MJapiApp()
