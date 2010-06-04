@@ -345,7 +345,13 @@ void MMenu::UpdateCommandStatus()
 		{
 			bool enabled = true, checked = false;
 			if (mTarget != nil)
-				mTarget->UpdateCommandStatus(GetItemCommand(i), this, i, enabled, checked);
+			{
+				MWindow* window = dynamic_cast<MWindow*>(mTarget);
+				if (window != nil)
+					window->GetFocus()->UpdateCommandStatus(GetItemCommand(i), this, i, enabled, checked);
+				else
+					mTarget->UpdateCommandStatus(GetItemCommand(i), this, i, enabled, checked);
+			}
 			mImpl->SetItemState(i, enabled, checked);
 		}
 	}

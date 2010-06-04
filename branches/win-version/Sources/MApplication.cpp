@@ -384,7 +384,7 @@ void MApplication::DoOpen()
 	
 	MDocument* doc = nil;
 	
-	if (ChooseFiles(false, urls))
+	if (MFileDialogs::ChooseFiles(nil, false, urls))
 	{
 		for (vector<MFile>::iterator url = urls.begin(); url != urls.end(); ++url)
 			doc = OpenOneDocument(*url);

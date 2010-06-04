@@ -334,8 +334,8 @@ string MDocument::GetWindowTitle() const
 	{
 		fs::path file = fs::system_complete(mFile.GetPath());
 		
-		result = file.string();
-		NormalizePath(result);
+		NormalizePath(file);
+		result = file.native_file_string();
 		
 		// strip off HOME, if any
 		string home = GetHomeDirectory();
@@ -349,6 +349,14 @@ string MDocument::GetWindowTitle() const
 		result = mFile.GetURI();
 	
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	GetDocumentName
+
+string MDocument::GetDocumentName() const
+{
+	return mFile.GetFileName();
 }
 
 // ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ MDocWindow::MDocWindow(const string& inTitle, const MRect& inBounds,
 	, mController(this)
 {
 	SetFocus(&mController);
+	AddRoute(mController.eDocumentChanged, eDocumentChanged);
 }
 
 MDocWindow::~MDocWindow()
@@ -159,7 +160,7 @@ void MDocWindow::FileSpecChanged(
 
 	if (doc != nil)
 	{
-		string title = doc->GetWindowTitle();;
+		string title = doc->GetWindowTitle();
 
 		if (doc->IsReadOnly())
 			title += _(" [Read Only]");

@@ -3,11 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <Windows.h>
-#include <CommCtrl.h>
-
-#undef GetNextWindow
-#undef GetWindow
+#include "MWinLib.h"
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -15,8 +11,6 @@
 #define foreach BOOST_FOREACH
 
 #include <zeep/xml/document.hpp>
-
-#include "MLib.h"
 
 #include "MAlerts.h"
 #include "MResources.h"

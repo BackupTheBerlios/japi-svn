@@ -52,10 +52,7 @@ void MController::SetDocument(
 		mDocument = inDocument;
 		
 		if (mDocument != nil)
-		{
 			mDocument->AddController(this);
-			//mDocWindow->AddRoutes(mDocument);
-		}
 		
 		eDocumentChanged(mDocument);
 	}
@@ -115,7 +112,7 @@ bool MController::UpdateCommandStatus(
 {
 	bool handled = false;
 
-	if (mDocument == nil)
+	if (mDocument != nil)
 		handled = mDocument->UpdateCommandStatus(inCommand, inMenu, inItemIndex,
 					outEnabled, outChecked);
 
@@ -199,6 +196,7 @@ bool MController::TryCloseDocument(
 					break;
 
 				case kAskSaveChanges_DontSave:
+					SetDocument(nil);
 					result = true;
 					break;
 			}
@@ -226,14 +224,15 @@ bool MController::TryCloseController(
 
 void MController::SaveDocumentAs()
 {
-	string name;	
+	fs::path file;
 	
 	if (mDocument->IsSpecified())
-		name = mDocument->GetFile().GetFileName();
+		file = mDocument->GetFile().GetPath();
 	else
-		name = mWindow->GetTitle();
+		file = fs::path(mDocument->GetDocumentName());
 	
-	//MSaverMixin::SaveDocumentAs(mWindow, name);
+	if (MFileDialogs::SaveFileAs(mWindow, file))
+		mDocument->DoSaveAs(MFile(file));
 }
 
 void MController::TryDiscardChanges()
@@ -241,9 +240,7 @@ void MController::TryDiscardChanges()
 	if (mDocument == nil)
 		return;
 
-	//MSaverMixin::TryDiscardChanges(mDocument->GetFile().GetFileName(), mWindow);
-
-	if (DisplayAlert(mWindow, "discard-changes-alert", mDocument->GetFile().GetFileName()) == 1/*kDiscardChanges_Discard*/)
+	if (DisplayAlert(mWindow, "discard-changes-alert", mDocument->GetFile().GetFileName()) == kDiscardChanges_Discard)
 		RevertDocument();
 }
 

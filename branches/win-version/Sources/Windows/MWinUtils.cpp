@@ -3,11 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <windows.h>
+#include "MWinLib.h"
 
 #include <cstdarg>
-
-#include "MLib.h"
 
 #include "MUtils.h"
 #include "MWinUtils.h"
@@ -252,10 +250,17 @@ MWinException::MWinException(
 
 string GetHomeDirectory()
 {
-	const char* HOME = getenv("HOME");
-	if (HOME == nil)
-		HOME = "";
-	return HOME;
+	string result;
+	wchar_t* path;
+
+	HRESULT hr = ::SHGetKnownFolderPath(FOLDERID_Profile, 0, nil, &path);
+	if (hr == S_OK)
+	{
+		result = w2c(path);
+		::CoTaskMemFree(path);
+	}
+
+	return result;
 }
 
 void delay(double inSeconds)

@@ -3,11 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <Windows.h>
+#include "MWinLib.h"
 
-#include <cassert>
-
-#include "MLib.h"
 #include "MWinProcMixin.h"
 #include "MError.h"
 #include "MWinApplicationImpl.h"

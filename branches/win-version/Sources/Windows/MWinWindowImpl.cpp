@@ -3,20 +3,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <Windows.h>
-#include <d2d1.h>
-#include <dwrite.h>
-
-#undef CreateWindow
-#undef GetNextWindow
-#undef GetTopWindow
+#include "MWinLib.h"
 
 #include "zeep/xml/document.hpp"
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-#include "MLib.h"
 #include "MWinWindowImpl.h"
 #include "MWindow.h"
 #include "MError.h"

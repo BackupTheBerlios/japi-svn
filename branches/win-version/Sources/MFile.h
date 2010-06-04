@@ -238,18 +238,27 @@ class MFileIterator
 					mImpl;
 };
 
-//bool ChooseDirectory(
-//	MFile&				outDirectory);
+namespace MFileDialogs
+{
 
 bool ChooseDirectory(
+	MWindow*			inParent,
 	fs::path&			outDirectory);
 
 bool ChooseOneFile(
+	MWindow*			inParent,
 	MFile&				ioFile);
 
 bool ChooseFiles(
+	MWindow*			inParent,
 	bool				inLocalOnly,
 	std::vector<MFile>&	outFiles);
+
+bool SaveFileAs(
+	MWindow*			inParent,
+	fs::path&			ioFile);
+
+}
 
 bool FileNameMatches(
 	const char*			inPattern,

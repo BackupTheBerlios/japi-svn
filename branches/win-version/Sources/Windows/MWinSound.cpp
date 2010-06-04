@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MWinLib.h"
 
 #include <map>
 #include <iostream>
@@ -19,7 +19,7 @@ using namespace std;
 void PlaySound(
 	const string&		inSoundName)
 {
-	if (not gPlaySounds)
+	if (Preferences::GetInteger("play sounds", true) == false)
 		return;
 	
 	//try

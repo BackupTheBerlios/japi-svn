@@ -3,23 +3,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <windows.h>
+#include "MWinLib.h"
 
-#define STRICT_TYPED_ITEMIDS
-#include <shlobj.h>
-#include <objbase.h>      // For COM headers
-#include <shobjidl.h>     // for IFileDialogEvents and IFileDialogControlEvents
-#include <shlwapi.h>
-//#include <knownfolders.h> // for KnownFolder APIs/datatypes/function headers
-//#include <propvarutil.h>  // for PROPVAR-related functions
-//#include <propkey.h>      // for the Property key APIs/datatypes
-//#include <propidl.h>      // for the Property System APIs
-//#include <strsafe.h>      // for StringCchPrintfW
-//#include <shtypes.h>      // for COMDLG_FILTERSPEC
-
-#include "MLib.h"
 #include "MFile.h"
 #include "MWinUtils.h"
+#include "MWinWindowImpl.h"
 
 using namespace std;
 
@@ -75,58 +63,77 @@ int32 write_attribute(const fs::path& inPath, const char* inName, const void* in
 	return result;
 }
 
+namespace MFileDialogs
+{
+
 class CDialogEventHandler : public IFileDialogEvents,
                             public IFileDialogControlEvents
 {
 public:
     // IUnknown methods
-    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv)
-    {
-        static const QITAB qit[] = {
-            QITABENT(CDialogEventHandler, IFileDialogEvents),
-            QITABENT(CDialogEventHandler, IFileDialogControlEvents),
-            { 0 },
-        };
-        return QISearch(this, qit, riid, ppv);
-    }
+    IFACEMETHODIMP	QueryInterface(REFIID riid, void** ppv);
 
-    IFACEMETHODIMP_(ULONG) AddRef()
-    {
-        return InterlockedIncrement(&_cRef);
-    }
+    IFACEMETHODIMP_(ULONG)
+					AddRef();
 
-    IFACEMETHODIMP_(ULONG) Release()
-    {
-        long cRef = InterlockedDecrement(&_cRef);
-        if (!cRef)
-            delete this;
-        return cRef;
-    }
+    IFACEMETHODIMP_(ULONG)
+					Release();
 
     // IFileDialogEvents methods
-    IFACEMETHODIMP OnFileOk(IFileDialog *) { return S_OK; };
-    IFACEMETHODIMP OnFolderChange(IFileDialog *) { return S_OK; };
-    IFACEMETHODIMP OnFolderChanging(IFileDialog *, IShellItem *) { return S_OK; };
-    IFACEMETHODIMP OnHelp(IFileDialog *) { return S_OK; };
-    IFACEMETHODIMP OnSelectionChange(IFileDialog *) { return S_OK; };
-    IFACEMETHODIMP OnShareViolation(IFileDialog *, IShellItem *, FDE_SHAREVIOLATION_RESPONSE *) { return S_OK; };
-	IFACEMETHODIMP OnTypeChange(IFileDialog *pfd) { return S_OK; }
-    IFACEMETHODIMP OnOverwrite(IFileDialog *, IShellItem *, FDE_OVERWRITE_RESPONSE *) { return S_OK; };
+    IFACEMETHODIMP	OnFileOk(IFileDialog *)							{ return S_OK; };
+    IFACEMETHODIMP	OnFolderChange(IFileDialog *)					{ return S_OK; };
+    IFACEMETHODIMP	OnFolderChanging(IFileDialog *, IShellItem *)	{ return S_OK; };
+    IFACEMETHODIMP	OnHelp(IFileDialog *)							{ return S_OK; };
+    IFACEMETHODIMP	OnSelectionChange(IFileDialog *)				{ return S_OK; };
+    IFACEMETHODIMP	OnShareViolation(IFileDialog *, IShellItem *, FDE_SHAREVIOLATION_RESPONSE *)
+																	{ return S_OK; };
+	IFACEMETHODIMP	OnTypeChange(IFileDialog *pfd)					{ return S_OK; }
+    IFACEMETHODIMP	OnOverwrite(IFileDialog *, IShellItem *, FDE_OVERWRITE_RESPONSE *)
+																	{ return S_OK; };
 
     // IFileDialogControlEvents methods
-	IFACEMETHODIMP OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem) { return S_OK; }
-    IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize *, DWORD) { return S_OK; };
-    IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL) { return S_OK; };
-    IFACEMETHODIMP OnControlActivating(IFileDialogCustomize *, DWORD) { return S_OK; };
+	IFACEMETHODIMP	OnItemSelected(IFileDialogCustomize *pfdc, DWORD dwIDCtl, DWORD dwIDItem)
+																	{ return S_OK; }
+    IFACEMETHODIMP	OnButtonClicked(IFileDialogCustomize *, DWORD)	{ return S_OK; };
+    IFACEMETHODIMP	OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL)
+																	{ return S_OK; };
+    IFACEMETHODIMP	OnControlActivating(IFileDialogCustomize *, DWORD)
+																	{ return S_OK; };
 
-    CDialogEventHandler() : _cRef(1) { };
+    CDialogEventHandler() : mRefCount(1) { };
+
+	static HRESULT	Create(REFIID riid, void **ppv);
+
 private:
-    ~CDialogEventHandler() { };
-    long _cRef;
+					~CDialogEventHandler() { };
+    long			mRefCount;
 };
 
+IFACEMETHODIMP CDialogEventHandler::QueryInterface(REFIID riid, void** ppv)
+{
+    static const QITAB qit[] = {
+        QITABENT(CDialogEventHandler, IFileDialogEvents),
+        QITABENT(CDialogEventHandler, IFileDialogControlEvents),
+        { 0 },
+    };
+    return QISearch(this, qit, riid, ppv);
+}
+
+IFACEMETHODIMP_(ULONG) CDialogEventHandler::AddRef()
+{
+    return InterlockedIncrement(&mRefCount);
+}
+
+IFACEMETHODIMP_(ULONG) CDialogEventHandler::Release()
+{
+    long cRef = InterlockedDecrement(&mRefCount);
+    if (!cRef)
+        delete this;
+    return cRef;
+}
+
 // Instance creation helper
-HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
+HRESULT CDialogEventHandler::Create(REFIID riid, void **ppv)
 {
     *ppv = NULL;
     CDialogEventHandler *pDialogEventHandler = new (std::nothrow) CDialogEventHandler();
@@ -139,109 +146,15 @@ HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
     return hr;
 }
 
+// --------------------------------------------------------------------
 
-bool ChooseDirectory(
-	fs::path&	outDirectory)
-{
-	return false;
-}
-
-//bool ChooseDirectory(
-//	fs::path&			outDirectory)
-//{
-//	bool result = true; 
-//	
-//	MFile dir(outDirectory);
-//
-//	if (ChooseDirectory(dir))
-//	{
-//		outDirectory = dir.GetPath();
-//		result = true;
-//	}
-//	
-//	return result; 
-//}
-
-// This code snippet demonstrates how to work with the common file dialog interface
-bool BasicFileOpen(MFile& outFile)
-{
-	//bool result = false;
-
-	////IFileDialog *pfd = nil;
- ////   IFileDialogEvents *pfde = nil;
-	////IShellItem *psiResult;
-
-	//// CoCreate the File Open Dialog object.
-	//MComPtr<IFileDialog> pfd;
-	//THROW_IF_HRESULT_ERROR(::CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd)));
-
-	//// Create an event handling object, and hook it up to the dialog.
-	//MComPtr<IFileDialogEvents> pfde;
-	//THROW_IF_HRESULT_ERROR(CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde)));
-
-	//// Hook up the event handler.
- //   DWORD dwCookie;
-	//THROW_IF_HRESULT_ERROR(pfd->Advise(pfde, &dwCookie));
-
-	//// Set the options on the dialog.
- //   DWORD dwFlags;
-
- //   // Before setting, always get the options first in order not to override existing options.
-	//THROW_IF_HRESULT_ERROR(pfd->GetOptions(&dwFlags));
-
-	//// In this case, get shell items only for file system items.
-	//THROW_IF_HRESULT_ERROR(pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM));
-
-	//const COMDLG_FILTERSPEC types[] =
-	//{
-	//	{L"All Documents (*.*)",         L"*.*"}
-	//};
-
-	//// Set the file types to display only. Notice that, this is a 1-based array.
- //   THROW_IF_HRESULT_ERROR(pfd->SetFileTypes(1, types));
-
-	//// Set the selected file type index to Word Docs for this example.
- //   THROW_IF_HRESULT_ERROR(pfd->SetFileTypeIndex(0));
-
-	//// Set the default extension to be ".doc" file.
- //   THROW_IF_HRESULT_ERROR(pfd->SetDefaultExtension(L"txt"));
-
-	//// Show the dialog
- //   THROW_IF_HRESULT_ERROR(pfd->Show(NULL));
-
-	//// Obtain the result, once the user clicks the 'Open' button.
- //   // The result is an IShellItem object.
-	//MComPtr<IShellItem> psiResult;
-	//THROW_IF_HRESULT_ERROR(pfd->GetResult(&psiResult));
-
-	//// We are just going to print out the name of the file for sample sake.
- //   PWSTR pszFilePath = NULL;
- //   THROW_IF_HRESULT_ERROR(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath));
-
-	//string path = w2c(pszFilePath);
-	//outFile = MFile(path);
-	//result = true;
-
-	//CoTaskMemFree(pszFilePath);
-
-	//// Unhook the event handler.
- //   pfd->Unadvise(dwCookie);
-
-	//return result;
-	return false;
-}
-
-bool ChooseOneFile(
-	MFile&	ioFile)
-{
-	BasicFileOpen(ioFile);
-
-	return false;
-}
-
-bool ChooseFiles(
+bool Choose(
+	HWND				inParent,
+	//const fs::path&		inDirectory,
 	bool				inLocalOnly,
-	std::vector<MFile>&	outFiles)
+	bool				inSelectMultiple,
+	bool				inSelectDirectory,
+	std::vector<MFile>&	outSelected)
 {
 	bool result = false;
 
@@ -251,7 +164,7 @@ bool ChooseFiles(
 
 	// Create an event handling object, and hook it up to the dialog.
 	MComPtr<IFileDialogEvents> pfde;
-	THROW_IF_HRESULT_ERROR(CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde)));
+	THROW_IF_HRESULT_ERROR(CDialogEventHandler::Create(IID_PPV_ARGS(&pfde)));
 
 	// Hook up the event handler.
     DWORD dwCookie;
@@ -263,8 +176,13 @@ bool ChooseFiles(
     // Before setting, always get the options first in order not to override existing options.
 	THROW_IF_HRESULT_ERROR(pfd->GetOptions(&dwFlags));
 
-	// In this case, get shell items only for file system items.
-	THROW_IF_HRESULT_ERROR(pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM | FOS_ALLOWMULTISELECT));
+	dwFlags |= FOS_FORCEFILESYSTEM;
+	if (inSelectDirectory)
+		dwFlags |= FOS_PICKFOLDERS;
+	else if (inSelectMultiple)
+		dwFlags |= FOS_ALLOWMULTISELECT;
+
+	THROW_IF_HRESULT_ERROR(pfd->SetOptions(dwFlags));
 
 	const COMDLG_FILTERSPEC types[] =
 	{
@@ -277,11 +195,17 @@ bool ChooseFiles(
 	// Set the selected file type index to Word Docs for this example.
     THROW_IF_HRESULT_ERROR(pfd->SetFileTypeIndex(0));
 
-	// Set the default extension to be ".doc" file.
-    THROW_IF_HRESULT_ERROR(pfd->SetDefaultExtension(L"txt"));
+	//if (fs::exists(inDirectory))
+	//{
+	//	MComPtr<IShellItem> dir();
+	//	pfd->SetFolder(inDirectory);
+	//}
+
+	//// Set the default extension to be ".doc" file.
+ //   THROW_IF_HRESULT_ERROR(pfd->SetDefaultExtension(L"txt"));
 
 	// Show the dialog
-    THROW_IF_HRESULT_ERROR(pfd->Show(NULL));
+    THROW_IF_HRESULT_ERROR(pfd->Show(inParent));
 
 	// Obtain the result, once the user clicks the 'Open' button.
     // The result is an IShellItem object.
@@ -299,9 +223,18 @@ bool ChooseFiles(
 		PWSTR pszFilePath = NULL;
 		THROW_IF_HRESULT_ERROR(item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath));
 
-		string path = w2c(pszFilePath);
-		outFiles.push_back(MFile(path));
-		result = true;
+		try
+		{
+			string path = w2c(pszFilePath);
+			outSelected.push_back(MFile(path));
+			result = true;
+		}
+		catch (exception& e)
+		{
+			DisplayError(e);
+			result = false;
+			break;
+		}
 
 		::CoTaskMemFree(pszFilePath);
 	}
@@ -310,4 +243,144 @@ bool ChooseFiles(
     pfd->Unadvise(dwCookie);
 
 	return result;
+}
+
+// --------------------------------------------------------------------
+
+bool ChooseDirectory(
+	MWindow*			inParent,
+	fs::path&			outDirectory)
+{
+	HWND hwnd = nil;
+	if (inParent != nil)
+		hwnd = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
+
+	vector<MFile> selected;
+	bool result = Choose(hwnd, true, false, true, selected);
+	if (result)
+		outDirectory = selected.front().GetPath();
+	return result;
+}
+
+bool ChooseOneFile(
+	MWindow*			inParent,
+	MFile&				outFile)
+{
+	HWND hwnd = nil;
+	if (inParent != nil)
+		hwnd = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
+
+	vector<MFile> selected;
+	bool result = Choose(hwnd, true, false, false, selected);
+	if (result)
+		outFile = MFile(selected.front());
+	return result;
+}
+
+bool ChooseFiles(
+	MWindow*			inParent,
+	bool				inLocalOnly,
+	std::vector<MFile>&	outFiles)
+{
+	HWND hwnd = nil;
+	if (inParent != nil)
+		hwnd = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
+
+	return Choose(hwnd, true, false, false, outFiles);
+}
+
+bool SaveFileAs(
+	MWindow*			inParent,
+	fs::path&			ioFile)
+{
+	bool result = false;
+
+	HWND hwnd = nil;
+	if (inParent != nil)
+		hwnd = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
+
+	// similar to the Choose code
+	MComPtr<IFileSaveDialog> pfd;
+	THROW_IF_HRESULT_ERROR(::CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd)));
+
+	// Create an event handling object, and hook it up to the dialog.
+	MComPtr<IFileDialogEvents> pfde;
+	THROW_IF_HRESULT_ERROR(CDialogEventHandler::Create(IID_PPV_ARGS(&pfde)));
+
+	// Hook up the event handler.
+    DWORD dwCookie;
+	THROW_IF_HRESULT_ERROR(pfd->Advise(pfde, &dwCookie));
+
+	// Set the options on the dialog.
+    DWORD dwFlags;
+
+    // Before setting, always get the options first in order not to override existing options.
+	THROW_IF_HRESULT_ERROR(pfd->GetOptions(&dwFlags));
+
+	dwFlags |= FOS_FORCEFILESYSTEM;
+
+	THROW_IF_HRESULT_ERROR(pfd->SetOptions(dwFlags));
+
+	const COMDLG_FILTERSPEC types[] =
+	{
+		{L"All Documents (*.*)",         L"*.*"}
+	};
+
+	// Set the file types to display only. Notice that, this is a 1-based array.
+    THROW_IF_HRESULT_ERROR(pfd->SetFileTypes(1, types));
+
+	// Set the selected file type index to Word Docs for this example.
+    THROW_IF_HRESULT_ERROR(pfd->SetFileTypeIndex(0));
+
+	fs::path folder(ioFile.parent_path());
+	if (fs::exists(folder))
+	{
+		wstring dir(c2w(folder.native_directory_string()));
+		MComPtr<IShellItem> psiFolder;
+		HRESULT hr = ::SHCreateItemFromParsingName(dir.c_str(), nil, IID_PPV_ARGS(&psiFolder));
+	    if (SUCCEEDED(hr))
+			pfd->SetFolder(psiFolder);
+	}
+
+	if (not ioFile.filename().empty())
+	{
+		wstring name(c2w(ioFile.filename()));
+		pfd->SetFileName(name.c_str());
+	}
+
+	//// Set the default extension to be ".doc" file.
+ //   THROW_IF_HRESULT_ERROR(pfd->SetDefaultExtension(L"txt"));
+
+	// Show the dialog
+    if (pfd->Show(hwnd) == S_OK)
+	{
+		result = true;
+
+		MComPtr<IShellItem> psiResult;
+		THROW_IF_HRESULT_ERROR(pfd->GetResult(&psiResult));
+
+		PWSTR pszFilePath = NULL;
+
+		try
+		{
+			THROW_IF_HRESULT_ERROR(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath));
+			string path = w2c(pszFilePath);
+			ioFile = path;
+			result = true;
+		}
+		catch (exception& e)
+		{
+			DisplayError(e);
+			result = false;
+		}
+
+		::CoTaskMemFree(pszFilePath);
+	}
+
+	// Unhook the event handler.
+    pfd->Unadvise(dwCookie);
+
+	return result;
+}
+
 }

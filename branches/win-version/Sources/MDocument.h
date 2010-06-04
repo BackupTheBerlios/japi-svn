@@ -91,6 +91,7 @@ class MDocument : public MHandler
 							bool				inModified);
 
 	virtual std::string	GetWindowTitle() const;
+	virtual std::string	GetDocumentName() const;
 
 	// note that MDocument is NOT a MHandler, but does 
 	// implement the UpdateCommandStatus and ProcessCommand methods

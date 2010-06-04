@@ -3,10 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <Windows.h>
-#include <Commctrl.h>
+#include "MWinLib.h"
 
-#include "MLib.h"
 #include "MUtils.h"
 
 #include "MWinApplicationImpl.h"
