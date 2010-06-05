@@ -41,24 +41,7 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 
 MWindow::~MWindow()
 {
-#if DEBUG
-	MWindow* w = sFirst;
-	while (w != nil)
-	{
-		if (w == this)
-		{
-			if (mImpl != nil /*and mImpl->IsValid()*/)
-				PRINT(("Window was not removed from list: %s", mTitle.c_str()));
-			else
-				PRINT(("Window was not removed from list: [deleted]"));
-
-			RemoveWindowFromList(this);
-
-			break;
-		}
-		w = w->mNext;
-	}
-#endif
+	RemoveWindowFromList(this);
 }
 
 void MWindow::Init()

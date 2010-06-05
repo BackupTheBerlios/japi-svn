@@ -13,6 +13,21 @@
 #include <ciso646>
 #endif
 
+#if defined(_DEBUG) && ! defined(DEBUG)
+#define DEBUG _DEBUG
+#endif
+
+#if DEBUG && NDEBUG
+#error "Cannot be defined both"
+#elif ! defined(NDEBUG) && ! defined(DEBUG)
+#pragma message("Neither NDEBUG nor DEBUG is defined, falling back to DEBUG")
+#define DEBUG	1
+#elif ! defined(NDEBUG)
+#define NDEBUG	(! DEBUG)
+#elif ! defined(DEBUG)
+#define DEBUG	(! NDEBUG)
+#endif
+
 #include "MTypes.h"
 
 #include <boost/filesystem/path.hpp>

@@ -5,14 +5,9 @@
 
 #include "MJapi.h"
 
-//#include <sys/un.h>
-//#include <sys/socket.h>
 #include <fcntl.h>
 #include <cerrno>
 #include <signal.h>
-//#include <libintl.h>
-//
-//#include <gdk/gdkx.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string/replace.hpp>

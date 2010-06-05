@@ -286,7 +286,7 @@ void MLocalFileLoader::DoLoad()
 		//	}
 		//}
 		
-		fs::ifstream file(path);
+		fs::ifstream file(path, ios::binary);
 		eReadFile(file);
 		
 		SetFileInfo(readOnly, modTime);

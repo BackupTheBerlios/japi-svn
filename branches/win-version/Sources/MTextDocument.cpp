@@ -522,7 +522,7 @@ void MTextDocument::ReInit()
 
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetXWidth();
-	mTabWidth = mCharWidth * mCharsPerTab;
+	mTabWidth = floor(mCharWidth * mCharsPerTab);
 }
 
 // ---------------------------------------------------------------------------

@@ -140,7 +140,7 @@ void MResourceFile::Add(
 	const string&	inPath,
 	const fs::path&	inFile)
 {
-	fs::ifstream f(inFile);
+	fs::ifstream f(inFile, ios::binary);
 
 	if (not f.is_open())
 		THROW(("Could not open resource file"));

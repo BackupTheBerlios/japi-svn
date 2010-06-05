@@ -601,7 +601,7 @@ void MTextBuffer::ReadFromFile(
 	char* data = new char[len];
 	try
 	{
-		b->sgetn(data, len);
+		len = b->sgetn(data, len);
 
 		// Now find out what this data contains.
 	

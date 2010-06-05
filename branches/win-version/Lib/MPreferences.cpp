@@ -94,7 +94,7 @@ IniFile::IniFile()
 		
 		if (fs::exists(mPrefsFile))
 		{
-			fs::ifstream data(mPrefsFile);
+			fs::ifstream data(mPrefsFile, ios::binary);
 			
 			if (data.is_open())
 			{

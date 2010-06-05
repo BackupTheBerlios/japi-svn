@@ -1272,6 +1272,7 @@ void MWinDeviceImpl::SetText(
 			mText += l;
 		}
 	}
+	mTextIndex.push_back(mText.length());
 
 	if (mTextLayout != nil)
 		mTextLayout->Release();
