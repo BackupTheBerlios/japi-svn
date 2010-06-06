@@ -22,10 +22,6 @@
 #elif ! defined(NDEBUG) && ! defined(DEBUG)
 #pragma message("Neither NDEBUG nor DEBUG is defined, falling back to DEBUG")
 #define DEBUG	1
-#elif ! defined(NDEBUG)
-#define NDEBUG	(! DEBUG)
-#elif ! defined(DEBUG)
-#define DEBUG	(! NDEBUG)
 #endif
 
 #include "MTypes.h"

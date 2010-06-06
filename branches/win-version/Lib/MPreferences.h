@@ -13,9 +13,14 @@
 
 #include <string>
 #include <vector>
+#include <boost/filesystem/path.hpp>
 
 #include "MColor.h"
 #include "MTypes.h"
+
+//extern const char kAppName[], kVersionString[];
+
+extern boost::filesystem::path	gPrefsDir;
 
 namespace Preferences
 {

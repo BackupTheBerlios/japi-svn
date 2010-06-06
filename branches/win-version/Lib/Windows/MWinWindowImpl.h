@@ -56,10 +56,10 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 
 	MWindow*		GetWindow() const						{ return mWindow; }
 
-	ID2D1HwndRenderTarget*
+	ID2D1RenderTarget*
 					GetRenderTarget() const					{ return mRenderTarget; }
 	void			SetRenderTarget(
-						ID2D1HwndRenderTarget* inTarget);
+						ID2D1RenderTarget* inTarget);
 
   protected:
 
@@ -102,7 +102,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	int32			mMinWidth, mMinHeight;
 	MMenu*			mMenubar;
 	int32			mLastGetMouseX, mLastGetMouseY;
-	ID2D1HwndRenderTarget*
+	ID2D1RenderTarget*
 					mRenderTarget;
 	MView*			mMousedView;
 	uint32			mClickCount;

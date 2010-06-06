@@ -2043,6 +2043,10 @@ void MTextDocument::SendSelectionChangedEvent()
 	}
 	
 	eSelectionChanged(mSelection, name);
+
+	// reset dirtyness
+	for (uint32 line = 0; line < mLineInfo.size(); ++line)
+		mLineInfo[line].dirty = false;
 }
 
 // ---------------------------------------------------------------------------

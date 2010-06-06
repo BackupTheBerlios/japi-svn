@@ -150,12 +150,15 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 }
 
 void MWinWindowImpl::SetRenderTarget(
-	ID2D1HwndRenderTarget* inTarget)
+	ID2D1RenderTarget* inTarget)
 {
-	if (mRenderTarget != nil)
+	if (mRenderTarget != nil and inTarget != mRenderTarget)
 		mRenderTarget->Release();
 
 	mRenderTarget = inTarget;
+
+	if (mRenderTarget != nil)
+		mRenderTarget->AddRef();
 }
 
 // --------------------------------------------------------------------
@@ -454,8 +457,8 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
 
-		if (mRenderTarget != nil)
-			mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
+		//if (mRenderTarget != nil)
+		//	mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
 		
 		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
 			newBounds.height - oldBounds.height);
@@ -651,6 +654,7 @@ bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 		int32 x = LOWORD(inLParam);
 		int32 y = HIWORD(inLParam);
 		
+		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseMove(x, y, modifiers);
 	}
 
@@ -667,6 +671,7 @@ bool MWinWindowImpl::WMMouseExit(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 		int32 x = LOWORD(inLParam);
 		int32 y = HIWORD(inLParam);
 		
+		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseExit(x, y, modifiers);
 	}
 
@@ -685,6 +690,7 @@ bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 		int32 x = LOWORD(inLParam);
 		int32 y = HIWORD(inLParam);
 		
+		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseUp(x, y, modifiers);
 	}
 

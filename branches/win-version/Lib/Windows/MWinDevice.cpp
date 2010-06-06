@@ -765,17 +765,25 @@ MWinDeviceImpl::MWinDeviceImpl(
 	
 	MWindow* window = inView->GetWindow();
 	THROW_IF_NIL(window);
-
 	MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
 
-	D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-		D2D1_RENDER_TARGET_TYPE_DEFAULT,
-		D2D1::PixelFormat(
-			DXGI_FORMAT_B8G8R8A8_UNORM,
-			D2D1_ALPHA_MODE_IGNORE),
-		0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
+	ID2D1RenderTarget* renderTarget = windowImpl->GetRenderTarget();
+	if (renderTarget != nil)
+		renderTarget->QueryInterface(&mRenderTarget);
 
-	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateDCRenderTarget(&props, &mRenderTarget));
+	if (mRenderTarget == nil)
+	{
+		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+			D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(
+				DXGI_FORMAT_B8G8R8A8_UNORM,
+				D2D1_ALPHA_MODE_IGNORE),
+			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
+
+		THROW_IF_HRESULT_ERROR(sD2DFactory->CreateDCRenderTarget(&props, &mRenderTarget));
+
+		windowImpl->SetRenderTarget(mRenderTarget);
+	}
 
 	MRect bounds;
 	inView->GetBounds(bounds);
@@ -832,13 +840,12 @@ MWinDeviceImpl::~MWinDeviceImpl()
 	if (mRenderTarget != nil)
 	{
 		HRESULT e = mRenderTarget->EndDraw();
-		//if (e == D2DERR_RECREATE_TARGET)
-		//{
-		//	MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(
-		//		MWinWindowImpl::Fetch(mRenderTarget->GetHwnd()));
-		//	wi->SetRenderTarget(nil);
-		//	throw 0;
-		//}
+		if (e == D2DERR_RECREATE_TARGET)
+		{
+			MWindow* window = mView->GetWindow();
+			MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(window->GetImpl());
+			wi->SetRenderTarget(nil);
+		}
 		mRenderTarget->Release();
 	}
 }
@@ -1357,30 +1364,21 @@ bool MWinDeviceImpl::PositionToIndex(
 	int32				inPosition,
 	uint32&				outIndex)
 {
-	BOOL isTrailingHit, isInside;
-    DWRITE_HIT_TEST_METRICS caretMetrics;
+	if (mTextLayout == nil)
+		outIndex = 0;
+	else
+	{
+		BOOL isTrailingHit, isInside;
+		DWRITE_HIT_TEST_METRICS caretMetrics;
 
-    //// Remap display coordinates to actual.
-    //DWRITE_MATRIX matrix;
-    //GetInverseViewMatrix(&matrix);
+		float x = inPosition;
+		float y = GetAscent();
 
-    //float transformedX = (x * matrix.m11 + y * matrix.m21 + matrix.dx);
-    //float transformedY = (x * matrix.m12 + y * matrix.m22 + matrix.dy);
+		mTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
+		outIndex = caretMetrics.textPosition;
+	}
 
-	float x = inPosition;
-	float y = GetAscent();
-
-	mTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
-	outIndex = caretMetrics.textPosition;
-
-    //// Update current selection according to click or mouse drag.
-    //SetSelection(
-    //    isTrailingHit ? SetSelectionModeAbsoluteTrailing : SetSelectionModeAbsoluteLeading,
-    //    caretMetrics.textPosition,
-    //    extendSelection
-    //    );
-
-    return true;
+	return true;
 }
 
 float MWinDeviceImpl::GetTextWidth()

@@ -216,6 +216,8 @@ void MTextView::MouseMove(
 	int32			inY,
 	uint32			inModifiers)
 {
+	PRINT(("MouseMove(%d, %d)", inX, inY));
+
 	inX -= kLeftMargin;
 	
 	if (mClickMode == eSelectStartDrag)
@@ -232,21 +234,20 @@ void MTextView::MouseMove(
 		//	mClickMode = eSelectNone;
 		//}
 	}
-	else
+	else if (mClickMode == eSelectNone)
 	{
-		if (IsPointInSelection(inX, inY))
-			SetCursor(eNormalCursor);
-		else if (inX >= 0)
-			SetCursor(eIBeamCursor);
-		else
-			SetCursor(eRightCursor);
-	
-		if (mClickMode != eSelectNone and IsActive())
+		if (IsActive())
 		{
-			if (ScrollToPointer(inX, inY))
-				mLastScrollTime = GetLocalTime();
+			if (IsPointInSelection(inX, inY))
+				SetCursor(eNormalCursor);
+			else if (inX >= 0)
+				SetCursor(eIBeamCursor);
+			else
+				SetCursor(eRightCursor);
 		}
 	}
+	else if (ScrollToPointer(inX, inY))
+		mLastScrollTime = GetLocalTime();
 }
 
 void MTextView::MouseExit(
@@ -412,6 +413,19 @@ void MTextView::Draw(
 		return;
 
 	MDevice dev(this, inUpdate, false);
+
+//#if DEBUG
+//	static int sTeller = 0;
+//
+//	unsigned char rgb[3] = { 255, 255, 200 };
+//	MColor backColor(
+//			rgb[(sTeller + 0) % 3],
+//			rgb[(sTeller + 1) % 3],
+//			rgb[(sTeller + 2) % 3]);
+//	dev.SetBackColor(backColor);
+//
+//	++sTeller;
+//#endif
 
 	MRect bounds;
 	GetBounds(bounds);
