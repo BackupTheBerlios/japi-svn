@@ -23,7 +23,7 @@
 #include "MClipboard.h"
 #include "MUnicode.h"
 #include "MLanguage.h"
-//#include "MFindDialog.h"
+#include "MFindDialog.h"
 #include "MError.h"
 #include "MController.h"
 #include "MStyles.h"
@@ -2854,8 +2854,8 @@ void MTextDocument::DoFastFind(MDirection inDirection)
 	else if (not mFastFindInited)
 	{
 		mFastFindInited = true;
-		//mFastFindWhat = MFindDialog::Instance().GetFindString();
-		//MFindDialog::Instance().SetFindString(mFastFindWhat, false);
+		mFastFindWhat = MFindDialog::Instance().GetFindString();
+		MFindDialog::Instance().SetFindString(mFastFindWhat, false);
 		FastFind(inDirection);
 	}
 	else
@@ -2884,8 +2884,8 @@ void MTextDocument::FastFindType(const char* inText, uint32 inTextLength)
 		mFastFindWhat.erase(offset, mFastFindWhat.length() - offset);
 	}
 	
-	//if (not mFastFindInited)
-	//	MFindDialog::Instance().SetFindString(mFastFindWhat, false);
+	if (not mFastFindInited)
+		MFindDialog::Instance().SetFindString(mFastFindWhat, false);
 	
 	if (FastFind(mFastFindDirection))
 		mFastFindInited = true;
@@ -2904,7 +2904,7 @@ bool MTextDocument::FastFind(MDirection inDirection)
 	
 	if (result)
 	{
-		//MFindDialog::Instance().SetFindString(mFastFindWhat, true);
+		MFindDialog::Instance().SetFindString(mFastFindWhat, true);
 		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
 	}
 	else
@@ -2915,9 +2915,9 @@ bool MTextDocument::FastFind(MDirection inDirection)
 
 bool MTextDocument::CanReplace()
 {
-	//return mText.CanReplace(MFindDialog::Instance().GetFindString(),
-	//	MFindDialog::Instance().GetRegex(),
-	//	MFindDialog::Instance().GetIgnoreCase(), mSelection);
+	return mText.CanReplace(MFindDialog::Instance().GetFindString(),
+		MFindDialog::Instance().GetRegex(),
+		MFindDialog::Instance().GetIgnoreCase(), mSelection);
 	return false;
 }
 
@@ -2957,41 +2957,39 @@ void MTextDocument::HandleFindDialogCommand(uint32 inCommand)
 
 bool MTextDocument::DoFindFirst()
 {
-	//string what = MFindDialog::Instance().GetFindString();
-	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	//bool regex = MFindDialog::Instance().GetRegex();
-	//uint32 offset = 0;
-	//
-	//MSelection found(this);
-	//bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
-	//
-	//if (result)
-	//	Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
-	//
-	//return result;
-	return false;
+	string what = MFindDialog::Instance().GetFindString();
+	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	bool regex = MFindDialog::Instance().GetRegex();
+	uint32 offset = 0;
+	
+	MSelection found(this);
+	bool result = mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found);
+	
+	if (result)
+		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
+	
+	return result;
 }
 
 bool MTextDocument::DoFindNext(MDirection inDirection)
 {
-	//string what = MFindDialog::Instance().GetFindString();
-	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	//bool regex = MFindDialog::Instance().GetRegex();
-	//uint32 offset;
-	//
-	//if (inDirection == kDirectionBackward)
-	//	offset = mSelection.GetMinOffset();
-	//else
-	//	offset = mSelection.GetMaxOffset();
-	//
-	//MSelection found(this);
-	//bool result = mText.Find(offset, what, inDirection, ignoreCase, regex, found);
-	//
-	//if (result)
-	//	Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
-	//
-	//return result;
-	return false;
+	string what = MFindDialog::Instance().GetFindString();
+	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	bool regex = MFindDialog::Instance().GetRegex();
+	uint32 offset;
+	
+	if (inDirection == kDirectionBackward)
+		offset = mSelection.GetMinOffset();
+	else
+		offset = mSelection.GetMaxOffset();
+	
+	MSelection found(this);
+	bool result = mText.Find(offset, what, inDirection, ignoreCase, regex, found);
+	
+	if (result)
+		Select(found.GetMinOffset(), found.GetMaxOffset(), kScrollToSelection);
+	
+	return result;
 }
 
 void MTextDocument::FindAll(string inWhat, bool inIgnoreCase, 
@@ -3051,39 +3049,39 @@ bool MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 	{
 		StartAction(kReplaceAction);
 		
-		//string what = MFindDialog::Instance().GetFindString();
-		//string replace = MFindDialog::Instance().GetReplaceString();
-		//
-		//uint32 offset = mSelection.GetMinOffset();
-		//
-		//if (MFindDialog::Instance().GetRegex())
-		//{
-		//	mText.ReplaceExpression(mSelection, what, MFindDialog::Instance().GetIgnoreCase(),
-		//		replace, replace);
-		//}
+		string what = MFindDialog::Instance().GetFindString();
+		string replace = MFindDialog::Instance().GetReplaceString();
+		
+		uint32 offset = mSelection.GetMinOffset();
+		
+		if (MFindDialog::Instance().GetRegex())
+		{
+			mText.ReplaceExpression(mSelection, what, MFindDialog::Instance().GetIgnoreCase(),
+				replace, replace);
+		}
 
-		//ReplaceSelectedText(replace, false, true);
-		//FinishAction();
-		//
-		//if (inFindNext)
-		//{
-		//	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-		//	bool regex = MFindDialog::Instance().GetRegex();
-		//	uint32 nextOffset = offset;
+		ReplaceSelectedText(replace, false, true);
+		FinishAction();
+		
+		if (inFindNext)
+		{
+			bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+			bool regex = MFindDialog::Instance().GetRegex();
+			uint32 nextOffset = offset;
 
-		//	if (inDirection == kDirectionForward)
-		//		nextOffset += replace.length();
-		//
-		//	MSelection found(this);
-		//	result = mText.Find(nextOffset, what, inDirection, ignoreCase, regex, found);
-		//	
-		//	if (result)
-		//		ChangeSelection(found);
-		//	else
-		//		ChangeSelection(offset, offset + replace.length());
+			if (inDirection == kDirectionForward)
+				nextOffset += replace.length();
+		
+			MSelection found(this);
+			result = mText.Find(nextOffset, what, inDirection, ignoreCase, regex, found);
+			
+			if (result)
+				ChangeSelection(found);
+			else
+				ChangeSelection(offset, offset + replace.length());
 	
-		//	eScroll(kScrollToSelection);
-		//}
+			eScroll(kScrollToSelection);
+		}
 	}
 
 	return result;
@@ -3091,52 +3089,52 @@ bool MTextDocument::DoReplace(bool inFindNext, MDirection inDirection)
 
 void MTextDocument::DoReplaceAll()
 {
-	//uint32 offset = 0, lastMatch = 0, lastOffset = mText.GetSize();
-	//string what = MFindDialog::Instance().GetFindString();
-	//string replace;
-	//bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
-	//bool replacedAny = false;
-	//bool regex = MFindDialog::Instance().GetRegex();
-	//MSelection found(this);
+	uint32 offset = 0, lastMatch = 0, lastOffset = mText.GetSize();
+	string what = MFindDialog::Instance().GetFindString();
+	string replace;
+	bool ignoreCase = MFindDialog::Instance().GetIgnoreCase();
+	bool replacedAny = false;
+	bool regex = MFindDialog::Instance().GetRegex();
+	MSelection found(this);
 
-	//if (MFindDialog::Instance().GetInSelection())
-	//{
-	//	offset = mSelection.GetMinOffset();
-	//	lastOffset = mSelection.GetMaxOffset();
-	//}
-	//
-	//while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found)
-	//	and found.GetMaxOffset() <= lastOffset)
-	//{
-	//	if (not replacedAny)
-	//	{
-	//		StartAction(kReplaceAction);
-	//		replacedAny = true;
-	//	}
-	//	
-	//	offset = found.GetMinOffset();
-	//	int32 lengthOfSelection = found.GetMaxOffset() - offset;
-	//	
-	//	replace = MFindDialog::Instance().GetReplaceString();
-	//	
-	//	if (regex)
-	//	{
-	//		mText.ReplaceExpression(found, what, MFindDialog::Instance().GetIgnoreCase(),
-	//			replace, replace);
-	//	}
-	//	
-	//	Delete(offset, found.GetMaxOffset() - offset);
-	//	Insert(offset, replace);
-	//	
-	//	lastMatch = offset;
-	//	offset += replace.length();
-	//	lastOffset += replace.length() - lengthOfSelection;
-	//}
-	//
-	//if (replacedAny)
-	//	Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
-	//else
-	//	PlaySound("warning");
+	if (MFindDialog::Instance().GetInSelection())
+	{
+		offset = mSelection.GetMinOffset();
+		lastOffset = mSelection.GetMaxOffset();
+	}
+	
+	while (mText.Find(offset, what, kDirectionForward, ignoreCase, regex, found)
+		and found.GetMaxOffset() <= lastOffset)
+	{
+		if (not replacedAny)
+		{
+			StartAction(kReplaceAction);
+			replacedAny = true;
+		}
+		
+		offset = found.GetMinOffset();
+		int32 lengthOfSelection = found.GetMaxOffset() - offset;
+		
+		replace = MFindDialog::Instance().GetReplaceString();
+		
+		if (regex)
+		{
+			mText.ReplaceExpression(found, what, MFindDialog::Instance().GetIgnoreCase(),
+				replace, replace);
+		}
+		
+		Delete(offset, found.GetMaxOffset() - offset);
+		Insert(offset, replace);
+		
+		lastMatch = offset;
+		offset += replace.length();
+		lastOffset += replace.length() - lengthOfSelection;
+	}
+	
+	if (replacedAny)
+		Select(lastMatch, lastMatch + replace.length(), kScrollToSelection);
+	else
+		PlaySound("warning");
 }
 
 void MTextDocument::DoComplete(MDirection inDirection)
@@ -4440,7 +4438,7 @@ bool MTextDocument::ProcessCommand(
 			break;
 
 		case cmd_Find:
-			//MFindDialog::Instance().Select();
+			MFindDialog::Instance().Select();
 			break;
 
 		case cmd_FindNext:
@@ -4454,12 +4452,12 @@ bool MTextDocument::ProcessCommand(
 		
 		case cmd_EnterSearchString:
 			GetSelectedText(s);
-			//MFindDialog::Instance().SetFindString(s, false);
+			MFindDialog::Instance().SetFindString(s, false);
 			break;
 
 		case cmd_EnterReplaceString:
 			GetSelectedText(s);
-			//MFindDialog::Instance().SetReplaceString(s);
+			MFindDialog::Instance().SetReplaceString(s);
 			break;
 
 		case cmd_Replace:

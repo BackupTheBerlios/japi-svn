@@ -110,11 +110,12 @@ class MWindow : public MView, public MHandler
 
   protected:
 
+							MWindow(
+								MWindowImpl*	inImpl);
+
 	virtual bool			DoClose();
 
   private:
-
-	void					Init();
 
 	void					TransitionTo(
 								MRect			inPosition);

@@ -36,22 +36,23 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 {
 	mBounds.x = mBounds.y = 0;
 
-	Init();
+	mNext = sFirst;
+	sFirst = this;
+}
+
+MWindow::MWindow(MWindowImpl* inImpl)
+	: MView('root', MRect(0, 0, 100, 100))
+	, MHandler(gApp)
+	, mImpl(inImpl)
+	, mFocus(this)
+{
+	mNext = sFirst;
+	sFirst = this;
 }
 
 MWindow::~MWindow()
 {
 	RemoveWindowFromList(this);
-}
-
-void MWindow::Init()
-{
-	//mChanged.Connect(this, "on_changed");
-	//mOnDestroy.Connect(GetGtkWidget(), "destroy");
-	//mOnDelete.Connect(GetGtkWidget(), "delete_event");
-
-	mNext = sFirst;
-	sFirst = this;
 }
 
 void MWindow::RecycleWindows()

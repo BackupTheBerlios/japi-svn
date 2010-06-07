@@ -10,73 +10,72 @@
 
 #include "MLib.h"
 
-//#include <sstream>
-//
-//#include "MDialog.h"
-//#include "MResources.h"
-//#include "MPreferences.h"
-//#include "MError.h"
-//
-//using namespace std;
-//
-//MDialog* MDialog::sFirst;
-//
-//MDialog::MDialog(
-//	const char*		inDialogResource)
-//	: MWindow(inDialogResource, "dialog")
-//	, mStdBtnClicked(this, &MDialog::StdBtnClicked)
-//	, mParentWindow(nil)
-//	, mNext(nil)
-//	, mCloseImmediatelyOnOK(true)
-//{
-//	mNext = sFirst;
-//	sFirst = this;
-//	
-//	mStdBtnClicked.Connect(this, "on_std_btn_click");
-//}
-//
-//MDialog::~MDialog()
-//{
-//	if (sFirst == this)
-//		sFirst = mNext;
-//	else
-//	{
-//		MDialog* dlog = sFirst;
-//		while (dlog->mNext != nil)
-//		{
-//			if (dlog->mNext == this)
-//			{
-//				dlog->mNext = mNext;
-//				break;
-//			}
-//			dlog = dlog->mNext;
-//		}
-//	}
-//}
-//
-//void MDialog::Show(
-//	MWindow*		inParent)
-//{
-//	if (inParent != nil)
-//	{
-//		gtk_window_set_transient_for(
-//			GTK_WINDOW(GetGtkWidget()),
-//			GTK_WINDOW(inParent->GetGtkWidget()));
-//	}
-//	
-//	MWindow::Show();
-//}
-//
-//bool MDialog::OKClicked()
-//{
-//	return true;
-//}
-//
-//bool MDialog::CancelClicked()
-//{
-//	return true;
-//}
-//
+#include <sstream>
+
+#include "MDialog.h"
+#include "MResources.h"
+#include "MPreferences.h"
+#include "MError.h"
+
+using namespace std;
+
+MDialog* MDialog::sFirst;
+
+MDialog::MDialog(
+	const char*		inDialogResource)
+	: MWindow(nil)
+	, mParentWindow(nil)
+	, mNext(nil)
+	, mCloseImmediatelyOnOK(true)
+{
+	mNext = sFirst;
+	sFirst = this;
+	
+	//mStdBtnClicked.Connect(this, "on_std_btn_click");
+}
+
+MDialog::~MDialog()
+{
+	if (sFirst == this)
+		sFirst = mNext;
+	else
+	{
+		MDialog* dlog = sFirst;
+		while (dlog->mNext != nil)
+		{
+			if (dlog->mNext == this)
+			{
+				dlog->mNext = mNext;
+				break;
+			}
+			dlog = dlog->mNext;
+		}
+	}
+}
+
+void MDialog::Show(
+	MWindow*		inParent)
+{
+	//if (inParent != nil)
+	//{
+	//	gtk_window_set_transient_for(
+	//		GTK_WINDOW(GetGtkWidget()),
+	//		GTK_WINDOW(inParent->GetGtkWidget()));
+	//}
+	
+	MWindow::Show();
+}
+
+bool MDialog::OKClicked()
+{
+	return true;
+}
+
+bool MDialog::CancelClicked()
+{
+	return true;
+}
+
 //void MDialog::StdBtnClicked()
 //{
 //	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(mStdBtnClicked.GetSourceGObject()));
@@ -112,34 +111,34 @@
 //		catch (...) {}
 //	}
 //}
-//
-//void MDialog::SavePosition(const char* inName)
-//{
-//	int x, y;
-//	gtk_window_get_position(GTK_WINDOW(GetGtkWidget()), &x, &y);
-//	
-//	stringstream s;
-//	s << x << ' ' << y;
-//	
-//	Preferences::SetString(inName, s.str());
-//}
-//
-//void MDialog::RestorePosition(const char* inName)
-//{
-//	string s = Preferences::GetString(inName, "");
-//	if (s.length() > 0)
-//	{
-//		int x, y;
-//		
-//		stringstream ss(s);
-//		ss >> x >> y;
-//		
-//		gtk_window_move(GTK_WINDOW(GetGtkWidget()), x, y);
-//	}
-//}
-//
-//void MDialog::SetCloseImmediatelyFlag(
-//	bool inCloseImmediately)
-//{
-//	mCloseImmediatelyOnOK = inCloseImmediately;
-//}
+
+void MDialog::SavePosition(const char* inName)
+{
+	MRect r;
+	GetWindowPosition(r);
+
+	stringstream s;
+	s << r.x << ' ' << r.y << ' ' << r.width << ' ' << r.height;
+	
+	Preferences::SetString(inName, s.str());
+}
+
+void MDialog::RestorePosition(const char* inName)
+{
+	string s = Preferences::GetString(inName, "");
+	if (s.length() > 0)
+	{
+		MRect r;
+		
+		stringstream ss(s);
+		ss >> r.x >> r.y >> r.width >> r.height;
+		
+		SetWindowPosition(r, false);
+	}
+}
+
+void MDialog::SetCloseImmediatelyFlag(
+	bool inCloseImmediately)
+{
+	mCloseImmediatelyOnOK = inCloseImmediately;
+}

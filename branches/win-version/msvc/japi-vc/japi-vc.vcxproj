@@ -102,6 +102,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\MEditWindow.cpp" />
+    <ClCompile Include="..\..\Sources\MFindDialog.cpp" />
     <ClCompile Include="..\..\Sources\MJapiApp.cpp" />
     <ClCompile Include="..\..\Sources\MLanguage.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageCpp.cpp" />

@@ -19,7 +19,6 @@
 #include "MDialog.h"
 #include "MFile.h"
 #include "MP2PEvents.h"
-//#include "MScrap.h"
 
 class MDocument;
 class MMessageList;

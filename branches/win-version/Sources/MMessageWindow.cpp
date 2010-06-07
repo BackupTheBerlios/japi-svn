@@ -44,24 +44,24 @@ const uint32
 	kLineColumnOffset		= kFileColumnOffset + 175,
 	kMessageColumnOffset	= kLineColumnOffset + 35;
 
-GdkPixbuf* GetBadge(
-	MMessageKind		inKind)
-{
-	const MColor
-		kMsgNoneColor("#efff7f");
-	
-	const uint32
-		kDotSize = 9;
-	
-	static GdkPixbuf* sBadges[] = {
-		CreateDot(kMsgNoneColor, kDotSize),
-		CreateDot(kNoteColor, kDotSize),
-		CreateDot(kWarningColor, kDotSize),
-		CreateDot(kErrorColor, kDotSize)
-	};
-
-	return sBadges[inKind];
-}
+//GdkPixbuf* GetBadge(
+//	MMessageKind		inKind)
+//{
+//	const MColor
+//		kMsgNoneColor("#efff7f");
+//	
+//	const uint32
+//		kDotSize = 9;
+//	
+//	static GdkPixbuf* sBadges[] = {
+//		CreateDot(kMsgNoneColor, kDotSize),
+//		CreateDot(kNoteColor, kDotSize),
+//		CreateDot(kWarningColor, kDotSize),
+//		CreateDot(kErrorColor, kDotSize)
+//	};
+//
+//	return sBadges[inKind];
+//}
 
 }
 
