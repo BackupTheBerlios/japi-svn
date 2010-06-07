@@ -115,10 +115,7 @@ class MView
 						int32			inY,
 						uint32			inModifiers);
 
-	virtual void	MouseExit(
-						int32			inX,
-						int32			inY,
-						uint32			inModifiers);
+	virtual void	MouseExit();
 
 	virtual void	MouseUp(
 						int32			inX,
@@ -172,7 +169,7 @@ class MView
 						int32			inY,
 						uint32			inModifiers);
 
-	void			SetCursor(
+	virtual void	SetCursor(
 						MCursor			inCursor);
 
 	void			ObscureCursor();

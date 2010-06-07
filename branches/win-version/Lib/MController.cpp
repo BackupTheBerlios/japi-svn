@@ -27,7 +27,7 @@ const int32
 
 MController::MController(
 	MWindow*	inWindow)
-	: MHandler(gApp)
+	: MHandler(inWindow)
 	, mDocument(nil)
 	, mWindow(inWindow)
 {
@@ -74,9 +74,9 @@ bool MController::ProcessCommand(
 		handled = true;
 		switch (inCommand)
 		{
-			case cmd_Close:
-				TryCloseController(kSaveChangesClosingDocument);
-				break;
+			//case cmd_Close:
+			//	TryCloseController(kSaveChangesClosingDocument);
+			//	break;
 	
 			case cmd_Save:
 				SaveDocument();
@@ -122,7 +122,7 @@ bool MController::UpdateCommandStatus(
 		switch (inCommand)
 		{
 			// always
-			case cmd_Close:
+			//case cmd_Close:
 			case cmd_SaveAs:
 			case cmd_Find:
 			case cmd_Print:

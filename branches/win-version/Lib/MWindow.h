@@ -105,6 +105,9 @@ class MWindow : public MView, public MHandler
 								int32			inX,
 								int32			inY);
 
+	virtual void			SetCursor(
+								MCursor			inCursor);
+
   protected:
 
 	virtual bool			DoClose();

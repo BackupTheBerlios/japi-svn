@@ -256,7 +256,6 @@ MEditWindow::MEditWindow()
 	//textController->AddTextView(mTextView);
 
 	mTextView->SetController(&mController);
-	SetFocus(&mController);
 	
 	AddRoute(mController.eAboutToCloseDocument, eSaveState);
 

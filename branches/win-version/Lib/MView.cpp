@@ -347,42 +347,8 @@ void MView::UpdateNow()
 void MView::SetCursor(
 	MCursor			inCursor)
 {
-	//assert(inCursor < eCursorCount);
-
-	//if (gGdkCursors[inCursor] == nil)
-	//{
-	//	switch (inCursor)
-	//	{
-	//		case eNormalCursor:
-	//			gGdkCursors[inCursor] = gdk_cursor_new(GDK_LEFT_PTR);
-	//			break;
-	//		
-	//		case eIBeamCursor:	
-	//			gGdkCursors[inCursor] = gdk_cursor_new(GDK_XTERM);
-	//			break;
-	//		
-	//		case eRightCursor:
-	//			gGdkCursors[inCursor] = gdk_cursor_new(GDK_RIGHT_PTR);
-	//			break;
-	//		
-	//		case eBlankCursor:
-	//		{
-	//			GdkPixmap* pixmap = gdk_pixmap_new(nil, 1, 1, 1);
-	//			GdkColor c = {};
-	//			
-	//			gGdkCursors[inCursor] = gdk_cursor_new_from_pixmap(
-	//				pixmap, pixmap, &c, &c, 0, 0);
-	//			gdk_pixmap_unref(pixmap);
-	//			break;
-	//		}
-	//		
-	//		default:
-	//			assert(false);
-	//	}
-	//}
-	//
-	//if (GDK_IS_WINDOW(mGtkWidget->window) and gGdkCursors[inCursor] != nil)
-	//	gdk_window_set_cursor(mGtkWidget->window, gGdkCursors[inCursor]);
+	if (mParent != nil)
+		mParent->SetCursor(inCursor);
 }
 
 void MView::AdjustCursor(
@@ -413,7 +379,6 @@ void MView::MouseDown(
 	uint32			inClickCount,
 	uint32			inModifiers)
 {
-	PRINT(("MouseDown at %d,%d", inX, inY));
 }
 
 void MView::MouseMove(
@@ -421,15 +386,10 @@ void MView::MouseMove(
 	int32			inY,
 	uint32			inModifiers)
 {
-	//PRINT(("MouseMove at %d,%d", inX, inY));
 }
 
-void MView::MouseExit(
-	int32			inX,
-	int32			inY,
-	uint32			inModifiers)
+void MView::MouseExit()
 {
-	//PRINT(("MouseExit at %d,%d", inX, inY));
 }
 
 void MView::MouseUp(
@@ -437,7 +397,6 @@ void MView::MouseUp(
 	int32			inY,
 	uint32			inModifiers)
 {
-	PRINT(("MouseUp at %d,%d", inX, inY));
 }
 
 //void MView::Click(int32 inX, int32 inY, uint32 inModifiers)

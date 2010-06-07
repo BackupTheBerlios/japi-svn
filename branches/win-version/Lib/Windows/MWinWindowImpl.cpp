@@ -329,6 +329,77 @@ bool MWinWindowImpl::WaitMouseMoved(int32 inX, int32 inY)
 	return result;
 }
 
+void MWinWindowImpl::SetCursor(MCursor inCursor)
+{
+	static HCURSOR sArrow = ::LoadCursor(NULL, IDC_ARROW);
+	static HCURSOR sIBeam = ::LoadCursor(NULL, IDC_IBEAM);
+	static HCURSOR sRightArrow = nil;
+
+	switch (inCursor)
+	{
+		case eNormalCursor:
+			if (sArrow != nil)
+				::SetCursor(sArrow);
+			break;
+
+		case eIBeamCursor:
+			if (sIBeam != nil)
+				::SetCursor(sIBeam);
+			break;
+
+		case eRightCursor:
+		{
+			if (sRightArrow == nil)
+			{
+				ICONINFO info;
+				if (::GetIconInfo(sArrow, &info))
+				{
+					BITMAP color = {}, mask = {};
+
+					HDC dc = ::GetDC(GetHandle());
+
+					::GetObjectW(info.hbmColor, sizeof(BITMAP), &color);
+					::GetObjectW(info.hbmMask, sizeof(BITMAP), &mask);
+
+					BITMAPINFOHEADER bi = { sizeof(BITMAPINFOHEADER) };
+					bi.biWidth = color.bmWidth;    
+					bi.biHeight = color.bmHeight;  
+					bi.biPlanes = 1;    
+					bi.biBitCount = 32;    
+					bi.biCompression = BI_RGB;
+
+					vector<uint32> rgba(bi.biWidth);
+
+					for (int row = 0; row < bi.biHeight; ++row)
+					{
+						if (::GetDIBits(dc, info.hbmColor, row, 1, &rgba[0], (BITMAPINFO*)&bi, DIB_RGB_COLORS) == 1)
+						{
+							reverse(rgba.begin(), rgba.end());
+							(void)::SetDIBits(dc, info.hbmColor, row, 1, &rgba[0], (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+						}
+
+						if (::GetDIBits(dc, info.hbmMask, row, 1, &rgba[0], (BITMAPINFO*)&bi, DIB_RGB_COLORS) == 1)
+						{
+							reverse(rgba.begin(), rgba.end());
+							(void)::SetDIBits(dc, info.hbmMask, row, 1, &rgba[0], (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+						}
+					}
+					
+					info.xHotspot = 32 - info.xHotspot;
+					sRightArrow = ::CreateIconIndirect(&info);
+				}
+			}
+
+			if (sRightArrow != nil)
+				::SetCursor(sRightArrow);
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
 void MWinWindowImpl::ConvertToScreen(int32& ioX, int32& ioY) const
 {
 	POINT p = { ioX, ioY };
@@ -616,8 +687,8 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	uint32 modifiers;
 	::GetModifierState(modifiers, false);
 	
-	int32 x = LOWORD(inLParam);
-	int32 y = HIWORD(inLParam);
+	int32 x = static_cast<int16>(LOWORD(inLParam));
+	int32 y = static_cast<int16>(HIWORD(inLParam));
 
 	MView* mousedView = mWindow->FindSubView(x, y);
 	if (mousedView == mMousedView)
@@ -651,9 +722,9 @@ bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 		uint32 modifiers;
 		::GetModifierState(modifiers, false);
 	
-		int32 x = LOWORD(inLParam);
-		int32 y = HIWORD(inLParam);
-		
+		int32 x = static_cast<int16>(LOWORD(inLParam));
+		int32 y = static_cast<int16>(HIWORD(inLParam));
+
 		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseMove(x, y, modifiers);
 	}
@@ -664,16 +735,7 @@ bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 bool MWinWindowImpl::WMMouseExit(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	if (mMousedView)
-	{
-		uint32 modifiers;
-		::GetModifierState(modifiers, false);
-	
-		int32 x = LOWORD(inLParam);
-		int32 y = HIWORD(inLParam);
-		
-		mMousedView->ConvertFromWindow(x, y);
-		mMousedView->MouseExit(x, y, modifiers);
-	}
+		mMousedView->MouseExit();
 
 	return true;
 }
@@ -687,8 +749,8 @@ bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 		uint32 modifiers;
 		::GetModifierState(modifiers, false);
 	
-		int32 x = LOWORD(inLParam);
-		int32 y = HIWORD(inLParam);
+		int32 x = static_cast<int16>(LOWORD(inLParam));
+		int32 y = static_cast<int16>(HIWORD(inLParam));
 		
 		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseUp(x, y, modifiers);

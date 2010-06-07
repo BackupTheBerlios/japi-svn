@@ -662,3 +662,9 @@ void MWindow::ScrollRect(MRect inRect, int32 inX, int32 inY)
 {
 	mImpl->ScrollRect(inRect, inX, inY);
 }
+
+void MWindow::SetCursor(
+	MCursor			inCursor)
+{
+	mImpl->SetCursor(inCursor);
+}

@@ -68,39 +68,39 @@ class MTextView : public MView
 	void				DocumentClosed(
 							MDocument*		inDocument);
 	
-  protected:
-
 	virtual void		Draw(
 							MRect			inUpdate);
 
 	virtual uint32		CountPages(
 							MDevice&		inDevice);
 
+	virtual void		AdjustCursor(
+							int32			inX,
+							int32			inY,
+							uint32			inModifiers);
+
 	virtual void		ActivateSelf();
 	virtual void		DeactivateSelf();
 
   public:
 
-	virtual void	MouseDown(
-						int32			inX,
-						int32			inY,
-						uint32			inClickCount,
-						uint32			inModifiers);
+	virtual void		MouseDown(
+							int32			inX,
+							int32			inY,
+							uint32			inClickCount,
+							uint32			inModifiers);
 
-	virtual void	MouseMove(
-						int32			inX,
-						int32			inY,
-						uint32			inModifiers);
+	virtual void		MouseMove(
+							int32			inX,
+							int32			inY,
+							uint32			inModifiers);
 
-	virtual void	MouseExit(
-						int32			inX,
-						int32			inY,
-						uint32			inModifiers);
+	virtual void		MouseExit();
 
-	virtual void	MouseUp(
-						int32			inX,
-						int32			inY,
-						uint32			inModifiers);
+	virtual void		MouseUp(
+							int32			inX,
+							int32			inY,
+							uint32			inModifiers);
 
 	//virtual void		OnPopupMenu(
 	//						GdkEventButton*	inEvent);

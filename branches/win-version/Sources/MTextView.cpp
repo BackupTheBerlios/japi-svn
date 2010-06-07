@@ -147,6 +147,24 @@ void MTextView::SetController(MController* inController)
 	AddRoute(eDocumentChanged, mController->eDocumentChanged);
 }
 
+void MTextView::AdjustCursor(
+	int32			inX,
+	int32			inY,
+	uint32			inModifiers)
+{
+	if (IsActive())
+	{
+		inX -= kLeftMargin;
+
+		if (IsPointInSelection(inX, inY))
+			SetCursor(eNormalCursor);
+		else if (inX >= 0)
+			SetCursor(eIBeamCursor);
+		else
+			SetCursor(eRightCursor);
+	}
+}
+
 void MTextView::MouseDown(
 	int32			inX,
 	int32			inY,
@@ -234,26 +252,11 @@ void MTextView::MouseMove(
 		//	mClickMode = eSelectNone;
 		//}
 	}
-	else if (mClickMode == eSelectNone)
-	{
-		if (IsActive())
-		{
-			if (IsPointInSelection(inX, inY))
-				SetCursor(eNormalCursor);
-			else if (inX >= 0)
-				SetCursor(eIBeamCursor);
-			else
-				SetCursor(eRightCursor);
-		}
-	}
 	else if (ScrollToPointer(inX, inY))
 		mLastScrollTime = GetLocalTime();
 }
 
-void MTextView::MouseExit(
-	int32			inX,
-	int32			inY,
-	uint32			inModifiers)
+void MTextView::MouseExit()
 {
 }
 

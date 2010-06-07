@@ -86,9 +86,9 @@ bool MDocWindow::UpdateCommandStatus(
 
 	switch (inCommand)
 	{
-		//case cmd_Close:
-		//	outEnabled = true;
-		//	break;
+		case cmd_Close:
+			outEnabled = true;
+			break;
 
 		default:
 			handled = MWindow::UpdateCommandStatus(
@@ -109,9 +109,10 @@ bool MDocWindow::ProcessCommand(
 
 	switch (inCommand)
 	{
-		//case cmd_Close:
-		//	
-		//	break;
+		case cmd_Close:
+			if (mController.TryCloseController(kSaveChangesClosingDocument))
+				Close();
+			break;
 
 		default:
 			handled = MWindow::ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers);
