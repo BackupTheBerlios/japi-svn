@@ -26,13 +26,4 @@
 
 #include "MTypes.h"
 
-#include <boost/filesystem/path.hpp>
-
-extern const char kAppName[], kVersionString[];
-
-// ===========================================================================
-//	general globals
-
-extern boost::filesystem::path	gPrefsDir;
-
 #endif

@@ -262,7 +262,7 @@ void MLocalFileLoader::DoLoad()
 		double modTime = fs::last_write_time(path);
         bool readOnly = false;
 
-		struct stat st;
+		//struct stat st;
 
 		//if (stat(path.string().c_str(), &st) == 0)
 		//{

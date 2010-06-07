@@ -47,6 +47,7 @@
       <PrecompiledHeaderFile>MWinLib.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\boost\include\boost-1_43;$(SolutionDir)..\Lib\Windows;$(SolutionDir)..\Lib;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -57,7 +58,7 @@
     <ClCompile>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
