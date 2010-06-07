@@ -1024,7 +1024,7 @@ void MTextView::ScrollMessage(MScrollMessage inCommand)
 	MRect bounds;
 	GetBounds(bounds);
 
-	int32 x = 0, y = 0;
+	int32 x = bounds.x, y = bounds.y;
 	
 	uint32 lineCount = mDocument->CountLines();
 	uint32 linesPerPage = static_cast<uint32>(bounds.height / mLineHeight);

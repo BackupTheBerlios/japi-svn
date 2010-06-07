@@ -3471,7 +3471,18 @@ bool MTextDocument::HandleKeydown(
 	
 	if (not handled and inModifiers == 0 and not inText.empty())
 	{
-		Type(inText.c_str(), inText.length());
+		//Type(inText.c_str(), inText.length());
+
+		if (mFastFindMode)
+			FastFindType(inText.c_str(), inText.length());
+		else
+		{
+			Type(inText.c_str(), inText.length());
+			mCompletionIndex = -1;
+		}
+	
+		UpdateDirtyLines();
+
 		handled = true;
 	}
 
