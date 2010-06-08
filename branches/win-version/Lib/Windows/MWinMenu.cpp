@@ -228,6 +228,14 @@ uint32 MWinMenuImpl::CountItems() const
 	return ::GetMenuItemCount(mMenuHandle);
 }
 
+void MWinMenuImpl::RemoveItems(
+	uint32				inFirstIndex,
+	uint32				inCount)
+{
+	for (uint32 i = inFirstIndex; i < inFirstIndex + inCount; ++i)
+		::RemoveMenu(mMenuHandle, inFirstIndex, MF_BYPOSITION);
+}
+
 string MWinMenuImpl::GetItemLabel(
 	uint32			inIndex) const
 {

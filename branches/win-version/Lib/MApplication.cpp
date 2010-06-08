@@ -14,14 +14,17 @@
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
+#include <boost/bind.hpp>
 
 #include "MApplication.h"
 #include "MApplicationImpl.h"
 #include "MCommands.h"
 #include "MDocument.h"
 #include "MPreferences.h"
-#include "MWindow.h"
+#include "MDocWindow.h"
 #include "MUtils.h"
+#include "MMenu.h"
+#include "MStrings.h"
 
 #include "MControls.h"
 
@@ -72,6 +75,27 @@ MApplication::MApplication()
 MApplication::~MApplication()
 {
 	delete mImpl;
+}
+
+void MApplication::InitGlobals()
+{
+	vector<string> recent;
+	Preferences::GetArray("recent", recent);
+
+	foreach (string uri, recent)
+	{
+		MFile file(uri);
+
+		if (file.IsValid() and (file.IsLocal() == false or file.Exists()))
+			mRecentFiles.push_back(file);
+	}
+}
+
+void MApplication::SaveGlobals()
+{
+	vector<string> recent;
+	transform(mRecentFiles.begin(), mRecentFiles.end(), back_inserter(recent), boost::bind(&MFile::GetURI, _1));
+	Preferences::SetArray("recent", recent);
 }
 
 bool MApplication::ProcessCommand(
@@ -134,6 +158,11 @@ bool MApplication::ProcessCommand(
 			DoSelectWindowFromWindowMenu(inItemIndex - 2);
 			break;
 		
+		case cmd_OpenRecent:
+			if (inMenu != nil and inItemIndex < mRecentFiles.size())
+				OpenOneDocument(mRecentFiles[inItemIndex]);
+			break;
+		
 		case 'test':
 		{
 //			MWindow* w = new MTestWindow();
@@ -142,7 +171,6 @@ bool MApplication::ProcessCommand(
 		}
 		
 		default:
-			// MApplication is the last in the hierarchy of handlers
 			result = false;
 			break;
 	}
@@ -185,58 +213,82 @@ bool MApplication::UpdateCommandStatus(
 	return result;
 }
 
+void MApplication::UpdateSpecialMenu(
+	const string&		inName,
+	MMenu*				inMenu)
+{
+	if (inName == "window")
+		UpdateWindowMenu(inMenu);
+	else if (inName == "recent")
+		UpdateRecentMenu(inMenu);
+	else
+		PRINT(("Unknown special menu %s", inName.c_str()));
+}
+
 void MApplication::UpdateWindowMenu(
 	MMenu*				inMenu)
 {
-	//inMenu->RemoveItems(2, inMenu->CountItems() - 2);
-	//
-	//MDocument* doc = MDocument::GetFirstDocument();
-	//while (doc != nil)
-	//{
-	//	if (doc != MTextDocument::GetWorksheet())
-	//	{
-	//		string label;
-	//		
-	//		if (doc->IsSpecified())
-	//		{
-	//			const MFile& url = doc->GetFile();
-	//			
-	//			if (not url.IsLocal())
-	//				label += url.GetScheme() + ':';
-	//			
-	//			label += url.GetFileName();
-	//		}
-	//		else
-	//		{
-	//			MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
-	//			if (w != nil)
-	//				label = w->GetTitle();
-	//			else
-	//				label = _("weird");
-	//		}
-	//		
-	//		inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
-	//	}
-	//	
-	//	doc = doc->GetNextDocument();
-	//}	
+	inMenu->RemoveItems(2, inMenu->CountItems() - 2);
+	
+	MDocument* doc = MDocument::GetFirstDocument();
+	while (doc != nil)
+	{
+		string label;
+
+		MDocWindow* w = MDocWindow::FindWindowForDocument(doc);
+		if (w != nil)
+			label = w->GetTitle();
+		else
+			label = _("weird");
+			
+		inMenu->AppendItem(label, cmd_SelectWindowFromMenu);
+		
+		doc = doc->GetNextDocument();
+	}	
+}
+
+void MApplication::UpdateRecentMenu(
+	MMenu*				inMenu)
+{
+	inMenu->RemoveItems(0, inMenu->CountItems());
+
+	foreach (const MFile& file, mRecentFiles)
+	{
+		if (file.IsValid() and (file.IsLocal() == false or file.Exists()))
+			inMenu->AppendItem(file.GetPath().native_file_string(), cmd_OpenRecent);
+	}
+}
+
+void MApplication::AddToRecentMenu(
+	const MFile&		inFile)
+{
+	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), inFile), mRecentFiles.end());
+	mRecentFiles.push_front(inFile);
+	if (mRecentFiles.size() > 10)
+		mRecentFiles.pop_back();
 }
 
 void MApplication::DoSelectWindowFromWindowMenu(
 	uint32				inIndex)
 {
-	//MDocument* doc = MDocument::GetFirstDocument();
+	MDocument* doc = MDocument::GetFirstDocument();
 
-	//while (doc != nil and inIndex-- > 0)
-	//	doc = doc->GetNextDocument();
-	//
-	//if (doc != nil)
-	//	DisplayDocument(doc);	
+	while (doc != nil and inIndex-- > 0)
+		doc = doc->GetNextDocument();
+	
+	if (doc != nil)
+		DisplayDocument(doc);	
 }	
 
 int MApplication::RunEventLoop()
 {
-	return mImpl->RunEventLoop();
+	InitGlobals();
+
+	int result = mImpl->RunEventLoop();
+
+	SaveGlobals();
+
+	return result;
 }
 
 void MApplication::DoSaveAll()

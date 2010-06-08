@@ -4650,6 +4650,14 @@ bool MTextDocument::ProcessCommand(
 			SetEOLNKind(eEOLN_DOS);
 			break;
 
+		case cmd_OpenIncludeFile:
+			DoOpenIncludeFile();
+			break;
+
+		case cmd_SwitchHeaderSource:
+			DoOpenCounterpart();
+			break;
+
 		default:
 			result = false;
 			break;
@@ -4699,10 +4707,11 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_GoToLine:
 		case cmd_ShiftLeft:
 		case cmd_ShiftRight:
-		case cmd_OpenIncludeFile:
 		case cmd_ShowDocInfoDialog:
 		case cmd_ShowDiffWindow:
 		case cmd_MakeXHTML:
+		case cmd_OpenIncludeFile:
+		case cmd_SwitchHeaderSource:
 			outEnabled = true;
 			break;
 
@@ -4949,3 +4958,130 @@ void MTextDocument::CheckReadOnly()
 		mWarnedReadOnly = true;
 	}
 }
+
+bool MTextDocument::OpenInclude(
+	string		inFileName)
+{
+	//MProject* project = MProject::Instance();
+	MFile url = GetFile().GetParent() / inFileName;
+	
+	bool result = false;
+	
+	if (url.IsValid())
+	{
+		if (url.IsLocal())
+			result = url.Exists();
+		else
+			result = true;
+	}
+	
+	//fs::path p;
+	//if (not result and project != nil and project->LocateFile(inFileName, true, p))
+	//{
+	//	result = true;
+	//	url = MFile(p);
+	//}
+	
+	if (result)
+		gApp->OpenOneDocument(url);
+	
+	return result;
+}
+
+void MTextDocument::DoOpenIncludeFile()
+{
+	bool result = false;
+	
+	MSelection selection = GetSelection();
+	
+	if (selection.IsEmpty())
+	{
+//		new MFindAndOpenDialog(this, mDocWindow);
+		result = true;
+	}
+	else
+	{
+		for (;;)
+		{
+			string s;
+			GetSelectedText(s);
+	
+			if (OpenInclude(s))
+			{
+				result = true;
+				break;
+			}
+			
+			MTextBuffer::iterator i =
+				mText.begin() + selection.GetMaxOffset();
+			
+			if (i.GetOffset() + 2 >= mText.GetSize() or
+				*i != '.' or
+				not IsAlnum(*(i + 1)))
+			{
+				break;
+			}
+			
+			i += 2;
+			
+			while (i != mText.end() and IsAlnum(*i))
+				++i;
+			
+			Select(selection.GetMinOffset(), i.GetOffset());
+		}
+	}
+	
+	if (not result)
+		PlaySound("warning");
+}
+
+void MTextDocument::DoOpenCounterpart()
+{
+	bool result = false;
+	
+	const char* kSourceExtensions[] = {
+		"c", "cc", "cp", "cpp", "c++", nil
+	};
+
+	const char* kHeaderExtensions[] = {
+		"h", "hp", "hpp", nil
+	};
+
+	if (IsSpecified())
+	{
+		string name = GetFile().GetFileName();
+		fs::path p;
+	
+		const char** ext = nil;
+		
+		if (FileNameMatches("*.h;*.hp;*.hpp", name))
+			ext = kSourceExtensions;
+		else if (FileNameMatches("*.c;*.cc;*.cp;*.cpp;*.c++;*.inl", name))
+			ext = kHeaderExtensions;
+	
+		if (ext != nil)
+		{
+			name.erase(name.rfind('.') + 1);
+			//MProject* project = MProject::Instance();
+		
+			//if (project != nil)
+			//{
+			//	for (const char** e = ext; result == false and *e != nil; ++e)
+			//		result = project->LocateFile(name + *e, true, p);
+
+			//	if (result)
+			//		gApp->OpenOneDocument(MFile(p));
+			//}
+
+			if (not result)
+			{
+				for (const char** e = ext; result == false and *e != nil; ++e)
+					result = OpenInclude(name + *e);
+			}
+		}
+	}
+	
+	if (not result)
+		PlaySound("warning");
+}
+

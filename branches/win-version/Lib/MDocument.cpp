@@ -15,6 +15,7 @@
 #include "MError.h"
 #include "MPreferences.h"
 #include "MDocClosedNotifier.h"
+#include "MApplication.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -127,7 +128,7 @@ bool MDocument::DoSave()
 
 	mFileSaver->DoSave();
 
-	MMenu::AddToRecentMenu(mFile);
+	gApp->AddToRecentMenu(mFile);
 		
 	return true;
 }

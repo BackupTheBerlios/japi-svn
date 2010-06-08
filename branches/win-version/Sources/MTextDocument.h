@@ -566,6 +566,12 @@ class MTextDocument : public MDocument
 							double			inSystemTime);
 	
 	void				MakeXHTML();
+
+	bool				OpenInclude(
+							std::string		inFileName);
+
+	void				DoOpenIncludeFile();
+	void				DoOpenCounterpart();
 	
 	int							mDataFD;
 	MTextBuffer					mText;

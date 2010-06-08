@@ -44,6 +44,10 @@ public:
 
 	virtual uint32		CountItems() const;
 
+	virtual void		RemoveItems(
+							uint32				inFirstIndex,
+							uint32				inCount);
+
 	virtual std::string	GetItemLabel(
 							uint32				inIndex) const;
 

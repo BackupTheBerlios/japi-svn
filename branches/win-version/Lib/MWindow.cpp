@@ -164,7 +164,7 @@ bool MWindow::DoClose()
 
 void MWindow::Close()
 {
-	if (DoClose())
+	if (DoClose() and mImpl != nil)
 		mImpl->Close();
 }
 

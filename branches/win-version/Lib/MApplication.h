@@ -14,6 +14,7 @@
 #include "MHandler.h"
 #include "MP2PEvents.h"
 #include "MController.h"
+#include "MFile.h"
 
 extern const char kAppName[], kVersionString[];
 
@@ -51,6 +52,13 @@ class MApplication : public MHandler
 							uint32				inItemIndex,
 							uint32				inModifiers);
 
+	virtual void		UpdateSpecialMenu(
+							const std::string&	inMenuKind,
+							MMenu*				inMenu);
+
+	void				AddToRecentMenu(
+							const MFile&		inFile);
+
 	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
 
@@ -87,9 +95,14 @@ class MApplication : public MHandler
 							MCloseReason		inReason);
 	virtual void		UpdateWindowMenu(
 							MMenu*				inMenu);
+	void				UpdateRecentMenu(
+							MMenu*				inMenu);
 	virtual void		DoSelectWindowFromWindowMenu(
 							uint32				inIndex);
 	virtual void		Pulse();
+
+	virtual void		InitGlobals();
+	virtual void		SaveGlobals();
 
 	MApplicationImpl*	mImpl;
 
@@ -97,6 +110,7 @@ class MApplication : public MHandler
 	bool				mQuitPending;
 	bool				mInitialized;
 	std::string			mCurrentFolder;
+	std::deque<MFile>	mRecentFiles;
 };
 
 extern MApplication*	gApp;

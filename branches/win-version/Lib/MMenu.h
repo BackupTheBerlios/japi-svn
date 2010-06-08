@@ -27,9 +27,6 @@ class MMenu
 
 	virtual			~MMenu();
 
-	static void		AddToRecentMenu(
-						const MFile&		inFileRef);
-
 	static MMenu*	CreateFromResource(
 						const char*			inResourceName);
 
@@ -62,10 +59,6 @@ class MMenu
 	uint32			GetItemCommand(
 						uint32				inIndex) const;
 
-	bool			GetRecentItem(
-						uint32				inIndex,
-						MFile&				outURL) const;
-
 	void			SetTarget(
 						MHandler*			inHandler);
 
@@ -80,8 +73,6 @@ class MMenu
 						int32				inY,
 						bool				inBottomMenu);
 	
-	bool			IsRecentMenu() const;
-	
 	static MMenu*	Create(
 						zeep::xml::element*	inXMLNode);
 
@@ -91,6 +82,7 @@ class MMenu
 
 	MMenuImpl*		mImpl;
 	std::string		mLabel;
+	std::string		mSpecial;
 	MHandler*		mTarget;
 };
 

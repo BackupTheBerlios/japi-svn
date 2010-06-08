@@ -46,8 +46,6 @@ class MJapiApp : public MApplication
 							uint32				inItemIndex,
 							uint32				inModifiers);
 
-	MEventIn<void(const std::string&,MMenu*)>	eUpdateSpecialMenu;
-
 	bool				LocateSystemIncludeFile(
 							const std::string&	inFileName,
 							MFile&				outFile);
@@ -109,9 +107,6 @@ class MJapiApp : public MApplication
 	void				UpdateEPubMenu(
 							MMenu*				inMenu);
 	
-	void				DoSelectWindowFromWindowMenu(
-							uint32				inIndex);
-
 	void				ShowWorksheet();
 		
 	//static gboolean		Timeout(
@@ -124,8 +119,8 @@ class MJapiApp : public MApplication
 
 	void				ProcessSocketMessages();
 
-	void				InitGlobals();
-	void				SaveGlobals();
+	virtual void		InitGlobals();
+	virtual void		SaveGlobals();
 
 	int					mSocketFD;
 	std::string			mCurrentFolder;

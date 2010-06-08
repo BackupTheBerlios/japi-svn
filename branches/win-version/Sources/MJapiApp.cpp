@@ -11,7 +11,10 @@
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
+#include "MFile.h"
 #include "MJapiApp.h"
 #include "MTextDocument.h"
 #include "MEditWindow.h"
@@ -105,11 +108,8 @@ fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 // --------------------------------------------------------------------
 
 MJapiApp::MJapiApp()
-	: eUpdateSpecialMenu(this, &MJapiApp::UpdateSpecialMenu)
-	, mSocketFD(-1)
+	: mSocketFD(-1)
 {
-	InitGlobals();
-
 	MAcceleratorTable& at = MAcceleratorTable::Instance();
 
 	at.RegisterAcceleratorKey(cmd_New, 'N', kControlKey);
@@ -171,7 +171,6 @@ MJapiApp::~MJapiApp()
 {
 	//if (mSocketFD >= 0)
 	//	close(mSocketFD);
-	SaveGlobals();
 }
 
 bool MJapiApp::ProcessCommand(
@@ -324,8 +323,10 @@ void MJapiApp::UpdateSpecialMenu(
 		UpdateScriptsMenu(inMenu);
 	else if (inName == "epub")
 		UpdateEPubMenu(inMenu);
+	else if (inName == "recent")
+		UpdateRecentMenu(inMenu);
 	else
-		PRINT(("Unknown special menu %s", inName.c_str()));
+		MApplication::UpdateSpecialMenu(inName, inMenu);
 }
 
 void MJapiApp::UpdateWindowMenu(
@@ -411,18 +412,6 @@ void MJapiApp::UpdateEPubMenu(
 	//	epub = epub->GetNextEPubDocument();
 	//}
 }
-
-void MJapiApp::DoSelectWindowFromWindowMenu(
-	uint32				inIndex)
-{
-	MDocument* doc = MDocument::GetFirstDocument();
-
-	while (doc != nil and inIndex-- > 0)
-		doc = doc->GetNextDocument();
-	
-	if (doc != nil)
-		DisplayDocument(doc);	
-}	
 
 void MJapiApp::DoSaveAll()
 {
@@ -702,7 +691,7 @@ MDocument* MJapiApp::OpenOneDocument(
 	if (doc != nil)
 	{
 		DisplayDocument(doc);
-		MMenu::AddToRecentMenu(inFileRef);
+		AddToRecentMenu(inFileRef);
 	}
 	
 	return doc;
@@ -722,7 +711,7 @@ void MJapiApp::OpenProject(
 	//w->Show();
 	//w.release();
 
-	//MMenu::AddToRecentMenu(inPath);
+	//AddToRecentMenu(inPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -743,7 +732,7 @@ void MJapiApp::OpenEPub(
 	//	w->Show();
 	//	w.release();
 	//
-	//	MMenu::AddToRecentMenu(inPath);
+	//	AddToRecentMenu(inPath);
 	//}
 	//catch (exception& e)
 	//{
@@ -1020,7 +1009,7 @@ void MJapiApp::ShowWorksheet()
 //
 //void MJapiApp::ProcessArgv(
 //	bool				inReadStdin,
-//	MFilesToOpenList&	inDocs)
+//	mRecentFilesToOpenList&	inDocs)
 //{
 //	MSockMsg msg = { };
 //
@@ -1033,7 +1022,7 @@ void MJapiApp::ShowWorksheet()
 //	if (inDocs.size() > 0)
 //	{
 //		msg.msg = 'open';
-//		for (MJapiApp::MFilesToOpenList::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
+//		for (MJapiApp::mRecentFilesToOpenList::const_iterator d = inDocs.begin(); d != inDocs.end(); ++d)
 //		{
 //			int32 lineNr = d->first;
 //			string url = d->second.GetURI();
@@ -1293,7 +1282,7 @@ void MJapiApp::ShowWorksheet()
 //		
 //		// see if we need to open any files from the commandline
 //		int32 lineNr = -1;
-//		MJapiApp::MFilesToOpenList filesToOpen;
+//		MJapiApp::mRecentFilesToOpenList filesToOpen;
 //		
 //		for (int32 i = optind; i < argc; ++i)
 //		{
@@ -1368,6 +1357,8 @@ void MJapiApp::ShowWorksheet()
 
 void MJapiApp::InitGlobals()
 {
+	MApplication::InitGlobals();
+
 	//gPrefsDir = g_get_user_config_dir();
 	//gPrefsDir /= "japi";
 	
@@ -1409,7 +1400,7 @@ void MJapiApp::InitGlobals()
 	gPCLineColor = Preferences::GetColor("pc line color", kPCLineColor);
 	gBreakpointColor = Preferences::GetColor("breakpoint color", kBreakpointColor);
 	gWhiteSpaceColor = Preferences::GetColor("whitespace color", kWhiteSpaceColor);
-	
+
 	//if (not fs::exists(gTemplatesDir))
 	//	fs::create_directory(gTemplatesDir);
 
@@ -1461,8 +1452,10 @@ void MJapiApp::SaveGlobals()
 	//{
 	//	gLanguageColors[ix] = Preferences::GetColor("color_" + char('0' + ix), kLanguageColors[ix]);
 	//}
-	
+
 	Preferences::SetInteger("concurrent-jobs", gConcurrentJobs);
+
+	MApplication::SaveGlobals();
 }
 
 // --------------------------------------------------------------------
@@ -1492,15 +1485,7 @@ int MApplication::Main(
 	//	result = 1;
 	//}
 	
-	gApp = new MJapiApp();
-
-	int result = gApp->RunEventLoop();
-
-	//foreach (const string& file, vm["file"].as<vector<string> >())
-	//{
-	//	cout << file << endl;
-	//}
-
-	return result;
+	MJapiApp app;
+	return app.RunEventLoop();
 }
 

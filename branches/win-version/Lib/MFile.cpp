@@ -823,38 +823,41 @@ MFileImp* CreateFileImpForURI(
 	
 	MFileImp* result = nil;
 
-	//pcrecpp::RE re("^(\\w+)://(.+)");
-	//string scheme, path;
-	//
-	//if (re.FullMatch(inURI, &scheme, &path))
-	//{
-	//	URLDecode(path);
-	//	
-	//	if (scheme == "file")
-	//		result = new MPathImp(fs::system_complete(path));
-	//	else if (scheme == "sftp" or scheme == "ssh")
-	//	{
-	//		pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
-	//		
-	//		string s1, s2, username, password, host, port, file;
+	if (ba::starts_with(inURI, "file://"))
+	{
+		string path(inURI + 7);
+		URLDecode(path);
+		result = new MPathImp(path);
+	}
+	else if (ba::starts_with(inURI, "ssh://") or ba::starts_with(inURI, "sftp://"))
+	{
+		//URLDecode(path);
+		//
+		//if (scheme == "file")
+		//	result = new MPathImp(fs::system_complete(path));
+		//else if (scheme == "sftp" or scheme == "ssh")
+		//{
+		//	pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
+		//	
+		//	string s1, s2, username, password, host, port, file;
 
-	//		if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
-	//		{
-	//			if (port.empty())
-	//				port = "22";
+		//	if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
+		//	{
+		//		if (port.empty())
+		//			port = "22";
 
-	//			if (isAbsoluteURI)
-	//				file.insert(file.begin(), '/');
+		//		if (isAbsoluteURI)
+		//			file.insert(file.begin(), '/');
 
-	//			result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
-	//		}
-	//		else
-	//			THROW(("Malformed URL: '%s'", inURI));
-	//	}
-	//	else
-	//		THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
-	//}
-	//else // assume it is a simple path
+		//		result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
+		//	}
+		//	else
+		//		THROW(("Malformed URL: '%s'", inURI));
+		//}
+		//else
+		//	THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
+	}
+	else // assume it is a simple path
 		result = new MPathImp(fs::system_complete(inURI));
 	
 	return result;

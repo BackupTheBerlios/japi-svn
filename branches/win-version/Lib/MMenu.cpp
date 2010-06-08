@@ -26,6 +26,8 @@
 #include "MResources.h"
 #include "MUtils.h"
 #include "MError.h"
+#include "MPreferences.h"
+#include "MApplication.h"
 
 #define foreach BOOST_FOREACH
 
@@ -53,37 +55,6 @@ struct MCommandToString
 	
 	operator const char*() const	{ return mCommandString; }
 };
-
-//struct MRecentItems
-//{
-//	static MRecentItems&
-//						Instance();
-//
-//						operator GtkRecentManager* ()	{ return mRecentMgr; }
-//
-//  private:
-//	
-//						MRecentItems();
-//						~MRecentItems();
-//
-//	GtkRecentManager*	mRecentMgr;
-//};
-//
-//MRecentItems& MRecentItems::Instance()
-//{
-//	static MRecentItems sInstance;
-//	return sInstance;
-//}
-//
-//MRecentItems::MRecentItems()
-//{
-//	mRecentMgr = gtk_recent_manager_get_default();
-//}
-//
-//MRecentItems::~MRecentItems()
-//{
-//	g_object_unref(mRecentMgr);
-//}
 
 }
 
@@ -140,53 +111,41 @@ MMenu* MMenu::Create(
 	
 	string special = inXMLNode->get_attribute("special");
 
-	MMenu* menu;
+	MMenu* menu = new MMenu(label, false);
+	menu->mSpecial = special;
 
-	//if (special == "recent")
-	//	menu = new MMenu(label, gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance()));
-	//else
-	//{
-		menu = new MMenu(label, false);
-		
-		foreach (xml::element* item, inXMLNode->children<xml::element>())
+	foreach (xml::element* item, inXMLNode->children<xml::element>())
+	{
+		if (item->qname() == "item")
 		{
-			if (item->qname() == "item")
+			label = item->get_attribute("label");
+			
+			if (label == "-")
+				menu->AppendSeparator();
+			else
 			{
-				label = item->get_attribute("label");
+				string cs = item->get_attribute("cmd").c_str();
+
+				if (cs.length() != 4)
+					THROW(("Invalid menu item specification, cmd is not correct"));
 				
-				if (label == "-")
-					menu->AppendSeparator();
+				uint32 cmd = 0;
+				for (int i = 0; i < 4; ++i)
+					cmd |= cs[i] << ((3 - i) * 8);
+				
+				if (item->get_attribute("check") == "radio")
+					menu->AppendRadioItem(label, cmd);
+				else if (item->get_attribute("check") == "checkbox")
+					menu->AppendCheckItem(label, cmd);
 				else
-				{
-					string cs = item->get_attribute("cmd").c_str();
-	
-					if (cs.length() != 4)
-						THROW(("Invalid menu item specification, cmd is not correct"));
-					
-					uint32 cmd = 0;
-					for (int i = 0; i < 4; ++i)
-						cmd |= cs[i] << ((3 - i) * 8);
-					
-					if (item->get_attribute("check") == "radio")
-						menu->AppendRadioItem(label, cmd);
-					else if (item->get_attribute("check") == "checkbox")
-						menu->AppendCheckItem(label, cmd);
-					else
-						menu->AppendItem(label, cmd);
-				}
+					menu->AppendItem(label, cmd);
 			}
-			else if (item->qname() == "menu")
-				menu->AppendMenu(Create(item));
 		}
-	//}
+		else if (item->qname() == "menu")
+			menu->AppendMenu(Create(item));
+	}
 	
 	return menu;
-}
-
-bool MMenu::IsRecentMenu() const
-{
-	//return GTK_IS_RECENT_CHOOSER_MENU(mGtkMenu);
-	return false;
 }
 
 void MMenu::AppendItem(
@@ -221,18 +180,6 @@ void MMenu::AppendMenu(
 	mImpl->AppendSubmenu(inMenu);
 }
 
-//void MMenu::AppendRecentMenu(
-//	const string&	inLabel)
-//{
-//	MMenuItem* item = CreateNewItem(inLabel, 0, nil);
-//	
-//	GtkWidget* recMenu = gtk_recent_chooser_menu_new_for_manager(MRecentItems::Instance());
-//	item->mSubMenu = new MMenu(inLabel, recMenu);;
-//
-//	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item->mGtkMenuItem), recMenu);
-//	item->mRecentItemActivated.Connect(recMenu, "item-activated");
-//}
-//
 uint32 MMenu::CountItems()
 {
 	return mImpl->CountItems();
@@ -242,22 +189,7 @@ void MMenu::RemoveItems(
 	uint32			inFromIndex,
 	uint32			inCount)
 {
-	//if (inFromIndex < mItems.size())
-	//{
-	//	MMenuItemList::iterator b = mItems.begin();
-	//	advance(b, inFromIndex);
-
-	//	if (inFromIndex + inCount > mItems.size())
-	//		inCount = mItems.size() - inFromIndex;
-
-	//	MMenuItemList::iterator e = b;
-	//	advance(e, inCount);	
-	//	
-	//	for (MMenuItemList::iterator mi = b; mi != e; ++mi)
-	//		gtk_widget_destroy((*mi)->mGtkMenuItem);
-	//	
-	//	mItems.erase(b, e);
-	//}
+	mImpl->RemoveItems(inFromIndex, inCount);
 }
 
 string MMenu::GetItemLabel(
@@ -270,47 +202,6 @@ uint32 MMenu::GetItemCommand(
 	uint32				inIndex) const
 {
 	return mImpl->GetItemCommand(inIndex);
-}
-
-bool MMenu::GetRecentItem(
-	uint32				inIndex,
-	MFile&				outURL) const
-{
-	//if (inIndex >= mItems.size())
-	//	THROW(("Item index out of range"));
-	//
-	//MMenuItemList::const_iterator i = mItems.begin();
-	//advance(i, inIndex);
-	//
-	//MMenuItem* item = *i;
-	//
-	//if (item->mSubMenu == nil or not GTK_IS_RECENT_CHOOSER(item->mSubMenu->GetGtkMenu()))
-	//	THROW(("Invalid item/menu"));
-
-	//bool result = false;
-	//char* uri = gtk_recent_chooser_get_current_uri(GTK_RECENT_CHOOSER(item->mSubMenu->GetGtkMenu()));
-	//
-	//if (uri != nil)
-	//{
-	//	outURL = MFile(uri);
-	//	g_free(uri);
-	//	
-	//	result = true;
-	//}
-
-	//return result;
-	return false;
-}
-
-void MMenu::AddToRecentMenu(
-	const MFile&		inFileRef)
-{
-	//string uri = inFileRef.GetURI();
-	//
-	//if (gtk_recent_manager_has_item(MRecentItems::Instance(), uri.c_str()))
-	//	gtk_recent_manager_remove_item(MRecentItems::Instance(), uri.c_str(), nil);
-	//
-	//gtk_recent_manager_add_item(MRecentItems::Instance(), uri.c_str());
 }
 
 void MMenu::SetTarget(
@@ -335,6 +226,9 @@ void MMenu::SetTarget(
 
 void MMenu::UpdateCommandStatus()
 {
+	if (not mSpecial.empty())
+		gApp->UpdateSpecialMenu(mSpecial, this);
+
 	for (uint32 i = 0; i < CountItems(); ++i)
 	{
 		MMenu* subMenu = mImpl->GetSubmenu(i);
