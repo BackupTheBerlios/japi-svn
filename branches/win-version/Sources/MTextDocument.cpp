@@ -3469,10 +3469,10 @@ bool MTextDocument::HandleKeydown(
 
 	handled = HandleRawKeydown(inKeyCode, inModifiers);
 	
-	if (not handled and inModifiers == 0 and not inText.empty())
+	if (not handled and
+		(inModifiers & ~kShiftKey) == 0 and
+		not inText.empty())
 	{
-		//Type(inText.c_str(), inText.length());
-
 		if (mFastFindMode)
 			FastFindType(inText.c_str(), inText.length());
 		else
@@ -3489,23 +3489,8 @@ bool MTextDocument::HandleKeydown(
 	return handled;
 }
 
-//// ----------------------------------------------------------------------------
-////	OnCommit
-//
-//void MTextDocument::OnCommit(
-//	const char*			inText,
-//	uint32				inLength)
-//{
-//	if (mFastFindMode)
-//		FastFindType(inText, inLength);
-//	else
-//	{
-//		Type(inText, inLength);
-//		mCompletionIndex = -1;
-//	}
-//	
-//	UpdateDirtyLines();
-//}
+// ----------------------------------------------------------------------------
+//	HandleKeyCommand
 
 bool MTextDocument::HandleKeyCommand(MKeyCommand inKeyCommand)
 {
@@ -4048,7 +4033,10 @@ bool MTextDocument::HandleRawKeydown(
 				
 				if (shift)
 				{
-					DoShiftRight();
+					if (inModifiers & kShiftKey)
+						DoShiftLeft();
+					else
+						DoShiftRight();
 					handled = true;
 				}
 				else
@@ -4059,30 +4047,13 @@ bool MTextDocument::HandleRawKeydown(
 				break;
 			}
 
-			//case GDK_ISO_Left_Tab:
-			//{
-			//	int minLine = mSelection.GetMinLine();
-			//	int maxLine = mSelection.GetMaxLine();
+			case kCancelKeyCode:
+				if (inModifiers & kControlKey /*and mShell and mShell->IsRunning()*/)
+					/*mShell->Kill()*/;
+				break;
 
-			//	bool shift = minLine < maxLine;
-			//	if (not shift)
-			//	{
-			//		shift =
-			//			mSelection.GetMinOffset() == LineStart(minLine) and
-			//			mSelection.GetMaxOffset() == LineStart(minLine + 1);
-			//	}
-			//	
-			//	if (shift)
-			//	{
-			//		DoShiftLeft();
-			//		handled = true;
-			//	}
-			//	break;
-			//}
-			
 			case kEscapeKeyCode:
 				mFastFindMode = false;
-	//			updateSelection = false;
 				//if (mShell.get() != nil and mShell->IsRunning())
 				//	mShell->Kill();
 				handled = true;

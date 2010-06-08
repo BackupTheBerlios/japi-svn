@@ -130,10 +130,12 @@ bool MWinProcMixin::WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inL
 		result = true;
 	else
 	{
-		uint32 keyCode = 0, modifiers = 0;
+		uint32 keyCode, modifiers;
 		
 		wchar_t ch = inWParam;
 		wstring text(&ch, 1);
+
+		keyCode = inWParam;
 	
 		GetModifierState(modifiers, false);
 		if (inLParam & (1 << 24))
@@ -220,13 +222,19 @@ bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 			if (modifiers & kControlKey)
 				keyCode = kReturnKeyCode;
 			break;
+		case VK_PAUSE:
+			keyCode = kPauseKeyCode;
+			break;
+		case VK_CANCEL:
+			keyCode = kCancelKeyCode;
+			break;
 		default:
 			if (inWParam >= VK_F1 and inWParam <= VK_F24)
 				keyCode = static_cast<unsigned short>(
 					0x0101 + inWParam - VK_F1);
-			else
+			else 
 				keyCode = static_cast<unsigned short>(
-					::MapVirtualKeyW(inWParam, 2));
+					::MapVirtualKeyW(inWParam, MAPVK_VK_TO_CHAR));
 			break;
 	}
 	

@@ -16,6 +16,7 @@
 #include "MWinWindowImpl.h"
 #include "MError.h"
 #include "MWinUtils.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 using namespace zeep;
@@ -73,7 +74,88 @@ void MWinMenuImpl::AppendItem(
 	/* Add it to the fMenuHandle */
 	MENUITEMINFOW lWinItem = { sizeof(MENUITEMINFOW) };
 	wstring label = c2w(inLabel);
-	
+
+	uint32 keyCode, modifiers;
+	if (MAcceleratorTable::Instance().GetAcceleratorKeyForCommand(inCommand, keyCode, modifiers))
+	{
+		wstring shortcut;
+
+		if (modifiers & kControlKey)
+			shortcut += L"Ctrl";
+
+		if (modifiers & kOptionKey)
+		{
+			if (not shortcut.empty())
+				shortcut += '+';
+			shortcut += L"Alt";
+		}
+
+		if (modifiers & kShiftKey)
+		{
+			if (not shortcut.empty())
+				shortcut += '+';
+			shortcut += L"Shift";
+		}
+
+		wstring key;
+
+		switch (keyCode)
+		{
+			case kHomeKeyCode:				key = L"Home"; break;
+			case kCancelKeyCode:			key = L"Break"; break;
+			case kEndKeyCode:				key = L"End"; break;
+			case kHelpKeyCode:				key = L"Help"; break;
+			//case kBellKeyCode:				key = L"Bell"; break;
+			case kBackspaceKeyCode:			key = L"Backspace"; break;
+			case kTabKeyCode:				key = L"Tab"; break;
+			//case kLineFeedKeyCode:			key = L"break;
+			//case kVerticalTabKeyCode:break;
+			case kPageUpKeyCode:			key = L"PageUp"; break;
+			//case kFormFeedKeyCode:			break;
+			case kPageDownKeyCode:			key = L"PageDown"; break;
+			case kReturnKeyCode:			key = L"Return"; break;
+			//case kFunctionKeyKeyCode:		break;
+			case kPauseKeyCode:				key = L"Pause"; break;
+			case kEscapeKeyCode:			key = L"Esc"; break;
+			//case kClearKeyCode:				break;
+			case kLeftArrowKeyCode:			key = L"Left"; break;
+			case kRightArrowKeyCode:		key = L"Right"; break;
+			case kUpArrowKeyCode:			key = L"Up"; break;
+			case kDownArrowKeyCode:			key = L"Down"; break;
+			case kSpaceKeyCode:				key = L"Space"; break;
+			case kDeleteKeyCode:			key = L"Del"; break;
+			case kF1KeyCode:				key = L"F1"; break;
+			case kF2KeyCode:				key = L"F2"; break;
+			case kF3KeyCode:				key = L"F3"; break;
+			case kF4KeyCode:				key = L"F4"; break;
+			case kF5KeyCode:				key = L"F5"; break;
+			case kF6KeyCode:				key = L"F6"; break;
+			case kF7KeyCode:				key = L"F7"; break;
+			case kF8KeyCode:				key = L"F8"; break;
+			case kF9KeyCode:				key = L"F9"; break;
+			case kF10KeyCode:				key = L"F10"; break;
+			case kF11KeyCode:				key = L"F11"; break;
+			case kF12KeyCode:				key = L"F12"; break;
+			case kF13KeyCode:				key = L"F13"; break;
+			case kF14KeyCode:				key = L"F14"; break;
+			case kF15KeyCode:				key = L"F15"; break;
+			default:
+				wchar_t ch = ::MapVirtualKeyW(keyCode, MAPVK_VK_TO_CHAR);
+				if (ch == 0 and keyCode < 127 and isprint(static_cast<char>(keyCode)))
+					ch = keyCode;
+				key = ch;
+				break;
+		}
+
+		if (not key.empty())
+		{
+			if (shortcut.empty())
+				label = label + wchar_t('\t') + key;
+			else
+				label = label + wchar_t('\t') + shortcut + wchar_t('+') + key;
+		}
+	}
+
 	lWinItem.fMask = MIIM_ID | MIIM_TYPE;
 	lWinItem.fType = MFT_STRING;
 	lWinItem.wID = inCommand;

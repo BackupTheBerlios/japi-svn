@@ -199,7 +199,7 @@ enum {	// modifier keys
 enum {	// key codes
 	kNullKeyCode 				= 0,
 	kHomeKeyCode 				= 1,
-	kEnterKeyCode				= 3,
+	kCancelKeyCode				= 3,
 	kEndKeyCode					= 4,
 	kHelpKeyCode 				= 5,
 	kBellKeyCode 				= 7,
@@ -212,6 +212,7 @@ enum {	// key codes
 	kPageDownKeyCode 			= 12,
 	kReturnKeyCode				= 13,
 	kFunctionKeyKeyCode			= 16,
+	kPauseKeyCode				= 19,
 	kEscapeKeyCode				= 27,
 	kClearKeyCode				= 27,
 	kLeftArrowKeyCode			= 28,
@@ -234,7 +235,10 @@ enum {	// key codes
 	kF12KeyCode					= 0x010c,
 	kF13KeyCode					= 0x010d,
 	kF14KeyCode					= 0x010e,
-	kF15KeyCode					= 0x010f
+	kF15KeyCode					= 0x010f,
+
+	// my own pseudo key codes
+	kEnterKeyCode				= 0x0201,
 };
 
 extern const char kHexChars[];
