@@ -126,10 +126,13 @@ IniFile::~IniFile()
 {
 	try
 	{
-		if (not fs::exists(gPrefsDir))
-			fs::create_directories(gPrefsDir);
+		if (not fs::exists(mPrefsFile))
+		{
+			if (not fs::exists(gPrefsDir))
+				fs::create_directories(gPrefsDir);
 		
-		mPrefsFile = gPrefsDir / "settings.xml";
+			mPrefsFile = gPrefsDir / "settings.xml";
+		}
 		
 		fs::ofstream data(mPrefsFile);
 		

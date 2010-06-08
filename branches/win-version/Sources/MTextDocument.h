@@ -23,7 +23,7 @@ struct MNamedRange;
 class MIncludeFileList;
 class MWindow;
 class MTextView;
-//class MShell;
+class MShell;
 class MMessageWindow;
 class MMessageList;
 class MMenu;
@@ -602,7 +602,7 @@ class MTextDocument : public MDocument
 	int32						mCompletionIndex;
 	uint32						mCompletionStartOffset;
 	MTextInputAreaInfo			mTextInputAreaInfo;
-	//std::unique_ptr<MShell>		mShell;
+	std::unique_ptr<MShell>		mShell;
 	MMessageWindow*				mStdErrWindow;
 	bool						mStdErrWindowSelected;
 	bool						mPreparedForStdOut;

@@ -323,8 +323,6 @@ void MJapiApp::UpdateSpecialMenu(
 		UpdateScriptsMenu(inMenu);
 	else if (inName == "epub")
 		UpdateEPubMenu(inMenu);
-	else if (inName == "recent")
-		UpdateRecentMenu(inMenu);
 	else
 		MApplication::UpdateSpecialMenu(inName, inMenu);
 }
@@ -691,7 +689,7 @@ MDocument* MJapiApp::OpenOneDocument(
 	if (doc != nil)
 	{
 		DisplayDocument(doc);
-		AddToRecentMenu(inFileRef);
+		AddToRecentMenu(inFileRef.GetPath());
 	}
 	
 	return doc;

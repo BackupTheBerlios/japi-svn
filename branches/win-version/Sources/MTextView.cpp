@@ -30,8 +30,6 @@ using namespace std;
 namespace
 {
 
-//const uint32	kMTextViewKind = 'MTxt';
-
 enum {
 	DND_TARGET_TYPE_URI_LIST = 1,
 	DND_TARGET_TYPE_UTF8_STRING,
@@ -66,20 +64,8 @@ MTextView::MTextView(
 	, eDocumentChanged(this, &MTextView::SetDocument)
 	, eIdle(this, &MTextView::Tick)
 
-	//, slOnCommit(this, &MTextView::OnCommit)
-	//, slOnDeleteSurrounding(this, &MTextView::OnDeleteSurrounding)
-	//, slOnPreeditChanged(this, &MTextView::OnPreeditChanged)
-	//, slOnPreeditStart(this, &MTextView::OnPreeditStart)
-	//, slOnPreeditEnd(this, &MTextView::OnPreeditEnd)
-	//, slOnRetrieveSurrounding(this, &MTextView::OnRetrieveSurrounding)
-	//
-	//, slOnVScrollBarValueChanged(this, &MTextView::OnVScrollBarValueChanged)
-	//, slOnHScrollBarValueChanged(this, &MTextView::OnHScrollBarValueChanged)
-	
 	, mController(nil)
 	, mDocument(nil)
-	//, mVScrollBar(inVScrollBar)
-	//, mHScrollBar(inHScrollBar)
 	, mLineHeight(10)
 	, mLastCaretBlinkTime(0)
 	, mCaretVisible(false)
@@ -91,21 +77,6 @@ MTextView::MTextView(
 	, mClickMode(eSelectNone)
 {
 	AddRoute(eIdle, gApp->eIdle);
-	
-//	mIMContext = gtk_im_context_simple_new();
-//	
-//	slOnCommit.Connect(G_OBJECT(mIMContext), "commit");
-//	slOnDeleteSurrounding.Connect(G_OBJECT(mIMContext), "delete-surrounding");
-//	slOnPreeditChanged.Connect(G_OBJECT(mIMContext), "preedit-changed");
-//	slOnPreeditStart.Connect(G_OBJECT(mIMContext), "preedit-start");
-//	slOnPreeditEnd.Connect(G_OBJECT(mIMContext), "preedit-end");
-//	slOnRetrieveSurrounding.Connect(G_OBJECT(mIMContext), "retrieve-surrounding");
-//	
-////	SetCallback(mVScrollBar->cbValueChanged, this, &MTextView::OnSBValueChanged);
-//	slOnVScrollBarValueChanged.Connect(mVScrollBar, "value-changed");
-//	slOnHScrollBarValueChanged.Connect(mHScrollBar, "value-changed");
-
-	//mImageOriginX = mImageOriginY = 0;
 	
 	StylesChanged();
 	
@@ -126,20 +97,6 @@ MTextView::MTextView(
 MTextView::~MTextView()
 {
 }
-
-//bool MTextView::OnRealize()
-//{
-//	bool result = false;
-//	
-//	if (MView::OnRealize())
-//	{
-//		gtk_im_context_set_client_window(mIMContext, GetGtkWidget()->window);
-//		
-//		result = true;
-//	}
-//	
-//	return result;
-//}
 
 void MTextView::SetController(MController* inController)
 {
@@ -271,57 +228,6 @@ void MTextView::MouseUp(
 	mClickMode = eSelectNone;
 	mLastScrollTime = 0;
 }
-
-//bool MTextView::OnMotionNotifyEvent(
-//	GdkEventMotion*	inEvent)
-//{
-//	int32 x, y;
-//	GdkModifierType state;
-//	
-//	if (inEvent->is_hint)
-//		gdk_window_get_pointer(inEvent->window, &x, &y, &state);
-//	else
-//	{
-//		x = static_cast<int32>(inEvent->x);
-//		y = static_cast<int32>(inEvent->y);
-//		state = GdkModifierType(inEvent->state);
-//	}
-//
-//	x += mImageOriginX - kLeftMargin;
-//	y += mImageOriginY;
-//	
-//	if (mClickMode == eSelectStartDrag)
-//	{
-//		if (gtk_drag_check_threshold(GetGtkWidget(), mClickStartX, mClickStartY, x, y))
-//		{
-//			const GtkTargetEntry sources[] =
-//			{
-//			    { const_cast<gchar*>("UTF8_STRING"), 0, DND_TARGET_TYPE_UTF8_STRING },
-//			};
-//			
-//			DragBegin(sources, 1, inEvent);
-//
-//			mClickMode = eSelectNone;
-//		}
-//	}
-//	else
-//	{
-//		if (IsPointInSelection(x, y))
-//			SetCursor(eNormalCursor);
-//		else if (x >= 0)
-//			SetCursor(eIBeamCursor);
-//		else
-//			SetCursor(eRightCursor);
-//	
-//		if (mClickMode != eSelectNone and IsActive())
-//		{
-//			if (ScrollToPointer(x, y))
-//				mLastScrollTime = GetLocalTime();
-//		}
-//	}
-//	
-//	return true;
-//}
 
 bool MTextView::ScrollToPointer(
 	int32		inX,
@@ -737,126 +643,6 @@ void MTextView::DrawLine(
 //	
 //	dev.MakeTransparent(0.35);
 //	outPixmap = dev.GetPixmap();
-//}
-
-//void MTextView::AdjustScrollBars()
-//{
-//	uint32 width = 10, height = 10;
-//	
-//	if (mDocument != nil)
-//	{
-//		width = mDocument->GuessMaxWidth();
-//		height = mDocument->CountLines() * mLineHeight;
-//	}
-//	
-//	MRect bounds;
-//	GetBounds(bounds);
-//	
-//	uint32 linesPerPage = bounds.height / mLineHeight;
-//
-//	GtkAdjustment* adj = gtk_range_get_adjustment(GTK_RANGE(mVScrollBar));
-//	
-//	if (adj != nil)
-//	{
-//		adj->lower = 0;
-//		adj->upper = height;
-//		adj->step_increment = mLineHeight;
-//		adj->page_increment = linesPerPage * mLineHeight;
-//		adj->page_size = bounds.height;
-//		adj->value = mImageOriginY;
-//		
-//		gtk_adjustment_changed(adj);
-//	}
-//	
-//	if (width == 0)
-//		gtk_widget_hide(mHScrollBar);
-//	else
-//	{
-//		gtk_widget_show(mHScrollBar);
-//	
-//		adj = gtk_range_get_adjustment(GTK_RANGE(mHScrollBar));
-//		
-//		if (adj != nil)
-//		{
-//			adj->lower = 0;
-//			adj->upper = width + (bounds.width / 2);
-//			adj->step_increment = mCharWidth;
-//			adj->page_increment = bounds.width / 2;
-//			adj->page_size = bounds.width;
-//			adj->value = mImageOriginX;
-//			
-//			gtk_adjustment_changed(adj);
-//		}
-//	}
-//}
-
-//bool MTextView::OnConfigureEvent(
-//	GdkEventConfigure*	inEvent)
-//{
-//	AdjustScrollBars();
-//	
-//	eBoundsChanged();
-//	
-//	return false;
-//}
-
-//void MTextView::ScrollTo(
-//	int32			inX,
-//	int32			inY)
-//{
-//	if (mDocument != nil and mDocument->GetSoftwrap())
-//		inX = 0;
-//	
-//	int32 dx = inX - mImageOriginX;
-//	int32 dy = inY - mImageOriginY;
-//	
-//	Scroll(-dx, -dy);
-//	
-//	mImageOriginX = inX;
-//	mImageOriginY = inY;
-//	
-//	gtk_range_set_value(GTK_RANGE(mVScrollBar), inY);
-//	gtk_range_set_value(GTK_RANGE(mHScrollBar), inX);
-//}
-
-//void MTextView::ScrollToPosition(
-//	int32			inX,
-//	int32			inY)
-//{
-//	ScrollTo(inX, inY);
-//}
-//
-//void MTextView::GetScrollPosition(
-//	int32&				outX,
-//	int32&				outY)
-//{
-//	outX = mImageOriginX;
-//	outY = mImageOriginY;
-//}
-
-//bool MTextView::OnScrollEvent(
-//	GdkEventScroll*		inEvent)
-//{
-//	switch (inEvent->direction)
-//	{
-//		case GDK_SCROLL_UP:
-//			for (int i = 0; i < 3; ++i)
-//				ScrollMessage(kScrollLineDown);
-//			break; 
-//
-//		case GDK_SCROLL_DOWN:
-//			for (int i = 0; i < 3; ++i)
-//				ScrollMessage(kScrollLineUp);
-//			break; 
-//
-//		case GDK_SCROLL_LEFT:
-//			break;
-//
-//		case GDK_SCROLL_RIGHT:
-//			break; 
-//	}	
-//		
-//	return true;
 //}
 
 void MTextView::LineCountChanged()
@@ -1387,13 +1173,8 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	// calculate the rectangle that needs to be scrolled
 	MRect r = bounds;
 
-	// the top of the scrolling rect
-	r.y = inFromLine * mLineHeight - bounds.y;
-	if (r.y < bounds.y)
-		r.y = bounds.y;
-	
-	// and the height
-	r.height = bounds.height - r.y;
+	if (r.y < inFromLine * mLineHeight)
+		r.y = inFromLine * mLineHeight;
 
 	int32 dy = inDelta * static_cast<int32>(mLineHeight);
 
@@ -1404,18 +1185,14 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	}
 	
 	// if the rect is not empty and lies within our bounds
-	if (r.height > 0 and
-		r.y <= bounds.height and
-		r.y + r.height >= 0 and
-		std::abs(dy) < bounds.height and
-		not mNeedsDisplay)
+	if (r & bounds)
 	{
 		ScrollRect(r, 0, dy);
 		
 		if (dy < 0)
 		{
 			r.y += r.height + dy;
-			r.height = bounds.height - r.y;
+			r.height = bounds.height - (r.y - bounds.y);
 			InvalidateRect(r);
 		}
 	}
@@ -1573,23 +1350,6 @@ void MTextView::DragDeleteData()
 //	mDocument->DeleteSelectedText();
 }
 
-//OSStatus MTextView::DoGetClickActivation(EventRef ioEvent)
-//{
-//	HIPoint where;
-//	(void)::GetEventParameter(ioEvent, kEventParamMouseLocation, typeHIPoint, nil,
-//		sizeof(where), nil, &where);
-//
-//	ClickActivationResult result = kActivateAndIgnoreClick;
-//	
-//	if (InitiateDrag(where, ioEvent))
-//		result = kDoNotActivateAndIgnoreClick;
-//	
-//	(void)::SetEventParameter(ioEvent, kEventParamClickActivation, typeClickActivationResult,
-//		sizeof(result), &result);
-//
-//	return noErr;
-//}
-
 // inWhere should be in view local coordinates
 bool MTextView::IsPointInSelection(
 	int32			inX,
@@ -1691,56 +1451,6 @@ void MTextView::SetDocument(MDocument* inDocument)
 	}
 }
 
-//bool MTextView::OnKeyPressEvent(
-//	GdkEventKey*	inEvent)
-//{
-//	if (gtk_im_context_filter_keypress(mIMContext, inEvent) == false)
-//		mDocument->OnKeyPressEvent(inEvent);
-//	
-//	return true;
-//}
-
-//bool MTextView::OnCommit(
-//	gchar*			inText)
-//{
-//	if (mDocument != nil)
-//		mDocument->OnCommit(inText, strlen(inText));
-//
-//	return true;
-//}
-//
-//bool MTextView::OnDeleteSurrounding(
-//	gint			inStart,
-//	gint			inLength)
-//{
-//	cout << "OnDeleteSurrounding" << endl;
-//	return true;
-//}
-//
-//bool MTextView::OnPreeditChanged()
-//{
-//	cout << "OnPreeditChanged" << endl;
-//	return true;
-//}
-//
-//bool MTextView::OnPreeditEnd()
-//{
-//	cout << "OnPreeditEnd" << endl;
-//	return true;
-//}
-//
-//bool MTextView::OnPreeditStart()
-//{
-//	cout << "OnPreeditStart" << endl;
-//	return true;
-//}
-//
-//bool MTextView::OnRetrieveSurrounding()
-//{
-//	cout << "OnRetrieveSurrounding" << endl;
-//	return true;
-//}
-//
 //void MTextView::OnPopupMenu(
 //	GdkEventButton*	inEvent)
 //{
@@ -1759,4 +1469,3 @@ void MTextView::SetDocument(MDocument* inDocument)
 //	if (popup != nil)
 //		popup->Popup(mController, inEvent, x, y, true);
 //}
-//

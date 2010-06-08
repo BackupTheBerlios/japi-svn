@@ -246,7 +246,6 @@ void MWinWindowImpl::Validate(MRect inRect)
 
 void MWinWindowImpl::UpdateNow()
 {
-	/* Force a direct WM_PAINT */
 	::UpdateWindow(GetHandle());
 }
 

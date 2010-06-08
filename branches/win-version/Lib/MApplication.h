@@ -59,7 +59,7 @@ class MApplication : public MHandler
 							MMenu*				inMenu);
 
 	void				AddToRecentMenu(
-							const MFile&		inFile);
+							const fs::path&		inFile);
 
 	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
@@ -112,7 +112,8 @@ class MApplication : public MHandler
 	bool				mQuitPending;
 	bool				mInitialized;
 	std::string			mCurrentFolder;
-	std::deque<MFile>	mRecentFiles;
+	std::deque<fs::path>
+						mRecentFiles;
 };
 
 extern MApplication*	gApp;

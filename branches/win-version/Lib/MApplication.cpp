@@ -82,11 +82,10 @@ void MApplication::InitGlobals()
 	vector<string> recent;
 	Preferences::GetArray("recent", recent);
 
-	foreach (string uri, recent)
+	foreach (string path, recent)
 	{
-		MFile file(uri);
-
-		if (file.IsValid() and (file.IsLocal() == false or file.Exists()))
+		fs::path file(path);
+		if (fs::exists(file))
 			mRecentFiles.push_back(file);
 	}
 }
@@ -94,7 +93,7 @@ void MApplication::InitGlobals()
 void MApplication::SaveGlobals()
 {
 	vector<string> recent;
-	transform(mRecentFiles.begin(), mRecentFiles.end(), back_inserter(recent), boost::bind(&MFile::GetURI, _1));
+	transform(mRecentFiles.begin(), mRecentFiles.end(), back_inserter(recent), boost::bind(&fs::path::native_file_string, _1));
 	Preferences::SetArray("recent", recent);
 }
 
@@ -160,7 +159,7 @@ bool MApplication::ProcessCommand(
 		
 		case cmd_OpenRecent:
 			if (inMenu != nil and inItemIndex < mRecentFiles.size())
-				OpenOneDocument(mRecentFiles[inItemIndex]);
+				OpenOneDocument(MFile(mRecentFiles[inItemIndex]));
 			break;
 		
 		case 'test':
@@ -252,20 +251,18 @@ void MApplication::UpdateRecentMenu(
 {
 	inMenu->RemoveItems(0, inMenu->CountItems());
 
-	foreach (MFile file, mRecentFiles)
+	foreach (fs::path file, mRecentFiles)
 	{
-		if (file.IsValid() and (file.IsLocal() == false or file.Exists()))
-			inMenu->AppendItem(file.GetPath().native_file_string(), cmd_OpenRecent);
+		if (fs::exists(file))
+			inMenu->AppendItem(file.native_file_string(), cmd_OpenRecent);
 	}
 }
 
 void MApplication::AddToRecentMenu(
-	const MFile&		inFile)
+	const fs::path&		inFile)
 {
-	MFile file(inFile);
-
-	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), file), mRecentFiles.end());
-	mRecentFiles.push_front(file);
+	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), inFile), mRecentFiles.end());
+	mRecentFiles.push_front(inFile);
 	if (mRecentFiles.size() > 10)
 		mRecentFiles.pop_back();
 }

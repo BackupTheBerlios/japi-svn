@@ -29,7 +29,7 @@
 #include "MStyles.h"
 #include "MPreferences.h"
 #include "MPrefsDialog.h"
-//#include "MShell.h"
+#include "MShell.h"
 //#include "MMessageWindow.h"
 #include "MDevice.h"
 #include "MCommands.h"
@@ -375,15 +375,15 @@ void MTextDocument::SaveState(
 	
 	mFile.WriteAttribute(kJapieDocState, &state, kMDocStateSize);
 	
-	//if (mShell.get() != nil)
-	//{
-	//	string cwd = mShell->GetCWD();
-	//	
-	//	mFile.WriteAttribute(kJapieCWD, cwd.c_str(), cwd.length());
-	//		
-	//	if (IsWorksheet())
-	//		Preferences::SetString("worksheet wd", cwd);
-	//}
+	if (mShell.get() != nil)
+	{
+		string cwd = mShell->GetCWD();
+		
+		mFile.WriteAttribute(kJapieCWD, cwd.c_str(), cwd.length());
+			
+		if (IsWorksheet())
+			Preferences::SetString("worksheet wd", cwd);
+	}
 }
 
 void MTextDocument::SetText(
@@ -450,16 +450,16 @@ void MTextDocument::SetWorksheet(
 		sWorksheet = inDocument;
 	
 		string cwd = Preferences::GetString("worksheet wd", "");
-		//if (cwd.length() > 0)
-		//{
-		//	inDocument->mShell.reset(new MShell(true));
-
-		//	inDocument->mShell->SetCWD(cwd);
-
-		//	SetCallback(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
-		//	SetCallback(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
-		//	SetCallback(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
-		//}
+		if (cwd.length() > 0)
+		{
+			inDocument->mShell.reset(new MShell(true));
+		
+			inDocument->mShell->SetCWD(cwd);
+		
+			SetCallback(inDocument->mShell->eStdOut, inDocument, &MTextDocument::StdOut);
+			SetCallback(inDocument->mShell->eStdErr, inDocument, &MTextDocument::StdErr);
+			SetCallback(inDocument->mShell->eShellStatus, inDocument, &MTextDocument::ShellStatusIn);
+		}
 	}		
 }
 
@@ -468,19 +468,19 @@ void MTextDocument::SetWorksheet(
 string MTextDocument::GetCWD() const
 {
 	string result;
-	//if (mShell.get() != nil)
-	//	result = mShell->GetCWD();
-	//else if (mFile.IsValid())
-	//{
-	//	char cwd[PATH_MAX];
-
-	//	int32 r = mFile.ReadAttribute(kJapieCWD, cwd, PATH_MAX);
-	//	if (r > 0 and r < PATH_MAX)
-	//	{
-	//		cwd[r] = 0;
-	//		result = cwd;
-	//	}
-	//}
+	if (mShell.get() != nil)
+		result = mShell->GetCWD();
+	else if (mFile.IsValid())
+	{
+		char cwd[PATH_MAX];
+	
+		int32 r = mFile.ReadAttribute(kJapieCWD, cwd, PATH_MAX);
+		if (r > 0 and r < PATH_MAX)
+		{
+			cwd[r] = 0;
+			result = cwd;
+		}
+	}
 	return result;
 }
 
@@ -488,11 +488,11 @@ bool MTextDocument::StopRunningShellCommand()
 {
 	bool result = false;
 
-	//if (mShell.get() != nil and mShell->IsRunning())
-	//{
-	//	mShell->Kill();
-	//	result = true;
-	//}
+	if (mShell.get() != nil and mShell->IsRunning())
+	{
+		mShell->Kill();
+		result = true;
+	}
 	
 	return result;
 }
@@ -3317,17 +3317,17 @@ void MTextDocument::QuotedRewrap(
 
 void MTextDocument::DoApplyScript(const std::string& inScript)
 {
-	//if (mShell.get() != nil and mShell->IsRunning())
-	//	return;
-	//
-	//if (mShell.get() == nil)
-	//{
-	//	mShell.reset(new MShell(true));
-
-	//	SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
-	//	SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
-	//	SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
-	//}
+	if (mShell.get() != nil and mShell->IsRunning())
+		return;
+	
+	if (mShell.get() == nil)
+	{
+		mShell.reset(new MShell(true));
+	
+		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+	}
 	
 	if (mSelection.IsEmpty())
 		SelectAll();
@@ -3337,7 +3337,7 @@ void MTextDocument::DoApplyScript(const std::string& inScript)
 	
 	mPreparedForStdOut = true;
 	StartAction(inScript.c_str());
-	//mShell->ExecuteScript((gScriptsDir / inScript).string(), text);
+	mShell->ExecuteScript((gScriptsDir / inScript).string(), text);
 }
 
 void MTextDocument::GetStyledText(
@@ -4048,17 +4048,10 @@ bool MTextDocument::HandleRawKeydown(
 			}
 
 			case kCancelKeyCode:
-				if (inModifiers & kControlKey /*and mShell and mShell->IsRunning()*/)
-					/*mShell->Kill()*/;
+				if (inModifiers & kControlKey and mShell and mShell->IsRunning())
+					mShell->Kill();
 				break;
 
-			case kEscapeKeyCode:
-				mFastFindMode = false;
-				//if (mShell.get() != nil and mShell->IsRunning())
-				//	mShell->Kill();
-				handled = true;
-				break;
-			
 			//case GDK_period:
 			//	if (inModifiers & GDK_CONTROL_MASK and mShell.get() != nil and mShell->IsRunning())
 			//		mShell->Kill();
@@ -4092,8 +4085,8 @@ void MTextDocument::ShellStatusIn(bool inActive)
 	
 	if (not inActive)
 	{
-		//string cwd = mShell->GetCWD();
-		//eBaseDirChanged(fs::path(cwd));
+		string cwd = mShell->GetCWD();
+		eBaseDirChanged(fs::path(cwd));
 	}
 }
 
@@ -4165,27 +4158,27 @@ void MTextDocument::Execute()
 	string s;
 	GetSelectedText(s);
 	
-	//if (mShell.get() == nil)
-	//{
-	//	mShell.reset(new MShell(true));
-
-	//	if (IsSpecified())
-	//	{
-	//		char cwd[1024] = { 0 };
-	//		int32 size = mFile.ReadAttribute(kJapieCWD, cwd, sizeof(cwd));
-	//		if (size > 0)
-	//		{
-	//			string d(cwd, size);
-	//			mShell->SetCWD(d);
-	//		}
-	//		else
-	//			mShell->SetCWD(mFile.GetPath().parent_path().string());
-	//	}
-	//	
-	//	SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
-	//	SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
-	//	SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
-	//}
+	if (mShell.get() == nil)
+	{
+		mShell.reset(new MShell(true));
+	
+		if (IsSpecified())
+		{
+			char cwd[1024] = { 0 };
+			int32 size = mFile.ReadAttribute(kJapieCWD, cwd, sizeof(cwd));
+			if (size > 0)
+			{
+				string d(cwd, size);
+				mShell->SetCWD(d);
+			}
+			else
+				mShell->SetCWD(mFile.GetPath().parent_path().string());
+		}
+		
+		SetCallback(mShell->eStdOut, this, &MTextDocument::StdOut);
+		SetCallback(mShell->eStdErr, this, &MTextDocument::StdErr);
+		SetCallback(mShell->eShellStatus, this, &MTextDocument::ShellStatusIn);
+	}
 
 	mPreparedForStdOut = false;
 	mStdErrWindowSelected = false;
@@ -4193,7 +4186,7 @@ void MTextDocument::Execute()
 	//if (mStdErrWindow != nil)
 	//	mStdErrWindow->ClearList();
 	
-	//mShell->Execute(s);
+	mShell->Execute(s);
 }
 
 void MTextDocument::Idle(

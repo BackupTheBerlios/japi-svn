@@ -128,7 +128,7 @@ bool MDocument::DoSave()
 
 	mFileSaver->DoSave();
 
-	gApp->AddToRecentMenu(mFile);
+	gApp->AddToRecentMenu(mFile.GetPath());
 		
 	return true;
 }

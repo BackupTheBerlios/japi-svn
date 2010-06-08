@@ -107,8 +107,6 @@ class MTextView : public MView
 	
   private:
 
-	//virtual bool		OnRealize();
-
 	void				DrawLine(
 							uint32			inLineNr,
 							MDevice&		inDevice,
@@ -165,41 +163,6 @@ class MTextView : public MView
 							MDevice&		inDevice);
 	
 	void				AdjustScrollBars();
-
-	//virtual bool		OnKeyPressEvent(
-	//						GdkEventKey*	inEvent);
-	//
-	//bool				OnCommit(
-	//						gchar*			inText);
-	//
-	//bool				OnDeleteSurrounding(
-	//						gint			inStart,
-	//						gint			inLength);
-
-	//bool				OnConfigureEvent(
-	//						GdkEventConfigure*
-	//										inEvent);
-
-	//bool				OnPreeditChanged();
-	//
-	//bool				OnPreeditEnd();
-
-	//bool				OnPreeditStart();
-	//
-	//bool				OnRetrieveSurrounding();
-
-	//void				OnVScrollBarValueChanged();
-
-	//void				OnHScrollBarValueChanged();
-	//
-	//MSlot<bool(gchar*)>						slOnCommit;
-	//MSlot<bool(gint,gint)>					slOnDeleteSurrounding;
-	//MSlot<bool()>							slOnPreeditChanged;
-	//MSlot<bool()>							slOnPreeditStart;
-	//MSlot<bool()>							slOnPreeditEnd;
-	//MSlot<bool()>							slOnRetrieveSurrounding;
-	//MSlot<void()>							slOnVScrollBarValueChanged;
-	//MSlot<void()>							slOnHScrollBarValueChanged;
 
 	virtual void		DragEnter();
 	
