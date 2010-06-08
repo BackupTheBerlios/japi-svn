@@ -15,16 +15,18 @@
 
 using namespace std;
 
-MShellImp::~MShellImp()
+MShellImpl::~MShellImpl()
 {
-	Abort();
+	//Abort();
 }
+
+
 
 // --------------------------------------------------------------------
 
 MShell::MShell(
 	bool			inRedirectStdErr)
-	: mImpl(MShellImp::Create(eStdOut, eStdErr, eShellStatus))
+	: mImpl(MShellImpl::Create(eStdOut, eStdErr, eShellStatus))
 {
 }
 
@@ -53,8 +55,9 @@ void MShell::Kill()
 
 bool MShell::IsRunning() const
 {
-	mImpl->Poll(0);
-	return mImpl->mPID > 0;
+	//mImpl->Poll(0);
+	//return mImpl->mPID > 0;
+	return false;
 }
 
 void MShell::SetCWD(

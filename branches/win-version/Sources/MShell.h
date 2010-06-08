@@ -37,7 +37,7 @@ class MShell
 	MCallback<void(bool)>					eShellStatus;
 
   private:
-	struct MShellImp*		mImpl;
+	struct MShellImpl*		mImpl;
 };
 
 #endif
