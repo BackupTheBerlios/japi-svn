@@ -162,6 +162,9 @@ class MDevice
 	void			SetDrawWhiteSpace(
 						bool				inDrawWhiteSpace);
 	
+	static void		GetSysSelectionColor(
+						MColor&				outColor);
+
   private:
 
 					MDevice(const MDevice&);

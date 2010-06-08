@@ -20,7 +20,7 @@
 #include "MAcceleratorTable.h"
 #include "MDocClosedNotifier.h"
 #include "MFindAndOpenDialog.h"
-//#include "MFindDialog.h"
+#include "MFindDialog.h"
 //#include "MProject.h"
 #include "MPrefsDialog.h"
 #include "MStrings.h"
@@ -35,6 +35,7 @@
 //#include "MShell.h"
 //#include "MTestWindow.h"
 #include "MLanguage.h"
+#include "MDevice.h"
 
 #include "MControls.h"
 
@@ -71,7 +72,8 @@ const MColor
 	kAttribColor("#1e843b"),
 	kInvisiblesColor("#aaaaaa"),
 	kHiliteColor("#ffd281"),
-	kCurrentLineColor("#ffffcc"),
+	//kCurrentLineColor("#ffffcc"),
+	kCurrentLineColor("#e8e8e8"),
 	kMarkedLineColor("#efff7f"),
 	kPCLineColor = MColor("#cce5ff"),
 	kBreakpointColor = MColor("#5ea50c"),
@@ -212,24 +214,24 @@ bool MJapiApp::ProcessCommand(
 			break;
 		}
 		
-		//case cmd_Find:
-		//	MFindDialog::Instance().Select();
-		//	break;
-		//
-		//case cmd_FindNext:
-		//	if (not MFindDialog::Instance().FindNext())
-		//		PlaySound("warning");
-		//	break;
-	
-		//case cmd_ReplaceFindNext:
-		//	if (not MFindDialog::Instance().FindNext())
-		//		PlaySound("warning");
-		//	break;
-	
-		//case cmd_FindInNextFile:
-		//	MFindDialog::Instance().FindNext();
-		//	break;
-		//
+		case cmd_Find:
+			MFindDialog::Instance().Select();
+			break;
+		
+		case cmd_FindNext:
+			if (not MFindDialog::Instance().FindNext())
+				PlaySound("warning");
+			break;
+		
+		case cmd_ReplaceFindNext:
+			if (not MFindDialog::Instance().FindNext())
+				PlaySound("warning");
+			break;
+		
+		case cmd_FindInNextFile:
+			MFindDialog::Instance().FindNext();
+			break;
+		
 		//case cmd_OpenIncludeFile:
 		//	new MFindAndOpenDialog(MProject::Instance(), MWindow::GetFirstWindow());
 		//	break;
@@ -520,11 +522,11 @@ void MJapiApp::DoQuit()
 
 	MApplication::DoQuit();
 	
-	//if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
-	//{
-	//	MFindDialog::Instance().Close();
-	//	gtk_main_quit();
-	//}
+	if (MDocument::GetFirstDocument() == nil/* and MProject::Instance() == nil*/)
+	{
+		MFindDialog::Instance().Close();
+//		gtk_main_quit();
+	}
 }
 
 MWindow* MJapiApp::DisplayDocument(
@@ -1397,7 +1399,9 @@ void MJapiApp::InitGlobals()
 	gLanguageColors[kLAttribColor] =		Preferences::GetColor("attribute color", kAttribColor);
 	gLanguageColors[kLInvisiblesColor] =	Preferences::GetColor("invisibles color", kInvisiblesColor);
 
-	gHiliteColor = Preferences::GetColor("hilite color", kHiliteColor);
+	gHiliteColor = kHiliteColor;
+	MDevice::GetSysSelectionColor(gHiliteColor);
+	Preferences::GetColor("hilite color", kHiliteColor);
 	gInactiveHiliteColor = Preferences::GetColor("inactive hilite color", kInactiveHighlightColor);
 //	gOddRowColor = kOddRowBackColor;
 	gCurrentLineColor = Preferences::GetColor("current line color", kCurrentLineColor);

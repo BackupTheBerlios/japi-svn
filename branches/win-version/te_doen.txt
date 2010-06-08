@@ -1,4 +1,16 @@
-﻿Bugs
+﻿Windows versie
+- Windows menu fixen
+- Clip in DrawLine, DrawCaret
+- scrollen met duim gaat niet goed
+- Dialogs maken
+- MList implementeren
+- MProject tot leven wekken
+- MShell implementeren
+- Functie Popup in Edit Window
+- SFTP implementeren
+- Recent menu
+
+Bugs
 
 - asynchroon inlezen van bestanden (IOFileLoaded vs Initialize)
 

@@ -785,27 +785,37 @@ MWinDeviceImpl::MWinDeviceImpl(
 		windowImpl->SetRenderTarget(mRenderTarget);
 	}
 
-	MRect bounds;
-	inView->GetBounds(bounds);
-	inView->ConvertToWindow(bounds.x, bounds.y);
+	try
+	{
+		MRect bounds;
+		inView->GetBounds(bounds);
+		inView->ConvertToWindow(bounds.x, bounds.y);
 
-	HDC dc = ::GetDC(windowImpl->GetHandle());
-	RECT r = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
-	mRenderTarget->BindDC(dc, &r);
+		HDC dc = ::GetDC(windowImpl->GetHandle());
+		RECT r = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
+		mRenderTarget->BindDC(dc, &r);
 
-	mRenderTarget->BeginDraw();
+		mRenderTarget->BeginDraw();
 
-	int32 x = 0, y = 0;
-	inView->ConvertToWindow(x, y);
+		int32 x = 0, y = 0;
+		inView->ConvertToWindow(x, y);
 
-	mRenderTarget->SetTransform(
-		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
+		mRenderTarget->SetTransform(
+			D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
 
-	if (inUpdate)
-		ClipRect(inUpdate);
+		if (inUpdate)
+			ClipRect(inUpdate);
 
-	SetForeColor(kBlack);
-	SetBackColor(kWhite);
+		SetForeColor(kBlack);
+		SetBackColor(kWhite);
+	}
+	catch (...)
+	{
+		mRenderTarget->Release();
+		mRenderTarget = nil;
+		windowImpl->SetRenderTarget(nil);
+		throw;
+	}
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
@@ -1375,7 +1385,17 @@ bool MWinDeviceImpl::PositionToIndex(
 		float y = GetAscent();
 
 		mTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
-		outIndex = caretMetrics.textPosition;
+		
+		if (isTrailingHit)
+			++caretMetrics.textPosition;
+		
+		// remap the wchar_t index into our UTF-8 string
+		vector<uint16>::iterator ix =
+			find(mTextIndex.begin(), mTextIndex.end(), caretMetrics.textPosition);
+		if (ix == mTextIndex.end())
+			outIndex = mText.length();
+		else
+			outIndex = ix - mTextIndex.begin();
 	}
 
 	return true;
@@ -1530,3 +1550,41 @@ MDeviceImp* MDeviceImp::Create(
 	return new MWinDeviceImpl(inView, inRect, inCreateOffscreen);
 }
 
+// --------------------------------------------------------------------
+
+//#include <AeroStyle.xml>
+
+void MDevice::GetSysSelectionColor(
+	MColor&				outColor)
+{
+	// just like Visual Studio does, we take a 2/3 mix of
+	// the system highlight color and white. This way we
+	// can still use the syntax highlighted colors and don't
+	// have to fall back to some recalculated colors.
+	
+	COLORREF clr = ::GetSysColor(COLOR_HIGHLIGHT);
+	if (clr != 0)
+	{
+		uint32 red = (clr & 0x000000FF);
+		red = (2 * red + 3 * 255) / 5;
+		if (red > 255)
+			red = 255;
+		outColor.red = red;
+
+		clr >>= 8;
+
+		uint32 green = (clr & 0x000000FF);
+		green = (2 * green + 3 * 255) / 5;
+		if (green > 255)
+			green = 255;
+		outColor.green = green;
+		
+		clr >>= 8;
+
+		uint32 blue = (clr & 0x000000FF);
+		blue = (2 * blue + 3 * 255) / 5;
+		if (blue > 255)
+			blue = 255;
+		outColor.blue = blue;
+	}
+}
