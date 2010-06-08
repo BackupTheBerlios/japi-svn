@@ -18,6 +18,8 @@
 
 extern const char kAppName[], kVersionString[];
 
+extern fs::path gExecutablePath;
+
 class MWindow;
 class MDocument;
 class MFile;

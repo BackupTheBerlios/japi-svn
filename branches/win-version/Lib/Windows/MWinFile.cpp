@@ -54,9 +54,17 @@ int32 write_attribute(const fs::path& inPath, const char* inName, const void* in
 
 	if (fd >= 0)
 	{
+		FILETIME t = {};
+		
+		::GetFileTime(fd, nil, nil, &t);
+			
 		DWORD written = 0;
 		if (::WriteFile(fd, inData, inDataSize, &written, nil))
 			result = written;
+		
+		if (t.dwHighDateTime or t.dwLowDateTime)
+			::SetFileTime(fd, nil, nil, &t);
+		
 		::CloseHandle(fd);
 	}
 

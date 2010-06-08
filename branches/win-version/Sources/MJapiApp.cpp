@@ -76,7 +76,7 @@ const MColor
 	kInvisiblesColor("#aaaaaa"),
 	kHiliteColor("#ffd281"),
 	//kCurrentLineColor("#ffffcc"),
-	kCurrentLineColor("#e8e8e8"),
+	kCurrentLineColor("#eeeeee"),
 	kMarkedLineColor("#efff7f"),
 	kPCLineColor = MColor("#cce5ff"),
 	kBreakpointColor = MColor("#5ea50c"),

@@ -24,6 +24,7 @@
 #include "MTypes.h"
 #include "MPreferences.h"
 #include "MError.h"
+#include "MApplication.h"
 
 #include <zeep/xml/document.hpp>
 #include <zeep/xml/node.hpp>
@@ -87,10 +88,16 @@ IniFile::IniFile()
 	{
 		SOAP_XML_SET_STRUCT_NAME(preference);
 		
-		if (not fs::exists(gPrefsDir))
-			fs::create_directories(gPrefsDir);
-		
-		mPrefsFile = gPrefsDir / "settings.xml";
+		// we use the settings.xml that is located in the directory containing the exe, if it exists...
+		if (fs::exists(gExecutablePath))
+			mPrefsFile = gExecutablePath.parent_path() / "settings.xml";
+
+		if (not fs::exists(mPrefsFile))
+		{
+			if (not fs::exists(gPrefsDir))
+				fs::create_directories(gPrefsDir);
+			mPrefsFile = gPrefsDir / "settings.xml";
+		}
 		
 		if (fs::exists(mPrefsFile))
 		{

@@ -252,7 +252,7 @@ void MApplication::UpdateRecentMenu(
 {
 	inMenu->RemoveItems(0, inMenu->CountItems());
 
-	foreach (const MFile& file, mRecentFiles)
+	foreach (MFile file, mRecentFiles)
 	{
 		if (file.IsValid() and (file.IsLocal() == false or file.Exists()))
 			inMenu->AppendItem(file.GetPath().native_file_string(), cmd_OpenRecent);
@@ -262,8 +262,10 @@ void MApplication::UpdateRecentMenu(
 void MApplication::AddToRecentMenu(
 	const MFile&		inFile)
 {
-	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), inFile), mRecentFiles.end());
-	mRecentFiles.push_front(inFile);
+	MFile file(inFile);
+
+	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), file), mRecentFiles.end());
+	mRecentFiles.push_front(file);
 	if (mRecentFiles.size() > 10)
 		mRecentFiles.pop_back();
 }

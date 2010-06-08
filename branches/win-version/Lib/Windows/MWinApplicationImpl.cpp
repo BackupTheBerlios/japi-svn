@@ -8,6 +8,9 @@
 #include "MUtils.h"
 
 #include "MWinApplicationImpl.h"
+#include "MWinUtils.h"
+
+using namespace std;
 
 #ifdef UNICODE
 #if defined _M_IX86
@@ -36,6 +39,10 @@ MWinApplicationImpl::MWinApplicationImpl(
 	: MApplicationImpl(inApp)
 	, mInstance(inInstance)
 {
+	wchar_t path[MAX_PATH] = {};
+	if (::GetModuleFileName(NULL, path, MAX_PATH) > 0)
+		gExecutablePath = w2c(path);
+
     HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	INITCOMMONCONTROLSEX info = {
