@@ -1241,6 +1241,16 @@ void MTextView::DeactivateSelf()
 	}
 }
 
+void MTextView::ResizeFrame(
+	int32			inXDelta,
+	int32			inYDelta,
+	int32			inWidthDelta,
+	int32			inHeightDelta)
+{
+	MView::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
+	eBoundsChanged();
+}
+
 void MTextView::DragEnter()
 {
 	MRect bounds;

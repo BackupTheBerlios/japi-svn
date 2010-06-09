@@ -82,6 +82,12 @@ class MTextView : public MView
 	virtual void		ActivateSelf();
 	virtual void		DeactivateSelf();
 
+	virtual void		ResizeFrame(
+							int32			inXDelta,
+							int32			inYDelta,
+							int32			inWidthDelta,
+							int32			inHeightDelta);
+
   public:
 
 	virtual void		MouseDown(

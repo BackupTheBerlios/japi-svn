@@ -58,7 +58,7 @@ void MWinDialogImpl::CreateParams(DWORD& outStyle,
 	MWinWindowImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
 
 	outClassName = L"MWinDialogImpl";
-	outStyle = WS_OVERLAPPEDWINDOW & ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
+	outStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
 	outExStyle = 0;
 	outMenu = nil;
 }
@@ -91,7 +91,7 @@ void MWinDialogImpl::Create()
 	io::stream<io::array_source> data(rsrc.data(), rsrc.size());
 	xml::document doc(data);
 
-	xml::element* e = doc.find_first("//interface/object[@class='GtkDialog']/property[@name='title']");
+	xml::element* e = doc.find_first("/interface/object[@class='GtkDialog']/property[@name='title']");
 	if (e != nil)
 		SetTitle(e->content());
 

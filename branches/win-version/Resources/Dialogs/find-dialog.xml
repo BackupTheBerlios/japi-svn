@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<dialog>
+	<content>
+		<box>
+			
+		</box>
+	</content>
+	<footer>
+		<button title="Replace All" id="btra" />
+		<button title="Replace &amp; Find" id="btrf" />
+		<button title="Replace" id="btnr" />
+		<button title="Find" id="btnf" />
+	</footer>
+</dialog>

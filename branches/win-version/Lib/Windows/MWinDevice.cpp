@@ -5,6 +5,9 @@
 
 #include "MWinLib.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #include <cmath>
 #include <cstring>
 #include <stack>
@@ -672,6 +675,9 @@ class MWinDeviceImpl : public MDeviceImp
 	void					InitGlobals();
 	void					CreateTextFormat();
 	void					LookupFont(const wstring& inFamily);
+
+	uint32					MapBack(
+								uint32				inOffset);
 
 	MView*					mView;
 	HDC						mDC;
@@ -1390,12 +1396,7 @@ bool MWinDeviceImpl::PositionToIndex(
 			++caretMetrics.textPosition;
 		
 		// remap the wchar_t index into our UTF-8 string
-		vector<uint16>::iterator ix =
-			find(mTextIndex.begin(), mTextIndex.end(), caretMetrics.textPosition);
-		if (ix == mTextIndex.end())
-			outIndex = mText.length();
-		else
-			outIndex = ix - mTextIndex.begin();
+		outIndex = MapBack(caretMetrics.textPosition);
 	}
 
 	return true;
@@ -1516,23 +1517,39 @@ void MWinDeviceImpl::BreakLines(
 	uint32				inWidth,
 	vector<uint32>&		outBreaks)
 {
-	//pango_layout_set_width(mPangoLayout, inWidth * PANGO_SCALE);
-	//pango_layout_set_wrap(mPangoLayout, PANGO_WRAP_WORD_CHAR);
+	mTextLayout->SetMaxWidth(inWidth);
+	
+	uint32 lineCount = 0;
+	mTextLayout->GetLineMetrics(nil, 0, &lineCount);
+	if (lineCount > 0)
+	{
+		vector<DWRITE_LINE_METRICS> lineMetrics(lineCount);
+		THROW_IF_HRESULT_ERROR(
+			mTextLayout->GetLineMetrics(&lineMetrics[0], lineCount, &lineCount));
+		
+		uint32 offset = 0;
+		foreach (DWRITE_LINE_METRICS& m, lineMetrics)
+		{
+			offset += m.length;
+			outBreaks.push_back(MapBack(offset));
+		}
+	}
+}
 
-	//if (pango_layout_is_wrapped(mPangoLayout))
-	//{
-	//	uint32 line = 0;
-	//	for (;;)
-	//	{
-	//		PangoLayoutLine* pangoLine = pango_layout_get_line_readonly(mPangoLayout, line);
-	//		++line;
-	//		
-	//		if (pangoLine == nil)
-	//			break;
-	//		
-	//		outBreaks.push_back(pangoLine->start_index + pangoLine->length);
-	//	}
-	//}
+uint32 MWinDeviceImpl::MapBack(
+	uint32				inOffset)
+{
+	vector<uint16>::iterator ix =
+		find(mTextIndex.begin(), mTextIndex.end(), inOffset);
+
+	uint32 result;
+
+	if (ix == mTextIndex.end())
+		result = mText.length();
+	else
+		result = ix - mTextIndex.begin();
+
+	return result;
 }
 
 // --------------------------------------------------------------------
@@ -1588,3 +1605,4 @@ void MDevice::GetSysSelectionColor(
 		outColor.blue = blue;
 	}
 }
+
