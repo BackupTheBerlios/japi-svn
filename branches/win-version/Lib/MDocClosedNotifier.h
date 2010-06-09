@@ -6,11 +6,27 @@
 #ifndef MDOCCLOSEDNOTIFIER_H
 #define MDOCCLOSEDNOTIFIER_H
 
+class MDocClosedNotifierImpl
+{
+public:
+						MDocClosedNotifierImpl();
+
+	void				AddRef();
+	void				Release();
+
+	virtual bool		ReadSome(std::string& outText) = 0;
+
+protected:
+	virtual				~MDocClosedNotifierImpl();
+
+	int32				mRefCount;
+};
+
 class MDocClosedNotifier
 {
   public:
 						MDocClosedNotifier(
-							int							inFD);
+							MDocClosedNotifierImpl*		inImpl);
 						
 						MDocClosedNotifier(
 							const MDocClosedNotifier&	inRHS);
@@ -20,11 +36,14 @@ class MDocClosedNotifier
 
 						~MDocClosedNotifier();
 
-	int					GetFD() const;
+	// read some data from client (i.e. stdin)
+	// returns false if the client stopped sending data
+	bool				ReadSome(
+							std::string&				outText);
 
   private:
-
-	struct MDocClosedNotifierImp*						mImpl;
+	MDocClosedNotifierImpl*
+						mImpl;
 };
 
 #endif

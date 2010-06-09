@@ -539,10 +539,9 @@ MWindow* MJapiApp::DisplayDocument(
 	return result;
 }
 
-void MJapiApp::DoNew()
+MDocument* MJapiApp::CreateNewDocument()
 {
-	MDocument* doc = MDocument::Create<MTextDocument>(this, MFile());
-	DisplayDocument(doc);
+	return MDocument::Create<MTextDocument>(this, MFile());
 }
 
 void MJapiApp::DoNewProject()

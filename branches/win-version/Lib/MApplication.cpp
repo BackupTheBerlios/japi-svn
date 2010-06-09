@@ -418,8 +418,15 @@ MWindow* MApplication::DisplayDocument(
 	return result;
 }
 
+MDocument* MApplication::CreateNewDocument()
+{
+	assert(false);
+	return nil;
+}
+
 void MApplication::DoNew()
 {
+	DisplayDocument(CreateNewDocument());
 }
 
 void MApplication::SetCurrentFolder(

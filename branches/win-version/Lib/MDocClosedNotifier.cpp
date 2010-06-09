@@ -6,46 +6,57 @@
 #include "MLib.h"
 
 #include <iostream>
+#include <cassert>
 
 #include "MDocClosedNotifier.h"
 #include "MError.h"
 
 using namespace std;
 
-struct MDocClosedNotifierImp
+MDocClosedNotifierImpl::MDocClosedNotifierImpl()
+	: mRefCount(1)
 {
-	int32			mRefCount;
-	int				mFD;	
-};
+}
+
+MDocClosedNotifierImpl::~MDocClosedNotifierImpl()
+{
+	assert(mRefCount == 0);
+}
+
+void MDocClosedNotifierImpl::AddRef()
+{
+	++mRefCount;
+}
+
+void MDocClosedNotifierImpl::Release()
+{
+	if (--mRefCount <= 0)
+		delete this;
+}
+
+// --------------------------------------------------------------------
 
 MDocClosedNotifier::MDocClosedNotifier(
-	int			inFD)
-	: mImpl(new MDocClosedNotifierImp)
+	MDocClosedNotifierImpl*	inImpl)
+	: mImpl(inImpl)
 {
-	mImpl->mRefCount = 1;
-	mImpl->mFD = inFD;
 }
 
 MDocClosedNotifier::MDocClosedNotifier(
 	const MDocClosedNotifier&	inRHS)
 {
 	mImpl = inRHS.mImpl;
-	++mImpl->mRefCount;
+	mImpl->AddRef();
 }
 
 MDocClosedNotifier&	MDocClosedNotifier::operator=(
 	const MDocClosedNotifier&	inRHS)
 {
-	if (this != &inRHS)
+	if (mImpl != inRHS.mImpl)
 	{
-		if (--mImpl->mRefCount <= 0)
-		{
-			//close(mImpl->mFD);
-			delete mImpl;
-		}
-		
+		mImpl->Release();
 		mImpl = inRHS.mImpl;
-		++mImpl->mRefCount;
+		mImpl->AddRef();
 	}
 	
 	return *this;	
@@ -53,14 +64,11 @@ MDocClosedNotifier&	MDocClosedNotifier::operator=(
 
 MDocClosedNotifier::~MDocClosedNotifier()
 {
-	if (--mImpl->mRefCount <= 0)
-	{
-		//close(mImpl->mFD);
-		delete mImpl;
-	}
+	mImpl->Release();
 }
 
-int MDocClosedNotifier::GetFD() const
+bool MDocClosedNotifier::ReadSome(
+	string&			outText)
 {
-	return mImpl->mFD;
+	return mImpl->ReadSome(outText);
 }

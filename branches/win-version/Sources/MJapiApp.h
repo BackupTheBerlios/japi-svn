@@ -50,10 +50,12 @@ class MJapiApp : public MApplication
 							const std::string&	inFileName,
 							MFile&				outFile);
 
-	MDocument*			OpenOneDocument(
+	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
 
-	MWindow*			DisplayDocument(
+	virtual MDocument*	CreateNewDocument();
+
+	virtual MWindow*	DisplayDocument(
 							MDocument*			inDocument);
 
 	void				OpenProject(
@@ -76,8 +78,6 @@ class MJapiApp : public MApplication
 	typedef std::list<MWindow*>		MWindowList;
 
 	virtual void		DoQuit();
-
-	virtual void		DoNew();
 
 	void				DoNewProject();
 

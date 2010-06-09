@@ -64,7 +64,7 @@ class MApplication : public MHandler
 	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
 
-	//virtual MDocument*	AskOpenOneDocument();
+	virtual MDocument*	CreateNewDocument();
 
 	virtual MWindow*	DisplayDocument(
 							MDocument*			inDocument);

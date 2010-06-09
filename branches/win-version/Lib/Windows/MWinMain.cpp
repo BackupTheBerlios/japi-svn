@@ -7,27 +7,48 @@
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #include <windows.h>
 #include <ddeml.h>
 
 #include "MApplication.h"
 #include "MError.h"
+#include "MWinUtils.h"
+#include "MDocument.h"
+#include "MDocClosedNotifier.h"
 
 using namespace std;
 namespace po = boost::program_options;
 
-class MDDE;
+class MWinDocClosedNotifierImpl : public MDocClosedNotifierImpl
+{
+public:
+							MWinDocClosedNotifierImpl(HCONV inConv)
+								: mConv(inConv) {}
+
+							~MWinDocClosedNotifierImpl()
+							{
+								eDocClosed(mConv);
+							}
+
+	MEventOut<void(HCONV)>	eDocClosed;
+
+	virtual bool			ReadSome(string& outText)		{ return false; }
+
+private:
+	HCONV					mConv;
+};
 
 class MDDEImpl
 {
 public:
-						MDDEImpl(MDDE* inDDE, uint32 inInst, HSZ inServer, HSZ inTopic, bool inServer)
-							: mDDE(inDDE)
-							, mInst(inInst)
+						MDDEImpl(uint32 inInst, HSZ inServer, HSZ inTopic)
+							: mInst(inInst)
 							, mServer(inServer)
 							, mTopic(inTopic)
-							, mIsServer(inIsServer)
 						{
 							sInstance = this;
 						}
@@ -39,384 +60,251 @@ public:
 							::DdeUninitialize(mInst);
 						}
 
-	static MDDEImpl*	Create(MDDE* inWinDDE);
+	void				Send(HCONV inConversation, const wstring& inCommand);
 
-	HSZ					GetTopic() const			{ return mTopic; }
+	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
+							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
+							DWORD dwData1, DWORD dwData2) = 0;
+
+	static HDDEDATA CALLBACK
+						DdeCallback(UINT uType, UINT uFmt, HCONV hconv,
+							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
+							DWORD dwData1, DWORD dwData2)
+						{
+							HDDEDATA result = DDE_FNOTPROCESSED;
+							if (sInstance != nil)
+								 result = sInstance->Callback(uType, uFmt, hconv, hsz1, hsz2, hdata, dwData1, dwData2);
+							return result;
+						}
 
 protected:
 	static MDDEImpl*	sInstance;
-
-	MDDE*				mDDE;
 	uint32				mInst;
 	HSZ					mServer, mTopic;
-	bool				mIsServer;
 };
 
 MDDEImpl* MDDEImpl::sInstance;
 
+void MDDEImpl::Send(HCONV inConversation, const wstring& inCommand)
+{
+	DWORD err = 0;
+	HDDEDATA result = ::DdeClientTransaction(
+		(LPBYTE)inCommand.c_str(), inCommand.length() * sizeof(wchar_t), inConversation, 0, CF_UNICODETEXT, XTYP_EXECUTE, 1000, &err);
+	if (result)
+		::DdeFreeDataHandle(result);
+}
+
+
+
 class MDDEServerImpl : public MDDEImpl
 {
 public:
-				MDDEServerImpl(MDDE* inDDE, uint32 inInst, HSZ inServer, HSZ inTopic)
-					: MDDEImpl(inDDE, inInst, inServer, inTopic)
-				{
-					if (not ::DdeNameService(mInst, mServer, 0, DNS_REGISTER))
-						THROW(("Failed to register DDE name service"));
-				}
+						MDDEServerImpl(uint32 inInst, HSZ inServer, HSZ inTopic)
+							: MDDEImpl(inInst, inServer, inTopic)
+							, eDocClosed(this, &MDDEServerImpl::DocClosed)
+						{
+							if (not ::DdeNameService(mInst, mServer, 0, DNS_REGISTER))
+								THROW(("Failed to register DDE name service"));
+						}
+
+	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
+							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
+							DWORD dwData1, DWORD dwData2);
 
 private:
-	static HDDEDATA CALLBACK
-				DdeCallback(UINT uType, UINT uFmt, HCONV hconv,
-					HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-					DWORD dwData1, DWORD dwData2);
+
+	MEventIn<void(HCONV)>
+						eDocClosed;
+
+	void				DocClosed(HCONV inConversation);
+
+	set<HCONV>			mConversations;
 };
 
-HDDEDATA CALLBACK MDDEServerImpl::DdeCallback(UINT uType, UINT uFmt, HCONV hconv,
+HDDEDATA MDDEServerImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 	HSZ hsz1, HSZ hsz2, HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
-	HDDEDATA result = (HDDEDATA)DDE_FNOTPROCESSED;
+	HDDEDATA result = DMLERR_NO_ERROR;
 	switch (uType)
 	{
 		case XTYP_CONNECT:
-			result = (HDDEDATA)(hsz1 == sInstance->GetTopic());
+			result = (HDDEDATA)mTopic;
 			break;
 		
-//		case XTYP_CONNECT_CONFIRM:
-//			break;
-			
+		case XTYP_CONNECT_CONFIRM:
+			mConversations.insert(hconv);
+			break;
+		
+		case XTYP_DISCONNECT:
+			mConversations.erase(hconv);
+			break;
+
 		case XTYP_EXECUTE:
 		{
 			DWORD len;
 			wchar_t* cmd = reinterpret_cast<wchar_t*>(::DdeAccessData(hdata, &len));
+			len /= sizeof(wchar_t);
 
 			if (cmd != nil)
 			{
 				wstring text(cmd, len);
-				static boost::wregex rx(L"\[(open|new)(\(\"(.+?)\"(,\s*(\d+))\))?\]");
+				static boost::wregex rx(L"\\[(open|new)(\\(\"(.+?)\"(,\\s*(\\d+))?\\))?\\]");
 
 				boost::wsmatch match;
 				if (boost::regex_match(text, match, rx))
 				{
+					MDocument* doc = nil;
+					bool read = false;
 
+					if (match.str(1) == L"open")
+					{
+						fs::path file(w2c(match.str(3)));
+						doc = gApp->OpenOneDocument(MFile(file));
+					}
+					else if (match.str(1) == L"new")
+						doc = gApp->CreateNewDocument();
+
+					if (doc != nil)
+					{
+						MWinDocClosedNotifierImpl* notifier = new MWinDocClosedNotifierImpl(hconv);
+						AddRoute(notifier->eDocClosed, eDocClosed);
+						doc->AddNotifier(MDocClosedNotifier(notifier), read);
+					}
 				}
 
 				::DdeUnaccessData(hdata);
 			}
 			break;
 		}
+
+		default:
+			result = (HDDEDATA)DMLERR_NOTPROCESSED;
+			break;
 	}
 	return result;
 }
 
-HWinServerDDEImp::HDDECmdParser::HDDECmdParser(wchar_t* inText)
-	: text(inText)
-	, start(inText)
+void MDDEServerImpl::DocClosed(HCONV inConversation)
 {
-}
-
-inline
-bool HWinServerDDEImp::HDDECmdParser::isident(wchar_t inChar)
-{
-	return
-		(inChar >= 'a' && inChar <= 'z') ||
-		(inChar >= '0' && inChar <= '9') ||
-		inChar == '_';
-}
-
-void HWinServerDDEImp::HDDECmdParser::GetNextToken()
-{
-	lookahead = TokenUndefined;
-	while (lookahead == TokenUndefined)
+	if (mConversations.count(inConversation))
 	{
-		start = text;
-		switch (*text)
-		{
-			case 0:
-				lookahead = TokenEOF;
-				break;
-			case '[':
-			case ']':
-			case '(':
-			case ')':
-				lookahead = *text;
-				++text;
-				break;
-			case '-':
-				if (isdigit(text[1]))
-				{
-					value = wcstol(text, &text, 10);
-					lookahead = TokenNumber;
-				}
-				else
-					lookahead = *text;
-				break;
-			case '"':
-				++text;
-				for (;;)
-				{
-					if (*text == 0)
-						break;
-
-					if (*text == '"' && text[1] == '"')
-					{
-						text += 2;
-						continue;
-					}
-					
-					if (*text == '"')
-					{
-						lookahead = TokenString;
-						++text;
-						break;
-					}
-					++text;
-				}
-				break;
-			default:
-				if (isdigit(*text))
-				{
-					value = wcstol(text, &text, 10);
-					lookahead = TokenNumber;
-				}
-				else if (isident(*text))
-				{
-					do	++text;
-					while (isident(*text));
-					
-					if (/*std::*/wcsncmp(start, L"open", 4) == 0)
-						lookahead = TokenOpenCmd;
-					else if (/*std::*/wcsncmp(start, L"new", 3) == 0)
-						lookahead = TokenNewCmd;
-					else
-						lookahead = TokenIdent;
-				}
-				else
-				{
-					lookahead = *text;
-					++text;
-				}
-				break;	
-		}
+		::DdeDisconnect(inConversation);
+		mConversations.erase(inConversation);
 	}
 }
 
-void HWinServerDDEImp::HDDECmdParser::Match(long inToken)
+class MDDEClientImpl : public MDDEImpl
 {
-	if (lookahead == inToken)
-		GetNextToken();
-	else
-	{
-//		StOKToThrow ok;
-		THROW((pErrStatus));
-	}
-}
+public:
+				MDDEClientImpl(DWORD inInst, HCONV inConv, HSZ inServer, HSZ inTopic)
+					: MDDEImpl(inInst, inServer, inTopic)
+					, mConv(inConv)
+				{
+				}
 
-void HWinServerDDEImp::HDDECmdParser::ParseCommands()
-{
-	GetNextToken();
-	while (lookahead != TokenEOF)
-		HandleNextCommand();
-}
+				~MDDEClientImpl()
+				{
+					::DdeDisconnect(mConv);
+				}
 
-void HWinServerDDEImp::HDDECmdParser::HandleNextCommand()
-{
-	Match('[');
-	if (lookahead == TokenOpenCmd)
-	{
-		int32 lineNr = -1;
-		
-		Match(TokenOpenCmd);
-		Match('(');
-		
-		unsigned long l = static_cast<unsigned long>(text - start);
-		HAutoBuf<wchar_t> path(new wchar_t[l + 1]);
-		std::memcpy(path.get(), start, l * 2);
-		path.get()[l] = 0;
-		
-		wchar_t* p = path.get();
-		
-		if (p[l - 1] == '"')
-			p[l - 1] = 0;
-		
-		if (p[0] == '"')
-			++p;
-		
-		HUrl url;
-		url.SetSpecifier(HFileSpec(p));
-		
-		Match(TokenString);
-		
-		if (lookahead == ',')
-		{
-			Match(',');
-			lineNr = value;
-			Match(TokenNumber);
-		}
-		
-		Match(')');
+	void		Open(const fs::path& inFile, int32 inLineNr);
+	void		New();
+	void		Wait();
 
-		gApp->Open(url, false);
-		
-		if (lineNr != -1)
-			gApp->DocGoToLine(url, lineNr);
-	}
-	else if (lookahead == TokenNewCmd)
-	{
-		Match(TokenNewCmd);
-		gApp->StartUp();
-	}
-	else
-	{
-		Match(TokenIdent);
+private:
+	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
+							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
+							DWORD dwData1, DWORD dwData2);
 
-		if (lookahead == '(')
-		{
-			Match('(');
-			while (lookahead != TokenEOF && lookahead != ')')
-				GetNextToken();
-			Match(')');
-		}
-	}
-
-	Match(']');
-}
-
-#pragma mark -
-
-struct HWinClientDDEImp : public HWinDDEImp
-{
-				HWinClientDDEImp(HWinDDE* inWinDDE, DWORD inInst,
-					HCONV inConv, HSZ inServer, HSZ inTopic);
-				~HWinClientDDEImp();
-
-	void		SendOpen(const HUrl& inURL, int32 inLineNr);
-	void		SendNew();
-	
-	HCONV		fConv;
+	HCONV		mConv;
+	bool		mDone;
 };
 
-HWinClientDDEImp::HWinClientDDEImp(HWinDDE* inWinDDE, DWORD inInst,
-		HCONV inConv, HSZ inServer, HSZ inTopic)
-	: HWinDDEImp(inWinDDE, inInst, false, inServer, inTopic)
-	, fConv(inConv)
+void MDDEClientImpl::Open(const fs::path& inFile, int32 inLineNr)
 {
+	Send(mConv, (boost::wformat(L"[open(\"%1%\",%2%)]") % c2w(inFile.native_file_string()) % inLineNr).str());
 }
 
-HWinClientDDEImp::~HWinClientDDEImp()
+void MDDEClientImpl::New()
 {
-	::DdeDisconnect(fConv);
+	Send(mConv, L"[new]");
 }
 
-void HWinClientDDEImp::SendOpen(const HUrl& inURL, int32 inLineNr)
+HDDEDATA MDDEClientImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
+	HSZ hsz1, HSZ hsz2, HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
-	HFileSpec spec;
-	if (inURL.GetSpecifier(spec) == kNoError)
+	HDDEDATA result = DMLERR_NO_ERROR;
+	switch (uType)
 	{
-		std::wstring cmd = L"[open(\"";
-		cmd += spec.GetWCharPath();
-		cmd += L"\",";
-		cmd += HEncoder::EncodeFromUTF8(NumToString(inLineNr).c_str());
-		cmd += L")]";
+		case XTYP_DISCONNECT:
+			mDone = true;
+			break;
+
+		default:
+			result = (HDDEDATA)DMLERR_NOTPROCESSED;
+			break;
+	}
+	return result;
+}
+
+void MDDEClientImpl::Wait()
+{
+	mDone = false;
+	while (not mDone)
+	{
+		MSG message;
+
+		int result = ::GetMessageW (&message, NULL, 0, 0);
+		if (result <= 0)
+		{
+			if (result < 0)
+				result = message.wParam;
+			break;
+		}
 		
-		DWORD len = 2UL * (cmd.length() + 1);
-		DWORD err = 0;
-		HDDEDATA result = ::DdeClientTransaction(
-			(LPBYTE)cmd.c_str(), len, fConv, 0, CF_UNICODETEXT, XTYP_EXECUTE,
-			1000, &err);
-		if (result)
-			::DdeFreeDataHandle(result);
-//		if (err)
-//			DisplayError(HError(err, true, true));
+		::TranslateMessage(&message);
+		::DispatchMessageW(&message);
 	}
 }
 
-void HWinClientDDEImp::SendNew()
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPSTR lpszCmdLine, int nCmdShow)
 {
-	const wchar_t kCmd[] = L"[new]";
-	
-	DWORD len = 2UL * (/*std::*/wcslen(kCmd) + 1);
-	DWORD err = 0;
-	HDDEDATA result = ::DdeClientTransaction(
-		(LPBYTE)kCmd, len, fConv, 0, CF_UNICODETEXT, XTYP_EXECUTE,
-		1000, &err);
-	if (result)
-		::DdeFreeDataHandle(result);
-}
+	vector<string> args = po::split_winmain(lpszCmdLine);
 
-#pragma mark -
-
-HWinDDEImp* HWinDDEImp::Create(HWinDDE* inWinDDE, const char* inAppName)
-{
-	HWinDDEImp* result = nil;
-	
+	bool server = false;
 	DWORD inst = 0;
-	UINT err;
-	if (HasUnicode())
-		err = ::DdeInitializeW(&inst, &HWinServerDDEImp::DdeCallback,
-			CBF_FAIL_SELFCONNECTIONS | CBF_SKIP_ALLNOTIFICATIONS, 0);
-	else
-		err = ::DdeInitializeA(&inst, &HWinServerDDEImp::DdeCallback,
-			CBF_FAIL_SELFCONNECTIONS | CBF_SKIP_ALLNOTIFICATIONS, 0);
+	UINT err = ::DdeInitialize(&inst, &MDDEImpl::DdeCallback, 0, 0);
+
+	int result = 0;
 
 	if (err == DMLERR_NO_ERROR)
 	{
-		HSZ srvr = ::DdeCreateStringHandleA(inst, const_cast<char*>(inAppName), CP_WINANSI);
-		HSZ topic = ::DdeCreateStringHandleA(inst, "System", CP_WINANSI);
+		HSZ srvr = ::DdeCreateStringHandle(inst, c2w(kAppName).c_str(), CP_WINUNICODE);
+		HSZ topic = ::DdeCreateStringHandle(inst, L"System", CP_WINUNICODE);
 		
 		HCONV conn = ::DdeConnect(inst, srvr, topic, nil);
-		if (conn == 0)
-			result = new HWinServerDDEImp(inWinDDE, inst, srvr, topic);
+		if (conn != 0)
+		{
+			MDDEClientImpl client(inst, conn, srvr, topic);
+
+			if (args.empty())
+				client.New();
+			else
+			{
+				foreach (string arg, args)
+					client.Open(fs::system_complete(arg), 0);
+			}
+
+			client.Wait();
+		}
 		else
-			result = new HWinClientDDEImp(inWinDDE, inst, conn, srvr, topic);
+		{
+			MDDEServerImpl server(inst, srvr, topic);
+			result = MApplication::Main(args);
+		}
 	}
+	else
+		result = MApplication::Main(args);
 
 	return result;
-}
-
-#pragma mark -
-
-HWinDDE& HWinDDE::Instance(const char* inAppName)
-{
-	static HWinDDE sInstance(inAppName);
-	return sInstance;
-}
-
-HWinDDE::HWinDDE(const char* inAppName)
-	: fImpl(HWinDDEImp::Create(this, inAppName))
-{
-}
-
-HWinDDE::~HWinDDE()
-{
-	delete fImpl;
-}
-
-bool HWinDDE::IsServer() const
-{
-	return fImpl == nil || fImpl->fIsServer;
-}
-
-void HWinDDE::OpenURL(const HUrl& inUrl, int32 inLineNr)
-{
-	assert(not IsServer());
-	static_cast<HWinClientDDEImp*>(fImpl)->SendOpen(inUrl, inLineNr);
-}
-
-void HWinDDE::OpenNew()
-{
-	assert(not IsServer());
-	static_cast<HWinClientDDEImp*>(fImpl)->SendNew();
-}
-
-
-
-
-
-int WINAPI WinMain( HINSTANCE /*hInst*/, 	/*Win32 entry-point routine */
-					HINSTANCE /*hPreInst*/, 
-					LPSTR lpszCmdLine, 
-					int /*nCmdShow*/ )
-{
-	vector<string> args = po::split_winmain(lpszCmdLine);
-	return MApplication::Main(args);
 }
