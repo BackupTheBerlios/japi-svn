@@ -11,7 +11,7 @@
 
 using namespace std;
 
-const int kScrollbarWidth = 16;
+const int kScrollbarWidth = ::GetThemeSysSize(nil, SM_CXVSCROLL);
 
 template<class CONTROL>
 MWinControlImpl<CONTROL>::MWinControlImpl(CONTROL* inControl, const string& inLabel)

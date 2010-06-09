@@ -89,9 +89,10 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\pcre\lib;$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\pcre-build\Release;$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

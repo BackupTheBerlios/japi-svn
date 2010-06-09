@@ -166,8 +166,8 @@ bool MFindDialog::ProcessCommand(
 
 bool MFindDialog::DoClose()
 {
-	//if (mVisible)
-	//{
+	if (mVisible)
+	{
 	//	Preferences::SetInteger("find in selection", IsChecked(kInSelectionCheckboxID));
 	//	Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
 	//	Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
@@ -188,13 +188,13 @@ bool MFindDialog::DoClose()
 	//	string s;
 	//	GetText(kNameFilterEditboxID, s);
 	//	Preferences::SetString("find name filter", s);
-	//
-	//	Hide();
-	//	
-	//	mVisible = false;
-	//}
 	
-	return true;
+		Hide();
+		
+		mVisible = false;
+	}
+
+	return false;
 }
 
 void MFindDialog::Select()

@@ -33,13 +33,10 @@ class MApplication : public MHandler
 
 	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
 	
-						MApplication();
-	
 						~MApplication();
 
-	static int			Main(
-							const std::vector<std::string>&
-												inArgs);
+	static MApplication*
+						Create();
 
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
@@ -85,9 +82,15 @@ class MApplication : public MHandler
 	int					RunEventLoop();
 
   protected:
-	  friend class MApplicationImpl;
+
+						MApplication();
+
+	virtual bool		IsCloseAllCandidate(
+							MDocument*			inDocument)		{ return true; }
+
+	friend class MApplicationImpl;
 	  
-	  typedef std::list<MWindow*>		MWindowList;
+	typedef std::list<MWindow*>		MWindowList;
 
 	virtual void		DoQuit();
 	virtual void		DoNew();
@@ -110,7 +113,6 @@ class MApplication : public MHandler
 
 	bool				mQuit;
 	bool				mQuitPending;
-	bool				mInitialized;
 	std::string			mCurrentFolder;
 	std::deque<fs::path>
 						mRecentFiles;

@@ -109,20 +109,11 @@ class MJapiApp : public MApplication
 	
 	void				ShowWorksheet();
 		
-	//static gboolean		Timeout(
-	//						gpointer			inData);
-
-	//static gint			Snooper(
-	//						GtkWidget*			inGrabWidget,
-	//						GdkEventKey*		inEvent,
-	//						gpointer			inFuncData); 
-
 	void				ProcessSocketMessages();
 
 	virtual void		InitGlobals();
 	virtual void		SaveGlobals();
 
-	int					mSocketFD;
 	std::string			mCurrentFolder;
 };
 

@@ -40,7 +40,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -66,6 +66,7 @@
       <PrecompiledHeaderFile>MWinLib.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\boost\include\boost-1_43;$(SolutionDir)..\Lib\Windows;$(SolutionDir)..\Lib;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -88,6 +89,7 @@
     <ClCompile Include="..\..\Lib\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinControlsImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinDevice.cpp" />
+    <ClCompile Include="..\..\Lib\Windows\MWinDialogImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinFile.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinMain.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinMenu.cpp" />
@@ -96,6 +98,9 @@
     <ClCompile Include="..\..\Lib\Windows\MWinSound.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinUtils.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinWindowImpl.cpp" />
+    <ClCompile Include="MWinLib.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

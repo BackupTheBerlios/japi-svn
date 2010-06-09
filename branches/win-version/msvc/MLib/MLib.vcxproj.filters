@@ -83,6 +83,9 @@
     <ClCompile Include="..\..\Lib\MView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Lib\MAcceleratorTable.h">

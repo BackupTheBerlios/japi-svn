@@ -1,5 +1,4 @@
 ﻿Windows versie
-- Windows menu fixen
 - Clip in DrawLine, DrawCaret
 - scrollen met duim gaat niet goed
 - Dialogs maken
@@ -8,7 +7,6 @@
 - MShell implementeren
 - Functie Popup in Edit Window
 - SFTP implementeren
-- Recent menu
 
 Bugs
 

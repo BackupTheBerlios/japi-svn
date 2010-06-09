@@ -19,6 +19,7 @@
 #include "MWinUtils.h"
 #include "MDocument.h"
 #include "MDocClosedNotifier.h"
+#include "MCommands.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -45,26 +46,27 @@ private:
 class MDDEImpl
 {
 public:
-						MDDEImpl(uint32 inInst, HSZ inServer, HSZ inTopic)
-							: mInst(inInst)
-							, mServer(inServer)
-							, mTopic(inTopic)
-						{
-							sInstance = this;
-						}
+						MDDEImpl(uint32 inInst);
+						~MDDEImpl();
 
-						~MDDEImpl()
-						{
-							::DdeFreeStringHandle(mInst, mServer);
-							::DdeFreeStringHandle(mInst, mTopic);
-							::DdeUninitialize(mInst);
-						}
+	static uint32		Init();
 
+	bool				IsServer() const;
 	void				Send(HCONV inConversation, const wstring& inCommand);
+	void				Open(const fs::path& inFile, int32 inLineNr);
+	void				New();
+	void				Wait();
 
-	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
+protected:
+
+	MEventIn<void(HCONV)>
+						eDocClosed;
+
+	void				DocClosed(HCONV inConversation);
+
+	HDDEDATA			Callback(UINT uType, UINT uFmt, HCONV hconv,
 							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-							DWORD dwData1, DWORD dwData2) = 0;
+							DWORD dwData1, DWORD dwData2);
 
 	static HDDEDATA CALLBACK
 						DdeCallback(UINT uType, UINT uFmt, HCONV hconv,
@@ -77,13 +79,59 @@ public:
 							return result;
 						}
 
-protected:
 	static MDDEImpl*	sInstance;
 	uint32				mInst;
 	HSZ					mServer, mTopic;
+	HCONV				mConv;				// 0 for server, defined for client
+	set<HCONV>			mConversations;		// only for servers
+	bool				mIsServer;
 };
 
 MDDEImpl* MDDEImpl::sInstance;
+
+MDDEImpl::MDDEImpl(uint32 inInst)
+	: eDocClosed(this, &MDDEImpl::DocClosed)
+	, mInst(inInst)
+	, mServer(::DdeCreateStringHandle(inInst, c2w(kAppName).c_str(), CP_WINUNICODE))
+	, mTopic(::DdeCreateStringHandle(inInst, L"System", CP_WINUNICODE))
+	, mConv(::DdeConnect(inInst, mServer, mTopic, nil))
+	, mIsServer(false)
+{
+	sInstance = this;
+
+	if (mConv == 0)
+	{
+		mIsServer = true;
+
+		if (not ::DdeNameService(mInst, mServer, 0, DNS_REGISTER))
+			THROW(("Failed to register DDE name service"));
+		mConv = ::DdeConnect(inInst, mServer, mTopic, nil);
+	}
+}
+
+MDDEImpl::~MDDEImpl()
+{
+	if (mConv != 0)
+		::DdeDisconnect(mConv);
+
+	::DdeFreeStringHandle(mInst, mServer);
+	::DdeFreeStringHandle(mInst, mTopic);
+	::DdeUninitialize(mInst);
+}
+
+uint32 MDDEImpl::Init()
+{
+	DWORD inst = 0;
+	UINT err = ::DdeInitialize(&inst, &MDDEImpl::DdeCallback, 0, 0);
+	if (err != DMLERR_NO_ERROR)
+		inst = 0;
+	return inst;
+}
+
+bool MDDEImpl::IsServer() const
+{
+	return mIsServer;
+}
 
 void MDDEImpl::Send(HCONV inConversation, const wstring& inCommand)
 {
@@ -94,34 +142,7 @@ void MDDEImpl::Send(HCONV inConversation, const wstring& inCommand)
 		::DdeFreeDataHandle(result);
 }
 
-
-
-class MDDEServerImpl : public MDDEImpl
-{
-public:
-						MDDEServerImpl(uint32 inInst, HSZ inServer, HSZ inTopic)
-							: MDDEImpl(inInst, inServer, inTopic)
-							, eDocClosed(this, &MDDEServerImpl::DocClosed)
-						{
-							if (not ::DdeNameService(mInst, mServer, 0, DNS_REGISTER))
-								THROW(("Failed to register DDE name service"));
-						}
-
-	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
-							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-							DWORD dwData1, DWORD dwData2);
-
-private:
-
-	MEventIn<void(HCONV)>
-						eDocClosed;
-
-	void				DocClosed(HCONV inConversation);
-
-	set<HCONV>			mConversations;
-};
-
-HDDEDATA MDDEServerImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
+HDDEDATA MDDEImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 	HSZ hsz1, HSZ hsz2, HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
 	HDDEDATA result = DMLERR_NO_ERROR;
@@ -136,7 +157,10 @@ HDDEDATA MDDEServerImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 			break;
 		
 		case XTYP_DISCONNECT:
-			mConversations.erase(hconv);
+			if (hconv == mConv)
+				mConv = 0;
+			else
+				mConversations.erase(hconv);
 			break;
 
 		case XTYP_EXECUTE:
@@ -169,6 +193,8 @@ HDDEDATA MDDEServerImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 						MWinDocClosedNotifierImpl* notifier = new MWinDocClosedNotifierImpl(hconv);
 						AddRoute(notifier->eDocClosed, eDocClosed);
 						doc->AddNotifier(MDocClosedNotifier(notifier), read);
+
+						gApp->DisplayDocument(doc);
 					}
 				}
 
@@ -184,7 +210,7 @@ HDDEDATA MDDEServerImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 	return result;
 }
 
-void MDDEServerImpl::DocClosed(HCONV inConversation)
+void MDDEImpl::DocClosed(HCONV inConversation)
 {
 	if (mConversations.count(inConversation))
 	{
@@ -193,64 +219,19 @@ void MDDEServerImpl::DocClosed(HCONV inConversation)
 	}
 }
 
-class MDDEClientImpl : public MDDEImpl
-{
-public:
-				MDDEClientImpl(DWORD inInst, HCONV inConv, HSZ inServer, HSZ inTopic)
-					: MDDEImpl(inInst, inServer, inTopic)
-					, mConv(inConv)
-				{
-				}
-
-				~MDDEClientImpl()
-				{
-					::DdeDisconnect(mConv);
-				}
-
-	void		Open(const fs::path& inFile, int32 inLineNr);
-	void		New();
-	void		Wait();
-
-private:
-	virtual HDDEDATA	Callback(UINT uType, UINT uFmt, HCONV hconv,
-							HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-							DWORD dwData1, DWORD dwData2);
-
-	HCONV		mConv;
-	bool		mDone;
-};
-
-void MDDEClientImpl::Open(const fs::path& inFile, int32 inLineNr)
+void MDDEImpl::Open(const fs::path& inFile, int32 inLineNr)
 {
 	Send(mConv, (boost::wformat(L"[open(\"%1%\",%2%)]") % c2w(inFile.native_file_string()) % inLineNr).str());
 }
 
-void MDDEClientImpl::New()
+void MDDEImpl::New()
 {
 	Send(mConv, L"[new]");
 }
 
-HDDEDATA MDDEClientImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
-	HSZ hsz1, HSZ hsz2, HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
+void MDDEImpl::Wait()
 {
-	HDDEDATA result = DMLERR_NO_ERROR;
-	switch (uType)
-	{
-		case XTYP_DISCONNECT:
-			mDone = true;
-			break;
-
-		default:
-			result = (HDDEDATA)DMLERR_NOTPROCESSED;
-			break;
-	}
-	return result;
-}
-
-void MDDEClientImpl::Wait()
-{
-	mDone = false;
-	while (not mDone)
+	while (mConv != 0)
 	{
 		MSG message;
 
@@ -269,42 +250,35 @@ void MDDEClientImpl::Wait()
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPSTR lpszCmdLine, int nCmdShow)
 {
-	vector<string> args = po::split_winmain(lpszCmdLine);
-
-	bool server = false;
-	DWORD inst = 0;
-	UINT err = ::DdeInitialize(&inst, &MDDEImpl::DdeCallback, 0, 0);
-
 	int result = 0;
 
-	if (err == DMLERR_NO_ERROR)
+	vector<string> args = po::split_winmain(lpszCmdLine);
+	uint32 inst = MDDEImpl::Init();
+
+	unique_ptr<MApplication> app(MApplication::Create());
+
+	if (inst != 0)
 	{
-		HSZ srvr = ::DdeCreateStringHandle(inst, c2w(kAppName).c_str(), CP_WINUNICODE);
-		HSZ topic = ::DdeCreateStringHandle(inst, L"System", CP_WINUNICODE);
-		
-		HCONV conn = ::DdeConnect(inst, srvr, topic, nil);
-		if (conn != 0)
-		{
-			MDDEClientImpl client(inst, conn, srvr, topic);
+		MDDEImpl dde(inst);
 
-			if (args.empty())
-				client.New();
-			else
-			{
-				foreach (string arg, args)
-					client.Open(fs::system_complete(arg), 0);
-			}
-
-			client.Wait();
-		}
+		if (args.empty())
+			dde.New();
 		else
 		{
-			MDDEServerImpl server(inst, srvr, topic);
-			result = MApplication::Main(args);
+			foreach (string arg, args)
+				dde.Open(fs::system_complete(arg), 0);
 		}
+
+		if (dde.IsServer())
+			result = app->RunEventLoop();
+		else
+			dde.Wait();
 	}
 	else
-		result = MApplication::Main(args);
+	{
+		app->ProcessCommand(cmd_New, nil, 0, 0);
+		result = app->RunEventLoop();
+	}
 
 	return result;
 }

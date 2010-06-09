@@ -66,7 +66,6 @@ MApplication::MApplication()
 	, mImpl(MApplicationImpl::Create(this))
 	, mQuit(false)
 	, mQuitPending(false)
-	, mInitialized(false)
 {
 	// set the global pointing to us
 	gApp = this;
@@ -133,8 +132,7 @@ bool MApplication::ProcessCommand(
 		//	break;
 		
 		case cmd_Quit:
-			//if (not MSaverMixin::IsNavDialogVisible())
-				DoQuit();
+			DoQuit();
 			break;
 		
 		case cmd_New:
@@ -321,61 +319,48 @@ void MApplication::DoSaveAll()
 void MApplication::DoCloseAll(
 	MCloseReason		inAction)
 {
-//	// first close all that can be closed
-//
-//	MDocument* doc = MDocument::GetFirstDocument();
-//	
-//	while (doc != nil)
-//	{
-//		MDocument* next = doc->GetNextDocument();
-//		
-//		if (dynamic_cast<MTextDocument*>(doc) != nil and
-//			doc != MTextDocument::GetWorksheet() and
-//			not doc->IsModified())
-//		{
-//			MController* controller = doc->GetFirstController();
-//			
-////			assert(controller != nil);
-//			
-//			if (controller != nil)
-//				(void)controller->TryCloseDocument(inAction);
-//			else
-//				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
-//		}
-//		
-//		doc = next;
-//	}
-//	
-//	// then close what remains
-//
-//	doc = MDocument::GetFirstDocument();
-//
-//	while (doc != nil)
-//	{
-//		MDocument* next = doc->GetNextDocument();
-//
-//		MController* controller = doc->GetFirstController();
-//		assert(controller != nil);
-//
-//		if (doc == MTextDocument::GetWorksheet())
-//		{
-//			if (inAction == kSaveChangesQuittingApplication)
-//			{
-//				doc->DoSave();
-//				
-//				if (not controller->TryCloseDocument(inAction))
-//					break;
-//			}
-//		}
-//		else if (dynamic_cast<MTextDocument*>(doc) != nil or
-//			inAction == kSaveChangesQuittingApplication)
-//		{
-//			if (not controller->TryCloseDocument(inAction))
-//				break;
-//		}
-//		
-//		doc = next;
-//	}
+	// first close all that can be closed
+
+	MDocument* doc = MDocument::GetFirstDocument();
+	
+	while (doc != nil)
+	{
+		MDocument* next = doc->GetNextDocument();
+		
+		if (not doc->IsModified() and IsCloseAllCandidate(doc))
+		{
+			MController* controller = doc->GetFirstController();
+			
+//			assert(controller != nil);
+			
+			if (controller != nil)
+				(void)controller->TryCloseDocument(inAction);
+			else
+				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
+		}
+		
+		doc = next;
+	}
+	
+	// then close what remains
+	doc = MDocument::GetFirstDocument();
+
+	while (doc != nil)
+	{
+		MDocument* next = doc->GetNextDocument();
+
+		MController* controller = doc->GetFirstController();
+		assert(controller != nil);
+
+		if (IsCloseAllCandidate(doc) or
+			inAction == kSaveChangesQuittingApplication)
+		{
+			if (not controller->TryCloseDocument(inAction))
+				break;
+		}
+		
+		doc = next;
+	}
 }
 
 void MApplication::DoQuit()
@@ -398,24 +383,7 @@ void MApplication::DoQuit()
 MWindow* MApplication::DisplayDocument(
 	MDocument*		inDocument)
 {
-	MWindow* result = nil; //MDocWindow::FindWindowForDocument(inDocument);
-	
-	//if (result == nil)
-	//{
-	//	if (dynamic_cast<MTextDocument*>(inDocument) != nil)
-	//	{
-	//		MEditWindow* e = new MEditWindow;
-	//		e->Initialize(inDocument);
-	//		e->Show();
-
-	//		result = e;
-	//	}
-	//}
-	
-	if (result != nil)
-		result->Select();
-	
-	return result;
+	return nil;
 }
 
 MDocument* MApplication::CreateNewDocument()
@@ -480,7 +448,7 @@ MDocument* MApplication::OpenOneDocument(
 	if (doc != nil)
 	{
 		DisplayDocument(doc);
-		//MMenu::AddToRecentMenu(inFileRef);
+		AddToRecentMenu(inFileRef.GetPath());
 	}
 	
 	return doc;
@@ -488,192 +456,17 @@ MDocument* MApplication::OpenOneDocument(
 
 void MApplication::Pulse()
 {
-	if (not mInitialized)
+	MWindow::RecycleWindows();
+
+	//if (mSocketFD >= 0)
+	//	ProcessSocketMessages();
+
+	if (gQuit or MWindow::GetFirstWindow() == nil)
 	{
-		DoNew();
-		mInitialized = true;
+		DoQuit();
+		gQuit = false;	// in case user cancelled the quit
 	}
 	else
-	{
-		MWindow::RecycleWindows();
-		//
-		//if (mSocketFD >= 0)
-		//	ProcessSocketMessages();
-
-		if (gQuit or
-			(mInitialized and
-			 MWindow::GetFirstWindow() == nil))
-		{
-			DoQuit();
-			gQuit = false;	// in case user cancelled the quit
-		}
-		else
-			eIdle(GetLocalTime());
-	}
+		eIdle(GetLocalTime());
 }
 
-/*
-int main(int argc, char* argv[])
-{
-	try
-	{
-		fs::path::default_name_check(fs::no_check);
-
-		// First find out who we are. Uses proc filesystem to find out.
-		char exePath[PATH_MAX + 1];
-		
-		int r = readlink("/proc/self/exe", exePath, PATH_MAX);
-		if (r > 0)
-		{
-			exePath[r] = 0;
-			gExecutablePath = fs::system_complete(exePath);
-			gPrefixPath = gExecutablePath.parent_path();
-		}
-		
-		if (not fs::exists(gExecutablePath))
-			gExecutablePath = fs::system_complete(argv[0]);
-	
-		// Collect the options
-		int c;
-		bool fork = true, readStdin = false, install = false;
-		string target, prefix;
-
-		while ((c = getopt(argc, const_cast<char**>(argv), "h?fip:m:vt")) != -1)
-		{
-			switch (c)
-			{
-				case 'f':
-					fork = false;
-					break;
-				
-				case 'i':
-					install = true;
-					break;
-				
-				case 'p':
-					prefix = optarg;
-					break;
-				
-				case 'm':
-					target = optarg;
-					break;
-#if DEBUG
-				case 'v':
-					++VERBOSE;
-					break;
-#endif
-				default:
-					usage();
-					break;
-			}
-		}
-		
-		if (install)
-		{
-			gtk_init(&argc, &argv);
-			InstallJapi(prefix);
-		}
-		
-		// if the option was to build a target, try it and exit.
-		if (not target.empty())
-		{
-			if (optind >= argc)
-				THROW(("You should specify a project file to use for building"));
-			
-			MFile file(fs::system_complete(argv[optind]));
-			
-			unique_ptr<MProject> project(MDocument::Create<MProject>(file));
-			project->SelectTarget(target);
-			if (project->Make(false))
-				cout << "Build successful, " << target << " is up-to-date" << endl;
-			else
-				cout << "Building " << target << " Failed" << endl;
-			exit(0);
-		}
-
-		// setup locale, if we can find it.
-		fs::path localeDir = gPrefixPath / "share" / "japi" / "locale";
-		if (not fs::exists(localeDir))
-			localeDir = fs::path("/usr/local/share/japi/locale");
-		if (not fs::exists(localeDir))
-			localeDir = fs::path("/usr/share/japi/locale");
-		if (fs::exists(localeDir))
-		{
-			setlocale(LC_CTYPE, "");
-			setlocale(LC_MESSAGES, "");
-			bindtextdomain("japi", localeDir.string().c_str());
-			textdomain("japi");
-		}
-		
-		// see if we need to open any files from the commandline
-		int32 lineNr = -1;
-		MApplication::MFilesToOpenList filesToOpen;
-		
-		for (int32 i = optind; i < argc; ++i)
-		{
-			string a(argv[i]);
-			
-			if (a == "-")
-				readStdin = true;
-			else if (a.substr(0, 1) == "+")
-				lineNr = atoi(a.c_str() + 1);
-			else
-			{
-				filesToOpen.push_back(make_pair(lineNr, MFile(a)));
-				lineNr = -1;
-			}
-		}
-		
-		MApplication app;
-		
-		if (fork == false or app.IsServer())
-		{
-			g_thread_init(nil);
-			gdk_threads_init();
-			gtk_init(&argc, &argv);
-	
-			InitGlobals();
-			
-			// now start up the normal executable		
-			gtk_window_set_default_icon_name ("accessories-text-editor");
-	
-			struct sigaction act, oact;
-			act.sa_handler = my_signal_handler;
-			sigemptyset(&act.sa_mask);
-			act.sa_flags = 0;
-			::sigaction(SIGTERM, &act, &oact);
-			::sigaction(SIGUSR1, &act, &oact);
-			::sigaction(SIGPIPE, &act, &oact);
-			::sigaction(SIGINT, &act, &oact);
-	
-			gdk_notify_startup_complete();
-
-			app.RunEventLoop();
-		
-			// we're done, clean up
-			MFindDialog::Instance().Close();
-			
-			SaveGlobals();
-	
-			if (fork)
-			{
-				char path[1024] = {};
-				snprintf(path, sizeof(path), kSocketName, getuid());
-				unlink(path);
-			}
-		}
-		else if (app.IsClient())
-			app.ProcessArgv(readStdin, filesToOpen);
-	}
-	catch (exception& e)
-	{
-		cerr << e.what() << endl;
-	}
-	catch (...)
-	{
-		cerr << "Exception caught" << endl;
-	}
-	
-	return 0;
-}
-*/

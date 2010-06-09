@@ -39,6 +39,8 @@ MWinApplicationImpl::MWinApplicationImpl(
 	: MApplicationImpl(inApp)
 	, mInstance(inInstance)
 {
+	sInstance = this;
+
 	wchar_t path[MAX_PATH] = {};
 	if (::GetModuleFileName(NULL, path, MAX_PATH) > 0)
 		gExecutablePath = w2c(path);
@@ -76,7 +78,6 @@ MWinApplicationImpl::~MWinApplicationImpl()
 
 int MWinApplicationImpl::RunEventLoop()
 {
-	sInstance = this;
 	::SetTimer(NULL, 0, 100, &MWinApplicationImpl::Timer);
 
 	MSG message;

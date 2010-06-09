@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "MDialog.h"
+#include "MWindowImpl.h"
 #include "MResources.h"
 #include "MPreferences.h"
 #include "MError.h"
@@ -22,16 +23,14 @@ using namespace std;
 MDialog* MDialog::sFirst;
 
 MDialog::MDialog(
-	const char*		inDialogResource)
-	: MWindow(nil)
+	const string&		inDialogResource)
+	: MWindow(MWindowImpl::CreateDialog(inDialogResource, this))
 	, mParentWindow(nil)
 	, mNext(nil)
 	, mCloseImmediatelyOnOK(true)
 {
 	mNext = sFirst;
 	sFirst = this;
-	
-	//mStdBtnClicked.Connect(this, "on_std_btn_click");
 }
 
 MDialog::~MDialog()

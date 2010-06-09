@@ -24,6 +24,7 @@
 #undef PlaySound
 #undef GetWindow
 #undef ClipRegion
+#undef CreateDialog
 
 #pragma warning (disable : 4355)	// this is used in Base Initializer list
 #pragma warning (disable : 4996)	// unsafe function or variable

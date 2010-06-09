@@ -41,7 +41,7 @@ class MDialog : public MWindow
   protected:
 
 					MDialog(
-						const char*			inDialogResource);
+						const std::string&	inDialogResource);
 
   private:
 
