@@ -45,6 +45,8 @@ public:
 	virtual void	SimulateClick();
 	virtual void	MakeDefault(bool inDefault);
 
+	virtual void	GetIdealSize(int32& outWidth, int32& outHeight);
+
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
 
@@ -88,6 +90,28 @@ public:
 
 private:
 	std::vector<int32>		mOffsets;
+};
+
+class MWinComboboxImpl : public MWinControlImpl<MCombobox>
+{
+public:
+					MWinComboboxImpl(MCombobox* inCombobox, bool inEditable);
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+	virtual void	AddedToWindow();
+
+	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText);
+
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult);
+
+private:
+	bool			mEditable;
 };
 
 #endif

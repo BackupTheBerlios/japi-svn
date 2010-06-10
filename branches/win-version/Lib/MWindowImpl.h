@@ -19,6 +19,8 @@ class MWindowImpl
 
 	virtual				~MWindowImpl() {}
 
+	virtual void		Finish() {}
+
 	virtual void		SetTitle(std::string inTitle) = 0;
 	//virtual std::string	GetTitle() const = 0;
 

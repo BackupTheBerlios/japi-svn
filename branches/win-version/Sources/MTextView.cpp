@@ -50,7 +50,7 @@ const double
 //	Default constructor
 
 MTextView::MTextView(
-	uint32				inID,
+	const string&		inID,
 	MRect				inBounds)
 	: MView(inID, inBounds)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
@@ -191,8 +191,6 @@ void MTextView::MouseMove(
 	int32			inY,
 	uint32			inModifiers)
 {
-	PRINT(("MouseMove(%d, %d)", inX, inY));
-
 	inX -= kLeftMargin;
 	
 	if (mClickMode == eSelectStartDrag)

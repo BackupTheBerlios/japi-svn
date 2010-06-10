@@ -31,6 +31,8 @@ MDialog::MDialog(
 {
 	mNext = sFirst;
 	sFirst = this;
+
+	GetImpl()->Finish();
 }
 
 MDialog::~MDialog()

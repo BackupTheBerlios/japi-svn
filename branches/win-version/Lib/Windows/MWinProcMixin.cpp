@@ -115,6 +115,15 @@ void MWinProcMixin::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 	outCursor = ::LoadCursorW(0, IDC_ARROW);
 }
 
+void MWinProcMixin::SubClass()
+{
+	mOldWinProc = (WNDPROC)::GetWindowLong(GetHandle(), GWL_WNDPROC);
+	if (mOldWinProc != &MWinProcMixin::WinProcCallBack)
+		::SetWindowLong(GetHandle(), GWL_WNDPROC, (long)&MWinProcMixin::WinProcCallBack);
+	else
+		mOldWinProc = nil;
+}
+
 bool MWinProcMixin::WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	SetHandle(nil);

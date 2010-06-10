@@ -161,6 +161,8 @@ void MWinControlImpl<CONTROL>::AddedToWindow()
 	GetParentAndBounds(parent, bounds);
 
 	CreateHandle(parent, bounds, c2w(GetText()));
+	
+	SubClass();
 
 	// set the font to the theme font
 	HTHEME theme = ::OpenThemeData(GetHandle(), VSCLASS_TEXTSTYLE);
@@ -234,6 +236,22 @@ void MWinButtonImpl::SimulateClick()
 
 void MWinButtonImpl::MakeDefault(bool inDefault)
 {
+}
+
+void MWinButtonImpl::GetIdealSize(int32& outWidth, int32& outHeight)
+{
+	outWidth = 75;
+	outHeight = 23;
+
+	SIZE size;
+	if (GetHandle() != nil and Button_GetIdealSize(GetHandle(), &size))
+	{
+		if (outWidth < size.cx + 20)
+			outWidth = size.cx + 20;
+
+		if (outHeight < size.cy + 2)
+			outHeight = size.cy + 2;
+	}
 }
 
 MButtonImpl* MButtonImpl::Create(MButton* inButton, const string& inLabel)
@@ -445,3 +463,102 @@ MStatusbarImpl* MStatusbarImpl::Create(MStatusbar* inStatusbar, uint32 inPartCou
 	return new MWinStatusbarImpl(inStatusbar, inPartCount, inPartWidths);
 }
 
+// --------------------------------------------------------------------
+
+MWinComboboxImpl::MWinComboboxImpl(MCombobox* inCombobox, bool inEditable)
+	: MWinControlImpl(inCombobox, "")
+	, mEditable(inEditable)
+{
+}
+
+void MWinComboboxImpl::SetChoices(const std::vector<std::string>& inChoices)
+{
+}
+
+void MWinComboboxImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"COMBOBOX";
+	if (mEditable)
+		outStyle = WS_CHILD | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP;
+	else
+		outStyle = WS_CHILD | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP;
+}
+
+void MWinComboboxImpl::AddedToWindow()
+{
+	MWinControlImpl::AddedToWindow();
+	
+	AddHandler(WM_MOUSEWHEEL, boost::bind(&MWinComboboxImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
+}
+
+bool MWinComboboxImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText)
+{
+	bool result = false;
+
+	if (inKeyCode == kReturnKeyCode or
+		inKeyCode == kEnterKeyCode or
+		inKeyCode == kTabKeyCode or
+		inKeyCode == kEscapeKeyCode or
+		(inModifiers & ~kShiftKey) != 0)
+	{
+		result = MWinControlImpl::DispatchKeyDown(inKeyCode, inModifiers, inText);
+	}
+
+	return result;
+}
+
+bool MWinComboboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool result = true;
+	
+	switch (inUMsg)
+	{
+		case CBN_SELENDOK:
+			mControl->eValueChanged(-1, "Nieuw!");
+			break;
+		
+		case CBN_EDITUPDATE:
+			mControl->eValueChanged(-1, "Nieuw!");
+			break;
+		
+		case CBN_DROPDOWN:
+		{
+//			int count = CountItems() + 1;
+//			if (count < 1) count = 1;
+//			if (count > 8) count = 8;
+			int count = 5;
+			
+			MRect bounds;
+			mControl->GetBounds(bounds);
+			
+			int itemHeight = ::SendMessage(GetHandle(), CB_GETITEMHEIGHT, 0, 0);
+			::SetWindowPos(GetHandle(), 0, 0, 0, bounds.width,
+				count * itemHeight + bounds.height + 2,
+				SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_HIDEWINDOW);
+			::SetWindowPos(GetHandle(), 0, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_SHOWWINDOW);
+			break;
+		}
+		
+		default:
+			result = false;
+			break;
+	}
+	
+	return result;
+}
+
+bool MWinComboboxImpl::WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult)
+{
+	return false;
+}
+
+MComboboxImpl* MComboboxImpl::Create(MCombobox* inCombobox, bool inEditable)
+{
+	return new MWinComboboxImpl(inCombobox, inEditable);
+}

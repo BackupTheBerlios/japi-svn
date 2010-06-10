@@ -10,7 +10,7 @@
 using namespace std;
 
 template<class IMPL>
-MControl<IMPL>::MControl(uint32 inID, MRect inBounds, IMPL* inImpl)
+MControl<IMPL>::MControl(const string& inID, MRect inBounds, IMPL* inImpl)
 	: MView(inID, inBounds)
 	, MHandler(nil)
 	, mImpl(inImpl)
@@ -122,14 +122,19 @@ void MControl<IMPL>::AddedToWindow()
 
 // --------------------------------------------------------------------
 
-MButton::MButton(uint32 inID, MRect inBounds, const string& inLabel)
+MButton::MButton(const string& inID, MRect inBounds, const string& inLabel)
 	: MControl<MButtonImpl>(inID, inBounds, MButtonImpl::Create(this, inLabel))
 {
 }
 
+void MButton::GetIdealSize(int32& outWidth, int32& outHeight)
+{
+	mImpl->GetIdealSize(outWidth, outHeight);
+}
+
 // --------------------------------------------------------------------
 
-MScrollbar::MScrollbar(uint32 inID, MRect inBounds)
+MScrollbar::MScrollbar(const string& inID, MRect inBounds)
 	: MControl<MScrollbarImpl>(inID, inBounds, MScrollbarImpl::Create(this))
 {
 }
@@ -171,7 +176,7 @@ void MScrollbar::SetViewSize(int32 inViewSize)
 
 // --------------------------------------------------------------------
 
-MStatusbar::MStatusbar(uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[])
+MStatusbar::MStatusbar(const string& inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[])
 	: MControl<MStatusbarImpl>(inID, inBounds, MStatusbarImpl::Create(this, inPartCount, inPartWidths))
 {
 	SetBindings(true, false, true, true);
@@ -181,3 +186,26 @@ void MStatusbar::SetStatusText(uint32 inPartNr, const string& inText, bool inBor
 {
 	mImpl->SetStatusText(inPartNr, inText, inBorder);
 }
+
+// --------------------------------------------------------------------
+
+MCombobox::MCombobox(const string& inID, MRect inBounds, bool inEditable)
+	: MControl<MComboboxImpl>(inID, inBounds, MComboboxImpl::Create(this, inEditable))
+{
+}
+
+void MCombobox::SetText(const string& inText)
+{
+	mImpl->SetText(inText);
+}
+
+string MCombobox::GetText() const
+{
+	return mImpl->GetText();
+}
+
+void MCombobox::SetChoices(const vector<string>& inChoices)
+{
+	mImpl->SetChoices(inChoices);
+}
+

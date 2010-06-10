@@ -78,6 +78,8 @@ MApplication::~MApplication()
 
 void MApplication::InitGlobals()
 {
+	mRecentFiles.clear();
+
 	vector<string> recent;
 	Preferences::GetArray("recent", recent);
 
@@ -85,7 +87,7 @@ void MApplication::InitGlobals()
 	{
 		fs::path file(path);
 		if (fs::exists(file))
-			mRecentFiles.push_back(file);
+			AddToRecentMenu(file);
 	}
 }
 

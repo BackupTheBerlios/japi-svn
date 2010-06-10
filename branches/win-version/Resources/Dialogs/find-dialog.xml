@@ -1,14 +1,13 @@
 <?xml version="1.0"?>
-<dialog>
-	<content>
-		<box>
-			
-		</box>
-	</content>
-	<footer>
-		<button title="Replace All" id="btra" />
-		<button title="Replace &amp; Find" id="btrf" />
-		<button title="Replace" id="btnr" />
-		<button title="Find" id="btnf" />
-	</footer>
+<dialog title="Find">
+	<vbox margin-x="10" margin-y="9" bind="left top right bottom">
+		<combobox id='find' bind="left top right"/>
+		<combobox id='repl' bind="left top right"/>
+	</vbox>
+	<hbox margin-x="10" margin-y="9" bind="left right bottom">
+		<button bind="right bottom" title="Replace All" id="btra" />
+		<button bind="right bottom" title="Replace &amp;&amp; Find" id="btrf" />
+		<button bind="right bottom" title="Replace" id="btnr" />
+		<button bind="right bottom" title="Find" id="btnf" />
+	</hbox>
 </dialog>

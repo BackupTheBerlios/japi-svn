@@ -24,7 +24,7 @@
 using namespace std;
 
 MView::MView(
-	uint32			inID,
+	const string&	inID,
 	MRect			inBounds)
 	: mID(inID)
 	, mBounds(0, 0, inBounds.width, inBounds.height)
@@ -226,9 +226,9 @@ void MView::ResizeFrame(
 			dy = inHeightDelta;
 		}
 
-		if (dx or dy or dw or dh)
+//		if (dx or dy or dw or dh)
 			child->ResizeFrame(dx, dy, dw, dh);
-		else
+		//else
 			child->Invalidate();
 	}
 
@@ -1028,7 +1028,7 @@ void MView::Draw(
 
 // --------------------------------------------------------------------
 
-MViewScroller::MViewScroller(uint32 inID,
+MViewScroller::MViewScroller(const string& inID,
 		MView* inTarget, bool inHScrollbar, bool inVScrollbar)
 	: MView(inID, MRect(0, 0, 0, 0))
 	, mTarget(inTarget)
@@ -1054,7 +1054,7 @@ MViewScroller::MViewScroller(uint32 inID,
 		if (inHScrollbar)
 			r.height -= kScrollbarWidth;
 
-		mVScrollbar = new MScrollbar('vscr', r);
+		mVScrollbar = new MScrollbar("vscrollbar", r);
 		mVScrollbar->SetBindings(false, true, true, true);
 		mVScrollbar->SetValue(0);
 		AddChild(mVScrollbar);
@@ -1071,7 +1071,7 @@ MViewScroller::MViewScroller(uint32 inID,
 		if (inVScrollbar)
 			r.width -= kScrollbarWidth;
 
-		mHScrollbar = new MScrollbar('hscr', r);
+		mHScrollbar = new MScrollbar("hscrollbar", r);
 		AddChild(mHScrollbar);
 		mHScrollbar->SetBindings(true, false, true, true);
 		mHScrollbar->SetValue(0);

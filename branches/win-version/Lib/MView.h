@@ -38,7 +38,8 @@ class MView
 {
   public:
 					MView(
-						uint32			inID,
+						const std::string&
+										inID,
 						MRect			inBounds);
 
 	virtual			~MView();
@@ -162,7 +163,7 @@ class MView
 						int32			inX,
 						int32			inY);
 
-	void			UpdateNow();
+	virtual void	UpdateNow();
 
 	virtual void	AdjustCursor(
 						int32			inX,
@@ -212,7 +213,7 @@ class MView
 	void			SuperHide();
 	virtual void	HideSelf();
 
-	uint32			mID;
+	std::string		mID;
 	MRect			mBounds, mFrame;
 	int32			mViewWidth, mViewHeight;
 	MView*			mParent;
@@ -228,7 +229,7 @@ class MView
 class MViewScroller : public MView
 {
 public:
-					MViewScroller(uint32 inID, MView* inTarget,
+					MViewScroller(const std::string& inID, MView* inTarget,
 						bool inHScrollbar, bool inVScrollbar);
 
 	virtual void	AdjustScrollbars();

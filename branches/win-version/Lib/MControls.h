@@ -29,7 +29,7 @@ public:
 
 protected:
 
-					MControl(uint32 inID, MRect inBounds, I* inImpl);
+					MControl(const std::string& inID, MRect inBounds, I* inImpl);
 
 	virtual void	ActivateSelf();
 	virtual void	DeactivateSelf();
@@ -49,6 +49,8 @@ protected:
 	I*				mImpl;
 };
 
+// --------------------------------------------------------------------
+
 class MButtonImpl;
 
 class MButton : public MControl<MButtonImpl>
@@ -56,11 +58,15 @@ class MButton : public MControl<MButtonImpl>
 public:
 	typedef MButtonImpl		MImpl;
 	
-					MButton(uint32 inID, MRect inBounds, const std::string& inLabel);
+					MButton(const std::string& inID, MRect inBounds, const std::string& inLabel);
+
+	void			GetIdealSize(int32& outWidth, int32& outHeight);
 
 	MEventOut<void()>
 					eClicked;
 };
+
+// --------------------------------------------------------------------
 
 extern const int kScrollbarWidth;
 class MScrollbarImpl;
@@ -70,7 +76,7 @@ class MScrollbar : public MControl<MScrollbarImpl>
 public:
 	typedef MScrollbarImpl		MImpl;
 
-					MScrollbar(uint32 inID, MRect inBounds);
+					MScrollbar(const std::string& inID, MRect inBounds);
 
 	virtual int32	GetValue() const;
 	virtual void	SetValue(int32 inValue);
@@ -87,6 +93,8 @@ public:
 					eScroll;
 };
 
+// --------------------------------------------------------------------
+
 class MStatusbarImpl;
 
 class MStatusbar : public MControl<MStatusbarImpl>
@@ -94,9 +102,30 @@ class MStatusbar : public MControl<MStatusbarImpl>
 public:
 	typedef MStatusbarImpl		MImpl;
 
-					MStatusbar(uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
+					MStatusbar(const std::string& inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
 
 	virtual void	SetStatusText(uint32 inPartNr, const std::string& inText, bool inBorder);
+};
+
+// --------------------------------------------------------------------
+
+class MComboboxImpl;
+
+class MCombobox : public MControl<MComboboxImpl>
+{
+public:
+	typedef MComboboxImpl		MImpl;
+		
+					MCombobox(const std::string& inID, MRect inBounds, bool inEditable);
+
+	MEventOut<void(int,std::string)>
+					eValueChanged;
+	
+	virtual void	SetText(const std::string& inText);
+	virtual std::string
+					GetText() const;
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices);
 };
 
 #endif

@@ -6,7 +6,7 @@ use warnings;
 use File::Copy;
 use Getopt::Long;
 
-my $rcDir = "msvc/japi-vc/Rsrc/";
+my $rcDir = "msvc/Rsrc/";
 my $rcFile = "MJapi.rc";
 my $rcRsrc = "Resources";
 

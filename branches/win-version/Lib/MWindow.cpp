@@ -29,7 +29,7 @@ MWindow* MWindow::sRecycle = nil;
 
 MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 		MWindowFlags inFlags, const string& inMenu)
-	: MView('root', inBounds)
+	: MView("window", inBounds)
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 	, mFocus(this)
@@ -41,7 +41,7 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 }
 
 MWindow::MWindow(MWindowImpl* inImpl)
-	: MView('root', MRect(0, 0, 100, 100))
+	: MView("window", MRect(0, 0, 100, 100))
 	, MHandler(gApp)
 	, mImpl(inImpl)
 	, mFocus(this)
@@ -53,6 +53,14 @@ MWindow::MWindow(MWindowImpl* inImpl)
 MWindow::~MWindow()
 {
 	RemoveWindowFromList(this);
+}
+
+void MWindow::SetImpl(
+	MWindowImpl*	inImpl)
+{
+	if (mImpl != nil)
+		delete mImpl;
+	mImpl = inImpl;
 }
 
 void MWindow::RecycleWindows()
@@ -155,6 +163,11 @@ void MWindow::Activate()
 void MWindow::Deactivate()
 {
 	MView::Deactivate();
+}
+
+void MWindow::UpdateNow()
+{
+	mImpl->UpdateNow();
 }
 
 bool MWindow::DoClose()

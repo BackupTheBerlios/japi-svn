@@ -40,6 +40,8 @@ class MWindow : public MView, public MHandler
 	virtual void			Activate();
 	virtual void			Deactivate();
 
+	virtual void			UpdateNow();
+
 	void					Close();
 	
 	void					Beep();
@@ -114,6 +116,9 @@ class MWindow : public MView, public MHandler
 								MWindowImpl*	inImpl);
 
 	virtual bool			DoClose();
+
+	void					SetImpl(
+								MWindowImpl*	inImpl);
 
   private:
 

@@ -27,7 +27,7 @@ class MWinProcMixin
 	virtual void	CreateHandle(MWinProcMixin* inParent, MRect inBounds,
 						const std::wstring& inTitle);
 
-//	void			SubClass();
+	void			SubClass();
 
 	typedef boost::function<bool(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 						LPARAM inLParam, int& outResult)> MWMCall;

@@ -23,7 +23,7 @@ class MTextView : public MView
 {
   public:
 						MTextView(
-							uint32				inID,
+							const std::string&	inID,
 							MRect				inBounds);
 						
 	virtual				~MTextView();

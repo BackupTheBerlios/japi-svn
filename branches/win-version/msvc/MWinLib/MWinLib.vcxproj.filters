@@ -73,7 +73,7 @@
     <ClCompile Include="MWinLib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Lib\Windows\MWinDialogImpl.cpp">
+    <ClCompile Include="..\..\Lib\Windows\MWinDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

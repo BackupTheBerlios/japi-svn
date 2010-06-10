@@ -59,6 +59,8 @@ public:
 	virtual void	SimulateClick() = 0;
 	virtual void	MakeDefault(bool inDefault) = 0;
 
+	virtual void	GetIdealSize(int32& outWidth, int32& outHeight) = 0;
+
 	static MButtonImpl*
 					Create(MButton* inButton, const std::string& inLabel);
 };
@@ -73,6 +75,22 @@ public:
 
 	static MStatusbarImpl*
 					Create(MStatusbar* inStatusbar, uint32 inPartCount, int32 inPartWidths[]);
+};
+
+class MComboboxImpl : public MControlImpl<MCombobox>
+{
+public:
+					MComboboxImpl(MCombobox* inCombobox)
+						: MControlImpl(inCombobox) {}
+	
+	virtual void	SetText(const std::string& inText) = 0;
+	virtual std::string
+					GetText() const = 0;
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices) = 0;
+
+	static MComboboxImpl*
+					Create(MCombobox* inCombobox, bool inEditable);
 };
 
 #endif
