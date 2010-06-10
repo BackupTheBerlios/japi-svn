@@ -209,3 +209,9 @@ void MCombobox::SetChoices(const vector<string>& inChoices)
 	mImpl->SetChoices(inChoices);
 }
 
+// --------------------------------------------------------------------
+
+MCaption::MCaption(const string& inID, MRect inBounds, const string& inText)
+	: MControl<MCaptionImpl>(inID, inBounds, MCaptionImpl::Create(this, inText))
+{
+}

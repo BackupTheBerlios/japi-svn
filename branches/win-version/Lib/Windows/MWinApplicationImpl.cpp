@@ -10,6 +10,7 @@
 #include "MWinApplicationImpl.h"
 #include "MWinUtils.h"
 #include "MWinWindowImpl.h"
+#include "MDialog.h"
 
 using namespace std;
 
@@ -96,8 +97,12 @@ int MWinApplicationImpl::RunEventLoop()
 		}
 
 		MWindow* first = MWindow::GetFirstWindow();
-		if (first != nil and static_cast<MWinWindowImpl*>(first->GetImpl())->IsDialogMessage(message))
+		if (first != nil and
+			dynamic_cast<MDialog*>(first) != nil and
+			static_cast<MWinWindowImpl*>(first->GetImpl())->IsDialogMessage(message))
+		{
 			continue;
+		}
 		
 		::TranslateMessage(&message);
 		::DispatchMessageW(&message);

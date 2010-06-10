@@ -128,4 +128,17 @@ public:
 	virtual void	SetChoices(const std::vector<std::string>& inChoices);
 };
 
+// --------------------------------------------------------------------
+
+class MCaptionImpl;
+
+class MCaption : public MControl<MCaptionImpl>
+{
+public:
+	typedef MCaptionImpl		MImpl;
+		
+					MCaption(const std::string& inID, MRect inBounds,
+						const std::string& inText);
+};
+
 #endif

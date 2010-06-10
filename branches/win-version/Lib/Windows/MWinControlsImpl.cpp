@@ -573,3 +573,24 @@ MComboboxImpl* MComboboxImpl::Create(MCombobox* inCombobox, bool inEditable)
 {
 	return new MWinComboboxImpl(inCombobox, inEditable);
 }
+
+// --------------------------------------------------------------------
+
+MWinCaptionImpl::MWinCaptionImpl(MCaption* inControl, const string& inText)
+	: MWinControlImpl(inControl, inText)
+{
+}
+
+void MWinCaptionImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"STATIC";
+	outStyle = WS_CHILD;
+}
+
+MCaptionImpl* MCaptionImpl::Create(MCaption* inCaption, const std::string& inText)
+{
+	return new MWinCaptionImpl(inCaption, inText);
+}

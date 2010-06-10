@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 <dialog title="Find">
 	<vbox margin-x="10" margin-y="9" bind="left top right bottom">
-		<combobox id='find' bind="left top right"/>
-		<combobox id='repl' bind="left top right"/>
+		<hbox bind="left top right">
+			<caption text="Find"/>
+			<combobox id='find' bind="left top right"/>
+		</hbox>
+		<hbox bind="left top right">
+			<caption text="Replace"/>
+			<combobox id='repl' bind="left top right"/>
+		</hbox>
+<!--		<separator />-->
 	</vbox>
 	<hbox margin-x="10" margin-y="9" bind="left right bottom">
 		<button bind="right bottom" title="Replace All" id="btra" />

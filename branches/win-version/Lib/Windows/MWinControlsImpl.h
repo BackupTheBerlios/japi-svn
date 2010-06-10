@@ -131,4 +131,13 @@ private:
 	bool			mEditable;
 };
 
+class MWinCaptionImpl : public MWinControlImpl<MCaption>
+{
+public:
+					MWinCaptionImpl(MCaption* inControl, const std::string& inText);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+};
+
 #endif

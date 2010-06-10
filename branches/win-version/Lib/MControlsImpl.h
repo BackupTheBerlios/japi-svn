@@ -93,4 +93,14 @@ public:
 					Create(MCombobox* inCombobox, bool inEditable);
 };
 
+class MCaptionImpl : public MControlImpl<MCaption>
+{
+public:
+					MCaptionImpl(MCaption* inCaption)
+						: MControlImpl(inCaption)				{}
+
+	static MCaptionImpl*
+					Create(MCaption* inCaption, const std::string& inText);
+};
+
 #endif

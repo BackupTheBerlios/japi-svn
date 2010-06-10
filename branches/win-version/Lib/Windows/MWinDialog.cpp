@@ -188,6 +188,24 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		inParent->AddChild(combo);
 		result = combo;
 	}
+	else if (inTemplate->name() == "caption")
+	{
+		string text = inTemplate->get_attribute("text");
+
+		MRect bounds(inX, inY, 0, 0);
+		GetTextMetrics(text, L"ContentArea;BodyText;Caption", TEXT_LABEL, 0, bounds.width, bounds.height);
+//		bounds.width += 20;
+//		if (bounds.width < 75)
+//			bounds.width = 75;
+
+		bounds.height += 4;
+		if (bounds.height < 23)
+			bounds.height = 23;
+		
+		MCaption* caption = new MCaption("caption", bounds, text);
+		inParent->AddChild(caption);
+		result = caption;
+	}
 	else if (name == "vbox" or name == "dialog")
 	{
 		int32 marginX = 0;
