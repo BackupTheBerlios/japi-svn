@@ -42,7 +42,7 @@ class MWinDialogImpl : public MWinWindowImpl
 private:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle, wstring& outClassName, HMENU& outMenu);
-	virtual void	RegisterParams(UINT& outStyle, HCURSOR& outCursor, HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
+	virtual void	RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor, HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
 
 	MView*			CreateControls(MView* inParent, int32 inX, int32 inY,
 						xml::element* inTemplate);
@@ -72,18 +72,20 @@ void MWinDialogImpl::CreateParams(DWORD& outStyle,
 
 	outClassName = L"MWinDialogImpl";
 	outStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
-	outExStyle = 0;
+	outExStyle = WS_EX_CONTROLPARENT;
 	outMenu = nil;
 }
 
-void MWinDialogImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
+void MWinDialogImpl::RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor,
 	HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground)
 {
-	MWinWindowImpl::RegisterParams(outStyle, outCursor, outIcon, outSmallIcon, outBackground);
+	MWinWindowImpl::RegisterParams(outStyle, outWndExtra,
+		outCursor, outIcon, outSmallIcon, outBackground);
 	
 	HINSTANCE inst = MWinApplicationImpl::GetInstance()->GetHInstance();
 	
 	outStyle = 0;// CS_HREDRAW | CS_VREDRAW;
+	outWndExtra = DLGWINDOWEXTRA;
 	//outIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	outCursor = ::LoadCursor(NULL, IDC_ARROW);
@@ -92,6 +94,8 @@ void MWinDialogImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
 
 void MWinDialogImpl::Finish()
 {
+	mFlags = kMFixedSize;
+
 	mrsrc::rsrc rsrc(string("Dialogs/") + mRsrc + ".xml");
 		
 	if (not rsrc)
@@ -116,7 +120,7 @@ void MWinDialogImpl::Finish()
 	MRect bounds(CW_USEDEFAULT, CW_USEDEFAULT, minWidth, minHeight);
 
 	// now create the dialog
-	MWinProcMixin::CreateHandle(nil, bounds, title);
+	MWinWindowImpl::Create(bounds, title);
 
 	// now we have the handle, get the DC and theme
 	mDC = ::GetDC(GetHandle());
@@ -163,6 +167,13 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		//button->GetIdealSize(bounds.width, bounds.height);
 
 		GetTextMetrics(title, L"PushButton;Button", BP_PUSHBUTTON, PBS_NORMAL, bounds.width, bounds.height);
+		bounds.width += 20;
+		if (bounds.width < 75)
+			bounds.width = 75;
+
+		bounds.height += 4;
+		if (bounds.height < 23)
+			bounds.height = 23;
 
 		button->ResizeFrame(0, 0, bounds.width - 75, bounds.height - 23);
 

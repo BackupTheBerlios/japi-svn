@@ -50,8 +50,9 @@ protected:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
-	virtual void	RegisterParams(UINT& outStyle, HCURSOR& outCursor,
-						HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
+	virtual void	RegisterParams(UINT& outStyle, int& outWndExtra,
+						HCURSOR& outCursor, HICON& outIcon,
+						HICON& outSmallIcon, HBRUSH& outBackground);
 
 	  //virtual void	CreateHandle(MCreateParams& inParam);
 	

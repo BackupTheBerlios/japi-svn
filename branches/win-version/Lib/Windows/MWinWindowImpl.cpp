@@ -75,10 +75,11 @@ void MWinWindowImpl::CreateParams(DWORD& outStyle,
 		outMenu = static_cast<MWinMenuImpl*>(mMenubar->impl())->GetHandle();
 }
 
-void MWinWindowImpl::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
-	HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground)
+void MWinWindowImpl::RegisterParams(UINT& outStyle, int& outWndExtra,
+	HCURSOR& outCursor, HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground)
 {
-	MWinProcMixin::RegisterParams(outStyle, outCursor, outIcon, outSmallIcon, outBackground);
+	MWinProcMixin::RegisterParams(outStyle, outWndExtra,
+		outCursor, outIcon, outSmallIcon, outBackground);
 	
 	HINSTANCE inst = MWinApplicationImpl::GetInstance()->GetHInstance();
 	
@@ -159,6 +160,11 @@ void MWinWindowImpl::SetRenderTarget(
 
 	if (mRenderTarget != nil)
 		mRenderTarget->AddRef();
+}
+
+bool MWinWindowImpl::IsDialogMessage(MSG& inMessage)
+{
+	return ::IsDialogMessageW(GetHandle(), &inMessage);
 }
 
 // --------------------------------------------------------------------

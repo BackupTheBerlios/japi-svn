@@ -9,6 +9,7 @@
 
 #include "MWinApplicationImpl.h"
 #include "MWinUtils.h"
+#include "MWinWindowImpl.h"
 
 using namespace std;
 
@@ -93,6 +94,10 @@ int MWinApplicationImpl::RunEventLoop()
 				result = message.wParam;
 			break;
 		}
+
+		MWindow* first = MWindow::GetFirstWindow();
+		if (first != nil and static_cast<MWinWindowImpl*>(first->GetImpl())->IsDialogMessage(message))
+			continue;
 		
 		::TranslateMessage(&message);
 		::DispatchMessageW(&message);

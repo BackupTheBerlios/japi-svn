@@ -467,6 +467,7 @@ MStatusbarImpl* MStatusbarImpl::Create(MStatusbar* inStatusbar, uint32 inPartCou
 
 MWinComboboxImpl::MWinComboboxImpl(MCombobox* inCombobox, bool inEditable)
 	: MWinControlImpl(inCombobox, "")
+	, mEditor(this)
 	, mEditable(inEditable)
 {
 }
@@ -491,6 +492,16 @@ void MWinComboboxImpl::AddedToWindow()
 {
 	MWinControlImpl::AddedToWindow();
 	
+	HWND edit = ::GetWindow(GetHandle(), GW_CHILD);
+	if (edit != nil)
+	{
+		mEditor.SetHandle(edit);
+		mEditor.SubClass();
+		//mEditor.AddMessageHandler(WM_MOUSEWHEEL, this, &HWinComboBoxImp::WMMouseWheel);
+		//mEditor.AddMessageHandler(kControlMsgBase + EN_SETFOCUS,
+		//	static_cast<HNativeControlNodeImp*>(this), &HNativeControlNodeImp::WMSetFocus);
+	}
+
 	AddHandler(WM_MOUSEWHEEL, boost::bind(&MWinComboboxImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
 }
 

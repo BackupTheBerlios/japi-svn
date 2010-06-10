@@ -82,8 +82,9 @@ void MWinProcMixin::CreateHandle(MWinProcMixin* inParent, MRect inBounds, const 
 	if (not ::GetClassInfoExW(instance, lWndClass.lpszClassName, &lWndClass))
 	{
 		lWndClass.lpfnWndProc = &MWinProcMixin::WinProcCallBack;
-		RegisterParams(lWndClass.style, lWndClass.hCursor,
-			lWndClass.hIcon, lWndClass.hIconSm, lWndClass.hbrBackground);
+		RegisterParams(lWndClass.style, lWndClass.cbWndExtra,
+			lWndClass.hCursor, lWndClass.hIcon,
+			lWndClass.hIconSm, lWndClass.hbrBackground);
 
 		ATOM a = ::RegisterClassExW(&lWndClass);
 		if (a == 0)
@@ -108,7 +109,7 @@ void MWinProcMixin::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	outStyle = WS_CHILD | WS_CLIPSIBLINGS;
 }
 
-void MWinProcMixin::RegisterParams(UINT& outStyle, HCURSOR& outCursor,
+void MWinProcMixin::RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor,
 	HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground)
 {
 	outStyle = CS_VREDRAW | CS_HREDRAW;

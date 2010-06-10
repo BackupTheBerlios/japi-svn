@@ -63,11 +63,13 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	void			SetRenderTarget(
 						ID2D1RenderTarget* inTarget);
 
+	bool			IsDialogMessage(MSG& inMesssage);
+
   protected:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
 						std::wstring& outClassName, HMENU& outMenu);
-	virtual void	RegisterParams(UINT& outStyle, HCURSOR& outCursor,
+	virtual void	RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor,
 						HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
 
 	virtual bool	WMClose(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);

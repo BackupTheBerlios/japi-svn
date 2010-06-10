@@ -111,6 +111,23 @@ public:
 						LPARAM inLParam, int& outResult);
 
 private:
+
+	class MEditPart : public MWinProcMixin
+	{
+	public:
+							MEditPart(MWinComboboxImpl* inImpl)
+								: mImpl(inImpl)								{}
+		virtual bool		DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+								const std::string& inText)
+							{
+								return mImpl->DispatchKeyDown(inKeyCode, inModifiers, inText);
+							}
+
+	private:
+		MWinComboboxImpl*	mImpl;
+	};
+	
+	MEditPart		mEditor;
 	bool			mEditable;
 };
 
