@@ -47,12 +47,17 @@ private:
 	MView*			CreateControls(MView* inParent, int32 inX, int32 inY,
 						xml::element* inTemplate);
 
+	void			GetTextMetrics(const string& inText, const wchar_t* inClass,
+						int inPartID, int inStateID, int32& outWidth, int32& outHeight);
+
 	string			mRsrc;
+	HDC				mDC;
 };
 
 MWinDialogImpl::MWinDialogImpl(const string& inResource, MWindow* inWindow)
 	: MWinWindowImpl(MWindowFlags(0), "", inWindow)
 	, mRsrc(inResource)
+	, mDC(nil)
 {
 }
 
@@ -113,6 +118,9 @@ void MWinDialogImpl::Finish()
 	// now create the dialog
 	MWinProcMixin::CreateHandle(nil, bounds, title);
 
+	// now we have the handle, get the DC and theme
+	mDC = ::GetDC(GetHandle());
+
 	// create the dialog controls, all stacked on top of each other
 	CreateControls(mWindow, 0, 0, dialog);
 
@@ -152,7 +160,10 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		MButton* button = new MButton(id, bounds, title);
 		//mControls[id] = button;
 		inParent->AddChild(button);
-		button->GetIdealSize(bounds.width, bounds.height);
+		//button->GetIdealSize(bounds.width, bounds.height);
+
+		GetTextMetrics(title, L"PushButton;Button", BP_PUSHBUTTON, PBS_NORMAL, bounds.width, bounds.height);
+
 		button->ResizeFrame(0, 0, bounds.width - 75, bounds.height - 23);
 
 		result = button;
@@ -270,6 +281,25 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		ba::contains(bindings, "bottom"));
 	
 	return result;
+}
+
+void MWinDialogImpl::GetTextMetrics(const string& inText, const wchar_t* inClass,
+	int inPartID, int inStateID, int32& outWidth, int32& outHeight)
+{
+	HTHEME hTheme = ::OpenThemeData(GetHandle(), inClass);
+	if (hTheme != nil)
+	{
+		wstring text(c2w(inText));
+		RECT r;
+
+		THROW_IF_HRESULT_ERROR(::GetThemeTextExtent(hTheme, mDC, inPartID, inStateID, text.c_str(),
+			text.length(), 0, nil, &r));
+
+		outWidth = r.right - r.left;
+		outHeight = r.bottom - r.top;
+
+		::CloseThemeData(hTheme);
+	}
 }
 
 // --------------------------------------------------------------------
