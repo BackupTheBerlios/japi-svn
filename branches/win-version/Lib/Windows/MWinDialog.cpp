@@ -47,17 +47,20 @@ private:
 	MView*			CreateControls(MView* inParent, int32 inX, int32 inY,
 						xml::element* inTemplate);
 
-	void			GetTextMetrics(const string& inText, const wchar_t* inClass,
-						int inPartID, int inStateID, int32& outWidth, int32& outHeight);
+	uint32			GetTextWidth(const string& inText,
+						const wchar_t* inClass, int inPartID, int inStateID);
 
 	string			mRsrc;
 	HDC				mDC;
+	float			mDLUX, mDLUY;
 };
 
 MWinDialogImpl::MWinDialogImpl(const string& inResource, MWindow* inWindow)
 	: MWinWindowImpl(MWindowFlags(0), "", inWindow)
 	, mRsrc(inResource)
 	, mDC(nil)
+	, mDLUX(1.75)
+	, mDLUY(1.875)
 {
 }
 
@@ -122,8 +125,36 @@ void MWinDialogImpl::Finish()
 	// now create the dialog
 	MWinWindowImpl::Create(bounds, title);
 
-	// now we have the handle, get the DC and theme
+	// now we have the handle, get the DC and theme font
 	mDC = ::GetDC(GetHandle());
+
+	HTHEME hTheme = ::OpenThemeData(GetHandle(), VSCLASS_TEXTSTYLE);
+
+	TEXTMETRIC tm;
+	if (hTheme != nil)
+	{
+		::GetThemeTextMetrics(hTheme, mDC, TEXT_BODYTEXT, TS_CONTROLLABEL_NORMAL, &tm);
+
+		RECT r;
+		THROW_IF_HRESULT_ERROR(::GetThemeTextExtent(hTheme, mDC, TEXT_BODYTEXT, TS_CONTROLLABEL_NORMAL, 
+			L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 52, 0, nil, &r));
+
+		mDLUY = tm.tmHeight / 8.0;
+		mDLUX = (r.right - r.left) / (52 * 4.0);
+
+		::CloseThemeData(hTheme);
+	}
+	else
+	{
+		::SelectObject(mDC, ::GetStockObject(DEFAULT_GUI_FONT));
+		::GetTextMetrics(mDC, &tm);
+
+		SIZE size;
+		::GetTextExtentPoint32(mDC, L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 52, &size);
+
+		mDLUY = tm.tmHeight / 8.0;
+		mDLUX = size.cx / (52 * 4.0);
+	}
 
 	// create the dialog controls, all stacked on top of each other
 	CreateControls(mWindow, 0, 0, dialog);
@@ -140,8 +171,8 @@ void MWinDialogImpl::Finish()
 	{
 		MRect p;
 		mWindow->GetWindowPosition(p);
-		p.x -= dw / 2;
-		p.y -= dh / 2;
+//		p.x -= dw / 2;
+//		p.y -= dh / 2;
 		p.width += dw;
 		p.height += dh;
 		mWindow->SetWindowPosition(p);
@@ -160,22 +191,16 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		string id = inTemplate->get_attribute("id");
 		string title = inTemplate->get_attribute("title");
 		
-		MRect bounds(inX, inY, 75, 23);
+		MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
 		MButton* button = new MButton(id, bounds, title);
-		//mControls[id] = button;
 		inParent->AddChild(button);
-		//button->GetIdealSize(bounds.width, bounds.height);
 
-		GetTextMetrics(title, L"PushButton;Button", BP_PUSHBUTTON, PBS_NORMAL, bounds.width, bounds.height);
-		bounds.width += 20;
-		if (bounds.width < 75)
-			bounds.width = 75;
-
-		bounds.height += 4;
-		if (bounds.height < 23)
-			bounds.height = 23;
-
-		button->ResizeFrame(0, 0, bounds.width - 75, bounds.height - 23);
+		uint32 idealWidth = GetTextWidth(title, VSCLASS_BUTTON, BP_PUSHBUTTON, PBS_NORMAL) + 10 * mDLUX;
+		if (idealWidth > bounds.width)
+			button->ResizeFrame(0, 0, idealWidth - bounds.width, 0);
+		
+		if (inTemplate->get_attribute("default") == "true")
+			button->MakeDefault(true);
 
 		result = button;
 	}
@@ -183,7 +208,7 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 	{
 		string id = inTemplate->get_attribute("id");
 		
-		MRect bounds(inX, inY, 75, 23);
+		MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
 		MCombobox* combo = new MCombobox(id, bounds, true);
 		inParent->AddChild(combo);
 		result = combo;
@@ -192,19 +217,18 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 	{
 		string text = inTemplate->get_attribute("text");
 
-		MRect bounds(inX, inY, 0, 0);
-		GetTextMetrics(text, L"ContentArea;BodyText;Caption", TEXT_LABEL, 0, bounds.width, bounds.height);
-//		bounds.width += 20;
-//		if (bounds.width < 75)
-//			bounds.width = 75;
-
-		bounds.height += 4;
-		if (bounds.height < 23)
-			bounds.height = 23;
-		
+		MRect bounds(inX, inY + 2 * mDLUY, 0, 8 * mDLUY);
+		bounds.width = GetTextWidth(text, VSCLASS_STATIC, STAT_TEXT, 0);
 		MCaption* caption = new MCaption("caption", bounds, text);
 		inParent->AddChild(caption);
 		result = caption;
+	}
+	else if (inTemplate->name() == "separator")
+	{
+		MRect bounds(inX, inY, 2, 2);
+		MSeparator* separator = new MSeparator("separator", bounds);
+		inParent->AddChild(separator);
+		result = separator;
 	}
 	else if (name == "vbox" or name == "dialog")
 	{
@@ -212,10 +236,10 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		int32 marginY = 0;
 
 		if (not inTemplate->get_attribute("margin-x").empty())
-			marginX = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-x"));
+			marginX = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-x")) * mDLUX;
 
 		if (not inTemplate->get_attribute("margin-y").empty())
-			marginY = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-y"));
+			marginY = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-y")) * mDLUY;
 		
 		int32 y = marginY;
 		int32 width = 2 * marginX;
@@ -232,6 +256,9 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		
 		foreach (xml::element* b, inTemplate->children<xml::element>())
 		{
+			if (not views.empty())
+				y += 4 * mDLUY;
+
 			MView* v = CreateControls(result, marginX, y, b);
 			views.push_back(v);
 			
@@ -241,10 +268,10 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 			if (width < r.width + 2 * marginX)
 				width = r.width + 2 * marginX;
 			
-			y += r.height + marginY;
+			y += r.height;
 		}
 		
-		int32 height = y;
+		int32 height = y + marginY;
 		
 		foreach (MView* v, views)
 		{
@@ -262,10 +289,10 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		int32 marginY = 0;
 
 		if (not inTemplate->get_attribute("margin-x").empty())
-			marginX = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-x"));
+			marginX = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-x")) * mDLUX;
 
 		if (not inTemplate->get_attribute("margin-y").empty())
-			marginY = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-y"));
+			marginY = boost::lexical_cast<int32>(inTemplate->get_attribute("margin-y")) * mDLUY;
 		
 		int32 x = marginX;
 		int32 height = 2 * marginY;
@@ -277,6 +304,9 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		
 		foreach (xml::element* b, inTemplate->children<xml::element>())
 		{
+			if (not views.empty())
+				x += 4 * mDLUX;
+
 			MView* v = CreateControls(result, x, marginY, b);
 			views.push_back(v);
 			
@@ -286,10 +316,10 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 			if (height < r.height + 2 * marginY)
 				height = r.height + 2 * marginY;
 			
-			x += r.width + marginX;
+			x += r.width;
 		}
 		
-		int32 width = x;
+		int32 width = x + marginX;
 		
 		foreach (MView* v, views)
 		{
@@ -300,6 +330,16 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 		}
 		
 		result->SetFrame(MRect(inX, inY, width, height));
+	}
+	
+	if (not inTemplate->get_attribute("width").empty())
+	{
+		uint32 width = boost::lexical_cast<uint32>(inTemplate->get_attribute("width")) * mDLUX;
+		
+		MRect bounds;
+		result->GetBounds(bounds);
+		if (width > bounds.width)
+			result->ResizeFrame(0, 0, width - bounds.width, 0);
 	}
 
 	string bindings = inTemplate->get_attribute("bind");
@@ -312,23 +352,30 @@ MView* MWinDialogImpl::CreateControls(MView* inParent, int32 inX, int32 inY,
 	return result;
 }
 
-void MWinDialogImpl::GetTextMetrics(const string& inText, const wchar_t* inClass,
-	int inPartID, int inStateID, int32& outWidth, int32& outHeight)
+uint32 MWinDialogImpl::GetTextWidth(const string& inText,
+	const wchar_t* inClass, int inPartID, int inStateID)
 {
+	uint32 result = 0;
+	wstring text(c2w(inText));
+	
 	HTHEME hTheme = ::OpenThemeData(GetHandle(), inClass);
+
 	if (hTheme != nil)
 	{
-		wstring text(c2w(inText));
 		RECT r;
-
-		THROW_IF_HRESULT_ERROR(::GetThemeTextExtent(hTheme, mDC, inPartID, inStateID, text.c_str(),
-			text.length(), 0, nil, &r));
-
-		outWidth = r.right - r.left;
-		outHeight = r.bottom - r.top;
-
+		THROW_IF_HRESULT_ERROR(::GetThemeTextExtent(hTheme, mDC,
+			inPartID, inStateID, text.c_str(), text.length(), 0, nil, &r));
+		result = r.right - r.left;
 		::CloseThemeData(hTheme);
 	}
+	else
+	{
+		SIZE size;
+		::GetTextExtentPoint32(mDC, text.c_str(), text.length(), &size);
+		result = size.cx;
+	}
+	
+	return result;
 }
 
 // --------------------------------------------------------------------

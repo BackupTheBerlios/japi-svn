@@ -132,6 +132,11 @@ void MButton::GetIdealSize(int32& outWidth, int32& outHeight)
 	mImpl->GetIdealSize(outWidth, outHeight);
 }
 
+void MButton::MakeDefault(bool inDefault)
+{
+	mImpl->MakeDefault(inDefault);
+}
+
 // --------------------------------------------------------------------
 
 MScrollbar::MScrollbar(const string& inID, MRect inBounds)
@@ -213,5 +218,12 @@ void MCombobox::SetChoices(const vector<string>& inChoices)
 
 MCaption::MCaption(const string& inID, MRect inBounds, const string& inText)
 	: MControl<MCaptionImpl>(inID, inBounds, MCaptionImpl::Create(this, inText))
+{
+}
+
+// --------------------------------------------------------------------
+
+MSeparator::MSeparator(const string& inID, MRect inBounds)
+	: MControl<MSeparatorImpl>(inID, inBounds, MSeparatorImpl::Create(this))
 {
 }

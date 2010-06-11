@@ -61,6 +61,7 @@ public:
 					MButton(const std::string& inID, MRect inBounds, const std::string& inLabel);
 
 	void			GetIdealSize(int32& outWidth, int32& outHeight);
+	void			MakeDefault(bool inDefault = true);
 
 	MEventOut<void()>
 					eClicked;
@@ -139,6 +140,18 @@ public:
 		
 					MCaption(const std::string& inID, MRect inBounds,
 						const std::string& inText);
+};
+
+// --------------------------------------------------------------------
+
+class MSeparatorImpl;
+
+class MSeparator : public MControl<MSeparatorImpl>
+{
+public:
+	typedef MSeparatorImpl		MImpl;
+		
+					MSeparator(const std::string& inID, MRect inBounds);
 };
 
 #endif

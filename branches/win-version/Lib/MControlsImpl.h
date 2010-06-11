@@ -103,4 +103,14 @@ public:
 					Create(MCaption* inCaption, const std::string& inText);
 };
 
+class MSeparatorImpl : public MControlImpl<MSeparator>
+{
+public:
+					MSeparatorImpl(MSeparator* inSeparator)
+						: MControlImpl(inSeparator)				{}
+
+	static MSeparatorImpl*
+					Create(MSeparator* inSeparator);
+};
+
 #endif

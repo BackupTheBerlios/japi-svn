@@ -236,6 +236,10 @@ void MWinButtonImpl::SimulateClick()
 
 void MWinButtonImpl::MakeDefault(bool inDefault)
 {
+	if (inDefault)
+		::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_DEFPUSHBUTTON, 0);
+	else
+		::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_PUSHBUTTON, 0);
 }
 
 void MWinButtonImpl::GetIdealSize(int32& outWidth, int32& outHeight)
@@ -593,4 +597,25 @@ void MWinCaptionImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 MCaptionImpl* MCaptionImpl::Create(MCaption* inCaption, const std::string& inText)
 {
 	return new MWinCaptionImpl(inCaption, inText);
+}
+
+// --------------------------------------------------------------------
+
+MWinSeparatorImpl::MWinSeparatorImpl(MSeparator* inControl)
+	: MWinControlImpl(inControl, "")
+{
+}
+
+void MWinSeparatorImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"STATIC";
+	outStyle = WS_CHILD | SS_SUNKEN;
+}
+
+MSeparatorImpl* MSeparatorImpl::Create(MSeparator* inSeparator)
+{
+	return new MWinSeparatorImpl(inSeparator);
 }

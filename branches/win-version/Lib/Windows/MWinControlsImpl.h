@@ -140,4 +140,13 @@ public:
 						std::wstring& outClassName, HMENU& outMenu);
 };
 
+class MWinSeparatorImpl : public MWinControlImpl<MSeparator>
+{
+public:
+					MWinSeparatorImpl(MSeparator* inControl);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+};
+
 #endif
