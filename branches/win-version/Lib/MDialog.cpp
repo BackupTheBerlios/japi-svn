@@ -17,6 +17,7 @@
 #include "MResources.h"
 #include "MPreferences.h"
 #include "MError.h"
+#include "MControls.h"
 
 using namespace std;
 
@@ -142,4 +143,31 @@ void MDialog::SetCloseImmediatelyFlag(
 	bool inCloseImmediately)
 {
 	mCloseImmediatelyOnOK = inCloseImmediately;
+}
+
+string MDialog::GetText(uint32 inID)
+{
+	string result;
+	
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view);
+	if (dynamic_cast<MCombobox*>(view) != nil)
+		result = static_cast<MCombobox*>(view)->GetText();
+	
+	return result;
+}
+
+void MDialog::SetText(uint32 inID, const std::string& inText)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view);
+	if (dynamic_cast<MCombobox*>(view) != nil)
+		static_cast<MCombobox*>(view)->SetText(inText);
+}
+
+void MDialog::SetChoices(uint32 inID, vector<string>& inChoices)
+{
+	MCombobox* combo = dynamic_cast<MCombobox*>(FindSubViewByID(inID));
+	THROW_IF_NIL(combo);
+	combo->SetChoices(inChoices);
 }

@@ -82,6 +82,7 @@ void MApplication::InitGlobals()
 
 	vector<string> recent;
 	Preferences::GetArray("recent", recent);
+	reverse(recent.begin(), recent.end());
 
 	foreach (string path, recent)
 	{

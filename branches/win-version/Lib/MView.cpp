@@ -24,7 +24,7 @@
 using namespace std;
 
 MView::MView(
-	const string&	inID,
+	const uint32	inID,
 	MRect			inBounds)
 	: mID(inID)
 	, mBounds(0, 0, inBounds.width, inBounds.height)
@@ -960,6 +960,25 @@ MView* MView::FindSubView(int32 inX, int32 inY)
 	return result;
 }
 
+MView* MView::FindSubViewByID(uint32 inID)
+{
+	MView* result = nil;
+	
+	if (mID == inID)
+		result = this;
+	else
+	{
+		foreach (MView* view, mChildren)
+		{
+			result = view->FindSubViewByID(inID);
+			if (result != nil)
+				break;
+		}
+	}
+	
+	return result;
+}
+
 void MView::ConvertToParent(int32& ioX, int32& ioY) const
 {
 	ioX += mFrame.x - mBounds.x;
@@ -1028,7 +1047,7 @@ void MView::Draw(
 
 // --------------------------------------------------------------------
 
-MViewScroller::MViewScroller(const string& inID,
+MViewScroller::MViewScroller(const uint32 inID,
 		MView* inTarget, bool inHScrollbar, bool inVScrollbar)
 	: MView(inID, MRect(0, 0, 0, 0))
 	, mTarget(inTarget)
@@ -1054,7 +1073,7 @@ MViewScroller::MViewScroller(const string& inID,
 		if (inHScrollbar)
 			r.height -= kScrollbarWidth;
 
-		mVScrollbar = new MScrollbar("vscrollbar", r);
+		mVScrollbar = new MScrollbar('vscr', r);
 		mVScrollbar->SetBindings(false, true, true, true);
 		mVScrollbar->SetValue(0);
 		AddChild(mVScrollbar);
@@ -1071,7 +1090,7 @@ MViewScroller::MViewScroller(const string& inID,
 		if (inVScrollbar)
 			r.width -= kScrollbarWidth;
 
-		mHScrollbar = new MScrollbar("hscrollbar", r);
+		mHScrollbar = new MScrollbar('hscr', r);
 		AddChild(mHScrollbar);
 		mHScrollbar->SetBindings(true, false, true, true);
 		mHScrollbar->SetValue(0);

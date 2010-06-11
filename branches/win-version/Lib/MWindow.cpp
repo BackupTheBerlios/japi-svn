@@ -29,7 +29,7 @@ MWindow* MWindow::sRecycle = nil;
 
 MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 		MWindowFlags inFlags, const string& inMenu)
-	: MView("window", inBounds)
+	: MView('wind', inBounds)
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 	, mFocus(this)
@@ -41,7 +41,7 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 }
 
 MWindow::MWindow(MWindowImpl* inImpl)
-	: MView("window", MRect(0, 0, 100, 100))
+	: MView('wind', MRect(0, 0, 100, 100))
 	, MHandler(gApp)
 	, mImpl(inImpl)
 	, mFocus(this)

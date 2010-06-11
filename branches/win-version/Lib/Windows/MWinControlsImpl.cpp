@@ -5,6 +5,9 @@
 
 #include "MWinLib.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #include "MWinWindowImpl.h"
 #include "MWinControlsImpl.h"
 #include "MWinUtils.h"
@@ -478,6 +481,17 @@ MWinComboboxImpl::MWinComboboxImpl(MCombobox* inCombobox, bool inEditable)
 
 void MWinComboboxImpl::SetChoices(const std::vector<std::string>& inChoices)
 {
+	::SendMessage(GetHandle(), CB_RESETCONTENT, 0, 0);
+
+	foreach (const string& choice, inChoices)
+	{
+		wstring s(c2w(choice));
+
+		::SendMessage(GetHandle(), CB_INSERTSTRING, (WPARAM)-1, (long)s.c_str());
+	}
+
+	if (not inChoices.empty())
+		SetText(inChoices.front());
 }
 
 void MWinComboboxImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
@@ -619,3 +633,56 @@ MSeparatorImpl* MSeparatorImpl::Create(MSeparator* inSeparator)
 {
 	return new MWinSeparatorImpl(inSeparator);
 }
+
+// --------------------------------------------------------------------
+
+MWinCheckboxImpl::MWinCheckboxImpl(MCheckbox* inControl, const string& inText)
+	: MWinControlImpl(inControl, inText)
+{
+}
+
+void MWinCheckboxImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"BUTTON";
+	outStyle = WS_CHILD | BS_CHECKBOX | BS_TEXT | WS_TABSTOP;
+}
+
+bool MWinCheckboxImpl::IsChecked() const
+{
+	return ::SendMessage(GetHandle(), BM_GETCHECK, 0, 0) == BST_CHECKED;
+}
+
+void MWinCheckboxImpl::SetChecked(bool inChecked)
+{
+	if (inChecked)
+		::SendMessage(GetHandle(), BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
+	else
+		::SendMessage(GetHandle(), BM_SETCHECK, (WPARAM)BST_UNCHECKED, 0);
+}
+
+bool MWinCheckboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool result = false;
+
+	if (inUMsg == BN_CLICKED)
+	{
+		bool checked = not IsChecked();
+
+		SetChecked(checked);
+		mControl->eValueChanged(checked);
+
+		outResult = 1;
+		result = true;
+	}
+
+	return result;
+}
+
+MCheckboxImpl* MCheckboxImpl::Create(MCheckbox* inCheckbox, const std::string& inText)
+{
+	return new MWinCheckboxImpl(inCheckbox, inText);
+}
+

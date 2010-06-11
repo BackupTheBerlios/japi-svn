@@ -10,7 +10,7 @@
 using namespace std;
 
 template<class IMPL>
-MControl<IMPL>::MControl(const string& inID, MRect inBounds, IMPL* inImpl)
+MControl<IMPL>::MControl(const uint32 inID, MRect inBounds, IMPL* inImpl)
 	: MView(inID, inBounds)
 	, MHandler(nil)
 	, mImpl(inImpl)
@@ -122,7 +122,7 @@ void MControl<IMPL>::AddedToWindow()
 
 // --------------------------------------------------------------------
 
-MButton::MButton(const string& inID, MRect inBounds, const string& inLabel)
+MButton::MButton(const uint32 inID, MRect inBounds, const string& inLabel)
 	: MControl<MButtonImpl>(inID, inBounds, MButtonImpl::Create(this, inLabel))
 {
 }
@@ -139,7 +139,7 @@ void MButton::MakeDefault(bool inDefault)
 
 // --------------------------------------------------------------------
 
-MScrollbar::MScrollbar(const string& inID, MRect inBounds)
+MScrollbar::MScrollbar(const uint32 inID, MRect inBounds)
 	: MControl<MScrollbarImpl>(inID, inBounds, MScrollbarImpl::Create(this))
 {
 }
@@ -181,7 +181,7 @@ void MScrollbar::SetViewSize(int32 inViewSize)
 
 // --------------------------------------------------------------------
 
-MStatusbar::MStatusbar(const string& inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[])
+MStatusbar::MStatusbar(const uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[])
 	: MControl<MStatusbarImpl>(inID, inBounds, MStatusbarImpl::Create(this, inPartCount, inPartWidths))
 {
 	SetBindings(true, false, true, true);
@@ -194,7 +194,7 @@ void MStatusbar::SetStatusText(uint32 inPartNr, const string& inText, bool inBor
 
 // --------------------------------------------------------------------
 
-MCombobox::MCombobox(const string& inID, MRect inBounds, bool inEditable)
+MCombobox::MCombobox(const uint32 inID, MRect inBounds, bool inEditable)
 	: MControl<MComboboxImpl>(inID, inBounds, MComboboxImpl::Create(this, inEditable))
 {
 }
@@ -216,14 +216,31 @@ void MCombobox::SetChoices(const vector<string>& inChoices)
 
 // --------------------------------------------------------------------
 
-MCaption::MCaption(const string& inID, MRect inBounds, const string& inText)
+MCaption::MCaption(const uint32 inID, MRect inBounds, const string& inText)
 	: MControl<MCaptionImpl>(inID, inBounds, MCaptionImpl::Create(this, inText))
 {
 }
 
 // --------------------------------------------------------------------
 
-MSeparator::MSeparator(const string& inID, MRect inBounds)
+MSeparator::MSeparator(const uint32 inID, MRect inBounds)
 	: MControl<MSeparatorImpl>(inID, inBounds, MSeparatorImpl::Create(this))
 {
+}
+
+// --------------------------------------------------------------------
+
+MCheckbox::MCheckbox(const uint32 inID, MRect inBounds, const string& inTitle)
+	: MControl<MCheckboxImpl>(inID, inBounds, MCheckboxImpl::Create(this, inTitle))
+{
+}
+
+bool MCheckbox::IsChecked() const
+{
+	return mImpl->IsChecked();
+}
+
+void MCheckbox::SetChecked(bool inChecked)
+{
+	mImpl->SetChecked(inChecked);
 }

@@ -238,7 +238,7 @@ MEditWindow::MEditWindow()
 	bounds.height = kScrollbarWidth;
 
 	int32 partWidths[4] = { 100, -1 };
-	mStatusbar = new MStatusbar("statusbar", bounds, 2, partWidths);
+	mStatusbar = new MStatusbar('stat', bounds, 2, partWidths);
 	AddChild(mStatusbar);
 	mStatusbar->GetFrame(bounds);
 
@@ -249,8 +249,8 @@ MEditWindow::MEditWindow()
 	
 	bounds.height -= statusbarHeight;
 
-    mTextView = new MTextView("textview", bounds);
-	MViewScroller* scroller = new MViewScroller("scroller", mTextView, false, true);
+    mTextView = new MTextView('txtv', bounds);
+	MViewScroller* scroller = new MViewScroller('scrl', mTextView, false, true);
 	scroller->SetBindings(true, true, true, true);
 	AddChild(scroller);
 	//textController->AddTextView(mTextView);

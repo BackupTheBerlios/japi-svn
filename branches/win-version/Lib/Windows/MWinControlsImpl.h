@@ -149,4 +149,18 @@ public:
 						std::wstring& outClassName, HMENU& outMenu);
 };
 
+class MWinCheckboxImpl : public MWinControlImpl<MCheckbox>
+{
+public:
+					MWinCheckboxImpl(MCheckbox* inControl, const std::string& inText);
+
+	virtual bool	IsChecked() const;
+	virtual void	SetChecked(bool inChecked);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+};
+
 #endif

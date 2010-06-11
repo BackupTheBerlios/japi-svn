@@ -38,6 +38,13 @@ class MDialog : public MWindow
 	void			SetCloseImmediatelyFlag(
 						bool				inCloseImmediately);
 
+
+	std::string		GetText(uint32 inID);
+	void			SetText(uint32 inID, const std::string& inText);
+
+	void			SetChoices(uint32 inID,
+						std::vector<std::string>& inChoices);
+	
   protected:
 
 					MDialog(

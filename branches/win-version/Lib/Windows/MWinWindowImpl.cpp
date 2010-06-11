@@ -153,7 +153,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 void MWinWindowImpl::SetRenderTarget(
 	ID2D1RenderTarget* inTarget)
 {
-	if (mRenderTarget != nil and inTarget != mRenderTarget)
+	if (mRenderTarget != nil and inTarget != mRenderTarget and inTarget != nil)
 		mRenderTarget->Release();
 
 	mRenderTarget = inTarget;
@@ -645,7 +645,8 @@ bool MWinWindowImpl::WMEraseBkgnd(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inW
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {
-	mMenubar->UpdateCommandStatus();
+	if (mMenubar != nil)
+		mMenubar->UpdateCommandStatus();
 	return false;
 }
 

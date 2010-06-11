@@ -113,4 +113,17 @@ public:
 					Create(MSeparator* inSeparator);
 };
 
+class MCheckboxImpl : public MControlImpl<MCheckbox>
+{
+public:
+					MCheckboxImpl(MCheckbox* inCheckbox)
+						: MControlImpl(inCheckbox)				{}
+
+	virtual bool	IsChecked() const = 0;
+	virtual void	SetChecked(bool inChecked) = 0;
+
+	static MCheckboxImpl*
+					Create(MCheckbox* inCheckbox, const std::string& inTitle);
+};
+
 #endif

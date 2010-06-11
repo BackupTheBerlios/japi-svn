@@ -119,14 +119,14 @@ MFindDialog::MFindDialog()
 	//mMultiMode = false;
 	//SetExpanded(kMultiFileExpanderID, mMultiMode);
 
-	//Preferences::GetArray("find find strings", mFindStrings);
-	//SetValues(kFindComboboxID, mFindStrings);
-	//
-	//Preferences::GetArray("find replace strings", mReplaceStrings);
-	//SetValues(kReplaceComboboxID, mReplaceStrings);
+	Preferences::GetArray("find find strings", mFindStrings);
+	SetChoices(kFindComboboxID, mFindStrings);
+	
+	Preferences::GetArray("find replace strings", mReplaceStrings);
+	SetChoices(kReplaceComboboxID, mReplaceStrings);
 
 	//Preferences::GetArray("find directories", mStartDirectories);
-	//SetValues(kStartDirComboboxID, mStartDirectories);
+	//SetChoices(kStartDirComboboxID, mStartDirectories);
 	
 	AddRoute(eIdle, gApp->eIdle);
 	
@@ -172,13 +172,13 @@ bool MFindDialog::DoClose()
 	//	Preferences::SetInteger("find wrap around", IsChecked(kWrapCheckboxID));
 	//	Preferences::SetInteger("find ignore case", IsChecked(kIgnoreCaseCheckboxID));
 	//	Preferences::SetInteger("find regular expression", IsChecked(kRegexCheckboxID));
-	//	
-	//	SavePosition("find dialog position");
-	//	
-	//	Preferences::SetArray("find find strings", mFindStrings);
-	//	Preferences::SetArray("find replace strings", mReplaceStrings);
-	//	Preferences::SetArray("find directories", mStartDirectories);
-	//
+		
+		SavePosition("find dialog position");
+		
+		Preferences::SetArray("find find strings", mFindStrings);
+		Preferences::SetArray("find replace strings", mReplaceStrings);
+		Preferences::SetArray("find directories", mStartDirectories);
+	
 	////	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
 	//	Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
 	//	Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
@@ -346,8 +346,8 @@ MFindDialog::SetFindString(
 				mFindStrings.pop_back();
 		}
 
-		//SetValues(kFindComboboxID, mFindStrings);
-		//
+		SetChoices(kFindComboboxID, mFindStrings);
+		
 		//SetChecked(kRegexCheckboxID, false);
 		//SetChecked(kBatchCheckboxID, false);
 
@@ -360,27 +360,26 @@ string MFindDialog::GetFindString()
 {
 	string result;
 
-	//if (mFindStringChanged)
-	//{
-	//	GetText(kFindComboboxID, result);
+	if (mFindStringChanged)
+	{
+		result = GetText(kFindComboboxID);
 
-	//	// place in front of list, removing other occurrences if any
-	//	mFindStrings.erase(
-	//		remove(mFindStrings.begin(), mFindStrings.end(), result),
-	//		mFindStrings.end());
+		// place in front of list, removing other occurrences if any
+		mFindStrings.erase(
+			remove(mFindStrings.begin(), mFindStrings.end(), result),
+			mFindStrings.end());
+	
+		mFindStrings.insert(mFindStrings.begin(), result);
+	
+		if (mFindStrings.size() > kMaxComboListSize)
+			mFindStrings.pop_back();
 
-	//	mFindStrings.insert(mFindStrings.begin(), result);
-
-	//	if (mFindStrings.size() > kMaxComboListSize)
-	//		mFindStrings.pop_back();
-
-	//	mUpdatingComboBox = true;
-	//	SetValues(kFindComboboxID, mFindStrings);
-	//	mUpdatingComboBox = false;
-	//	mFindStringChanged = false;
-	//}
-	//else 
-	if (not mFindStrings.empty())
+		mUpdatingComboBox = true;
+		SetChoices(kFindComboboxID, mFindStrings);
+		mUpdatingComboBox = false;
+		mFindStringChanged = false;
+	}
+	else if (not mFindStrings.empty())
 		result = mFindStrings.front();
 	
 	if (not GetRegex())
@@ -405,8 +404,8 @@ void MFindDialog::SetReplaceString(
 		if (mReplaceStrings.size() > kMaxComboListSize)
 			mReplaceStrings.pop_back();
 
-		//SetValues(kReplaceComboboxID, mReplaceStrings);
-		//
+		SetChoices(kReplaceComboboxID, mReplaceStrings);
+		
 		//SetChecked(kRegexCheckboxID, false);
 		//SetChecked(kBatchCheckboxID, false);
 
@@ -419,27 +418,26 @@ string MFindDialog::GetReplaceString()
 {
 	string result;
 
-	//if (mReplaceStringChanged)
-	//{
-	//	GetText(kReplaceComboboxID, result);
-
-	//	// place in front of list, removing other occurrences if any
-	//	mReplaceStrings.erase(
-	//		remove(mReplaceStrings.begin(), mReplaceStrings.end(), result),
-	//		mReplaceStrings.end());
-
-	//	mReplaceStrings.insert(mReplaceStrings.begin(), result);
-
-	//	if (mReplaceStrings.size() > kMaxComboListSize)
-	//		mReplaceStrings.pop_back();
-
-	//	mUpdatingComboBox = true;
-	//	SetValues(kReplaceComboboxID, mReplaceStrings);
-	//	mUpdatingComboBox = false;
-	//	mFindStringChanged = false;
-	//}
-	//else
-	if (not mReplaceStrings.empty())
+	if (mReplaceStringChanged)
+	{
+		result = GetText(kReplaceComboboxID);
+	
+		// place in front of list, removing other occurrences if any
+		mReplaceStrings.erase(
+			remove(mReplaceStrings.begin(), mReplaceStrings.end(), result),
+			mReplaceStrings.end());
+	
+		mReplaceStrings.insert(mReplaceStrings.begin(), result);
+	
+		if (mReplaceStrings.size() > kMaxComboListSize)
+			mReplaceStrings.pop_back();
+	
+		mUpdatingComboBox = true;
+		SetChoices(kReplaceComboboxID, mReplaceStrings);
+		mUpdatingComboBox = false;
+		mFindStringChanged = false;
+	}
+	else if (not mReplaceStrings.empty())
 		result = mReplaceStrings.front();
 	
 	if (not GetRegex())
@@ -467,7 +465,7 @@ string MFindDialog::GetStartDirectory()
 	//		mStartDirectories.pop_back();
 
 	//	mUpdatingComboBox = true;
-	//	SetValues(kStartDirComboboxID, mStartDirectories);
+	//	SetChoices(kStartDirComboboxID, mStartDirectories);
 	//	mUpdatingComboBox = false;
 	//	mStartDirectoriesChanged = false;
 	//}
@@ -856,7 +854,7 @@ void MFindDialog::SelectSearchDir()
 	//		mStartDirectories.erase(mStartDirectories.end() - 1);
 	//	
 	//	mUpdatingComboBox = true;
-	//	SetValues(kStartDirComboboxID, mStartDirectories);
+	//	SetChoices(kStartDirComboboxID, mStartDirectories);
 	//	mUpdatingComboBox = false;
 	//	mStartDirectoriesChanged = false;
 	//}

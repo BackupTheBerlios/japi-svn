@@ -340,7 +340,7 @@ string MDocument::GetWindowTitle() const
 		
 		// strip off HOME, if any
 		string home = GetHomeDirectory();
-		if (not home.empty() and ba::starts_with(result, home))
+		if (not home.empty() and ba::istarts_with(result, home))
 		{
 			result.erase(0, home.length());
 			result.insert(0, "~");
