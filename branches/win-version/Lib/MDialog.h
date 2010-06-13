@@ -35,17 +35,27 @@ class MDialog : public MWindow
 
 	MWindow*		GetParentWindow() const				{ return mParentWindow; }
 	
-	std::string		GetText(uint32 inID) const;
-	void			SetText(uint32 inID, const std::string& inText);
+	void			SetFocus(const std::string& inID);
 
-	bool			IsChecked(uint32 inID) const;
-	void			SetChecked(uint32 inID, bool inChecked);
+	std::string		GetText(const std::string& inID) const;
+	void			SetText(const std::string& inID, const std::string& inText);
 
-	void			SetChoices(uint32 inID,
+	bool			IsChecked(const std::string& inID) const;
+	void			SetChecked(const std::string& inID, bool inChecked);
+
+	void			SetChoices(const std::string& inID,
 						std::vector<std::string>& inChoices);
 	
-	void			SetEnabled(uint32 inID, bool inEnabled);
-	void			SetVisible(uint32 inID, bool inEnabled);
+	void			SetEnabled(const std::string& inID, bool inEnabled);
+	void			SetVisible(const std::string& inID, bool inEnabled);
+
+	virtual void	ButtonClicked(const std::string& inID);
+	virtual void	CheckboxChanged(const std::string& inID, bool inValue);
+	virtual void	TextChanged(const std::string& inID, const std::string& inText);
+
+	MEventIn<void(const std::string&)>						eButtonClicked;
+	MEventIn<void(const std::string&,bool)>					eCheckboxClicked;
+	MEventIn<void(const std::string&,const std::string&)>	eTextChanged;
 
   protected:
 
@@ -53,9 +63,6 @@ class MDialog : public MWindow
 						const std::string&	inDialogResource);
 
   private:
-
-	//MSlot<void()>	mStdBtnClicked;
-	//void			StdBtnClicked();
 
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all

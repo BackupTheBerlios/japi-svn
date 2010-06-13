@@ -3,29 +3,29 @@
 	<vbox margin-left-right="7" margin-top="7" bind="left top right bottom">
 		<hbox bind="left top right">
 			<caption text="Find" width="36" />
-			<combobox id='find' bind="left top right"/>
+			<combobox id='what' bind="left top right"/>
 		</hbox>
 		<hbox bind="left top right">
 			<caption text="Replace" width="36" />
-			<combobox id='repl' bind="left top right"/>
+			<combobox id='with' bind="left top right"/>
 		</hbox>
 		<table bind="left top right" margin-left="40">
 			<row>
-				<checkbox id='0001' title="Ignore case" />
-				<checkbox id='0002' title="In selection" />
-				<checkbox id='0003' title="Regular expression" />
+				<checkbox id='ignore-case' title="Ignore case" />
+				<checkbox id='in-selection' title="In selection" />
+				<checkbox id='regular-expression' title="Regular expression" />
 			</row>
 			<row>
-				<checkbox id='0004' title="Wrap around" />
-				<checkbox id='0005' title="Whole word" />
-				<checkbox id='0006' title="Batch" />
+				<checkbox id='wrap-around' title="Wrap around" />
+				<checkbox id='whole-word' title="Whole word" />
+				<checkbox id='batch' title="Batch" />
 			</row>
 		</table>
 	</vbox>
 	<hbox margin="7" bind="left right bottom">
-		<button bind="right bottom" title="Replace All" id="btra" />
-		<button bind="right bottom" title="Replace &amp;&amp; Find" id="btrf" />
-		<button bind="right bottom" title="Replace" id="btnr" />
-		<button bind="right bottom" title="Find" id="btnf" default="true" />
+		<button bind="right bottom" title="Replace All" id="replace-all" />
+		<button bind="right bottom" title="Replace &amp;&amp; Find" id="replace-and-find" />
+		<button bind="right bottom" title="Replace" id="replace" />
+		<button bind="right bottom" title="Find" id="find" default="true" />
 	</hbox>
 </dialog>

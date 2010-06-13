@@ -33,35 +33,34 @@ namespace {
 const uint32
 	kMaxComboListSize =			10;
 
-enum {
-	kFindButtonID =				'btnf',
-	kReplaceAndFindButtonID =	'btrf',
-	kReplaceButtonID =			'btnr',
-	kReplaceAllButtonID =		'btra',
-	kFindComboboxID =			'find',
-	kReplaceComboboxID =	 	'repl',
-	kInSelectionCheckboxID = 	'insl',
-	kWrapCheckboxID =			'wrap',
-	kIgnoreCaseCheckboxID =		'ignc',
-	kRegexCheckboxID = 			'regx',
-	kEntireWordCheckboxID =		'word',
-	kBatchCheckboxID =			'btch',
+const string
+	kFindButtonID =				"find",
+	kReplaceAndFindButtonID =	"replace-and-find",
+	kReplaceButtonID =			"replace",
+	kReplaceAllButtonID =		"replace-all",
+	kFindComboboxID =			"what",
+	kReplaceComboboxID =	 	"with",
+	kInSelectionCheckboxID = 	"in-selection",
+	kWrapCheckboxID =			"wrap-around",
+	kIgnoreCaseCheckboxID =		"ignore-case",
+	kRegexCheckboxID = 			"regular-expression",
+	kEntireWordCheckboxID =		"whole-word",
+	kBatchCheckboxID =			"batch",
 	
 	// --- multi
 	
-	kMultiFileExpanderID	 =	'exp1',
-	kMethodPopupID = 			'meth',
-	kRecursiveCheckboxID =		'recu',
-	kStartDirComboboxID =		'sdir',
-	kEnableFilterCheckboxID =	'ffnm',
-	kNameFilterEditboxID =		'filt',
-	kBrowseStartDirButtonID =	'chdr',
+	kMultiFileExpanderID	 =	"exp1",
+	kMethodPopupID = 			"meth",
+	kRecursiveCheckboxID =		"recu",
+	kStartDirComboboxID =		"sdir",
+	kEnableFilterCheckboxID =	"ffnm",
+	kNameFilterEditboxID =		"filt",
+	kBrowseStartDirButtonID =	"chdr",
 	
 	// --- status
 	
-	kChasingArrowsID =			301,
-	kStatusPanelID =			'curf'
-};
+//	kChasingArrowsID =			301,
+	kStatusPanelID =			"curf";
 
 enum {
 	kMethodDirectory = 			1,
@@ -180,12 +179,12 @@ bool MFindDialog::DoClose()
 		Preferences::SetArray("find directories", mStartDirectories);
 	
 	//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
-		Preferences::SetString("find multi method", GetText(kMethodPopupID));
-		Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
+//		Preferences::SetString("find multi method", GetText(kMethodPopupID));
+//		Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
 	
-		Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
+//		Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
 		
-		Preferences::SetString("find name filter", GetText(kNameFilterEditboxID));
+//		Preferences::SetString("find name filter", GetText(kNameFilterEditboxID));
 	
 		Hide();
 		
@@ -493,101 +492,112 @@ bool MFindDialog::GetRegex() const
 	return IsChecked(kRegexCheckboxID);
 }
 
-void MFindDialog::ValueChanged(
-	uint32		inButonID)
+void MFindDialog::ButtonClicked(
+	const string&	inID)
 {
-	string s;
-	
-	switch (inButonID)
+	if (inID == kFindButtonID)
+		DoFindCommand(cmd_FindNext);
+	else if (inID == kReplaceButtonID)
+		DoFindCommand(cmd_Replace);
+	else if (inID == kReplaceAndFindButtonID)
+		DoFindCommand(cmd_ReplaceFindNext);
+	else if (inID == kReplaceAllButtonID)
+		DoFindCommand(cmd_ReplaceAll);
+	//		break;
+	//	
+	//	case kBrowseStartDirButtonID:
+	//		SelectSearchDir();
+	//		break;
+	//	
+	//	case kMultiFileExpanderID:
+	//		//SetVisible(kStatusPanelID, false);
+	//		break;
+	//	
+	//	case kBatchCheckboxID:
+	//	{
+	//		bool batch = IsChecked(kBatchCheckboxID);
+	//		
+	//		SetEnabled(kReplaceAllButtonID, not batch);
+	//		SetEnabled(kReplaceButtonID, not batch);
+	//		SetEnabled(kReplaceAndFindButtonID, not batch);
+	//		break;
+	//	}
+	//	
+	//	//case kMethodPopupID:
+	//	//{
+	//	//	switch (GetValue(kMethodPopupID))
+	//	//	{
+	//	//		case kMethodDirectory:
+	//	//			SetEnabled(kStartDirComboboxID, true);
+	//	//			SetEnabled(kBrowseStartDirButtonID, true);
+	//	//			SetEnabled(kRecursiveCheckboxID, true);
+	//	//			SetEnabled(kEnableFilterCheckboxID, true);
+	//	//			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+	//	//			break;
+	//	//		
+	//	//		case kMethodIncludeFiles:
+	//	//			SetEnabled(kStartDirComboboxID, false);
+	//	//			SetEnabled(kBrowseStartDirButtonID, false);
+	//	//			SetEnabled(kRecursiveCheckboxID, true);
+	//	//			SetEnabled(kEnableFilterCheckboxID, true);
+	//	//			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+	//	//			break;
+	//	//		
+	//	//		case kMethodOpenWindows:
+	//	//			SetEnabled(kStartDirComboboxID, false);
+	//	//			SetEnabled(kBrowseStartDirButtonID, false);
+	//	//			SetEnabled(kRecursiveCheckboxID, false);
+	//	//			SetEnabled(kEnableFilterCheckboxID, false);
+	//	//			SetEnabled(kNameFilterEditboxID, false);
+	//	//			break;
+	//	//	}
+	//	//	break;
+	//	//}
+	//	
+	//	case kFindComboboxID:
+	//		if (not mUpdatingComboBox)
+	//			mFindStringChanged = true;
+	//		break;
+	//	
+	//	case kReplaceComboboxID:
+	//		if (not mUpdatingComboBox)
+	//			mReplaceStringChanged = true;
+	//		break;
+	//	
+	//	case kStartDirComboboxID:
+	//		if (not mUpdatingComboBox)
+	//			mStartDirectoriesChanged = true;
+	//		break;
+	//	
+	//	case kEnableFilterCheckboxID:
+	//		SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
+	//		break;
+	//	
+	//	default:
+	//		//MDialog::ValueChanged(inButonID);
+	//		break;
+	//}
+}
+
+void MFindDialog::CheckboxChanged(
+	const string&		inID,
+	bool				inChecked)
+{
+}
+
+void MFindDialog::TextChanged(
+	const string&		inID,
+	const string&		inText)
+{
+	if (not mUpdatingComboBox)
 	{
-		case kFindButtonID:
-			DoFindCommand(cmd_FindNext);
-			break;
-		
-		case kReplaceButtonID:
-			DoFindCommand(cmd_Replace);
-			break;
-		
-		case kReplaceAndFindButtonID:
-			DoFindCommand(cmd_ReplaceFindNext);
-			break;
-		
-		case kReplaceAllButtonID:
-			DoFindCommand(cmd_ReplaceAll);
-			break;
-		
-		case kBrowseStartDirButtonID:
-			SelectSearchDir();
-			break;
-		
-		case kMultiFileExpanderID:
-			//SetVisible(kStatusPanelID, false);
-			break;
-		
-		case kBatchCheckboxID:
-		{
-			bool batch = IsChecked(kBatchCheckboxID);
-			
-			SetEnabled(kReplaceAllButtonID, not batch);
-			SetEnabled(kReplaceButtonID, not batch);
-			SetEnabled(kReplaceAndFindButtonID, not batch);
-			break;
-		}
-		
-		//case kMethodPopupID:
-		//{
-		//	switch (GetValue(kMethodPopupID))
-		//	{
-		//		case kMethodDirectory:
-		//			SetEnabled(kStartDirComboboxID, true);
-		//			SetEnabled(kBrowseStartDirButtonID, true);
-		//			SetEnabled(kRecursiveCheckboxID, true);
-		//			SetEnabled(kEnableFilterCheckboxID, true);
-		//			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
-		//			break;
-		//		
-		//		case kMethodIncludeFiles:
-		//			SetEnabled(kStartDirComboboxID, false);
-		//			SetEnabled(kBrowseStartDirButtonID, false);
-		//			SetEnabled(kRecursiveCheckboxID, true);
-		//			SetEnabled(kEnableFilterCheckboxID, true);
-		//			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
-		//			break;
-		//		
-		//		case kMethodOpenWindows:
-		//			SetEnabled(kStartDirComboboxID, false);
-		//			SetEnabled(kBrowseStartDirButtonID, false);
-		//			SetEnabled(kRecursiveCheckboxID, false);
-		//			SetEnabled(kEnableFilterCheckboxID, false);
-		//			SetEnabled(kNameFilterEditboxID, false);
-		//			break;
-		//	}
-		//	break;
-		//}
-		
-		case kFindComboboxID:
-			if (not mUpdatingComboBox)
-				mFindStringChanged = true;
-			break;
-		
-		case kReplaceComboboxID:
-			if (not mUpdatingComboBox)
-				mReplaceStringChanged = true;
-			break;
-		
-		case kStartDirComboboxID:
-			if (not mUpdatingComboBox)
-				mStartDirectoriesChanged = true;
-			break;
-		
-		case kEnableFilterCheckboxID:
-			SetEnabled(kNameFilterEditboxID, IsChecked(kEnableFilterCheckboxID));
-			break;
-		
-		default:
-			//MDialog::ValueChanged(inButonID);
-			break;
-	}
+		if (inID == kFindComboboxID)
+			mFindStringChanged = true;
+		else if (inID == kReplaceComboboxID)
+			mReplaceStringChanged = true;
+		else if (inID == kStartDirComboboxID)
+			mStartDirectoriesChanged = true;
+	}	
 }
 
 bool MFindDialog::FindNext()

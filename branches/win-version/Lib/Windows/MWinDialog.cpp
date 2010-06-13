@@ -25,23 +25,12 @@
 #include "MResources.h"
 #include "MAcceleratorTable.h"
 #include "MControls.h"
+#include "MDialog.h"
 
 using namespace std;
 using namespace zeep;
 namespace io = boost::iostreams;
 namespace ba = boost::algorithm;
-
-namespace {
-
-uint32 str2id(const string& inID)
-{
-	uint32 id = 0;
-	for (string::const_iterator ch = inID.begin(); ch != inID.end(); ++ch)
-		id = id << 8 | uint8(*ch);
-	return id;
-}
-
-}
 
 class MWinDialogImpl : public MWinWindowImpl
 {
@@ -248,7 +237,7 @@ void MWinDialogImpl::GetMargins(xml::element* inTemplate,
 
 MView* MWinDialogImpl::CreateButton(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	uint32 id = str2id(inTemplate->get_attribute("id"));
+	string id = inTemplate->get_attribute("id");
 	string title = inTemplate->get_attribute("title");
 	
 	MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
@@ -261,6 +250,8 @@ MView* MWinDialogImpl::CreateButton(xml::element* inTemplate, int32 inX, int32 i
 	if (inTemplate->get_attribute("default") == "true")
 		button->MakeDefault(true);
 
+	AddRoute(button->eClicked, static_cast<MDialog*>(mWindow)->eButtonClicked);
+
 	return button;
 }
 
@@ -270,32 +261,38 @@ MView* MWinDialogImpl::CreateCaption(xml::element* inTemplate, int32 inX, int32 
 
 	MRect bounds(inX, inY + 2 * mDLUY, 0, 8 * mDLUY);
 	bounds.width = GetTextWidth(text, VSCLASS_STATIC, STAT_TEXT, 0);
-	return new MCaption('capt', bounds, text);
+	return new MCaption("caption", bounds, text);
 }
 
 MView* MWinDialogImpl::CreateCheckbox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	uint32 id = str2id(inTemplate->get_attribute("id"));
+	string id = inTemplate->get_attribute("id");
 	string title = inTemplate->get_attribute("title");
 
 	MRect bounds(inX, inY + 2 * mDLUY, 0, 10 * mDLUY);
-	bounds.width = 12 * mDLUY +
-		GetTextWidth(title, VSCLASS_STATIC, STAT_TEXT, 0);
-	return new MCheckbox(id, bounds, title);
+	bounds.width = 14 * mDLUX +
+		GetTextWidth(title, VSCLASS_BUTTON, BP_CHECKBOX, PBS_NORMAL);
+	MCheckbox* checkbox = new MCheckbox(id, bounds, title);
+	AddRoute(checkbox->eValueChanged,
+		static_cast<MDialog*>(mWindow)->eCheckboxClicked);
+	return checkbox;
 }
 
 MView* MWinDialogImpl::CreateCombobox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	uint32 id = str2id(inTemplate->get_attribute("id"));
+	string id = inTemplate->get_attribute("id");
 
 	MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
-	return new MCombobox(id, bounds, true);
+	MCombobox* combobox = new MCombobox(id, bounds, true);
+	AddRoute(combobox->eValueChanged,
+		static_cast<MDialog*>(mWindow)->eTextChanged);
+	return combobox;
 }
 
 MView* MWinDialogImpl::CreateSeparator(xml::element* inTemplate, int32 inX, int32 inY)
 {
 	MRect bounds(inX, inY, 2, 2);
-	return new MSeparator('sepa', bounds);
+	return new MSeparator("separator", bounds);
 }
 
 MView* MWinDialogImpl::CreateVBox(xml::element* inTemplate, int32 inX, int32 inY)
@@ -303,7 +300,7 @@ MView* MWinDialogImpl::CreateVBox(xml::element* inTemplate, int32 inX, int32 inY
 	int32 y = 0;
 	int32 width = 0;
 	
-	MView* result = new MView('vbox', MRect(inX, inY, 0, 0));
+	MView* result = new MView("vbox", MRect(inX, inY, 0, 0));
 	
 	vector<MView*> views;
 	
@@ -345,7 +342,7 @@ MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY
 	int32 x = 0;
 	int32 height = 0;
 	
-	MView* result = new MView('hbox', MRect(inX, inY, 0, 0));
+	MView* result = new MView("hbox", MRect(inX, inY, 0, 0));
 	
 	vector<MView*> views;
 	
@@ -384,7 +381,7 @@ MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY
 
 MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	MView* result = new MView('tabl', MRect(inX, inY, 0, 0));
+	MView* result = new MView("table", MRect(inX, inY, 0, 0));
 	
 	vector<vector<MView*> > rows;
 	vector<int32> widths;
@@ -419,7 +416,7 @@ MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 in
 			
 			if (cols.size() > widths.size())
 				widths.push_back(width);
-			else if (widths[cols.size() - 1] < width);
+			else if (widths[cols.size() - 1] < width)
 				widths[cols.size() - 1] = width;
 			
 			if (height < frame.height + frame.y - y)
@@ -453,6 +450,8 @@ MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 in
 			MRect frame;
 			col->GetFrame(frame);
 			
+			assert(frame.width <= widths[n]);
+
 			col->ResizeFrame(x - frame.x, y - frame.y,
 				widths[n] - frame.width, 0);
 			

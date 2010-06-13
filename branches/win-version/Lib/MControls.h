@@ -29,7 +29,7 @@ public:
 
 protected:
 
-					MControl(const uint32 inID, MRect inBounds, I* inImpl);
+					MControl(const std::string& inID, MRect inBounds, I* inImpl);
 
 	virtual void	ActivateSelf();
 	virtual void	DeactivateSelf();
@@ -58,12 +58,12 @@ class MButton : public MControl<MButtonImpl>
 public:
 	typedef MButtonImpl		MImpl;
 	
-					MButton(const uint32 inID, MRect inBounds, const std::string& inLabel);
+					MButton(const std::string& inID, MRect inBounds, const std::string& inLabel);
 
 	void			GetIdealSize(int32& outWidth, int32& outHeight);
 	void			MakeDefault(bool inDefault = true);
 
-	MEventOut<void()>
+	MEventOut<void(const std::string&)>
 					eClicked;
 };
 
@@ -77,7 +77,7 @@ class MScrollbar : public MControl<MScrollbarImpl>
 public:
 	typedef MScrollbarImpl		MImpl;
 
-					MScrollbar(const uint32 inID, MRect inBounds);
+					MScrollbar(const std::string& inID, MRect inBounds);
 
 	virtual int32	GetValue() const;
 	virtual void	SetValue(int32 inValue);
@@ -103,7 +103,7 @@ class MStatusbar : public MControl<MStatusbarImpl>
 public:
 	typedef MStatusbarImpl		MImpl;
 
-					MStatusbar(const uint32 inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
+					MStatusbar(const std::string& inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
 
 	virtual void	SetStatusText(uint32 inPartNr, const std::string& inText, bool inBorder);
 };
@@ -117,9 +117,9 @@ class MCombobox : public MControl<MComboboxImpl>
 public:
 	typedef MComboboxImpl		MImpl;
 		
-					MCombobox(const uint32 inID, MRect inBounds, bool inEditable);
+					MCombobox(const std::string& inID, MRect inBounds, bool inEditable);
 
-	MEventOut<void(int,std::string)>
+	MEventOut<void(const std::string&,const std::string&)>
 					eValueChanged;
 	
 	virtual void	SetText(const std::string& inText);
@@ -138,7 +138,7 @@ class MCaption : public MControl<MCaptionImpl>
 public:
 	typedef MCaptionImpl		MImpl;
 		
-					MCaption(const uint32 inID, MRect inBounds,
+					MCaption(const std::string& inID, MRect inBounds,
 						const std::string& inText);
 };
 
@@ -151,7 +151,7 @@ class MSeparator : public MControl<MSeparatorImpl>
 public:
 	typedef MSeparatorImpl		MImpl;
 		
-					MSeparator(const uint32 inID, MRect inBounds);
+					MSeparator(const std::string& inID, MRect inBounds);
 };
 
 // --------------------------------------------------------------------
@@ -163,13 +163,13 @@ class MCheckbox : public MControl<MCheckboxImpl>
 public:
 	typedef MCheckboxImpl		MImpl;
 		
-					MCheckbox(const uint32 inID, MRect inBounds,
+					MCheckbox(const std::string& inID, MRect inBounds,
 						const std::string& inTitle);
 
 	bool			IsChecked() const;
 	void			SetChecked(bool inChecked);
 
-	MEventOut<void(bool)>
+	MEventOut<void(const std::string&,bool)>
 					eValueChanged;
 };
 

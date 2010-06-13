@@ -86,8 +86,16 @@ class MFindDialog : public MDialog
 	void			ShowHideMultiPanel(
 						bool				inShow);
 
-	virtual void	ValueChanged(
-						uint32				inButonID);
+	virtual void	ButtonClicked(
+						const std::string&	inID);
+
+	virtual void	CheckboxChanged(
+						const std::string&	inID,
+						bool				inValue);
+
+	virtual void	TextChanged(
+						const std::string&	inID,
+						const std::string&	inText);
 
 	void			DoFindCommand(
 						uint32				inCommand);

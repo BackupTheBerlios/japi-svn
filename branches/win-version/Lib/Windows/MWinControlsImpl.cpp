@@ -223,7 +223,7 @@ bool MWinButtonImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM 
 
 	if (inMsg == BN_CLICKED)
 	{
-		mControl->eClicked();
+		mControl->eClicked(mControl->GetID());
 
 		outResult = 1;
 		result = true;
@@ -234,7 +234,7 @@ bool MWinButtonImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM 
 
 void MWinButtonImpl::SimulateClick()
 {
-	mControl->eClicked();
+	mControl->eClicked(mControl->GetID());
 }
 
 void MWinButtonImpl::MakeDefault(bool inDefault)
@@ -547,19 +547,18 @@ bool MWinComboboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	switch (inUMsg)
 	{
 		case CBN_SELENDOK:
-			mControl->eValueChanged(-1, "Nieuw!");
+			mControl->eValueChanged(mControl->GetID(), "Nieuw!");
 			break;
 		
 		case CBN_EDITUPDATE:
-			mControl->eValueChanged(-1, "Nieuw!");
+			mControl->eValueChanged(mControl->GetID(), "Nieuw!");
 			break;
 		
 		case CBN_DROPDOWN:
 		{
-//			int count = CountItems() + 1;
-//			if (count < 1) count = 1;
-//			if (count > 8) count = 8;
-			int count = 5;
+			int count = ::SendMessage(GetHandle(), CB_GETCOUNT, 0, 0) + 1;
+			if (count < 1) count = 1;
+			if (count > 8) count = 8;
 			
 			MRect bounds;
 			mControl->GetBounds(bounds);
@@ -672,7 +671,7 @@ bool MWinCheckboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 		bool checked = not IsChecked();
 
 		SetChecked(checked);
-		mControl->eValueChanged(checked);
+		mControl->eValueChanged(mControl->GetID(), checked);
 
 		outResult = 1;
 		result = true;

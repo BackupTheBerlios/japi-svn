@@ -26,6 +26,9 @@ MDialog* MDialog::sFirst;
 MDialog::MDialog(
 	const string&		inDialogResource)
 	: MWindow(MWindowImpl::CreateDialog(inDialogResource, this))
+	, eButtonClicked(this, &MDialog::ButtonClicked)
+	, eCheckboxClicked(this, &MDialog::CheckboxChanged)
+	, eTextChanged(this, &MDialog::TextChanged)
 	, mParentWindow(nil)
 	, mNext(nil)
 {
@@ -77,41 +80,32 @@ bool MDialog::CancelClicked()
 	return true;
 }
 
-//void MDialog::StdBtnClicked()
-//{
-//	const char* name = gtk_buildable_get_name(GTK_BUILDABLE(mStdBtnClicked.GetSourceGObject()));
-//	if (name != nil)
-//	{
-//		uint32 id = 0;
-//		for (uint32 i = 0; i < 4 and name[i]; ++i)
-//			id = (id << 8) | name[i];
-//		
-//		try
-//		{
-//			switch (id)
-//			{
-//				case 'okok':
-//					if (OKClicked())
-//						Close();
-//					break;
-//				
-//				case 'cncl':
-//					if (CancelClicked())
-//						Close();
-//					break;
-//				
-//				default:
-//					ValueChanged(id);
-//					break;
-//			}
-//		}
-//		catch (exception& e)
-//		{
-//			DisplayError(e);
-//		}
-//		catch (...) {}
-//	}
-//}
+void MDialog::ButtonClicked(
+	const string&		inID)
+{
+	if (inID == "ok")
+	{
+		if (OKClicked())
+			Close();
+	}
+	else if (inID == "cancel")
+	{
+		if (CancelClicked())
+			Close();
+	}
+}
+
+void MDialog::CheckboxChanged(
+	const string&		inID,
+	bool				inChecked)
+{
+}
+
+void MDialog::TextChanged(
+	const string&		inID,
+	const string&		inText)
+{
+}
 
 void MDialog::SavePosition(const char* inName)
 {
@@ -138,7 +132,7 @@ void MDialog::RestorePosition(const char* inName)
 	}
 }
 
-string MDialog::GetText(uint32 inID) const
+string MDialog::GetText(const string& inID) const
 {
 	string result;
 	
@@ -150,7 +144,7 @@ string MDialog::GetText(uint32 inID) const
 	return result;
 }
 
-void MDialog::SetText(uint32 inID, const std::string& inText)
+void MDialog::SetText(const string& inID, const std::string& inText)
 {
 	MView* view = FindSubViewByID(inID);
 	THROW_IF_NIL(view);
@@ -158,28 +152,28 @@ void MDialog::SetText(uint32 inID, const std::string& inText)
 		static_cast<MCombobox*>(view)->SetText(inText);
 }
 
-bool MDialog::IsChecked(uint32 inID) const
+bool MDialog::IsChecked(const string& inID) const
 {
 	MView* view = FindSubViewByID(inID);
 	THROW_IF_NIL(dynamic_cast<MCheckbox*>(view));
 	return static_cast<MCheckbox*>(view)->IsChecked();
 }
 
-void MDialog::SetChecked(uint32 inID, bool inChecked)
+void MDialog::SetChecked(const string& inID, bool inChecked)
 {
 	MView* view = FindSubViewByID(inID);
 	THROW_IF_NIL(dynamic_cast<MCheckbox*>(view));
 	static_cast<MCheckbox*>(view)->SetChecked(inChecked);
 }
 
-void MDialog::SetChoices(uint32 inID, vector<string>& inChoices)
+void MDialog::SetChoices(const string& inID, vector<string>& inChoices)
 {
 	MCombobox* combo = dynamic_cast<MCombobox*>(FindSubViewByID(inID));
 	THROW_IF_NIL(combo);
 	combo->SetChoices(inChoices);
 }
 
-void MDialog::SetEnabled(uint32 inID, bool inEnabled)
+void MDialog::SetEnabled(const string& inID, bool inEnabled)
 {
 	MView* view = FindSubViewByID(inID);
 	THROW_IF_NIL(view == nil);
@@ -189,7 +183,7 @@ void MDialog::SetEnabled(uint32 inID, bool inEnabled)
 		view->Disable();
 }
 
-void MDialog::SetVisible(uint32 inID, bool inVisible)
+void MDialog::SetVisible(const string& inID, bool inVisible)
 {
 	MView* view = FindSubViewByID(inID);
 	THROW_IF_NIL(view == nil);

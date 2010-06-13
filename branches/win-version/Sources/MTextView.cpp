@@ -50,7 +50,7 @@ const double
 //	Default constructor
 
 MTextView::MTextView(
-	const uint32		inID,
+	const string&		inID,
 	MRect				inBounds)
 	: MView(inID, inBounds)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)

@@ -38,10 +38,13 @@ class MView
 {
   public:
 					MView(
-						const uint32	inID,
+						const std::string&
+										inID,
 						MRect			inBounds);
 
 	virtual			~MView();
+
+	std::string		GetID() const						{ return mID; }
 
 	virtual MView*	GetParent() const;
 
@@ -189,7 +192,8 @@ class MView
 						int32			inY) const;
 
 	virtual MView*	FindSubViewByID(
-						uint32			inID) const;
+						const std::string&
+										inID) const;
 
 	virtual void	ConvertToParent(int32& ioX, int32& ioY) const;
 	virtual void	ConvertFromParent(int32& ioX, int32& ioY) const;
@@ -215,7 +219,7 @@ class MView
 	void			SuperHide();
 	virtual void	HideSelf();
 
-	uint32			mID;
+	std::string		mID;
 	MRect			mBounds, mFrame;
 	int32			mViewWidth, mViewHeight;
 	MView*			mParent;
@@ -231,7 +235,7 @@ class MView
 class MViewScroller : public MView
 {
 public:
-					MViewScroller(const uint32 inID, MView* inTarget,
+					MViewScroller(const std::string& inID, MView* inTarget,
 						bool inHScrollbar, bool inVScrollbar);
 
 	virtual void	AdjustScrollbars();
