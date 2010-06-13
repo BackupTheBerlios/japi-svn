@@ -943,9 +943,9 @@ uint32 MView::CountPages(
 //	PRINT(("Show Popup Menu"));
 //}
 
-MView* MView::FindSubView(int32 inX, int32 inY)
+MView* MView::FindSubView(int32 inX, int32 inY) const
 {
-	MView* result = this;
+	const MView* result = this;
 
 	foreach (MView* view, mChildren)
 	{
@@ -957,12 +957,12 @@ MView* MView::FindSubView(int32 inX, int32 inY)
 		}
 	}
 	
-	return result;
+	return const_cast<MView*>(result);
 }
 
-MView* MView::FindSubViewByID(uint32 inID)
+MView* MView::FindSubViewByID(uint32 inID) const
 {
-	MView* result = nil;
+	const MView* result = nil;
 	
 	if (mID == inID)
 		result = this;
@@ -976,7 +976,7 @@ MView* MView::FindSubViewByID(uint32 inID)
 		}
 	}
 	
-	return result;
+	return const_cast<MView*>(result);
 }
 
 void MView::ConvertToParent(int32& ioX, int32& ioY) const

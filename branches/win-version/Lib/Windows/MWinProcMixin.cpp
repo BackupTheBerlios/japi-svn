@@ -154,6 +154,8 @@ bool MWinProcMixin::WMChar(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inL
 		outResult = 1;
 		if (DispatchKeyDown(keyCode, modifiers, w2c(text)))
 		{
+			::UpdateWindow(GetHandle());
+	
 			result = true;
 			outResult = 0;
 		}
@@ -254,6 +256,8 @@ bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 	
 	if (keyCode != 0 and DispatchKeyDown(keyCode, modifiers, text))
 	{
+		::UpdateWindow(GetHandle());
+		
 		result = true;
 		outResult = 0;
 	}

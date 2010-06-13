@@ -35,16 +35,18 @@ class MDialog : public MWindow
 
 	MWindow*		GetParentWindow() const				{ return mParentWindow; }
 	
-	void			SetCloseImmediatelyFlag(
-						bool				inCloseImmediately);
-
-
-	std::string		GetText(uint32 inID);
+	std::string		GetText(uint32 inID) const;
 	void			SetText(uint32 inID, const std::string& inText);
+
+	bool			IsChecked(uint32 inID) const;
+	void			SetChecked(uint32 inID, bool inChecked);
 
 	void			SetChoices(uint32 inID,
 						std::vector<std::string>& inChoices);
 	
+	void			SetEnabled(uint32 inID, bool inEnabled);
+	void			SetVisible(uint32 inID, bool inEnabled);
+
   protected:
 
 					MDialog(
@@ -58,7 +60,6 @@ class MDialog : public MWindow
 	MWindow*		mParentWindow;
 	MDialog*		mNext;						// for the close all
 	static MDialog*	sFirst;
-	bool			mCloseImmediatelyOnOK;
 };
 
 #endif // MDIALOG_H

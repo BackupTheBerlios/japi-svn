@@ -279,7 +279,7 @@ MView* MWinDialogImpl::CreateCheckbox(xml::element* inTemplate, int32 inX, int32
 	string title = inTemplate->get_attribute("title");
 
 	MRect bounds(inX, inY + 2 * mDLUY, 0, 10 * mDLUY);
-	bounds.width = 10 * mDLUY +
+	bounds.width = 12 * mDLUY +
 		GetTextWidth(title, VSCLASS_STATIC, STAT_TEXT, 0);
 	return new MCheckbox(id, bounds, title);
 }

@@ -28,7 +28,6 @@ MDialog::MDialog(
 	: MWindow(MWindowImpl::CreateDialog(inDialogResource, this))
 	, mParentWindow(nil)
 	, mNext(nil)
-	, mCloseImmediatelyOnOK(true)
 {
 	mNext = sFirst;
 	sFirst = this;
@@ -139,13 +138,7 @@ void MDialog::RestorePosition(const char* inName)
 	}
 }
 
-void MDialog::SetCloseImmediatelyFlag(
-	bool inCloseImmediately)
-{
-	mCloseImmediatelyOnOK = inCloseImmediately;
-}
-
-string MDialog::GetText(uint32 inID)
+string MDialog::GetText(uint32 inID) const
 {
 	string result;
 	
@@ -165,9 +158,44 @@ void MDialog::SetText(uint32 inID, const std::string& inText)
 		static_cast<MCombobox*>(view)->SetText(inText);
 }
 
+bool MDialog::IsChecked(uint32 inID) const
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(dynamic_cast<MCheckbox*>(view));
+	return static_cast<MCheckbox*>(view)->IsChecked();
+}
+
+void MDialog::SetChecked(uint32 inID, bool inChecked)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(dynamic_cast<MCheckbox*>(view));
+	static_cast<MCheckbox*>(view)->SetChecked(inChecked);
+}
+
 void MDialog::SetChoices(uint32 inID, vector<string>& inChoices)
 {
 	MCombobox* combo = dynamic_cast<MCombobox*>(FindSubViewByID(inID));
 	THROW_IF_NIL(combo);
 	combo->SetChoices(inChoices);
 }
+
+void MDialog::SetEnabled(uint32 inID, bool inEnabled)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view == nil);
+	if (inEnabled)
+		view->Enable();
+	else
+		view->Disable();
+}
+
+void MDialog::SetVisible(uint32 inID, bool inVisible)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view == nil);
+	if (inVisible)
+		view->Show();
+	else
+		view->Hide();
+}
+

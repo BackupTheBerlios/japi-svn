@@ -186,10 +186,10 @@ class MView
 
 	MView*			FindSubView(
 						int32			inX,
-						int32			inY);
+						int32			inY) const;
 
 	virtual MView*	FindSubViewByID(
-						uint32			inID);
+						uint32			inID) const;
 
 	virtual void	ConvertToParent(int32& ioX, int32& ioY) const;
 	virtual void	ConvertFromParent(int32& ioX, int32& ioY) const;
