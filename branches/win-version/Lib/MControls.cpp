@@ -37,47 +37,6 @@ void MControl<IMPL>::ResizeFrame(int32 inXDelta, int32 inYDelta,
 	mImpl->FrameResized();
 }
 
-//template<class IMPL>
-//long MControl<IMPL>::GetValue() const
-//{
-//	return mImpl->GetValue();
-//}
-//
-//void MControl::SetValue(long inValue)
-//{
-//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetValue(inValue);
-//}
-//	
-//void MControl::SetMinValue(long inMinValue)
-//{
-//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetMinValue(inMinValue);
-//}
-//
-//long MControl::GetMinValue() const
-//{
-//	return dynamic_cast<MValueControlImplMixin*>(mImpl)->GetMinValue();
-//}
-//	
-//void MControl::SetMaxValue(long inMaxValue)
-//{
-//	dynamic_cast<MValueControlImplMixin*>(mImpl)->SetMaxValue(inMaxValue);
-//}
-//
-//long MControl::GetMaxValue() const
-//{
-//	return dynamic_cast<MValueControlImplMixin*>(mImpl)->GetMaxValue();
-//}
-//
-//string MControl::GetText() const
-//{
-//	return dynamic_cast<MTextControlImplMixin*>(mImpl)->GetText();
-//}
-//
-//void MControl::SetText(string inText)
-//{
-//	dynamic_cast<MTextControlImplMixin*>(mImpl)->SetText(inText);
-//}
-
 template<class IMPL>
 void MControl<IMPL>::ActivateSelf()
 {
@@ -194,8 +153,8 @@ void MStatusbar::SetStatusText(uint32 inPartNr, const string& inText, bool inBor
 
 // --------------------------------------------------------------------
 
-MCombobox::MCombobox(const string& inID, MRect inBounds, bool inEditable)
-	: MControl<MComboboxImpl>(inID, inBounds, MComboboxImpl::Create(this, inEditable))
+MCombobox::MCombobox(const string& inID, MRect inBounds)
+	: MControl<MComboboxImpl>(inID, inBounds, MComboboxImpl::Create(this))
 {
 }
 
@@ -212,6 +171,45 @@ string MCombobox::GetText() const
 void MCombobox::SetChoices(const vector<string>& inChoices)
 {
 	mImpl->SetChoices(inChoices);
+}
+
+// --------------------------------------------------------------------
+
+MPopup::MPopup(const string& inID, MRect inBounds)
+	: MControl<MPopupImpl>(inID, inBounds, MPopupImpl::Create(this))
+{
+}
+
+void MPopup::SetValue(int32 inValue)
+{
+	mImpl->SetValue(inValue);
+}
+
+int32 MPopup::GetValue() const
+{
+	return mImpl->GetValue();
+}
+
+void MPopup::SetChoices(const vector<string>& inChoices)
+{
+	mImpl->SetChoices(inChoices);
+}
+
+// --------------------------------------------------------------------
+
+MEdittext::MEdittext(const string& inID, MRect inBounds)
+	: MControl<MEdittextImpl>(inID, inBounds, MEdittextImpl::Create(this))
+{
+}
+
+void MEdittext::SetText(const string& inText)
+{
+	mImpl->SetText(inText);
+}
+
+string MEdittext::GetText() const
+{
+	return mImpl->GetText();
 }
 
 // --------------------------------------------------------------------

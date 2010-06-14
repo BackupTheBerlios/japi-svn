@@ -32,7 +32,7 @@ MView::MView(
 	, mViewWidth(inBounds.width)
 	, mViewHeight(inBounds.height)
 	, mParent(nil)
-	, mWillDraw(true)
+	, mWillDraw(false)
 	, mActive(eTriStateOn)
 	, mVisible(eTriStateOn)
 	, mEnabled(eTriStateOn)
@@ -187,13 +187,15 @@ void MView::ResizeFrame(
 		Invalidate();
 
 	MRect newBounds = mBounds;
-	newBounds.width += inWidthDelta;
-	newBounds.height += inHeightDelta;
 
 	MRect newFrame = mFrame;
 	newFrame.x += inXDelta;
 	newFrame.y += inYDelta;
+
 	newFrame.width += inWidthDelta;
+	newBounds.width += inWidthDelta;
+
+	newBounds.height += inHeightDelta;
 	newFrame.height += inHeightDelta;
 
 	mFrame = newFrame;
@@ -1043,6 +1045,280 @@ void MView::Draw(
 	MRect			inUpdate)
 {
 	// do nothing
+}
+
+// --------------------------------------------------------------------
+
+void MHBox::AddChild(
+	MView*			inChild)
+{
+	MRect frame;
+	inChild->GetFrame(frame);
+	
+	// adjust for new height, if needed
+	if (frame.y + frame.height > mFrame.height)
+		ResizeFrame(0, 0, 0, frame.y + frame.height - mFrame.height);
+	else
+		frame.height = mFrame.height - frame.y;
+	
+	// our width will increase
+	mFrame.width += frame.x + frame.width;
+	
+	// append the child as last in the row
+	if (not mChildren.empty())
+	{
+		MRect lastFrame;
+		mChildren.back()->GetFrame(lastFrame);
+		
+		frame.x += lastFrame.x + lastFrame.width + mSpacing;
+		inChild->SetFrame(frame);
+	}
+
+	MView::AddChild(inChild);
+}
+
+void MHBox::ResizeFrame(
+	int32			inXDelta,
+	int32			inYDelta,
+	int32			inWidthDelta,
+	int32			inHeightDelta)
+{
+	mFrame.x += inXDelta;
+	mFrame.y += inYDelta;
+	mFrame.width += inWidthDelta;
+	mFrame.height += inHeightDelta;
+
+	mBounds.width += inWidthDelta;
+	mBounds.height += inHeightDelta;
+
+	uint32 n = 0;	// count the resizing children
+	foreach (MView* child, mChildren)
+	{
+		if (child->WidthResizable())
+			++n;
+	}
+	
+	if (n > 0)
+	{
+		int32 delta = inWidthDelta / n;
+		int32 dx = 0;
+		
+		foreach (MView* child, mChildren)
+		{
+			if (child->WidthResizable())
+			{
+				child->ResizeFrame(dx, 0, delta, inHeightDelta);
+				dx += delta;
+			}
+			else
+				child->ResizeFrame(dx, 0, 0, inHeightDelta);
+		}
+	}
+	else
+	{
+		foreach (MView* child, mChildren)
+			child->ResizeFrame(0, 0, 0, inHeightDelta);
+	}
+}
+
+void MVBox::AddChild(
+	MView*			inChild)
+{
+	MRect frame;
+	inChild->GetFrame(frame);
+	
+	// adjust for new width, if needed
+	if (frame.x + frame.width > mFrame.width)
+		ResizeFrame(0, 0, frame.x + frame.width - mFrame.width, 0);
+	else
+		frame.width = mFrame.width - frame.x;
+	
+	// our height will increase
+	mFrame.height += frame.y + frame.height;
+	
+	// append the child as last in the row
+	if (not mChildren.empty())
+	{
+		MRect lastFrame;
+		mChildren.back()->GetFrame(lastFrame);
+		
+		frame.y += lastFrame.y + lastFrame.height + mSpacing;
+		inChild->SetFrame(frame);
+	}
+
+	MView::AddChild(inChild);
+}
+
+void MVBox::ResizeFrame(
+	int32			inXDelta,
+	int32			inYDelta,
+	int32			inWidthDelta,
+	int32			inHeightDelta)
+{
+	mFrame.x += inXDelta;
+	mFrame.y += inYDelta;
+	mFrame.width += inWidthDelta;
+	mFrame.height += inHeightDelta;
+
+	mBounds.width += inWidthDelta;
+	mBounds.height += inHeightDelta;
+
+	uint32 n = 0;	// count the resizing children
+	foreach (MView* child, mChildren)
+	{
+		if (child->HeightResizable())
+			++n;
+	}
+	
+	if (n > 0)
+	{
+		int32 delta = inHeightDelta / n;
+		int32 dy = 0;
+		
+		foreach (MView* child, mChildren)
+		{
+			if (child->HeightResizable())
+			{
+				child->ResizeFrame(0, dy, inWidthDelta, dy);
+				dy += delta;
+			}
+			else
+				child->ResizeFrame(0, dy, inWidthDelta, 0);
+		}
+	}
+	else
+	{
+		foreach (MView* child, mChildren)
+			child->ResizeFrame(0, 0, inWidthDelta, 0);
+	}
+}
+
+MTable::MTable(const std::string& inID, MRect inBounds, MView* inChildren[],
+	uint32 inColumns, uint32 inRows, int32 inHSpacing, int32 inVSpacing)
+	: MView(inID, inBounds)
+	, mColumns(inColumns)
+	, mRows(inRows)
+	, mHSpacing(inHSpacing)
+	, mVSpacing(inVSpacing)
+	, mGrid(mRows * mColumns)
+{
+	vector<int32> widths(mColumns);
+	vector<int32> heights(mRows);
+	
+	for (int32 r = 0; r < mRows; ++r)
+	{
+		for (int32 c = 0; c < mColumns; ++c)
+		{
+			int ix = r * mColumns + c;
+			
+			if (inChildren[ix] == nil)
+				continue;
+
+			mGrid[ix] = inChildren[ix];
+			MView::AddChild(mGrid[ix]);
+			
+			MRect bounds;
+			mGrid[ix]->GetBounds(bounds);
+			
+			if (widths[c] < bounds.width)
+				widths[c] = bounds.width;
+			
+			if (heights[r] < bounds.height)
+				heights[r] = bounds.height;
+		}
+	}
+	
+	int32 x, y = 0;
+	
+	for (int32 r = 0; r < mRows; ++r)
+	{
+		x = 0;
+
+		for (int32 c = 0; c < mColumns; ++c)
+		{
+			int ix = r * mColumns + c;
+
+			if (inChildren[ix] == nil)
+				continue;
+
+			MRect frame;
+			mGrid[ix]->GetFrame(frame);
+			
+			mGrid[ix]->ResizeFrame(x, y,
+				widths[c] - frame.width, heights[r] - frame.height);
+			
+			x += widths[c] + mHSpacing;
+		}
+		
+		y += heights[r] + mVSpacing;
+	}
+	
+	mBounds.width = mFrame.width = x - mHSpacing;
+	mBounds.height = mFrame.height = y - mVSpacing;
+}
+
+void MTable::ResizeFrame(
+	int32			inXDelta,
+	int32			inYDelta,
+	int32			inWidthDelta,
+	int32			inHeightDelta)
+{
+	mFrame.x += inXDelta;
+	mFrame.y += inYDelta;
+	mFrame.width += inWidthDelta;
+	mFrame.height += inHeightDelta;
+
+	mBounds.width += inWidthDelta;
+	mBounds.height += inHeightDelta;
+	
+	// resize rows
+	for (uint32 rx = 0; rx < mRows; ++rx)
+	{
+		int32 height = 0;
+		
+		for (uint32 cx = 0; cx < mColumns; ++cx)
+		{
+			MView* v = mGrid[rx * mColumns + cx];
+			if (v == nil)
+				continue;
+			
+			MRect f;
+			v->GetFrame(f);
+			
+			if (height < f.y + f.height)
+				height = f.y + f.height;
+		}
+
+		for (uint32 cx = 0; cx < mColumns; ++cx)
+		{
+			MView* v = mGrid[rx * mColumns + cx];
+			if (v == nil or v->HeightResizable() == false)
+				continue;
+			
+			MRect f;
+			v->GetFrame(f);
+			
+			if (f.y + f.height < height)
+				v->ResizeFrame(0, 0, 0, height - f.y - f.height);
+		}
+	}
+}
+
+void MTable::AddChild(
+	MView*			inView,
+	int32			inColumn,
+	int32			inRow,
+	int32			inColumnSpan,
+	int32			inRowSpan)
+{
+	MView::AddChild(inView);
+	
+	if (inColumn > mColumns or inRow > mRows)
+		THROW(("table index out of bounds"));
+	
+	mGrid[inRow * mColumns + inColumn] = inView;
+	
+	ResizeFrame(0, 0, 0, 0);
 }
 
 // --------------------------------------------------------------------

@@ -49,13 +49,13 @@ const string
 	
 	// --- multi
 	
-	kMultiFileExpanderID	 =	"exp1",
-	kMethodPopupID = 			"meth",
-	kRecursiveCheckboxID =		"recu",
-	kStartDirComboboxID =		"sdir",
-	kEnableFilterCheckboxID =	"ffnm",
-	kNameFilterEditboxID =		"filt",
-	kBrowseStartDirButtonID =	"chdr",
+	kMultiFileExpanderID	 =	"multi-file-search",
+	kMethodPopupID = 			"multi-file-method",
+	kRecursiveCheckboxID =		"recursive",
+	kStartDirComboboxID =		"start-dir",
+	kEnableFilterCheckboxID =	"enable-name-filter",
+	kNameFilterEditboxID =		"name-filter",
+	kBrowseStartDirButtonID =	"browse-start-dir",
 	
 	// --- status
 	
@@ -196,7 +196,6 @@ bool MFindDialog::DoClose()
 
 void MFindDialog::Select()
 {
-	RestorePosition("find dialog position");
 	Show(nil);
 	MWindow::Select();
 	//SetFocus(kFindComboboxID);

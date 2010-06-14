@@ -21,6 +21,31 @@
 				<checkbox id='batch' title="Batch" />
 			</row>
 		</table>
+		<checkbox id="multi-file-search" title="Multi file search" />
+		<table bind="left right">
+			<row>
+				<caption text="Method" />
+				<hbox bind="left right">
+					<popup bind="left top right" id="multi-file-method">
+						<option>Find in folders</option>
+						<option>Find in open windows</option>
+						<option>Find in include files</option>
+					</popup>
+					<checkbox bind="top right" id="recursive" title="Recursive" />
+				</hbox>
+			</row>
+			<row>
+				<caption text="Starting directory" />
+				<hbox bind="left right">
+					<edittext bind="left right" id="start-dir" />
+					<button bind="right" id="browse-start-dir" title="…" />
+				</hbox>
+			</row>
+			<row>
+				<caption text="File name filter" />
+				<edittext bind="left right" id="name-fitler" />
+			</row>
+		</table>
 	</vbox>
 	<hbox margin="7" bind="left right bottom">
 		<button bind="right bottom" title="Replace All" id="replace-all" />

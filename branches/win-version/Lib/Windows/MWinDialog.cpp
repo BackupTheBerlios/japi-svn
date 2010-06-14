@@ -55,6 +55,8 @@ private:
 	MView*			CreateCaption(xml::element* inTemplate, int32 inX, int32 inY);
 	MView*			CreateCheckbox(xml::element* inTemplate, int32 inX, int32 inY);
 	MView*			CreateCombobox(xml::element* inTemplate, int32 inX, int32 inY);
+	MView*			CreateEdittext(xml::element* inTemplate, int32 inX, int32 inY);
+	MView*			CreatePopup(xml::element* inTemplate, int32 inX, int32 inY);
 	MView*			CreateSeparator(xml::element* inTemplate, int32 inX, int32 inY);
 	MView*			CreateVBox(xml::element* inTemplate, int32 inX, int32 inY);
 	MView*			CreateHBox(xml::element* inTemplate, int32 inX, int32 inY);
@@ -172,7 +174,6 @@ void MWinDialogImpl::Finish()
 
 	// create the dialog controls, all stacked on top of each other
 	MView* content = CreateControls(dialog, 0, 0);
-	mWindow->AddChild(content);
 
 	RECT cr;
 	::GetClientRect(GetHandle(), &cr);
@@ -192,6 +193,8 @@ void MWinDialogImpl::Finish()
 		p.height += dh;
 		mWindow->SetWindowPosition(p);
 	}
+
+	mWindow->AddChild(content);
 }
 
 void MWinDialogImpl::GetMargins(xml::element* inTemplate,
@@ -240,12 +243,12 @@ MView* MWinDialogImpl::CreateButton(xml::element* inTemplate, int32 inX, int32 i
 	string id = inTemplate->get_attribute("id");
 	string title = inTemplate->get_attribute("title");
 	
-	MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
-	MButton* button = new MButton(id, bounds, title);
-
 	uint32 idealWidth = GetTextWidth(title, VSCLASS_BUTTON, BP_PUSHBUTTON, PBS_NORMAL) + 10 * mDLUX;
-	if (idealWidth > bounds.width)
-		button->ResizeFrame(0, 0, idealWidth - bounds.width, 0);
+	if (idealWidth < 50 * mDLUX)
+		idealWidth = 50 * mDLUX;
+	MRect bounds(inX, inY, idealWidth, 14 * mDLUY);
+
+	MButton* button = new MButton(id, bounds, title);
 	
 	if (inTemplate->get_attribute("default") == "true")
 		button->MakeDefault(true);
@@ -283,10 +286,48 @@ MView* MWinDialogImpl::CreateCombobox(xml::element* inTemplate, int32 inX, int32
 	string id = inTemplate->get_attribute("id");
 
 	MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
-	MCombobox* combobox = new MCombobox(id, bounds, true);
+	MCombobox* combobox = new MCombobox(id, bounds);
 	AddRoute(combobox->eValueChanged,
 		static_cast<MDialog*>(mWindow)->eTextChanged);
 	return combobox;
+}
+
+MView* MWinDialogImpl::CreateEdittext(xml::element* inTemplate, int32 inX, int32 inY)
+{
+	string id = inTemplate->get_attribute("id");
+
+	MRect bounds(inX, inY, 50 * mDLUX, 14 * mDLUY);
+	MEdittext* edittext = new MEdittext(id, bounds);
+	AddRoute(edittext->eValueChanged,
+		static_cast<MDialog*>(mWindow)->eTextChanged);
+	return edittext;
+}
+
+MView* MWinDialogImpl::CreatePopup(xml::element* inTemplate, int32 inX, int32 inY)
+{
+	string id = inTemplate->get_attribute("id");
+
+	MRect bounds(inX, inY, 0, 14 * mDLUY);
+	
+	vector<string> choices;
+	foreach (xml::element* option, inTemplate->find("./option"))
+	{
+		string label = option->content();
+		int32 width = GetTextWidth(label, VSCLASS_COMBOBOX, CP_DROPDOWNBUTTON, CBXSL_NORMAL);
+		if (bounds.width < width)
+			bounds.width = width;
+		choices.push_back(label);
+	}
+
+	bounds.width += 14 * mDLUX;
+
+	MPopup* popup = new MPopup(id, bounds);
+
+	popup->SetChoices(choices);
+	//AddRoute(popup->eValueChanged,
+	//	static_cast<MDialog*>(mWindow)->eValueChanged);
+
+	return popup;
 }
 
 MView* MWinDialogImpl::CreateSeparator(xml::element* inTemplate, int32 inX, int32 inY)
@@ -297,172 +338,62 @@ MView* MWinDialogImpl::CreateSeparator(xml::element* inTemplate, int32 inX, int3
 
 MView* MWinDialogImpl::CreateVBox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	int32 y = 0;
-	int32 width = 0;
-	
-	MView* result = new MView("vbox", MRect(inX, inY, 0, 0));
-	
-	vector<MView*> views;
+	MView* result = new MVBox("vbox", MRect(inX, inY, 0, 0), 4 * mDLUY);
 	
 	foreach (xml::element* b, inTemplate->children<xml::element>())
-	{
-		if (not views.empty())
-			y += 4 * mDLUY;
-
-		MView* v = CreateControls(b, 0, y);
-		views.push_back(v);
-		result->AddChild(v);
-		
-		MRect r;
-		v->GetBounds(r);
-
-		if (width < r.width)
-			width = r.width;
-		
-		y += r.height;
-	}
-	
-	int32 height = y;
-	
-	foreach (MView* v, views)
-	{
-		MRect b;
-		v->GetBounds(b);
-		if (b.width < width)
-			v->ResizeFrame(0, 0, width - b.width, 0);
-	}
-
-	result->SetFrame(MRect(inX, inY, width, height));
+		result->AddChild(CreateControls(b, 0, 0));
 	
 	return result;
 }
 
 MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	int32 x = 0;
-	int32 height = 0;
-	
-	MView* result = new MView("hbox", MRect(inX, inY, 0, 0));
-	
-	vector<MView*> views;
+	MView* result = new MHBox("hbox", MRect(inX, inY, 0, 0), 4 * mDLUX);
 	
 	foreach (xml::element* b, inTemplate->children<xml::element>())
-	{
-		if (not views.empty())
-			x += 4 * mDLUX;
-
-		MView* v = CreateControls(b, x, 0);
-		views.push_back(v);
-		result->AddChild(v);
-		
-		MRect r;
-		v->GetBounds(r);
-
-		if (height < r.height)
-			height = r.height;
-		
-		x += r.width;
-	}
-	
-	int32 width = x;
-	
-	foreach (MView* v, views)
-	{
-		MRect b;
-		v->GetBounds(b);
-		if (b.height < height)
-			v->ResizeFrame(0, 0, 0, height - b.height);
-	}
-
-	result->SetFrame(MRect(inX, inY, width, height));
+		result->AddChild(CreateControls(b, 0, 0));
 	
 	return result;
 }
 
 MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	MView* result = new MView("table", MRect(inX, inY, 0, 0));
-	
-	vector<vector<MView*> > rows;
-	vector<int32> widths;
+//	MView* result = new MVBox("table-vbox", MRect(inX, inY, 0, 0), 4 * mDLUY);
+//
+//	foreach (xml::element* row, inTemplate->find("./row"))
+//	{
+//		MView* r = new MHBox("table-hbox", MRect(0, 0, 0, 0), 4 * mDLUX);
+//		foreach (xml::element* col, row->children<xml::element>())
+//			r->AddChild(CreateControls(col, 0, 0));
+//		result->AddChild(r);
+//	}
+//	return result;
 
-	int32 x = 0;
-	int32 y = 0;
+	vector<MView*> views;
+	uint32 colCount = 0, rowCount = 0;
 	
 	foreach (xml::element* row, inTemplate->find("./row"))
 	{
-		x = 0;
-
-		vector<MView*> cols;
-		int32 height = 0;
-		
-		if (not rows.empty())
-			y += 4 * mDLUY;
+		int32 cn = 0;
 		
 		foreach (xml::element* col, row->children<xml::element>())
 		{
-			if (not cols.empty())
-				x += 4 * mDLUX;
-			
-			MView* view = CreateControls(col, x, y);
-			cols.push_back(view);
-			result->AddChild(view);
-			
-			MRect frame;
-			view->GetFrame(frame);
-			
-			int32 width = frame.width + frame.x - x;
-			x += width;
-			
-			if (cols.size() > widths.size())
-				widths.push_back(width);
-			else if (widths[cols.size() - 1] < width)
-				widths[cols.size() - 1] = width;
-			
-			if (height < frame.height + frame.y - y)
-				height = frame.height + frame.y - y;
-		}
-
-		foreach (MView* v, cols)
-		{
-			MRect b;
-			v->GetBounds(b);
-			if (b.height < height)
-				v->ResizeFrame(0, 0, 0, height - b.height);
+			++cn;
+			if (colCount < cn)
+				colCount = cn;
+			views.push_back(CreateControls(col, 0, 0));
 		}
 		
-		y += height;
-		
-		if (not cols.empty())
-			rows.push_back(cols);
-	}
-	
-	result->SetFrame(MRect(inX, inY, x, y));
-	
-	y = 0;
-	foreach (vector<MView*>& row, rows)
-	{
-		x = 0;
-		int32 n = 0, height;
-		
-		foreach (MView* col, row)
-		{
-			MRect frame;
-			col->GetFrame(frame);
-			
-			assert(frame.width <= widths[n]);
-
-			col->ResizeFrame(x - frame.x, y - frame.y,
-				widths[n] - frame.width, 0);
-			
-			x += widths[n];
-			++n;
-			height = frame.height;
-		}
-		
-		y += height;
+		++rowCount;
 	}
 
+	// fix me!
+	while (views.size() < (rowCount * colCount))
+		views.push_back(nil);
+	
+	MTable* result = new MTable("table", MRect(inX, inY, 0, 0),
+		&views[0], colCount, rowCount, 4 * mDLUX, 4 * mDLUY);
+	
 	return result;
 }
 
@@ -483,6 +414,10 @@ MView* MWinDialogImpl::CreateControls(xml::element* inTemplate, int32 inX, int32
 		result = CreateCheckbox(inTemplate, inX + marginLeft, inY + marginTop);
 	else if (name == "combobox")
 		result = CreateCombobox(inTemplate, inX + marginLeft, inY + marginTop);
+	else if (name == "edittext")
+		result = CreateEdittext(inTemplate, inX + marginLeft, inY + marginTop);
+	else if (name == "popup")
+		result = CreatePopup(inTemplate, inX + marginLeft, inY + marginTop);
 	else if (name == "separator")
 		result = CreateSeparator(inTemplate, inX + marginLeft, inY + marginTop);
 	else if (name == "table")
@@ -496,10 +431,10 @@ MView* MWinDialogImpl::CreateControls(xml::element* inTemplate, int32 inX, int32
 	{
 		uint32 width = boost::lexical_cast<uint32>(inTemplate->get_attribute("width")) * mDLUX;
 		
-		MRect bounds;
-		result->GetBounds(bounds);
-		if (width > bounds.width)
-			result->ResizeFrame(0, 0, width - bounds.width, 0);
+		MRect frame;
+		result->GetFrame(frame);
+		if (frame.width < width)
+			result->ResizeFrame(0, 0, width - frame.width, 0);
 	}
 	
 	MRect frame;

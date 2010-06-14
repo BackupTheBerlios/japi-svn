@@ -36,6 +36,8 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 {
 	mBounds.x = mBounds.y = 0;
 
+	SetBindings(true, true, true, true);
+
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -46,6 +48,8 @@ MWindow::MWindow(MWindowImpl* inImpl)
 	, mImpl(inImpl)
 	, mFocus(this)
 {
+	SetBindings(true, true, true, true);
+
 	mNext = sFirst;
 	sFirst = this;
 }
@@ -61,6 +65,11 @@ void MWindow::SetImpl(
 	if (mImpl != nil)
 		delete mImpl;
 	mImpl = inImpl;
+}
+
+MWindowFlags MWindow::GetFlags() const
+{
+	return mImpl->GetFlags();
 }
 
 void MWindow::RecycleWindows()

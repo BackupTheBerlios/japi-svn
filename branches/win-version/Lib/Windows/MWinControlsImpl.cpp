@@ -7,12 +7,14 @@
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
+#include <boost/algorithm/string.hpp>
 
 #include "MWinWindowImpl.h"
 #include "MWinControlsImpl.h"
 #include "MWinUtils.h"
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 const int kScrollbarWidth = ::GetThemeSysSize(nil, SM_CXVSCROLL);
 
@@ -472,26 +474,30 @@ MStatusbarImpl* MStatusbarImpl::Create(MStatusbar* inStatusbar, uint32 inPartCou
 
 // --------------------------------------------------------------------
 
-MWinComboboxImpl::MWinComboboxImpl(MCombobox* inCombobox, bool inEditable)
+MWinComboboxImpl::MWinComboboxImpl(MCombobox* inCombobox)
 	: MWinControlImpl(inCombobox, "")
 	, mEditor(this)
-	, mEditable(inEditable)
 {
 }
 
 void MWinComboboxImpl::SetChoices(const std::vector<std::string>& inChoices)
 {
-	::SendMessage(GetHandle(), CB_RESETCONTENT, 0, 0);
-
-	foreach (const string& choice, inChoices)
+	if (GetHandle() == nil)
+		mChoices = inChoices;
+	else
 	{
-		wstring s(c2w(choice));
+		::SendMessage(GetHandle(), CB_RESETCONTENT, 0, 0);
 
-		::SendMessage(GetHandle(), CB_INSERTSTRING, (WPARAM)-1, (long)s.c_str());
+		foreach (const string& choice, inChoices)
+		{
+			wstring s(c2w(choice));
+
+			::SendMessage(GetHandle(), CB_INSERTSTRING, (WPARAM)-1, (long)s.c_str());
+		}
+
+		if (not inChoices.empty())
+			SetText(inChoices.front());
 	}
-
-	if (not inChoices.empty())
-		SetText(inChoices.front());
 }
 
 void MWinComboboxImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
@@ -500,10 +506,7 @@ void MWinComboboxImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
 	
 	outClassName = L"COMBOBOX";
-	if (mEditable)
-		outStyle = WS_CHILD | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP;
-	else
-		outStyle = WS_CHILD | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP;
+	outStyle = WS_CHILD | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP;
 }
 
 void MWinComboboxImpl::AddedToWindow()
@@ -511,16 +514,18 @@ void MWinComboboxImpl::AddedToWindow()
 	MWinControlImpl::AddedToWindow();
 	
 	HWND edit = ::GetWindow(GetHandle(), GW_CHILD);
-	if (edit != nil)
-	{
-		mEditor.SetHandle(edit);
-		mEditor.SubClass();
-		//mEditor.AddMessageHandler(WM_MOUSEWHEEL, this, &HWinComboBoxImp::WMMouseWheel);
-		//mEditor.AddMessageHandler(kControlMsgBase + EN_SETFOCUS,
-		//	static_cast<HNativeControlNodeImp*>(this), &HNativeControlNodeImp::WMSetFocus);
-	}
+	THROW_IF_NIL(edit);
+
+	mEditor.SetHandle(edit);
+	mEditor.SubClass();
+	//mEditor.AddMessageHandler(WM_MOUSEWHEEL, this, &HWinComboBoxImp::WMMouseWheel);
+	//mEditor.AddMessageHandler(kControlMsgBase + EN_SETFOCUS,
+	//	static_cast<HNativeControlNodeImp*>(this), &HNativeControlNodeImp::WMSetFocus);
 
 	AddHandler(WM_MOUSEWHEEL, boost::bind(&MWinComboboxImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
+
+	if (not mChoices.empty())
+		SetChoices(mChoices);
 }
 
 bool MWinComboboxImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
@@ -547,11 +552,11 @@ bool MWinComboboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	switch (inUMsg)
 	{
 		case CBN_SELENDOK:
-			mControl->eValueChanged(mControl->GetID(), "Nieuw!");
+			mControl->eValueChanged(mControl->GetID(), GetText());
 			break;
 		
 		case CBN_EDITUPDATE:
-			mControl->eValueChanged(mControl->GetID(), "Nieuw!");
+			mControl->eValueChanged(mControl->GetID(), GetText());
 			break;
 		
 		case CBN_DROPDOWN:
@@ -586,9 +591,216 @@ bool MWinComboboxImpl::WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
 	return false;
 }
 
-MComboboxImpl* MComboboxImpl::Create(MCombobox* inCombobox, bool inEditable)
+MComboboxImpl* MComboboxImpl::Create(MCombobox* inCombobox)
 {
-	return new MWinComboboxImpl(inCombobox, inEditable);
+	return new MWinComboboxImpl(inCombobox);
+}
+
+// --------------------------------------------------------------------
+
+MWinPopupImpl::MWinPopupImpl(MPopup* inPopup)
+	: MWinControlImpl(inPopup, "")
+{
+}
+
+void MWinPopupImpl::SetChoices(const std::vector<std::string>& inChoices)
+{
+	if (GetHandle() == nil)
+		mChoices = inChoices;
+	else
+	{
+		::SendMessage(GetHandle(), CB_RESETCONTENT, 0, 0);
+
+		foreach (const string& choice, inChoices)
+		{
+			wstring s(c2w(choice));
+
+			::SendMessage(GetHandle(), CB_INSERTSTRING, (WPARAM)-1, (long)s.c_str());
+		}
+
+		if (not inChoices.empty())
+			SetValue(0);
+	}
+}
+
+void MWinPopupImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = L"COMBOBOX";
+	outStyle = WS_CHILD | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP;
+}
+
+void MWinPopupImpl::AddedToWindow()
+{
+	MWinControlImpl::AddedToWindow();
+	
+	AddHandler(WM_MOUSEWHEEL, boost::bind(&MWinPopupImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
+
+	if (not mChoices.empty())
+		SetChoices(mChoices);
+}
+
+int32 MWinPopupImpl::GetValue() const
+{
+	return ::SendMessage(GetHandle(), CB_GETCURSEL, 0, 0);
+}
+
+void MWinPopupImpl::SetValue(int32 inValue)
+{
+	::SendMessage(GetHandle(), CB_SETCURSEL, (WPARAM)inValue, 0);
+}
+
+bool MWinPopupImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText)
+{
+	bool result = false;
+
+	if (inKeyCode == kReturnKeyCode or
+		inKeyCode == kEnterKeyCode or
+		inKeyCode == kTabKeyCode or
+		inKeyCode == kEscapeKeyCode or
+		(inModifiers & ~kShiftKey) != 0)
+	{
+		result = MWinControlImpl::DispatchKeyDown(inKeyCode, inModifiers, inText);
+	}
+
+	return result;
+}
+
+bool MWinPopupImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool result = true;
+	
+	switch (inUMsg)
+	{
+		case CBN_SELENDOK:
+			mControl->eValueChanged(mControl->GetID(), GetValue());
+			break;
+		
+//		case CBN_EDITUPDATE:
+//			mControl->eValueChanged(mControl->GetID(), GetValue());
+//			break;
+		
+		case CBN_DROPDOWN:
+		{
+			int count = ::SendMessage(GetHandle(), CB_GETCOUNT, 0, 0) + 1;
+			if (count < 1) count = 1;
+			if (count > 8) count = 8;
+			
+			MRect bounds;
+			mControl->GetBounds(bounds);
+			
+			int itemHeight = ::SendMessage(GetHandle(), CB_GETITEMHEIGHT, 0, 0);
+			::SetWindowPos(GetHandle(), 0, 0, 0, bounds.width,
+				count * itemHeight + bounds.height + 2,
+				SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_HIDEWINDOW);
+			::SetWindowPos(GetHandle(), 0, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_SHOWWINDOW);
+			break;
+		}
+		
+		default:
+			result = false;
+			break;
+	}
+	
+	return result;
+}
+
+bool MWinPopupImpl::WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult)
+{
+	return false;
+}
+
+MPopupImpl* MPopupImpl::Create(MPopup* inPopup)
+{
+	return new MWinPopupImpl(inPopup);
+}
+
+// --------------------------------------------------------------------
+
+MWinEdittextImpl::MWinEdittextImpl(MEdittext* inEdittext)
+	: MWinControlImpl(inEdittext, "")
+{
+}
+
+void MWinEdittextImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+
+	outClassName = L"EDIT";
+	outStyle = WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL;
+	outExStyle = WS_EX_CLIENTEDGE;
+
+//	if (fMultiLine)
+//		ioParams.fStyle |= ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL;
+//	else if (fNumber)
+//		ioParams.fStyle |= ES_NUMBER | ES_RIGHT;
+//	else if (fPassword)
+//		ioParams.fStyle |= ES_PASSWORD;
+	
+}
+
+string MWinEdittextImpl::GetText() const
+{
+	int l = ::SendMessage(GetHandle(), WM_GETTEXTLENGTH, 0, 0);
+	vector<wchar_t> buffer(l + 1);
+	l = ::SendMessage(GetHandle(), WM_GETTEXT, (WPARAM)(l + 1), (LPARAM)&buffer[0]);
+
+	string text(w2c(&buffer[0]));
+	ba::replace_all(text, "\r\n", "\n");
+	return text;
+}
+
+void MWinEdittextImpl::SetText(const std::string& inText)
+{
+	wstring text(c2w(inText));
+	ba::replace_all(text, L"\n", L"\r\n");
+	::SendMessage(GetHandle(), WM_SETTEXT, 0, (LPARAM)text.c_str());
+}
+
+bool MWinEdittextImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText)
+{
+	bool result = false;
+
+	if (inKeyCode == kReturnKeyCode or
+		inKeyCode == kEnterKeyCode or
+		inKeyCode == kTabKeyCode or
+		inKeyCode == kEscapeKeyCode or
+		(inModifiers & ~kShiftKey) != 0)
+	{
+		result = MWinControlImpl::DispatchKeyDown(inKeyCode, inModifiers, inText);
+	}
+
+	return result;
+}
+
+bool MWinEdittextImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool result = true;
+	
+	switch (inUMsg)
+	{
+		case EN_CHANGE:
+			mControl->eValueChanged(mControl->GetID(), GetText());
+			break;
+		
+		default:
+			result = false;
+			break;
+	}
+	
+	return result;
+}
+
+MEdittextImpl* MEdittextImpl::Create(MEdittext* inEdittext)
+{
+	return new MWinEdittextImpl(inEdittext);
 }
 
 // --------------------------------------------------------------------

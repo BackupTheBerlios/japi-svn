@@ -19,6 +19,8 @@ class MWindowImpl
 
 	virtual				~MWindowImpl() {}
 
+	MWindowFlags		GetFlags() const								{ return mFlags; }
+
 	virtual void		Finish() {}
 
 	virtual void		SetTitle(std::string inTitle) = 0;

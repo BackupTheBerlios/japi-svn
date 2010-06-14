@@ -95,7 +95,7 @@ private:
 class MWinComboboxImpl : public MWinControlImpl<MCombobox>
 {
 public:
-					MWinComboboxImpl(MCombobox* inCombobox, bool inEditable);
+					MWinComboboxImpl(MCombobox* inCombobox);
 	
 	virtual void	SetChoices(const std::vector<std::string>& inChoices);
 
@@ -128,7 +128,52 @@ private:
 	};
 	
 	MEditPart		mEditor;
-	bool			mEditable;
+	std::vector<std::string>
+					mChoices;
+};
+
+class MWinPopupImpl : public MWinControlImpl<MPopup>
+{
+public:
+					MWinPopupImpl(MPopup* inPopup);
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices);
+
+	virtual int32	GetValue() const;
+	virtual void	SetValue(int32 inValue);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+	virtual void	AddedToWindow();
+
+	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText);
+
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam,
+						LPARAM inLParam, int& outResult);
+
+private:
+	std::vector<std::string>
+					mChoices;
+};
+
+class MWinEdittextImpl : public MWinControlImpl<MEdittext>
+{
+public:
+					MWinEdittextImpl(MEdittext* inEdittext);
+	
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+
+	virtual std::string
+					GetText() const;
+	virtual void	SetText(const std::string& inText);
+
+	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
+						const std::string& inText);
+
+	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
 class MWinCaptionImpl : public MWinControlImpl<MCaption>

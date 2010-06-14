@@ -128,6 +128,14 @@ void MDialog::RestorePosition(const char* inName)
 		stringstream ss(s);
 		ss >> r.x >> r.y >> r.width >> r.height;
 		
+		if (GetFlags() & kMFixedSize)
+		{
+			MRect bounds;
+			GetWindowPosition(bounds);
+			r.width = bounds.width;
+			r.height = bounds.height;
+		}
+
 		SetWindowPosition(r, false);
 	}
 }

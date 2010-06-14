@@ -77,6 +77,9 @@ class MView
 	void			SetFrame(
 						const MRect&	inFrame);
 
+	bool			WidthResizable() const				{ return mBindLeft and mBindRight; }
+	bool			HeightResizable() const				{ return mBindTop and mBindBottom; }
+
 	virtual void	GetViewSize(
 						int32&			outWidth,
 						int32&			outHeight) const;
@@ -230,6 +233,74 @@ class MView
 	MTriState		mActive;
 	MTriState		mVisible;
 	MTriState		mEnabled;
+};
+
+class MHBox : public MView
+{
+  public:
+					MHBox(const std::string& inID, MRect inBounds, uint32 inSpacing)
+						: MView(inID, inBounds)
+						, mSpacing(inSpacing) {}
+
+	virtual void	AddChild(
+						MView*			inChild);
+	
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
+
+  protected:
+	uint32			mSpacing;
+};
+
+class MVBox : public MView
+{
+  public:
+					MVBox(const std::string& inID, MRect inBounds, uint32 inSpacing)
+						: MView(inID, inBounds)
+						, mSpacing(inSpacing) {}
+	
+	virtual void	AddChild(
+						MView*			inChild);
+
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
+
+  protected:
+	uint32			mSpacing;
+};
+
+class MTable : public MView
+{
+  public:
+					MTable(const std::string& inID, MRect inBounds,
+						MView* inChildren[],
+						uint32 inColumns, uint32 inRows,
+						int32 inHSpacing, int32 inVSpacing);
+	
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
+
+	virtual void	AddChild(
+						MView*			inView,
+						int32			inColumn,
+						int32			inRow,
+						int32			inColumnSpan = 1,
+						int32			inRowSpan = 1);
+
+  private:
+	uint32			mColumns, mRows;
+	int32			mHSpacing, mVSpacing;
+	std::vector<MView*>
+					mGrid;
 };
 
 class MViewScroller : public MView

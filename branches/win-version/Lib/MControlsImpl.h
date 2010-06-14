@@ -90,7 +90,36 @@ public:
 	virtual void	SetChoices(const std::vector<std::string>& inChoices) = 0;
 
 	static MComboboxImpl*
-					Create(MCombobox* inCombobox, bool inEditable);
+					Create(MCombobox* inCombobox);
+};
+
+class MPopupImpl : public MControlImpl<MPopup>
+{
+public:
+					MPopupImpl(MPopup* inPopup)
+						: MControlImpl(inPopup) {}
+	
+	virtual void	SetValue(int32 inValue) = 0;
+	virtual int32	GetValue() const = 0;
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices) = 0;
+
+	static MPopupImpl*
+					Create(MPopup* inPopup);
+};
+
+class MEdittextImpl : public MControlImpl<MEdittext>
+{
+public:
+					MEdittextImpl(MEdittext* inEdittext)
+						: MControlImpl(inEdittext) {}
+	
+	virtual void	SetText(const std::string& inText) = 0;
+	virtual std::string
+					GetText() const = 0;
+
+	static MEdittextImpl*
+					Create(MEdittext* inEdittext);
 };
 
 class MCaptionImpl : public MControlImpl<MCaption>

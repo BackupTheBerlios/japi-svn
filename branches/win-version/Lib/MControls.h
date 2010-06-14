@@ -117,7 +117,7 @@ class MCombobox : public MControl<MComboboxImpl>
 public:
 	typedef MComboboxImpl		MImpl;
 		
-					MCombobox(const std::string& inID, MRect inBounds, bool inEditable);
+					MCombobox(const std::string& inID, MRect inBounds);
 
 	MEventOut<void(const std::string&,const std::string&)>
 					eValueChanged;
@@ -125,6 +125,26 @@ public:
 	virtual void	SetText(const std::string& inText);
 	virtual std::string
 					GetText() const;
+	
+	virtual void	SetChoices(const std::vector<std::string>& inChoices);
+};
+
+// --------------------------------------------------------------------
+
+class MPopupImpl;
+
+class MPopup : public MControl<MPopupImpl>
+{
+public:
+	typedef MPopupImpl		MImpl;
+		
+					MPopup(const std::string& inID, MRect inBounds);
+
+	MEventOut<void(const std::string&,int32)>
+					eValueChanged;
+	
+	virtual void	SetValue(int32 inValue);
+	virtual int32	GetValue() const;
 	
 	virtual void	SetChoices(const std::vector<std::string>& inChoices);
 };
@@ -140,6 +160,25 @@ public:
 		
 					MCaption(const std::string& inID, MRect inBounds,
 						const std::string& inText);
+};
+
+// --------------------------------------------------------------------
+
+class MEdittextImpl;
+
+class MEdittext : public MControl<MEdittextImpl>
+{
+public:
+	typedef MEdittextImpl		MImpl;
+		
+					MEdittext(const std::string& inID, MRect inBounds);
+
+	MEventOut<void(const std::string&,const std::string&)>
+					eValueChanged;
+	
+	virtual void	SetText(const std::string& inText);
+	virtual std::string
+					GetText() const;
 };
 
 // --------------------------------------------------------------------

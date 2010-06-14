@@ -79,6 +79,7 @@ MTextView::MTextView(
 	AddRoute(eIdle, gApp->eIdle);
 	
 	StylesChanged();
+	mWillDraw = true;
 	
 //	const GtkTargetEntry targets[] =
 //	{
