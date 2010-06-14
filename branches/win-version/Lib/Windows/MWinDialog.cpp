@@ -338,20 +338,28 @@ MView* MWinDialogImpl::CreateSeparator(xml::element* inTemplate, int32 inX, int3
 
 MView* MWinDialogImpl::CreateVBox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	MView* result = new MVBox("vbox", MRect(inX, inY, 0, 0), 4 * mDLUY);
+	MRect r(inX, inY, 0, 0);
+	MView* result = new MVBox("vbox", r, 4 * mDLUY);
 	
 	foreach (xml::element* b, inTemplate->children<xml::element>())
 		result->AddChild(CreateControls(b, 0, 0));
+	
+	result->GetViewSize(r.width, r.height);
+	result->SetFrame(r);
 	
 	return result;
 }
 
 MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY)
 {
-	MView* result = new MHBox("hbox", MRect(inX, inY, 0, 0), 4 * mDLUX);
+	MRect r(inX, inY, 0, 0);
+	MView* result = new MHBox("hbox", r, 4 * mDLUX);
 	
 	foreach (xml::element* b, inTemplate->children<xml::element>())
 		result->AddChild(CreateControls(b, 0, 0));
+	
+	result->GetViewSize(r.width, r.height);
+	result->SetFrame(r);
 	
 	return result;
 }
@@ -391,9 +399,13 @@ MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 in
 	while (views.size() < (rowCount * colCount))
 		views.push_back(nil);
 	
-	MTable* result = new MTable("table", MRect(inX, inY, 0, 0),
+	MRect r(inX, inY, 0, 0);
+	MTable* result = new MTable("table", r,
 		&views[0], colCount, rowCount, 4 * mDLUX, 4 * mDLUY);
 	
+	result->GetViewSize(r.width, r.height);
+	result->SetFrame(r);
+
 	return result;
 }
 
@@ -403,29 +415,26 @@ MView* MWinDialogImpl::CreateControls(xml::element* inTemplate, int32 inX, int32
 
 	string name = inTemplate->name();
 
-	int32 marginLeft, marginTop, marginRight, marginBottom;
-	GetMargins(inTemplate, marginLeft, marginTop, marginRight, marginBottom);
-
 	if (name == "button")
-		result = CreateButton(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateButton(inTemplate, inX, inY);
 	else if (name == "caption")
-		result = CreateCaption(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateCaption(inTemplate, inX, inY);
 	else if (name == "checkbox")
-		result = CreateCheckbox(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateCheckbox(inTemplate, inX, inY);
 	else if (name == "combobox")
-		result = CreateCombobox(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateCombobox(inTemplate, inX, inY);
 	else if (name == "edittext")
-		result = CreateEdittext(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateEdittext(inTemplate, inX, inY);
 	else if (name == "popup")
-		result = CreatePopup(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreatePopup(inTemplate, inX, inY);
 	else if (name == "separator")
-		result = CreateSeparator(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateSeparator(inTemplate, inX, inY);
 	else if (name == "table")
-		result = CreateTable(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateTable(inTemplate, inX, inY);
 	else if (name == "vbox" or name == "dialog")
-		result = CreateVBox(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateVBox(inTemplate, inX, inY);
 	else if (name == "hbox")
-		result = CreateHBox(inTemplate, inX + marginLeft, inY + marginTop);
+		result = CreateHBox(inTemplate, inX, inY);
 	
 	if (not inTemplate->get_attribute("width").empty())
 	{
@@ -436,12 +445,23 @@ MView* MWinDialogImpl::CreateControls(xml::element* inTemplate, int32 inX, int32
 		if (frame.width < width)
 			result->ResizeFrame(0, 0, width - frame.width, 0);
 	}
-	
-	MRect frame;
-	result->GetFrame(frame);
-	frame.width += marginLeft + marginRight;
-	frame.height += marginTop + marginBottom;
-	result->SetFrame(frame);
+
+	int32 marginLeft, marginTop, marginRight, marginBottom;
+	GetMargins(inTemplate, marginLeft, marginTop, marginRight, marginBottom);
+
+	if (marginLeft != 0 or marginTop != 0)
+		result->ResizeFrame(marginLeft, marginTop, 0, 0);
+
+	if (marginRight != 0 or marginBottom != 0)
+	{
+		MRect frame;
+		result->GetFrame(frame);
+		frame.width += marginRight;
+		frame.height += marginBottom;
+		result->SetFrame(frame);
+
+		result->SetViewSize(frame.width, frame.height);
+	}
 
 	string bindings = inTemplate->get_attribute("bind");
 	result->SetBindings(

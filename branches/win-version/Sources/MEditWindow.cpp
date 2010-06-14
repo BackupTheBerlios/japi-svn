@@ -240,7 +240,7 @@ MEditWindow::MEditWindow()
 	int32 partWidths[4] = { 100, -1 };
 	mStatusbar = new MStatusbar("status", bounds, 2, partWidths);
 	AddChild(mStatusbar);
-	mStatusbar->GetFrame(bounds);
+	mStatusbar->GetBounds(bounds);
 
 	int32 statusbarHeight = bounds.height;
 

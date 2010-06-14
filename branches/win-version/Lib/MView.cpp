@@ -1056,13 +1056,14 @@ void MHBox::AddChild(
 	inChild->GetFrame(frame);
 	
 	// adjust for new height, if needed
-	if (frame.y + frame.height > mFrame.height)
-		ResizeFrame(0, 0, 0, frame.y + frame.height - mFrame.height);
+	if (mViewHeight < frame.y + frame.height)
+		ResizeFrame(0, 0, 0, frame.y + frame.height - mViewHeight);
+		//mViewHeight = frame.y + frame.height;
 	else
-		frame.height = mFrame.height - frame.y;
+		inChild->ResizeFrame(0, 0, 0, mViewHeight - frame.height - frame.y);
 	
 	// our width will increase
-	mFrame.width += frame.x + frame.width;
+	mViewWidth += frame.x + frame.width;
 	
 	// append the child as last in the row
 	if (not mChildren.empty())
@@ -1090,10 +1091,16 @@ void MHBox::ResizeFrame(
 
 	mBounds.width += inWidthDelta;
 	mBounds.height += inHeightDelta;
+	
+	mViewWidth += inWidthDelta;
+	mViewHeight += inHeightDelta;
 
 	uint32 n = 0;	// count the resizing children
 	foreach (MView* child, mChildren)
 	{
+		if (inHeightDelta != 0)
+			child->ResizeFrame(0, 0, 0, inHeightDelta);
+
 		if (child->WidthResizable())
 			++n;
 	}
@@ -1107,17 +1114,12 @@ void MHBox::ResizeFrame(
 		{
 			if (child->WidthResizable())
 			{
-				child->ResizeFrame(dx, 0, delta, inHeightDelta);
+				child->ResizeFrame(dx, 0, delta, 0);
 				dx += delta;
 			}
 			else
-				child->ResizeFrame(dx, 0, 0, inHeightDelta);
+				child->ResizeFrame(dx, 0, 0, 0);
 		}
-	}
-	else
-	{
-		foreach (MView* child, mChildren)
-			child->ResizeFrame(0, 0, 0, inHeightDelta);
 	}
 }
 
@@ -1128,13 +1130,13 @@ void MVBox::AddChild(
 	inChild->GetFrame(frame);
 	
 	// adjust for new width, if needed
-	if (frame.x + frame.width > mFrame.width)
-		ResizeFrame(0, 0, frame.x + frame.width - mFrame.width, 0);
+	if (mViewWidth < frame.x + frame.width)
+		ResizeFrame(0, 0, frame.x + frame.width - mViewWidth, 0);
 	else
-		frame.width = mFrame.width - frame.x;
+		inChild->ResizeFrame(0, 0, mViewWidth - frame.width - frame.x, 0);
 	
 	// our height will increase
-	mFrame.height += frame.y + frame.height;
+	mViewHeight += frame.y + frame.height;
 	
 	// append the child as last in the row
 	if (not mChildren.empty())
@@ -1162,10 +1164,16 @@ void MVBox::ResizeFrame(
 
 	mBounds.width += inWidthDelta;
 	mBounds.height += inHeightDelta;
+	
+	mViewWidth += inWidthDelta;
+	mViewHeight += inHeightDelta;
 
 	uint32 n = 0;	// count the resizing children
 	foreach (MView* child, mChildren)
 	{
+		if (inWidthDelta != 0)
+			child->ResizeFrame(0, 0, inWidthDelta, 0);
+		
 		if (child->HeightResizable())
 			++n;
 	}
@@ -1179,17 +1187,12 @@ void MVBox::ResizeFrame(
 		{
 			if (child->HeightResizable())
 			{
-				child->ResizeFrame(0, dy, inWidthDelta, dy);
+				child->ResizeFrame(0, dy, 0, dy);
 				dy += delta;
 			}
 			else
-				child->ResizeFrame(0, dy, inWidthDelta, 0);
+				child->ResizeFrame(0, dy, 0, 0);
 		}
-	}
-	else
-	{
-		foreach (MView* child, mChildren)
-			child->ResizeFrame(0, 0, inWidthDelta, 0);
 	}
 }
 
@@ -1253,8 +1256,8 @@ MTable::MTable(const std::string& inID, MRect inBounds, MView* inChildren[],
 		y += heights[r] + mVSpacing;
 	}
 	
-	mBounds.width = mFrame.width = x - mHSpacing;
-	mBounds.height = mFrame.height = y - mVSpacing;
+	mBounds.width = mFrame.width = mViewWidth = x - mHSpacing;
+	mBounds.height = mFrame.height = mViewHeight = y - mVSpacing;
 }
 
 void MTable::ResizeFrame(
@@ -1270,6 +1273,9 @@ void MTable::ResizeFrame(
 
 	mBounds.width += inWidthDelta;
 	mBounds.height += inHeightDelta;
+	
+	mViewWidth += inWidthDelta;
+	mViewHeight += inHeightDelta;
 	
 	// resize rows
 	for (uint32 rx = 0; rx < mRows; ++rx)

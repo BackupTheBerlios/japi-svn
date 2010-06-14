@@ -76,9 +76,12 @@ class MView
 
 	void			SetFrame(
 						const MRect&	inFrame);
-
-	bool			WidthResizable() const				{ return mBindLeft and mBindRight; }
-	bool			HeightResizable() const				{ return mBindTop and mBindBottom; }
+	
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
 
 	virtual void	GetViewSize(
 						int32&			outWidth,
@@ -87,6 +90,9 @@ class MView
 	virtual void	SetViewSize(
 						int32			inWidth,
 						int32			inHeight);
+
+	bool			WidthResizable() const				{ return mBindLeft and mBindRight; }
+	bool			HeightResizable() const				{ return mBindTop and mBindBottom; }
 
 	virtual void	GetScrollUnit(
 						int32&			outScrollUnitX,
@@ -98,12 +104,6 @@ class MView
 
 	void			SetBindings(bool inFollowLeft, bool inFollowTop,
 						bool inFollowRight, bool inFollowBottom);
-
-	virtual void	ResizeFrame(
-						int32			inXDelta,
-						int32			inYDelta,
-						int32			inWidthDelta,
-						int32			inHeightDelta);
 
 	virtual bool	ActivateOnClick(
 						int32			inX,
@@ -223,13 +223,15 @@ class MView
 	virtual void	HideSelf();
 
 	std::string		mID;
-	MRect			mBounds, mFrame;
+	MRect			mBounds;
+	MRect			mFrame;
 	int32			mViewWidth, mViewHeight;
+//	int32			mMarginLeft, mMarginTop, mMarginRight, mMarginBottom;
+	bool			mBindLeft, mBindTop, mBindRight, mBindBottom;
 	MView*			mParent;
 	MViewScroller*	mScroller;
 	MViewList		mChildren;
 	bool			mWillDraw;
-	bool			mBindLeft, mBindTop, mBindRight, mBindBottom;
 	MTriState		mActive;
 	MTriState		mVisible;
 	MTriState		mEnabled;
