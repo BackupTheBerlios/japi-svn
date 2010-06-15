@@ -11,6 +11,7 @@
 #include "MUtils.h"
 #include "MWinUtils.h"
 #include "MUnicode.h"
+#include "MAcceleratorTable.h"
 
 using namespace std;
 
@@ -270,7 +271,22 @@ bool MWinProcMixin::WMKeydown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 bool MWinProcMixin::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
 	const string& inText)
 {
-	return false;
+	bool result = false;
+	uint32 cmd;
+
+	if (MAcceleratorTable::Instance().IsAcceleratorKey(inKeyCode, inModifiers, cmd))
+	{
+		result = true;
+		
+		bool enabled = false, checked = false;
+
+		if (gApp->UpdateCommandStatus(cmd, nil, 0, enabled, checked) and enabled)
+			gApp->ProcessCommand(cmd, nil, 0, inModifiers);
+	}
+	else
+		result = gApp->HandleKeydown(inKeyCode, inModifiers, inText);
+	
+	return result;
 }
 
 bool MWinProcMixin::WMNotify(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)

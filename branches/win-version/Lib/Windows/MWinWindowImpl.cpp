@@ -233,6 +233,7 @@ void MWinWindowImpl::Select()
 	}
 
 	::SetActiveWindow(GetHandle());
+	mWindow->Activate();
 }
 
 void MWinWindowImpl::Close()
@@ -454,14 +455,19 @@ bool MWinWindowImpl::DispatchKeyDown(uint32 inKeyCode,
 	bool result = false;
 	uint32 cmd;
 
+	MHandler* focus = mWindow->GetFocus();
+
 	if (MAcceleratorTable::Instance().IsAcceleratorKey(inKeyCode, inModifiers, cmd))
 	{
 		result = true;
+		
+		bool enabled = false, checked = false;
 
-		mWindow->GetFocus()->ProcessCommand(cmd, nil, 0, inModifiers);
+		if (focus->UpdateCommandStatus(cmd, nil, 0, enabled, checked) and enabled)
+			focus->ProcessCommand(cmd, nil, 0, inModifiers);
 	}
 	else
-		result = mWindow->GetFocus()->HandleKeydown(inKeyCode, inModifiers, inText);
+		result = focus->HandleKeydown(inKeyCode, inModifiers, inText);
 	
 	return result;
 }
@@ -493,8 +499,8 @@ bool MWinWindowImpl::WMActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWPara
 		mWindow->Deactivate ();
 	else if (mWindow->IsEnabled())
 		mWindow->Activate();
-	//else
-	//	beep();
+	else
+		PRINT(("Duh"));
 	return true;
 }
 

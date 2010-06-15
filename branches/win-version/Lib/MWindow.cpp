@@ -33,13 +33,13 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 	, mFocus(this)
+	, mNext(nil)
 {
 	mBounds.x = mBounds.y = 0;
 
 	SetBindings(true, true, true, true);
-
-	mNext = sFirst;
-	sFirst = this;
+	
+	AppendWindowToList(this);
 }
 
 MWindow::MWindow(MWindowImpl* inImpl)
@@ -47,11 +47,11 @@ MWindow::MWindow(MWindowImpl* inImpl)
 	, MHandler(gApp)
 	, mImpl(inImpl)
 	, mFocus(this)
+	, mNext(nil)
 {
 	SetBindings(true, true, true, true);
 
-	mNext = sFirst;
-	sFirst = this;
+	AppendWindowToList(this);
 }
 
 MWindow::~MWindow()
@@ -82,6 +82,20 @@ void MWindow::RecycleWindows()
 		MWindow* next = w->mNext;
 		delete w;
 		w = next;
+	}
+}
+
+void MWindow::AppendWindowToList(
+	MWindow*		inWindow)
+{
+	if (sFirst == nil)
+		sFirst = inWindow;
+	else
+	{
+		MWindow* before = sFirst;
+		while (before->mNext != nil)
+			before = before->mNext;
+		before->mNext = inWindow;
 	}
 }
 
@@ -149,6 +163,7 @@ void MWindow::Activate()
 
 	if (sFirst != this)
 	{
+PRINT(("Pulling to front"));
 		if (sFirst->IsActive())
 			sFirst->Deactivate();
 

@@ -48,6 +48,9 @@ class MWindow : public MView, public MHandler
 	
 	static MWindow*			GetFirstWindow()				{ return sFirst; }
 	MWindow*				GetNextWindow() const			{ return mNext; }
+
+	static void				AppendWindowToList(
+								MWindow*		inWindow);
 	static void				RemoveWindowFromList(
 								MWindow*		inWindow);
 		

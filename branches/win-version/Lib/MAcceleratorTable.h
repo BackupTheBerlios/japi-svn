@@ -6,6 +6,8 @@
 #ifndef MACCELERATOR_H
 #define MACCELERATOR_H
 
+#include "MCommands.h"
+
 extern const uint32 kValidModifiersMask;
 
 class MAcceleratorTable
