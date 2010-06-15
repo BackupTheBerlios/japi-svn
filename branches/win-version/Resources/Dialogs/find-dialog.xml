@@ -21,7 +21,7 @@
 				<checkbox id='batch' title="Batch" />
 			</row>
 		</table>
-		<checkbox id="multi-file-search" title="Multi file search" />
+		<checkbox margin-top="3" id="multi-file-search" title="Multi file search" />
 		<table bind="left right">
 			<row>
 				<caption text="Method" />
