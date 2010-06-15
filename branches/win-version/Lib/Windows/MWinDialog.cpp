@@ -103,7 +103,7 @@ void MWinDialogImpl::RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& o
 	
 	HINSTANCE inst = MWinApplicationImpl::GetInstance()->GetHInstance();
 	
-	outStyle = 0;// CS_HREDRAW | CS_VREDRAW;
+	outStyle = 0;
 	outWndExtra = DLGWINDOWEXTRA;
 	//outIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
@@ -174,6 +174,7 @@ void MWinDialogImpl::Finish()
 
 	// create the dialog controls, all stacked on top of each other
 	MView* content = CreateControls(dialog, 0, 0);
+//	content->SetBindings(true, true, true, true);
 
 	RECT cr;
 	::GetClientRect(GetHandle(), &cr);
@@ -366,17 +367,6 @@ MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY
 
 MView* MWinDialogImpl::CreateTable(xml::element* inTemplate, int32 inX, int32 inY)
 {
-//	MView* result = new MVBox("table-vbox", MRect(inX, inY, 0, 0), 4 * mDLUY);
-//
-//	foreach (xml::element* row, inTemplate->find("./row"))
-//	{
-//		MView* r = new MHBox("table-hbox", MRect(0, 0, 0, 0), 4 * mDLUX);
-//		foreach (xml::element* col, row->children<xml::element>())
-//			r->AddChild(CreateControls(col, 0, 0));
-//		result->AddChild(r);
-//	}
-//	return result;
-
 	vector<MView*> views;
 	uint32 colCount = 0, rowCount = 0;
 	

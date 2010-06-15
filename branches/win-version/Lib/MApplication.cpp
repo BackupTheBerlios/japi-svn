@@ -376,11 +376,8 @@ void MApplication::DoQuit()
 
 	DoCloseAll(kSaveChangesQuittingApplication);
 
-	//if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
-	//{
-	//	MFindDialog::Instance().Close();
+	if (MDocument::GetFirstDocument() == nil /*and MProject::Instance() == nil*/)
 		mImpl->Quit();
-	//}
 }
 
 MWindow* MApplication::DisplayDocument(

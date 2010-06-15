@@ -65,16 +65,16 @@ class MView
 	virtual void	SetViewScroller(
 						MViewScroller*	inScroller);
 
-	void			GetBounds(
+	virtual void	GetBounds(
 						MRect&			outBounds) const;
 
-	void			SetBounds(
+	virtual void	SetBounds(
 						const MRect&	inBounds);
 
-	void			GetFrame(
+	virtual void	GetFrame(
 						MRect&			outFrame) const;
 
-	void			SetFrame(
+	virtual void	SetFrame(
 						const MRect&	inFrame);
 	
 	virtual void	ResizeFrame(
@@ -91,6 +91,18 @@ class MView
 						int32			inWidth,
 						int32			inHeight);
 
+	virtual void	GetBindings(
+						bool&			outFollowLeft,
+						bool&			outFollowTop,
+						bool&			outFollowRight,
+						bool&			outFollowBottom) const;
+
+	virtual void	SetBindings(
+						bool			inFollowLeft,
+						bool			inFollowTop,
+						bool			inFollowRight,
+						bool			inFollowBottom);
+
 	bool			WidthResizable() const				{ return mBindLeft and mBindRight; }
 	bool			HeightResizable() const				{ return mBindTop and mBindBottom; }
 
@@ -101,9 +113,6 @@ class MView
 	virtual void	SetScrollUnit(
 						int32			inScrollUnitX,
 						int32			inScrollUnitY);
-
-	void			SetBindings(bool inFollowLeft, bool inFollowTop,
-						bool inFollowRight, bool inFollowBottom);
 
 	virtual bool	ActivateOnClick(
 						int32			inX,
@@ -226,7 +235,6 @@ class MView
 	MRect			mBounds;
 	MRect			mFrame;
 	int32			mViewWidth, mViewHeight;
-//	int32			mMarginLeft, mMarginTop, mMarginRight, mMarginBottom;
 	bool			mBindLeft, mBindTop, mBindRight, mBindBottom;
 	MView*			mParent;
 	MViewScroller*	mScroller;
@@ -236,6 +244,34 @@ class MView
 	MTriState		mVisible;
 	MTriState		mEnabled;
 };
+
+/*
+class MMarginBox : public MView
+{
+  public:
+					MMarginBox(const std::string& inID, MView* inChild,
+						int32 inMarginLeft, int32 inMarginTop,
+						int32 inMarginRight, int32 inMarginBottom);
+
+	virtual void	AddChild(
+						MView*			inChild);
+	
+	virtual void	SetBounds(
+						const MRect&	inBounds);
+
+	virtual void	SetFrame(
+						const MRect&	inFrame);
+	
+	virtual void	ResizeFrame(
+						int32			inXDelta,
+						int32			inYDelta,
+						int32			inWidthDelta,
+						int32			inHeightDelta);
+
+  protected:
+	int32			mMarginLeft, mMarginTop, mMarginRight, mMarginBottom;
+};
+*/
 
 class MHBox : public MView
 {

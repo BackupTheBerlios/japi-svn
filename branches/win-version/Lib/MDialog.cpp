@@ -136,7 +136,7 @@ void MDialog::RestorePosition(const char* inName)
 			r.height = bounds.height;
 		}
 
-		SetWindowPosition(r, false);
+//		SetWindowPosition(r, false);
 	}
 }
 

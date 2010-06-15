@@ -168,8 +168,23 @@ void MView::SetViewSize(
 		mScroller->AdjustScrollbars();
 }
 
-void MView::SetBindings(bool inFollowLeft, bool inFollowTop,
-	bool inFollowRight, bool inFollowBottom)
+void MView::GetBindings(
+	bool&			outFollowLeft,
+	bool&			outFollowTop,
+	bool&			outFollowRight,
+	bool&			outFollowBottom) const
+{
+	outFollowLeft = mBindLeft;
+	outFollowTop = mBindTop;
+	outFollowRight = mBindRight;
+	outFollowBottom = mBindBottom;
+}
+
+void MView::SetBindings(
+	bool			inFollowLeft,
+	bool			inFollowTop,
+	bool			inFollowRight,
+	bool			inFollowBottom)
 {
 	mBindLeft = inFollowLeft;
 	mBindTop = inFollowTop;

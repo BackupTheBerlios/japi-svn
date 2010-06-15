@@ -12,8 +12,7 @@
 #include <cstring>
 #include <stack>
 
-#include "MDevice.h"
-#include "MDeviceImpl.h"
+#include "MWinDeviceImpl.h"
 #include "MView.h"
 #include "MWinWindowImpl.h"
 #include "MError.h"
@@ -540,186 +539,35 @@ STDMETHODIMP MTextRenderer::QueryInterface(
 
 }
 
-// --------------------------------------------------------------------
-// base class for MWinDeviceImpl
-// provides only the basic Pango functionality
-// This is needed in measuring text metrics and such
-
-class MWinDeviceImpl : public MDeviceImp
+ID2D1Factory*	MWinDeviceImpl::GetD2D1Factory()
 {
-  public:
-							MWinDeviceImpl();
+	static ID2D1Factory* sD2DFactory = nil;
 
-							MWinDeviceImpl(
-								MView*		inView,
-								MRect		inBounds,
-								bool		inOffscreen);
+	if (sD2DFactory == nil)
+		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
 
-	virtual					~MWinDeviceImpl();
+	return sD2DFactory;
+}
 
-	virtual void			Save();
-	
-	virtual void			Restore();
-
-	virtual MRect			GetBounds() const						{ return MRect(0, 0, 100, 100); }
-
-	virtual void			SetFont(
-								const string&		inFont);
-
-	virtual void			SetForeColor(
-								MColor				inColor);
-
-	virtual MColor			GetForeColor() const;
-
-	virtual void			SetBackColor(
-								MColor				inColor);
-
-	virtual MColor			GetBackColor() const;
-	
-	virtual void			ClipRect(
-								MRect				inRect);
-
-	//virtual void			ClipRegion(
-	//							MRegion				inRegion);
-
-	virtual void			EraseRect(
-								MRect				inRect);
-
-	virtual void			FillRect(
-								MRect				inRect);
-
-	virtual void			StrokeRect(
-								MRect				inRect,
-								uint32				inLineWidth = 1);
-
-	virtual void			FillEllipse(
-								MRect				inRect);
-
-	//virtual void			DrawImage(
-	//							cairo_surface_t*	inImage,
-	//							float				inX,
-	//							float				inY,
-	//							float				inShear);
-	
-	virtual void			CreateAndUsePattern(
-								MColor				inColor1,
-								MColor				inColor2);
-	
-	virtual float			GetAscent();
-	
-	virtual float			GetDescent();
-
-	virtual float			GetLineHeight();
-
-	virtual float			GetXWidth();
-
-	virtual void			DrawString(
-								const string&		inText,
-								float				inX,
-								float				inY,
-								uint32				inTruncateWidth = 0,
-								MAlignment			inAlign = eAlignNone);
-
-	// Text Layout options
-	virtual void			SetText(
-								const string&		inText);
-	
-	virtual void			SetTabStops(
-								float				inTabWidth);
-	
-	virtual void			SetTextColors(
-								uint32				inColorCount,
-								uint32				inColorIndices[],
-								uint32				inOffsets[],
-								MColor				inColors[]);
-
-	virtual void			SetTextSelection(
-								uint32				inStart,
-								uint32				inLength,
-								MColor				inSelectionColor);
-	
-	virtual void			IndexToPosition(
-								uint32				inIndex,
-								bool				inTrailing,
-								int32&				outPosition);
-
-	virtual bool			PositionToIndex(
-								int32				inPosition,
-								uint32&				outIndex);
-	
-	virtual float			GetTextWidth();
-	
-	virtual void			DrawText(
-								float				inX,
-								float				inY);
-
-	virtual void			DrawCaret(
-								float				inX,
-								float				inY,
-								uint32				inOffset);
-	
-	virtual void			BreakLines(
-								uint32				inWidth,
-								vector<uint32>&		outBreaks);
-
-	virtual void			MakeTransparent(
-								float				inOpacity) {}
-
-	//virtual GdkPixmap*		GetPixmap() const		{ return nil; }
-
-	virtual void			SetDrawWhiteSpace(
-								bool				inDrawWhiteSpace) {}
-
-  protected:
-
-	void					InitGlobals();
-	void					CreateTextFormat();
-	void					LookupFont(const wstring& inFamily);
-
-	uint32					MapBack(
-								uint32				inOffset);
-
-	MView*					mView;
-	HDC						mDC;
-	//HBITMAP					mOffscreenBitmap;
-	int						mDCState;
-	//HDC						mWindowDC;
-	HPEN					mForePen;
-	//bool					mPrinting;
-
-	static ID2D1Factory*	sD2DFactory;
-	static IDWriteFactory*	sDWFactory;
-	static wstring			sLocale;
-
-	ID2D1DCRenderTarget*	mRenderTarget;
-	ID2D1Layer*				mClipLayer;
-	IDWriteTextFormat*		mTextFormat;
-	IDWriteTextLayout*		mTextLayout;
-	ID2D1Brush*				mForeBrush;
-	ID2D1Brush*				mBackBrush;
-
-	wstring					mFontFamily;
-	float					mFontSize;
-	IDWriteFont*			mFont;
-
-	// converted text (from UTF8 to UTF16)
-	wstring					mText;
-	vector<uint16>			mTextIndex;		// from string to wstring
-	MColor					mSelectionColor;
-	uint32					mSelectionStart, mSelectionLength;
-
-	//float					mDpiScaleX, mDpiScaleY;
-
-	stack<ID2D1DrawingStateBlock*>
-							mState;
-};
-
-ID2D1Factory*	MWinDeviceImpl::sD2DFactory;
-IDWriteFactory*	MWinDeviceImpl::sDWFactory;
-wstring			MWinDeviceImpl::sLocale;
-
-void MWinDeviceImpl::InitGlobals()
+IDWriteFactory*	MWinDeviceImpl::GetDWFactory()
 {
+	static IDWriteFactory* sDWFactory = nil;
+
+	if (sDWFactory == nil)
+	{
+		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
+	        DWRITE_FACTORY_TYPE_SHARED,
+	        __uuidof(IDWriteFactory),
+			reinterpret_cast<IUnknown**>(&sDWFactory)));
+	}
+	
+	return sDWFactory;
+}
+
+wstring MWinDeviceImpl::GetLocale()
+{
+	static wstring sLocale;
+	
 	if (sLocale.empty())
 	{
         wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
@@ -729,14 +577,7 @@ void MWinDeviceImpl::InitGlobals()
 			sLocale = L"en-us";
 	}
 
-	if (sD2DFactory == nil)
-		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
-
-	if (sDWFactory == nil)
-		THROW_IF_HRESULT_ERROR(::DWriteCreateFactory(
-	        DWRITE_FACTORY_TYPE_SHARED,
-	        __uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown**>(&sDWFactory)));
+	return sLocale;
 }
 
 MWinDeviceImpl::MWinDeviceImpl()
@@ -750,7 +591,6 @@ MWinDeviceImpl::MWinDeviceImpl()
 	, mFont(nil)
 	, mSelectionLength(0)
 {
-	InitGlobals();
 }
 
 MWinDeviceImpl::MWinDeviceImpl(
@@ -767,61 +607,40 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mFont(nil)
 	, mSelectionLength(0)
 {
-	InitGlobals();
-	
 	MWindow* window = inView->GetWindow();
 	THROW_IF_NIL(window);
 	MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
 
-	ID2D1RenderTarget* renderTarget = windowImpl->GetRenderTarget();
-	if (renderTarget != nil)
-		renderTarget->QueryInterface(&mRenderTarget);
+	mRenderTarget = windowImpl->GetRenderTarget();
+	THROW_IF_NIL(mRenderTarget);
 
-	if (mRenderTarget == nil)
+	MRect bounds;
+	inView->GetBounds(bounds);
+	inView->ConvertToWindow(bounds.x, bounds.y);
+
+	int32 x = 0, y = 0;
+	inView->ConvertToWindow(x, y);
+
+	ID2D1DCRenderTarget* dcRenderTarget;
+	if (mRenderTarget->QueryInterface(&dcRenderTarget) == S_OK)
 	{
-		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-			D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			D2D1::PixelFormat(
-				DXGI_FORMAT_B8G8R8A8_UNORM,
-				D2D1_ALPHA_MODE_IGNORE),
-			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
-
-		THROW_IF_HRESULT_ERROR(sD2DFactory->CreateDCRenderTarget(&props, &mRenderTarget));
-
-		windowImpl->SetRenderTarget(mRenderTarget);
-	}
-
-	try
-	{
-		MRect bounds;
-		inView->GetBounds(bounds);
-		inView->ConvertToWindow(bounds.x, bounds.y);
-
 		HDC dc = ::GetDC(windowImpl->GetHandle());
 		RECT r = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
-		mRenderTarget->BindDC(dc, &r);
+		dcRenderTarget->BindDC(dc, &r);
 
-		mRenderTarget->BeginDraw();
-
-		int32 x = 0, y = 0;
-		inView->ConvertToWindow(x, y);
-
-		mRenderTarget->SetTransform(
-			D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
-
-		if (inUpdate)
-			ClipRect(inUpdate);
-
-		SetForeColor(kBlack);
-		SetBackColor(kWhite);
+		dcRenderTarget->Release();
 	}
-	catch (...)
-	{
-		mRenderTarget->Release();
-		mRenderTarget = nil;
-		windowImpl->SetRenderTarget(nil);
-		throw;
-	}
+
+	mRenderTarget->BeginDraw();
+
+	mRenderTarget->SetTransform(
+		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
+
+	if (inUpdate)
+		ClipRect(inUpdate);
+
+	SetForeColor(kBlack);
+	SetBackColor(kWhite);
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
@@ -855,21 +674,25 @@ MWinDeviceImpl::~MWinDeviceImpl()
 
 	if (mRenderTarget != nil)
 	{
-		HRESULT e = mRenderTarget->EndDraw();
-		if (e == D2DERR_RECREATE_TARGET)
+		HRESULT hr = mRenderTarget->EndDraw();
+		mRenderTarget->Release();
+
+		if (hr == D2DERR_RECREATE_TARGET)
 		{
 			MWindow* window = mView->GetWindow();
-			MWinWindowImpl* wi = dynamic_cast<MWinWindowImpl*>(window->GetImpl());
-			wi->SetRenderTarget(nil);
+			if (window != nil)
+			{
+				MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
+				windowImpl->ReleaseRenderTarget();
+			}
 		}
-		mRenderTarget->Release();
 	}
 }
 
 void MWinDeviceImpl::Save()
 {
 	ID2D1DrawingStateBlock* state;
-	THROW_IF_HRESULT_ERROR(sD2DFactory->CreateDrawingStateBlock(&state));
+	THROW_IF_HRESULT_ERROR(GetD2D1Factory()->CreateDrawingStateBlock(&state));
 	mRenderTarget->SaveDrawingState(state);
 	mState.push(state);
 }
@@ -1099,7 +922,7 @@ void MWinDeviceImpl::LookupFont(const wstring& inFamily)
 	mFont = nil;
 
 	IDWriteFontCollection* pFontCollection = nil;
-	THROW_IF_HRESULT_ERROR(sDWFactory->GetSystemFontCollection(&pFontCollection));
+	THROW_IF_HRESULT_ERROR(GetDWFactory()->GetSystemFontCollection(&pFontCollection));
 	uint32 familyCount = pFontCollection->GetFontFamilyCount();
 
     for (uint32 i = 0; i < familyCount; ++i)
@@ -1113,7 +936,7 @@ void MWinDeviceImpl::LookupFont(const wstring& inFamily)
         uint32 index = 0;
 		BOOL exists = false;
         
-		THROW_IF_HRESULT_ERROR(pFamilyNames->FindLocaleName(sLocale.c_str(), &index, &exists));
+		THROW_IF_HRESULT_ERROR(pFamilyNames->FindLocaleName(GetLocale().c_str(), &index, &exists));
         
         // If the specified locale doesn't exist, select the first on the list.
         if (not exists)
@@ -1147,14 +970,14 @@ void MWinDeviceImpl::CreateTextFormat()
 		}
 
 		THROW_IF_HRESULT_ERROR(
-			sDWFactory->CreateTextFormat(
+			GetDWFactory()->CreateTextFormat(
 				mFontFamily.c_str(),                // Font family name.
 				NULL,		                       // Font collection (NULL sets it to use the system font collection).
 				DWRITE_FONT_WEIGHT_REGULAR,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
 				mFontSize,
-				sLocale.c_str(),
+				GetLocale().c_str(),
 				&mTextFormat
 			));
 	}
@@ -1200,7 +1023,7 @@ float MWinDeviceImpl::GetXWidth()
 	IDWriteTextLayout* layout = nil;
 
 	THROW_IF_HRESULT_ERROR(
-		sDWFactory->CreateTextLayout(L"x", 1, mTextFormat, 99999.0f, 99999.0f, &layout));
+		GetDWFactory()->CreateTextLayout(L"x", 1, mTextFormat, 99999.0f, 99999.0f, &layout));
 
 	DWRITE_TEXT_METRICS metrics;
 	THROW_IF_HRESULT_ERROR(layout->GetMetrics(&metrics));
@@ -1303,7 +1126,7 @@ void MWinDeviceImpl::SetText(
 	mTextLayout = nil;
 
 	THROW_IF_HRESULT_ERROR(
-		sDWFactory->CreateTextLayout(
+		GetDWFactory()->CreateTextLayout(
 			mText.c_str(),
 			mText.length(),
 			mTextFormat,
@@ -1467,7 +1290,7 @@ void MWinDeviceImpl::DrawText(
 			selectionColorBrush->Release();
 		}
 
-		MTextRenderer renderer(sD2DFactory, mRenderTarget);
+		MTextRenderer renderer(GetD2D1Factory(), mRenderTarget);
 		mTextLayout->Draw(nil, &renderer, inX, inY);
 	}
 }
@@ -1478,7 +1301,7 @@ void MWinDeviceImpl::DrawCaret(
 	uint32				inOffset)
 {
     // Translate text character offset to point x,y.
-    DWRITE_HIT_TEST_METRICS caretMetrics;
+    DWRITE_HIT_TEST_METRICS caretMetrics = {};
     float caretX = 0, caretY = 0;
 
 	if (mTextLayout != nil)
@@ -1493,7 +1316,7 @@ void MWinDeviceImpl::DrawCaret(
 		mTextLayout->HitTestTextPosition(
 			offset, false, &caretX, &caretY, &caretMetrics);
 	}
-	else
+//	else
 		caretMetrics.height = GetLineHeight();
 
     // The default thickness of 1 pixel is almost _too_ thin on modern large monitors,

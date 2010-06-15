@@ -88,7 +88,7 @@
     <ClCompile Include="..\..\Lib\Windows\MWinAlerts.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinApplicationImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinControlsImpl.cpp" />
-    <ClCompile Include="..\..\Lib\Windows\MWinDevice.cpp" />
+    <ClCompile Include="..\..\Lib\Windows\MWinDeviceImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinDialog.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinFile.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinMain.cpp" />

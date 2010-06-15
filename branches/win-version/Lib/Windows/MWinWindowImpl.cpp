@@ -18,7 +18,7 @@
 #include "MUtils.h"
 #include "MWinUtils.h"
 #include "MWinMenu.h"
-#include "MDevice.h"
+#include "MWinDeviceImpl.h"
 #include "MResources.h"
 #include "MAcceleratorTable.h"
 
@@ -150,16 +150,43 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 		mMenubar->SetTarget(mWindow);
 }
 
-void MWinWindowImpl::SetRenderTarget(
-	ID2D1RenderTarget* inTarget)
+ID2D1RenderTarget* MWinWindowImpl::GetRenderTarget()
 {
-	if (mRenderTarget != nil and inTarget != mRenderTarget and inTarget != nil)
-		mRenderTarget->Release();
+	if (mRenderTarget == nil)
+	{
+		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+			D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(
+				DXGI_FORMAT_B8G8R8A8_UNORM,
+				D2D1_ALPHA_MODE_IGNORE),
+			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
 
-	mRenderTarget = inTarget;
+		THROW_IF_HRESULT_ERROR(MWinDeviceImpl::GetD2D1Factory()->CreateDCRenderTarget(&props, &mRenderTarget));
 
-	if (mRenderTarget != nil)
-		mRenderTarget->AddRef();
+//		RECT rc;
+//		::GetClientRect(GetHandle(), &rc);
+//
+//		D2D1_HWND_RENDER_TARGET_PROPERTIES wprops = D2D1::HwndRenderTargetProperties(
+//			GetHandle(), D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top)
+//		);
+//
+//		THROW_IF_HRESULT_ERROR(
+//			MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
+	}
+
+	THROW_IF_NIL(mRenderTarget);
+
+	ID2D1RenderTarget* result = nil;
+	THROW_IF_HRESULT_ERROR(mRenderTarget->QueryInterface(&result));
+	THROW_IF_NIL(result);
+
+	return result;
+}
+
+void MWinWindowImpl::ReleaseRenderTarget()
+{
+	mRenderTarget->Release();
+	mRenderTarget = nil;
 }
 
 bool MWinWindowImpl::IsDialogMessage(MSG& inMessage)
@@ -534,7 +561,14 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 		}
 
 		//if (mRenderTarget != nil)
-		//	mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
+		//{
+		//	HRESULT hr = mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
+		//	if (hr == D2DERR_RECREATE_TARGET)
+		//	{
+		//		mRenderTarget->Release();
+		//		mRenderTarget = nil;
+		//	}
+		//}
 		
 		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
 			newBounds.height - oldBounds.height);
@@ -616,9 +650,22 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 		// BeginPaint and call the Node redraw 
 		::BeginPaint(inHWnd, &lPs);
 
+		//ID2D1RenderTarget* renderTarget = GetRenderTarget();
+
 		try
 		{
+			//renderTarget->BeginDraw();
+			//
 			mWindow->RedrawAll(update);
+			
+			//HRESULT hr = renderTarget->EndDraw();
+			//renderTarget->Release();
+
+			//if (hr == D2DERR_RECREATE_TARGET)
+			//{
+			//	mRenderTarget->Release();
+			//	mRenderTarget = nil;
+			//}
 		}
 		catch (...)
 		{

@@ -6,7 +6,7 @@
 #ifndef MDEVICEIMPL_H
 #define MDEVICEIMPL_H
 
-#include "MTypes.h"
+#include "MDevice.h"
 
 // --------------------------------------------------------------------
 // base class for MDeviceImp
