@@ -350,7 +350,6 @@ MView* MWinDialogImpl::CreateVBox(xml::element* inTemplate, int32 inX, int32 inY
 	
 	return result;
 }
-
 MView* MWinDialogImpl::CreateHBox(xml::element* inTemplate, int32 inX, int32 inY)
 {
 	MRect r(inX, inY, 0, 0);

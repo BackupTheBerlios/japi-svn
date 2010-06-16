@@ -1077,10 +1077,6 @@ void MHBox::AddChild(
 	else
 		inChild->ResizeFrame(0, 0, 0, mViewHeight - frame.height - frame.y);
 	
-	// our width will increase
-	mViewWidth += frame.x + frame.width;
-	
-	// append the child as last in the row
 	if (not mChildren.empty())
 	{
 		MRect lastFrame;
@@ -1089,6 +1085,8 @@ void MHBox::AddChild(
 		frame.x += lastFrame.x + lastFrame.width + mSpacing;
 		inChild->SetFrame(frame);
 	}
+
+	mViewWidth = frame.x + frame.width;
 
 	MView::AddChild(inChild);
 }
@@ -1120,7 +1118,7 @@ void MHBox::ResizeFrame(
 			++n;
 	}
 	
-	if (n > 0)
+	if (n > 0 and inWidthDelta != 0)
 	{
 		int32 delta = inWidthDelta / n;
 		int32 dx = 0;
@@ -1150,9 +1148,6 @@ void MVBox::AddChild(
 	else
 		inChild->ResizeFrame(0, 0, mViewWidth - frame.width - frame.x, 0);
 	
-	// our height will increase
-	mViewHeight += frame.y + frame.height;
-	
 	// append the child as last in the row
 	if (not mChildren.empty())
 	{
@@ -1163,6 +1158,9 @@ void MVBox::AddChild(
 		inChild->SetFrame(frame);
 	}
 
+	// our height will increase
+	mViewHeight = frame.y + frame.height;
+	
 	MView::AddChild(inChild);
 }
 
@@ -1193,7 +1191,7 @@ void MVBox::ResizeFrame(
 			++n;
 	}
 	
-	if (n > 0)
+	if (n > 0 and inHeightDelta != 0)
 	{
 		int32 delta = inHeightDelta / n;
 		int32 dy = 0;
@@ -1321,6 +1319,55 @@ void MTable::ResizeFrame(
 			
 			if (f.y + f.height < height)
 				v->ResizeFrame(0, 0, 0, height - f.y - f.height);
+		}
+	}
+
+	// resize columns
+	// first count the number of resizing columns
+	
+	if (inWidthDelta != 0)
+	{
+		uint32 n = 0;
+		vector<bool> resizable(mColumns);
+
+		for (uint32 cx = 0; cx < mColumns; ++cx)
+		{
+			for (uint32 rx = 0; rx < mRows; ++rx)
+			{
+				MView* child = mGrid[rx * mColumns + cx];
+
+				if (child != nil and child->WidthResizable())
+				{
+					resizable[cx] = true;
+					++n;
+					break;
+				}
+			}
+		}
+		
+		if (n > 0)
+		{
+			for (uint32 cx = 0; cx < mColumns; ++cx)
+			{
+				int32 delta = inWidthDelta / n;
+				int32 dx = 0;
+				
+				for (uint32 rx = 0; rx < mRows; ++rx)
+				{
+					MView* child = mGrid[rx * mColumns + cx];
+					
+					if (child == nil)
+						continue;
+					
+					if (resizable[cx])
+						child->ResizeFrame(dx, 0, delta, 0);
+					else
+						child->ResizeFrame(dx, 0, 0, 0);
+				}
+
+				if (resizable[cx])
+					dx += delta;
+			}
 		}
 	}
 }

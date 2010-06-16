@@ -38,7 +38,7 @@
 				<caption text="Starting directory" />
 				<hbox bind="left right">
 					<edittext bind="left right" id="start-dir" />
-					<button bind="right" id="browse-start-dir" title="…" />
+					<button bind="right" id="browse-start-dir" title="…" width="10" />
 				</hbox>
 			</row>
 			<row>
@@ -48,6 +48,7 @@
 		</table>
 	</vbox>
 	<hbox margin="7" bind="left right bottom">
+		<vbox bind="left right" /> <!-- expandable filler -->
 		<button bind="right bottom" title="Replace All" id="replace-all" />
 		<button bind="right bottom" title="Replace &amp;&amp; Find" id="replace-and-find" />
 		<button bind="right bottom" title="Replace" id="replace" />

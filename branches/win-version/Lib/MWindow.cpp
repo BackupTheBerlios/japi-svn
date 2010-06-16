@@ -163,7 +163,6 @@ void MWindow::Activate()
 
 	if (sFirst != this)
 	{
-PRINT(("Pulling to front"));
 		if (sFirst->IsActive())
 			sFirst->Deactivate();
 
