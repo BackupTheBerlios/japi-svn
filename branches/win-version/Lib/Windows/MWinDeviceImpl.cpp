@@ -1331,7 +1331,7 @@ void MWinDeviceImpl::DrawCaret(
 	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	mRenderTarget->FillRectangle(
 		D2D1::RectF(inX + caretX - caretThickness / 2, inY + caretY,
-					inX + caretX + caretThickness / 2, inY + caretY + caretMetrics.height),
+					inX + caretX + caretThickness / 2, floor(inY + caretY + caretMetrics.height)),
 		mForeBrush);
 	mRenderTarget->SetAntialiasMode(savedMode);
 }

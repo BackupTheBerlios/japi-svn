@@ -40,10 +40,14 @@ class MWinDialogImpl : public MWinWindowImpl
 
 	virtual void	Finish();
 
+	virtual bool	IsDialogMessage(MSG& inMesssage);
+
 private:
 
 	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle, wstring& outClassName, HMENU& outMenu);
 	virtual void	RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor, HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
+
+	virtual int		DefProc(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam);
 
 	void			GetMargins(xml::element* inTemplate,
 						int32& outLeftMargin, int32& outTopMargin,
@@ -69,6 +73,8 @@ private:
 	string			mRsrc;
 	HDC				mDC;
 	float			mDLUX, mDLUY;
+	MButton*		mOKButton;
+	MButton*		mCancelButton;
 };
 
 MWinDialogImpl::MWinDialogImpl(const string& inResource, MWindow* inWindow)
@@ -77,6 +83,8 @@ MWinDialogImpl::MWinDialogImpl(const string& inResource, MWindow* inWindow)
 	, mDC(nil)
 	, mDLUX(1.75)
 	, mDLUY(1.875)
+	, mOKButton(nil)
+	, mCancelButton(nil)
 {
 }
 
@@ -109,6 +117,45 @@ void MWinDialogImpl::RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& o
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	outCursor = ::LoadCursor(NULL, IDC_ARROW);
 	outBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+}
+
+bool MWinDialogImpl::IsDialogMessage(MSG& inMessage)
+{
+	bool result = false;
+	
+	if (inMessage.message == WM_KEYDOWN)
+	{
+		result = true;
+		
+		switch (inMessage.wParam)
+		{
+//			case VK_TAB:
+//			case VK_SPACE:
+//				break;
+			
+			case VK_ESCAPE:
+				if (mCancelButton != nil)
+					mCancelButton->SimulateClick();
+				break;
+			
+			case VK_RETURN:
+				if (mOKButton != nil)
+					mOKButton->SimulateClick();
+				break;
+
+			default:
+				result = ::IsDialogMessageW(GetHandle(), &inMessage);
+				break;
+		}
+	}
+		
+	return result;	
+}
+
+int MWinDialogImpl::DefProc(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam)
+{
+//	return ::DefDlgProcW(inHWnd, inUMsg, inWParam, inLParam);
+	return MWinWindowImpl::DefProc(inHWnd, inUMsg, inWParam, inLParam);
 }
 
 void MWinDialogImpl::Finish()
@@ -252,7 +299,16 @@ MView* MWinDialogImpl::CreateButton(xml::element* inTemplate, int32 inX, int32 i
 	MButton* button = new MButton(id, bounds, title);
 	
 	if (inTemplate->get_attribute("default") == "true")
+	{
 		button->MakeDefault(true);
+		mOKButton = button;
+	}
+
+	if (id == "ok" and mOKButton == nil)
+		mOKButton = button;
+	
+	if (id == "cancel")
+		mCancelButton = button;
 
 	AddRoute(button->eClicked, static_cast<MDialog*>(mWindow)->eButtonClicked);
 

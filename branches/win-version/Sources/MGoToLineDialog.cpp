@@ -20,10 +20,8 @@ using namespace std;
 
 namespace {
 
-enum
-{
-	kTextBoxControlID = 'edit'
-};
+const string
+	kTextBoxControlID = "edit";
 
 }
 
@@ -39,9 +37,7 @@ MGoToLineDialog::MGoToLineDialog(
 
 bool MGoToLineDialog::OKClicked()
 {
-	string s;
-	GetText(kTextBoxControlID, s);
-	uint32 lineNr = StringToNum(s);
+	int32 lineNr = boost::lexical_cast<int32>(GetText(kTextBoxControlID));
 
 	if (lineNr > 0 and mDocument != nil)
 		mDocument->GoToLine(lineNr - 1);

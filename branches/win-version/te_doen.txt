@@ -1,7 +1,6 @@
 ﻿Windows versie
-- Clip in DrawLine, DrawCaret
 - scrollen met duim gaat niet goed
-- Dialogs maken
+- Dialogs afmaken
 - MList implementeren
 - MProject tot leven wekken
 - MShell implementeren

@@ -40,6 +40,9 @@ class MDialog : public MWindow
 	std::string		GetText(const std::string& inID) const;
 	void			SetText(const std::string& inID, const std::string& inText);
 
+	int32			GetValue(const std::string& inID) const;
+	void			SetValue(const std::string& inID, int32 inValue);
+
 	bool			IsChecked(const std::string& inID) const;
 	void			SetChecked(const std::string& inID, bool inChecked);
 

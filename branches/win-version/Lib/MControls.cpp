@@ -23,6 +23,12 @@ MControl<IMPL>::~MControl()
 }
 
 template<class IMPL>
+void MControl<IMPL>::Focus()
+{
+	mImpl->Focus();
+}
+
+template<class IMPL>
 void MControl<IMPL>::Draw(
 	MRect			inUpdate)
 {
@@ -86,9 +92,9 @@ MButton::MButton(const string& inID, MRect inBounds, const string& inLabel)
 {
 }
 
-void MButton::GetIdealSize(int32& outWidth, int32& outHeight)
+void MButton::SimulateClick()
 {
-	mImpl->GetIdealSize(outWidth, outHeight);
+	mImpl->SimulateClick();
 }
 
 void MButton::MakeDefault(bool inDefault)

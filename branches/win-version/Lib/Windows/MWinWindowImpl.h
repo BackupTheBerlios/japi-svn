@@ -23,8 +23,6 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual void	Create(MRect inBounds, const std::wstring& inTitle);
 
 	virtual void	SetTitle(std::string inTitle);
-	//virtual std::string
-	//				GetTitle() const;
 
 	virtual void	Show();
 	virtual void	Hide();
@@ -34,11 +32,6 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual void	Select();
 	virtual void	Close();
 
-	//virtual void	ActivateSelf();
-	//virtual void	DeactivateSelf();
-	//virtual void	BeFocus();
-	//virtual void	SubFocusChanged();
-	
 	virtual void	SetWindowPosition(MRect inBounds, bool inTransition);
 	virtual void	GetWindowPosition(MRect& outBounds) const;
 	
@@ -62,7 +55,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 					GetRenderTarget();
 	void			ReleaseRenderTarget();
 
-	bool			IsDialogMessage(MSG& inMesssage);
+	virtual bool	IsDialogMessage(MSG& inMesssage);
 
   protected:
 

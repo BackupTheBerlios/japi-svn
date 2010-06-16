@@ -101,18 +101,18 @@ MFindDialog::MFindDialog()
 {	
 	RestorePosition("find dialog position");
 	
-	//SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
-	//SetChecked(kWrapCheckboxID, Preferences::GetInteger("find wrap around", 0));
-	//SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
-	//SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
-	//SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
-	//SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
-	//SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
-
-	//SetChecked(kEnableFilterCheckboxID, Preferences::GetInteger("find name filter enabled", 1));
-	//SetText(kNameFilterEditboxID, Preferences::GetString("find name filter", "*.h;*.cpp;*.inl"));
-
-	//SetValue(kMethodPopupID, Preferences::GetInteger("find multi method", kMethodDirectory));
+	SetChecked(kInSelectionCheckboxID, Preferences::GetInteger("find in selection", 0));
+	SetChecked(kWrapCheckboxID, Preferences::GetInteger("find wrap around", 0));
+	SetChecked(kIgnoreCaseCheckboxID, Preferences::GetInteger("find ignore case", 0));
+	SetChecked(kRegexCheckboxID, Preferences::GetInteger("find regular expression", 0));
+	SetChecked(kEntireWordCheckboxID, Preferences::GetInteger("find entire word", 0));
+	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 0));
+	SetChecked(kRecursiveCheckboxID, Preferences::GetInteger("find recursive", 1));
+	
+//	SetChecked(kEnableFilterCheckboxID, Preferences::GetInteger("find name filter enabled", 1));
+//	SetText(kNameFilterEditboxID, Preferences::GetString("find name filter", "*.h;*.cpp;*.inl"));
+	
+	SetValue(kMethodPopupID, Preferences::GetInteger("find multi method", kMethodDirectory));
 
 	//// never set multi-mode automatically
 	//mMultiMode = false;
@@ -179,8 +179,8 @@ bool MFindDialog::DoClose()
 		Preferences::SetArray("find directories", mStartDirectories);
 	
 	//	Preferences::SetInteger("find multi", GetValue(kMultiFileExpanderID));
-//		Preferences::SetString("find multi method", GetText(kMethodPopupID));
-//		Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
+		Preferences::SetInteger("find multi method", GetValue(kMethodPopupID));
+		Preferences::SetInteger("find recursive", IsChecked(kRecursiveCheckboxID));
 	
 //		Preferences::SetInteger("find name filter enabled", IsChecked(kEnableFilterCheckboxID));
 		
@@ -198,7 +198,7 @@ void MFindDialog::Select()
 {
 	Show(nil);
 	MWindow::Select();
-	//SetFocus(kFindComboboxID);
+	SetFocus(kFindComboboxID);
 	mVisible = true;
 }
 

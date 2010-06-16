@@ -25,6 +25,8 @@ public:
 	virtual void	Draw(
 						MRect			inUpdate);
 
+	virtual void	Focus();
+
 	I*				GetImpl() const					{ return mImpl; }
 
 protected:
@@ -60,7 +62,7 @@ public:
 	
 					MButton(const std::string& inID, MRect inBounds, const std::string& inLabel);
 
-	void			GetIdealSize(int32& outWidth, int32& outHeight);
+	void			SimulateClick();
 	void			MakeDefault(bool inDefault = true);
 
 	MEventOut<void(const std::string&)>

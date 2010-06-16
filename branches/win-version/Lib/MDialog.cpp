@@ -66,8 +66,24 @@ void MDialog::Show(
 	//		GTK_WINDOW(GetGtkWidget()),
 	//		GTK_WINDOW(inParent->GetGtkWidget()));
 	//}
+
+	// if parent exists, we position our dialog on top of it
+	if (inParent != nil)
+	{
+		MRect r;
+		GetWindowPosition(r);
+	
+		MRect b;
+		inParent->GetWindowPosition(b);
+		
+		r.x = b.x + (b.width - r.width) / 2;
+		r.y = b.y + (b.height - r.height) / 3;
+
+		SetWindowPosition(r);
+	}
 	
 	MWindow::Show();
+	MWindow::Select();
 }
 
 bool MDialog::OKClicked()
@@ -105,6 +121,22 @@ void MDialog::TextChanged(
 	const string&		inID,
 	const string&		inText)
 {
+}
+
+void MDialog::SetFocus(const std::string& inID)
+{
+	//MControl* control = dynamic_cast<MControl*>(FindViewByID(inID));
+	//if (control != nil)
+	//	control->Focus();
+
+	MView* view = FindSubViewByID(inID);
+	if (view != nil)
+	{
+		if (dynamic_cast<MEdittext*>(view) != nil)
+			static_cast<MEdittext*>(view)->Focus();
+		else if (dynamic_cast<MCombobox*>(view) != nil)
+			static_cast<MCombobox*>(view)->Focus();
+	}
 }
 
 void MDialog::SavePosition(const char* inName)
@@ -148,6 +180,8 @@ string MDialog::GetText(const string& inID) const
 	THROW_IF_NIL(view);
 	if (dynamic_cast<MCombobox*>(view) != nil)
 		result = static_cast<MCombobox*>(view)->GetText();
+	else if (dynamic_cast<MEdittext*>(view) != nil)
+		result = static_cast<MEdittext*>(view)->GetText();
 	
 	return result;
 }
@@ -158,6 +192,28 @@ void MDialog::SetText(const string& inID, const std::string& inText)
 	THROW_IF_NIL(view);
 	if (dynamic_cast<MCombobox*>(view) != nil)
 		static_cast<MCombobox*>(view)->SetText(inText);
+	else if (dynamic_cast<MEdittext*>(view) != nil)
+		static_cast<MEdittext*>(view)->SetText(inText);
+}
+
+int32 MDialog::GetValue(const std::string& inID) const
+{
+	int32 result = -1;
+
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view);
+	if (dynamic_cast<MPopup*>(view) != nil)
+		result = static_cast<MPopup*>(view)->GetValue();
+	
+	return result;
+}
+
+void MDialog::SetValue(const std::string& inID, int32 inValue)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(view);
+	if (dynamic_cast<MPopup*>(view) != nil)
+		static_cast<MPopup*>(view)->SetValue(inValue);
 }
 
 bool MDialog::IsChecked(const string& inID) const

@@ -18,6 +18,7 @@
 #include "MResources.h"
 #include "MControls.h"
 #include "MPreferences.h"
+#include "MGoToLineDialog.h"
 
 using namespace std;
 

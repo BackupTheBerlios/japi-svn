@@ -468,6 +468,9 @@ class MTextDocument : public MDocument
 	bool				GetIncludePopupItems(MMenu& inMenu);
 	void				SelectIncludePopupItem(uint32 inItem);
 
+	bool				OpenInclude(
+							std::string		inFileName);
+
   private:
 
 						MTextDocument();
@@ -567,11 +570,9 @@ class MTextDocument : public MDocument
 	
 	void				MakeXHTML();
 
-	bool				OpenInclude(
-							std::string		inFileName);
-
 	void				DoOpenIncludeFile();
 	void				DoOpenCounterpart();
+	void				DoGoToLine();
 	
 	int							mDataFD;
 	MTextBuffer					mText;

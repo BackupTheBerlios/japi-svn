@@ -21,50 +21,16 @@ void PlaySound(
 {
 	if (Preferences::GetInteger("play sounds", true) == false)
 		return;
-	
-	//try
-	//{
-	//	StOKToThrow ok;
-	//	string filename;
-	//	
-	//	if (inSoundName == "success")
-	//		filename = Preferences::GetString("success sound", "info.wav");
-	//	else if (inSoundName == "failure" or inSoundName == "error")
-	//		filename = Preferences::GetString("failure sound", "error.wav");
-	//	else if (inSoundName == "warning")
-	//		filename = Preferences::GetString("warning sound", "warning.wav");
-	//	else if (inSoundName == "question")
-	//		filename = Preferences::GetString("question sound", "question.wav");
-	//	else
-	//	{
-	//		filename = "warning.wav";
-	//		cerr << "Unknown sound name " << inSoundName << endl;
-	//	}
 
-	//	fs::path path = filename;
-
-	//	const char* const* config_dirs = g_get_system_data_dirs();
-	//	for (const char* const* dir = config_dirs; *dir != nil; ++dir)
-	//	{
-	//		path = fs::path(*dir) / "sounds" / filename;
-	//		if (fs::exists(path))
-	//			break;
-	//	}
-	//	
-	//	if (fs::exists(path))
-	//		MAudioSocket::Instance().Play(path.string());
-	//	else
-	//	{
-	//		cerr << "Sound does not exist: " << path.string() << endl;
-	//		if (MWindow::GetFirstWindow() != nil)
-	//			MWindow::GetFirstWindow()->Beep();
-	//		else
-	//			gdk_beep();
-	//	}
-	//}
-	//catch (...)
-	//{
-	//	gdk_beep();
-	//}
+	if (inSoundName == "success")
+		::MessageBeep(MB_ICONINFORMATION);
+	else if (inSoundName == "failure" or inSoundName == "error")
+		::MessageBeep(MB_ICONERROR);
+	else if (inSoundName == "warning")
+		::MessageBeep(MB_ICONWARNING);
+	else if (inSoundName == "question")
+		::MessageBeep(MB_ICONQUESTION);
+	else
+		::MessageBeep(MB_ICONINFORMATION);
 }
 

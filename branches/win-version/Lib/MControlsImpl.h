@@ -16,6 +16,8 @@ public:
 						: mControl(inControl)					{}
 	virtual			~MControlImpl()								{}
 
+	virtual void	Focus()										{}
+
 	virtual void	AddedToWindow()								{}
 	virtual void	FrameResized()								{}
 	virtual void	Draw(MRect inBounds)						{}

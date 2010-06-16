@@ -11,14 +11,10 @@
 #include "MJapi.h"
 
 #include "MFindAndOpenDialog.h"
-#include "MTextController.h"
-#include "MProjectWindow.h"
-#include "MProject.h"
+#include "MTextDocument.h"
+//#include "MProjectWindow.h"
+//#include "MProject.h"
 #include "MPreferences.h"
-#include "MView.h"
-#include "MUnicode.h"
-#include "MUtils.h"
-#include "MFile.h"
 #include "MSound.h"
 #include "MJapiApp.h"
 
@@ -26,18 +22,17 @@ using namespace std;
 
 namespace {
 
-enum {
-	kTextBoxControlID = 'edit'
-};
+const string
+	kTextBoxControlID = "edit";
 
 }
 
 MFindAndOpenDialog::MFindAndOpenDialog(
-	MTextController*	inController,
+	MTextDocument*		inDocument,
 	MWindow*			inWindow)
 	: MDialog("find-and-open-dialog")
-	, mController(inController)
-	, mProject(nil)
+	, mDocument(inDocument)
+//	, mProject(nil)
 {
 	SetText(kTextBoxControlID,
 		Preferences::GetString("last open include", ""));
@@ -46,45 +41,50 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	SetFocus(kTextBoxControlID);
 }
 
-MFindAndOpenDialog::MFindAndOpenDialog(
-	MProject*			inProject,
-	MWindow*			inWindow)
-	: MDialog("find-and-open-dialog")
-	, mController(nil)
-	, mProject(inProject)
-{
-	SetText(kTextBoxControlID,
-		Preferences::GetString("last open include", ""));
-
-	Show(inWindow);
-	SetFocus(kTextBoxControlID);
-}
+//MFindAndOpenDialog::MFindAndOpenDialog(
+//	MProject*			inProject,
+//	MWindow*			inWindow)
+//	: MDialog("find-and-open-dialog")
+//	, mController(nil)
+//	, mProject(inProject)
+//{
+//	SetText(kTextBoxControlID,
+//		Preferences::GetString("last open include", ""));
+//
+//	Show(inWindow);
+//	SetFocus(kTextBoxControlID);
+//}
 
 bool MFindAndOpenDialog::OKClicked()
 {
-	string s;
-
-	GetText(kTextBoxControlID, s);
+	string s = GetText(kTextBoxControlID);
 
 	Preferences::SetString("last open include", s);
 
-	if (mController != nil)
-	{
-		if (not mController->OpenInclude(s))
-			PlaySound("warning");
-	}
-	else
-	{
-		MProject* project = mProject;
-		
-		if (project == nil)
-			project = MProject::Instance();
+	bool opened = false;
 
-		fs::path p(s);
-		
-		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
-			gApp->OpenOneDocument(MFile(p));
+	if (mDocument != nil)
+		opened = mDocument->OpenInclude(s);
+
+	if (not opened)
+	{
+//		MProject* project = mProject;
+//		
+//		if (project == nil)
+//			project = MProject::Instance();
+//		if (project != nil and project->LocateFile(s, true, p))
+//			opened = (gApp->OpenOneDocument(MFile(p)) != nil);
 	}
+
+	if (not opened)
+	{
+		fs::path p(s);
+		if (fs::exists(p))
+			opened = (gApp->OpenOneDocument(MFile(p)) != nil);
+	}
+
+	if (not opened)
+		PlaySound("warning");
 	
 	return true;
 }

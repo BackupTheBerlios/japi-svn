@@ -18,6 +18,8 @@ public:
 
 	virtual void	GetParentAndBounds(MWinProcMixin*& outParent, MRect& outBounds);
 
+	virtual void	Focus();
+
 	virtual void	AddedToWindow();
 	virtual void	FrameResized();
 	virtual void	Draw(MRect inBounds);
@@ -30,6 +32,8 @@ public:
 	virtual std::string
 					GetText() const;
 	virtual void	SetText(const std::string& inText);
+
+	virtual bool	WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
 protected:
 	std::string		mLabel;
@@ -51,6 +55,12 @@ public:
 						std::wstring& outClassName, HMENU& outMenu);
 
 	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+
+	virtual void	AddedToWindow();
+
+private:
+	bool			mDefault;
 };
 
 class MWinScrollbarImpl : public MWinControlImpl<MScrollbar>

@@ -96,12 +96,12 @@ int MWinApplicationImpl::RunEventLoop()
 			break;
 		}
 
-		MWindow* first = MWindow::GetFirstWindow();
-		if (first != nil and
-			dynamic_cast<MDialog*>(first) != nil and
-			static_cast<MWinWindowImpl*>(first->GetImpl())->IsDialogMessage(message))
+		HWND front = ::GetActiveWindow();
+		if (front != nil)
 		{
-			continue;
+			MWinWindowImpl* impl = dynamic_cast<MWinWindowImpl*>(MWinProcMixin::Fetch(front));
+			if (impl != nil and impl->IsDialogMessage(message))
+				continue;
 		}
 		
 		::TranslateMessage(&message);

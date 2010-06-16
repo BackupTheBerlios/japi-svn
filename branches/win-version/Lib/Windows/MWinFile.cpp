@@ -213,36 +213,37 @@ bool Choose(
  //   THROW_IF_HRESULT_ERROR(pfd->SetDefaultExtension(L"txt"));
 
 	// Show the dialog
-    THROW_IF_HRESULT_ERROR(pfd->Show(inParent));
-
-	// Obtain the result, once the user clicks the 'Open' button.
-    // The result is an IShellItem object.
-	MComPtr<IShellItemArray> psiResult;
-	THROW_IF_HRESULT_ERROR(pfd->GetResults(&psiResult));
-
-	DWORD count;
-	THROW_IF_HRESULT_ERROR(psiResult->GetCount(&count));
-
-	for (int i = 0; i < count; ++i)
+    if (pfd->Show(inParent) == S_OK)
 	{
-		MComPtr<IShellItem> item;
-		THROW_IF_HRESULT_ERROR(psiResult->GetItemAt(i, &item));
+		// Obtain the result, once the user clicks the 'Open' button.
+		// The result is an IShellItem object.
+		MComPtr<IShellItemArray> psiResult;
+		THROW_IF_HRESULT_ERROR(pfd->GetResults(&psiResult));
 
-		PWSTR pszFilePath = NULL;
-		THROW_IF_HRESULT_ERROR(item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath));
+		DWORD count;
+		THROW_IF_HRESULT_ERROR(psiResult->GetCount(&count));
 
-		try
+		for (int i = 0; i < count; ++i)
 		{
-			string path = w2c(pszFilePath);
-			outSelected.push_back(MFile(path));
-			result = true;
-		}
-		catch (exception& e)
-		{
-			DisplayError(e);
-		}
+			MComPtr<IShellItem> item;
+			THROW_IF_HRESULT_ERROR(psiResult->GetItemAt(i, &item));
 
-		::CoTaskMemFree(pszFilePath);
+			PWSTR pszFilePath = NULL;
+			THROW_IF_HRESULT_ERROR(item->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath));
+
+			try
+			{
+				string path = w2c(pszFilePath);
+				outSelected.push_back(MFile(path));
+				result = true;
+			}
+			catch (exception& e)
+			{
+				DisplayError(e);
+			}
+
+			::CoTaskMemFree(pszFilePath);
+		}
 	}
 
 	// Unhook the event handler.

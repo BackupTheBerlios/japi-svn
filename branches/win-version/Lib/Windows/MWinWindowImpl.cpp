@@ -118,7 +118,7 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
-	//AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
@@ -191,7 +191,7 @@ void MWinWindowImpl::ReleaseRenderTarget()
 
 bool MWinWindowImpl::IsDialogMessage(MSG& inMessage)
 {
-	return ::IsDialogMessageW(GetHandle(), &inMessage);
+	return false;
 }
 
 // --------------------------------------------------------------------
@@ -224,8 +224,11 @@ bool MWinWindowImpl::Visible() const
 
 void MWinWindowImpl::Select()
 {
-	WINDOWPLACEMENT pl = { 0 };
-	pl.length = sizeof(pl);
+	WINDOWPLACEMENT pl = { sizeof(WINDOWPLACEMENT) };
+
+	if (not Visible())
+		Show();
+
 	if (::GetWindowPlacement(GetHandle(), &pl) and ::IsIconic(GetHandle()))
 	{
 		pl.showCmd = SW_RESTORE;

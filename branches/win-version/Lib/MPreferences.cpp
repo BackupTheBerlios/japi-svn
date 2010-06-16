@@ -213,8 +213,18 @@ GetInteger(
 	const char*	inName,
 	int32		inDefaultValue)
 {
-	return boost::lexical_cast<int32>(GetString(
-		inName, boost::lexical_cast<string>(inDefaultValue)));
+	int32 result = inDefaultValue;
+
+	try
+	{
+		result = boost::lexical_cast<int32>(GetString(
+			inName, boost::lexical_cast<string>(inDefaultValue)));
+	}
+	catch (...)
+	{
+	}
+
+	return result;
 }
 
 void

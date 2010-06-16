@@ -12,6 +12,7 @@
 #include "MWinWindowImpl.h"
 #include "MWinControlsImpl.h"
 #include "MWinUtils.h"
+#include "MUtils.h"
 
 using namespace std;
 namespace ba = boost::algorithm;
@@ -23,11 +24,22 @@ MWinControlImpl<CONTROL>::MWinControlImpl(CONTROL* inControl, const string& inLa
 	: CONTROL::MImpl(inControl)
 	, mLabel(inLabel)
 {
+//	AddHandler(WM_GETDLGCODE, boost::bind(&MWinControlImpl::WMGetDlgCode, this, _1, _2, _3, _4, _5));
 }
 
 template<class CONTROL>
 MWinControlImpl<CONTROL>::~MWinControlImpl()
 {
+}
+
+template<class CONTROL>
+void MWinControlImpl<CONTROL>::Focus()
+{
+	if (GetHandle() != nil)
+	{
+		::SetFocus(GetHandle());
+		::UpdateWindow(GetHandle());
+	}
 }
 
 template<class CONTROL>
@@ -203,10 +215,17 @@ void MWinControlImpl<CONTROL>::AddedToWindow()
 		HideSelf();
 }
 
+template<class CONTROL>
+bool MWinControlImpl<CONTROL>::WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	return false;
+}
+
 // --------------------------------------------------------------------
 
 MWinButtonImpl::MWinButtonImpl(MButton* inButton, const string& inLabel)
 	: MWinControlImpl(inButton, inLabel)
+	, mDefault(false)
 {
 }
 
@@ -234,14 +253,44 @@ bool MWinButtonImpl::WMCommand(HWND inHWnd, UINT inMsg, WPARAM inWParam, LPARAM 
 	return result;
 }
 
+bool MWinButtonImpl::WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	outResult = DLGC_BUTTON;
+
+	if (mDefault)
+		outResult |= DLGC_DEFPUSHBUTTON;
+
+	return true;
+}
+
 void MWinButtonImpl::SimulateClick()
 {
+	::SendMessage(GetHandle(), BM_SETSTATE, 1, 0);
+	::UpdateWindow(GetHandle());
+	::delay(12.0 / 60.0);
+	::SendMessage(GetHandle(), BM_SETSTATE, 0, 0);
+	::UpdateWindow(GetHandle());
+
 	mControl->eClicked(mControl->GetID());
 }
 
 void MWinButtonImpl::MakeDefault(bool inDefault)
 {
-	if (inDefault)
+	mDefault = inDefault;
+
+	if (GetHandle() != nil)
+	{
+		if (inDefault)
+			::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_DEFPUSHBUTTON, 0);
+		else
+			::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_PUSHBUTTON, 0);
+	}
+}
+
+void MWinButtonImpl::AddedToWindow()
+{
+	MWinControlImpl::AddedToWindow();
+	if (mDefault)
 		::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_DEFPUSHBUTTON, 0);
 	else
 		::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_PUSHBUTTON, 0);

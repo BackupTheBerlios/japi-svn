@@ -48,6 +48,8 @@
 #include "MPrinter.h"
 //#include "MePubDocument.h"
 //#include "MXHTMLTools.h"
+#include "MGoToLineDialog.h"
+#include "MFindAndOpenDialog.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -3359,7 +3361,10 @@ void MTextDocument::GetStyledText(
 {
 	// shortcut
 	if (inLength == 0)
+	{
+		inDevice.SetText("");
 		return;
+	}
 
 	inDevice.SetFont(mFont);
 	
@@ -4651,6 +4656,10 @@ bool MTextDocument::ProcessCommand(
 			DoOpenCounterpart();
 			break;
 
+		case cmd_GoToLine:
+			DoGoToLine();
+			break;
+
 		default:
 			result = false;
 			break;
@@ -4989,8 +4998,12 @@ void MTextDocument::DoOpenIncludeFile()
 	
 	if (selection.IsEmpty())
 	{
-//		new MFindAndOpenDialog(this, mDocWindow);
-		result = true;
+		MView* target = mTargetTextView;
+		if (target != nil)
+		{
+			new MFindAndOpenDialog(this, target->GetWindow());
+			result = true;
+		}
 	}
 	else
 	{
@@ -5076,5 +5089,13 @@ void MTextDocument::DoOpenCounterpart()
 	
 	if (not result)
 		PlaySound("warning");
+}
+
+void MTextDocument::DoGoToLine()
+{
+	MView* target = mTargetTextView;
+	
+	if (target != nil)
+		new MGoToLineDialog(this, target->GetWindow());
 }
 
