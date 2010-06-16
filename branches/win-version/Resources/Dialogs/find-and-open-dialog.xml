@@ -3,7 +3,7 @@
 	<vbox margin="7" bind="left right">
 		<hbox bind="left right">
 			<caption text="File:"/>
-			<edittext bind="left right" id="edit"/>
+			<edittext width="200" bind="left right" id="edit"/>
 		</hbox>
 	</vbox>
 	<hbox margin="7" bind="left right bottom">
