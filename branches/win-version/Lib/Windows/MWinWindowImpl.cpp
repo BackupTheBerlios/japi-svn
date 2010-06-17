@@ -821,33 +821,29 @@ bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 	return true;
 }
 
-bool MWinWindowImpl::WMMouseWheel(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& /*outResult*/)
+bool MWinWindowImpl::WMMouseWheel(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	//short delta = static_cast<short>(HIWORD(inWParam));
-	//delta /= WHEEL_DELTA;
+	short deltay = static_cast<short>(HIWORD(inWParam));
+	deltay /= WHEEL_DELTA;
+	short deltax = static_cast<short>(LOWORD(inWParam));
+	deltax /= WHEEL_DELTA;
+	
+	uint32 modifiers;
+	::GetModifierState(modifiers, false);
+	
+	int32 x = LOWORD(inLParam);
+	int32 y = HIWORD(inLParam);
+	mWindow->ConvertFromScreen(x, y);
+	
+	MView* view = mWindow->FindSubView(x, y);
+	
+	if (view != nil)
+	{
+		view->ConvertFromWindow(x, y);
+		view->MouseWheel(x, y, deltax, deltay, modifiers);
+	}
 
-	//unsigned long modifiers;
-	//GetModifierState(modifiers, false);
-	//
-	//HPoint where;
-	//where.x = LOWORD(inLParam);
-	//where.y = HIWORD(inLParam);
-	//mWindow->ConvertFromScreen(where);
-	//
-	//HNode* node;
-	//
-	//if (HNode::GetGrabbingNode())
-	//	node = HNode::GetGrabbingNode();
-	//else
-	//	node = mWindow->FindSubPane(where);
-	//assert(node != nil);
-	//
-	//if (node)
-	//{
-	//	node->ConvertFromWindow(where);
-	//	node->WheelScroll(where, delta, modifiers);
-	//}
-
+	outResult = 0;
 	return true;
 }
 

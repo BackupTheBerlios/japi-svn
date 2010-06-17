@@ -137,6 +137,13 @@ class MView
 						int32			inY,
 						uint32			inModifiers);
 
+	virtual void	MouseWheel(
+						int32			inX,
+						int32			inY,
+						int32			inDeltaX,
+						int32			inDeltaY,
+						uint32			inModifiers);
+
 	virtual void	RedrawAll(
 						MRect			inUpdate);
 
@@ -365,6 +372,13 @@ public:
 	void			GetTargetScrollUnit(
 						int32&			outScrollUnitX,
 						int32&			outScrollUnitY) const;
+
+	virtual void	MouseWheel(
+						int32			inX,
+						int32			inY,
+						int32			inDeltaX,
+						int32			inDeltaY,
+						uint32			inModifiers);
 
 protected:
 

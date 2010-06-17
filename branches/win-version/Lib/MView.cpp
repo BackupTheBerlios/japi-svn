@@ -413,6 +413,20 @@ void MView::MouseUp(
 {
 }
 
+void MView::MouseWheel(
+	int32			inX,
+	int32			inY,
+	int32			inDeltaX,
+	int32			inDeltaY,
+	uint32			inModifiers)
+{
+	if (mParent != nil)
+	{
+		ConvertToParent(inX, inY);
+		mParent->MouseWheel(inX, inY, inDeltaX, inDeltaY, inModifiers);	
+	}
+}
+
 //void MView::Click(int32 inX, int32 inY, uint32 inModifiers)
 //{
 //	PRINT(("Click at %d,%d", inX, inY));
@@ -1591,3 +1605,26 @@ void MViewScroller::HScroll(MScrollMessage inScrollMsg)
 		mTarget->ScrollBy(dx, 0);
 }
 
+void MViewScroller::MouseWheel(
+	int32			inX,
+	int32			inY,
+	int32			inDeltaX,
+	int32			inDeltaY,
+	uint32			inModifiers)
+{
+	if (inDeltaX != 0 and mHScrollbar != nil)
+	{
+		if (inDeltaX > 0)
+			HScroll(kScrollLineUp);
+		else
+			HScroll(kScrollLineDown);
+	}
+	
+	if (inDeltaY != 0 and mVScrollbar != nil)
+	{
+		if (inDeltaY > 0)
+			VScroll(kScrollLineUp);
+		else
+			VScroll(kScrollLineDown);
+	}
+}
