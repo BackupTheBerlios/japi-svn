@@ -162,6 +162,8 @@ public:
 		
 					MCaption(const std::string& inID, MRect inBounds,
 						const std::string& inText);
+
+	virtual void	SetText(const std::string& inText);
 };
 
 // --------------------------------------------------------------------

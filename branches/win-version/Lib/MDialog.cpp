@@ -194,6 +194,8 @@ void MDialog::SetText(const string& inID, const std::string& inText)
 		static_cast<MCombobox*>(view)->SetText(inText);
 	else if (dynamic_cast<MEdittext*>(view) != nil)
 		static_cast<MEdittext*>(view)->SetText(inText);
+	else if (dynamic_cast<MCaption*>(view) != nil)
+		static_cast<MCaption*>(view)->SetText(inText);
 }
 
 int32 MDialog::GetValue(const std::string& inID) const
@@ -240,7 +242,7 @@ void MDialog::SetChoices(const string& inID, vector<string>& inChoices)
 void MDialog::SetEnabled(const string& inID, bool inEnabled)
 {
 	MView* view = FindSubViewByID(inID);
-	THROW_IF_NIL(view == nil);
+	THROW_IF_NIL(view);
 	if (inEnabled)
 		view->Enable();
 	else
@@ -250,7 +252,7 @@ void MDialog::SetEnabled(const string& inID, bool inEnabled)
 void MDialog::SetVisible(const string& inID, bool inVisible)
 {
 	MView* view = FindSubViewByID(inID);
-	THROW_IF_NIL(view == nil);
+	THROW_IF_NIL(view);
 	if (inVisible)
 		view->Show();
 	else

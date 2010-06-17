@@ -50,7 +50,7 @@ class MDialog : public MWindow
 						std::vector<std::string>& inChoices);
 	
 	void			SetEnabled(const std::string& inID, bool inEnabled);
-	void			SetVisible(const std::string& inID, bool inEnabled);
+	void			SetVisible(const std::string& inID, bool inVisible);
 
 	virtual void	ButtonClicked(const std::string& inID);
 	virtual void	CheckboxChanged(const std::string& inID, bool inValue);

@@ -1,5 +1,4 @@
 ﻿Windows versie
-- scrollen met duim gaat niet goed
 - Dialogs afmaken
 - MList implementeren
 - MProject tot leven wekken

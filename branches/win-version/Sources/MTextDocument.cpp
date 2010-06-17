@@ -50,6 +50,7 @@
 //#include "MXHTMLTools.h"
 #include "MGoToLineDialog.h"
 #include "MFindAndOpenDialog.h"
+#include "MMarkMatchingDialog.h"
 
 using namespace std;
 namespace io = boost::iostreams;
@@ -4657,7 +4658,13 @@ bool MTextDocument::ProcessCommand(
 			break;
 
 		case cmd_GoToLine:
-			DoGoToLine();
+			if (mTargetTextView != nil)
+				new MGoToLineDialog(this, mTargetTextView->GetWindow());
+			break;
+		
+		case cmd_MarkMatching:
+			if (mTargetTextView != nil)
+				new MMarkMatchingDialog(this, mTargetTextView->GetWindow());
 			break;
 
 		default:
@@ -4706,7 +4713,6 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_ReplaceAll:
 		case cmd_Entab:
 		case cmd_Detab:
-		case cmd_GoToLine:
 		case cmd_ShiftLeft:
 		case cmd_ShiftRight:
 		case cmd_ShowDocInfoDialog:
@@ -4715,6 +4721,11 @@ bool MTextDocument::UpdateCommandStatus(
 		case cmd_OpenIncludeFile:
 		case cmd_SwitchHeaderSource:
 			outEnabled = true;
+			break;
+
+		case cmd_MarkMatching:
+		case cmd_GoToLine:
+			outEnabled = mTargetTextView != nil;
 			break;
 
 		// dirty
@@ -4998,10 +5009,9 @@ void MTextDocument::DoOpenIncludeFile()
 	
 	if (selection.IsEmpty())
 	{
-		MView* target = mTargetTextView;
-		if (target != nil)
+		if (mTargetTextView != nil)
 		{
-			new MFindAndOpenDialog(this, target->GetWindow());
+			new MFindAndOpenDialog(this, mTargetTextView->GetWindow());
 			result = true;
 		}
 	}
@@ -5090,12 +5100,3 @@ void MTextDocument::DoOpenCounterpart()
 	if (not result)
 		PlaySound("warning");
 }
-
-void MTextDocument::DoGoToLine()
-{
-	MView* target = mTargetTextView;
-	
-	if (target != nil)
-		new MGoToLineDialog(this, target->GetWindow());
-}
-

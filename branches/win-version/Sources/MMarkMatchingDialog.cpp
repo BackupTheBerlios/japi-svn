@@ -20,12 +20,10 @@ using namespace std;
 
 namespace {
 
-enum
-{
-	kTextBoxControlID = 'edit',
-	kIgnoreCaseControlID = 'ignc',
-	kRegularExpressionControlID = 'regx'
-};
+const string
+	kTextBoxControlID = "edit",
+	kIgnoreCaseControlID = "ignore-case",
+	kRegularExpressionControlID = "regular-expression";
 
 }
 
@@ -41,10 +39,9 @@ MMarkMatchingDialog::MMarkMatchingDialog(
 
 bool MMarkMatchingDialog::OKClicked()
 {
-	string txt;
-	GetText(kTextBoxControlID, txt);
+	string txt = GetText(kTextBoxControlID);
 
-	if (txt.length() > 0 and mDocument != nil)
+	if (not txt.empty() and mDocument != nil)
 	{
 		mDocument->MarkMatching(txt, 
 			IsChecked(kIgnoreCaseControlID),

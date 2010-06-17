@@ -97,6 +97,10 @@ class MFindDialog : public MDialog
 						const std::string&	inID,
 						const std::string&	inText);
 
+	virtual void	ValueChanged(
+						const std::string&	inID,
+						int32				inValue);
+
 	void			DoFindCommand(
 						uint32				inCommand);
 

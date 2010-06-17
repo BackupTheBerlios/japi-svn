@@ -572,7 +572,6 @@ class MTextDocument : public MDocument
 
 	void				DoOpenIncludeFile();
 	void				DoOpenCounterpart();
-	void				DoGoToLine();
 	
 	int							mDataFD;
 	MTextBuffer					mText;

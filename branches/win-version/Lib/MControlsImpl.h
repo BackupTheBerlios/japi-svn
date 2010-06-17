@@ -130,6 +130,8 @@ public:
 					MCaptionImpl(MCaption* inCaption)
 						: MControlImpl(inCaption)				{}
 
+	virtual void	SetText(const std::string& inText) = 0;
+
 	static MCaptionImpl*
 					Create(MCaption* inCaption, const std::string& inText);
 };

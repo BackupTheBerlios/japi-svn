@@ -1316,7 +1316,7 @@ void MWinDeviceImpl::DrawCaret(
 		mTextLayout->HitTestTextPosition(
 			offset, false, &caretX, &caretY, &caretMetrics);
 	}
-//	else
+	else
 		caretMetrics.height = GetLineHeight();
 
     // The default thickness of 1 pixel is almost _too_ thin on modern large monitors,

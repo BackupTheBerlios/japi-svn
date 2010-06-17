@@ -115,7 +115,7 @@
 		<item label="Next Mark" cmd='NxtM'/>
 		<item label="Previous Mark" cmd='PrvM'/>
 		<item label="-" />
-		<item label="Clear All Marks" cmd='ClML'/>
+		<item label="Clear All Marks" cmd='ClAM'/>
 		<item label="Mark Line" cmd='Mark'/>
 		<item label="Find and Mark…" cmd='F&amp;Mk'/>
 		<item label="-" />

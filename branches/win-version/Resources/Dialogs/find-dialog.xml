@@ -21,8 +21,9 @@
 				<checkbox id='batch' title="Batch" />
 			</row>
 		</table>
+		<separator bind="left right" />
 		<checkbox margin-top="3" id="multi-file-search" title="Multi file search" />
-		<table bind="left right">
+		<table margin-left="10" bind="left right">
 			<row>
 				<caption text="Method" />
 				<hbox bind="left right">
@@ -31,21 +32,26 @@
 						<option>Find in open windows</option>
 						<option>Find in include files</option>
 					</popup>
-					<checkbox bind="top right" id="recursive" title="Recursive" />
+					<checkbox margin-top="2" bind="top right" id="recursive" title="Recursive" />
 				</hbox>
 			</row>
 			<row>
 				<caption text="Starting directory" />
 				<hbox bind="left right">
-					<edittext bind="left right" id="start-dir" />
-					<button bind="right" id="browse-start-dir" title="…" width="10" />
+					<combobox bind="left right" id="start-dir" />
+					<button bind="right" id="browse-start-dir" title="…" width="6" />
 				</hbox>
 			</row>
 			<row>
-				<caption text="File name filter" />
-				<edittext bind="left right" id="name-fitler" />
+				<checkbox id="enable-name-filter" title="Filter file name" />
+				<hbox>
+					<caption text="File name filter" />
+					<edittext bind="left right" id="name-filter" />
+				</hbox>
 			</row>
 		</table>
+		<caption id="status" bind="left right" text="(leeg)" width="200" />
+		<separator bind="left right" />
 	</vbox>
 	<hbox margin="7" bind="left right bottom">
 		<vbox bind="left right" /> <!-- expandable filler -->

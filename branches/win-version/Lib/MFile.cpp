@@ -1218,23 +1218,13 @@ bool FileNameMatches(
 
 // ------------------------------------------------------------
 
-#if 0
 struct MFileIteratorImp
 {
-	struct MInfo
-	{
-		fs::path		mParent;
-		DIR*			mDIR;
-		struct dirent	mEntry;
-	};
-	
 						MFileIteratorImp()
 							: mReturnDirs(false) {}
 	virtual				~MFileIteratorImp() {}
 	
 	virtual	bool		Next(fs::path& outFile) = 0;
-	bool				IsTEXT(
-							const fs::path&	inFile);
 	
 	string				mFilter;
 	bool				mReturnDirs;
@@ -1245,26 +1235,17 @@ struct MSingleFileIteratorImp : public MFileIteratorImp
 						MSingleFileIteratorImp(
 							const fs::path&	inDirectory);
 
-	virtual				~MSingleFileIteratorImp();
-	
 	virtual	bool		Next(
 							fs::path&			outFile);
 	
-	MInfo				mInfo;
+	fs::directory_iterator
+						mIter;
 };
 
 MSingleFileIteratorImp::MSingleFileIteratorImp(
 	const fs::path&	inDirectory)
+	: mIter(inDirectory)
 {
-	mInfo.mParent = inDirectory;
-	mInfo.mDIR = opendir(inDirectory.string().c_str());
-	memset(&mInfo.mEntry, 0, sizeof(mInfo.mEntry));
-}
-
-MSingleFileIteratorImp::~MSingleFileIteratorImp()
-{
-	if (mInfo.mDIR != nil)
-		closedir(mInfo.mDIR);
 }
 
 bool MSingleFileIteratorImp::Next(
@@ -1272,27 +1253,15 @@ bool MSingleFileIteratorImp::Next(
 {
 	bool result = false;
 	
-	while (not result)
+	for (; result == false and mIter != fs::directory_iterator(); ++mIter)
 	{
-		struct dirent* e = nil;
-		
-		if (mInfo.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(mInfo.mDIR, &mInfo.mEntry, &e));
-		
-		if (e == nil)
-			break;
-
-		if (strcmp(e->d_name, ".") == 0 or strcmp(e->d_name, "..") == 0)
-			continue;
-
-		outFile = mInfo.mParent / e->d_name;
-
-		if (is_directory(outFile) and not mReturnDirs)
+		if (fs::is_directory(*mIter) and not mReturnDirs)
 			continue;
 		
-		if (mFilter.length() == 0 or
-			FileNameMatches(mFilter.c_str(), outFile))
+		if (mFilter.empty() or
+			FileNameMatches(mFilter.c_str(), *mIter))
 		{
+			outFile = *mIter;
 			result = true;
 		}
 	}
@@ -1305,31 +1274,15 @@ struct MDeepFileIteratorImp : public MFileIteratorImp
 						MDeepFileIteratorImp(
 							const fs::path&	inDirectory);
 
-	virtual				~MDeepFileIteratorImp();
-
 	virtual	bool		Next(fs::path& outFile);
 
-	stack<MInfo>		mStack;
+	fs::recursive_directory_iterator
+						mIter;
 };
 
 MDeepFileIteratorImp::MDeepFileIteratorImp(const fs::path& inDirectory)
+	: mIter(inDirectory)
 {
-	MInfo info;
-
-	info.mParent = inDirectory;
-	info.mDIR = opendir(inDirectory.string().c_str());
-	memset(&info.mEntry, 0, sizeof(info.mEntry));
-	
-	mStack.push(info);
-}
-
-MDeepFileIteratorImp::~MDeepFileIteratorImp()
-{
-	while (not mStack.empty())
-	{
-		closedir(mStack.top().mDIR);
-		mStack.pop();
-	}
 }
 
 bool MDeepFileIteratorImp::Next(
@@ -1337,47 +1290,15 @@ bool MDeepFileIteratorImp::Next(
 {
 	bool result = false;
 	
-	while (not result and not mStack.empty())
+	for (; result == false and mIter != fs::recursive_directory_iterator(); ++mIter)
 	{
-		struct dirent* e = nil;
-		
-		MInfo& top = mStack.top();
-		
-		if (top.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(top.mDIR, &top.mEntry, &e));
-		
-		if (e == nil)
-		{
-			if (top.mDIR != nil)
-				closedir(top.mDIR);
-			mStack.pop();
-		}
-		else
-		{
-			outFile = top.mParent / e->d_name;
-			
-			struct stat st;
-			if (stat(outFile.string().c_str(), &st) < 0 or S_ISLNK(st.st_mode))
-				continue;
-			
-			if (S_ISDIR(st.st_mode))
-			{
-				if (strcmp(e->d_name, ".") and strcmp(e->d_name, ".."))
-				{
-					MInfo info;
-	
-					info.mParent = outFile;
-					info.mDIR = opendir(outFile.string().c_str());
-					memset(&info.mEntry, 0, sizeof(info.mEntry));
-					
-					mStack.push(info);
-				}
-				continue;
-			}
+		if (fs::is_directory(*mIter) and not mReturnDirs)
+			continue;
 
-			if (mFilter.length() and not FileNameMatches(mFilter.c_str(), outFile))
-				continue;
-
+		if (mFilter.empty() or
+			FileNameMatches(mFilter.c_str(), *mIter))
+		{
+			outFile = *mIter;
 			result = true;
 		}
 	}
@@ -1385,19 +1306,17 @@ bool MDeepFileIteratorImp::Next(
 	return result;
 }
 
-#endif
-
 MFileIterator::MFileIterator(
 	const fs::path&	inDirectory,
 	uint32			inFlags)
 	: mImpl(nil)
 {
-	//if (inFlags & kFileIter_Deep)
-	//	mImpl = new MDeepFileIteratorImp(inDirectory);
-	//else
-	//	mImpl = new MSingleFileIteratorImp(inDirectory);
-	//
-	//mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
+	if (inFlags & kFileIter_Deep)
+		mImpl = new MDeepFileIteratorImp(inDirectory);
+	else
+		mImpl = new MSingleFileIteratorImp(inDirectory);
+	
+	mImpl->mReturnDirs = (inFlags & kFileIter_ReturnDirectories) != 0;
 }
 
 MFileIterator::~MFileIterator()
@@ -1408,14 +1327,13 @@ MFileIterator::~MFileIterator()
 bool MFileIterator::Next(
 	fs::path&			outFile)
 {
-	//return mImpl->Next(outFile);
-	return false;
+	return mImpl->Next(outFile);
 }
 
 void MFileIterator::SetFilter(
 	const string&	inFilter)
 {
-	//mImpl->mFilter = inFilter;
+	mImpl->mFilter = inFilter;
 }
 
 // ----------------------------------------------------------------------------

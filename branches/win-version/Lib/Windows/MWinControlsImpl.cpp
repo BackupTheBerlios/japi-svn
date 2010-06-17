@@ -284,6 +284,7 @@ void MWinButtonImpl::MakeDefault(bool inDefault)
 			::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_DEFPUSHBUTTON, 0);
 		else
 			::SendMessage(GetHandle(), BM_SETSTYLE, (WPARAM)BS_PUSHBUTTON, 0);
+		::UpdateWindow(GetHandle());
 	}
 }
 
@@ -513,6 +514,7 @@ void MWinStatusbarImpl::SetStatusText(uint32 inPartNr, const string& inText, boo
 	
 		wstring text(c2w(inText));
 		::SendMessageW(GetHandle(), SB_SETTEXT, inPartNr, (LPARAM)text.c_str());
+		::UpdateWindow(GetHandle());
 	}
 }
 
@@ -546,6 +548,8 @@ void MWinComboboxImpl::SetChoices(const std::vector<std::string>& inChoices)
 
 		if (not inChoices.empty())
 			SetText(inChoices.front());
+		
+		::UpdateWindow(GetHandle());
 	}
 }
 
@@ -669,6 +673,8 @@ void MWinPopupImpl::SetChoices(const std::vector<std::string>& inChoices)
 
 		if (not inChoices.empty())
 			SetValue(0);
+		
+		::UpdateWindow(GetHandle());
 	}
 }
 
@@ -693,12 +699,13 @@ void MWinPopupImpl::AddedToWindow()
 
 int32 MWinPopupImpl::GetValue() const
 {
-	return ::SendMessage(GetHandle(), CB_GETCURSEL, 0, 0);
+	return ::SendMessage(GetHandle(), CB_GETCURSEL, 0, 0) + 1;
 }
 
 void MWinPopupImpl::SetValue(int32 inValue)
 {
-	::SendMessage(GetHandle(), CB_SETCURSEL, (WPARAM)inValue, 0);
+	::SendMessage(GetHandle(), CB_SETCURSEL, (WPARAM)(inValue - 1), 0);
+	::UpdateWindow(GetHandle());
 }
 
 bool MWinPopupImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
@@ -810,6 +817,7 @@ void MWinEdittextImpl::SetText(const std::string& inText)
 	wstring text(c2w(inText));
 	ba::replace_all(text, L"\n", L"\r\n");
 	::SendMessage(GetHandle(), WM_SETTEXT, 0, (LPARAM)text.c_str());
+	::UpdateWindow(GetHandle());
 }
 
 bool MWinEdittextImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
@@ -868,6 +876,13 @@ void MWinCaptionImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 	outStyle = WS_CHILD;
 }
 
+void MWinCaptionImpl::SetText(const string& inText)
+{
+	wstring s(c2w(inText));
+	::SetWindowTextW(GetHandle(), s.c_str());
+	::UpdateWindow(GetHandle());
+}
+
 MCaptionImpl* MCaptionImpl::Create(MCaption* inCaption, const std::string& inText)
 {
 	return new MWinCaptionImpl(inCaption, inText);
@@ -921,6 +936,7 @@ void MWinCheckboxImpl::SetChecked(bool inChecked)
 		::SendMessage(GetHandle(), BM_SETCHECK, (WPARAM)BST_CHECKED, 0);
 	else
 		::SendMessage(GetHandle(), BM_SETCHECK, (WPARAM)BST_UNCHECKED, 0);
+	::UpdateWindow(GetHandle());
 }
 
 bool MWinCheckboxImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)

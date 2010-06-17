@@ -192,16 +192,19 @@ bool Choose(
 
 	THROW_IF_HRESULT_ERROR(pfd->SetOptions(dwFlags));
 
-	const COMDLG_FILTERSPEC types[] =
+	if (not inSelectDirectory)
 	{
-		{L"All Documents (*.*)",         L"*.*"}
-	};
+		const COMDLG_FILTERSPEC types[] =
+		{
+			{L"All Documents (*.*)",         L"*.*"}
+		};
 
-	// Set the file types to display only. Notice that, this is a 1-based array.
-    THROW_IF_HRESULT_ERROR(pfd->SetFileTypes(1, types));
+		// Set the file types to display only. Notice that, this is a 1-based array.
+		THROW_IF_HRESULT_ERROR(pfd->SetFileTypes(1, types));
 
-	// Set the selected file type index to Word Docs for this example.
-    THROW_IF_HRESULT_ERROR(pfd->SetFileTypeIndex(0));
+		// Set the selected file type index to Word Docs for this example.
+		THROW_IF_HRESULT_ERROR(pfd->SetFileTypeIndex(0));
+	}
 
 	//if (fs::exists(inDirectory))
 	//{

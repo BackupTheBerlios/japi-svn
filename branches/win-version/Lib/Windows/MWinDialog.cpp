@@ -317,11 +317,14 @@ MView* MWinDialogImpl::CreateButton(xml::element* inTemplate, int32 inX, int32 i
 
 MView* MWinDialogImpl::CreateCaption(xml::element* inTemplate, int32 inX, int32 inY)
 {
+	string id = inTemplate->get_attribute("id");
+	if (id.empty())
+		id = "caption";
 	string text = inTemplate->get_attribute("text");
 
 	MRect bounds(inX, inY + 2 * mDLUY, 0, 8 * mDLUY);
 	bounds.width = GetTextWidth(text, VSCLASS_STATIC, STAT_TEXT, 0);
-	return new MCaption("caption", bounds, text);
+	return new MCaption(id, bounds, text);
 }
 
 MView* MWinDialogImpl::CreateCheckbox(xml::element* inTemplate, int32 inX, int32 inY)

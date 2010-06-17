@@ -272,28 +272,25 @@ void MView::Invalidate(
 
 void MView::ScrollBy(int32 inDeltaX, int32 inDeltaY)
 {
-	MScrollbar* scrollbar = mScroller ? mScroller->GetHScrollbar() : nil;
+	int32 x, y;
+	GetScrollPosition(x, y);
 	
+	MScrollbar* scrollbar = mScroller ? mScroller->GetHScrollbar() : nil;
 	if (inDeltaX and scrollbar != nil)
 	{
-		int32 value = scrollbar->GetValue();
-
-		if (inDeltaX + value < scrollbar->GetMinValue())
-			inDeltaX = scrollbar->GetMinValue() - value;
-		if (inDeltaX + value > scrollbar->GetMaxValue())
-			inDeltaX = scrollbar->GetMaxValue() - value;
+		if (x + inDeltaX < scrollbar->GetMinValue())
+			inDeltaX = scrollbar->GetMinValue() - x;
+		if (x + inDeltaX > scrollbar->GetMaxValue())
+			inDeltaX = scrollbar->GetMaxValue() - x;
 	}
 
 	scrollbar = mScroller ? mScroller->GetVScrollbar() : nil;
-	
 	if (inDeltaY and scrollbar != nil)
 	{
-		int32 value = scrollbar->GetValue();
-
-		if (inDeltaY + value < scrollbar->GetMinValue())
-			inDeltaY = scrollbar->GetMinValue() - value;
-		if (inDeltaY + value > scrollbar->GetMaxValue())
-			inDeltaY = scrollbar->GetMaxValue() - value;
+		if (y + inDeltaY < scrollbar->GetMinValue())
+			inDeltaY = scrollbar->GetMinValue() - y;
+		if (y + inDeltaY > scrollbar->GetMaxValue())
+			inDeltaY = scrollbar->GetMaxValue() - y;
 	}
 	
 	if (inDeltaX != 0 or inDeltaY != 0)

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<dialog title="Find and mark lines">
+	<vbox margin="7" bind="left right">
+		<hbox bind="left right">
+			<caption text="Find:"/>
+			<edittext width="120" bind="left right" id="edit"/>
+		</hbox>
+		<checkbox id="ignore-case" title="Ignore case" />
+		<checkbox id="regular-expression" title="Regular expression" />
+	</vbox>
+	<hbox margin="7" bind="left right bottom">
+		<vbox bind="left right" /> <!-- expandable filler -->
+		<button bind="right bottom" title="OK" id="ok" default="true" />
+		<button bind="right bottom" title="Cancel" id="cancel" />
+	</hbox>
+</dialog>

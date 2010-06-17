@@ -225,6 +225,11 @@ MCaption::MCaption(const string& inID, MRect inBounds, const string& inText)
 {
 }
 
+void MCaption::SetText(const string& inText)
+{
+	mImpl->SetText(inText);
+}
+
 // --------------------------------------------------------------------
 
 MSeparator::MSeparator(const string& inID, MRect inBounds)
