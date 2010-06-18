@@ -427,10 +427,16 @@ void MView::MouseWheel(
 	}
 }
 
-//void MView::Click(int32 inX, int32 inY, uint32 inModifiers)
-//{
-//	PRINT(("Click at %d,%d", inX, inY));
-//}
+void MView::ShowContextMenu(
+	int32			inX,
+	int32			inY)
+{
+	if (mParent != nil)
+	{
+		ConvertToParent(inX, inY);
+		mParent->ShowContextMenu(inX, inY);
+	}
+}
 
 void MView::Show()
 {
@@ -1487,21 +1493,13 @@ void MViewScroller::AdjustScrollbars()
 
 	if (mHScrollbar != nil)
 	{
-		mHScrollbar->SetMinValue(0);
-		mHScrollbar->SetMaxValue(viewWidth);
-		mHScrollbar->SetViewSize(bounds.width);
-		mHScrollbar->SetValue(bounds.x);
-		
+		mHScrollbar->SetAdjustmentValues(0, viewWidth, mScrollUnitX, bounds.width, bounds.x);
 		dx = mHScrollbar->GetValue() - bounds.x;
 	}
 
 	if (mVScrollbar != nil)
 	{
-		mVScrollbar->SetMinValue(0);
-		mVScrollbar->SetMaxValue(viewHeight);
-		mVScrollbar->SetViewSize(bounds.height);
-		mVScrollbar->SetValue(bounds.y);
-
+		mVScrollbar->SetAdjustmentValues(0, viewHeight, mScrollUnitY, bounds.height, bounds.y);
 		dy = mVScrollbar->GetValue() - bounds.y;
 	}
 	
@@ -1529,8 +1527,6 @@ void MViewScroller::GetTargetScrollUnit(
 
 void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 {
-	int32 value = mVScrollbar->GetValue();
-
 	MRect frame;
 	mTarget->GetFrame(frame);
 
@@ -1558,7 +1554,7 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 			break;
 
 		case kScrollToThumb:
-			dy = value - y;
+			dy = mVScrollbar->GetTrackValue() - y;
 			break;
 	}
 
@@ -1568,8 +1564,6 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 
 void MViewScroller::HScroll(MScrollMessage inScrollMsg)
 {
-	int32 value = mVScrollbar->GetValue();
-
 	MRect frame;
 	mTarget->GetFrame(frame);
 
@@ -1597,7 +1591,7 @@ void MViewScroller::HScroll(MScrollMessage inScrollMsg)
 			break;
 
 		case kScrollToThumb:
-			dx = value - x;
+			dx = mHScrollbar->GetTrackValue() - x;
 			break;
 	}
 
@@ -1612,19 +1606,22 @@ void MViewScroller::MouseWheel(
 	int32			inDeltaY,
 	uint32			inModifiers)
 {
-	if (inDeltaX != 0 and mHScrollbar != nil)
-	{
-		if (inDeltaX > 0)
-			HScroll(kScrollLineUp);
-		else
-			HScroll(kScrollLineDown);
-	}
+	const int32 kWheelAcceleration = 3;
 	
-	if (inDeltaY != 0 and mVScrollbar != nil)
-	{
-		if (inDeltaY > 0)
-			VScroll(kScrollLineUp);
-		else
-			VScroll(kScrollLineDown);
-	}
+	MRect frame;
+	mTarget->GetFrame(frame);
+
+	int32 x, y;
+	mTarget->GetScrollPosition(x, y);
+	
+	int32 dx = 0, dy = 0;
+
+	if (mHScrollbar != nil)
+		dx = -(inDeltaX * mScrollUnitX * kWheelAcceleration);
+			
+	if (mVScrollbar != nil)
+		dy = -(inDeltaY * mScrollUnitY * kWheelAcceleration);
+
+	if (dx != 0 or dy != 0)
+		mTarget->ScrollBy(dx, dy);
 }

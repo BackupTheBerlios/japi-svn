@@ -144,6 +144,10 @@ class MView
 						int32			inDeltaY,
 						uint32			inModifiers);
 
+	virtual void	ShowContextMenu(
+						int32			inX,
+						int32			inY);
+
 	virtual void	RedrawAll(
 						MRect			inUpdate);
 
@@ -251,34 +255,6 @@ class MView
 	MTriState		mVisible;
 	MTriState		mEnabled;
 };
-
-/*
-class MMarginBox : public MView
-{
-  public:
-					MMarginBox(const std::string& inID, MView* inChild,
-						int32 inMarginLeft, int32 inMarginTop,
-						int32 inMarginRight, int32 inMarginBottom);
-
-	virtual void	AddChild(
-						MView*			inChild);
-	
-	virtual void	SetBounds(
-						const MRect&	inBounds);
-
-	virtual void	SetFrame(
-						const MRect&	inFrame);
-	
-	virtual void	ResizeFrame(
-						int32			inXDelta,
-						int32			inYDelta,
-						int32			inWidthDelta,
-						int32			inHeightDelta);
-
-  protected:
-	int32			mMarginLeft, mMarginTop, mMarginRight, mMarginBottom;
-};
-*/
 
 class MHBox : public MView
 {

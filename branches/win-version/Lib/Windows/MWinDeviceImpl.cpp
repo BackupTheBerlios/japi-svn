@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include "MWinLib.h"
+#include <comdef.h>
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH

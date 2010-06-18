@@ -41,12 +41,18 @@ public:
 
 	virtual int32	GetValue() const = 0;
 	virtual void	SetValue(int32 inValue) = 0;
-	virtual int32	GetMinValue() const = 0;
-	virtual void	SetMinValue(int32 inValue) = 0;
-	virtual int32	GetMaxValue() const = 0;
-	virtual void	SetMaxValue(int32 inValue) = 0;
 
-	virtual void	SetViewSize(int32 inViewSize) = 0;
+	virtual int32	GetTrackValue() const = 0;
+
+	virtual void	SetAdjustmentValues(int32 inMinValue, int32 inMaxValue,
+						int32 inScrollUnit, int32 inPageSize, int32 inValue) = 0;
+
+	virtual int32	GetMinValue() const = 0;
+//	virtual void	SetMinValue(int32 inValue) = 0;
+	virtual int32	GetMaxValue() const = 0;
+//	virtual void	SetMaxValue(int32 inValue) = 0;
+//
+//	virtual void	SetViewSize(int32 inViewSize) = 0;
 
 	static MScrollbarImpl*
 					Create(MScrollbar* inControl);

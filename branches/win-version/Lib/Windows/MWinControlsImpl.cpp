@@ -373,6 +373,30 @@ void MWinScrollbarImpl::SetValue(int32 inValue)
 	}
 }
 
+int32 MWinScrollbarImpl::GetTrackValue() const
+{
+	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_TRACKPOS };
+	
+	if (GetHandle() != nil)
+		::GetScrollInfo(GetHandle(), SB_CTL, &info);
+
+	return info.nTrackPos;
+}
+
+void MWinScrollbarImpl::SetAdjustmentValues(int32 inMinValue, int32 inMaxValue,
+	int32 inScrollUnit, int32 inPageSize, int32 inValue)
+{
+	if (GetHandle() != nil)
+	{
+		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_ALL };
+		info.nMin = inMinValue;
+		info.nMax = inMaxValue;
+		info.nPage = inPageSize;
+		info.nPos = inValue;
+		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
+	}
+}
+
 int32 MWinScrollbarImpl::GetMinValue() const
 {
 	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
@@ -383,37 +407,17 @@ int32 MWinScrollbarImpl::GetMinValue() const
 	return info.nMin;
 }
 
-void MWinScrollbarImpl::SetMinValue(int32 inValue)
-{
-	if (GetHandle() != nil)
-	{
-		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
-	
-		::GetScrollInfo(GetHandle(), SB_CTL, &info);
-		info.nMin = inValue;
-		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
-	}
-}
-
 int32 MWinScrollbarImpl::GetMaxValue() const
 {
-	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
+	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE };
 	if (GetHandle() != nil)
 		::GetScrollInfo(GetHandle(), SB_CTL, &info);
 
-	return info.nMax;
-}
+	int32 result = info.nMax;
+	if (info.nPage > 1)
+		result -= info.nPage - 1;
 
-void MWinScrollbarImpl::SetMaxValue(int32 inValue)
-{
-	if (GetHandle() != nil)
-	{
-		SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE };
-	
-		::GetScrollInfo(GetHandle(), SB_CTL, &info);
-		info.nMax = inValue;
-		::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
-	}
+	return result;
 }
 
 bool MWinScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
@@ -454,15 +458,6 @@ bool MWinScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LP
 	}
 
 	return result;
-}
-
-void MWinScrollbarImpl::SetViewSize(int32 inViewSize)
-{
-	SCROLLINFO info = { sizeof(info), SIF_PAGE };
-	
-	::GetScrollInfo(GetHandle(), SB_CTL, &info);
-	info.nPage = inViewSize;
-	::SetScrollInfo(GetHandle(), SB_CTL, &info, true);
 }
 
 MScrollbarImpl* MScrollbarImpl::Create(MScrollbar* inScrollbar)

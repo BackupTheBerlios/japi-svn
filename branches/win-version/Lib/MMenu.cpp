@@ -75,7 +75,8 @@ MMenu::~MMenu()
 }
 
 MMenu* MMenu::CreateFromResource(
-	const char*			inResourceName)
+	const char*			inResourceName,
+	bool				inPopup)
 {
 	MMenu* result = nil;
 	
@@ -92,13 +93,14 @@ MMenu* MMenu::CreateFromResource(
 	xml::element* root = doc.find_first("/menu");
 
 	if (root != nil)
-		result = Create(root);
+		result = Create(root, inPopup);
 
 	return result;
 }
 
 MMenu* MMenu::Create(
-	xml::element*	inXMLNode)
+	xml::element*		inXMLNode,
+	bool				inPopup)
 {
 	string label;
 
@@ -111,7 +113,7 @@ MMenu* MMenu::Create(
 	
 	string special = inXMLNode->get_attribute("special");
 
-	MMenu* menu = new MMenu(label, false);
+	MMenu* menu = new MMenu(label, inPopup);
 	menu->mSpecial = special;
 
 	foreach (xml::element* item, inXMLNode->children<xml::element>())
@@ -142,7 +144,7 @@ MMenu* MMenu::Create(
 			}
 		}
 		else if (item->qname() == "menu")
-			menu->AppendMenu(Create(item));
+			menu->AppendMenu(Create(item, false));
 	}
 	
 	return menu;
@@ -289,8 +291,7 @@ void MMenu::UpdateCommandStatus()
 //}
 
 void MMenu::Popup(
-	MHandler*			inHandler,
-	//GdkEventButton*		inEvent,
+	MWindow*			inHandler,
 	int32				inX,
 	int32				inY,
 	bool				inBottomMenu)

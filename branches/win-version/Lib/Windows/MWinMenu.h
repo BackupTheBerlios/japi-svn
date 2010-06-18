@@ -58,7 +58,7 @@ public:
 							uint32				inIndex) const;
 
 	virtual void		Popup(
-							MHandler*			inHandler,
+							MWindow*			inHandler,
 							int32				inX,
 							int32				inY,
 							bool				inBottomMenu);

@@ -13,6 +13,7 @@
 #include "MP2PEvents.h"
 
 class MHandler;
+class MWindow;
 class MFile;
 class MMenuImpl;
 
@@ -28,7 +29,8 @@ class MMenu
 	virtual			~MMenu();
 
 	static MMenu*	CreateFromResource(
-						const char*			inResourceName);
+						const char*			inResourceName,
+						bool				inPopup);
 
 	void			AppendItem(
 						const std::string&	inLabel,
@@ -68,13 +70,14 @@ class MMenu
 	MHandler*		GetTarget()				{ return mTarget; }
 	
 	void			Popup(
-						MHandler*			inTarget,
+						MWindow*			inTarget,
 						int32				inX,
 						int32				inY,
 						bool				inBottomMenu);
 	
 	static MMenu*	Create(
-						zeep::xml::element*	inXMLNode);
+						zeep::xml::element*	inXMLNode,
+						bool				inPopup);
 
 	MMenuImpl*		impl() const			{ return mImpl; }
 

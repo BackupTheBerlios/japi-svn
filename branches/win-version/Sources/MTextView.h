@@ -108,8 +108,9 @@ class MTextView : public MView
 							int32			inY,
 							uint32			inModifiers);
 
-	//virtual void		OnPopupMenu(
-	//						GdkEventButton*	inEvent);
+	virtual void		ShowContextMenu(
+							int32			inX,
+							int32			inY);
 	
   private:
 

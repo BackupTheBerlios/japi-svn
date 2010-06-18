@@ -296,7 +296,7 @@ bool ChooseFiles(
 	if (inParent != nil)
 		hwnd = static_cast<MWinWindowImpl*>(inParent->GetImpl())->GetHandle();
 
-	return Choose(hwnd, true, false, false, outFiles);
+	return Choose(hwnd, true, true, false, outFiles);
 }
 
 bool SaveFileAs(

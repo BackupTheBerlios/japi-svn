@@ -65,28 +65,11 @@ class MClipboard
 		bool			mBlock;
 	};
 
-	void				LoadClipboardIfNeeded();
+	class MClipboardImpl*
+						mImpl;
 
-	//static void			GtkClipboardGet(
-	//						GtkClipboard*		inClipboard,
-	//						GtkSelectionData*	inSelectionData,
-	//						guint				inInfo,
-	//						gpointer			inUserDataOrOwner);
-	//
-	//static void			GtkClipboardClear(
-	//						GtkClipboard*		inClipboard,
-	//						gpointer			inUserDataOrOwner);
-
-	//void				OnOwnerChange(
-	//						GdkEventOwnerChange*inEvent);
-	//
-	//MSlot<void(GdkEventOwnerChange*)>			mOwnerChange;
-	//
 	Data*				mRing[kClipboardRingSize];
 	uint32				mCount;
-	bool				mOwnerChanged;
-	bool				mClipboardIsMine;
-	//GtkClipboard*		mGtkClipboard;
 };
 
 #endif // MCLIPBOARD_H

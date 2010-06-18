@@ -1460,21 +1460,18 @@ void MTextView::SetDocument(MDocument* inDocument)
 	}
 }
 
-//void MTextView::OnPopupMenu(
-//	GdkEventButton*	inEvent)
-//{
-//	int32 x = 0, y = 0;
-//	
-//	if (inEvent != nil)
-//	{
-//		x = static_cast<int32>(inEvent->x);
-//		y = static_cast<int32>(inEvent->y);
-//	}
-//
-//	ConvertToGlobal(x, y);
-//
-//	MMenu* popup = MMenu::CreateFromResource("text-view-context-menu");
-//	
-//	if (popup != nil)
-//		popup->Popup(mController, inEvent, x, y, true);
-//}
+void MTextView::ShowContextMenu(
+	int32			inX,
+	int32			inY)
+{
+	ConvertToScreen(inX, inY);
+
+	MMenu* popup = MMenu::CreateFromResource("text-view-context-menu", true);
+	
+	if (popup != nil)
+	{
+		popup->SetTarget(GetWindow());
+		popup->UpdateCommandStatus();
+		popup->Popup(GetWindow(), inX, inY, true);
+	}
+}

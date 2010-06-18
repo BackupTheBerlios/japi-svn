@@ -76,5 +76,8 @@
     <ClCompile Include="..\..\Lib\Windows\MWinDeviceImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Lib\Windows\MWinClipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

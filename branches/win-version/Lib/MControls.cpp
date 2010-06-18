@@ -118,31 +118,43 @@ void MScrollbar::SetValue(int32 inValue)
 {
 	mImpl->SetValue(inValue);
 }
-	
-void MScrollbar::SetMinValue(int32 inMinValue)
+
+int32 MScrollbar::GetTrackValue() const
 {
-	mImpl->SetMinValue(inMinValue);
+	return mImpl->GetTrackValue();
 }
+
+void MScrollbar::SetAdjustmentValues(int32 inMinValue, int32 inMaxValue,
+	int32 inScrollUnit, int32 inPageSize, int32 inValue)
+{
+	mImpl->SetAdjustmentValues(inMinValue, inMaxValue,
+		inScrollUnit, inPageSize, inValue);
+}
+
+//void MScrollbar::SetMinValue(int32 inMinValue)
+//{
+//	mImpl->SetMinValue(inMinValue);
+//}
 
 int32 MScrollbar::GetMinValue() const
 {
 	return mImpl->GetMinValue();
 }
 	
-void MScrollbar::SetMaxValue(int32 inMaxValue)
-{
-	mImpl->SetMaxValue(inMaxValue);
-}
+//void MScrollbar::SetMaxValue(int32 inMaxValue)
+//{
+//	mImpl->SetMaxValue(inMaxValue);
+//}
 
 int32 MScrollbar::GetMaxValue() const
 {
 	return mImpl->GetMaxValue();
 }
 
-void MScrollbar::SetViewSize(int32 inViewSize)
-{
-	mImpl->SetViewSize(inViewSize);
-}
+//void MScrollbar::SetViewSize(int32 inViewSize)
+//{
+//	mImpl->SetViewSize(inViewSize);
+//}
 
 // --------------------------------------------------------------------
 

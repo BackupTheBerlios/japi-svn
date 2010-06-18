@@ -4,6 +4,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include "MWinLib.h"
+#include <comdef.h>
 
 #include "zeep/xml/document.hpp"
 #include <boost/iostreams/device/array.hpp>
@@ -50,7 +51,7 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 		
 		xml::document doc(data);
 	
-		mMenubar = MMenu::Create(doc.child());
+		mMenubar = MMenu::Create(doc.child(), false);
 	}
 }
 
@@ -676,6 +677,16 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 			//	mRenderTarget = nil;
 			//}
 		}
+		catch (_com_error& e)
+		{
+			try
+			{
+				mRenderTarget->Release();
+			}
+			catch (...) {}
+
+			mRenderTarget = nil;
+		}
 		catch (...)
 		{
 		}
@@ -869,37 +880,20 @@ bool MWinWindowImpl::WMSetFocus(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWPa
 
 bool MWinWindowImpl::WMContextMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& /*outResult*/)
 {
-	//try
-	//{
-	//	HPoint where(LOWORD(inLParam), HIWORD(inLParam));
-	//	HPoint local(where);
-	//	ConvertFromScreen(local);
-	//	
-	//	HNode* node = mWindow->FindSubPane(local);
-	//	assert(node != nil);
+	try
+	{
+		int32 x = LOWORD(inLParam);
+		int32 y = HIWORD(inLParam);
 
-	//	HMenu contextMenu(true);
-	//	contextMenu.SetParentWindow(mWindow);
-	//	contextMenu.SetIsContextMenu();
-	//	
-	//	node->PopulateContextMenu(contextMenu);
-
-	//	HMenu* selectedMenu;
-	//	unsigned int selectedItem;
-
-	//	if (contextMenu.Popup(where, selectedMenu, selectedItem) &&
-	//		selectedMenu != nil && selectedItem >= 0)
-	//	{
-	//		HMessage msg(selectedMenu->GetItemCommand(selectedItem));
-	//		msg.menu = selectedMenu;
-	//		msg.itemNr = static_cast<int>(selectedItem);
-	//		if (HHandler::GetFocus())
-	//			HHandler::GetFocus()->HandleMessage(msg);
-	//	}
-	//}
-	//catch (...)
-	//{
-	//}
+		ConvertFromScreen(x, y);
+		
+		MView* view = mWindow->FindSubView(x, y);
+		if (view != nil)
+			view->ShowContextMenu(x, y);
+	}
+	catch (...)
+	{
+	}
 
 	return true;
 }

@@ -273,18 +273,13 @@ MMenu* MWinMenuImpl::GetSubmenu(
 }
 
 void MWinMenuImpl::Popup(
-	MHandler*		inHandler,
+	MWindow*		inWindow,
 	int32			inX,
 	int32			inY,
 	bool			inBottomMenu)
 {
-	MWindow* window = dynamic_cast<MWindow*>(inHandler);
-	if (window != nil)
-	{
-		MWinWindowImpl* impl = dynamic_cast<MWinWindowImpl*>(window->GetImpl());
-
-		::TrackPopupMenuEx(mMenuHandle, TPM_NONOTIFY, inX, inY, impl->GetHandle(), nil);
-	}
+	MWinWindowImpl* impl = dynamic_cast<MWinWindowImpl*>(inWindow->GetImpl());
+	::TrackPopupMenuEx(mMenuHandle, TPM_NONOTIFY, inX, inY, impl->GetHandle(), nil);
 }
 
 MMenu* MWinMenuImpl::Lookup(

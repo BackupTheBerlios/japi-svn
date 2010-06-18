@@ -13,7 +13,7 @@
 #include <list>
 
 #include "MTypes.h"
-#include "MClipboard.h"
+#include "MClipboardImpl.h"
 #include "MUnicode.h"
 #include "MError.h"
 
@@ -46,19 +46,14 @@ void MClipboard::Data::AddData(const string& inText)
 }
 
 MClipboard::MClipboard()
-	: /*mOwnerChange(this, &MClipboard::OnOwnerChange)
-	, */mCount(0)
-	, mOwnerChanged(true)
-	, mClipboardIsMine(false)
-	//, mGtkClipboard(gtk_clipboard_get_for_display(gdk_display_get_default(), GDK_SELECTION_CLIPBOARD))
+	: mImpl(MClipboardImpl::Create(this))
+	, mCount(0)
 {
-	//mOwnerChange.Connect(G_OBJECT(mGtkClipboard), "owner-change");
 }
 
 MClipboard::~MClipboard()
 {
-	//if (mCount > 0 and mClipboardIsMine)
-	//	gtk_clipboard_store(mGtkClipboard);
+	mImpl->Commit();
 	
 	for (uint32 i = 0; i < mCount; ++i)
 		delete mRing[i];
@@ -72,7 +67,7 @@ MClipboard& MClipboard::Instance()
 
 bool MClipboard::HasData()
 {
-	MClipboard::Instance().LoadClipboardIfNeeded();
+	mImpl->LoadClipboardIfNeeded();
 	
 //	cout << "Clipboard now contains " << mCount << " data items:" << endl;
 //	
@@ -86,7 +81,7 @@ bool MClipboard::HasData()
 
 bool MClipboard::IsBlock()
 {
-	MClipboard::Instance().LoadClipboardIfNeeded();
+	mImpl->LoadClipboardIfNeeded();
 	
 	return mCount > 0 and mRing[0]->mBlock;
 }
@@ -137,21 +132,7 @@ void MClipboard::SetData(const string& inText, bool inBlock)
 		++mCount;
 	}
 
-	//GtkTargetEntry targets[] = {
-	//	{ const_cast<gchar*>("UTF8_STRING"), 0, 0 },
-	//	{ const_cast<gchar*>("COMPOUND_TEXT"), 0, 0 },
-	//	{ const_cast<gchar*>("TEXT"), 0, 0 },
-	//	{ const_cast<gchar*>("STRING"), 0, 0 },
-	//};
-
-	//gtk_clipboard_set_with_data(mGtkClipboard, 
-	//	targets, sizeof(targets) / sizeof(GtkTargetEntry),
-	//	&MClipboard::GtkClipboardGet, &MClipboard::GtkClipboardClear, nil);
-	
-//	gtk_clipboard_set_text(mGtkClipboard, inText.c_str(), inText.length());
-	
-	mOwnerChanged = false;
-	mClipboardIsMine = true;
+	mImpl->Commit();
 }
 
 void MClipboard::AddData(const string& inText)
@@ -160,53 +141,5 @@ void MClipboard::AddData(const string& inText)
 		SetData(inText, false);
 	else
 		mRing[0]->AddData(inText);
-}
-
-//void MClipboard::GtkClipboardGet(
-//	GtkClipboard*		inClipboard,
-//	GtkSelectionData*	inSelectionData,
-//	guint				inInfo,
-//	gpointer			inUserDataOrOwner)
-//{
-////cout << "GtkClipboardGet" << endl;
-//	MClipboard& self = Instance();	
-//	
-//	gtk_selection_data_set_text(inSelectionData, 
-//		self.mRing[0]->mText.c_str(), self.mRing[0]->mText.length());
-//}
-//
-//void MClipboard::GtkClipboardClear(
-//	GtkClipboard*		inClipboard,
-//	gpointer			inUserDataOrOwner)
-//{
-////cout << "GtkClipboardClear" << endl;
-//	Instance().mOwnerChanged = true;
-//	Instance().mClipboardIsMine = false;
-//}
-//
-//void MClipboard::OnOwnerChange(
-//	GdkEventOwnerChange*	inEvent)
-//{
-////cout << "OnOwnerChange" << endl;
-//
-//	if (not mClipboardIsMine)
-//		mOwnerChanged = true;
-//}
-
-void MClipboard::LoadClipboardIfNeeded()
-{
-//	if (not mClipboardIsMine and
-//		mOwnerChanged and
-//		gtk_clipboard_wait_is_text_available(mGtkClipboard))
-//	{
-////cout << "Reloading clipboard" << endl;
-//		gchar* text = gtk_clipboard_wait_for_text(mGtkClipboard);
-//		if (text != nil)
-//		{
-//			SetData(text, false);
-//			g_free(text);
-//		}
-//		mOwnerChanged = false;
-//	}
 }
 

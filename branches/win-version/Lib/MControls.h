@@ -83,14 +83,13 @@ public:
 
 	virtual int32	GetValue() const;
 	virtual void	SetValue(int32 inValue);
-	
-	void			SetMinValue(int32 inMinValue);
-	int32			GetMinValue() const;
-	
-	void			SetMaxValue(int32 inMaxValue);
-	int32			GetMaxValue() const;
 
-	virtual void	SetViewSize(int32 inViewSize);
+	virtual int32	GetTrackValue() const;
+	virtual int32	GetMinValue() const;
+	virtual int32	GetMaxValue() const;
+	
+	virtual void	SetAdjustmentValues(int32 inMinValue, int32 inMaxValue,
+						int32 inScrollUnit, int32 inPageSize, int32 inValue);
 
 	MEventOut<void(MScrollMessage)>
 					eScroll;

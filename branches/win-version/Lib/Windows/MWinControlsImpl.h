@@ -76,12 +76,18 @@ public:
 
 	virtual int32	GetValue() const;
 	virtual void	SetValue(int32 inValue);
-	virtual int32	GetMinValue() const;
-	virtual void	SetMinValue(int32 inValue);
-	virtual int32	GetMaxValue() const;
-	virtual void	SetMaxValue(int32 inValue);
+	
+	virtual int32	GetTrackValue() const;
 
-	virtual void	SetViewSize(int32 inValue);
+	virtual void	SetAdjustmentValues(int32 inMinValue, int32 inMaxValue,
+						int32 inScrollUnit,  int32 inPageSize, int32 inValue);
+
+	virtual int32	GetMinValue() const;
+//	virtual void	SetMinValue(int32 inValue);
+	virtual int32	GetMaxValue() const;
+//	virtual void	SetMaxValue(int32 inValue);
+//
+//	virtual void	SetViewSize(int32 inValue);
 
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
