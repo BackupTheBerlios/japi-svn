@@ -52,13 +52,13 @@ private:
 };
 
 MTextColor::MTextColor()
-	: mRefCount(0)
+	: mRefCount(1)
 {
 }
 
 MTextColor::MTextColor(
 		const MColor& inColor)
-	: mRefCount(0)
+	: mRefCount(1)
 {
 	mColor = D2D1::ColorF(inColor.red / 255.f, inColor.green / 255.f, inColor.blue / 255.f);
 }
@@ -545,7 +545,15 @@ ID2D1Factory*	MWinDeviceImpl::GetD2D1Factory()
 	static ID2D1Factory* sD2DFactory = nil;
 
 	if (sD2DFactory == nil)
+	{
+#if DEBUG
+		D2D1_FACTORY_OPTIONS options = {};
+		options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, options, &sD2DFactory));
+#else
 		THROW_IF_HRESULT_ERROR(::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &sD2DFactory));
+#endif
+	}
 
 	return sD2DFactory;
 }
@@ -701,8 +709,12 @@ void MWinDeviceImpl::Save()
 void MWinDeviceImpl::Restore()
 {
 	assert(not mState.empty());
-	mRenderTarget->RestoreDrawingState(mState.top());
-	mState.pop();
+	if (not mState.empty())
+	{
+		mRenderTarget->RestoreDrawingState(mState.top());
+		mState.top()->Release();
+		mState.pop();
+	}
 }
 
 void MWinDeviceImpl::SetForeColor(
@@ -1165,6 +1177,7 @@ void MWinDeviceImpl::SetTextColors(
 			range.length = mTextIndex[inOffsets[ix + 1]] - range.startPosition;
 		
 		mTextLayout->SetDrawingEffect(color, range);
+		color->Release();
 	}
 }
 
