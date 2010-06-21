@@ -945,11 +945,12 @@ bool MView::IsActive() const
 
 void MView::GetMouse(
 	int32&			outX,
-	int32&			outY) const
+	int32&			outY,
+	uint32&			outModifiers) const
 {
 	if (mParent != nil)
 	{
-		mParent->GetMouse(outX, outY);
+		mParent->GetMouse(outX, outY, outModifiers);
 		ConvertFromParent(outX, outY);
 	}
 }

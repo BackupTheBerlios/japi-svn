@@ -238,57 +238,61 @@ bool MTextView::ScrollToPointer(
 
 	mDocument->PositionToOffset(inX, inY, mClickCaret);
 
-	if (mClickMode == eSelectBlock)
+	switch (mClickMode)
 	{
-		MSelection selection = mDocument->GetSelection();
-		uint32 al, ac, cl, cc;
-		selection.GetAnchorLineAndColumn(al, ac);
-		mDocument->PositionToLineColumn(inX, inY, cl, cc);
-		mDocument->Select(MSelection(mDocument, al, ac, cl, cc));
-
-		scrolled = ScrollToCaret();
-	}
-	else if (mClickMode == eSelectRegular)
-	{
-		mDocument->Select(mClickAnchor, mClickCaret);
-		scrolled = ScrollToCaret();
-	}
-	else if (mClickMode == eSelectWords)
-	{
-		uint32 c1, c2;
-		mDocument->FindWord(mClickCaret, c1, c2);
-		if (c1 != c2)
+		case eSelectRegular:
+			mDocument->Select(mClickAnchor, mClickCaret);
+			break;
+		
+		case eSelectBlock:
 		{
-			if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
-				mClickCaret = c1;
-			else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
-				mClickCaret = c2;
+			MSelection selection = mDocument->GetSelection();
+			uint32 al, ac, cl, cc;
+			selection.GetAnchorLineAndColumn(al, ac);
+			mDocument->PositionToLineColumn(inX, inY, cl, cc);
+			mDocument->Select(MSelection(mDocument, al, ac, cl, cc));
+			break;
+		}
+		
+		case eSelectWords:
+		{
+			uint32 c1, c2;
+			mDocument->FindWord(mClickCaret, c1, c2);
+			if (c1 != c2)
+			{
+				if (c1 < mClickCaret and mClickCaret < mMinClickAnchor)
+					mClickCaret = c1;
+				else if (c2 > mClickCaret and mClickCaret > mMaxClickAnchor)
+					mClickCaret = c2;
+			}
+	
+			if (mClickCaret < mMinClickAnchor)
+				mDocument->Select(mMaxClickAnchor, mClickCaret);
+			else if (mClickCaret > mMaxClickAnchor)
+				mDocument->Select(mMinClickAnchor, mClickCaret);
+			else
+				mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
+			break;
 		}
 
-		if (mClickCaret < mMinClickAnchor)
-			mDocument->Select(mMaxClickAnchor, mClickCaret);
-		else if (mClickCaret > mMaxClickAnchor)
-			mDocument->Select(mMinClickAnchor, mClickCaret);
-		else
-			mDocument->Select(mMinClickAnchor, mMaxClickAnchor);
-
-		scrolled = ScrollToCaret();
-	}
-	else if (mClickMode == eSelectLines)
-	{
-		mClickCaret = mDocument->OffsetToLine(mClickCaret);
-
-		if (mClickCaret < mClickAnchor)
-			mDocument->Select(
-				mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
-		else
-			mDocument->Select(
-				mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
-
-		scrolled = ScrollToCaret();
+		case eSelectLines:
+		{
+			mClickCaret = mDocument->OffsetToLine(mClickCaret);
+	
+			if (mClickCaret < mClickAnchor)
+				mDocument->Select(
+					mDocument->LineStart(mClickAnchor + 1), mDocument->LineStart(mClickCaret));
+			else
+				mDocument->Select(
+					mDocument->LineStart(mClickAnchor), mDocument->LineStart(mClickCaret + 1));
+			break;
+		}
+		
+		default:
+			break;
 	}
 	
-	return scrolled;
+	return ScrollToCaret();
 }
 	
 uint32 MTextView::CountPages(
@@ -657,57 +661,51 @@ void MTextView::Tick(
 	
 	MValueChanger<bool> change(mInTick, true);
 
-	//if (mLastScrollTime > 0 and
-	//	mLastScrollTime + kScrollDelay < inTime)
-	//{
-	//	int32 x, y;
-	//	GdkModifierType state;
-	//	gdk_window_get_pointer(GetGtkWidget()->window, &x, &y, &state);
-	//
-	//	x += mImageOriginX - kLeftMargin;
-	//	y += mImageOriginY;
-	//	
-	//	if (ScrollToPointer(x, y))
-	//		mLastScrollTime = inTime;
-	//	else
-	//		mLastScrollTime = 0;
-	//	
-	//	return;
-	//}
-	
-	if (inTime < mLastCaretBlinkTime + kCaretBlinkTime)
-		return;
-	
-	mLastCaretBlinkTime = inTime;
-	
-	MSelection sel = mDocument->GetSelection();
-
-	//if (IsWithinDrag() and mDragIsAcceptable)
-	//{
-	//	InvalidateLine(mDocument->OffsetToLine(mDragCaret));
-	//	mCaretVisible = not mCaretVisible;
-	//}
-	//else
-	//{
-		uint32 caret = sel.GetCaret();
+	if (mLastScrollTime > 0 and
+		mLastScrollTime + kScrollDelay < inTime)
+	{
+		int32 x, y;
+		uint32 modifiers;
+		GetMouse(x, y, modifiers);
 		
-		if (mCaret != caret)
-		{
-			InvalidateLine(mDocument->OffsetToLine(mCaret));
-			mCaret = caret;
-		}
-
-		if ((not IsActive() and mCaretVisible) or
-			(IsActive() and (sel.IsEmpty() or mCaretVisible)))
-		{
-			if (mDocument->GetFastFindMode())
-				mCaretVisible = true;
-			else
-				mCaretVisible = not mCaretVisible;
+		if (ScrollToPointer(x, y))
+			mLastScrollTime = inTime;
+		else
+			mLastScrollTime = 0;
+	}
+	else if (inTime >= mLastCaretBlinkTime + kCaretBlinkTime)
+	{
+		mLastCaretBlinkTime = inTime;
+		
+		MSelection sel = mDocument->GetSelection();
 	
-			InvalidateLine(mDocument->OffsetToLine(mCaret));
-		}
-	//}
+		//if (IsWithinDrag() and mDragIsAcceptable)
+		//{
+		//	InvalidateLine(mDocument->OffsetToLine(mDragCaret));
+		//	mCaretVisible = not mCaretVisible;
+		//}
+		//else
+		//{
+			uint32 caret = sel.GetCaret();
+			
+			if (mCaret != caret)
+			{
+				InvalidateLine(mDocument->OffsetToLine(mCaret));
+				mCaret = caret;
+			}
+	
+			if ((not IsActive() and mCaretVisible) or
+				(IsActive() and (sel.IsEmpty() or mCaretVisible)))
+			{
+				if (mDocument->GetFastFindMode())
+					mCaretVisible = true;
+				else
+					mCaretVisible = not mCaretVisible;
+		
+				InvalidateLine(mDocument->OffsetToLine(mCaret));
+			}
+		//}
+	}
 }
 
 void MTextView::SelectionChanged(

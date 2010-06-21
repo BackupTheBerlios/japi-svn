@@ -200,9 +200,10 @@ class MView
 
 	void			ObscureCursor();
 
-	void			GetMouse(
+	virtual void		GetMouse(
 						int32&			outX,
-						int32&			outY) const;
+						int32&			outY,
+						uint32&			outModifiers) const;
 
 	uint32			GetModifiers() const;
 

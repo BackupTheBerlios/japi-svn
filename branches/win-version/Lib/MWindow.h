@@ -102,6 +102,11 @@ class MWindow : public MView, public MHandler
 	virtual void			ConvertToScreen(int32& ioX, int32& ioY) const;
 	virtual void			ConvertFromScreen(int32& ioX, int32& ioY) const;
 
+	virtual void			GetMouse(
+						int32&			outX,
+						int32&			outY,
+						uint32&			outModifiers) const;
+
 	virtual void			Invalidate(
 								MRect			inRect);
 

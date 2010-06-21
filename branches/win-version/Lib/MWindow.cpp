@@ -690,6 +690,11 @@ void MWindow::ConvertFromScreen(int32& ioX, int32& ioY) const
 	mImpl->ConvertFromScreen(ioX, ioY);
 }
 
+void MWindow::GetMouse(int32& outX, int32& outY, uint32& outModifiers) const
+{
+	mImpl->GetMouse(outX, outY, outModifiers);
+}
+
 void MWindow::Invalidate(MRect inRect)
 {
 	mImpl->Invalidate(inRect);
