@@ -1036,14 +1036,14 @@ float MWinDeviceImpl::GetXWidth()
 	IDWriteTextLayout* layout = nil;
 
 	THROW_IF_HRESULT_ERROR(
-		GetDWFactory()->CreateTextLayout(L"x", 1, mTextFormat, 99999.0f, 99999.0f, &layout));
+		GetDWFactory()->CreateTextLayout(L"xxxxxxxxxx", 10, mTextFormat, 99999.0f, 99999.0f, &layout));
 
 	DWRITE_TEXT_METRICS metrics;
 	THROW_IF_HRESULT_ERROR(layout->GetMetrics(&metrics));
 
 	layout->Release();
 
-	return metrics.width;
+	return metrics.width / 10;
 }
 
 void MWinDeviceImpl::DrawString(

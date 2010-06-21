@@ -889,7 +889,10 @@ bool MWinWindowImpl::WMContextMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*in
 		
 		MView* view = mWindow->FindSubView(x, y);
 		if (view != nil)
+		{
+			view->ConvertFromWindow(x, y);
 			view->ShowContextMenu(x, y);
+		}
 	}
 	catch (...)
 	{

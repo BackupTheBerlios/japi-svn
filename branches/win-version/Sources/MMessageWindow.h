@@ -115,7 +115,6 @@ class MMessageWindow : public MDocWindow
 	std::string		mText;
 	double			mLastAddition;
 	MTextView*		mTextView;
-	//GtkWidget*		mSelectionPanel;
 };
 
 #endif

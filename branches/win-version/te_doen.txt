@@ -1,4 +1,5 @@
 ﻿Windows versie
+- CloseAll werkt niet goed (laat vensters staan)
 - Dialogs afmaken
 - MList implementeren
 - MProject tot leven wekken

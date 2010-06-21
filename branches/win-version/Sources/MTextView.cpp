@@ -343,7 +343,7 @@ void MTextView::Draw(
 
 	MValueChanger<int32> saveDescent(mDescent, mDescent);
 	MValueChanger<int32> saveLineHeight(mLineHeight, mLineHeight);
-	MValueChanger<int32> saveCharWidth(mCharWidth, mCharWidth);
+	MValueChanger<float> saveCharWidth(mCharWidth, mCharWidth);
 
 	mNeedsDisplay = false;
 

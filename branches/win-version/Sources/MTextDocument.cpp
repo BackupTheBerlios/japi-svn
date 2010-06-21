@@ -525,7 +525,7 @@ void MTextDocument::ReInit()
 
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetXWidth();
-	mTabWidth = floor(mCharWidth * mCharsPerTab);
+	mTabWidth = mCharWidth * mCharsPerTab;
 }
 
 // ---------------------------------------------------------------------------
@@ -2183,20 +2183,11 @@ void MTextDocument::PositionToLineColumn(
 	if (outLine >= mLineInfo.size())
 		outLine = mLineInfo.size() - 1;
 
-	string text;
-	MDevice device;
-	
-	GetStyledText(outLine, device, text);
-	
 	if (GetSoftwrap())
 		inLocationX -= GetLineIndentWidth(outLine);
 	
 	if (inLocationX > 0)
-	{
-//		bool trailing;
-//		/*bool hit = */device.PositionToIndex(inLocationX, outColumn, trailing);
 		outColumn = static_cast<uint32>((inLocationX + (mCharWidth / 2)) / mCharWidth);
-	}
 	else
 		outColumn = 0;
 }
