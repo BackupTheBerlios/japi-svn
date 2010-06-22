@@ -957,3 +957,95 @@ MCheckboxImpl* MCheckboxImpl::Create(MCheckbox* inCheckbox, const std::string& i
 	return new MWinCheckboxImpl(inCheckbox, inText);
 }
 
+// --------------------------------------------------------------------
+
+MWinListHeaderImpl::MWinListHeaderImpl(MListHeader* inListHeader)
+	: MWinControlImpl(inListHeader, "")
+{
+}
+
+void MWinListHeaderImpl::CreateHandle(MWinProcMixin* inParent, MRect inBounds,
+	const wstring& inTitle)
+{
+	MWinControlImpl::CreateHandle(inParent, inBounds, inTitle);
+
+	if (inParent != nil)
+	{
+        // Retrieve the bounding rectangle of the parent window's 
+        // client area, and then request size and position values 
+        // from the header control. 
+
+		MRect bounds;
+		mControl->GetBounds(bounds);
+		mControl->ConvertToWindow(bounds.x, bounds.y);
+
+		RECT rc = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
+ 
+        HDLAYOUT hdl;
+        WINDOWPOS wp; 
+
+		hdl.prc = &rc;
+        hdl.pwpos = &wp; 
+
+		if (::SendMessage(GetHandle(), HDM_LAYOUT, 0, (LPARAM) &hdl))
+		{
+			// Set the size, position, and visibility of the header control.
+			::SetWindowPos(GetHandle(), wp.hwndInsertAfter, wp.x, wp.y, 
+				wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
+			
+			MRect frame;
+			mControl->GetFrame(frame);
+			frame.width = wp.cx;
+			frame.height = wp.cy;
+			mControl->SetFrame(frame);
+		}
+
+		inParent->AddNotify(HDN_TRACK, GetHandle(),
+			boost::bind(&MWinListHeaderImpl::HDNTrack, this, _1, _2, _3));
+	}
+}
+
+void MWinListHeaderImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+
+	outStyle = WS_CHILD | HDS_HORZ;
+	outClassName = WC_HEADER;
+}
+
+void MWinListHeaderImpl::AppendColumn(const string& inLabel, int inWidth)
+{
+	HDITEM item = {};
+	
+	wstring label = c2w(inLabel);
+	
+	item.mask = HDI_FORMAT | HDI_TEXT;
+	item.pszText = const_cast<wchar_t*>(label.c_str());
+	item.cchTextMax = label.length();
+	item.fmt = HDF_LEFT | HDF_STRING;
+
+	if (inWidth > 0)
+	{
+		item.mask |= HDI_WIDTH;
+		item.cxy = inWidth;
+	}
+	
+	int insertAfter = 0;
+	::SendMessage(GetHandle(), HDM_INSERTITEM, (WPARAM)&insertAfter, (LPARAM)&item);
+}
+
+bool MWinListHeaderImpl::HDNTrack(WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	NMHEADER& nmh = *(NMHEADER*)inLParam;
+
+	mControl->eColumnResized(nmh.iItem, nmh.pitem->cxy);
+
+	return false;
+}
+
+MListHeaderImpl* MListHeaderImpl::Create(MListHeader* inListHeader)
+{
+	return new MWinListHeaderImpl(inListHeader);
+}
+

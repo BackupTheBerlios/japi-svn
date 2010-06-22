@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef MLIST_H
-#define MLIST_H
+#ifndef MGTKLIST_H
+#define MGTKLIST_H
 
 #include <string>
 #include <vector>

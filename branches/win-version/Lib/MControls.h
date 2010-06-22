@@ -215,4 +215,19 @@ public:
 					eValueChanged;
 };
 
+// --------------------------------------------------------------------
+
+class MListHeaderImpl;
+
+class MListHeader : public MControl<MListHeaderImpl>
+{
+  public:
+	typedef MListHeaderImpl		MImpl;
+					MListHeader(const std::string& inID, MRect inBounds);
+	
+	MEventOut<void(uint32,uint32)>			eColumnResized;
+
+	void			AppendColumn(const std::string& inLabel, int inWidth = -1);
+};
+
 #endif

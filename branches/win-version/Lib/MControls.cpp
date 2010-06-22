@@ -265,3 +265,15 @@ void MCheckbox::SetChecked(bool inChecked)
 {
 	mImpl->SetChecked(inChecked);
 }
+
+// --------------------------------------------------------------------
+
+MListHeader::MListHeader(const std::string& inID, MRect inBounds)
+	: MControl(inID, inBounds, MListHeaderImpl::Create(this))
+{
+}
+
+void MListHeader::AppendColumn(const string& inLabel, int inWidth)
+{
+	mImpl->AppendColumn(inLabel, inWidth);
+}

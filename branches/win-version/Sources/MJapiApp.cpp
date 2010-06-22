@@ -36,7 +36,7 @@
 //#include "MePubDocument.h"
 //#include "MePubWindow.h"
 //#include "MShell.h"
-//#include "MTestWindow.h"
+#include "CTestWindow.h"
 #include "MLanguage.h"
 #include "MDevice.h"
 
@@ -260,8 +260,8 @@ bool MJapiApp::ProcessCommand(
 		
 		case 'test':
 		{
-//			MWindow* w = new MTestWindow();
-//			w->Show();
+			MWindow* w = new CTestWindow();
+			w->Select();
 			break;
 		}
 		

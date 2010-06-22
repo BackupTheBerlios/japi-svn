@@ -92,6 +92,7 @@
     <ClCompile Include="..\..\Lib\Windows\MWinDeviceImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinDialog.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinFile.cpp" />
+    <ClCompile Include="..\..\Lib\Windows\MWinListViewImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinMain.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinMenu.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinProcMixin.cpp" />

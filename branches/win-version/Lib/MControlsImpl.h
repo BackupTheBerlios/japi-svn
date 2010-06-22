@@ -165,4 +165,16 @@ public:
 					Create(MCheckbox* inCheckbox, const std::string& inTitle);
 };
 
+class MListHeaderImpl : public MControlImpl<MListHeader>
+{
+  public:
+					MListHeaderImpl(MListHeader* inListHeader)
+						: MControlImpl(inListHeader) {}
+	
+	virtual void	AppendColumn(const std::string& inLabel, int inWidth) = 0;
+
+	static MListHeaderImpl*
+					Create(MListHeader* inListHeader);
+};
+
 #endif

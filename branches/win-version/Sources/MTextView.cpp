@@ -208,12 +208,14 @@ void MTextView::MouseMove(
 		//	mClickMode = eSelectNone;
 		//}
 	}
-	else if (ScrollToPointer(inX, inY))
+	else if (mClickMode != eSelectNone and ScrollToPointer(inX, inY))
 		mLastScrollTime = GetLocalTime();
 }
 
 void MTextView::MouseExit()
 {
+	mClickMode = eSelectNone;
+	mLastScrollTime = 0;
 }
 
 void MTextView::MouseUp(

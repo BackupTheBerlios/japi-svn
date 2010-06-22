@@ -87,7 +87,7 @@
     <ClCompile Include="..\..\Lib\MError.cpp" />
     <ClCompile Include="..\..\Lib\MFile.cpp" />
     <ClCompile Include="..\..\Lib\MHandler.cpp" />
-    <ClCompile Include="..\..\Lib\MList.cpp" />
+    <ClCompile Include="..\..\Lib\MListView.cpp" />
     <ClCompile Include="..\..\Lib\MMenu.cpp" />
     <ClCompile Include="..\..\Lib\MPreferences.cpp" />
     <ClCompile Include="..\..\Lib\MStrings.cpp" />

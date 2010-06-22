@@ -149,7 +149,6 @@ void MTextDocument::Init()
 	mCompletionIndex = -1;
 	mStdErrWindow = nil;
 	mPCLine = numeric_limits<uint32>::max();
-	mDataFD = -1;
  
 	mCharsPerTab = gCharsPerTab;
 
@@ -244,16 +243,6 @@ void MTextDocument::AddNotifier(
 	bool					inRead)
 {
 	MDocument::AddNotifier(inNotifier, inRead);
-	
-	//if (inRead)
-	//{
-	//	mPreparedForStdOut = true;
-	//	mDataFD = inNotifier.GetFD();
-
-	//	int flags = fcntl(mDataFD, F_GETFL, 0);
-	//	if (fcntl(mDataFD, F_SETFL, flags | O_NONBLOCK))
-	//		cerr << _("Failed to set fd non blocking: ") << strerror(errno) << endl;
-	//}
 }
 
 MController* MTextDocument::GetFirstController() const
@@ -3976,7 +3965,6 @@ bool MTextDocument::HandleRawKeydown(
 					Reset();
 					Execute();
 					handled = true;
-	//				updateSelection = false;
 				}
 				else
 				{
@@ -4050,16 +4038,8 @@ bool MTextDocument::HandleRawKeydown(
 					mShell->Kill();
 				break;
 
-			//case GDK_period:
-			//	if (inModifiers & GDK_CONTROL_MASK and mShell.get() != nil and mShell->IsRunning())
-			//		mShell->Kill();
-			//	else
-			//		handled = false;
-			//	break;
-			
 			default:
 				handled = false;
-	//			updateSelection = false;
 				break;
 		}
 	
@@ -4201,15 +4181,7 @@ void MTextDocument::Idle(
 		mNeedReparse = false;
 	}
 	
-	//if (mDataFD >= 0)
-	//{
-	//	char buffer[10240];
-	//	int r = read(mDataFD, buffer, sizeof(buffer));
-	//	if (r == 0 or (r < 0 and errno != EAGAIN))
-	//		mDataFD = -1;
-	//	else if (r > 0)
-	//		StdOut(buffer, r);
-	//}
+#pragma message("read mDataFD here")
 }
 
 // ---------------------------------------------------------------------------

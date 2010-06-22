@@ -103,6 +103,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Sources\CTestWindow.cpp" />
     <ClCompile Include="..\..\Sources\MEditWindow.cpp" />
     <ClCompile Include="..\..\Sources\MFindAndOpenDialog.cpp" />
     <ClCompile Include="..\..\Sources\MFindDialog.cpp" />

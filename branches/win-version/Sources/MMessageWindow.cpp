@@ -31,9 +31,6 @@ namespace
 const uint32
 	kListViewID = 'tree';
 	
-//static const Rect
-//	sRect = { 0, 0, 150, 400 };
-
 const double
 	kDelay = 0.333;
 

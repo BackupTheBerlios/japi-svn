@@ -405,9 +405,6 @@ class MTextDocument : public MDocument
 	const MTextInputAreaInfo&
 						GetTextInputAreaInfo() const		{ return mTextInputAreaInfo; }
 
-	//void				OnKeyPressEvent(
-	//						GdkEventKey*	inEvent);
-	
 	void				OnCommit(
 							const char*		inText,
 							uint32			inLength);
@@ -573,7 +570,6 @@ class MTextDocument : public MDocument
 	void				DoOpenIncludeFile();
 	void				DoOpenCounterpart();
 	
-	int							mDataFD;
 	MTextBuffer					mText;
 	MTextView*					mTargetTextView;
 	uint32						mWrapWidth;

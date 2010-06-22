@@ -226,4 +226,19 @@ public:
 	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
+class MWinListHeaderImpl : public MWinControlImpl<MListHeader>
+{
+  public:
+					MWinListHeaderImpl(MListHeader* inListHeader);
+
+	virtual void	CreateParams(DWORD& outStyle, DWORD& outExStyle,
+						std::wstring& outClassName, HMENU& outMenu);
+	virtual void	CreateHandle(MWinProcMixin* inParent, MRect inBounds,
+						const std::wstring& inTitle);
+
+	virtual void	AppendColumn(const std::string& inLabel, int inWidth);
+
+	virtual bool	HDNTrack(WPARAM inWParam, LPARAM inLParam, int& outResult);
+};
+
 #endif

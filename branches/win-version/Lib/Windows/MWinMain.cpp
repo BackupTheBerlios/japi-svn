@@ -252,6 +252,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPSTR lpszCmdLine, int n
 {
 	int result = 0;
 
+	PRINT(("Hello, world!"));
+
 	vector<string> args = po::split_winmain(lpszCmdLine);
 	uint32 inst = MDDEImpl::Init();
 
