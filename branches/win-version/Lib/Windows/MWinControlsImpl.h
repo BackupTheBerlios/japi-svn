@@ -190,6 +190,7 @@ public:
 						const std::string& inText);
 
 	virtual bool	WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 
 class MWinCaptionImpl : public MWinControlImpl<MCaption>

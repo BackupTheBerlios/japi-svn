@@ -794,6 +794,7 @@ void MWinEdittextImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
 //	else if (fPassword)
 //		ioParams.fStyle |= ES_PASSWORD;
 	
+	AddHandler(WM_SETFOCUS, boost::bind(&MWinEdittextImpl::WMSetFocus, this, _1, _2, _3, _4, _5));
 }
 
 string MWinEdittextImpl::GetText() const
@@ -848,6 +849,12 @@ bool MWinEdittextImpl::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	}
 	
 	return result;
+}
+
+bool MWinEdittextImpl::WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	::SendMessage(GetHandle(), EM_SETSEL, 0, -1);
+	return false;
 }
 
 MEdittextImpl* MEdittextImpl::Create(MEdittext* inEdittext)
