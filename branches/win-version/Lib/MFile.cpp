@@ -274,7 +274,7 @@ void MLocalFileLoader::DoLoad()
 		//					(gid == st.st_gid and (S_IWGRP & st.st_mode)) or
 		//					(S_IWOTH & st.st_mode));
 		//	
-		//	if (readOnly && S_IWGRP & st.st_mode)
+		//	if (readOnly and S_IWGRP & st.st_mode)
 		//	{
 		//		int ngroups = getgroups(0, nil);
 		//		if (ngroups > 0)
@@ -1391,31 +1391,39 @@ void NormalizePath(string& ioPath)
 	unsigned long i = 0;
 	
 	dirs.push(0);
+
+	bool unc = false;
+
+	if (path.length() > 2 and path[0] == '/' and path[1] == '/')
+	{
+		unc = true;
+		++i;
+	}
 	
 	while (i < path.length())
 	{
-		while (i < path.length() && path[i] == '/')
+		while (i < path.length() and path[i] == '/')
 		{
 			++i;
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.top() = i;
 			else
 				dirs.push(i);
 		}
 		
-		if (path[i] == '.' && path[i + 1] == '.' && path[i + 2] == '/')
+		if (path[i] == '.' and path[i + 1] == '.' and path[i + 2] == '/')
 		{
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.pop();
-			if (dirs.size() == 0)
+			if (dirs.empty())
 				--r;
 			i += 2;
 			continue;
 		}
-		else if (path[i] == '.' && path[i + 1] == '/')
+		else if (path[i] == '.' and path[i + 1] == '/')
 		{
 			i += 1;
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.top() = i;
 			else
 				dirs.push(i);
@@ -1431,13 +1439,13 @@ void NormalizePath(string& ioPath)
 		dirs.push(i);
 	}
 	
-	if (dirs.size() > 0 && dirs.top() == path.length())
+	if (not dirs.empty() and dirs.top() == path.length())
 		ioPath.assign("/");
 	else
 		ioPath.erase(ioPath.begin(), ioPath.end());
 	
 	bool dir = false;
-	while (dirs.size() > 0)
+	while (not dirs.empty())
 	{
 		unsigned long l, n;
 		n = path.find('/', dirs.top());
@@ -1463,6 +1471,9 @@ void NormalizePath(string& ioPath)
 		while (++r < 0)
 			ioPath.insert(0, "../");
 	}
-	else if (path.length() > 0 && path[0] == '/' && ioPath[0] != '/')
+	else if (path.length() > 0 and path[0] == '/' and ioPath[0] != '/')
 		ioPath.insert(0, "/");
+
+	if (unc and ioPath[0] == '/')
+		ioPath.insert(ioPath.begin(), '/');
 }

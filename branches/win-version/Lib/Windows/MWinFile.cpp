@@ -236,8 +236,8 @@ bool Choose(
 
 			try
 			{
-				string path = w2c(pszFilePath);
-				outSelected.push_back(MFile(path));
+				fs::path p(w2c(pszFilePath));
+				outSelected.push_back(MFile(p));
 				result = true;
 			}
 			catch (exception& e)
