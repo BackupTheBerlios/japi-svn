@@ -79,7 +79,11 @@ class MDeviceImp
 	
 	virtual float			GetLeading()									{ return 0; }
 	
-	virtual float			GetLineHeight()									{ return GetAscent() + GetDescent() + GetLeading(); }
+	virtual int32			GetLineHeight()
+							{
+								return static_cast<int32>(
+									std::ceil(GetAscent() + GetDescent() + GetLeading()));
+							}
 
 	virtual float			GetXWidth()										{ return 8; }
 

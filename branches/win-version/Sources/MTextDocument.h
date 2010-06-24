@@ -575,7 +575,7 @@ class MTextDocument : public MDocument
 	uint32						mWrapWidth;
 	MLineInfoArray				mLineInfo;
 	std::string					mFont;
-	uint32						mLineHeight;
+	int32						mLineHeight;
 	float						mCharWidth;	// to be able to calculate tab widths
 	float						mTabWidth;
 	uint32						mCharsPerTab;

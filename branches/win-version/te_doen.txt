@@ -1,6 +1,6 @@
 ﻿Windows versie
 - CloseAll werkt niet goed (laat vensters staan)
-- Dialogs afmaken
+- Dialogs afmaken		(copy/paste in edit veld, esc voor sluiten Find Dialog)
 - MList implementeren
 - MProject tot leven wekken
 - MShell implementeren

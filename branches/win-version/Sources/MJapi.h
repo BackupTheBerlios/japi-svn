@@ -6,9 +6,9 @@
 #ifndef MJAPI_H
 #define MJAPI_H
 
-#include <boost/filesystem/path.hpp>
-
 #include "MLib.h"
+
+#include <boost/filesystem/path.hpp>
 
 #include "MTypes.h"
 #include "MColor.h"

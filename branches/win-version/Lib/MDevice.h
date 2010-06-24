@@ -95,7 +95,7 @@ class MDevice
 	
 	float			GetLeading() const;
 	
-	float			GetLineHeight() const;
+	int32			GetLineHeight() const;
 
 	float			GetXWidth() const;
 

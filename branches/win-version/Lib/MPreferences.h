@@ -25,6 +25,9 @@ extern boost::filesystem::path	gPrefsDir;
 namespace Preferences
 {
 
+bool	GetBoolean(const char* inName, bool inDefaultValue);
+void	SetBoolean(const char* inName, bool inValue);
+
 int32	GetInteger(const char* inName, int32 inDefaultValue);
 void	SetInteger(const char* inName, int32 inValue);
 

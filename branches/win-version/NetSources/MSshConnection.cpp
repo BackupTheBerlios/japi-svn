@@ -863,7 +863,7 @@ void MSshConnection::ProcessConnect()
 		data << rng->GenerateByte();
 
 	string compress;
-	if (Preferences::GetInteger("compress-sftp", true))
+	if (Preferences::GetBoolean("compress-sftp", true))
 		compress = kUseCompressionAlgorithms;
 	else
 		compress = kDontUseCompressionAlgorithms;
@@ -1123,7 +1123,7 @@ void MSshConnection::ProcessNewKeys(
 				new HMAC<SHA256>(fKeys[5]));
 	
 		string compress;
-		if (Preferences::GetInteger("compress-sftp", true))
+		if (Preferences::GetBoolean("compress-sftp", true))
 			compress = kUseCompressionAlgorithms;
 		else
 			compress = kDontUseCompressionAlgorithms;
@@ -1209,7 +1209,7 @@ void MSshConnection::ProcessUserAuthNone(
 			
 //			try
 //			{
-//				if (Preferences::GetInteger("use-certificate", false) != 0)
+//				if (Preferences::GetBoolean("use-certificate", false) != 0)
 //				{
 //					fCertificate.reset(new MCertificate(
 //						Preferences::GetString("auth-certificate", "")));
@@ -1538,7 +1538,7 @@ void MSshConnection::UserAuthFailed()
 //	
 //	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
 //	
-//	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
+//	if (type == "auth-agent@openssh.com" and Preferences::GetBoolean("advertise_agent", 1))
 //	{
 ////		fAgentChannel.reset(new MSshAgentChannel(*this));
 //		
@@ -1984,7 +1984,7 @@ string MSshConnection::GetEncryptionParams() const
 			ChooseProtocol(fEncryptionAlgC2S, kEncryptionAlgorithms) + '-' +
 			ChooseProtocol(fMACAlgC2S, kMacAlgorithms) + '-';
 		
-		if (Preferences::GetInteger("compress-sftp", true) != 0)
+		if (Preferences::GetBoolean("compress-sftp", true) != 0)
 			result += ChooseProtocol(fCompressionAlgC2S, kUseCompressionAlgorithms);
 		else
 			result += ChooseProtocol(fCompressionAlgC2S, kDontUseCompressionAlgorithms);

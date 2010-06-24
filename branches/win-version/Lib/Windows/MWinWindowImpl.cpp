@@ -237,6 +237,7 @@ void MWinWindowImpl::Select()
 	}
 
 	::SetActiveWindow(GetHandle());
+	::SetForegroundWindow(GetHandle());
 	mWindow->Activate();
 }
 
@@ -505,7 +506,7 @@ bool MWinWindowImpl::WMActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWPara
 		mWindow->Activate();
 	else
 		PRINT(("Duh"));
-	return true;
+	return false;
 }
 
 bool MWinWindowImpl::WMMouseActivate(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& outResult)
@@ -677,15 +678,16 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 			//	mRenderTarget = nil;
 			//}
 		}
-		catch (_com_error& e)
+		catch (_com_error&)
 		{
+			ID2D1DCRenderTarget* renderTarget = mRenderTarget;
+			mRenderTarget = nil;
+			
 			try
 			{
-				mRenderTarget->Release();
+				renderTarget->Release();
 			}
 			catch (...) {}
-
-			mRenderTarget = nil;
 		}
 		catch (...)
 		{

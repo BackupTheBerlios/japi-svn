@@ -162,7 +162,7 @@ float MDevice::GetLeading() const
 	return mImpl->GetLeading();
 }
 
-float MDevice::GetLineHeight() const
+int32 MDevice::GetLineHeight() const
 {
 	return mImpl->GetLineHeight();
 }

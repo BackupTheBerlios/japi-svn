@@ -1455,7 +1455,7 @@ uint32 MTextDocument::GetLineIndent(uint32 inLine) const
 
 uint32 MTextDocument::GetLineIndentWidth(uint32 inLine) const
 {
-	return GetLineIndent(inLine) * mCharWidth;
+	return static_cast<uint32>(GetLineIndent(inLine) * mCharWidth);
 }
 
 // ---------------------------------------------------------------------------
@@ -1510,7 +1510,7 @@ void MTextDocument::FindLineBreaks(
 		{
 			// compensate for leading tabs
 			inFromOffset = s.GetOffset();
-			uint32 width = mWrapWidth - inIndent * mCharWidth;
+			uint32 width = mWrapWidth - static_cast<uint32>(inIndent * mCharWidth);
 			
 			// length of the text to examine
 			uint32 length = lastBreak - inFromOffset;
@@ -2228,7 +2228,7 @@ uint32 MTextDocument::GuessMaxWidth() const
 			offset = mLineInfo[line].start;
 		}
 		
-		maxWidth *= mCharWidth;
+		maxWidth = static_cast<uint32>(maxWidth * mCharWidth);
 	}
 	
 	return maxWidth;
@@ -4939,17 +4939,25 @@ void MTextDocument::CheckReadOnly()
 bool MTextDocument::OpenInclude(
 	string		inFileName)
 {
-	//MProject* project = MProject::Instance();
-	MFile url = GetFile().GetParent() / inFileName;
-	
 	bool result = false;
-	
-	if (url.IsValid())
+	MFile url;
+
+	//MProject* project = MProject::Instance();
+
+	if (IsSpecified())
 	{
-		if (url.IsLocal())
-			result = url.Exists();
-		else
-			result = true;
+		try
+		{
+			url = GetFile().GetParent() / inFileName;
+			if (url.IsValid())
+			{
+				if (url.IsLocal())
+					result = url.Exists();
+				else
+					result = true;
+			}
+		}
+		catch (...) {}
 	}
 	
 	//fs::path p;

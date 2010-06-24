@@ -78,7 +78,7 @@ class MWinDeviceImpl : public MDeviceImp
 	
 	virtual float			GetDescent();
 
-	virtual float			GetLineHeight();
+	virtual int32			GetLineHeight();
 
 	virtual float			GetXWidth();
 

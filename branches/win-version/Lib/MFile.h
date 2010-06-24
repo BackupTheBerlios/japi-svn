@@ -97,7 +97,7 @@ class MFile
 	
 	bool				Exists() const;
 
-	double				GetModDate() const;
+	std::time_t			GetModDate() const;
 
 	bool				ReadOnly() const;
 
@@ -115,7 +115,7 @@ class MFile
 	
 	void				SetFileInfo(
 							bool				inReadOnly,
-							double				inModDate);
+							std::time_t			inModDate);
 
 	friend fs::path RelativePath(const MFile&, const MFile&);
 	friend class MFileLoader;
@@ -123,7 +123,7 @@ class MFile
 
 	MFileImp*			mImpl;
 	bool				mReadOnly;
-	double				mModDate;
+	std::time_t			mModDate;
 };
 
 MFile operator/(const MFile& lhs, const fs::path& rhs);
@@ -158,7 +158,7 @@ class MFileLoader
 
 	void			SetFileInfo(
 						bool				inReadOnly,
-						double				inModDate);
+						std::time_t			inModDate);
 
   private:
 					MFileLoader(
@@ -195,7 +195,7 @@ class MFileSaver
 
 	void			SetFileInfo(
 						bool				inReadOnly,
-						double				inModDate);
+						std::time_t			inModDate);
 
   private:
 					MFileSaver(

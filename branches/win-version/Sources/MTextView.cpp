@@ -311,7 +311,7 @@ uint32 MTextView::CountPages(
 
 	inDevice.SetFont(mDocument->GetFont());
 
-	uint32 lineHeight = static_cast<uint32>(ceil(inDevice.GetLineHeight()));
+	uint32 lineHeight = inDevice.GetLineHeight();
 	
 	uint32 linesPerPage = bounds.height / lineHeight;
 	if (linesPerPage == 0 or lines == 0)
@@ -347,7 +347,6 @@ void MTextView::Draw(
 	MValueChanger<int32> saveXOrigin(bounds.x, bounds.x);
 	MValueChanger<int32> saveYOrigin(bounds.y, bounds.y);
 
-	MValueChanger<int32> saveDescent(mDescent, mDescent);
 	MValueChanger<int32> saveLineHeight(mLineHeight, mLineHeight);
 	MValueChanger<float> saveCharWidth(mCharWidth, mCharWidth);
 
@@ -357,7 +356,6 @@ void MTextView::Draw(
 	{
 		dev.SetFont(mDocument->GetFont());
 		
-		mDescent = dev.GetDescent();
 		mLineHeight = dev.GetLineHeight();
 		mCharWidth = dev.GetXWidth();
 		
@@ -415,8 +413,8 @@ void MTextView::DrawLine(
 
 	MDeviceContextSaver save(inDevice);
 
-	int32 y = inLineRect.y;
-	int32 x = inLineRect.x + indent;
+	float y = static_cast<float>(inLineRect.y);
+	float x = static_cast<float>(inLineRect.x + indent);
 
 	MSelection selection = mDocument->GetSelection();
 
@@ -548,8 +546,8 @@ void MTextView::DrawLine(
 			c1 = selection.GetMinColumn();
 			c2 = selection.GetMaxColumn();
 			
-			r.x += indent + c1 * mCharWidth;
-			r.width = (c2 - c1) * mCharWidth;
+			r.x += static_cast<int32>(indent + c1 * mCharWidth);
+			r.width = static_cast<int32>((c2 - c1) * mCharWidth);
 
 			inDevice.Save();
 			inDevice.SetForeColor(selectionColor);
@@ -572,7 +570,7 @@ void MTextView::DrawLine(
 				MRect r = inLineRect;
 				
 				if (text.length() > 0)
-					r.x += indent + inDevice.GetTextWidth();
+					r.x += static_cast<int32>(indent + inDevice.GetTextWidth());
 
 				inDevice.Save();
 				inDevice.SetForeColor(selectionColor);
@@ -1172,10 +1170,10 @@ void MTextView::ShiftLines(uint32 inFromLine, int32 inDelta)
 	// calculate the rectangle that needs to be scrolled
 	MRect r = bounds;
 
-	if (r.y < inFromLine * mLineHeight)
-		r.y = inFromLine * mLineHeight;
+	if (r.y < static_cast<int32>(inFromLine * mLineHeight))
+		r.y = static_cast<int32>(inFromLine * mLineHeight);
 
-	int32 dy = inDelta * static_cast<int32>(mLineHeight);
+	int32 dy = inDelta * mLineHeight;
 
 	if (dy < 0)
 	{
@@ -1408,8 +1406,7 @@ void MTextView::StylesChanged()
 		MDevice dev;
 		string txt;
 		mDocument->GetStyledText(0, dev, txt);
-		mDescent = dev.GetDescent();
-		mLineHeight = dev.GetAscent() + mDescent + dev.GetLeading();
+		mLineHeight = dev.GetLineHeight();
 		mCharWidth = dev.GetXWidth();
 	}
 	else

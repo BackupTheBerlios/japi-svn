@@ -32,6 +32,11 @@ struct MColor
 					uint8				inGreen,
 					uint8				inBlue);
 
+				MColor(
+					float				inRed,
+					float				inGreen,
+					float				inBlue);
+
 	MColor&		operator=(
 					const MColor&		inOther);
 

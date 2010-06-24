@@ -81,7 +81,7 @@ MPrefsDialog::MPrefsDialog()
 	string txt;
 	
 	SetText(kTabWidthEditTextID, NumToString(gCharsPerTab));
-	SetChecked(kTabEntersSpacesCheckboxID, Preferences::GetInteger("tab enters spaces", 0));
+	SetChecked(kTabEntersSpacesCheckboxID, Preferences::GetBoolean("tab enters spaces", false));
 	SetText(kSpacesPerTabEditTextID, NumToString(gSpacesPerTab));
 	SetEnabled(kSpacesPerTabEditTextID, gTabEntersSpaces);
 	SetChecked(kBalanceWhileTypingCheckboxID, gKiss);
@@ -103,7 +103,7 @@ MPrefsDialog::MPrefsDialog()
 	else if (s == "iso-8859-1")
 		SetValue(kEncodingPopupID, 5);
 	
-	SetChecked(kBOMCheckboxID, Preferences::GetInteger("add bom", 1));
+	SetChecked(kBOMCheckboxID, Preferences::GetBoolean("add bom", true));
 
 	s = Preferences::GetString("newline char", "LF");
 	if (s == "LF")
@@ -130,10 +130,10 @@ MPrefsDialog::MPrefsDialog()
 
 	// set up startup options
 	
-	SetChecked(kOpenLastProjectControlID, Preferences::GetInteger("reopen project", 0));
-	SetChecked(kOpenWorksheetControlID, Preferences::GetInteger("open worksheet", 0));
-	SetChecked(kSaveStateControlID, Preferences::GetInteger("save state", 1));
-	SetChecked(kForceNLControlID, Preferences::GetInteger("force newline at eof", 1));
+	SetChecked(kOpenLastProjectControlID, Preferences::GetBoolean("reopen project", false));
+	SetChecked(kOpenWorksheetControlID, Preferences::GetBoolean("open worksheet", false));
+	SetChecked(kSaveStateControlID, Preferences::GetBoolean("save state", true));
+	SetChecked(kForceNLControlID, Preferences::GetBoolean("force newline at eof", true));
 	
 	// compiler and build options
 	
@@ -175,7 +175,7 @@ void MPrefsDialog::ValueChanged(
 			break;
 
 		case kTabEntersSpacesCheckboxID:
-			Preferences::SetInteger("tab enters spaces",
+			Preferences::SetBoolean("tab enters spaces",
 				gTabEntersSpaces = IsChecked(kTabEntersSpacesCheckboxID));
 			SetEnabled(kSpacesPerTabEditTextID, gTabEntersSpaces);
 			break;
@@ -188,16 +188,16 @@ void MPrefsDialog::ValueChanged(
 			break;
 
 		case kBalanceWhileTypingCheckboxID:
-			Preferences::SetInteger("kiss", gKiss = IsChecked(kBalanceWhileTypingCheckboxID));
+			Preferences::SetBoolean("kiss", gKiss = IsChecked(kBalanceWhileTypingCheckboxID));
 			break;
 		
 		case kAutoIndentCheckboxID:
-			Preferences::SetInteger("auto indent", gAutoIndent = IsChecked(kAutoIndentCheckboxID));
+			Preferences::SetBoolean("auto indent", gAutoIndent = IsChecked(kAutoIndentCheckboxID));
 			SetEnabled(kSmartIndentCheckboxID, gAutoIndent);
 			break;
 		
 		case kSmartIndentCheckboxID:
-			Preferences::SetInteger("smart indent", gSmartIndent = IsChecked(kSmartIndentCheckboxID));
+			Preferences::SetBoolean("smart indent", gSmartIndent = IsChecked(kSmartIndentCheckboxID));
 			break;
 
 		case kWhiteSpaceColorID:
@@ -226,7 +226,7 @@ void MPrefsDialog::ValueChanged(
 			break;
 
 		case kBOMCheckboxID:
-			Preferences::SetInteger("add bom", IsChecked(kBOMCheckboxID));
+			Preferences::SetBoolean("add bom", IsChecked(kBOMCheckboxID));
 			break;
 		
 		case kNewlinePopupID:
@@ -248,7 +248,7 @@ void MPrefsDialog::ValueChanged(
 			break;
 		
 		case kPlaySoundsCheckboxID:
-			Preferences::SetInteger("play sounds", gPlaySounds = IsChecked(kPlaySoundsCheckboxID));
+			Preferences::SetBoolean("play sounds", gPlaySounds = IsChecked(kPlaySoundsCheckboxID));
 			break;
 		
 		case kKeywordColorID:
@@ -304,19 +304,19 @@ void MPrefsDialog::ValueChanged(
 			break;
 
 		case kOpenLastProjectControlID:
-			Preferences::SetInteger("reopen project", IsChecked(kOpenLastProjectControlID));
+			Preferences::SetBoolean("reopen project", IsChecked(kOpenLastProjectControlID));
 			break;
 		
 		case kOpenWorksheetControlID:
-			Preferences::SetInteger("open worksheet", IsChecked(kOpenWorksheetControlID));
+			Preferences::SetBoolean("open worksheet", IsChecked(kOpenWorksheetControlID));
 			break;
 	
 		case kSaveStateControlID:
-			Preferences::SetInteger("save state", IsChecked(kSaveStateControlID));
+			Preferences::SetBoolean("save state", IsChecked(kSaveStateControlID));
 			break;
 		
 		case kForceNLControlID:
-			Preferences::SetInteger("force newline at eof", IsChecked(kForceNLControlID));
+			Preferences::SetBoolean("force newline at eof", IsChecked(kForceNLControlID));
 			break;
 		
 		case kDefaultCompilerEditTextID:

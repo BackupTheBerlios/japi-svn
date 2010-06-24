@@ -309,7 +309,7 @@ void MEditWindow::SaveState(
 {
 	try
 	{
-		if (inDocument->IsSpecified() and Preferences::GetInteger("save state", 1))
+		if (inDocument->IsSpecified() and Preferences::GetBoolean("save state", true))
 		{
 			MTextDocument* doc = static_cast<MTextDocument*>(inDocument);
 			doc->SaveState(this);

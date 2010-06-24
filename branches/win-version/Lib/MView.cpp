@@ -1239,9 +1239,9 @@ MTable::MTable(const std::string& inID, MRect inBounds, MView* inChildren[],
 	vector<int32> widths(mColumns);
 	vector<int32> heights(mRows);
 	
-	for (int32 r = 0; r < mRows; ++r)
+	for (uint32 r = 0; r < mRows; ++r)
 	{
-		for (int32 c = 0; c < mColumns; ++c)
+		for (uint32 c = 0; c < mColumns; ++c)
 		{
 			int ix = r * mColumns + c;
 			
@@ -1264,11 +1264,11 @@ MTable::MTable(const std::string& inID, MRect inBounds, MView* inChildren[],
 	
 	int32 x, y = 0;
 	
-	for (int32 r = 0; r < mRows; ++r)
+	for (uint32 r = 0; r < mRows; ++r)
 	{
 		x = 0;
 
-		for (int32 c = 0; c < mColumns; ++c)
+		for (uint32 c = 0; c < mColumns; ++c)
 		{
 			int ix = r * mColumns + c;
 
@@ -1392,8 +1392,8 @@ void MTable::ResizeFrame(
 
 void MTable::AddChild(
 	MView*			inView,
-	int32			inColumn,
-	int32			inRow,
+	uint32			inColumn,
+	uint32			inRow,
 	int32			inColumnSpan,
 	int32			inRowSpan)
 {

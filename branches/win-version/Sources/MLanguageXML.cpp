@@ -60,7 +60,7 @@ MLanguageXML::StyleLine(
 		return;
 	
 	bool leave = false;
-	bool close = ioState & 0x1000;
+	bool close = (ioState & 0x1000) != 0;
 	ioState &= 0x0FFF;
 
 	MTextBuffer::const_iterator text(inText.begin() + inOffset);

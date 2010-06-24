@@ -201,7 +201,6 @@ class MTextView : public MView
 	MTextDocument*		mDocument;
 	int32				mLineHeight;
 	float				mCharWidth;		// for block selection drawing
-	int32				mDescent;
 	MRect				mSavedBounds;	// for kissing
 	double				mLastCaretBlinkTime;
 	bool				mCaretVisible;

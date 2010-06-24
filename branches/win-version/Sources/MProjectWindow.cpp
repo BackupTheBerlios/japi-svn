@@ -409,7 +409,7 @@ void MProjectWindow::Initialize(
 	bool useState = false;
 	MProjectState state = {};
 	
-	if (Preferences::GetInteger("save state", 1))
+	if (Preferences::GetBoolean("save state", true))
 	{
 		ssize_t r = inDocument->GetFile().ReadAttribute(kJapieProjectState, &state, kMProjectStateSize);
 		useState = static_cast<uint32>(r) == kMProjectStateSize;

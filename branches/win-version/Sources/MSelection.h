@@ -98,7 +98,7 @@ class MSelection
 	
 	struct Pos
 	{
-					Pos(uint64 inOffset = 0);
+					Pos(uint32 inOffset = 0);
 					Pos(uint32 inLine, uint32 inColumn);
 
 		bool		operator==(const Pos& inOther) const;
@@ -106,7 +106,7 @@ class MSelection
 		
 		union
 		{
-			uint64	mOffset;
+			uint32	mOffset;
 			struct
 			{
 				uint32	line;

@@ -208,8 +208,32 @@ void IniFile::GetStrings(
 	outStrings = mPrefs[inName];
 }
 
-int32
-GetInteger(
+bool GetBoolean(
+	const char*	inName,
+	bool		inDefaultValue)
+{
+	bool result = inDefaultValue;
+
+	try
+	{
+		string s = GetString(inName, inDefaultValue ? "true" : "false");
+		result = (s == "true" or s == "1");
+	}
+	catch (...)
+	{
+	}
+
+	return result;
+}
+
+void SetBoolean(
+	const char*	inName,
+	bool		inValue)
+{
+	SetString(inName, inValue ? "true" : "false");
+}
+
+int32 GetInteger(
 	const char*	inName,
 	int32		inDefaultValue)
 {
@@ -227,8 +251,7 @@ GetInteger(
 	return result;
 }
 
-void
-SetInteger(
+void SetInteger(
 	const char*	inName,
 	int32		inValue)
 {

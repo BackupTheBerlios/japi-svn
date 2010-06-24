@@ -512,7 +512,7 @@ MTextBuffer::MTextBuffer()
 	else
 		mEncoding = kEncodingUTF8;
 	
-	mBOM = Preferences::GetInteger("add bom", 0) != 0;
+	mBOM = Preferences::GetBoolean("add bom", false);
 
 	s = Preferences::GetString("newline char", "LF");
 	if (s == "CR")
@@ -531,7 +531,7 @@ MTextBuffer::MTextBuffer(
 	, mGapOffset(0)
 {
 	mEncoding = kEncodingUTF8;
-	mBOM = Preferences::GetInteger("add bom", 0) != 0;
+	mBOM = Preferences::GetBoolean("add bom", false);
 
 	string s = Preferences::GetString("newline char", "LF");
 	
@@ -589,19 +589,23 @@ void MTextBuffer::ReadFromFile(
 	// First read the data into a buffer
 	streambuf* b = inFile.rdbuf();
 	
-	int64 len = b->pubseekoff(0, ios::end);
+	int64 llen = b->pubseekoff(0, ios::end);
 	b->pubseekpos(0);
 
-	if (len < 0)
+	if (llen < 0)
 		THROW(("File is not open?"));
 
-	if (len > numeric_limits<uint32>::max())
+	if (llen > numeric_limits<uint32>::max())
 		THROW(("File too large to open"));
 
+	uint32 len = static_cast<uint32>(llen);
 	char* data = new char[len];
+
 	try
 	{
-		len = b->sgetn(data, len);
+		// the file should have opened ios::binary,
+		// but just in case it didn't...
+		len = static_cast<uint32>(b->sgetn(data, len));
 
 		// Now find out what this data contains.
 	

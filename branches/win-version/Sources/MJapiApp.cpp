@@ -792,15 +792,15 @@ void MJapiApp::InitGlobals()
 
 	gScriptsDir = gPrefsDir / "Scripts";
 		
-	gPlaySounds = Preferences::GetInteger("play sounds", gPlaySounds);
-	gAutoIndent = Preferences::GetInteger("auto indent", gAutoIndent);
-	gSmartIndent = Preferences::GetInteger("smart indent", gSmartIndent);
-	gKiss = Preferences::GetInteger("kiss", gKiss);
+	gPlaySounds = Preferences::GetBoolean("play sounds", gPlaySounds);
+	gAutoIndent = Preferences::GetBoolean("auto indent", gAutoIndent);
+	gSmartIndent = Preferences::GetBoolean("smart indent", gSmartIndent);
+	gKiss = Preferences::GetBoolean("kiss", gKiss);
 	gCharsPerTab = Preferences::GetInteger("chars per tab", gCharsPerTab);
 	gSpacesPerTab = Preferences::GetInteger("spaces per tab", gSpacesPerTab);
-//	gSmoothFonts = Preferences::GetInteger("smooth fonts", gSmoothFonts);
-	gShowInvisibles = Preferences::GetInteger("show invisibles", gShowInvisibles);
-	gTabEntersSpaces = Preferences::GetInteger("tab enters spaces", gTabEntersSpaces);
+//	gSmoothFonts = Preferences::GetBoolean("smooth fonts", gSmoothFonts);
+	gShowInvisibles = Preferences::GetBoolean("show invisibles", gShowInvisibles);
+	gTabEntersSpaces = Preferences::GetBoolean("tab enters spaces", gTabEntersSpaces);
 	
 	gLanguageColors[kLTextColor] =			Preferences::GetColor("text color", kTextColor);
 	gLanguageColors[kLKeyWordColor] =		Preferences::GetColor("keyword color", kKeyWordColor);
@@ -858,17 +858,17 @@ void MJapiApp::InitGlobals()
 
 void MJapiApp::SaveGlobals()
 {
-	Preferences::SetInteger("play sounds", gPlaySounds);
-	Preferences::SetInteger("auto indent", gAutoIndent);
-	Preferences::SetInteger("smart indent", gSmartIndent);
-	Preferences::SetInteger("kiss", gKiss);
+	Preferences::SetBoolean("play sounds", gPlaySounds);
+	Preferences::SetBoolean("auto indent", gAutoIndent);
+	Preferences::SetBoolean("smart indent", gSmartIndent);
+	Preferences::SetBoolean("kiss", gKiss);
 	Preferences::SetInteger("chars per tab", gCharsPerTab);
 	Preferences::SetInteger("spaces per tab", gSpacesPerTab);
 //	Preferences::SetInteger("smooth fonts", gSmoothFonts);
-	Preferences::SetInteger("show invisibles", gShowInvisibles);
+	Preferences::SetBoolean("show invisibles", gShowInvisibles);
 	//Preferences::SetInteger("fontsize", gFontSize);
 	//Preferences::SetString("fontname", gFontName);
-	Preferences::SetInteger("tab enters spaces", gTabEntersSpaces);
+	Preferences::SetBoolean("tab enters spaces", gTabEntersSpaces);
 
 	//for (uint32 ix = 0; ix < kLStyleCount; ++ix)
 	//{

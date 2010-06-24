@@ -15,7 +15,7 @@ int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, 
 {
 	int32 result = -1;
 
-	wstring path = c2w(inPath.string());
+	wstring path = c2w(inPath.native_file_string());
 	path += L":japi";
 
 	unsigned long access = GENERIC_READ;
@@ -41,7 +41,7 @@ int32 write_attribute(const fs::path& inPath, const char* inName, const void* in
 {
 	int32 result = -1;
 
-	wstring path = c2w(inPath.string());
+	wstring path = c2w(inPath.native_file_string());
 	path += L":japi";
 
 	unsigned long access = GENERIC_READ | GENERIC_WRITE;
@@ -226,7 +226,7 @@ bool Choose(
 		DWORD count;
 		THROW_IF_HRESULT_ERROR(psiResult->GetCount(&count));
 
-		for (int i = 0; i < count; ++i)
+		for (uint32 i = 0; i < count; ++i)
 		{
 			MComPtr<IShellItem> item;
 			THROW_IF_HRESULT_ERROR(psiResult->GetItemAt(i, &item));

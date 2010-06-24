@@ -504,7 +504,7 @@ void MePubWindow::Initialize(
 	bool useState = false;
 	MePubState state = {};
 	
-	if (Preferences::GetInteger("save state", 1))
+	if (Preferences::GetBoolean("save state", true))
 	{
 		ssize_t r = mEPub->GetFile().ReadAttribute(kJapieePubState, &state, kMePubStateSize);
 		useState = static_cast<uint32>(r) == kMePubStateSize;

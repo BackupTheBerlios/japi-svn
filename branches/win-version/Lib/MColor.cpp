@@ -13,7 +13,7 @@
 using namespace std;
 
 const MColor
-	kBlack(0, 0, 0),
+	kBlack("#000000"),
 	kWhite("#ffffff"),
 	kNoteColor("#206cff"),
 	kWarningColor("#ffeb17"),
@@ -58,6 +58,16 @@ MColor::MColor(
 	red = inRed;
 	green = inGreen;
 	blue = inBlue;
+}
+
+MColor::MColor(
+	float			inRed,
+	float			inGreen,
+	float			inBlue)
+{
+	red = static_cast<uint8>(inRed * 255);
+	green = static_cast<uint8>(inGreen * 255);
+	blue = static_cast<uint8>(inBlue * 255);
 }
 
 MColor& MColor::operator=(

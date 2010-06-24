@@ -24,6 +24,21 @@
 
 using namespace std;
 
+// Add our own conversion routine to namespace D2D1
+namespace D2D1
+{
+
+D2D1FORCEINLINE D2D1_RECT_F RectF(const MRect& r)
+{
+    return Rect<FLOAT>(
+    	static_cast<float>(r.x),
+    	static_cast<float>(r.y),
+    	static_cast<float>(r.x + r.width),
+    	static_cast<float>(r.y + r.height));
+}
+
+}
+
 namespace
 {
 
@@ -643,7 +658,9 @@ MWinDeviceImpl::MWinDeviceImpl(
 	mRenderTarget->BeginDraw();
 
 	mRenderTarget->SetTransform(
-		D2D1::Matrix3x2F::Translation(x - bounds.x, y - bounds.y));
+		D2D1::Matrix3x2F::Translation(
+			static_cast<float>(x - bounds.x),
+			static_cast<float>(y - bounds.y)));
 
 	if (inUpdate)
 		ClipRect(inUpdate);
@@ -740,7 +757,7 @@ MColor MWinDeviceImpl::GetForeColor() const
 	if (brush != nil)
 	{
 		D2D1_COLOR_F color = brush->GetColor();
-		result = MColor(color.r * 255, color.g * 255, color.b * 255 /*, color.a * 255*/);
+		result = MColor(color.r, color.g, color.b);
 		brush->Release();
 	}
 
@@ -770,7 +787,7 @@ MColor MWinDeviceImpl::GetBackColor() const
 	if (brush != nil)
 	{
 		D2D1_COLOR_F color = brush->GetColor();
-		result = MColor(color.r * 255, color.g * 255, color.b * 255 /*, color.a * 255*/);
+		result = MColor(color.r, color.g, color.b);
 		brush->Release();
 	}
 
@@ -790,8 +807,7 @@ void MWinDeviceImpl::ClipRect(
 
     // Push the layer with the geometric mask.
 	mRenderTarget->PushLayer(
-		D2D1::LayerParameters(D2D1::RectF(inRect.x, inRect.y,
-			inRect.x + inRect.width, inRect.y + inRect.height)),
+		D2D1::LayerParameters(D2D1::RectF(inRect)),
 		mClipLayer);
 }
 
@@ -806,8 +822,7 @@ void MWinDeviceImpl::EraseRect(
 	assert(mBackBrush);
 	assert(mRenderTarget);
 
-	mRenderTarget->FillRectangle(
-		D2D1::RectF(inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height), mBackBrush);
+	mRenderTarget->FillRectangle(D2D1::RectF(inRect), mBackBrush);
 }
 
 void MWinDeviceImpl::FillRect(
@@ -816,8 +831,7 @@ void MWinDeviceImpl::FillRect(
 	assert(mForeBrush);
 	assert(mRenderTarget);
 
-	mRenderTarget->FillRectangle(
-		D2D1::RectF(inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height), mForeBrush);
+	mRenderTarget->FillRectangle(D2D1::RectF(inRect), mForeBrush);
 }
 
 void MWinDeviceImpl::StrokeRect(
@@ -827,8 +841,7 @@ void MWinDeviceImpl::StrokeRect(
 	assert(mForeBrush);
 	assert(mRenderTarget);
 
-	mRenderTarget->DrawRectangle(
-		D2D1::RectF(inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height), mForeBrush);
+	mRenderTarget->DrawRectangle(D2D1::RectF(inRect), mForeBrush);
 }
 
 void MWinDeviceImpl::FillEllipse(
@@ -843,10 +856,7 @@ void MWinDeviceImpl::FillEllipse(
 	else
 		radius = inRect.width / 2.f;
 
-	D2D1_ROUNDED_RECT r =
-		D2D1::RoundedRect(D2D1::RectF(inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height),
-		radius, radius);
-
+	D2D1_ROUNDED_RECT r = D2D1::RoundedRect(D2D1::RectF(inRect), radius, radius);
 	mRenderTarget->FillRoundedRectangle(r, mForeBrush);
 }
 
@@ -1016,14 +1026,15 @@ float MWinDeviceImpl::GetDescent()
 	return metrics.descent * mFontSize / metrics.designUnitsPerEm;
 }
 
-float MWinDeviceImpl::GetLineHeight()
+int32 MWinDeviceImpl::GetLineHeight()
 {
 	if (not mFont)
 		SetFont("Consolas 10");
 
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
-	return (metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm;
+	return static_cast<int32>(
+		ceil((metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm));
 }
 
 float MWinDeviceImpl::GetXWidth()
@@ -1057,9 +1068,7 @@ void MWinDeviceImpl::DrawString(
 
 	wstring s(c2w(inText));
 	mRenderTarget->DrawTextW(s.c_str(), s.length(),
-		mTextFormat,
-		D2D1::RectF(inX, inY, 200, 14),
-		mForeBrush);
+		mTextFormat, D2D1::RectF(inX, inY, 200.f, 14.f), mForeBrush);
 }
 
 void MWinDeviceImpl::SetText(
@@ -1224,7 +1233,7 @@ bool MWinDeviceImpl::PositionToIndex(
 		BOOL isTrailingHit, isInside;
 		DWRITE_HIT_TEST_METRICS caretMetrics;
 
-		float x = inPosition;
+		float x = static_cast<float>(inPosition);
 		float y = GetAscent();
 
 		mTextLayout->HitTestPoint(x, y, &isTrailingHit, &isInside, &caretMetrics);
@@ -1331,7 +1340,7 @@ void MWinDeviceImpl::DrawCaret(
 			offset, false, &caretX, &caretY, &caretMetrics);
 	}
 	else
-		caretMetrics.height = GetLineHeight();
+		caretMetrics.height = static_cast<float>(GetLineHeight());
 
     // The default thickness of 1 pixel is almost _too_ thin on modern large monitors,
     // but we'll use it.
@@ -1345,7 +1354,8 @@ void MWinDeviceImpl::DrawCaret(
 	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	mRenderTarget->FillRectangle(
 		D2D1::RectF(inX + caretX - caretThickness / 2, inY + caretY,
-					inX + caretX + caretThickness / 2, floor(inY + caretY + caretMetrics.height)),
+					inX + caretX + caretThickness / 2, floor(inY + caretY + caretMetrics.height)
+		),
 		mForeBrush);
 	mRenderTarget->SetAntialiasMode(savedMode);
 }
@@ -1354,7 +1364,7 @@ void MWinDeviceImpl::BreakLines(
 	uint32				inWidth,
 	vector<uint32>&		outBreaks)
 {
-	mTextLayout->SetMaxWidth(inWidth);
+	mTextLayout->SetMaxWidth(static_cast<float>(inWidth));
 	
 	uint32 lineCount = 0;
 	mTextLayout->GetLineMetrics(nil, 0, &lineCount);

@@ -102,7 +102,7 @@ MLanguageCpp::StyleLine(
 	
 	while (not leave and text.GetOffset() < maxOffset)
 	{
-		wchar_t c = 0;
+		char c = 0;
 		if (i < inLength)
 			c = text[i];
 		++i;

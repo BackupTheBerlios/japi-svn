@@ -226,7 +226,7 @@ void MFileLoader::Cancel()
 
 void MFileLoader::SetFileInfo(
 	bool				inReadOnly,
-	double				inModDate)
+	std::time_t			inModDate)
 {
 	mFile.SetFileInfo(inReadOnly, inModDate);
 }
@@ -259,7 +259,7 @@ void MLocalFileLoader::DoLoad()
 		if (not fs::exists(path))
 			THROW(("File %s does not exist", path.string().c_str())); 
 		
-		double modTime = fs::last_write_time(path);
+		time_t modTime = fs::last_write_time(path);
         bool readOnly = false;
 
 		//struct stat st;
@@ -320,7 +320,7 @@ void MFileSaver::Cancel()
 
 void MFileSaver::SetFileInfo(
 	bool				inReadOnly,
-	double				inModDate)
+	std::time_t			inModDate)
 {
 	mFile.SetFileInfo(inReadOnly, inModDate);
 }
@@ -505,7 +505,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 		case SFTP_INIT_DONE:
 			eProgress(0.f, _("Connected"));
 			mSFTPChannel->ReadFile(mFile.GetPath().string(),
-				Preferences::GetInteger("text transfer", true));
+				Preferences::GetBoolean("text transfer", true));
 			break;
 		
 		case SFTP_FILE_SIZE_KNOWN:
@@ -616,7 +616,7 @@ void MSftpFileSaver::SFTPChannelEvent(
 		case SFTP_INIT_DONE:
 			eProgress(0.f, _("Connected"));
 			mSFTPChannel->WriteFile(mFile.GetPath().string(),
-				Preferences::GetInteger("text transfer", true));
+				Preferences::GetBoolean("text transfer", true));
 			break;
 		
 		case SFTP_CAN_SEND_DATA:
@@ -640,7 +640,7 @@ void MSftpFileSaver::SFTPChannelEvent(
 				mSFTPChannel->CloseFile();
 //				SetModified(false);
 //
-//				if (Preferences::GetInteger("loguploads", false) != 0)
+//				if (Preferences::GetBoolean("loguploads", false) != 0)
 //					LogUpload();
 			}
 			break;
@@ -949,7 +949,7 @@ MFile& MFile::operator/=(
 
 void MFile::SetFileInfo(
 	bool				inReadOnly,
-	double				inModDate)
+	std::time_t			inModDate)
 {
 	mReadOnly = inReadOnly;
 	mModDate = inModDate;
@@ -1056,7 +1056,7 @@ bool MFile::Exists() const
 	return IsLocal() and fs::exists(GetPath());
 }
 
-double MFile::GetModDate() const
+time_t MFile::GetModDate() const
 {
 	return mModDate;
 }

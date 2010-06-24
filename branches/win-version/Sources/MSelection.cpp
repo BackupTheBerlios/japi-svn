@@ -20,7 +20,7 @@ using namespace std;
 
 inline
 MSelection::Pos::Pos(
-	uint64		inOffset)
+	uint32		inOffset)
 	: mOffset(inOffset)
 {
 }

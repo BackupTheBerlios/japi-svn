@@ -135,7 +135,7 @@ bool MDiffWindow::ProcessCommand(
 		
 		case kIgnoreWhiteSpaceCommand:
 			mIgnoreWhitespace = not mIgnoreWhitespace;
-			Preferences::SetInteger("diff-ignore-whitespace", mIgnoreWhitespace);
+			Preferences::SetBoolean("diff-ignore-whitespace", mIgnoreWhitespace);
 			break;
 		
 		case kIgnoreFileNameCommand:

@@ -313,8 +313,8 @@ class MTable : public MView
 
 	virtual void	AddChild(
 						MView*			inView,
-						int32			inColumn,
-						int32			inRow,
+						uint32			inColumn,
+						uint32			inRow,
 						int32			inColumnSpan = 1,
 						int32			inRowSpan = 1);
 
