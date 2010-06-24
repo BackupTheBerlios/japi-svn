@@ -145,8 +145,8 @@ void MDocWindow::DocumentChanged(
 
 		ModifiedChanged(inDocument->IsModified());
 	}
-	else	// default action is to close the window if the document is nil
-		Close();
+	else
+		Recycle();
 }
 
 void MDocWindow::ModifiedChanged(

@@ -1,4 +1,5 @@
 ﻿Windows versie
+
 - CloseAll werkt niet goed (laat vensters staan)
 - Dialogs afmaken		(copy/paste in edit veld, esc voor sluiten Find Dialog)
 - MList implementeren

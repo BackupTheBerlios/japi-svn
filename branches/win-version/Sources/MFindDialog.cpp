@@ -136,7 +136,6 @@ MFindDialog::MFindDialog()
 MFindDialog::~MFindDialog()
 {
 	sInstance = nil;
-	RemoveWindowFromList(this);
 }
 
 bool MFindDialog::ProcessCommand(

@@ -6,6 +6,8 @@
 #ifndef MWINDOW_H
 #define MWINDOW_H
 
+#include <list>
+
 #include "MView.h"
 #include "MColor.h"
 #include "MHandler.h"
@@ -46,13 +48,8 @@ class MWindow : public MView, public MHandler
 	
 	void					Beep();
 	
-	static MWindow*			GetFirstWindow()				{ return sFirst; }
-	MWindow*				GetNextWindow() const			{ return mNext; }
-
-	static void				AppendWindowToList(
-								MWindow*		inWindow);
-	static void				RemoveWindowFromList(
-								MWindow*		inWindow);
+	static MWindow*			GetFirstWindow();
+	MWindow*				GetNextWindow() const;
 		
 	void					SetTitle(
 								const std::string&	inTitle);
@@ -128,6 +125,8 @@ class MWindow : public MView, public MHandler
 	void					SetImpl(
 								MWindowImpl*	inImpl);
 
+	void					Recycle();
+
   private:
 
 	void					TransitionTo(
@@ -141,9 +140,8 @@ class MWindow : public MView, public MHandler
 	bool					mModified;
 	MHandler*				mFocus;
 
-	static MWindow*			sRecycle;
-	static MWindow*			sFirst;
-	MWindow*				mNext;
+	static std::list<MWindow*>
+							sWindowList, sRecycleList;
 };
 
 

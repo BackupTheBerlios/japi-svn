@@ -24,8 +24,7 @@ using namespace std;
 //	MWindow
 //
 
-MWindow* MWindow::sFirst = nil;
-MWindow* MWindow::sRecycle = nil;
+list<MWindow*> MWindow::sWindowList, MWindow::sRecycleList;
 
 MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 		MWindowFlags inFlags, const string& inMenu)
@@ -33,13 +32,12 @@ MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 	, MHandler(gApp)
 	, mImpl(MWindowImpl::Create(inTitle, inBounds, inFlags, inMenu, this))
 	, mFocus(this)
-	, mNext(nil)
 {
 	mBounds.x = mBounds.y = 0;
 
 	SetBindings(true, true, true, true);
 	
-	AppendWindowToList(this);
+	sWindowList.push_back(this);
 }
 
 MWindow::MWindow(MWindowImpl* inImpl)
@@ -47,16 +45,16 @@ MWindow::MWindow(MWindowImpl* inImpl)
 	, MHandler(gApp)
 	, mImpl(inImpl)
 	, mFocus(this)
-	, mNext(nil)
 {
 	SetBindings(true, true, true, true);
 
-	AppendWindowToList(this);
+	sWindowList.push_back(this);
 }
 
 MWindow::~MWindow()
 {
-	RemoveWindowFromList(this);
+	sWindowList.erase(find(sWindowList.begin(), sWindowList.end(), this));
+	sRecycleList.erase(find(sRecycleList.begin(), sRecycleList.end(), this));
 }
 
 void MWindow::SetImpl(
@@ -72,51 +70,44 @@ MWindowFlags MWindow::GetFlags() const
 	return mImpl->GetFlags();
 }
 
+MWindow* MWindow::GetFirstWindow()
+{
+	MWindow* result = nil;
+	if (not sWindowList.empty())
+		result = sWindowList.front();
+	return result;
+}
+
+MWindow* MWindow::GetNextWindow() const
+{
+	MWindow* result = nil;
+
+	list<MWindow*>::const_iterator w =
+		find(sWindowList.begin(), sWindowList.end(), this);
+
+	if (w != sWindowList.end())
+	{
+		++w;
+		if (w != sWindowList.end())
+			result = *w;
+	}
+
+	return result;
+}
+
+void MWindow::Recycle()
+{
+	sRecycleList.push_back(this);
+	sWindowList.erase(find(sWindowList.begin(), sWindowList.end(), this));
+}
+
 void MWindow::RecycleWindows()
 {
-	MWindow* w = sRecycle;
-	sRecycle = nil;
-
-	while (w != nil)
+	while (not sRecycleList.empty())
 	{
-		MWindow* next = w->mNext;
+		MWindow* w = sRecycleList.front();
+		sRecycleList.pop_front();
 		delete w;
-		w = next;
-	}
-}
-
-void MWindow::AppendWindowToList(
-	MWindow*		inWindow)
-{
-	if (sFirst == nil)
-		sFirst = inWindow;
-	else
-	{
-		MWindow* before = sFirst;
-		while (before->mNext != nil)
-			before = before->mNext;
-		before->mNext = inWindow;
-	}
-}
-
-void MWindow::RemoveWindowFromList(
-	MWindow*		inWindow)
-{
-	if (inWindow == sFirst)
-		sFirst = inWindow->mNext;
-	else if (sFirst != nil)
-	{
-		MWindow* w = sFirst;
-		while (w != nil)
-		{
-			MWindow* next = w->mNext;
-			if (next == inWindow)
-			{
-				w->mNext = inWindow->mNext;
-				break;
-			}
-			w = next;
-		}
 	}
 }
 
@@ -161,25 +152,13 @@ void MWindow::Activate()
 		MView::Activate();
 	}
 
-	if (sFirst != this)
+	if (not sWindowList.empty() and sWindowList.front() != this)
 	{
-		if (sFirst->IsActive())
-			sFirst->Deactivate();
+		if (sWindowList.front()->IsActive())
+			sWindowList.front()->Deactivate();
 
-		MWindow* w = sFirst;
-		while (w != nil)
-		{
-			if (w == this)
-			{
-				RemoveWindowFromList(this);
-
-				mNext = sFirst;
-				sFirst = this;
-
-				break;
-			}
-			w = w->mNext;
-		}
+		sWindowList.erase(find(sWindowList.begin(), sWindowList.end(), this));
+		sWindowList.push_front(this);
 	}
 }
 
