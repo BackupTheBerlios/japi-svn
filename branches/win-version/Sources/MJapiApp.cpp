@@ -452,11 +452,12 @@ void MJapiApp::DoCloseAll(
 			not doc->IsModified())
 		{
 			MController* controller = doc->GetFirstController();
-			
-//			assert(controller != nil);
-			
 			if (controller != nil)
-				(void)controller->TryCloseDocument(inAction);
+			{
+				MWindow* w = controller->GetWindow();
+				if (controller->TryCloseDocument(inAction))
+					w->Close();
+			}
 			else
 				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
 		}
@@ -508,7 +509,7 @@ void MJapiApp::DoQuit()
 	
 	if (MDocument::GetFirstDocument() == nil/* and MProject::Instance() == nil*/)
 	{
-		MFindDialog::Instance().Close();
+		MFindDialog::Instance().Quit();
 //		gtk_main_quit();
 	}
 }

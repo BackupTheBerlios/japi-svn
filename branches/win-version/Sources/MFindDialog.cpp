@@ -96,6 +96,7 @@ MFindDialog::MFindDialog()
 	, mReplaceStringChanged(false)
 	, mStartDirectoriesChanged(false)
 	, mVisible(false)
+	, mQuit(false)
 	, mFindAllThread(nil)
 	, mFindAllResult(nil)
 {	
@@ -160,6 +161,12 @@ bool MFindDialog::ProcessCommand(
 	return result;
 }
 
+void MFindDialog::Quit()
+{
+	mQuit = true;
+	Close();
+}
+
 bool MFindDialog::DoClose()
 {
 	if (mVisible)
@@ -185,7 +192,7 @@ bool MFindDialog::DoClose()
 		mVisible = false;
 	}
 
-	return false;
+	return mQuit;
 }
 
 void MFindDialog::Select()

@@ -90,9 +90,6 @@ class MWindow : public MView, public MHandler
 	void					GetMaxPosition(
 								MRect&			outRect) const;
 	
-	// window recycling, called by application for now
-	static void				RecycleWindows();
-
 	MWindowImpl*			GetImpl() const			{ return mImpl; }
 
 	// coordinate manipulations
@@ -125,8 +122,6 @@ class MWindow : public MView, public MHandler
 	void					SetImpl(
 								MWindowImpl*	inImpl);
 
-	void					Recycle();
-
   private:
 
 	void					TransitionTo(
@@ -141,7 +136,7 @@ class MWindow : public MView, public MHandler
 	MHandler*				mFocus;
 
 	static std::list<MWindow*>
-							sWindowList, sRecycleList;
+							sWindowList;
 };
 
 

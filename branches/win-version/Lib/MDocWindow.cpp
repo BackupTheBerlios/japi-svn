@@ -145,8 +145,6 @@ void MDocWindow::DocumentChanged(
 
 		ModifiedChanged(inDocument->IsModified());
 	}
-	else
-		Recycle();
 }
 
 void MDocWindow::ModifiedChanged(

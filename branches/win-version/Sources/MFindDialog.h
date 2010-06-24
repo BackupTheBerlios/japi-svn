@@ -70,6 +70,7 @@ class MFindDialog : public MDialog
 	std::string		GetStartDirectory();
 
 	virtual bool	DoClose();
+	virtual void	Quit();
 
   private:
 
@@ -140,6 +141,7 @@ class MFindDialog : public MDialog
 	bool			mUpdatingComboBox;
 	bool			mFindStringChanged, mReplaceStringChanged, mStartDirectoriesChanged;
 	bool			mVisible;
+	bool			mQuit;
 	StringArray		mFindStrings;
 	StringArray		mReplaceStrings;
 	StringArray		mStartDirectories;

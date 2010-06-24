@@ -132,12 +132,13 @@ bool MController::UpdateCommandStatus(
 			// dirty
 			case cmd_Save:
 				outEnabled =
+					mDocument != nil and
 					mDocument->IsModified() and
 					(not mDocument->IsSpecified() or not mDocument->IsReadOnly());
 				break;
 	
 			case cmd_Revert:
-				outEnabled = mDocument->IsSpecified() and mDocument->IsModified();
+				outEnabled = mDocument != nil and mDocument->IsSpecified() and mDocument->IsModified();
 				break;
 	
 			default:

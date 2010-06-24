@@ -24,7 +24,7 @@ using namespace std;
 //	MWindow
 //
 
-list<MWindow*> MWindow::sWindowList, MWindow::sRecycleList;
+list<MWindow*> MWindow::sWindowList;
 
 MWindow::MWindow(const string& inTitle, const MRect& inBounds,
 		MWindowFlags inFlags, const string& inMenu)
@@ -53,8 +53,9 @@ MWindow::MWindow(MWindowImpl* inImpl)
 
 MWindow::~MWindow()
 {
-	sWindowList.erase(find(sWindowList.begin(), sWindowList.end(), this));
-	sRecycleList.erase(find(sRecycleList.begin(), sRecycleList.end(), this));
+	sWindowList.erase(
+		remove(sWindowList.begin(), sWindowList.end(), this),
+		sWindowList.end());
 }
 
 void MWindow::SetImpl(
@@ -95,22 +96,6 @@ MWindow* MWindow::GetNextWindow() const
 	return result;
 }
 
-void MWindow::Recycle()
-{
-	sRecycleList.push_back(this);
-	sWindowList.erase(find(sWindowList.begin(), sWindowList.end(), this));
-}
-
-void MWindow::RecycleWindows()
-{
-	while (not sRecycleList.empty())
-	{
-		MWindow* w = sRecycleList.front();
-		sRecycleList.pop_front();
-		delete w;
-	}
-}
-
 MWindow* MWindow::GetWindow() const
 {
 	return const_cast<MWindow*>(this);
@@ -129,11 +114,14 @@ void MWindow::Show()
 void MWindow::ShowSelf()
 {
 	mImpl->Show();
+	if (find(sWindowList.begin(), sWindowList.end(), this) == sWindowList.end())
+		sWindowList.push_back(this);
 }
 
 void MWindow::HideSelf()
 {
 	mImpl->Hide();
+	sWindowList.erase(remove(sWindowList.begin(), sWindowList.end(), this), sWindowList.end());
 }
 
 void MWindow::Select()

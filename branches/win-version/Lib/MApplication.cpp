@@ -333,11 +333,12 @@ void MApplication::DoCloseAll(
 		if (not doc->IsModified() and IsCloseAllCandidate(doc))
 		{
 			MController* controller = doc->GetFirstController();
-			
-//			assert(controller != nil);
-			
 			if (controller != nil)
-				(void)controller->TryCloseDocument(inAction);
+			{
+				MWindow* w = controller->GetWindow();
+				if (controller->TryCloseDocument(inAction))
+					w->Close();
+			}
 			else
 				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
 		}
@@ -456,11 +457,6 @@ MDocument* MApplication::OpenOneDocument(
 
 void MApplication::Pulse()
 {
-	MWindow::RecycleWindows();
-
-	//if (mSocketFD >= 0)
-	//	ProcessSocketMessages();
-
 	if (gQuit or MWindow::GetFirstWindow() == nil)
 	{
 		DoQuit();
