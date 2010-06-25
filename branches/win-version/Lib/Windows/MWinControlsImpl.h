@@ -34,6 +34,7 @@ public:
 	virtual void	SetText(const std::string& inText);
 
 	virtual bool	WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
 protected:
 	std::string		mLabel;

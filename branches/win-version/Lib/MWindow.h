@@ -40,7 +40,6 @@ class MWindow : public MView, public MHandler
 	virtual void			Select();
 	
 	virtual void			Activate();
-	virtual void			Deactivate();
 
 	virtual void			UpdateNow();
 
@@ -97,9 +96,9 @@ class MWindow : public MView, public MHandler
 	virtual void			ConvertFromScreen(int32& ioX, int32& ioY) const;
 
 	virtual void			GetMouse(
-						int32&			outX,
-						int32&			outY,
-						uint32&			outModifiers) const;
+								int32&			outX,
+								int32&			outY,
+								uint32&			outModifiers) const;
 
 	virtual void			Invalidate(
 								MRect			inRect);
@@ -111,6 +110,7 @@ class MWindow : public MView, public MHandler
 
 	virtual void			SetCursor(
 								MCursor			inCursor);
+	virtual void			ObscureCursor();
 
   protected:
 
@@ -138,6 +138,5 @@ class MWindow : public MView, public MHandler
 	static std::list<MWindow*>
 							sWindowList;
 };
-
 
 #endif // MWINDOW_H

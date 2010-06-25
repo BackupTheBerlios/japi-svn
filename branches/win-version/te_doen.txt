@@ -1,12 +1,12 @@
 ﻿Windows versie
 
-- CloseAll werkt niet goed (laat vensters staan)
 - Dialogs afmaken		(copy/paste in edit veld, esc voor sluiten Find Dialog)
 - MList implementeren
 - MProject tot leven wekken
 - MShell implementeren
 - Functie Popup in Edit Window
 - SFTP implementeren
+- Horizontale scrollbar
 
 Bugs
 

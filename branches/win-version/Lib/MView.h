@@ -198,7 +198,7 @@ class MView
 	virtual void	SetCursor(
 						MCursor			inCursor);
 
-	void			ObscureCursor();
+	virtual void	ObscureCursor();
 
 	virtual void		GetMouse(
 						int32&			outX,

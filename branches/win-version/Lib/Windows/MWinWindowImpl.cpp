@@ -132,7 +132,6 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_MOUSEWHEEL,		boost::bind(&MWinWindowImpl::WMMouseWheel, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_VSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_HSCROLL,			boost::bind(&MWinWindowImpl::WMScroll, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_SETFOCUS,			boost::bind(&MWinWindowImpl::WMSetFocus, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_CONTEXTMENU,		boost::bind(&MWinWindowImpl::WMContextMenu, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SETCURSOR,		boost::bind(&MWinWindowImpl::WMSetCursor, this, _1, _2, _3, _4, _5));
 //	AddHandler(WM_IME_COMPOSITION,	boost::bind(&MWinWindowImpl::WMImeComposition, this, _1, _2, _3, _4, _5));
@@ -436,6 +435,11 @@ void MWinWindowImpl::SetCursor(MCursor inCursor)
 		default:
 			break;
 	}
+}
+
+void MWinWindowImpl::ObscureCursor()
+{
+	::SetCursor(nil);
 }
 
 void MWinWindowImpl::ConvertToScreen(int32& ioX, int32& ioY) const
@@ -810,7 +814,10 @@ bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 bool MWinWindowImpl::WMMouseExit(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	if (mMousedView)
+	{
 		mMousedView->MouseExit();
+		mMousedView = nil;
+	}
 
 	return true;
 }
@@ -829,6 +836,8 @@ bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 		
 		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseUp(x, y, modifiers);
+
+		mMousedView = nil;
 	}
 
 	return true;
@@ -870,14 +879,6 @@ bool MWinWindowImpl::WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 		result = scrollbarImpl->WMScroll(inHWnd, inUMsg, inWParam, inLParam, outResult);
 
 	return result;
-}
-
-bool MWinWindowImpl::WMSetFocus(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
-{
-	//if (not fCalledFromSubFocusChanged)
-	//	mWindow->RestoreFocus();
-
-	return true;
 }
 
 bool MWinWindowImpl::WMContextMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM inLParam, int& /*outResult*/)

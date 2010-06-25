@@ -25,6 +25,7 @@ MWinControlImpl<CONTROL>::MWinControlImpl(CONTROL* inControl, const string& inLa
 	, mLabel(inLabel)
 {
 //	AddHandler(WM_GETDLGCODE, boost::bind(&MWinControlImpl::WMGetDlgCode, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SETFOCUS, boost::bind(&MWinControlImpl::WMSetFocus, this, _1, _2, _3, _4, _5));
 }
 
 template<class CONTROL>
@@ -218,6 +219,16 @@ void MWinControlImpl<CONTROL>::AddedToWindow()
 template<class CONTROL>
 bool MWinControlImpl<CONTROL>::WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
+	return false;
+}
+
+template<class CONTROL>
+bool MWinControlImpl<CONTROL>::WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	MWindow* w = mControl->GetWindow();
+	if (w != nil)
+		w->SetFocus(mControl);
+	
 	return false;
 }
 

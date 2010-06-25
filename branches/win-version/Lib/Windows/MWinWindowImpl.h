@@ -45,6 +45,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WaitMouseMoved(int32 inX, int32 inY);
 
 	virtual void	SetCursor(MCursor inCursor);
+	virtual void	ObscureCursor();
 
 	virtual void	ConvertToScreen(int32& ioX, int32& ioY) const;
 	virtual void	ConvertFromScreen(int32& ioX, int32& ioY) const;
@@ -81,7 +82,6 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	virtual bool	WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMMouseWheel(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMScroll(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
-	virtual bool	WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMContextMenu(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMSetCursor(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 //	virtual bool	WMImeComposition(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);

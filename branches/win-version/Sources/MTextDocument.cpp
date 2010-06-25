@@ -76,28 +76,8 @@ const char
 	kJapieCWD[] = "com.hekkelman.japi.CWD";
 
 const uint32
-	kMDocStateSize = 36;	// sizeof(MDocState)
+	kMDocStateSize = sizeof(MDocState);
 
-}
-
-// ---------------------------------------------------------------------------
-//	MDocState
-
-void MDocState::Swap()
-{
-	net_swapper swap;
-	
-	mSelection[0] = swap(mSelection[0]);
-	mSelection[1] = swap(mSelection[1]);
-	mSelection[2] = swap(mSelection[2]);
-	mSelection[3] = swap(mSelection[3]);
-	mScrollPosition[0] = swap(mScrollPosition[0]);
-	mScrollPosition[1] = swap(mScrollPosition[1]);
-	mWindowPosition[0] = swap(mWindowPosition[0]);
-	mWindowPosition[1] = swap(mWindowPosition[1]);
-	mWindowSize[0] = swap(mWindowSize[0]);
-	mWindowSize[1] = swap(mWindowSize[1]);
-	mSwapHelper = swap(mSwapHelper);
 }
 
 // ---------------------------------------------------------------------------
@@ -329,8 +309,6 @@ void MTextDocument::SaveState(
 
 	mFile.ReadAttribute(kJapieDocState, &state, kMDocStateSize);
 	
-	state.Swap();
-	
 	if (mSelection.IsBlock())
 	{
 		mSelection.GetAnchorLineAndColumn(
@@ -362,8 +340,6 @@ void MTextDocument::SaveState(
 
 	state.mFlags.mSoftwrap = mSoftwrap;
 	state.mFlags.mTabWidth = mCharsPerTab;
-	
-	state.Swap();
 	
 	mFile.WriteAttribute(kJapieDocState, &state, kMDocStateSize);
 	
@@ -572,8 +548,6 @@ bool MTextDocument::ReadDocState(
 		int32 r = mFile.ReadAttribute(kJapieDocState, &ioDocState, kMDocStateSize);
 		if (r > 0 and static_cast<uint32>(r) == kMDocStateSize)
 		{
-			ioDocState.Swap();
-
 			if (ioDocState.mFlags.mSelectionIsBlock)
 			{
 				if (ioDocState.mSelection[0] <= mLineInfo.size() and
@@ -2394,7 +2368,7 @@ void MTextDocument::DoRedo()
 	MSelection s(this);
 	uint32 offset, length;
 	int32 delta;
-	
+
 	mLastAction = mCurrentAction = kNoAction;
 	mText.Redo(s, offset, length, delta);
 	RepairAfterUndo(offset, length, delta);

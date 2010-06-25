@@ -379,7 +379,8 @@ void MView::AdjustCursor(
 
 void MView::ObscureCursor()
 {
-	SetCursor(eBlankCursor);
+	if (mParent != nil)
+		mParent->ObscureCursor();
 }
 
 bool MView::ActivateOnClick(int32 inX, int32 inY, uint32 inModifiers)

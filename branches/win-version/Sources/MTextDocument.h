@@ -41,20 +41,14 @@ struct MDocState
 	uint32			mScrollPosition[2];
 	uint16			mWindowPosition[2];
 	uint16			mWindowSize[2];
-	union
+	struct
 	{
-		struct
-		{
-			bool	mSoftwrap			: 1;
-			bool	mSelectionIsBlock	: 1;
-			uint32	mReserved1			: 6;
-			uint8	mTabWidth			: 8;
-			uint32	mReserved2			: 16;
-		}			mFlags;
-		uint32		mSwapHelper;
-	};
-	
-	void			Swap();
+		bool	mSoftwrap			: 1;
+		bool	mSelectionIsBlock	: 1;
+		uint32	mReserved1			: 6;
+		uint8	mTabWidth			: 8;
+		uint32	mReserved2			: 16;
+	}			mFlags;
 };
 
 class MTextDocument : public MDocument

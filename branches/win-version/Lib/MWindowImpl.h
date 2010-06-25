@@ -52,6 +52,7 @@ class MWindowImpl
 	virtual bool		WaitMouseMoved(int32 inX, int32 inY) = 0;
 
 	virtual void		SetCursor(MCursor inCursor) = 0;
+	virtual void		ObscureCursor() = 0;
 
 	virtual void		ConvertToScreen(int32& ioX, int32& ioY) const = 0;
 	virtual void		ConvertFromScreen(int32& ioX, int32& ioY) const = 0;

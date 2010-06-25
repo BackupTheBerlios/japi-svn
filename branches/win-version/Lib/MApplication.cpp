@@ -33,8 +33,6 @@ namespace ba = boost::algorithm;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-static bool gQuit = false;
-
 #if DEBUG
 int VERBOSE, TRACE;
 #endif
@@ -457,11 +455,13 @@ MDocument* MApplication::OpenOneDocument(
 
 void MApplication::Pulse()
 {
-	if (gQuit or MWindow::GetFirstWindow() == nil)
-	{
+	// if there are no visible windows left, we quit
+	MWindow* front = MWindow::GetFirstWindow();
+	while (front != nil and not front->IsVisible())
+		front = front->GetNextWindow();
+	
+	if (front == nil)
 		DoQuit();
-		gQuit = false;	// in case user cancelled the quit
-	}
 	else
 		eIdle(GetLocalTime());
 }
