@@ -770,7 +770,7 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	int32 y = static_cast<int16>(HIWORD(inLParam));
 
 	MView* mousedView = mWindow->FindSubView(x, y);
-	if (mousedView == mClickedView)
+	if (mousedView == mMousedView)
 	{
 		if (mLastClickTime + GetDblClickTime() > GetLocalTime())
 			mClickCount = mClickCount % 3 + 1;
@@ -780,15 +780,15 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	else
 	{
 		mClickCount = 1;
-		mClickedView = mMousedView = mousedView;
+		mMousedView = mousedView;
 	}
 
 	mLastClickTime = GetLocalTime();
 
-	if (mClickedView != nil)
+	if (mMousedView != nil)
 	{
-		mClickedView->ConvertFromWindow(x, y);
-		mClickedView->MouseDown(x, y, mClickCount, modifiers);
+		mMousedView->ConvertFromWindow(x, y);
+		mMousedView->MouseDown(x, y, mClickCount, modifiers);
 	}
 
 	return true;
@@ -796,13 +796,14 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 
 bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
-	if (mMousedView)
+	int32 x = static_cast<int16>(LOWORD(inLParam));
+	int32 y = static_cast<int16>(HIWORD(inLParam));
+
+	MView* mousedView = mWindow->FindSubView(x, y);
+	if (mousedView == mMousedView)
 	{
 		uint32 modifiers;
 		::GetModifierState(modifiers, false);
-	
-		int32 x = static_cast<int16>(LOWORD(inLParam));
-		int32 y = static_cast<int16>(HIWORD(inLParam));
 
 		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseMove(x, y, modifiers);
@@ -814,10 +815,7 @@ bool MWinWindowImpl::WMMouseMove(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 bool MWinWindowImpl::WMMouseExit(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
 {
 	if (mMousedView)
-	{
 		mMousedView->MouseExit();
-		mMousedView = nil;
-	}
 
 	return true;
 }
@@ -826,18 +824,17 @@ bool MWinWindowImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 {
 	::ReleaseCapture();
 
-	if (mMousedView)
+	int32 x = static_cast<int16>(LOWORD(inLParam));
+	int32 y = static_cast<int16>(HIWORD(inLParam));
+
+	MView* mousedView = mWindow->FindSubView(x, y);
+	if (mousedView == mMousedView)
 	{
 		uint32 modifiers;
 		::GetModifierState(modifiers, false);
 	
-		int32 x = static_cast<int16>(LOWORD(inLParam));
-		int32 y = static_cast<int16>(HIWORD(inLParam));
-		
 		mMousedView->ConvertFromWindow(x, y);
 		mMousedView->MouseUp(x, y, modifiers);
-
-		mMousedView = nil;
 	}
 
 	return true;

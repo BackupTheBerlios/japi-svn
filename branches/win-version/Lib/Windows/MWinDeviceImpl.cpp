@@ -655,53 +655,76 @@ MWinDeviceImpl::MWinDeviceImpl(
 		dcRenderTarget->Release();
 	}
 
-	mRenderTarget->BeginDraw();
+	try
+	{
+		mRenderTarget->BeginDraw();
 
-	mRenderTarget->SetTransform(
-		D2D1::Matrix3x2F::Translation(
-			static_cast<float>(x - bounds.x),
-			static_cast<float>(y - bounds.y)));
+		mRenderTarget->SetTransform(
+			D2D1::Matrix3x2F::Translation(
+				static_cast<float>(x - bounds.x),
+				static_cast<float>(y - bounds.y)));
 
-	if (inUpdate)
-		ClipRect(inUpdate);
+		if (inUpdate)
+			ClipRect(inUpdate);
 
-	SetForeColor(kBlack);
-	SetBackColor(kWhite);
+		SetForeColor(kBlack);
+		SetBackColor(kWhite);
+	}
+	catch (_com_error& e)
+	{
+		PRINT(("COM error trying to begin draw"));
+		windowImpl->ReleaseRenderTarget();
+		mRenderTarget->Release();
+		throw;
+	}
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
 {
-	if (mFont != nil)
-		mFont->Release();
+	try
+	{
+		if (mFont != nil)
+			mFont->Release();
 	
-	if (mForeBrush != nil)
-		mForeBrush->Release();
+		if (mForeBrush != nil)
+			mForeBrush->Release();
 
-	if (mBackBrush != nil)
-		mBackBrush->Release();
+		if (mBackBrush != nil)
+			mBackBrush->Release();
 
-	while (not mState.empty())
-	{
-		mState.top()->Release();
-		mState.pop();
+		while (not mState.empty())
+		{
+			mState.top()->Release();
+			mState.pop();
+		}
+
+		if (mTextLayout != nil)
+			mTextLayout->Release();
+
+		if (mTextFormat != nil)
+			mTextFormat->Release();
+
+		if (mClipLayer != nil)
+		{
+			mRenderTarget->PopLayer();
+			mClipLayer->Release();
+		}
 	}
-
-	if (mTextLayout != nil)
-		mTextLayout->Release();
-
-	if (mTextFormat != nil)
-		mTextFormat->Release();
-
-	if (mClipLayer != nil)
+	catch (...)
 	{
-		mRenderTarget->PopLayer();
-		mClipLayer->Release();
+		PRINT(("Oeps"));
 	}
 
 	if (mRenderTarget != nil)
 	{
-		HRESULT hr = mRenderTarget->EndDraw();
-		mRenderTarget->Release();
+		HRESULT hr = D2DERR_RECREATE_TARGET;
+
+		try
+		{
+			hr = mRenderTarget->EndDraw();
+			mRenderTarget->Release();
+		}
+		catch (...) {}
 
 		if (hr == D2DERR_RECREATE_TARGET)
 		{
