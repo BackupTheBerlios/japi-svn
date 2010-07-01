@@ -770,7 +770,7 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	int32 y = static_cast<int16>(HIWORD(inLParam));
 
 	MView* mousedView = mWindow->FindSubView(x, y);
-	if (mousedView == mMousedView)
+	if (mousedView == mClickedView)
 	{
 		if (mLastClickTime + GetDblClickTime() > GetLocalTime())
 			mClickCount = mClickCount % 3 + 1;
@@ -780,15 +780,15 @@ bool MWinWindowImpl::WMMouseDown(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPAR
 	else
 	{
 		mClickCount = 1;
-		mMousedView = mousedView;
+		mClickedView = mMousedView = mousedView;
 	}
 
 	mLastClickTime = GetLocalTime();
 
-	if (mMousedView != nil)
+	if (mClickedView != nil)
 	{
-		mMousedView->ConvertFromWindow(x, y);
-		mMousedView->MouseDown(x, y, mClickCount, modifiers);
+		mClickedView->ConvertFromWindow(x, y);
+		mClickedView->MouseDown(x, y, mClickCount, modifiers);
 	}
 
 	return true;

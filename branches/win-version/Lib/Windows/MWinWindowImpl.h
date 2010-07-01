@@ -103,6 +103,7 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	ID2D1DCRenderTarget*
 					mRenderTarget;
 	MView*			mMousedView;
+	MView*			mClickedView;
 	uint32			mClickCount;
 	double			mLastClickTime;
 };
