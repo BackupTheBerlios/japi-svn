@@ -161,17 +161,17 @@ ID2D1RenderTarget* MWinWindowImpl::GetRenderTarget()
 				D2D1_ALPHA_MODE_IGNORE),
 			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
 
-		THROW_IF_HRESULT_ERROR(MWinDeviceImpl::GetD2D1Factory()->CreateDCRenderTarget(&props, &mRenderTarget));
+//		THROW_IF_HRESULT_ERROR(MWinDeviceImpl::GetD2D1Factory()->CreateDCRenderTarget(&props, &mRenderTarget));
+//
+		RECT rc;
+		::GetClientRect(GetHandle(), &rc);
 
-//		RECT rc;
-//		::GetClientRect(GetHandle(), &rc);
-//
-//		D2D1_HWND_RENDER_TARGET_PROPERTIES wprops = D2D1::HwndRenderTargetProperties(
-//			GetHandle(), D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top)
-//		);
-//
-//		THROW_IF_HRESULT_ERROR(
-//			MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
+		D2D1_HWND_RENDER_TARGET_PROPERTIES wprops = D2D1::HwndRenderTargetProperties(
+			GetHandle(), D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top)
+		);
+
+		THROW_IF_HRESULT_ERROR(
+			MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
 	}
 
 	THROW_IF_NIL(mRenderTarget);
@@ -195,7 +195,7 @@ bool MWinWindowImpl::IsDialogMessage(MSG& inMessage)
 }
 
 // --------------------------------------------------------------------
-// overrides for MWindowImpl
+// overrides for MWindowImlp
 
 void MWinWindowImpl::SetTitle(string inTitle)
 {
@@ -290,7 +290,8 @@ void MWinWindowImpl::UpdateNow()
 void MWinWindowImpl::ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV)
 {
 	RECT r = { inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height };
-	::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
+	//::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
+	::InvalidateRect(GetHandle(), &r, false);
 }
 	
 bool MWinWindowImpl::GetMouse(int32& outX, int32& outY, uint32& outModifiers)
@@ -575,15 +576,15 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
 
-		//if (mRenderTarget != nil)
-		//{
-		//	HRESULT hr = mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
-		//	if (hr == D2DERR_RECREATE_TARGET)
-		//	{
-		//		mRenderTarget->Release();
-		//		mRenderTarget = nil;
-		//	}
-		//}
+		if (mRenderTarget != nil)
+		{
+			HRESULT hr = mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
+			if (hr == D2DERR_RECREATE_TARGET)
+			{
+				mRenderTarget->Release();
+				mRenderTarget = nil;
+			}
+		}
 		
 		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
 			newBounds.height - oldBounds.height);
@@ -672,6 +673,7 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 			//renderTarget->BeginDraw();
 			//
 			mWindow->RedrawAll(update);
+			::ValidateRect(GetHandle(), &lUpdateRect);
 			
 			//HRESULT hr = renderTarget->EndDraw();
 			//renderTarget->Release();
@@ -684,14 +686,14 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 		}
 		catch (_com_error&)
 		{
-			ID2D1DCRenderTarget* renderTarget = mRenderTarget;
-			mRenderTarget = nil;
-			
-			try
-			{
-				renderTarget->Release();
-			}
-			catch (...) {}
+			//ID2D1DCRenderTarget* renderTarget = mRenderTarget;
+			//mRenderTarget = nil;
+			//
+			//try
+			//{
+			//	renderTarget->Release();
+			//}
+			//catch (...) {}
 		}
 		catch (...)
 		{
