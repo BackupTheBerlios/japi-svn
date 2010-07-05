@@ -31,6 +31,7 @@ MWinCanvasImpl::MWinCanvasImpl(
 	AddHandler(WM_MOUSEMOVE,		boost::bind(&MWinCanvasImpl::WMMouseMove, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MOUSELEAVE,		boost::bind(&MWinCanvasImpl::WMMouseExit, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_CAPTURECHANGED,	boost::bind(&MWinCanvasImpl::WMMouseExit, this, _1, _2, _3, _4, _5));
+	AddHandler(WM_SETCURSOR,		boost::bind(&MWinCanvasImpl::WMSetCursor, this, _1, _2, _3, _4, _5));
 }
 
 MWinCanvasImpl::~MWinCanvasImpl()
@@ -290,6 +291,35 @@ bool MWinCanvasImpl::WMMouseUp(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM
 	mCanvas->MouseUp(x, y, modifiers);
 
 	return true;
+}
+
+bool MWinCanvasImpl::WMSetCursor(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	bool handled = false;
+	try
+	{
+		if (mCanvas->IsActive())
+		{
+			int32 x, y;
+			uint32 modifiers = 0;
+
+			POINT p;
+			::GetCursorPos(&p);
+			::ScreenToClient(GetHandle(), &p);
+			
+			x = p.x;
+			y = p.y;
+			
+			mCanvas->ConvertFromWindow(x, y);
+			mCanvas->AdjustCursor(x, y, modifiers);
+			handled = true;
+		}
+	}
+	catch (...)
+	{
+	}
+
+	return handled;
 }
 
 // --------------------------------------------------------------------
