@@ -35,7 +35,7 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 	, mMinWidth(100)
 	, mMinHeight(100)
 	, mMenubar(nil)
-	, mRenderTarget(nil)
+//	, mRenderTarget(nil)
 	, mMousedView(nil)
 	, mClickCount(0)
 	, mLastClickTime(0)
@@ -57,8 +57,8 @@ MWinWindowImpl::MWinWindowImpl(MWindowFlags inFlags, const string& inMenu,
 
 MWinWindowImpl::~MWinWindowImpl()
 {
-	if (mRenderTarget != nil)
-		mRenderTarget->Release();
+	//if (mRenderTarget != nil)
+	//	mRenderTarget->Release();
 }
 
 void MWinWindowImpl::CreateParams(DWORD& outStyle,
@@ -118,8 +118,8 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_MOUSEACTIVATE,	boost::bind(&MWinWindowImpl::WMMouseActivate, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
-	AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
+//	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
+//	AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
@@ -150,44 +150,44 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 		mMenubar->SetTarget(mWindow);
 }
 
-ID2D1RenderTarget* MWinWindowImpl::GetRenderTarget()
-{
-	if (mRenderTarget == nil)
-	{
-		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-			D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			D2D1::PixelFormat(
-				DXGI_FORMAT_B8G8R8A8_UNORM,
-				D2D1_ALPHA_MODE_IGNORE),
-			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
-
-//		THROW_IF_HRESULT_ERROR(MWinDeviceImpl::GetD2D1Factory()->CreateDCRenderTarget(&props, &mRenderTarget));
+//ID2D1RenderTarget* MWinWindowImpl::GetRenderTarget()
+//{
+//	if (mRenderTarget == nil)
+//	{
+//		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+//			D2D1_RENDER_TARGET_TYPE_DEFAULT,
+//			D2D1::PixelFormat(
+//				DXGI_FORMAT_B8G8R8A8_UNORM,
+//				D2D1_ALPHA_MODE_IGNORE),
+//			0, 0, D2D1_RENDER_TARGET_USAGE_NONE, D2D1_FEATURE_LEVEL_DEFAULT);
 //
-		RECT rc;
-		::GetClientRect(GetHandle(), &rc);
-
-		D2D1_HWND_RENDER_TARGET_PROPERTIES wprops = D2D1::HwndRenderTargetProperties(
-			GetHandle(), D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top)
-		);
-
-		THROW_IF_HRESULT_ERROR(
-			MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
-	}
-
-	THROW_IF_NIL(mRenderTarget);
-
-	ID2D1RenderTarget* result = nil;
-	THROW_IF_HRESULT_ERROR(mRenderTarget->QueryInterface(&result));
-	THROW_IF_NIL(result);
-
-	return result;
-}
-
-void MWinWindowImpl::ReleaseRenderTarget()
-{
-	mRenderTarget->Release();
-	mRenderTarget = nil;
-}
+////		THROW_IF_HRESULT_ERROR(MWinDeviceImpl::GetD2D1Factory()->CreateDCRenderTarget(&props, &mRenderTarget));
+////
+//		RECT rc;
+//		::GetClientRect(GetHandle(), &rc);
+//
+//		D2D1_HWND_RENDER_TARGET_PROPERTIES wprops = D2D1::HwndRenderTargetProperties(
+//			GetHandle(), D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top)
+//		);
+//
+//		THROW_IF_HRESULT_ERROR(
+//			MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
+//	}
+//
+//	THROW_IF_NIL(mRenderTarget);
+//
+//	ID2D1RenderTarget* result = nil;
+//	THROW_IF_HRESULT_ERROR(mRenderTarget->QueryInterface(&result));
+//	THROW_IF_NIL(result);
+//
+//	return result;
+//}
+//
+//void MWinWindowImpl::ReleaseRenderTarget()
+//{
+//	mRenderTarget->Release();
+//	mRenderTarget = nil;
+//}
 
 bool MWinWindowImpl::IsDialogMessage(MSG& inMessage)
 {
@@ -254,13 +254,28 @@ void MWinWindowImpl::Close()
 	
 void MWinWindowImpl::SetWindowPosition(MRect inBounds, bool inTransition)
 {
-	//HRect sb;
-	//HScreen::GetBounds(sb);
-	//
-	//if (sb.Intersects(inBounds))
+	RECT area = {};
 
-	::MoveWindow(GetHandle(), inBounds.x, inBounds.y,
-		inBounds.width, inBounds.height, TRUE);
+	if (not ::SystemParametersInfo(SPI_GETWORKAREA, 0, (LPVOID)&area, 0))
+	{
+		/* Get the root DC */
+		HDC lDC = ::GetDC(NULL);
+	
+		/* Set the outBounds */
+		area.right = ::GetDeviceCaps(lDC, HORZRES);
+		area.bottom = ::GetDeviceCaps(lDC, VERTRES);
+	
+		/* Release the DC. Don't know if thats needed with the screen DC */
+		::ReleaseDC (NULL, lDC);
+	}
+	
+	MRect screenArea(area.left, area.top, area.right - area.left, area.bottom - area.top);
+	
+	MRect wr = screenArea & inBounds;
+	
+	// only sensible sizes are allowed
+	if (wr and wr.width > 100 and wr.height > 100)
+		::MoveWindow(GetHandle(), wr.x, wr.y, wr.width, wr.height, TRUE);
 }
 
 void MWinWindowImpl::GetWindowPosition(MRect& outBounds) const
@@ -576,15 +591,15 @@ bool MWinWindowImpl::WMSize(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWParam, L
 //				SWP_NOZORDER | SWP_NOZORDER);
 		}
 
-		if (mRenderTarget != nil)
-		{
-			HRESULT hr = mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
-			if (hr == D2DERR_RECREATE_TARGET)
-			{
-				mRenderTarget->Release();
-				mRenderTarget = nil;
-			}
-		}
+		//if (mRenderTarget != nil)
+		//{
+		//	HRESULT hr = mRenderTarget->Resize(D2D1::SizeU(newBounds.width, newBounds.height));
+		//	if (hr == D2DERR_RECREATE_TARGET)
+		//	{
+		//		mRenderTarget->Release();
+		//		mRenderTarget = nil;
+		//	}
+		//}
 		
 		mWindow->ResizeFrame(0, 0, newBounds.width - oldBounds.width,
 			newBounds.height - oldBounds.height);
@@ -709,11 +724,11 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 bool MWinWindowImpl::WMEraseBkgnd(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
 {
 	bool result = false;
-	if (mRenderTarget != nil)
-	{
-		outResult = 1;
-		result = true;
-	}
+	//if (mRenderTarget != nil)
+	//{
+	//	outResult = 1;
+	//	result = true;
+	//}
 	return result;
 }
 

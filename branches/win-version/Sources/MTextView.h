@@ -10,7 +10,7 @@
 #include "MColor.h"
 #include "MHandler.h"
 #include "MP2PEvents.h"
-#include "MView.h"
+#include "MCanvas.h"
 #include "MSelection.h"
 
 class MDocument;
@@ -19,7 +19,7 @@ class MDocWindow;
 class MController;
 class MDevice;
 
-class MTextView : public MView
+class MTextView : public MCanvas
 {
   public:
 						MTextView(

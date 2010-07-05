@@ -75,6 +75,7 @@
     <ClCompile Include="..\..\Lib\MAcceleratorTable.cpp" />
     <ClCompile Include="..\..\Lib\MAlerts.cpp" />
     <ClCompile Include="..\..\Lib\MApplication.cpp" />
+    <ClCompile Include="..\..\Lib\MCanvas.cpp" />
     <ClCompile Include="..\..\Lib\MClipboard.cpp" />
     <ClCompile Include="..\..\Lib\MColor.cpp" />
     <ClCompile Include="..\..\Lib\MController.cpp" />

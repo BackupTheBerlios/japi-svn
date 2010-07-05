@@ -87,6 +87,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\Lib\Windows\MWinAlerts.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinApplicationImpl.cpp" />
+    <ClCompile Include="..\..\Lib\Windows\MWinCanvasImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinClipboard.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinControlsImpl.cpp" />
     <ClCompile Include="..\..\Lib\Windows\MWinDeviceImpl.cpp" />

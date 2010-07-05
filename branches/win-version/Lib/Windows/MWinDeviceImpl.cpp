@@ -15,7 +15,7 @@
 
 #include "MWinDeviceImpl.h"
 #include "MView.h"
-#include "MWinWindowImpl.h"
+#include "MWinCanvasImpl.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MError.h"
@@ -631,12 +631,12 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mFont(nil)
 	, mSelectionLength(0)
 {
-	MWindow* window = inView->GetWindow();
-	THROW_IF_NIL(window);
-	MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
+	//MWindow* window = inView->GetWindow();
+	//THROW_IF_NIL(window);
+	//MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
 
-	mRenderTarget = windowImpl->GetRenderTarget();
-	THROW_IF_NIL(mRenderTarget);
+	//mRenderTarget = windowImpl->GetRenderTarget();
+	//THROW_IF_NIL(mRenderTarget);
 
 	MRect bounds;
 	inView->GetBounds(bounds);
@@ -645,38 +645,19 @@ MWinDeviceImpl::MWinDeviceImpl(
 	int32 x = 0, y = 0;
 	inView->ConvertToWindow(x, y);
 
-	ID2D1DCRenderTarget* dcRenderTarget;
-	if (mRenderTarget->QueryInterface(&dcRenderTarget) == S_OK)
-	{
-		HDC dc = ::GetDC(windowImpl->GetHandle());
-		RECT r = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
-		dcRenderTarget->BindDC(dc, &r);
+	MCanvas* canvas = dynamic_cast<MCanvas*>(inView);
+	mRenderTarget = static_cast<MWinCanvasImpl*>(canvas->GetImpl())->GetRenderTarget();
 
-		dcRenderTarget->Release();
-	}
+	mRenderTarget->SetTransform(
+		D2D1::Matrix3x2F::Translation(
+			static_cast<float>(x - bounds.x),
+			static_cast<float>(y - bounds.y)));
 
-	try
-	{
-		mRenderTarget->BeginDraw();
+	if (inUpdate)
+		ClipRect(inUpdate);
 
-		mRenderTarget->SetTransform(
-			D2D1::Matrix3x2F::Translation(
-				static_cast<float>(x - bounds.x),
-				static_cast<float>(y - bounds.y)));
-
-		if (inUpdate)
-			ClipRect(inUpdate);
-
-		SetForeColor(kBlack);
-		SetBackColor(kWhite);
-	}
-	catch (_com_error& e)
-	{
-		PRINT(("COM error trying to begin draw"));
-		windowImpl->ReleaseRenderTarget();
-		mRenderTarget->Release();
-		throw;
-	}
+	SetForeColor(kBlack);
+	SetBackColor(kWhite);
 }
 
 MWinDeviceImpl::~MWinDeviceImpl()
@@ -713,28 +694,6 @@ MWinDeviceImpl::~MWinDeviceImpl()
 	catch (...)
 	{
 		PRINT(("Oeps"));
-	}
-
-	if (mRenderTarget != nil)
-	{
-		HRESULT hr = D2DERR_RECREATE_TARGET;
-
-		try
-		{
-			hr = mRenderTarget->EndDraw();
-			mRenderTarget->Release();
-		}
-		catch (...) {}
-
-		if (hr == D2DERR_RECREATE_TARGET)
-		{
-			MWindow* window = mView->GetWindow();
-			if (window != nil)
-			{
-				MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
-				windowImpl->ReleaseRenderTarget();
-			}
-		}
 	}
 }
 

@@ -82,5 +82,8 @@
     <ClCompile Include="..\..\Lib\Windows\MWinListViewImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Lib\Windows\MWinCanvasImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

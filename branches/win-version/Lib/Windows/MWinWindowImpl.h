@@ -11,7 +11,7 @@
 #include "MWindowImpl.h"
 #include "MWinProcMixin.h"
 
-interface ID2D1HwndRenderTarget;
+//interface ID2D1HwndRenderTarget;
 
 class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 {
@@ -52,9 +52,9 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 
 	MWindow*		GetWindow() const						{ return mWindow; }
 
-	ID2D1RenderTarget*
-					GetRenderTarget();
-	void			ReleaseRenderTarget();
+	//ID2D1RenderTarget*
+	//				GetRenderTarget();
+	//void			ReleaseRenderTarget();
 
 	virtual bool	IsDialogMessage(MSG& inMesssage);
 
@@ -98,9 +98,9 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 	int32			mMinWidth, mMinHeight;
 	MMenu*			mMenubar;
 	int32			mLastGetMouseX, mLastGetMouseY;
-	ID2D1HwndRenderTarget*
+//	ID2D1HwndRenderTarget*
 //	ID2D1DCRenderTarget*
-					mRenderTarget;
+//					mRenderTarget;
 	MView*			mMousedView;
 	uint32			mClickCount;
 	double			mLastClickTime;

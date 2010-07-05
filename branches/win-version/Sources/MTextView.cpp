@@ -52,7 +52,7 @@ const double
 MTextView::MTextView(
 	const string&		inID,
 	MRect				inBounds)
-	: MView(inID, inBounds)
+	: MCanvas(inID, inBounds)
 	, eLineCountChanged(this, &MTextView::LineCountChanged)
 	, eSelectionChanged(this, &MTextView::SelectionChanged)
 	, eScroll(this, &MTextView::ScrollMessage)
@@ -1244,7 +1244,7 @@ void MTextView::ResizeFrame(
 	int32			inWidthDelta,
 	int32			inHeightDelta)
 {
-	MView::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
+	MCanvas::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
 	eBoundsChanged();
 }
 

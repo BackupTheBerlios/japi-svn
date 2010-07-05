@@ -6,6 +6,7 @@
 #ifndef MWINDEVICEIMPL_H
 #define MWINDEVICEIMPL_H
 
+#include <stack>
 #include "MDeviceImpl.h"
 
 // --------------------------------------------------------------------

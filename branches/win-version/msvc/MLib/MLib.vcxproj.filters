@@ -86,6 +86,9 @@
     <ClCompile Include="..\..\Lib\MListView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Lib\MCanvas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Lib\MAcceleratorTable.h">
