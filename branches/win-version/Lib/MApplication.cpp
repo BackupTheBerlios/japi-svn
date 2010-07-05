@@ -200,6 +200,8 @@ bool MApplication::UpdateCommandStatus(
 		case cmd_OpenIncludeFile:
 		case cmd_Worksheet:
 		case cmd_About:
+		case cmd_SelectWindowFromMenu:
+		case cmd_OpenRecent:
 			outEnabled = true;
 			break;
 		

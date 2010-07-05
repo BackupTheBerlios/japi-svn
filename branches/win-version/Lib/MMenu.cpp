@@ -238,7 +238,7 @@ void MMenu::UpdateCommandStatus()
 			subMenu->UpdateCommandStatus();
 		else
 		{
-			bool enabled = true, checked = false;
+			bool enabled = false, checked = false;
 			if (mTarget != nil)
 			{
 				MWindow* window = dynamic_cast<MWindow*>(mTarget);

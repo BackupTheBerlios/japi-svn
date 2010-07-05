@@ -6,7 +6,7 @@
 - MShell implementeren
 - Functie Popup in Edit Window
 - SFTP implementeren
-- Horizontale scrollbar
+- Horizontale schuifbalk
 
 Bugs
 

@@ -4773,30 +4773,37 @@ bool MTextDocument::UpdateCommandStatus(
 			break;
 
 		case cmd_EncodingUTF8:
+			outEnabled = true;
 			outChecked = GetEncoding() == kEncodingUTF8;
 			break;
 
 		case cmd_EncodingUTF16BE:
+			outEnabled = true;
 			outChecked = GetEncoding() == kEncodingUTF16BE;
 			break;
 
 		case cmd_EncodingUTF16LE:
+			outEnabled = true;
 			outChecked = GetEncoding() == kEncodingUTF16LE;
 			break;
 
 		case cmd_EncodingISO8859_1:
+			outEnabled = true;
 			outChecked = GetEncoding() == kEncodingISO88591;
 			break;
 
 		case cmd_LineEndLF:
+			outEnabled = true;
 			outChecked = GetEOLNKind() == eEOLN_UNIX;
 			break;
 
 		case cmd_LineEndCR:
+			outEnabled = true;
 			outChecked = GetEOLNKind() == eEOLN_MAC;
 			break;
 
 		case cmd_LineEndCRLF:
+			outEnabled = true;
 			outChecked = GetEOLNKind() == eEOLN_DOS;
 			break;
 
