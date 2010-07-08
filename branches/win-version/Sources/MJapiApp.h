@@ -29,7 +29,8 @@ class MJapiApp : public MApplication
 
 	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
 	
-						MJapiApp();
+						MJapiApp(
+							MApplicationImpl*	inImpl);
 	
 						~MJapiApp();
 	
@@ -85,8 +86,8 @@ class MJapiApp : public MApplication
 
 	void				DoSaveAll();
 
-	void				DoCloseAll(
-							MCloseReason		inReason);
+//	void				DoCloseAll(
+//							MCloseReason		inReason);
 
 	void				DoOpenTemplate(
 							const std::string&	inTemplate);

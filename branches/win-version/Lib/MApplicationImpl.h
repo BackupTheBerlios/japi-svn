@@ -11,24 +11,12 @@
 class MApplicationImpl
 {
   public:
-					MApplicationImpl(
-						MApplication*		inApp);
-
-	virtual			~MApplicationImpl();
+					MApplicationImpl()		{}
+	virtual			~MApplicationImpl()		{}
 
 	virtual int		RunEventLoop() = 0;
 
 	virtual void	Quit() = 0;
-
-	static MApplicationImpl*
-					Create(
-						MApplication* inApp);
-
-  protected:
-
-	  void			Pulse();
-	  
-	  MApplication*	mApp;
 };
 
 #endif

@@ -64,7 +64,6 @@ class MWinWindowImpl : public MWindowImpl, public MWinProcMixin
 						std::wstring& outClassName, HMENU& outMenu);
 	virtual void	RegisterParams(UINT& outStyle, int& outWndExtra, HCURSOR& outCursor,
 						HICON& outIcon, HICON& outSmallIcon, HBRUSH& outBackground);
-
 	virtual bool	WMClose(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMDestroy(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMActivate(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);

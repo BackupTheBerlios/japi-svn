@@ -33,10 +33,11 @@ class MApplication : public MHandler
 
 	typedef std::vector<std::pair<uint32, MFile> > MFilesToOpenList;
 	
-						~MApplication();
-
 	static MApplication*
-						Create();
+						Create(
+							MApplicationImpl*	inImpl);
+
+						~MApplication();
 
 	virtual bool		UpdateCommandStatus(
 							uint32				inCommand,
@@ -66,6 +67,9 @@ class MApplication : public MHandler
 	virtual MWindow*	DisplayDocument(
 							MDocument*			inDocument);
 
+	virtual bool		CloseAll(
+							MCloseReason		inReason);
+
 	const std::string&	GetCurrentFolder() const				{ return mCurrentFolder; }
 
 	virtual void		SetCurrentFolder(
@@ -76,35 +80,30 @@ class MApplication : public MHandler
 
 	MEventOut<void(double)>						eIdle;
 
-	//bool				IsServer();
-	//bool				IsClient();
-
 	int					RunEventLoop();
+
+	virtual void		Pulse();
 
   protected:
 
-						MApplication();
+						MApplication(
+							MApplicationImpl*	inImpl);
 
 	virtual bool		IsCloseAllCandidate(
 							MDocument*			inDocument)		{ return true; }
 
-	friend class MApplicationImpl;
-	  
 	typedef std::list<MWindow*>		MWindowList;
 
 	virtual void		DoQuit();
 	virtual void		DoNew();
 	virtual void		DoOpen();
 	virtual void		DoSaveAll();
-	virtual void		DoCloseAll(
-							MCloseReason		inReason);
 	virtual void		UpdateWindowMenu(
 							MMenu*				inMenu);
 	void				UpdateRecentMenu(
 							MMenu*				inMenu);
 	virtual void		DoSelectWindowFromWindowMenu(
 							uint32				inIndex);
-	virtual void		Pulse();
 
 	virtual void		InitGlobals();
 	virtual void		SaveGlobals();

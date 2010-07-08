@@ -1045,10 +1045,9 @@ bool MWinWindowImpl::WMImeRequest(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM inWPa
 
 bool MWinWindowImpl::WMQueryEndSession(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
 {
-	//if (gApp->Quit())
-	//	outResult = 1;
-	//else
-		outResult = 0;
+	PRINT(("QueryEndSession"));
+
+	outResult = gApp->CloseAll(kSaveChangesQuittingApplication);
 	return true;
 }
 

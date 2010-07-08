@@ -107,7 +107,9 @@ fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
 
 // --------------------------------------------------------------------
 
-MJapiApp::MJapiApp()
+MJapiApp::MJapiApp(
+	MApplicationImpl*	inImpl)
+	: MApplication(inImpl)
 {
 	MAcceleratorTable& at = MAcceleratorTable::Instance();
 
@@ -436,66 +438,66 @@ void MJapiApp::DoSaveAll()
 	}
 }
 
-void MJapiApp::DoCloseAll(
-	MCloseReason		inAction)
-{
-	// first close all that can be closed
-
-	MDocument* doc = MDocument::GetFirstDocument();
-	
-	while (doc != nil)
-	{
-		MDocument* next = doc->GetNextDocument();
-		
-		if (dynamic_cast<MTextDocument*>(doc) != nil and
-			doc != MTextDocument::GetWorksheet() and
-			not doc->IsModified())
-		{
-			MController* controller = doc->GetFirstController();
-			if (controller != nil)
-			{
-				MWindow* w = controller->GetWindow();
-				if (controller->TryCloseDocument(inAction))
-					w->Close();
-			}
-			else
-				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
-		}
-		
-		doc = next;
-	}
-	
-	// then close what remains
-
-	doc = MDocument::GetFirstDocument();
-
-	while (doc != nil)
-	{
-		MDocument* next = doc->GetNextDocument();
-
-		MController* controller = doc->GetFirstController();
-		assert(controller != nil);
-
-		if (doc == MTextDocument::GetWorksheet())
-		{
-			if (inAction == kSaveChangesQuittingApplication)
-			{
-				doc->DoSave();
-				
-				if (not controller->TryCloseDocument(inAction))
-					break;
-			}
-		}
-		else if (dynamic_cast<MTextDocument*>(doc) != nil or
-			inAction == kSaveChangesQuittingApplication)
-		{
-			if (not controller->TryCloseDocument(inAction))
-				break;
-		}
-		
-		doc = next;
-	}
-}
+//void MJapiApp::DoCloseAll(
+//	MCloseReason		inAction)
+//{
+//	// first close all that can be closed
+//
+//	MDocument* doc = MDocument::GetFirstDocument();
+//	
+//	while (doc != nil)
+//	{
+//		MDocument* next = doc->GetNextDocument();
+//		
+//		if (dynamic_cast<MTextDocument*>(doc) != nil and
+//			doc != MTextDocument::GetWorksheet() and
+//			not doc->IsModified())
+//		{
+//			MController* controller = doc->GetFirstController();
+//			if (controller != nil)
+//			{
+//				MWindow* w = controller->GetWindow();
+//				if (controller->TryCloseDocument(inAction))
+//					w->Close();
+//			}
+//			else
+//				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
+//		}
+//		
+//		doc = next;
+//	}
+//	
+//	// then close what remains
+//
+//	doc = MDocument::GetFirstDocument();
+//
+//	while (doc != nil)
+//	{
+//		MDocument* next = doc->GetNextDocument();
+//
+//		MController* controller = doc->GetFirstController();
+//		assert(controller != nil);
+//
+//		if (doc == MTextDocument::GetWorksheet())
+//		{
+//			if (inAction == kSaveChangesQuittingApplication)
+//			{
+//				doc->DoSave();
+//				
+//				if (not controller->TryCloseDocument(inAction))
+//					break;
+//			}
+//		}
+//		else if (dynamic_cast<MTextDocument*>(doc) != nil or
+//			inAction == kSaveChangesQuittingApplication)
+//		{
+//			if (not controller->TryCloseDocument(inAction))
+//				break;
+//		}
+//		
+//		doc = next;
+//	}
+//}
 
 void MJapiApp::DoQuit()
 {
@@ -881,7 +883,8 @@ void MJapiApp::SaveGlobals()
 	MApplication::SaveGlobals();
 }
 
-MApplication* MApplication::Create()
+MApplication* MApplication::Create(
+	MApplicationImpl*		inImpl)
 {
-	return new MJapiApp();
+	return new MJapiApp(inImpl);
 }

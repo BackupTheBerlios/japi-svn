@@ -11,6 +11,7 @@
 #include "MWinUtils.h"
 #include "MWinWindowImpl.h"
 #include "MDialog.h"
+#include "MError.h"
 
 using namespace std;
 
@@ -28,21 +29,15 @@ using namespace std;
 
 MWinApplicationImpl* MWinApplicationImpl::sInstance;
 
-
-MApplicationImpl* MApplicationImpl::Create(
-	MApplication* inApp)
-{
-	return new MWinApplicationImpl(::GetModuleHandle(nil), inApp);
-}
-
 MWinApplicationImpl::MWinApplicationImpl(
-	HINSTANCE			inInstance,
-	MApplication*		inApp)
-	: MApplicationImpl(inApp)
-	, mInstance(inInstance)
+	HINSTANCE			inInstance)
+	: mInstance(inInstance)
 {
 	sInstance = this;
+}
 
+void MWinApplicationImpl::Initialise()
+{
 	wchar_t path[MAX_PATH] = {};
 	if (::GetModuleFileName(NULL, path, MAX_PATH) > 0)
 		gExecutablePath = w2c(path);
@@ -88,7 +83,12 @@ int MWinApplicationImpl::RunEventLoop()
 	// Main message loop:
 	for (;;)
 	{
-		result = ::GetMessageW (&message, NULL, 0, 0);
+		result = ::GetMessage(&message, NULL, 0, 0);
+
+//#if DEBUG
+//		LogWinMsg("GetMessageW", message.message);
+//#endif
+
 		if (result <= 0)
 		{
 			if (result < 0)
@@ -103,9 +103,9 @@ int MWinApplicationImpl::RunEventLoop()
 			if (impl != nil and impl->IsDialogMessage(message))
 				continue;
 		}
-		
+
 		::TranslateMessage(&message);
-		::DispatchMessageW(&message);
+		::DispatchMessage(&message);
 	}
 
 	sInstance = nil;
@@ -133,8 +133,8 @@ void CALLBACK MWinApplicationImpl::Timer(
 		sInTimer = true;
 		try
 		{
-			if (sInstance != nil)
-				sInstance->Pulse();
+			if (gApp != nil)
+				gApp->Pulse();
 		}
 		catch (...) {}
 		sInTimer = false;

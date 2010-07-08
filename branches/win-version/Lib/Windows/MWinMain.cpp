@@ -14,7 +14,7 @@
 #include <windows.h>
 #include <ddeml.h>
 
-#include "MApplication.h"
+#include "MWinApplicationImpl.h"
 #include "MError.h"
 #include "MWinUtils.h"
 #include "MDocument.h"
@@ -257,7 +257,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPSTR lpszCmdLine, int n
 	vector<string> args = po::split_winmain(lpszCmdLine);
 	uint32 inst = MDDEImpl::Init();
 
-	unique_ptr<MApplication> app(MApplication::Create());
+	unique_ptr<MApplication> app(MApplication::Create(new MWinApplicationImpl(hInst)));
 
 	if (inst != 0)
 	{

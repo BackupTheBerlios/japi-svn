@@ -7,24 +7,23 @@
 #define MWINAPPLICATION_IMPL_H
 
 #include "MApplicationImpl.h"
+#include "MWinProcMixin.h"
 
 class MWinApplicationImpl : public MApplicationImpl
 {
   public:
 					MWinApplicationImpl(
-						HINSTANCE			inInstance,
-						MApplication*		inApp);
-
+						HINSTANCE			inInstance);
 	virtual			~MWinApplicationImpl();
 
 	static MWinApplicationImpl*
 					GetInstance()				{ return sInstance; }
-	static HINSTANCE
-					GetHInstance()				{ return sInstance->mInstance; }
+	HINSTANCE		GetHInstance()				{ return mInstance; }
 
 	virtual int		RunEventLoop();
 	virtual void	Quit();
 
+	void			Initialise();
 
   private:
 
@@ -33,7 +32,7 @@ class MWinApplicationImpl : public MApplicationImpl
 					sInstance;
 
 	static void CALLBACK
-					Timer(HWND /*hwnd*/, UINT /*uMsg*/, UINT /*idEvent*/, DWORD /*dwTime*/);
+					Timer(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime);
 };
 
 #endif

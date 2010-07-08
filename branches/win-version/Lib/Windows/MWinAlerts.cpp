@@ -51,7 +51,7 @@ int32 DisplayAlert(
 	vector<TASKDIALOG_BUTTON> buttons;
 	list<wstring> buttonLabels;
 
-	config.hInstance = MWinApplicationImpl::GetHInstance();
+	config.hInstance = MWinApplicationImpl::GetInstance()->GetHInstance();
 
 	if (inParent != nil)
 	{

@@ -42,26 +42,10 @@ fs::path gExecutablePath, gPrefixPath;
 
 // --------------------------------------------------------------------
 
-MApplicationImpl::MApplicationImpl(
-	MApplication*		inApp)
-	: mApp(inApp)
-{
-}
-
-MApplicationImpl::~MApplicationImpl()
-{
-}
-
-void MApplicationImpl::Pulse()
-{
-	mApp->Pulse();
-}
-
-// --------------------------------------------------------------------
-
-MApplication::MApplication()
+MApplication::MApplication(
+	MApplicationImpl*		inImpl)
 	: MHandler(nil)
-	, mImpl(MApplicationImpl::Create(this))
+	, mImpl(inImpl)
 	, mQuit(false)
 	, mQuitPending(false)
 {
@@ -145,7 +129,7 @@ bool MApplication::ProcessCommand(
 			break;
 		
 		case cmd_CloseAll:
-			DoCloseAll(kSaveChangesClosingAllDocuments);
+			CloseAll(kSaveChangesClosingAllDocuments);
 			break;
 		
 		case cmd_SaveAll:
@@ -319,9 +303,10 @@ void MApplication::DoSaveAll()
 	}
 }
 
-void MApplication::DoCloseAll(
+bool MApplication::CloseAll(
 	MCloseReason		inAction)
 {
+	bool result = true;
 	// first close all that can be closed
 
 	MDocument* doc = MDocument::GetFirstDocument();
@@ -360,11 +345,16 @@ void MApplication::DoCloseAll(
 			inAction == kSaveChangesQuittingApplication)
 		{
 			if (not controller->TryCloseDocument(inAction))
+			{
+				result = false;
 				break;
+			}
 		}
 		
 		doc = next;
 	}
+	
+	return result;
 }
 
 void MApplication::DoQuit()
@@ -375,9 +365,7 @@ void MApplication::DoQuit()
 	//	Preferences::SetString("last project", p);
 	//}
 
-	DoCloseAll(kSaveChangesQuittingApplication);
-
-	if (MDocument::GetFirstDocument() == nil /*and MProject::Instance() == nil*/)
+	if (CloseAll(kSaveChangesQuittingApplication))
 		mImpl->Quit();
 }
 

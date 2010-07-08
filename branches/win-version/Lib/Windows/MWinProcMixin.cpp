@@ -93,11 +93,12 @@ void MWinProcMixin::CreateHandle(MWinProcMixin* inParent, MRect inBounds, const 
 			//ThrowIfOSErr((::GetLastError()));
 	}
 
-	HWND handle = CreateWindowExW(exStyle,
+	HWND handle = ::CreateWindowExW(exStyle,
 		lWndClass.lpszClassName, inTitle.c_str(),
 		style,
 		inBounds.x, inBounds.y, inBounds.width, inBounds.height,
 		parent, menu, instance, this);
+
 	if (handle == nil)
 		THROW_WIN_ERROR(("Error creating window"));
 
@@ -307,6 +308,9 @@ bool MWinProcMixin::WMCommand(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM 
 int	MWinProcMixin::WinProc(HWND inHandle, UINT inMsg, WPARAM inWParam, LPARAM inLParam)
 {
 	int result = 0;
+
+//	LogWinMsg("WinProc", inMsg);
+
 	MHandlerTable::iterator i = mHandlers.find(inMsg);
 	if (i == mHandlers.end() or not i->second(inHandle, inMsg, inWParam, inLParam, result))
 	{
