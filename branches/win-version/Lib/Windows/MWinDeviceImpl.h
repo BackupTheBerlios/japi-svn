@@ -170,7 +170,7 @@ class MWinDeviceImpl : public MDeviceImp
 	MColor					mSelectionColor;
 	uint32					mSelectionStart, mSelectionLength;
 
-	//float					mDpiScaleX, mDpiScaleY;
+	float					mDpiScaleX, mDpiScaleY;
 	std::stack<ID2D1DrawingStateBlock*>
 							mState;
 };

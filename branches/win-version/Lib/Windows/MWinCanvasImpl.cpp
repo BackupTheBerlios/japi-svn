@@ -181,6 +181,8 @@ bool MWinCanvasImpl::WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM i
 
 			THROW_IF_HRESULT_ERROR(
 				MWinDeviceImpl::GetD2D1Factory()->CreateHwndRenderTarget(&props, &wprops, &mRenderTarget));
+
+			mRenderTarget->SetDpi(96.f, 96.f);
 		}
 
 		try

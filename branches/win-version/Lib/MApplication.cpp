@@ -359,12 +359,6 @@ bool MApplication::CloseAll(
 
 void MApplication::DoQuit()
 {
-	//if (MProject::Instance() != nil)
-	//{
-	//	string p = MProject::Instance()->GetPath().string();
-	//	Preferences::SetString("last project", p);
-	//}
-
 	if (CloseAll(kSaveChangesQuittingApplication))
 		mImpl->Quit();
 }

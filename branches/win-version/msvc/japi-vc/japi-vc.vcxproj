@@ -78,6 +78,9 @@
       <Outputs>$(SolutionDir)\Rsrc\MJapi.rc;%(Outputs)</Outputs>
       <Inputs>$(SolutionDir)\..\Resources\MakeRes.pl;%(Inputs)</Inputs>
     </CustomBuildStep>
+    <Manifest>
+      <AdditionalManifestFiles>$(SolutionDir)dpi-aware.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -101,6 +104,9 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>$(SolutionDir)dpi-aware.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\CTestWindow.cpp" />

@@ -517,11 +517,7 @@ STDMETHODIMP MTextRenderer::GetPixelsPerDip(
     __out FLOAT* pixelsPerDip
     )
 {
-    float x, yUnused;
-
-    mRenderTarget->GetDpi(&x, &yUnused);
-    *pixelsPerDip = x / 96;
-
+	*pixelsPerDip = 1;
     return S_OK;
 }
 
@@ -615,6 +611,15 @@ MWinDeviceImpl::MWinDeviceImpl()
 	, mFont(nil)
 	, mSelectionLength(0)
 {
+    HDC hdc = ::GetDC(NULL);
+    if (hdc)
+    {
+        mDpiScaleX = 96.f / ::GetDeviceCaps(hdc, LOGPIXELSX);
+        mDpiScaleY = 96.f / ::GetDeviceCaps(hdc, LOGPIXELSY);
+        ::ReleaseDC(NULL, hdc);
+    }
+    else
+    	mDpiScaleX = mDpiScaleY = 1.0f;
 }
 
 MWinDeviceImpl::MWinDeviceImpl(
@@ -631,12 +636,15 @@ MWinDeviceImpl::MWinDeviceImpl(
 	, mFont(nil)
 	, mSelectionLength(0)
 {
-	//MWindow* window = inView->GetWindow();
-	//THROW_IF_NIL(window);
-	//MWinWindowImpl* windowImpl = static_cast<MWinWindowImpl*>(window->GetImpl());
-
-	//mRenderTarget = windowImpl->GetRenderTarget();
-	//THROW_IF_NIL(mRenderTarget);
+    HDC hdc = ::GetDC(NULL);
+    if (hdc)
+    {
+        mDpiScaleX = 96.f / ::GetDeviceCaps(hdc, LOGPIXELSX);
+        mDpiScaleY = 96.f / ::GetDeviceCaps(hdc, LOGPIXELSY);
+        ::ReleaseDC(NULL, hdc);
+    }
+    else
+    	mDpiScaleX = mDpiScaleY = 1.0f;
 
 	MRect bounds;
 	inView->GetBounds(bounds);
@@ -648,10 +656,12 @@ MWinDeviceImpl::MWinDeviceImpl(
 	MCanvas* canvas = dynamic_cast<MCanvas*>(inView);
 	mRenderTarget = static_cast<MWinCanvasImpl*>(canvas->GetImpl())->GetRenderTarget();
 
-	mRenderTarget->SetTransform(
+	D2D1::Matrix3x2F translate(
 		D2D1::Matrix3x2F::Translation(
 			static_cast<float>(x - bounds.x),
 			static_cast<float>(y - bounds.y)));
+	
+	mRenderTarget->SetTransform(translate);
 
 	if (inUpdate)
 		ClipRect(inUpdate);
@@ -913,7 +923,7 @@ void MWinDeviceImpl::SetFont(
 		THROW(("Error in specified font"));
 
 	mFontFamily = c2w(inFont.substr(0, e - inFont.begin()));
-	mFontSize = size * 96.f / 72.f;
+	mFontSize = (size * 96.f) / (72.f * mDpiScaleY);
 
 	// OK, so that's what the user requested, now find something suitable
 	LookupFont(mFontFamily);
@@ -996,6 +1006,15 @@ float MWinDeviceImpl::GetAscent()
 	DWRITE_FONT_METRICS metrics;
 	mFont->GetMetrics(&metrics);
 	return metrics.ascent * mFontSize / metrics.designUnitsPerEm;
+
+	//CreateTextFormat();
+	//
+	//DWRITE_LINE_SPACING_METHOD lineSpacingMethod;
+	//float lineSpacing, baseline;
+	//
+	//mTextFormat->GetLineSpacing(&lineSpacingMethod, &lineSpacing, &baseline);
+	//
+	//return baseline;
 }
 
 float MWinDeviceImpl::GetDescent()
@@ -1017,6 +1036,26 @@ int32 MWinDeviceImpl::GetLineHeight()
 	mFont->GetMetrics(&metrics);
 	return static_cast<int32>(
 		ceil((metrics.ascent + metrics.descent + metrics.lineGap) * mFontSize / metrics.designUnitsPerEm));
+
+	//CreateTextFormat();
+	//
+	//DWRITE_LINE_SPACING_METHOD lineSpacingMethod;
+	//float lineSpacing, baseline;
+	//
+	//THROW_IF_HRESULT_ERROR(mTextFormat->GetLineSpacing(&lineSpacingMethod, &lineSpacing, &baseline));
+	//
+	//return static_cast<int32>(floor(lineSpacing));
+
+
+	//if (mTextLayout == nil)
+	//	SetText(" ");
+	//
+	//DWRITE_LINE_SPACING_METHOD lineSpacingMethod = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+	//float lineSpacing, baseline;
+	//
+	//THROW_IF_HRESULT_ERROR(mTextLayout->GetLineSpacing(&lineSpacingMethod, &lineSpacing, &baseline));
+	//
+	//return static_cast<int32>(floor(lineSpacing));
 }
 
 float MWinDeviceImpl::GetXWidth()
@@ -1326,7 +1365,7 @@ void MWinDeviceImpl::DrawCaret(
 
     // The default thickness of 1 pixel is almost _too_ thin on modern large monitors,
     // but we'll use it.
-    DWORD caretIntThickness = 2;
+    DWORD caretIntThickness = 2 / mDpiScaleX;
 	::SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caretIntThickness, FALSE);
     const float caretThickness = float(caretIntThickness);
 
