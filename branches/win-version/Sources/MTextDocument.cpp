@@ -490,8 +490,8 @@ void MTextDocument::ReInit()
 
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetXWidth();
-#pragma message("this sucks!")
-	mTabWidth = floor(mCharWidth * mCharsPerTab);
+	// decrement the tabwidth a little to work around a bug in DirectWrite
+	mTabWidth = mCharWidth * mCharsPerTab - 0.01;
 }
 
 // ---------------------------------------------------------------------------

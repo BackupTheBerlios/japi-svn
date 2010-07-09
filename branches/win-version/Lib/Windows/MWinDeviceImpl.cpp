@@ -662,6 +662,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 			static_cast<float>(y - bounds.y)));
 	
 	mRenderTarget->SetTransform(translate);
+	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
 	if (inUpdate)
 		ClipRect(inUpdate);
