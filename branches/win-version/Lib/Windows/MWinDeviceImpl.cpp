@@ -662,6 +662,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 			static_cast<float>(y - bounds.y)));
 	
 	mRenderTarget->SetTransform(translate);
+
+	// default to this mode:
 	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
 	if (inUpdate)
@@ -1313,9 +1315,6 @@ void MWinDeviceImpl::DrawText(
 				// to the per-primitive antialiasing of the edges unless
 				// it is disabled (better for performance anyway).
 
-				D2D1_ANTIALIAS_MODE savedMode = mRenderTarget->GetAntialiasMode();
-				mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-
 				for (size_t i = 0; i < actualHitTestCount; ++i)
 				{
 					const DWRITE_HIT_TEST_METRICS& htm = hitTestMetrics[i];
@@ -1328,8 +1327,6 @@ void MWinDeviceImpl::DrawText(
             
 					mRenderTarget->FillRectangle(highlightRect, selectionColorBrush);
 				}
-
-				mRenderTarget->SetAntialiasMode(savedMode);
 			}
 
 			selectionColorBrush->Release();
@@ -1372,14 +1369,11 @@ void MWinDeviceImpl::DrawCaret(
 
 	SetForeColor(kBlack);
 
-	D2D1_ANTIALIAS_MODE savedMode = mRenderTarget->GetAntialiasMode();
-	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	mRenderTarget->FillRectangle(
 		D2D1::RectF(inX + caretX - caretThickness / 2, inY + caretY,
 					inX + caretX + caretThickness / 2, floor(inY + caretY + caretMetrics.height)
 		),
 		mForeBrush);
-	mRenderTarget->SetAntialiasMode(savedMode);
 }
 
 void MWinDeviceImpl::BreakLines(
