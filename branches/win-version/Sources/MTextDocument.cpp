@@ -66,6 +66,7 @@ namespace
 const char
 	kNoAction[]			= "None",
 	kTypeAction[]		= "Type",
+	kCompleteAction[]	= "Complete",
 	kPasteAction[]		= "Paste",
 	kReplaceAction[]	= "Replace",
 	kDropAction[]		= "Drag",
@@ -491,7 +492,7 @@ void MTextDocument::ReInit()
 	mLineHeight = device.GetLineHeight();
 	mCharWidth = device.GetXWidth();
 	// decrement the tabwidth a little to work around a bug in DirectWrite
-	mTabWidth = mCharWidth * mCharsPerTab - 0.01;
+	mTabWidth = mCharWidth * mCharsPerTab - 0.01f;
 }
 
 // ---------------------------------------------------------------------------
@@ -3097,11 +3098,12 @@ void MTextDocument::DoReplaceAll()
 
 void MTextDocument::DoComplete(MDirection inDirection)
 {
-	if (mCompletionIndex != -1 and mCurrentAction == kTypeAction)
+	if (mCompletionIndex != -1 and mCurrentAction == kCompleteAction)
 	{
-		int32 remove = mSelection.GetCaret() - mCompletionStartOffset;
-		if (remove > 0)
-			Delete(mCompletionStartOffset, mSelection.GetCaret() - mCompletionStartOffset);
+		DoUndo();
+		//int32 remove = mSelection.GetCaret() - mCompletionStartOffset;
+		//if (remove > 0)
+		//	Delete(mCompletionStartOffset, mSelection.GetCaret() - mCompletionStartOffset);
 	}
 	else
 	{
@@ -3154,8 +3156,28 @@ void MTextDocument::DoComplete(MDirection inDirection)
 	}
 	else
 	{
-		Type(mCompletionStrings[mCompletionIndex].c_str(),
-			mCompletionStrings[mCompletionIndex].length());
+		StartAction(kCompleteAction);
+
+		uint32 offset = mCompletionStartOffset;
+	
+		uint32 len = mCompletionStrings[mCompletionIndex].length();
+
+		Insert(offset, mCompletionStrings[mCompletionIndex].c_str(), len);
+	
+		for (int i = kActiveInputArea; i <= kSelectedText; ++i)
+			mTextInputAreaInfo.fOffset[i] = -1;
+	
+		MSelection s = mText.GetSelectionAfter();
+		if (s.GetCaret() == offset)
+			s.SetCaret(offset + len);
+		ChangeSelection(MSelection(this, offset + len, offset + len));
+		mText.SetSelectionAfter(s);
+
+		uint32 line;
+		OffsetToPosition(mSelection.GetCaret(), line, mWalkOffset);
+		
+		SendSelectionChangedEvent();
+		eScroll(kScrollToCaret);
 	}
 	
 	TouchLine(OffsetToLine(mCompletionStartOffset));
@@ -3432,7 +3454,8 @@ bool MTextDocument::HandleKeydown(
 	
 	if (not handled and
 		(inModifiers & ~kShiftKey) == 0 and
-		not inText.empty())
+		not inText.empty() and
+		not (inText.length() == 1 and iscntrl(inText[0])))
 	{
 		if (mFastFindMode)
 			FastFindType(inText.c_str(), inText.length());
