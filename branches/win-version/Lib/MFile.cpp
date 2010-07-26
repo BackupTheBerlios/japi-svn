@@ -352,8 +352,9 @@ void MLocalFileSaver::DoSave()
 		
 		bool save = true;
 		
-		if (fs::exists(path) and
-		    (fs::last_write_time(path) <= mFile.GetModDate() or eAskOverwriteNewer()))
+		if (not fs::exists(path) or
+		    fs::last_write_time(path) <= mFile.GetModDate() or
+			eAskOverwriteNewer())
 		{
 			fs::ofstream file(path, ios::trunc|ios::binary);
 			
