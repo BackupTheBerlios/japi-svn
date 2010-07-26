@@ -156,9 +156,6 @@ class MDocument : public MHandler
 	bool				mDirty;
 
   private:
-	MFileLoader*		mFileLoader;
-	MFileSaver*			mFileSaver;
-
 	MDocument*			mNext;
 	static MDocument*	sFirst;
 };

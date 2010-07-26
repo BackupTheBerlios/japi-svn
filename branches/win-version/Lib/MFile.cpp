@@ -352,19 +352,22 @@ void MLocalFileSaver::DoSave()
 		
 		bool save = true;
 		
-		if (fs::exists(path) and fs::last_write_time(path) > mFile.GetModDate())
-			save = eAskOverwriteNewer();
-	
-		fs::ofstream file(path, ios::trunc|ios::binary);
-		
-		if (not file.is_open())
-			THROW(("Could not open file %s for writing", path.leaf().c_str()));
-		
-		eWriteFile(file);
-		
-		eFileWritten();
-		
-		SetFileInfo(false, fs::last_write_time(path));
+		if (fs::exists(path) and
+		    (fs::last_write_time(path) <= mFile.GetModDate() or eAskOverwriteNewer()))
+		{
+			fs::ofstream file(path, ios::trunc|ios::binary);
+			
+			if (not file.is_open())
+				THROW(("Could not open file %s for writing", path.leaf().c_str()));
+			
+			eWriteFile(file);
+			
+			file.close();
+			
+			eFileWritten();
+			
+			SetFileInfo(false, fs::last_write_time(path));
+		}
 	}
 	catch (exception& e)
 	{
