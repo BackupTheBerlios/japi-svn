@@ -118,6 +118,7 @@
     <ClCompile Include="..\..\Sources\MLanguage.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageCpp.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageHTML.cpp" />
+    <ClCompile Include="..\..\Sources\MLanguagePascal.cpp" />
     <ClCompile Include="..\..\Sources\MLanguagePerl.cpp" />
     <ClCompile Include="..\..\Sources\MLanguagePython.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageTeX.cpp" />

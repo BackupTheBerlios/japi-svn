@@ -12,6 +12,7 @@
 
 #include "MLanguage.h"
 #include "MLanguageCpp.h"
+#include "MLanguagePascal.h"
 #include "MLanguagePerl.h"
 #include "MLanguagePython.h"
 #include "MLanguageTeX.h"
@@ -461,6 +462,8 @@ MLanguage::GetLanguageForDocument(
 		result = LanguageFactory<MLanguageCpp>::Create();
 	else if (MLanguageHTML::MatchLanguage(inFile, inText))
 		result = LanguageFactory<MLanguageHTML>::Create();
+	else if (MLanguagePascal::MatchLanguage(inFile, inText))
+		result = LanguageFactory<MLanguagePascal>::Create();
 	else if (MLanguagePerl::MatchLanguage(inFile, inText))
 		result = LanguageFactory<MLanguagePerl>::Create();
 	else if (MLanguagePython::MatchLanguage(inFile, inText))
@@ -478,6 +481,8 @@ MLanguage::GetLanguage(
 	const string&		inName)
 {
 	MLanguage* result = LanguageFactory<MLanguageCpp>::Create();
+	if (inName != result->GetName())
+		result = LanguageFactory<MLanguagePascal>::Create();
 	if (inName != result->GetName())
 		result = LanguageFactory<MLanguagePerl>::Create();
 	if (inName != result->GetName())

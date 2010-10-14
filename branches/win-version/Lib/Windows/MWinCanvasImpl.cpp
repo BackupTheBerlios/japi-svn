@@ -193,6 +193,9 @@ bool MWinCanvasImpl::WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM i
 			::ValidateRect(GetHandle(), &lUpdateRect);
 			
 			HRESULT hr = mRenderTarget->EndDraw();
+			if (hr != S_OK)
+				PRINT(("EndDraw returned %lx", hr));
+
 			if (hr == D2DERR_RECREATE_TARGET)
 			{
 				mRenderTarget->Release();

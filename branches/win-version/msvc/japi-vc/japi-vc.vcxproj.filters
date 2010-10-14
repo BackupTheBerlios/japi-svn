@@ -75,6 +75,9 @@
     <ClCompile Include="..\..\Sources\CTestWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\MLanguagePascal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Rsrc\MJapi.rc">
