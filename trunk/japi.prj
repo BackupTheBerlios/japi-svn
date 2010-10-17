@@ -97,6 +97,7 @@
         <file>MLanguage.cpp</file>
         <file>MLanguageCpp.cpp</file>
         <file>MLanguageHTML.cpp</file>
+        <file>MLanguagePascal.cpp</file>
         <file>MLanguagePerl.cpp</file>
         <file>MLanguagePython.cpp</file>
         <file>MLanguageTeX.cpp</file>

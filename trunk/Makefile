@@ -7,24 +7,28 @@
 PREFIX		= /usr/local
 
 DEFINES		= BUILDING_TEMPORARY_JAPI DEBUG
-LIBS		= boost_thread boost_filesystem boost_iostreams expat uuid crypto tidy pcrecpp canberra zeep
+BOOST_DIR	= ../boost
+LIBZEEP_DIR	= ../libzeep
+LIBS		= boost_system boost_thread boost_filesystem boost_iostreams expat uuid crypto tidy pcrecpp canberra zeep
 WARNINGS	= all no-multichar no-unknown-pragmas
-SOURCES		= $(wildcard Sources/*.cpp zeep/*.cpp NetSources/*.cpp)
+SOURCES		= $(wildcard Sources/*.cpp NetSources/*.cpp)
 OBJDIR		= Obj.temp/
 OBJECTS		= $(addprefix $(OBJDIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
-VPATH		:= :Sources:zeep:NetSources:
-LDFLAGS		= -g $(shell pkg-config --libs gtk+-x11-2.0 libcanberra gthread-2.0) $(LIBPATHS:%=-L%) $(LIBS:%=-l%)
-CC			= c++
+VPATH		:= :Sources:NetSources:
+CC		= c++
 CFLAGS		= -fsigned-char -g -finput-charset=UTF-8 -pipe $(WARNINGS:%=-W%) $(DEFINES:%=-D%) -std=c++0x
 CFLAGS		+= $(shell pkg-config --cflags gtk+-x11-2.0 libcanberra)
-CFLAGS		+= $(addprefix -iquote, Sources zeep NetSources)
+CFLAGS		+= -I$(BOOST_DIR)/include -I$(LIBZEEP_DIR)
+CFLAGS		+= $(addprefix -iquote, Sources NetSources)
+LDFLAGS		= -g $(shell pkg-config --libs gtk+-x11-2.0 libcanberra gthread-2.0) $(LIBPATHS:%=-L%) $(LIBS:%=-l%)
+LDFLAGS		+= -L$(BOOST_DIR)/lib -L$(LIBZEEP_DIR)
 
 OS		= $(shell uname -s)
 
 ifeq ($(OS),Linux)
 LIBS		+= attr
 LIBS		+= crypto++
-LIBS		:= $(LIBS:boost_%=boost_%-mt)
+#LIBS		:= $(LIBS:boost_%=boost_%-mt)
 endif
 
 ifeq ($(OS),FreeBSD)
