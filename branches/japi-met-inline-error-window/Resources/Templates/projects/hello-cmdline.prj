@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<project>
+	<syspaths>
+		<path>/usr/include</path>
+	</syspaths>
+	<userpaths>
+		<path>src</path>
+	</userpaths>
+	<files>
+		<file>HelloWorld.cpp</file>
+	</files>
+	<targets>
+		<target kind="Executable">
+			<name>HelloWorld-Debug</name>
+			<linkTarget>hello-world-debug</linkTarget>
+			<compiler>/usr/bin/g++</compiler>
+			<defines>
+				<define>DEBUG</define>
+			</defines>
+			<cflags>
+				<cflag>-O0</cflag>
+				<cflag>-gdwarf-2</cflag>
+			</cflags>
+			<warnings>
+				<warning>all</warning>
+			</warnings>
+		</target>
+		<target kind="Executable">
+			<name>HelloWorld-Release</name>
+			<linkTarget>hello-world-release</linkTarget>
+			<compiler>/usr/bin/g++</compiler>
+			<defines>
+				<define>NDEBUG</define>
+			</defines>
+			<cflags>
+				<cflag>-O3</cflag>
+			</cflags>
+			<warnings>
+				<warning>all</warning>
+			</warnings>
+		</target>
+	</targets>
+</project>

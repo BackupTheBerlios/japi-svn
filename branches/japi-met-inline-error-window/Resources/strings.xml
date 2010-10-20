@@ -1,0 +1,4267 @@
+<?xml version="1.0" standalone="yes" ?>
+<strings>
+	<string>
+		<loc lang="en">File</loc>
+		<loc lang="nl">Bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">New</loc>
+		<loc lang="nl">Nieuw</loc>
+	</string>
+	<string>
+		<loc lang="en">Open…</loc>
+		<loc lang="nl">Openen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Open Recent</loc>
+		<loc lang="nl">Open recente</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Edit</loc>
+		<loc lang="nl">Wijzig</loc>
+	</string>
+	<string>
+		<loc lang="en">Text</loc>
+		<loc lang="nl">Tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Search</loc>
+		<loc lang="nl">Zoek</loc>
+	</string>
+	<string>
+		<loc lang="en">Parse</loc>
+		<loc lang="nl">Functies</loc>
+	</string>
+	<string>
+		<loc lang="en">Find</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast Find</loc>
+		<loc lang="nl">Snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Writeable</loc>
+		<loc lang="nl">Beschrijfbaar</loc>
+	</string>
+	<string>
+		<loc lang="en">Read Only</loc>
+		<loc lang="nl">Beveiligd</loc>
+	</string>
+	<string>
+		<loc lang="en">Info</loc>
+		<loc lang="nl">Info</loc>
+	</string>
+	<string>
+		<loc lang="en">No Wrap</loc>
+		<loc lang="nl">Niet afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Soft Wrap</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">File 1</loc>
+		<loc lang="nl">Bestand 1</loc>
+	</string>
+	<string>
+		<loc lang="en">File 2</loc>
+		<loc lang="nl">Bestand 2</loc>
+	</string>
+	<string>
+		<loc lang="en">Rescan</loc>
+		<loc lang="nl">Berekenen</loc>
+	</string>
+	<string>
+		<loc lang="en">Merge to 1</loc>
+		<loc lang="nl">Naar 1</loc>
+	</string>
+	<string>
+		<loc lang="en">Merge to 2</loc>
+		<loc lang="nl">Naar 2</loc>
+	</string>
+	<string>
+		<loc lang="en">New</loc>
+		<loc lang="nl">Nieuw</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Execute</loc>
+		<loc lang="nl">Uitvoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Parse</loc>
+		<loc lang="nl">Functies</loc>
+	</string>
+	<string>
+		<loc lang="en">Find</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast Find</loc>
+		<loc lang="nl">Snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Writeable</loc>
+		<loc lang="nl">Beschrijfbaar</loc>
+	</string>
+	<string>
+		<loc lang="en">Read Only</loc>
+		<loc lang="nl">Beveiligd</loc>
+	</string>
+	<string>
+		<loc lang="en">Info</loc>
+		<loc lang="nl">Info</loc>
+	</string>
+	<string>
+		<loc lang="en">No Wrap</loc>
+		<loc lang="nl">Niet afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Soft Wrap</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">New</loc>
+		<loc lang="nl">Nieuw</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Variable</loc>
+		<loc lang="nl">Variabele</loc>
+	</string>
+	<string>
+		<loc lang="en">Differences</loc>
+		<loc lang="nl">Verschillen</loc>
+	</string>
+	<string>
+		<loc lang="en">General editor settings</loc>
+		<loc lang="nl">Algemene instellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Font styles for plain text, affects new documents</loc>
+		<loc lang="nl">Lettertypen voor gewone tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Encoding preferences, affects new documents</loc>
+		<loc lang="nl">Voorkeuren coderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Various colors</loc>
+		<loc lang="nl">Diverse kleuren</loc>
+	</string>
+	<string>
+		<loc lang="en">Font mappings for non-Roman scripts</loc>
+		<loc lang="nl">Lettertype toewijzing voor niet-romaanse tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Options for saving files</loc>
+		<loc lang="nl">Opties voor het opslaan van bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Options for the state information stored in files</loc>
+		<loc lang="nl">Opties voor de statusinformatie in bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Paths to use when searching for include files</loc>
+		<loc lang="nl">Zoekpaden voor 'include' bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Options for the way invisible characters are displayed</loc>
+		<loc lang="nl">Opties voor het weergeven van onzichtbare tekens</loc>
+	</string>
+	<string>
+		<loc lang="en">The bindings between key shortcuts and actions</loc>
+		<loc lang="nl">Sneltoets instellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Options for syntax styling</loc>
+		<loc lang="nl">Opties voor syntax markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Options for the function pop-up</loc>
+		<loc lang="nl">Opties voor functie pop-up</loc>
+	</string>
+	<string>
+		<loc lang="en">Paths in the directory pop-up of the Find Dialog and more</loc>
+		<loc lang="nl">Paden in zoek dialoogvenster en andere zoek instellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Options having effect on worksheets</loc>
+		<loc lang="nl">Werkblad instellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">What Pepper should do when starting up</loc>
+		<loc lang="nl">Wat Pepper moet doen bij het opstarten</loc>
+	</string>
+	<string>
+		<loc lang="en">FTP Servers to show in the FTP Open and Save dialogs</loc>
+		<loc lang="nl">FTP servers in de FTP dialoogvensters voor openen en opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Settings for using FTP</loc>
+		<loc lang="nl">Instellingen voor het gebruik van FTP</loc>
+	</string>
+	<string>
+		<loc lang="en">Default settings for softwrapping</loc>
+		<loc lang="nl">Standaardinstellingen voor afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">The filename extensions to which Pepper is associated</loc>
+		<loc lang="nl">Bestandsnaamextensies waaraan Pepper is verbonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Loading Fonts</loc>
+		<loc lang="nl">Lettertypen laden</loc>
+	</string>
+	<string>
+		<loc lang="en">Reading Preferences</loc>
+		<loc lang="nl">Voorkeuren lezen</loc>
+	</string>
+	<string>
+		<loc lang="en">Loading Language Plugins</loc>
+		<loc lang="nl">Taalextensies laden</loc>
+	</string>
+	<string>
+		<loc lang="en">Building Dialogs</loc>
+		<loc lang="nl">Dialoogvensters maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Initialization Done</loc>
+		<loc lang="nl">Initialisatie compleet</loc>
+	</string>
+	<string>
+		<loc lang="en">Building Keyword Tables</loc>
+		<loc lang="nl">Sleutelwoordtabellen genereren</loc>
+	</string>
+	<string>
+		<loc lang="en">Compressing Keyword Tables</loc>
+		<loc lang="nl">Sleutelwoordtabellen comprimeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Installing Help Files</loc>
+		<loc lang="nl">Helpbestanden installeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Extensions</loc>
+		<loc lang="nl">Extensions</loc>
+	</string>
+	<string>
+		<loc lang="en">Languages</loc>
+		<loc lang="nl">Languages</loc>
+	</string>
+	<string>
+		<loc lang="en">Templates</loc>
+		<loc lang="nl">Templates</loc>
+	</string>
+	<string>
+		<loc lang="en">Settings</loc>
+		<loc lang="nl">Settings</loc>
+	</string>
+	<string>
+		<loc lang="en">Accelerator.hs</loc>
+		<loc lang="nl">Accelerator.hs</loc>
+	</string>
+	<string>
+		<loc lang="en">Keybindings.hs</loc>
+		<loc lang="nl">Keybindings.hs</loc>
+	</string>
+	<string>
+		<loc lang="en">Context menu items</loc>
+		<loc lang="nl">Context menu items</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut</loc>
+		<loc lang="nl">Knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy</loc>
+		<loc lang="nl">Kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Paste</loc>
+		<loc lang="nl">Plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">Syntax Styling</loc>
+		<loc lang="nl">Syntax markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Invisibles</loc>
+		<loc lang="nl">Onzichtbare tekens weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Switch Font</loc>
+		<loc lang="nl">Lettertype wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Line Numbers</loc>
+		<loc lang="nl">Regelnummers weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Accelerator</loc>
+		<loc lang="nl">Toon Accelerator</loc>
+	</string>
+	<string>
+		<loc lang="en">Show in Windows Explorer</loc>
+		<loc lang="nl">Weergeven in Windows Verkenner</loc>
+	</string>
+	<string>
+		<loc lang="en">Undo strings</loc>
+		<loc lang="nl">Undo strings</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Drop</loc>
+		<loc lang="nl">Verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift Left</loc>
+		<loc lang="nl">Naar links verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift Right</loc>
+		<loc lang="nl">Naar rechts verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Twiddle</loc>
+		<loc lang="nl">Tekens omwisselen</loc>
+	</string>
+	<string>
+		<loc lang="en">Comment</loc>
+		<loc lang="nl">Commentaar plaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Uncomment</loc>
+		<loc lang="nl">Commentaar verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Insert Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Remove Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Justify</loc>
+		<loc lang="nl">Passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Change Case</loc>
+		<loc lang="nl">Hoofdletter/kleine letter</loc>
+	</string>
+	<string>
+		<loc lang="en">Change Encoding</loc>
+		<loc lang="nl">Tekstcodering wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Entab</loc>
+		<loc lang="nl">Van spaties tabs maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Detab</loc>
+		<loc lang="nl">Van tabs spaties maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace All</loc>
+		<loc lang="nl">Alles vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut</loc>
+		<loc lang="nl">Knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Paste</loc>
+		<loc lang="nl">Plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">Typing</loc>
+		<loc lang="nl">Typen</loc>
+	</string>
+	<string>
+		<loc lang="en">Can't Undo</loc>
+		<loc lang="nl">Kan niet ongedaan maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Can't Redo</loc>
+		<loc lang="nl">Kan niet opnieuw uitvoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Undo ^0</loc>
+		<loc lang="nl">Ongedaan maken ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Redo ^0</loc>
+		<loc lang="nl">Opnieuw ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">cut marked lines</loc>
+		<loc lang="nl">Gemarkeerde regels knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">clear marked lines</loc>
+		<loc lang="nl">Gemarkeerde regels wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">change eoln char</loc>
+		<loc lang="nl">Einde-regelteken wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">quoted rewrap</loc>
+		<loc lang="nl">citaat passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Leave Open</loc>
+		<loc lang="nl">Open laten</loc>
+	</string>
+	<string>
+		<loc lang="en">Save To Disk</loc>
+		<loc lang="nl">Opslaan op schijf</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Discard</loc>
+		<loc lang="nl">Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Search Results</loc>
+		<loc lang="nl">Zoekresultaten</loc>
+	</string>
+	<string>
+		<loc lang="en">Found ^0 occurrences of '^1'</loc>
+		<loc lang="nl">'^1' is op ^0 plaatsen gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Error Messages</loc>
+		<loc lang="nl">Foutmeldingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Received ^0 Error Messages</loc>
+		<loc lang="nl">^0 foutmeldingen ontvangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Definitions</loc>
+		<loc lang="nl">Definities</loc>
+	</string>
+	<string>
+		<loc lang="en">Found ^0 Definitions of '^1'</loc>
+		<loc lang="nl">^0 definities van '^1' gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">None</loc>
+		<loc lang="nl">Geen</loc>
+	</string>
+	<string>
+		<loc lang="en">Files are identical</loc>
+		<loc lang="nl">Bestanden zijn identiek</loc>
+	</string>
+	<string>
+		<loc lang="en">Extra line in file ^0: ^1</loc>
+		<loc lang="nl">Extra regel in bestand ^0: ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">Extra lines in file ^0: ^1-^2</loc>
+		<loc lang="nl">Extra regels in bestand ^0: ^1-^2</loc>
+	</string>
+	<string>
+		<loc lang="en">Nonmatching lines. File 1: ^0, File 2: ^1</loc>
+		<loc lang="nl">Afwijkende regels. Bestand 1: ^0, bestand 2: ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">Nonmatching lines. File 1: ^0-^1, File 2: ^2</loc>
+		<loc lang="nl">Afwijkende regels. Bestand 1: ^0-^1, bestand 2: ^2</loc>
+	</string>
+	<string>
+		<loc lang="en">Nonmatching lines. File 1: ^0, File 2: ^1-^2</loc>
+		<loc lang="nl">Afwijkende regels. Bestand 1: ^0, bestand 2: ^1-^2</loc>
+	</string>
+	<string>
+		<loc lang="en">Nonmatching lines. File 1: ^0-^1, File 2: ^2-^3</loc>
+		<loc lang="nl">Afwijkende regels. Bestand 1: ^0-^1, bestand 2: ^2-^3</loc>
+	</string>
+	<string>
+		<loc lang="en">File '^0' only in dir ^1</loc>
+		<loc lang="nl">Bestand '^0' alleen in map ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">No directory selected</loc>
+		<loc lang="nl">Geen map geselecteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">Add</loc>
+		<loc lang="nl">Toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Change</loc>
+		<loc lang="nl">Wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">No ToolServer selected</loc>
+		<loc lang="nl">Geen ToolServer geselecteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">Untitled</loc>
+		<loc lang="nl">Naamloos</loc>
+	</string>
+	<string>
+		<loc lang="en">Nothing found</loc>
+		<loc lang="nl">Niets gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Choose File</loc>
+		<loc lang="nl">Bestand kiezen</loc>
+	</string>
+	<string>
+		<loc lang="en">Regular expression ^0</loc>
+		<loc lang="nl">Reguliere expressie ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Please locate ^0</loc>
+		<loc lang="nl">Opzoeken ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Info for ^0</loc>
+		<loc lang="nl">Informatie over ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Pepper Multi-File View</loc>
+		<loc lang="nl">Enkel venster</loc>
+	</string>
+	<string>
+		<loc lang="en">No directory selected</loc>
+		<loc lang="nl">Geen map geselecteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">No Functions found</loc>
+		<loc lang="nl">Geen functies gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">tags file</loc>
+		<loc lang="nl">tags bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Web Browser</loc>
+		<loc lang="nl">Webbrowser</loc>
+	</string>
+	<string>
+		<loc lang="en">Choose Folder</loc>
+		<loc lang="nl">Map kiezen</loc>
+	</string>
+	<string>
+		<loc lang="en">ToolServer</loc>
+		<loc lang="nl">ToolServer</loc>
+	</string>
+	<string>
+		<loc lang="en">Application</loc>
+		<loc lang="nl">Programma</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Help</loc>
+		<loc lang="nl">Help</loc>
+	</string>
+	<string>
+		<loc lang="en">Pick a color</loc>
+		<loc lang="nl">Kleur kiezen</loc>
+	</string>
+	<string>
+		<loc lang="en">Untitled ^0</loc>
+		<loc lang="nl">Naamloos ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">file 1:</loc>
+		<loc lang="nl">Bestand 1:</loc>
+	</string>
+	<string>
+		<loc lang="en">file 2:</loc>
+		<loc lang="nl">Bestand 2:</loc>
+	</string>
+	<string>
+		<loc lang="en">Worksheet [^0]</loc>
+		<loc lang="nl">Werkblad [^0]</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift+</loc>
+		<loc lang="nl">Shift+</loc>
+	</string>
+	<string>
+		<loc lang="en">Cmd+</loc>
+		<loc lang="nl">Cmd+</loc>
+	</string>
+	<string>
+		<loc lang="en">Wnd+</loc>
+		<loc lang="nl">Wnd+</loc>
+	</string>
+	<string>
+		<loc lang="en">Ctrl+</loc>
+		<loc lang="nl">Ctrl+</loc>
+	</string>
+	<string>
+		<loc lang="en">Opt+</loc>
+		<loc lang="nl">Opt+</loc>
+	</string>
+	<string>
+		<loc lang="en">Alt+</loc>
+		<loc lang="nl">Alt+</loc>
+	</string>
+	<string>
+		<loc lang="en">Tab</loc>
+		<loc lang="nl">Tab</loc>
+	</string>
+	<string>
+		<loc lang="en">Space</loc>
+		<loc lang="nl">Spatie</loc>
+	</string>
+	<string>
+		<loc lang="en">Backspace</loc>
+		<loc lang="nl">Backspace</loc>
+	</string>
+	<string>
+		<loc lang="en">Return</loc>
+		<loc lang="nl">Return</loc>
+	</string>
+	<string>
+		<loc lang="en">Enter</loc>
+		<loc lang="nl">Enter</loc>
+	</string>
+	<string>
+		<loc lang="en">Esc</loc>
+		<loc lang="nl">Esc</loc>
+	</string>
+	<string>
+		<loc lang="en">Left</loc>
+		<loc lang="nl">Links</loc>
+	</string>
+	<string>
+		<loc lang="en">Right</loc>
+		<loc lang="nl">Rechts</loc>
+	</string>
+	<string>
+		<loc lang="en">Up</loc>
+		<loc lang="nl">Op</loc>
+	</string>
+	<string>
+		<loc lang="en">Down</loc>
+		<loc lang="nl">Neer</loc>
+	</string>
+	<string>
+		<loc lang="en">Insert</loc>
+		<loc lang="nl">Insert</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete</loc>
+		<loc lang="nl">Delete</loc>
+	</string>
+	<string>
+		<loc lang="en">Home</loc>
+		<loc lang="nl">Home</loc>
+	</string>
+	<string>
+		<loc lang="en">End</loc>
+		<loc lang="nl">End</loc>
+	</string>
+	<string>
+		<loc lang="en">PgUp</loc>
+		<loc lang="nl">PgUp</loc>
+	</string>
+	<string>
+		<loc lang="en">PgDn</loc>
+		<loc lang="nl">PgDn</loc>
+	</string>
+	<string>
+		<loc lang="en">F1</loc>
+		<loc lang="nl">F1</loc>
+	</string>
+	<string>
+		<loc lang="en">F2</loc>
+		<loc lang="nl">F2</loc>
+	</string>
+	<string>
+		<loc lang="en">F3</loc>
+		<loc lang="nl">F3</loc>
+	</string>
+	<string>
+		<loc lang="en">F4</loc>
+		<loc lang="nl">F4</loc>
+	</string>
+	<string>
+		<loc lang="en">F5</loc>
+		<loc lang="nl">F5</loc>
+	</string>
+	<string>
+		<loc lang="en">F6</loc>
+		<loc lang="nl">F6</loc>
+	</string>
+	<string>
+		<loc lang="en">F7</loc>
+		<loc lang="nl">F7</loc>
+	</string>
+	<string>
+		<loc lang="en">F8</loc>
+		<loc lang="nl">F8</loc>
+	</string>
+	<string>
+		<loc lang="en">F9</loc>
+		<loc lang="nl">F9</loc>
+	</string>
+	<string>
+		<loc lang="en">F10</loc>
+		<loc lang="nl">F10</loc>
+	</string>
+	<string>
+		<loc lang="en">F11</loc>
+		<loc lang="nl">F11</loc>
+	</string>
+	<string>
+		<loc lang="en">F12</loc>
+		<loc lang="nl">F12</loc>
+	</string>
+	<string>
+		<loc lang="en">Print</loc>
+		<loc lang="nl">Afdrukken</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll</loc>
+		<loc lang="nl">Verschuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Pause</loc>
+		<loc lang="nl">Pauze</loc>
+	</string>
+	<string>
+		<loc lang="en">Numpad-</loc>
+		<loc lang="nl">Numeriek toetsenblok</loc>
+	</string>
+	<string>
+		<loc lang="en">File</loc>
+		<loc lang="nl">Bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Line</loc>
+		<loc lang="nl">Regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Context</loc>
+		<loc lang="nl">Context</loc>
+	</string>
+	<string>
+		<loc lang="en">Registered To:</loc>
+		<loc lang="nl">Geregistreerd op naam van:</loc>
+	</string>
+	<string>
+		<loc lang="en">Name</loc>
+		<loc lang="nl">Naam</loc>
+	</string>
+	<string>
+		<loc lang="en">Size</loc>
+		<loc lang="nl">Grootte</loc>
+	</string>
+	<string>
+		<loc lang="en">Date</loc>
+		<loc lang="nl">Datum</loc>
+	</string>
+	<string>
+		<loc lang="en">File: ^0, Page: ^1</loc>
+		<loc lang="nl">Bestand: ^0, Pagina: ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">Fetching ^0</loc>
+		<loc lang="nl">^0 ophalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Sending ^0</loc>
+		<loc lang="nl">^0 verzenden</loc>
+	</string>
+	<string>
+		<loc lang="en">not an error?</loc>
+		<loc lang="nl">geen fout?</loc>
+	</string>
+	<string>
+		<loc lang="en">End of file</loc>
+		<loc lang="nl">Einde van bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">No such file</loc>
+		<loc lang="nl">Bestand bestaat niet</loc>
+	</string>
+	<string>
+		<loc lang="en">Permission denied</loc>
+		<loc lang="nl">Geen toegang</loc>
+	</string>
+	<string>
+		<loc lang="en">Failure</loc>
+		<loc lang="nl">Mislukt</loc>
+	</string>
+	<string>
+		<loc lang="en">Bad message</loc>
+		<loc lang="nl">Fout in boodschap</loc>
+	</string>
+	<string>
+		<loc lang="en">No connection</loc>
+		<loc lang="nl">Geen verbinding</loc>
+	</string>
+	<string>
+		<loc lang="en">Connection lost</loc>
+		<loc lang="nl">Verbinding verbroken</loc>
+	</string>
+	<string>
+		<loc lang="en">Operation not supported</loc>
+		<loc lang="nl">Bewerking niet ondersteund</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Fetching ^0</loc>
+		<loc lang="nl">^0 ophalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Putting ^0</loc>
+		<loc lang="nl">^0 neerzetten</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to open accelerator file</loc>
+		<loc lang="nl">Accelerator bestand openen mislukt</loc>
+	</string>
+	<string>
+		<loc lang="en">Expected ^0, but found ^1</loc>
+		<loc lang="nl">Verwachtte ^0, maar vond ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">end of file</loc>
+		<loc lang="nl">Einde bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">keyword</loc>
+		<loc lang="nl">Sleutelwoord</loc>
+	</string>
+	<string>
+		<loc lang="en">string</loc>
+		<loc lang="nl">Tekenreeks</loc>
+	</string>
+	<string>
+		<loc lang="en">number</loc>
+		<loc lang="nl">Getal</loc>
+	</string>
+	<string>
+		<loc lang="en">'accelerator'</loc>
+		<loc lang="nl">'accelerator'</loc>
+	</string>
+	<string>
+		<loc lang="en">'text'</loc>
+		<loc lang="nl">'text'</loc>
+	</string>
+	<string>
+		<loc lang="en">'menu'</loc>
+		<loc lang="nl">'menu'</loc>
+	</string>
+	<string>
+		<loc lang="en">'extension'</loc>
+		<loc lang="nl">'extension'</loc>
+	</string>
+	<string>
+		<loc lang="en">'name'</loc>
+		<loc lang="nl">'name'</loc>
+	</string>
+	<string>
+		<loc lang="en">'shortcut'</loc>
+		<loc lang="nl">'shortcut'</loc>
+	</string>
+	<string>
+		<loc lang="en">'language'</loc>
+		<loc lang="nl">'language'</loc>
+	</string>
+	<string>
+		<loc lang="en">'items'</loc>
+		<loc lang="nl">'items'</loc>
+	</string>
+	<string>
+		<loc lang="en">'value'</loc>
+		<loc lang="nl">'value'</loc>
+	</string>
+	<string>
+		<loc lang="en">'shift'</loc>
+		<loc lang="nl">'shift'</loc>
+	</string>
+	<string>
+		<loc lang="en">'command'</loc>
+		<loc lang="nl">'command'</loc>
+	</string>
+	<string>
+		<loc lang="en">'control'</loc>
+		<loc lang="nl">'control'</loc>
+	</string>
+	<string>
+		<loc lang="en">'option'</loc>
+		<loc lang="nl">'option'</loc>
+	</string>
+	<string>
+		<loc lang="en">'numpad'</loc>
+		<loc lang="nl">'numpad'</loc>
+	</string>
+	<string>
+		<loc lang="en">'none'</loc>
+		<loc lang="nl">'none'</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to open keybindings file</loc>
+		<loc lang="nl">Snelkoppelingsbestand openen mislukt</loc>
+	</string>
+	<string>
+		<loc lang="en">Expected ^0, but found ^1</loc>
+		<loc lang="nl">Verwachtte ^0, maar vond ^1</loc>
+	</string>
+	<string>
+		<loc lang="en">end of file</loc>
+		<loc lang="nl">Einde bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">keyword</loc>
+		<loc lang="nl">Sleutelwoord</loc>
+	</string>
+	<string>
+		<loc lang="en">string</loc>
+		<loc lang="nl">Tekenreeks</loc>
+	</string>
+	<string>
+		<loc lang="en">number</loc>
+		<loc lang="nl">Getal</loc>
+	</string>
+	<string>
+		<loc lang="en">'keybinding'</loc>
+		<loc lang="nl">'keybinding'</loc>
+	</string>
+	<string>
+		<loc lang="en">'state'</loc>
+		<loc lang="nl">'state'</loc>
+	</string>
+	<string>
+		<loc lang="en">'mapping'</loc>
+		<loc lang="nl">'mapping'</loc>
+	</string>
+	<string>
+		<loc lang="en">'name'</loc>
+		<loc lang="nl">'name'</loc>
+	</string>
+	<string>
+		<loc lang="en">'shortcut'</loc>
+		<loc lang="nl">'shortcut'</loc>
+	</string>
+	<string>
+		<loc lang="en">'fallback'</loc>
+		<loc lang="nl">'fallback'</loc>
+	</string>
+	<string>
+		<loc lang="en">'continue'</loc>
+		<loc lang="nl">'continue'</loc>
+	</string>
+	<string>
+		<loc lang="en">'process_char'</loc>
+		<loc lang="nl">'process_char'</loc>
+	</string>
+	<string>
+		<loc lang="en">'new_state'</loc>
+		<loc lang="nl">'new_state'</loc>
+	</string>
+	<string>
+		<loc lang="en">'shift'</loc>
+		<loc lang="nl">'shift'</loc>
+	</string>
+	<string>
+		<loc lang="en">'command'</loc>
+		<loc lang="nl">'command'</loc>
+	</string>
+	<string>
+		<loc lang="en">'control'</loc>
+		<loc lang="nl">'control'</loc>
+	</string>
+	<string>
+		<loc lang="en">'option'</loc>
+		<loc lang="nl">'option'</loc>
+	</string>
+	<string>
+		<loc lang="en">'numpad'</loc>
+		<loc lang="nl">'numpad'</loc>
+	</string>
+	<string>
+		<loc lang="en">'none'</loc>
+		<loc lang="nl">'none'</loc>
+	</string>
+	<string>
+		<loc lang="en">'true'</loc>
+		<loc lang="nl">'true'</loc>
+	</string>
+	<string>
+		<loc lang="en">'false'</loc>
+		<loc lang="nl">'false'</loc>
+	</string>
+	<string>
+		<loc lang="en">command</loc>
+		<loc lang="nl">command</loc>
+	</string>
+	<string>
+		<loc lang="en">Text files</loc>
+		<loc lang="nl">Tekst bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">All files</loc>
+		<loc lang="nl">Alle bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">^0 Files (^1)</loc>
+		<loc lang="nl">^0 bestanden (^1)</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Help</loc>
+		<loc lang="nl">&amp;Help</loc>
+	</string>
+	<string>
+		<loc lang="en">Pepper ^0 File</loc>
+		<loc lang="nl">Pepper ^0 bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Pepper is brought to you by:</loc>
+		<loc lang="nl">Pepper wordt u aangeboden door:</loc>
+	</string>
+	<string>
+		<loc lang="en">Resource not found</loc>
+		<loc lang="nl">Bron niet gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Insufficient memory</loc>
+		<loc lang="nl">Niet genoeg geheugen</loc>
+	</string>
+	<string>
+		<loc lang="en">File not found</loc>
+		<loc lang="nl">Bestand niet gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Disk full</loc>
+		<loc lang="nl">Schijf vol</loc>
+	</string>
+	<string>
+		<loc lang="en">Unknown error</loc>
+		<loc lang="nl">Onbekende fout</loc>
+	</string>
+	<string>
+		<loc lang="en">I/O Error</loc>
+		<loc lang="nl">I/O fout</loc>
+	</string>
+	<string>
+		<loc lang="en">Resource too short</loc>
+		<loc lang="nl">Bron is te kort</loc>
+	</string>
+	<string>
+		<loc lang="en">Resource is read-only</loc>
+		<loc lang="nl">Bron is beveiligd</loc>
+	</string>
+	<string>
+		<loc lang="en">Nil pointer</loc>
+		<loc lang="nl">Ongeldig geheugenadres</loc>
+	</string>
+	<string>
+		<loc lang="en">Preference name is too long, your prefs file is probably corrupt</loc>
+		<loc lang="nl">Voorkeursnaam is te lang, waarschijnlijk is het voorkeurenbestand beschadigd</loc>
+	</string>
+	<string>
+		<loc lang="en">File I/O error: ^0</loc>
+		<loc lang="nl">Bestand I/O fout: ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Status error ???</loc>
+		<loc lang="nl">Status fout ???</loc>
+	</string>
+	<string>
+		<loc lang="en">Logical error</loc>
+		<loc lang="nl">Logische fout</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot rename file</loc>
+		<loc lang="nl">Kan bestandsnaam niet wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">File is corrupt</loc>
+		<loc lang="nl">Bestand is beschadigd</loc>
+	</string>
+	<string>
+		<loc lang="en">X error</loc>
+		<loc lang="nl">X fout</loc>
+	</string>
+	<string>
+		<loc lang="en">Locale error</loc>
+		<loc lang="nl">Localiseringsfout</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not create RGB colormaps</loc>
+		<loc lang="nl">Kon geen RGB kleurenmappen maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not create RGB colormaps</loc>
+		<loc lang="nl">Kon geen RGB kleurenmappen maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Drag not accepted</loc>
+		<loc lang="nl">Kan niet slepen</loc>
+	</string>
+	<string>
+		<loc lang="en">Extension too long</loc>
+		<loc lang="nl">Extensie is te lang</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot associate Pepper to this extension: ^0</loc>
+		<loc lang="nl">Kan Pepper niet aan deze extensie verbinden: ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">X error</loc>
+		<loc lang="nl">X-windows fout</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not open connection</loc>
+		<loc lang="nl">Kan geen verbinding openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Server's SFTP version is not supported (server has version %d)</loc>
+		<loc lang="nl">Versie van SFTP server protocol wordt niet ondersteund (%d)</loc>
+	</string>
+	<string>
+		<loc lang="en">Authentication protocol error</loc>
+		<loc lang="nl">Fout in authenticatie protocol</loc>
+	</string>
+	<string>
+		<loc lang="en">Authentication failed</loc>
+		<loc lang="nl">Authenticatie mislukt</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not open file ^0</loc>
+		<loc lang="nl">Kon bestand ^0 niet openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Directory ^0 not found</loc>
+		<loc lang="nl">Map ^0 niet gevonden</loc>
+	</string>
+	<string>
+		<loc lang="en">Language name too long</loc>
+		<loc lang="nl">Taalnaam is te lang</loc>
+	</string>
+	<string>
+		<loc lang="en">Not a valid call in this context</loc>
+		<loc lang="nl">Geen geldige aanroep in deze context</loc>
+	</string>
+	<string>
+		<loc lang="en">Not a valid regular expression\n(^0)</loc>
+		<loc lang="nl">Geen geldige reguliere expressie\n(^0)</loc>
+	</string>
+	<string>
+		<loc lang="en">Couldn't find pattern to replace</loc>
+		<loc lang="nl">Kon geen patroon vinden om te vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not create preferences file</loc>
+		<loc lang="nl">Kon geen voorkeurenbestand maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Prefname too long</loc>
+		<loc lang="nl">Voorkeursnaam is te lang</loc>
+	</string>
+	<string>
+		<loc lang="en">Error reading from resource</loc>
+		<loc lang="nl">Fout tijdens het lezen van de bron</loc>
+	</string>
+	<string>
+		<loc lang="en">Trying to modify read-only resource</loc>
+		<loc lang="nl">Poging tot wijzigen van een beveiligde bron</loc>
+	</string>
+	<string>
+		<loc lang="en">File does not have a ckid</loc>
+		<loc lang="nl">Bestand heeft geen ckid</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark not set</loc>
+		<loc lang="nl">Mark is niet gezet</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot search for a block</loc>
+		<loc lang="nl">Kan geen blokken zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot append blocks</loc>
+		<loc lang="nl">Kan geen blokken aan elkaar voegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Incremental search pattern is too long</loc>
+		<loc lang="nl">Snelzoekpatroon is te lang</loc>
+	</string>
+	<string>
+		<loc lang="en">Document is read only</loc>
+		<loc lang="nl">Document is beveiligd</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot select blocks when in softwrapping mode</loc>
+		<loc lang="nl">Kan geen blokken selecteren als afbreken aanstaat</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot twiddle blocks</loc>
+		<loc lang="nl">Kan geen blokken omwisselen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot comment blocks</loc>
+		<loc lang="nl">Kan geen blokken becommentariëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot wrap blocks</loc>
+		<loc lang="nl">Kan geen blokken afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot unwrap blocks</loc>
+		<loc lang="nl">Kan niet uit blokken regeleinden weghalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot justify blocks</loc>
+		<loc lang="nl">Kan blokken niet aanpassen</loc>
+	</string>
+	<string>
+		<loc lang="en">Invalid palette resource</loc>
+		<loc lang="nl">Ongeldige accelerator definitie</loc>
+	</string>
+	<string>
+		<loc lang="en">Invalid transaction</loc>
+		<loc lang="nl">Ongeldige transactie</loc>
+	</string>
+	<string>
+		<loc lang="en">Invalid selection for entab/detab operation</loc>
+		<loc lang="nl">Ongeldige selectie voor tab naar spatie actie</loc>
+	</string>
+	<string>
+		<loc lang="en">Invalid selection for accelerator</loc>
+		<loc lang="nl">Ongeldige selectie voor accelerator</loc>
+	</string>
+	<string>
+		<loc lang="en">Match too large.</loc>
+		<loc lang="nl">Gevonden tekst is te groot</loc>
+	</string>
+	<string>
+		<loc lang="en">Invalid Keybindings file, will use defaults</loc>
+		<loc lang="nl">Ongeldig snelkoppelingsbestand, standaardinstellingen zullen worden gebruikt</loc>
+	</string>
+	<string>
+		<loc lang="en">You will have to save this file before marking it Read only.</loc>
+		<loc lang="nl">Bestand eerst opslaan voordat het beveiligd kan worden</loc>
+	</string>
+	<string>
+		<loc lang="en">Allocation failed or pointer was nil</loc>
+		<loc lang="nl">Toewijzing mislukt of geheugenadres was ongeldig</loc>
+	</string>
+	<string>
+		<loc lang="en">Missing resource</loc>
+		<loc lang="nl">Bron ontbreekt</loc>
+	</string>
+	<string>
+		<loc lang="en">IO Error</loc>
+		<loc lang="nl">IO Fout</loc>
+	</string>
+	<string>
+		<loc lang="en">Param error</loc>
+		<loc lang="nl">Parameter fout</loc>
+	</string>
+	<string>
+		<loc lang="en">File I/O error (error: ^0)</loc>
+		<loc lang="nl">I/O fout (errno: ^0)</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not rename file</loc>
+		<loc lang="nl">Kon bestandsnaam niet wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Network error (errno: ^0)</loc>
+		<loc lang="nl">Netwerk fout (errno: ^0)</loc>
+	</string>
+	<string>
+		<loc lang="en">Cannot delete protected text</loc>
+		<loc lang="nl">Kan beveiligde tekst niet wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not upload '^0'.</loc>
+		<loc lang="nl">Kon '^0' niet versturen</loc>
+	</string>
+	<string>
+		<loc lang="en">Exec failed: ^0</loc>
+		<loc lang="nl">Uitvoering mislukt: ^0</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not connect to server '^0'</loc>
+		<loc lang="nl">Kon geen verbinding maken met server '^0'</loc>
+	</string>
+	<string>
+		<loc lang="en">Username '^0' not accepted</loc>
+		<loc lang="nl">Gebruikersnaam '^0' niet geaccepteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">Password not accepted</loc>
+		<loc lang="nl">Wachtwoord niet geaccepteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to determine current working directory</loc>
+		<loc lang="nl">Kon huidige map niet bepalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to set transfer mode</loc>
+		<loc lang="nl">Kon overdrachtmethode niet veranderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to get size for '^0'</loc>
+		<loc lang="nl">Kon grootte van '^0' niet bepalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to change directory to '^0'</loc>
+		<loc lang="nl">Kon map niet wijzigen naar '^0'</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to list directory '^0'</loc>
+		<loc lang="nl">Kon map '^0' niet weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to get file '^0'</loc>
+		<loc lang="nl">Kon bestand '^0' niet ophalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Failed to put file '^0'</loc>
+		<loc lang="nl">Kon bestand '^0' niet oversturen</loc>
+	</string>
+	<string>
+		<loc lang="en">Editing commands</loc>
+		<loc lang="nl">Opdrachten bewerken</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor Character Left</loc>
+		<loc lang="nl">Cursor een teken naar links verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor Character Right</loc>
+		<loc lang="nl">Cursor een teken naar rechts verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor Word Left</loc>
+		<loc lang="nl">Cursor een woord naar links verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor Word Right</loc>
+		<loc lang="nl">Cursor een woord naar rechts verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Beginning of Line</loc>
+		<loc lang="nl">Cursor naar begin van regel verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to End of Line</loc>
+		<loc lang="nl">Cursor naar einde van regel verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Previous Line</loc>
+		<loc lang="nl">Cursor naar vorige regel verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Next Line</loc>
+		<loc lang="nl">Cursor naar volgende regel verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Top of Page</loc>
+		<loc lang="nl">Cursor naar begin van pagina verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Bottom of Page</loc>
+		<loc lang="nl">Cursor naar einde van pagina verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to Beginning of File</loc>
+		<loc lang="nl">Cursor naar begin van bestand verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Move Cursor to End of File</loc>
+		<loc lang="nl">Cursor naar einde van bestand verplaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection with Character Left</loc>
+		<loc lang="nl">Selectie uitbreiden met een teken naar links</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection with Character Right</loc>
+		<loc lang="nl">Selectie uitbreiden met een teken naar rechts</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection with Previous Word</loc>
+		<loc lang="nl">Selectie uitbreiden met het vorige woord</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection with Next Word</loc>
+		<loc lang="nl">Selectie uitbreiden met het volgende woord</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Beginning of Line</loc>
+		<loc lang="nl">Selectie uitbreiden naar begin van de regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to End of Line</loc>
+		<loc lang="nl">Selectie uitbreiden naar einde van de regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Previous Line</loc>
+		<loc lang="nl">Selectie uitbreiden naar de vorige regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Next Line</loc>
+		<loc lang="nl">Selectie uitbreiden naar de volgende regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Current Line</loc>
+		<loc lang="nl">Selectie uitbreiden naar de huidige regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Beginning of Page</loc>
+		<loc lang="nl">Selectie uitbreiden naar begin van de pagina</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to End of Page</loc>
+		<loc lang="nl">Selectie uitbreiden naar einde van de pagina</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to Beginning of File</loc>
+		<loc lang="nl">Selectie uitbreiden naar begin van het bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Extend Selection to End of File</loc>
+		<loc lang="nl">Selectie uitbreiden naar einde van het bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll One Line Up</loc>
+		<loc lang="nl">Een regel omhoog schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll One Line Down</loc>
+		<loc lang="nl">Een regel omlaag schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll Page Up</loc>
+		<loc lang="nl">Een pagina omhoog schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll Page Down</loc>
+		<loc lang="nl">Een pagina omlaag schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll to Start of File</loc>
+		<loc lang="nl">Naar begin van bestand schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll to End of File</loc>
+		<loc lang="nl">Naar einde van bestand schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete Character Left</loc>
+		<loc lang="nl">Teken links wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete Character Right</loc>
+		<loc lang="nl">Teken rechts wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete Word Left</loc>
+		<loc lang="nl">Woord links wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete Word Right</loc>
+		<loc lang="nl">Woord rechts wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete to End of Line</loc>
+		<loc lang="nl">Tot einde van regel wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete to End of File</loc>
+		<loc lang="nl">Tot einde van bestand wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Complete Identifier looking forward</loc>
+		<loc lang="nl">Automatisch aanvullen met vooruit zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Complete Identifier looking backward</loc>
+		<loc lang="nl">Automatisch aanvullen met achteruit zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut to End of Line</loc>
+		<loc lang="nl">Tot einde van regel knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut Next Word</loc>
+		<loc lang="nl">Volgende woord knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut Previous Word</loc>
+		<loc lang="nl">Vorige woord knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark</loc>
+		<loc lang="nl">Mark</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark All</loc>
+		<loc lang="nl">Alles markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark Word</loc>
+		<loc lang="nl">Woord markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Exchange Caret and Mark</loc>
+		<loc lang="nl">Mark en Caret omwisselen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut Region between Caret and Mark</loc>
+		<loc lang="nl">Tekst tussen Caret en Mark knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy Region between Caret and Mark</loc>
+		<loc lang="nl">Tekst tussen Caret en Mark kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete Region between Caret and Mark</loc>
+		<loc lang="nl">Tekst tussen Caret en Mark wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Append Next Cut</loc>
+		<loc lang="nl">Volgende knip toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open Line</loc>
+		<loc lang="nl">Regel openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Recenter</loc>
+		<loc lang="nl">Opnieuw centreren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut Line</loc>
+		<loc lang="nl">Regel knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy Line</loc>
+		<loc lang="nl">Regel kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear Line</loc>
+		<loc lang="nl">Regel wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Start Block selection</loc>
+		<loc lang="nl">Blokselectie beginnen</loc>
+	</string>
+	<string>
+		<loc lang="en">File Menu</loc>
+		<loc lang="nl">Bestandsmenu</loc>
+	</string>
+	<string>
+		<loc lang="en">New</loc>
+		<loc lang="nl">Nieuw</loc>
+	</string>
+	<string>
+		<loc lang="en">New Project</loc>
+		<loc lang="nl">Nieuw project</loc>
+	</string>
+	<string>
+		<loc lang="en">Open…</loc>
+		<loc lang="nl">Openen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Open from Server…</loc>
+		<loc lang="nl">Vanaf server openen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Find and Open File</loc>
+		<loc lang="nl">Bestand zoeken en openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Close</loc>
+		<loc lang="nl">Sluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">Close All</loc>
+		<loc lang="nl">Alles sluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Save All</loc>
+		<loc lang="nl">Alles opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Save As…</loc>
+		<loc lang="nl">Opslaan als…</loc>
+	</string>
+	<string>
+		<loc lang="en">Save on Server…</loc>
+		<loc lang="nl">Opslaan op server…</loc>
+	</string>
+	<string>
+		<loc lang="en">Save a Copy As…</loc>
+		<loc lang="nl">Kopie opslaan als…</loc>
+	</string>
+	<string>
+		<loc lang="en">Revert</loc>
+		<loc lang="nl">Wijzigingen ongedaan maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Page Setup…</loc>
+		<loc lang="nl">Pagina opmaak…</loc>
+	</string>
+	<string>
+		<loc lang="en">Print…</loc>
+		<loc lang="nl">Afdrukken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Print One</loc>
+		<loc lang="nl">Een afdrukken</loc>
+	</string>
+	<string>
+		<loc lang="en">Quit</loc>
+		<loc lang="nl">Afsluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">Edit Menu</loc>
+		<loc lang="nl">Menu bewerken</loc>
+	</string>
+	<string>
+		<loc lang="en">Undo</loc>
+		<loc lang="nl">Ongedaan maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Redo</loc>
+		<loc lang="nl">Opnieuw uitvoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut</loc>
+		<loc lang="nl">Knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut and Append</loc>
+		<loc lang="nl">Knippen en toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy</loc>
+		<loc lang="nl">Kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy and Append</loc>
+		<loc lang="nl">Kopiëren en toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Paste</loc>
+		<loc lang="nl">Plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">Paste Next</loc>
+		<loc lang="nl">Volgende plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Select All</loc>
+		<loc lang="nl">Alles selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">Select Line</loc>
+		<loc lang="nl">Regel selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">Select Paragraph</loc>
+		<loc lang="nl">Alinea selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">File Info…</loc>
+		<loc lang="nl">Bestandsinfo…</loc>
+	</string>
+	<string>
+		<loc lang="en">File Statistics…</loc>
+		<loc lang="nl">Bestandsstatistieken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Working Directory…</loc>
+		<loc lang="nl">Werkmap…</loc>
+	</string>
+	<string>
+		<loc lang="en">Preferences…</loc>
+		<loc lang="nl">Voorkeuren…</loc>
+	</string>
+	<string>
+		<loc lang="en">Accelerator</loc>
+		<loc lang="nl">Accelerator</loc>
+	</string>
+	<string>
+		<loc lang="en">Edit Accelerator…</loc>
+		<loc lang="nl">Accelerator bewerken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Text Menu</loc>
+		<loc lang="nl">Tekst menu</loc>
+	</string>
+	<string>
+		<loc lang="en">Balance</loc>
+		<loc lang="nl">Balanceren</loc>
+	</string>
+	<string>
+		<loc lang="en">Twiddle</loc>
+		<loc lang="nl">Omwisselen</loc>
+	</string>
+	<string>
+		<loc lang="en">Change to Uppercase</loc>
+		<loc lang="nl">Wijzigen naar hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Change to Lowercase</loc>
+		<loc lang="nl">Wijzigen naar kleine letters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize Words</loc>
+		<loc lang="nl">Woorden omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize Lines</loc>
+		<loc lang="nl">Regels omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize Sentences</loc>
+		<loc lang="nl">Zinnen omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Change Encoding…</loc>
+		<loc lang="nl">Tekstcodering wijzigen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift Left</loc>
+		<loc lang="nl">Schuif naar links</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift Right</loc>
+		<loc lang="nl">Schuif naar rechts</loc>
+	</string>
+	<string>
+		<loc lang="en">Comment</loc>
+		<loc lang="nl">Commentaar plaatsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Uncomment</loc>
+		<loc lang="nl">Commentaar verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Entab</loc>
+		<loc lang="nl">Van spaties tabs maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Detab</loc>
+		<loc lang="nl">Van tabs spaties maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Soft Wrap</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Justify</loc>
+		<loc lang="nl">Passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Insert Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Remove Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">Quoted Rewrap</loc>
+		<loc lang="nl">Citaat passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Syntax Styling</loc>
+		<loc lang="nl">Syntax markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Invisibles</loc>
+		<loc lang="nl">Onzichtbare tekens weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Switch Font</loc>
+		<loc lang="nl">Lettertype wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Line Numbers</loc>
+		<loc lang="nl">Regelnummers weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show in Web Browser</loc>
+		<loc lang="nl">Weergeven in webbrowser</loc>
+	</string>
+	<string>
+		<loc lang="en">Search Menu</loc>
+		<loc lang="nl">Menu zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find…</loc>
+		<loc lang="nl">Zoeken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Again</loc>
+		<loc lang="nl">Volgende zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Again Backwards</loc>
+		<loc lang="nl">Vorige zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find in Next File</loc>
+		<loc lang="nl">Zoeken in volgend bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Selection</loc>
+		<loc lang="nl">Selectie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Selection Backwards</loc>
+		<loc lang="nl">Achterwaarts selectie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Enter Search String</loc>
+		<loc lang="nl">Als zoekpatroon invoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Enter Replace String</loc>
+		<loc lang="nl">Als vervangpatroon invoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace and Find</loc>
+		<loc lang="nl">Vervangen en Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace and Find Backwards</loc>
+		<loc lang="nl">Achterwaarts zoeken en vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace All</loc>
+		<loc lang="nl">Alles vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast Find</loc>
+		<loc lang="nl">Snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast Find Backwards</loc>
+		<loc lang="nl">Achterwaarts snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Definition</loc>
+		<loc lang="nl">Definitie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Go To Line…</loc>
+		<loc lang="nl">Gaan naar regel…</loc>
+	</string>
+	<string>
+		<loc lang="en">Next Replace Marker</loc>
+		<loc lang="nl">Volgende vervangpunt</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Differences…</loc>
+		<loc lang="nl">Verschillen zoeken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark</loc>
+		<loc lang="nl">Markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark Line</loc>
+		<loc lang="nl">Regel markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear all Marks</loc>
+		<loc lang="nl">Alle markeringen wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark Functions</loc>
+		<loc lang="nl">Functies markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp; Mark…</loc>
+		<loc lang="nl">Zoeken &amp; markeren…</loc>
+	</string>
+	<string>
+		<loc lang="en">Jump to Next Mark</loc>
+		<loc lang="nl">Naar volgende markering springen</loc>
+	</string>
+	<string>
+		<loc lang="en">Jump to Previous Mark</loc>
+		<loc lang="nl">Naar vorige markering springen</loc>
+	</string>
+	<string>
+		<loc lang="en">Copy Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Window Menu</loc>
+		<loc lang="nl">Menu venster</loc>
+	</string>
+	<string>
+		<loc lang="en">Multi-File View</loc>
+		<loc lang="nl">Enkel venster</loc>
+	</string>
+	<string>
+		<loc lang="en">Error Window</loc>
+		<loc lang="nl">Berichtenvenster</loc>
+	</string>
+	<string>
+		<loc lang="en">Stack</loc>
+		<loc lang="nl">Stapelen</loc>
+	</string>
+	<string>
+		<loc lang="en">Tile</loc>
+		<loc lang="nl">Tegelen</loc>
+	</string>
+	<string>
+		<loc lang="en">Zoom</loc>
+		<loc lang="nl">Zoomen</loc>
+	</string>
+	<string>
+		<loc lang="en">Worksheet</loc>
+		<loc lang="nl">Werkblad</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Next Document</loc>
+		<loc lang="nl">Volgende document weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Previous Document</loc>
+		<loc lang="nl">Vorige document weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">IDE Menu</loc>
+		<loc lang="nl">IDE menu</loc>
+	</string>
+	<string>
+		<loc lang="en">Check Syntax</loc>
+		<loc lang="nl">Syntax controleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Preprocess</loc>
+		<loc lang="nl">Preprocess</loc>
+	</string>
+	<string>
+		<loc lang="en">Compile</loc>
+		<loc lang="nl">Compileren</loc>
+	</string>
+	<string>
+		<loc lang="en">Add Window</loc>
+		<loc lang="nl">Venster toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Bring Up To Date</loc>
+		<loc lang="nl">Bijwerken</loc>
+	</string>
+	<string>
+		<loc lang="en">Make</loc>
+		<loc lang="nl">Maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Run</loc>
+		<loc lang="nl">Draaien</loc>
+	</string>
+	<string>
+		<loc lang="en">Miscellaneous</loc>
+		<loc lang="nl">Diversen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open Header/Source</loc>
+		<loc lang="nl">Kop/bron openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Execute Command</loc>
+		<loc lang="nl">Opdracht uitvoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel Executing Command</loc>
+		<loc lang="nl">Uitvoeropdracht annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Split Pane</loc>
+		<loc lang="nl">Venster splitsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Switch to Other Part</loc>
+		<loc lang="nl">Overschakelen naar ander paneel</loc>
+	</string>
+	<string>
+		<loc lang="en">Unsplit Pane</loc>
+		<loc lang="nl">Ongesplitst paneel</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Next Error</loc>
+		<loc lang="nl">Volgende fout weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Previous Error</loc>
+		<loc lang="nl">Vorige fout weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Extensions</loc>
+		<loc lang="nl">Extensies</loc>
+	</string>
+	<string>
+		<loc lang="en">\0x14</loc>
+		<loc lang="nl">\0x14</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;File</loc>
+		<loc lang="nl">&amp;Bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Edit</loc>
+		<loc lang="nl">Be&amp;werken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Text</loc>
+		<loc lang="nl">&amp;Tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Search</loc>
+		<loc lang="nl">&amp;Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Mark</loc>
+		<loc lang="nl">&amp;Markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Extension</loc>
+		<loc lang="nl">&amp;Extensie</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Window</loc>
+		<loc lang="nl">&amp;Venster</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;About Pepper…</loc>
+		<loc lang="nl">&amp;Over Pepper…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Register…</loc>
+		<loc lang="nl">&amp;Registeren…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Pepper Documentation…</loc>
+		<loc lang="nl">&amp;Pepper documentatie…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;New</loc>
+		<loc lang="nl">&amp;Nieuw</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Open…</loc>
+		<loc lang="nl">&amp;Openen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Open fro&amp;m Server…</loc>
+		<loc lang="nl">Openen van server…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Find and Open File…</loc>
+		<loc lang="nl">&amp;Bestand zoeken en openen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Open &amp;Recent</loc>
+		<loc lang="nl">&amp;Recente bestanden openen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Close</loc>
+		<loc lang="nl">&amp;Sluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">Close &amp;All</loc>
+		<loc lang="nl">&amp;Alles sluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Save</loc>
+		<loc lang="nl">&amp;Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Sa&amp;ve on Server…</loc>
+		<loc lang="nl">Opslaan op server…</loc>
+	</string>
+	<string>
+		<loc lang="en">Save A&amp;ll</loc>
+		<loc lang="nl">Alles opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Sav&amp;e As…</loc>
+		<loc lang="nl">Opslaan als…</loc>
+	</string>
+	<string>
+		<loc lang="en">Save a &amp;Copy As…</loc>
+		<loc lang="nl">Kopie opslaan als…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Revert</loc>
+		<loc lang="nl">&amp;Wijzigingen ongedaan maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Pr&amp;int Setup…</loc>
+		<loc lang="nl">Pagina-instelling…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Print</loc>
+		<loc lang="nl">&amp;Afdrukken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Quit</loc>
+		<loc lang="nl">&amp;Afsluiten</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Undo</loc>
+		<loc lang="nl">&amp;Ongedaan maken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Redo</loc>
+		<loc lang="nl">&amp;Opnieuw uitvoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cu&amp;t</loc>
+		<loc lang="nl">Knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cut and Appen&amp;d</loc>
+		<loc lang="nl">Knippen en toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Copy</loc>
+		<loc lang="nl">&amp;Kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">C&amp;opy and Append</loc>
+		<loc lang="nl">Kopiëren en toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Paste</loc>
+		<loc lang="nl">&amp;Plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">Paste &amp;Next</loc>
+		<loc lang="nl">Volgende plakken</loc>
+	</string>
+	<string>
+		<loc lang="en">C&amp;lear</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Insert</loc>
+		<loc lang="nl">&amp;Invoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Select &amp;All</loc>
+		<loc lang="nl">Alles selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">Select &amp;Line</loc>
+		<loc lang="nl">Regel selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">Select &amp;Paragraph</loc>
+		<loc lang="nl">Alinea selecteren</loc>
+	</string>
+	<string>
+		<loc lang="en">File &amp;Info…</loc>
+		<loc lang="nl">Bestandsinfo…</loc>
+	</string>
+	<string>
+		<loc lang="en">File Statistics…</loc>
+		<loc lang="nl">Bestandsstatistieken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Working &amp;Directory…</loc>
+		<loc lang="nl">Werkmap…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Accelerator</loc>
+		<loc lang="nl">&amp;Accelerator</loc>
+	</string>
+	<string>
+		<loc lang="en">A&amp;ccelerator Editor…</loc>
+		<loc lang="nl">A&amp;ccelerator Editor…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Preferences…</loc>
+		<loc lang="nl">&amp;Voorkeuren…</loc>
+	</string>
+	<string>
+		<loc lang="en">Test</loc>
+		<loc lang="nl">Test</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Balance</loc>
+		<loc lang="nl">&amp;Balanceren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Twiddle</loc>
+		<loc lang="nl">&amp;Omwisselen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Change Case</loc>
+		<loc lang="nl">&amp;Hoofdletter/kleine letter</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift &amp;Left</loc>
+		<loc lang="nl">Naar links schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">Shift &amp;Right</loc>
+		<loc lang="nl">Naar rechts schuiven</loc>
+	</string>
+	<string>
+		<loc lang="en">C&amp;omment</loc>
+		<loc lang="nl">Commentaar toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Uncomment</loc>
+		<loc lang="nl">Commentaar verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Entab</loc>
+		<loc lang="nl">Van spaties naar tabs</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Detab</loc>
+		<loc lang="nl">Van tabs naar spaties</loc>
+	</string>
+	<string>
+		<loc lang="en">Soft &amp;Wrap</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Justify</loc>
+		<loc lang="nl">&amp;Passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">In&amp;sert Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Remove Line Breaks</loc>
+		<loc lang="nl">Einde-regeltekens verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Quoted Rewrap…</loc>
+		<loc lang="nl">Citaat passend maken…</loc>
+	</string>
+	<string>
+		<loc lang="en">S&amp;yntax Styling</loc>
+		<loc lang="nl">Syntax weergave</loc>
+	</string>
+	<string>
+		<loc lang="en">S&amp;how Invisibles</loc>
+		<loc lang="nl">Onzichtbare tekens weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Switch &amp;Font</loc>
+		<loc lang="nl">Lettertype wijzigen</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Line &amp;Numbers</loc>
+		<loc lang="nl">Regelnummers weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show in Web &amp;Browser</loc>
+		<loc lang="nl">In webbrowser weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Find…</loc>
+		<loc lang="nl">&amp;Zoeken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;Again</loc>
+		<loc lang="nl">Verder zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;Again Backwards</loc>
+		<loc lang="nl">Achterwaarts verder zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find in &amp;Next File</loc>
+		<loc lang="nl">Zoeken in volgende bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;Selection</loc>
+		<loc lang="nl">Selectie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;Selection Backwards</loc>
+		<loc lang="nl">Achterwaarts selectie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Enter Search String</loc>
+		<loc lang="nl">Zoekpatroon invoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Enter Replace String</loc>
+		<loc lang="nl">Vervangpatroon invoeren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Replace</loc>
+		<loc lang="nl">&amp;Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Rep&amp;lace &amp;&amp; Find</loc>
+		<loc lang="nl">Zoeken en vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace &amp;&amp; Find Backwards</loc>
+		<loc lang="nl">Achterwaarts zoeken en vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replac&amp;e All</loc>
+		<loc lang="nl">Alles vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast F&amp;ind</loc>
+		<loc lang="nl">Snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Fast Find Backwards</loc>
+		<loc lang="nl">Achterwaarts snelzoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;Definition…</loc>
+		<loc lang="nl">Definitie zoeken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Go to &amp;Line…</loc>
+		<loc lang="nl">Naar regel springen…</loc>
+	</string>
+	<string>
+		<loc lang="en">Next Replace Marker</loc>
+		<loc lang="nl">Volgende vervangingsmarkering</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Differen&amp;ces…</loc>
+		<loc lang="nl">Verschillen zoeken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Cle&amp;ar Marks</loc>
+		<loc lang="nl">Markeringen wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark &amp;Line</loc>
+		<loc lang="nl">&amp;Regel markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark &amp;Functions</loc>
+		<loc lang="nl">&amp;Functies markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Find &amp;&amp; Mark…</loc>
+		<loc lang="nl">Zoeken &amp;&amp; markeren…</loc>
+	</string>
+	<string>
+		<loc lang="en">Jump to &amp;Next Mark</loc>
+		<loc lang="nl">Naar volgende markering springen</loc>
+	</string>
+	<string>
+		<loc lang="en">Jump to &amp;Previous Mark</loc>
+		<loc lang="nl">Naar vorige markering springen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Copy Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels kopiëren</loc>
+	</string>
+	<string>
+		<loc lang="en">Cu&amp;t Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels knippen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cl&amp;ear Marked Lines</loc>
+		<loc lang="nl">Gemarkeerde regels wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Multi-File View</loc>
+		<loc lang="nl">Enkel venster</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Error Window</loc>
+		<loc lang="nl">&amp;Foutenvenster</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Worksheet</loc>
+		<loc lang="nl">&amp;Werkblad</loc>
+	</string>
+	<string>
+		<loc lang="en">Next Document</loc>
+		<loc lang="nl">Volgende document</loc>
+	</string>
+	<string>
+		<loc lang="en">Previous Document</loc>
+		<loc lang="nl">Vorige document</loc>
+	</string>
+	<string>
+		<loc lang="en">Color…</loc>
+		<loc lang="nl">Kleur…</loc>
+	</string>
+	<string>
+		<loc lang="en">Listing…</loc>
+		<loc lang="nl">Mapinhoud…</loc>
+	</string>
+	<string>
+		<loc lang="en">File…</loc>
+		<loc lang="nl">Bestand…</loc>
+	</string>
+	<string>
+		<loc lang="en">Unicode…</loc>
+		<loc lang="nl">Unicode…</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Plain</loc>
+		<loc lang="nl">&amp;Blanco</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;UPPER CASE</loc>
+		<loc lang="nl">&amp;HOOFDLETTERS</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;lower case</loc>
+		<loc lang="nl">&amp;kleine letters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize &amp;Words</loc>
+		<loc lang="nl">&amp;Woorden omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize l&amp;ines</loc>
+		<loc lang="nl">Regels omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">Capitalize &amp;sentences</loc>
+		<loc lang="nl">Zinnen omzetten in hoofdletters</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Plain</loc>
+		<loc lang="nl">&amp;Blanco</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Unix</loc>
+		<loc lang="nl">&amp;Unix</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Mac</loc>
+		<loc lang="nl">&amp;Mac</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;DOS</loc>
+		<loc lang="nl">&amp;DOS</loc>
+	</string>
+	<string>
+		<loc lang="en">U&amp;nicode</loc>
+		<loc lang="nl">U&amp;nicode</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Soft wrap</loc>
+		<loc lang="nl">&amp;Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">S&amp;yntax Styling</loc>
+		<loc lang="nl">S&amp;yntax weergave</loc>
+	</string>
+	<string>
+		<loc lang="en">Show &amp;Invisibles</loc>
+		<loc lang="nl">Onzichtbare tekens weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show &amp;Line Numbers</loc>
+		<loc lang="nl">Regelnummers weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">No Language</loc>
+		<loc lang="nl">Geen taal</loc>
+	</string>
+	<string>
+		<loc lang="en">New &amp;Item</loc>
+		<loc lang="nl">Nieuw &amp;item</loc>
+	</string>
+	<string>
+		<loc lang="en">New &amp;Menu</loc>
+		<loc lang="nl">Nieuw &amp;menu</loc>
+	</string>
+	<string>
+		<loc lang="en">New &amp;Subitem</loc>
+		<loc lang="nl">Nieuw &amp;subitem</loc>
+	</string>
+	<string>
+		<loc lang="en">Any Language</loc>
+		<loc lang="nl">Elke taal</loc>
+	</string>
+	<string>
+		<loc lang="en">File's &amp;Name</loc>
+		<loc lang="nl">Bestandsnaam</loc>
+	</string>
+	<string>
+		<loc lang="en">File's &amp;URL</loc>
+		<loc lang="nl">&amp;URL van bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">File's &amp;Directory</loc>
+		<loc lang="nl">Map van bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">File's &amp;Basename</loc>
+		<loc lang="nl">Stamnaam van bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">File's Name as &amp;Identifier</loc>
+		<loc lang="nl">Bestandsnaam als '&amp;Identifier'</loc>
+	</string>
+	<string>
+		<loc lang="en">Us&amp;er Name</loc>
+		<loc lang="nl">Gebruikersnaam</loc>
+	</string>
+	<string>
+		<loc lang="en">Current &amp;Time</loc>
+		<loc lang="nl">Huidige tijd</loc>
+	</string>
+	<string>
+		<loc lang="en">Current D&amp;ate</loc>
+		<loc lang="nl">Huidige datum</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Selected Text</loc>
+		<loc lang="nl">Geselecteerde tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Insertion &amp;Point</loc>
+		<loc lang="nl">Invoegpunt</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Replace Marker</loc>
+		<loc lang="nl">Vervangingsmarkeerder</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Extension</loc>
+		<loc lang="nl">Extensie</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Hidden</loc>
+		<loc lang="nl">Verborgen bestanden weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Open Read Only</loc>
+		<loc lang="nl">Openen als alleen-lezen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Find</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Find</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Match Case</loc>
+		<loc lang="nl">Hfd/kl gelijk</loc>
+	</string>
+	<string>
+		<loc lang="en">Wrap Around</loc>
+		<loc lang="nl">Omlopen</loc>
+	</string>
+	<string>
+		<loc lang="en">In Selection</loc>
+		<loc lang="nl">In selectie</loc>
+	</string>
+	<string>
+		<loc lang="en">Entire Word</loc>
+		<loc lang="nl">Geheel woord</loc>
+	</string>
+	<string>
+		<loc lang="en">Regular expression</loc>
+		<loc lang="nl">Reguliere expressie</loc>
+	</string>
+	<string>
+		<loc lang="en">Batch</loc>
+		<loc lang="nl">Verzamelen</loc>
+	</string>
+	<string>
+		<loc lang="en">Multi-File</loc>
+		<loc lang="nl">Bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Method</loc>
+		<loc lang="nl">Zoek in</loc>
+	</string>
+	<string>
+		<loc lang="en">Recursive</loc>
+		<loc lang="nl">Recursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Starting Directory</loc>
+		<loc lang="nl">Startmap</loc>
+	</string>
+	<string>
+		<loc lang="en">File name filter</loc>
+		<loc lang="nl">Bestandsnaam filter</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace All</loc>
+		<loc lang="nl">Alles vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace &amp; Find</loc>
+		<loc lang="nl">Zoeken en vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">Find</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Directory Scan</loc>
+		<loc lang="nl">Mappen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open Windows</loc>
+		<loc lang="nl">Open vensters</loc>
+	</string>
+	<string>
+		<loc lang="en">Include Files</loc>
+		<loc lang="nl">Include bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Find Definition</loc>
+		<loc lang="nl">Definitie zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Definition to find:</loc>
+		<loc lang="nl">Op te zoeken definitie:</loc>
+	</string>
+	<string>
+		<loc lang="en">not selected</loc>
+		<loc lang="nl">niet geselecteerd</loc>
+	</string>
+	<string>
+		<loc lang="en">...</loc>
+		<loc lang="nl">...</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Name:</loc>
+		<loc lang="nl">Naam:</loc>
+	</string>
+	<string>
+		<loc lang="en">New Folder</loc>
+		<loc lang="nl">Nieuwe map</loc>
+	</string>
+	<string>
+		<loc lang="en">Show Hidden</loc>
+		<loc lang="nl">Verborgen bestanden weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Find and Mark</loc>
+		<loc lang="nl">Zoeken en markeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Mark lines containing:</loc>
+		<loc lang="nl">Regels markeren met: </loc>
+	</string>
+	<string>
+		<loc lang="en">Regular expression</loc>
+		<loc lang="nl">Reguliere expressie</loc>
+	</string>
+	<string>
+		<loc lang="en">Match case</loc>
+		<loc lang="nl">Hoofdletter/kleine letter gelijk</loc>
+	</string>
+	<string>
+		<loc lang="en">Entire word</loc>
+		<loc lang="nl">Geheel woord</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">New Folder</loc>
+		<loc lang="nl">Nieuwe map</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Create</loc>
+		<loc lang="nl">Maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Name of new folder:</loc>
+		<loc lang="nl">Naam van nieuwe map:</loc>
+	</string>
+	<string>
+		<loc lang="en">Go to Line</loc>
+		<loc lang="nl">Gaan naar regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Line:</loc>
+		<loc lang="nl">Regel:</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Find and Open</loc>
+		<loc lang="nl">Zoeken en openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Name of file to open:</loc>
+		<loc lang="nl">Naam van te openen bestand:</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">No Language</loc>
+		<loc lang="nl">Geen taal</loc>
+	</string>
+	<string>
+		<loc lang="en">Unix</loc>
+		<loc lang="nl">Unix</loc>
+	</string>
+	<string>
+		<loc lang="en">Mac</loc>
+		<loc lang="nl">Mac</loc>
+	</string>
+	<string>
+		<loc lang="en">DOS</loc>
+		<loc lang="nl">DOS</loc>
+	</string>
+	<string>
+		<loc lang="en">Unicode</loc>
+		<loc lang="nl">Unicode</loc>
+	</string>
+	<string>
+		<loc lang="en">UTF-8</loc>
+		<loc lang="nl">UTF-8</loc>
+	</string>
+	<string>
+		<loc lang="en">UTF-16 BE</loc>
+		<loc lang="nl">UTF-16 BE</loc>
+	</string>
+	<string>
+		<loc lang="en">UTF-16 LE</loc>
+		<loc lang="nl">UTF-16 LE</loc>
+	</string>
+	<string>
+		<loc lang="en">MacOS Roman</loc>
+		<loc lang="nl">MacOS Romaans</loc>
+	</string>
+	<string>
+		<loc lang="en">Windows ANSI</loc>
+		<loc lang="nl">Windows ANSI</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 1 (8859-1)</loc>
+		<loc lang="nl">ISO Latin 1 (8859-1)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 2 (8859-2)</loc>
+		<loc lang="nl">ISO Latin 2 (8859-2)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 3 (8859-3)</loc>
+		<loc lang="nl">ISO Latin 3 (8859-3)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 4 (8859-4)</loc>
+		<loc lang="nl">ISO Latin 4 (8859-4)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin Cyrillic (8859-5)</loc>
+		<loc lang="nl">ISO Latin Cyrillic (8859-5)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin Arabic (8859-6)</loc>
+		<loc lang="nl">ISO Latin Arabic (8859-6)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin Greek (8859-7)</loc>
+		<loc lang="nl">ISO Latin Greek (8859-7)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin Hebrew (8859-8)</loc>
+		<loc lang="nl">ISO Latin Hebrew (8859-8)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 5 (8859-9)</loc>
+		<loc lang="nl">ISO Latin 5 (8859-9)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 6 (8859-10)</loc>
+		<loc lang="nl">ISO Latin 6 (8859-10)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 7 (8859-13)</loc>
+		<loc lang="nl">ISO Latin 7 (8859-13)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 8 (8859-14)</loc>
+		<loc lang="nl">ISO Latin 8 (8859-14)</loc>
+	</string>
+	<string>
+		<loc lang="en">ISO Latin 9 (8859-15)</loc>
+		<loc lang="nl">ISO Latin 9 (8859-15)</loc>
+	</string>
+	<string>
+		<loc lang="en">ShiftJIS</loc>
+		<loc lang="nl">ShiftJIS</loc>
+	</string>
+	<string>
+		<loc lang="en">Big5</loc>
+		<loc lang="nl">Big5</loc>
+	</string>
+	<string>
+		<loc lang="en">UTF-7</loc>
+		<loc lang="nl">UTF-7</loc>
+	</string>
+	<string>
+		<loc lang="en">File Info</loc>
+		<loc lang="nl">Bestandsinfo</loc>
+	</string>
+	<string>
+		<loc lang="en">EOLN character</loc>
+		<loc lang="nl">Regeleinde</loc>
+	</string>
+	<string>
+		<loc lang="en">Text encoding</loc>
+		<loc lang="nl">Tekstcodering</loc>
+	</string>
+	<string>
+		<loc lang="en">Add byte order marker</loc>
+		<loc lang="nl">Byte order marker toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Font</loc>
+		<loc lang="nl">Lettertype</loc>
+	</string>
+	<string>
+		<loc lang="en">Bold</loc>
+		<loc lang="nl">Vet</loc>
+	</string>
+	<string>
+		<loc lang="en">Italic</loc>
+		<loc lang="nl">Cursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Underline</loc>
+		<loc lang="nl">Onderstr.</loc>
+	</string>
+	<string>
+		<loc lang="en">Spaces per tab</loc>
+		<loc lang="nl">Spaties per tab</loc>
+	</string>
+	<string>
+		<loc lang="en">Syntax styling</loc>
+		<loc lang="nl">Syntax markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Softwrap file</loc>
+		<loc lang="nl">Tekst terugloop</loc>
+	</string>
+	<string>
+		<loc lang="en">Window width</loc>
+		<loc lang="nl">Vensterbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Paper width</loc>
+		<loc lang="nl">Papierbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Fixed column</loc>
+		<loc lang="nl">Vaste kolom</loc>
+	</string>
+	<string>
+		<loc lang="en">Filetype</loc>
+		<loc lang="nl">Bestandstype</loc>
+	</string>
+	<string>
+		<loc lang="en">Executable</loc>
+		<loc lang="nl">Uitvoerbaar</loc>
+	</string>
+	<string>
+		<loc lang="en">Executable</loc>
+		<loc lang="nl">Uitvoerbaar</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Apply</loc>
+		<loc lang="nl">Toepassen</loc>
+	</string>
+	<string>
+		<loc lang="en">Always</loc>
+		<loc lang="nl">Altijd</loc>
+	</string>
+	<string>
+		<loc lang="en">When saving</loc>
+		<loc lang="nl">Tijdens het opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Never</loc>
+		<loc lang="nl">Nooit</loc>
+	</string>
+	<string>
+		<loc lang="en">Preferences</loc>
+		<loc lang="nl">Voorkeuren</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Revert</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Defaults</loc>
+		<loc lang="nl">Standaarden</loc>
+	</string>
+	<string>
+		<loc lang="en">Editing</loc>
+		<loc lang="nl">Bewerken</loc>
+	</string>
+	<string>
+		<loc lang="en">Tab width:</loc>
+		<loc lang="nl">Tabbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Tab enters spaces</loc>
+		<loc lang="nl">Tab voegt spaties in</loc>
+	</string>
+	<string>
+		<loc lang="en">Spaces per tab:</loc>
+		<loc lang="nl">Spaties per tab:</loc>
+	</string>
+	<string>
+		<loc lang="en">Tab indents</loc>
+		<loc lang="nl">Inspringen</loc>
+	</string>
+	<string>
+		<loc lang="en">Indent one tab extra</loc>
+		<loc lang="nl">Een tab extra inspringen</loc>
+	</string>
+	<string>
+		<loc lang="en">Block cursor</loc>
+		<loc lang="nl">Blok cursor</loc>
+	</string>
+	<string>
+		<loc lang="en">Flashing cursor</loc>
+		<loc lang="nl">Knipperende cursor</loc>
+	</string>
+	<string>
+		<loc lang="en">Full path in window title</loc>
+		<loc lang="nl">Gehele pad in venstertitel</loc>
+	</string>
+	<string>
+		<loc lang="en">Enable drag&amp;drop editing</loc>
+		<loc lang="nl">Slepen van tekst toestaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Anti aliased text</loc>
+		<loc lang="nl">Anti aliased tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Syntax coloring</loc>
+		<loc lang="nl">Syntax kleur markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Balance while typing</loc>
+		<loc lang="nl">Balanceren tijdens typen</loc>
+	</string>
+	<string>
+		<loc lang="en">Auto indent</loc>
+		<loc lang="nl">Automatisch inspringen</loc>
+	</string>
+	<string>
+		<loc lang="en">Smart indenting braces</loc>
+		<loc lang="nl">Slim inspringende accolades</loc>
+	</string>
+	<string>
+		<loc lang="en">Two-stage jump to line start</loc>
+		<loc lang="nl">2x springen naar begin regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Scrollwheel acceleration</loc>
+		<loc lang="nl">Schuifwiel versnelling</loc>
+	</string>
+	<string>
+		<loc lang="en">Smooth wheel scrolling</loc>
+		<loc lang="nl">Soepele schuifwiel beweging</loc>
+	</string>
+	<string>
+		<loc lang="en">Scrollbars on left side</loc>
+		<loc lang="nl">Schuifbalken aan linkerkant</loc>
+	</string>
+	<string>
+		<loc lang="en">Fonts</loc>
+		<loc lang="nl">Lettertypen</loc>
+	</string>
+	<string>
+		<loc lang="en">Default font</loc>
+		<loc lang="nl">Standaard lettertype</loc>
+	</string>
+	<string>
+		<loc lang="en">Bold</loc>
+		<loc lang="nl">Vet</loc>
+	</string>
+	<string>
+		<loc lang="en">Italic</loc>
+		<loc lang="nl">Cursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Underline</loc>
+		<loc lang="nl">Onderstr.</loc>
+	</string>
+	<string>
+		<loc lang="en">Alternate font</loc>
+		<loc lang="nl">Alternatief lettertype</loc>
+	</string>
+	<string>
+		<loc lang="en">Bold</loc>
+		<loc lang="nl">Vet</loc>
+	</string>
+	<string>
+		<loc lang="en">Italic</loc>
+		<loc lang="nl">Cursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Underline</loc>
+		<loc lang="nl">Onderstr.</loc>
+	</string>
+	<string>
+		<loc lang="en">Accelerator font</loc>
+		<loc lang="nl">Accelerator lettertype</loc>
+	</string>
+	<string>
+		<loc lang="en">Bold</loc>
+		<loc lang="nl">Vet</loc>
+	</string>
+	<string>
+		<loc lang="en">Italic</loc>
+		<loc lang="nl">Cursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Underline</loc>
+		<loc lang="nl">Onderstr.</loc>
+	</string>
+	<string>
+		<loc lang="en">Encodings</loc>
+		<loc lang="nl">Coderingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Default newline character</loc>
+		<loc lang="nl">Regeleinde</loc>
+	</string>
+	<string>
+		<loc lang="en">Default encoding</loc>
+		<loc lang="nl">Tekstcodering</loc>
+	</string>
+	<string>
+		<loc lang="en">Add byte order marker</loc>
+		<loc lang="nl">Byte order marker toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Keyboard follows encoding</loc>
+		<loc lang="nl">Toetsenbord volgt codering</loc>
+	</string>
+	<string>
+		<loc lang="en">Colors</loc>
+		<loc lang="nl">Kleuren</loc>
+	</string>
+	<string>
+		<loc lang="en">Font</loc>
+		<loc lang="nl">Tekst</loc>
+	</string>
+	<string>
+		<loc lang="en">Background</loc>
+		<loc lang="nl">Achtergrond</loc>
+	</string>
+	<string>
+		<loc lang="en">Emacs mark</loc>
+		<loc lang="nl">Emacs mark</loc>
+	</string>
+	<string>
+		<loc lang="en">Line numbers</loc>
+		<loc lang="nl">Regelnummers</loc>
+	</string>
+	<string>
+		<loc lang="en">Current line</loc>
+		<loc lang="nl">Huidige regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Selection</loc>
+		<loc lang="nl">Selectie</loc>
+	</string>
+	<string>
+		<loc lang="en">Saving</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">When saving a file</loc>
+		<loc lang="nl">Bij het opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Make backup</loc>
+		<loc lang="nl">Backup maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Force newline at end</loc>
+		<loc lang="nl">Regeleinde aan het eind forceren</loc>
+	</string>
+	<string>
+		<loc lang="en">Verify open files for modification</loc>
+		<loc lang="nl">Wijzigingen in open bestanden melden</loc>
+	</string>
+	<string>
+		<loc lang="en">State</loc>
+		<loc lang="nl">Status</loc>
+	</string>
+	<string>
+		<loc lang="en">Add state</loc>
+		<loc lang="nl">Status toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">When opening a file restore</loc>
+		<loc lang="nl">Herstellen bij openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Window position</loc>
+		<loc lang="nl">Venster positie</loc>
+	</string>
+	<string>
+		<loc lang="en">Language settings</loc>
+		<loc lang="nl">Taalinstellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Text settings</loc>
+		<loc lang="nl">Tekstinstellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Selection</loc>
+		<loc lang="nl">Selectie</loc>
+	</string>
+	<string>
+		<loc lang="en">Scroll bar settings</loc>
+		<loc lang="nl">Schuifbalkinstellingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Include paths</loc>
+		<loc lang="nl">Include bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Search parent directory</loc>
+		<loc lang="nl">Zoeken in bovenliggende map</loc>
+	</string>
+	<string>
+		<loc lang="en">Invisibles</loc>
+		<loc lang="nl">Onzichtbare tekens</loc>
+	</string>
+	<string>
+		<loc lang="en">Control characters</loc>
+		<loc lang="nl">Sturingstekens</loc>
+	</string>
+	<string>
+		<loc lang="en">Invisibles color</loc>
+		<loc lang="nl">Kleur onzichtbare tekens</loc>
+	</string>
+	<string>
+		<loc lang="en">Tab character</loc>
+		<loc lang="nl">Tab teken</loc>
+	</string>
+	<string>
+		<loc lang="en">Space character</loc>
+		<loc lang="nl">Spatie teken</loc>
+	</string>
+	<string>
+		<loc lang="en">End of line character</loc>
+		<loc lang="nl">Regeleinde teken</loc>
+	</string>
+	<string>
+		<loc lang="en">Keybindings</loc>
+		<loc lang="nl">Snelkoppelingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Action</loc>
+		<loc lang="nl">Actie</loc>
+	</string>
+	<string>
+		<loc lang="en">Keys</loc>
+		<loc lang="nl">Toetsen</loc>
+	</string>
+	<string>
+		<loc lang="en">Add</loc>
+		<loc lang="nl">Toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Delete</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Syntax styling</loc>
+		<loc lang="nl">Syntax markering</loc>
+	</string>
+	<string>
+		<loc lang="en">Keywords…</loc>
+		<loc lang="nl">Sleutelwoorden…</loc>
+	</string>
+	<string>
+		<loc lang="en">Bold</loc>
+		<loc lang="nl">Vet</loc>
+	</string>
+	<string>
+		<loc lang="en">Italic</loc>
+		<loc lang="nl">Cursief</loc>
+	</string>
+	<string>
+		<loc lang="en">Underline</loc>
+		<loc lang="nl">Onderstr.</loc>
+	</string>
+	<string>
+		<loc lang="en">Protected</loc>
+		<loc lang="nl">Beveiligd</loc>
+	</string>
+	<string>
+		<loc lang="en">Matching filenames</loc>
+		<loc lang="nl">Bijbehorende bestandsnamen</loc>
+	</string>
+	<string>
+		<loc lang="en">Default language</loc>
+		<loc lang="nl">Standaard taal</loc>
+	</string>
+	<string>
+		<loc lang="en">Function pop-up</loc>
+		<loc lang="nl">Functie pop-up</loc>
+	</string>
+	<string>
+		<loc lang="en">Function pop-up</loc>
+		<loc lang="nl">Functie pop-up</loc>
+	</string>
+	<string>
+		<loc lang="en">Sort alphabetically</loc>
+		<loc lang="nl">Alfabetisch sorteren</loc>
+	</string>
+	<string>
+		<loc lang="en">Show types</loc>
+		<loc lang="nl">Typen weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show prototypes</loc>
+		<loc lang="nl">Prototypen weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Show includes</loc>
+		<loc lang="nl">Include bestanden weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Searching</loc>
+		<loc lang="nl">Zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Fill find dialog on activate</loc>
+		<loc lang="nl">Zoekdialoogvenster vullen bij het activeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Incremental search matches case</loc>
+		<loc lang="nl">Snelzoekpatroon let op Hfd/kleine letters</loc>
+	</string>
+	<string>
+		<loc lang="en">Identifier completion scans open windows</loc>
+		<loc lang="nl">Automatisch aanvullen doorzoekt open vensters</loc>
+	</string>
+	<string>
+		<loc lang="en">Find differences</loc>
+		<loc lang="nl">Verschillen zoeken</loc>
+	</string>
+	<string>
+		<loc lang="en">Ignore case change</loc>
+		<loc lang="nl">Hfd/kl. letterwijziging negeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Ignore white space</loc>
+		<loc lang="nl">Spaties negeren </loc>
+	</string>
+	<string>
+		<loc lang="en">Worksheet</loc>
+		<loc lang="nl">Werkblad</loc>
+	</string>
+	<string>
+		<loc lang="en">Shell</loc>
+		<loc lang="nl">Shell</loc>
+	</string>
+	<string>
+		<loc lang="en">Redirect stderr output</loc>
+		<loc lang="nl">Stderr uitvoer omleiden</loc>
+	</string>
+	<string>
+		<loc lang="en">Pattern</loc>
+		<loc lang="nl">Patroon</loc>
+	</string>
+	<string>
+		<loc lang="en">Message</loc>
+		<loc lang="nl">Bericht</loc>
+	</string>
+	<string>
+		<loc lang="en">Warning</loc>
+		<loc lang="nl">Warning</loc>
+	</string>
+	<string>
+		<loc lang="en">File</loc>
+		<loc lang="nl">Bestand</loc>
+	</string>
+	<string>
+		<loc lang="en">Line</loc>
+		<loc lang="nl">Regel</loc>
+	</string>
+	<string>
+		<loc lang="en">Startup</loc>
+		<loc lang="nl">Opstarten</loc>
+	</string>
+	<string>
+		<loc lang="en">At startup</loc>
+		<loc lang="nl">Bij het opstarten</loc>
+	</string>
+	<string>
+		<loc lang="en">Create new document</loc>
+		<loc lang="nl">Nieuw document maken</loc>
+	</string>
+	<string>
+		<loc lang="en">Show open dialog</loc>
+		<loc lang="nl">Open dialoogvenster weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Do nothing</loc>
+		<loc lang="nl">Niets doen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open worksheet</loc>
+		<loc lang="nl">Werkblad openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open multi-file view</loc>
+		<loc lang="nl">Enkel venster openen</loc>
+	</string>
+	<string>
+		<loc lang="en">SFTP</loc>
+		<loc lang="nl">SFTP</loc>
+	</string>
+	<string>
+		<loc lang="en">Server</loc>
+		<loc lang="nl">Server</loc>
+	</string>
+	<string>
+		<loc lang="en">Username</loc>
+		<loc lang="nl">Gebruikersnaam</loc>
+	</string>
+	<string>
+		<loc lang="en">Path</loc>
+		<loc lang="nl">Pad</loc>
+	</string>
+	<string>
+		<loc lang="en">Options</loc>
+		<loc lang="nl">Opties</loc>
+	</string>
+	<string>
+		<loc lang="en">Automatically reconnect</loc>
+		<loc lang="nl">Automatisch opnieuw verbinden</loc>
+	</string>
+	<string>
+		<loc lang="en">Log uploads</loc>
+		<loc lang="nl">Verzendingen registreren</loc>
+	</string>
+	<string>
+		<loc lang="en">Wrapping</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Soft wrap files</loc>
+		<loc lang="nl">Bestanden afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Window width</loc>
+		<loc lang="nl">Vensterbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Paper width</loc>
+		<loc lang="nl">Papierbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Fixed column</loc>
+		<loc lang="nl">Vaste kolom</loc>
+	</string>
+	<string>
+		<loc lang="en">Always softwrap *.txt files</loc>
+		<loc lang="nl">*.txt bestanden altijd afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">File Associations</loc>
+		<loc lang="nl">Bestandsverbindingen</loc>
+	</string>
+	<string>
+		<loc lang="en">Extension</loc>
+		<loc lang="nl">Extensie</loc>
+	</string>
+	<string>
+		<loc lang="en">Description</loc>
+		<loc lang="nl">Beschrijving</loc>
+	</string>
+	<string>
+		<loc lang="en">Accelerator Editor</loc>
+		<loc lang="nl">Accelerator Editor</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Revert</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Name:</loc>
+		<loc lang="nl">Naam:</loc>
+	</string>
+	<string>
+		<loc lang="en">Language:</loc>
+		<loc lang="nl">Taal:</loc>
+	</string>
+	<string>
+		<loc lang="en">Keybinding:</loc>
+		<loc lang="nl">Sneltoets:</loc>
+	</string>
+	<string>
+		<loc lang="en">Clear</loc>
+		<loc lang="nl">Wissen</loc>
+	</string>
+	<string>
+		<loc lang="en">Simple</loc>
+		<loc lang="nl">Eenvoudig</loc>
+	</string>
+	<string>
+		<loc lang="en">Empty</loc>
+		<loc lang="nl">Leeg</loc>
+	</string>
+	<string>
+		<loc lang="en">Empty</loc>
+		<loc lang="nl">Leeg</loc>
+	</string>
+	<string>
+		<loc lang="en">New…</loc>
+		<loc lang="nl">Nieuw…</loc>
+	</string>
+	<string>
+		<loc lang="en">Add to menu</loc>
+		<loc lang="nl">Aan menu toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Edit menu…</loc>
+		<loc lang="nl">Menu bewerken…</loc>
+	</string>
+	<string>
+		<loc lang="en">Open from Server</loc>
+		<loc lang="nl">Vanaf server openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Connect…</loc>
+		<loc lang="nl">Verbinden…</loc>
+	</string>
+	<string>
+		<loc lang="en">Show all files</loc>
+		<loc lang="nl">Alle bestanden weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Save on Server</loc>
+		<loc lang="nl">Opslaan op server</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Connect…</loc>
+		<loc lang="nl">Verbinden…</loc>
+	</string>
+	<string>
+		<loc lang="en">Name:</loc>
+		<loc lang="nl">Naam:</loc>
+	</string>
+	<string>
+		<loc lang="en">New Folder</loc>
+		<loc lang="nl">Nieuwe map</loc>
+	</string>
+	<string>
+		<loc lang="en">Show all files</loc>
+		<loc lang="nl">Alle bestanden weergeven</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Inloggen</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Openen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Server</loc>
+		<loc lang="nl">Server</loc>
+	</string>
+	<string>
+		<loc lang="en">Username</loc>
+		<loc lang="nl">Gebruikersnaam</loc>
+	</string>
+	<string>
+		<loc lang="en">Fetching</loc>
+		<loc lang="nl">Ophalen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Quoted Rewrap</loc>
+		<loc lang="nl">Citaat passend maken</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Quote chars</loc>
+		<loc lang="nl">Aanhalingstekens</loc>
+	</string>
+	<string>
+		<loc lang="en">Wrap width</loc>
+		<loc lang="nl">Afbreekbreedte</loc>
+	</string>
+	<string>
+		<loc lang="en">Strip spaces</loc>
+		<loc lang="nl">Spaties verwijderen</loc>
+	</string>
+	<string>
+		<loc lang="en">New Folder</loc>
+		<loc lang="nl">Nieuwe map</loc>
+	</string>
+	<string>
+		<loc lang="en">Name of new folder:</loc>
+		<loc lang="nl">Naam van nieuwe map:</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Please Register</loc>
+		<loc lang="nl">Let op</loc>
+	</string>
+	<string>
+		<loc lang="en">Please Register your copy of Pepper.</loc>
+		<loc lang="nl">Gelieve uw exemplaar van Pepper te registreren.</loc>
+	</string>
+	<string>
+		<loc lang="en">Visit http://www.hekkelman.com/ for more information.</loc>
+		<loc lang="nl">Zie http://www.hekkelman.com/ voor meer informatie.</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Unicode Picker</loc>
+		<loc lang="nl">Unicode kiezer</loc>
+	</string>
+	<string>
+		<loc lang="en">&lt;</loc>
+		<loc lang="nl">&lt;</loc>
+	</string>
+	<string>
+		<loc lang="en">&gt;</loc>
+		<loc lang="nl">&gt;</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Statistics</loc>
+		<loc lang="nl">Statistieken</loc>
+	</string>
+	<string>
+		<loc lang="en">Size in bytes</loc>
+		<loc lang="nl">Aantal bytes</loc>
+	</string>
+	<string>
+		<loc lang="en">Lines</loc>
+		<loc lang="nl">Regels</loc>
+	</string>
+	<string>
+		<loc lang="en">Words</loc>
+		<loc lang="nl">Woorden</loc>
+	</string>
+	<string>
+		<loc lang="en">Path</loc>
+		<loc lang="nl">Pad</loc>
+	</string>
+	<string>
+		<loc lang="en">Created</loc>
+		<loc lang="nl">Gemaakt</loc>
+	</string>
+	<string>
+		<loc lang="en">Last Modified</loc>
+		<loc lang="nl">Laatste wijziging</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Info</loc>
+		<loc lang="nl">Info</loc>
+	</string>
+	<string>
+		<loc lang="en">bla bla</loc>
+		<loc lang="nl">bla bla</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Ignore</loc>
+		<loc lang="nl">Negeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Warning</loc>
+		<loc lang="nl">Waarschuwing</loc>
+	</string>
+	<string>
+		<loc lang="en">bla bla</loc>
+		<loc lang="nl">bla bla</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Ignore</loc>
+		<loc lang="nl">Negeren</loc>
+	</string>
+	<string>
+		<loc lang="en">Error</loc>
+		<loc lang="nl">Fout</loc>
+	</string>
+	<string>
+		<loc lang="en">bla bla</loc>
+		<loc lang="nl">bla bla</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Ignore</loc>
+		<loc lang="nl">Negeren</loc>
+	</string>
+	<string>
+		<loc lang="en">ColorPicker</loc>
+		<loc lang="nl">Kleurkiezer</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Logging in</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Please enter password for ^0 at ^1.</loc>
+		<loc lang="nl">Voer het wachtwoord voor ^0 op ^1 in.</loc>
+	</string>
+	<string>
+		<loc lang="en">Password:</loc>
+		<loc lang="nl">Wachtwoord:</loc>
+	</string>
+	<string>
+		<loc lang="en">Authentication as ^0 at ^1 failed.</loc>
+		<loc lang="nl">Aanmelding als ^0 op ^1 is mislukt.</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Login</loc>
+		<loc lang="nl">Aanmelden</loc>
+	</string>
+	<string>
+		<loc lang="en">Caps Lock is down!</loc>
+		<loc lang="nl">Caps lock staat aan!</loc>
+	</string>
+	<string>
+		<loc lang="en">Open</loc>
+		<loc lang="nl">Open</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleer</loc>
+	</string>
+	<string>
+		<loc lang="en">Save changes to document ^0 before closing?</loc>
+		<loc lang="nl">Wijzigingen in document ^0 opslaan als het wordt gesloten? </loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Don't Save</loc>
+		<loc lang="nl">&amp;Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Do you want to reload the preferences file '^0'?</loc>
+		<loc lang="nl">Wilt u de voorkeuren voor bestand '^0' opnieuw laden?</loc>
+	</string>
+	<string>
+		<loc lang="en">Reload</loc>
+		<loc lang="nl">Opnieuw laden</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Do you really want to discard all changes in document ^0?</loc>
+		<loc lang="nl">Wilt u alle wijzigingen in bestand ^0 echt niet opslaan?</loc>
+	</string>
+	<string>
+		<loc lang="en">Discard</loc>
+		<loc lang="nl">Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Do you want to save changes to ^0 before showing it in the web browser?</loc>
+		<loc lang="nl">Wilt u de wijzigingen in ^0 opslaan voor het in de webbrowser wordt weergegeven?</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Don't save</loc>
+		<loc lang="nl">Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">^0</loc>
+		<loc lang="nl">^0</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace All on multiple files</loc>
+		<loc lang="nl">Alles vervangen in meerdere bestanden</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Leave Open</loc>
+		<loc lang="nl">Open &amp;laten</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Save to Disk</loc>
+		<loc lang="nl">Opslaan op &amp;schijf</loc>
+	</string>
+	<string>
+		<loc lang="en">File '^0' was changed by another program, reload it?</loc>
+		<loc lang="nl">Bestand '^0' is door een ander programma gewijzigd. Opnieuw laden?</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Do you want to replace the current shortcut for this key combination?</loc>
+		<loc lang="nl">Wilt u de huidige sneltoets vervangen door deze toetsencombinatie?</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">An error occurred:</loc>
+		<loc lang="nl">Er is een fout opgetreden:</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">The preferences have changed. Save changes before closing?</loc>
+		<loc lang="nl">De voorkeuren zijn gewijzigd. Wijzigingen opslaan voor het sluiten?</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Don't Save</loc>
+		<loc lang="nl">&amp;Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">The file '^0' was not properly closed, do you want to resume working with it?</loc>
+		<loc lang="nl">Het bestand '^0' is onjuist afgesloten. Wilt u ermee verder werken?</loc>
+	</string>
+	<string>
+		<loc lang="en">Restore</loc>
+		<loc lang="nl">Herstellen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Restore &amp;All</loc>
+		<loc lang="nl">&amp;Alles herst.</loc>
+	</string>
+	<string>
+		<loc lang="en">File '^0' is marked as Read Only, do you want to make it writeable?</loc>
+		<loc lang="nl">Bestand '^0' is beveiligd. Wilt u het beschrijfbaar maken?</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Make Writeable</loc>
+		<loc lang="nl">Beschr. maken</loc>
+	</string>
+	<string>
+		<loc lang="en">A file with the name '^0' already exists. Are you sure you want to replace the existing document with this file?</loc>
+		<loc lang="nl">Er bestaat al een bestand met de naam '^0'. Weet u zeker dat u het bestaande document wilt vervangen?</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">Replace</loc>
+		<loc lang="nl">Vervangen</loc>
+	</string>
+	<string>
+		<loc lang="en">The file '^0' contains inconsistent end of line characters.</loc>
+		<loc lang="nl">Het bestand '^0' bevat inconsistente einde-regel tekens</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Abort the upload of ^0?</loc>
+		<loc lang="nl">Het laden van ^0 afbreken?</loc>
+	</string>
+	<string>
+		<loc lang="en">Abort</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">The Accelerator has changed. Save changes before closing?</loc>
+		<loc lang="nl">De Accelerator is gewijzigd. Wijzigingen opslaan voor het sluiten?</loc>
+	</string>
+	<string>
+		<loc lang="en">Save</loc>
+		<loc lang="nl">Opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Don't Save</loc>
+		<loc lang="nl">&amp;Niet opslaan</loc>
+	</string>
+	<string>
+		<loc lang="en">Exception in '^0', file '^1', line ^2</loc>
+		<loc lang="nl">Uitzondering in '^0', bestand '^1', regel ^2</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Abort</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Debugger</loc>
+		<loc lang="nl">Debugger</loc>
+	</string>
+	<string>
+		<loc lang="en">Assertion failed '^0', file '^1', line ^2</loc>
+		<loc lang="nl">Assertion failed '^0', file '^1', line ^2</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Abort</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">Debugger</loc>
+		<loc lang="nl">Debugger</loc>
+	</string>
+	<string>
+		<loc lang="en">Could not find Pepper's directory containing the plugins. Do you want to search for it now?</loc>
+		<loc lang="nl">Kon de map van Pepper met plugins niet vinden. Wilt u ernaar zoeken?</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">To register Pepper open a text document containing the registration information and then choose Register from the menu.</loc>
+		<loc lang="nl">Om Pepper te registreren opent u een tekst document met de registratie informatie. Daarna kiest u Registreren uit het menu.</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+	<string>
+		<loc lang="en">No response from server ^0, do you want to continue trying to connect?</loc>
+		<loc lang="nl">Geen antwoord van server ^0, wilt u blijven proberen?</loc>
+	</string>
+	<string>
+		<loc lang="en">Continue</loc>
+		<loc lang="nl">Wacht</loc>
+	</string>
+	<string>
+		<loc lang="en">Abort</loc>
+		<loc lang="nl">Afbreken</loc>
+	</string>
+	<string>
+		<loc lang="en">The host key for server ^0 (signature: ^1) is not known. Click Add Key if you trust this host and want to cache the key, click Once to connect without storing the key.</loc>
+		<loc lang="nl">De sleutel voor server ^0 (handtekening: ^1) is niet bekend. Druk op Toevoegen als u deze server vertrouwt, druk op Eenmalig om te verbinden zonder de sleutel op te slaan.</loc>
+	</string>
+	<string>
+		<loc lang="en">Add Key</loc>
+		<loc lang="nl">Toevoegen</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Once</loc>
+		<loc lang="nl">&amp;Eenmalig</loc>
+	</string>
+	<string>
+		<loc lang="en">The host key for server ^0 (signature: ^1) has changed!!! If you are ABSOLUTELY sure this is correct you can replace the key otherwise click Cancel.</loc>
+		<loc lang="nl">De sleutel voor server ^0 (handtekening: ^1) is gewijzigd!!! Als u ABSOLUUT zeker bent dat dit juist is kunt u de sleutel vervangen.</loc>
+	</string>
+	<string>
+		<loc lang="en">Cancel</loc>
+		<loc lang="nl">Annuleren</loc>
+	</string>
+	<string>
+		<loc lang="en">&amp;Replace Key</loc>
+		<loc lang="nl">&amp;Vervang sleutel</loc>
+	</string>
+	<string>
+		<loc lang="en">This version has expired, please visit http://www.hekkelman.com/ for information on newer releases.</loc>
+		<loc lang="nl">Deze versie is verlopen. Zie http://www.hekkelman.com/ voor informatie over nieuwe versies.</loc>
+	</string>
+	<string>
+		<loc lang="en">Duh...</loc>
+		<loc lang="nl">Eh...</loc>
+	</string>
+	<string>
+		<loc lang="en">This is a beta version, please report any problems to info@hekkelman.com.</loc>
+		<loc lang="nl">Dit is een beta versie. Gelieve problemen te melden via info@hekkelman.com.</loc>
+	</string>
+	<string>
+		<loc lang="en">Proceed at your own risk.</loc>
+		<loc lang="nl">Ga verder op eigen risico.</loc>
+	</string>
+	<string>
+		<loc lang="en">OK</loc>
+		<loc lang="nl">OK</loc>
+	</string>
+</strings>

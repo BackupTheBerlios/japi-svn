@@ -1,0 +1,268 @@
+<project version="2.0">
+  <pkg-config>
+    <pkg tool="pkg-config">gthread-2.0</pkg>
+    <pkg tool="pkg-config">gtk+-x11-2.0</pkg>
+    <pkg tool="pkg-config">uuid</pkg>
+    <pkg tool="pkg-config">libcanberra</pkg>
+  </pkg-config>
+  <syspaths>
+    <path>../boost/include</path>
+    <path>../libzeep</path>
+  </syspaths>
+  <userpaths>
+    <path>Sources</path>
+    <path>NetSources</path>
+  </userpaths>
+  <libpaths>
+    <path>../boost/lib</path>
+    <path>../libzeep</path>
+  </libpaths>
+  <files>
+    <group name="MLib">
+      <file>MAlerts.cpp</file>
+      <file>MClipboard.cpp</file>
+      <file>MColor.cpp</file>
+      <file>MController.cpp</file>
+      <file>MDevice.cpp</file>
+      <file>MDialog.cpp</file>
+      <file>MDocument.cpp</file>
+      <file>MDocWindow.cpp</file>
+      <file>MError.cpp</file>
+      <file>MFile.cpp</file>
+      <file>MHandler.cpp</file>
+      <file>MList.cpp</file>
+      <file>MMenu.cpp</file>
+      <file>MPreferences.cpp</file>
+      <file>MPrinter.cpp</file>
+      <file>MResources.cpp</file>
+      <file>MSaverMixin.cpp</file>
+      <file>MStrings.cpp</file>
+      <file>MSound.cpp</file>
+      <file>MTimer.cpp</file>
+      <file>MUnicode.cpp</file>
+      <file>MUtils.cpp</file>
+      <file>MView.cpp</file>
+      <file>MWindow.cpp</file>
+    </group>
+    <group name="NetSources">
+      <file>MAuthDialog.cpp</file>
+      <file>MKnownHosts.cpp</file>
+      <file>MSftpChannel.cpp</file>
+      <file>MSshAgent.cpp</file>
+      <file>MSshChannel.cpp</file>
+      <file>MSshConnection.cpp</file>
+    </group>
+    <group name="Sources">
+      <file>MJapiApp.cpp</file>
+      <file>MAcceleratorTable.cpp</file>
+      <file>MDocClosedNotifier.cpp</file>
+      <file>MTextBuffer.cpp</file>
+      <file>MTextController.cpp</file>
+      <file>MTextDocument.cpp</file>
+      <file>MTextView.cpp</file>
+      <group name="Windows">
+        <file>MEditWindow.cpp</file>
+        <file>MMessageWindow.cpp</file>
+      </group>
+      <file>MGlobals.cpp</file>
+      <group name="Dialogs">
+        <file>MQuotedRewrapDialog.cpp</file>
+        <file>MDiffWindow.cpp</file>
+        <file>MFindAndOpenDialog.cpp</file>
+        <file>MFindDialog.cpp</file>
+        <file>MGoToLineDialog.cpp</file>
+        <file>MMarkMatchingDialog.cpp</file>
+        <file>MPrefsDialog.cpp</file>
+      </group>
+      <file>MDiff.cpp</file>
+      <group name="Project">
+        <file>MProject.cpp</file>
+        <file>MProjectItem.cpp</file>
+        <file>MProjectJob.cpp</file>
+        <file>MObjectFile.cpp</file>
+        <file>MObjectFileImp_elf.cpp</file>
+        <file>MObjectFileImp_macho.cpp</file>
+        <file>MProjectInfoDialog.cpp</file>
+        <file>MLibraryInfoDialog.cpp</file>
+        <file>MProjectWindow.cpp</file>
+      </group>
+      <group name="ePub">
+        <file>MePubDocument.cpp</file>
+        <file>MePubItem.cpp</file>
+        <file>MePubWindow.cpp</file>
+        <file>MePubServer.cpp</file>
+        <file>MXHTMLTools.cpp</file>
+      </group>
+      <group name="Language">
+        <file>MLanguage.cpp</file>
+        <file>MLanguageCpp.cpp</file>
+        <file>MLanguageHTML.cpp</file>
+        <file>MLanguagePascal.cpp</file>
+        <file>MLanguagePerl.cpp</file>
+        <file>MLanguagePython.cpp</file>
+        <file>MLanguageTeX.cpp</file>
+        <file>MLanguageXML.cpp</file>
+      </group>
+      <file>MShell.cpp</file>
+      <file>MPkgConfig.cpp</file>
+      <file>MSelection.cpp</file>
+    </group>
+    <group name="Libraries">
+      <link optional="true">attr</link>
+      <link optional="true">boost_system</link>
+      <link>boost_thread</link>
+      <link>boost_filesystem</link>
+      <link>boost_iostreams</link>
+      <link>crypto</link>
+      <link>pcre</link>
+      <link>pcrecpp</link>
+      <link>uuid</link>
+      <link>tidy</link>
+      <link>cryptopp</link>
+      <link>zeep</link>
+    </group>
+  </files>
+  <resources resource-dir="Resources">
+    <group name="Alerts">
+      <resource>Alerts/epub-item-does-not-exist.xml</resource>
+      <resource>Alerts/problems-in-epub.xml</resource>
+      <resource>Alerts/ask-add-lib-as-link.xml</resource>
+      <resource>Alerts/ask-add-include-path-alert.xml</resource>
+      <resource>Alerts/ask-overwrite-newer.xml</resource>
+      <resource>Alerts/make-clean-alert.xml</resource>
+      <resource>Alerts/save-changes-alert.xml</resource>
+      <resource>Alerts/discard-changes-alert.xml</resource>
+      <resource>Alerts/replace-all-alert.xml</resource>
+      <resource>Alerts/read-only-alert.xml</resource>
+      <resource>Alerts/error-alert.xml</resource>
+      <resource>Alerts/exception-alert.xml</resource>
+      <resource>Alerts/host-key-changed-alert.xml</resource>
+      <resource>Alerts/unknown-host-alert.xml</resource>
+      <resource>Alerts/stop-building-alert.xml</resource>
+    </group>
+    <group name="Dialogs">
+      <resource>Dialogs/find-dialog.ui</resource>
+      <resource>Dialogs/find-and-open-dialog.ui</resource>
+      <resource>Dialogs/mark-matching-dialog.ui</resource>
+      <resource>Dialogs/go-to-line-dialog.ui</resource>
+      <resource>Dialogs/new-group-dialog.ui</resource>
+      <resource>Dialogs/auth-dialog.ui</resource>
+      <resource>Dialogs/prefs-dialog.ui</resource>
+      <resource>Dialogs/diff-window.ui</resource>
+      <resource>Dialogs/project-info-dialog.ui</resource>
+      <resource>Dialogs/library-info-dialog.ui</resource>
+      <resource>Dialogs/quoted-rewrap-dialog.ui</resource>
+    </group>
+    <group name="Menus">
+      <resource>Menus/epub-window-menu.xml</resource>
+      <resource>Menus/text-view-context-menu.xml</resource>
+      <resource>Menus/edit-window-menu.xml</resource>
+      <resource>Menus/project-window-menu.xml</resource>
+    </group>
+    <group name="Windows">
+      <resource>Windows/epub-window.ui</resource>
+      <resource>Windows/message-list-window.ui</resource>
+      <resource>Windows/edit-window.ui</resource>
+      <resource>Windows/project-window.ui</resource>
+    </group>
+    <group name="Templates">
+      <resource>Templates/empty.c</resource>
+      <resource>Templates/Strict.xhtml</resource>
+      <resource>Templates/Template.html</resource>
+      <resource>Templates/Transitional.xhtml</resource>
+      <group name="Projects">
+        <resource>Templates/projects/hello-cmdline.prj</resource>
+        <resource>Templates/projects/hello.cpp</resource>
+      </group>
+    </group>
+    <group name="Scripts">
+      <resource>Scripts/run-perl-script.pl</resource>
+      <resource>Scripts/sort.pl</resource>
+      <resource>Scripts/strip-tags.pl</resource>
+      <resource>Scripts/tidy.sh</resource>
+    </group>
+    <group name="Locale">
+      <group name="nl">
+        <resource>Dutch/japi.po</resource>
+      </group>
+    </group>
+    <resource>japi.desktop</resource>
+    <resource>empty_xhtml_file.xhtml</resource>
+    <resource>../Sources/mrsrc.h</resource>
+  </resources>
+  <targets>
+    <target kind="Executable">
+      <name>Japi-Debug</name>
+      <linkTarget>japi</linkTarget>
+      <compiler>/usr/bin/c++</compiler>
+      <defines>
+        <define>DEBUG</define>
+      </defines>
+      <cflags>
+        <cflag>-O0</cflag>
+        <cflag>-pthread</cflag>
+        <cflag>-gdwarf-2</cflag>
+        <cflag>-std=c++0x</cflag>
+      </cflags>
+      <warnings>
+        <warning>all</warning>
+        <warning>no-multichar</warning>
+        <warning>no-unknown-pragmas</warning>
+      </warnings>
+    </target>
+    <target kind="Executable">
+      <name>Japi-Release</name>
+      <linkTarget>japi</linkTarget>
+      <compiler>/usr/bin/g++</compiler>
+      <defines>
+        <define>NDEBUG</define>
+      </defines>
+      <cflags>
+        <cflag>-pthread</cflag>
+        <cflag>-std=c++0x</cflag>
+        <cflag>-O2</cflag>
+      </cflags>
+      <warnings>
+        <warning>all</warning>
+        <warning>no-multichar</warning>
+        <warning>no-unknown-pragmas</warning>
+      </warnings>
+    </target>
+    <target kind="Executable" arch="i386">
+      <name>Japi-32bit-Debug</name>
+      <linkTarget>japi-32</linkTarget>
+      <compiler>/usr/bin/g++</compiler>
+      <defines>
+        <define>DEBUG</define>
+      </defines>
+      <cflags>
+        <cflag>-O0</cflag>
+        <cflag>-pthread</cflag>
+        <cflag>-gdwarf-2</cflag>
+      </cflags>
+      <warnings>
+        <warning>all</warning>
+        <warning>no-multichar</warning>
+        <warning>no-unknown-pragmas</warning>
+      </warnings>
+    </target>
+    <target kind="Executable" arch="i386">
+      <name>Japi-32bit-Release</name>
+      <linkTarget>japi-32</linkTarget>
+      <compiler>/usr/bin/g++</compiler>
+      <defines>
+        <define>NDEBUG</define>
+      </defines>
+      <cflags>
+        <cflag>-O3</cflag>
+        <cflag>-pthread</cflag>
+        <cflag>-gdwarf-2</cflag>
+      </cflags>
+      <warnings>
+        <warning>all</warning>
+        <warning>no-multichar</warning>
+        <warning>no-unknown-pragmas</warning>
+      </warnings>
+    </target>
+  </targets>
+</project>
