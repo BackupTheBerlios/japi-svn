@@ -563,17 +563,18 @@ MDocWindow* MJapiApp::DisplayDocument(
 	MDocument*		inDocument)
 {
 	MDocWindow* result = MDocWindow::FindWindowForDocument(inDocument);
-	
-	if (result == nil)
-	{
-		if (dynamic_cast<MTextDocument*>(inDocument) != nil)
-		{
-			MEditWindow* e = new MEditWindow;
-			e->Initialize(inDocument);
-			e->Show();
 
-			result = e;
-		}
+	// text document?
+	MTextDocument* textDoc = dynamic_cast<MTextDocument*>(inDocument);
+	
+	if (result == nil or
+		(textDoc != nil and dynamic_cast<MEditWindow*>(result) == nil))
+	{
+		MEditWindow* e = new MEditWindow;
+		e->Initialize(inDocument);
+		e->Show();
+
+		result = e;
 	}
 	
 	if (result != nil)

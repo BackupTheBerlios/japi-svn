@@ -58,7 +58,7 @@ class MMessageList
 	struct MMessageListImp*					mImpl;
 };
 
-class MMessageWindow : public MDocWindow
+class MMessageWindow : public MWindow
 {
   public:
 					MMessageWindow(
@@ -114,8 +114,8 @@ class MMessageWindow : public MDocWindow
 	MMessageList	mList;
 	std::string		mText;
 	double			mLastAddition;
-	MTextView*		mTextView;
-	GtkWidget*		mSelectionPanel;
+//	MTextView*		mTextView;
+//	GtkWidget*		mSelectionPanel;
 };
 
 #endif

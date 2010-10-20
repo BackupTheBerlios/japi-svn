@@ -32,9 +32,6 @@ namespace
 const uint32
 	kListViewID = 'tree';
 	
-//static const Rect
-//	sRect = { 0, 0, 150, 400 };
-
 const double
 	kDelay = 0.333;
 
@@ -64,9 +61,9 @@ GdkPixbuf* GetBadge(
 	return sBadges[inKind];
 }
 
-}
-
 // --------------------------------------------------------------------
+
+}
 
 struct MMessageItem
 {
@@ -272,7 +269,7 @@ uint32 MMessageList::GetCount() const
 
 MMessageWindow::MMessageWindow(
 	const string& 	inTitle)
-	: MDocWindow("message-list-window")
+	: MWindow("message-list-window")
 	, eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
 	, eSelectMsg(this, &MMessageWindow::SelectMsg)
 	, eInvokeMsg(this, &MMessageWindow::InvokeMsg)
@@ -293,34 +290,34 @@ MMessageWindow::MMessageWindow(
 	mListView->SetColumnTitle(kMsgColumn, _("Message"));
 	mListView->SetExpandColumn(kMsgColumn);
 
-	// ----------------------------------------------------------------
-
-	MTextController* textController = new MTextController(this);
-	mController = textController;
-	
-	mMenubar.SetTarget(mController);
-
-	// add status 
-	
-	GtkWidget* statusBar = GetWidget('stat');
-	
-	GtkShadowType shadow_type;
-	gtk_widget_style_get(statusBar, "shadow_type", &shadow_type, nil);
-	
-	// selection status
-
-	GtkWidget* frame = gtk_frame_new(nil);
-	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
-	
-	mSelectionPanel = gtk_label_new("1, 1");
-	gtk_label_set_single_line_mode(GTK_LABEL(mSelectionPanel), true);
-	gtk_container_add(GTK_CONTAINER(frame), mSelectionPanel);	
-	
-	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
-	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 0);
-	gtk_widget_set_size_request(mSelectionPanel, 100, -1);
-	
-	// parse popups
+//	// ----------------------------------------------------------------
+//
+//	MTextController* textController = new MTextController(this);
+//	mController = textController;
+//	
+//	mMenubar.SetTarget(mController);
+//
+//	// add status 
+//	
+//	GtkWidget* statusBar = GetWidget('stat');
+//	
+//	GtkShadowType shadow_type;
+//	gtk_widget_style_get(statusBar, "shadow_type", &shadow_type, nil);
+//	
+//	// selection status
+//
+//	GtkWidget* frame = gtk_frame_new(nil);
+//	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+//	
+//	mSelectionPanel = gtk_label_new("1, 1");
+//	gtk_label_set_single_line_mode(GTK_LABEL(mSelectionPanel), true);
+//	gtk_container_add(GTK_CONTAINER(frame), mSelectionPanel);	
+//	
+//	gtk_box_pack_start(GTK_BOX(statusBar), frame, false, false, 0);
+//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 0);
+//	gtk_widget_set_size_request(mSelectionPanel, 100, -1);
+//	
+//	// parse popups
 	
 //	mIncludePopup = new MParsePopup(50);
 //	frame = gtk_frame_new(nil);
@@ -338,21 +335,21 @@ MMessageWindow::MMessageWindow(
 //	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 2);	
 //	mParsePopup->SetController(mController, true);
 
-	// hscrollbar
-	GtkWidget* hScrollBar = gtk_hscrollbar_new(nil);
-	frame = gtk_frame_new(nil);
-	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
-	gtk_container_add(GTK_CONTAINER(frame), hScrollBar);
-	gtk_box_pack_end(GTK_BOX(statusBar), frame, false, false, 0);
-//	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 3);
-	gtk_widget_set_size_request(hScrollBar, 150, -1);
-	
-	gtk_widget_show_all(statusBar);
-	
-	// text view
-	
-    mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'), hScrollBar);
-	textController->AddTextView(mTextView);
+//	// hscrollbar
+//	GtkWidget* hScrollBar = gtk_hscrollbar_new(nil);
+//	frame = gtk_frame_new(nil);
+//	gtk_frame_set_shadow_type(GTK_FRAME(frame), shadow_type);
+//	gtk_container_add(GTK_CONTAINER(frame), hScrollBar);
+//	gtk_box_pack_end(GTK_BOX(statusBar), frame, false, false, 0);
+////	gtk_box_reorder_child(GTK_BOX(statusBar), frame, 3);
+//	gtk_widget_set_size_request(hScrollBar, 150, -1);
+//	
+//	gtk_widget_show_all(statusBar);
+//	
+//	// text view
+//	
+//    mTextView = new MTextView(GetWidget('text'), GetWidget('vsbr'), hScrollBar);
+//	textController->AddTextView(mTextView);
 
 	// ----------------------------------------------------------------
 
@@ -503,37 +500,38 @@ void MMessageWindow::DocumentChanged(
 
 bool MMessageWindow::DoClose()
 {
-	return mController->TryCloseController(kSaveChangesClosingDocument);
+//	return mController.TryCloseController(kSaveChangesClosingDocument);
+	return MWindow::DoClose();
 }
 
 void MMessageWindow::SelectMsg(
 	MMessageRow*	inItem)
 {
-	MMessageItem& item = *inItem->mItem;
-	
-	if (item.mFileNr > 0)
-	{
-		MFile file = mList.GetFile(item.mFileNr - 1);
-
-		MDocument* doc = MDocument::GetDocumentForFile(file);
-		if (doc == nil)
-			doc = MDocument::Create<MTextDocument>(file);
-		
-		if (doc != nil and
-			(doc == mController->GetDocument() or mController->TryCloseDocument(kSaveChangesClosingDocument)))
-		{
-			MTextDocument* textDoc = dynamic_cast<MTextDocument*>(doc);
-			if (textDoc != nil)
-			{
-				mController->SetDocument(doc);
-			
-				if (item.mMaxOffset > item.mMinOffset)
-					textDoc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
-				else if (item.mLineNr > 0)
-					textDoc->GoToLine(item.mLineNr - 1);
-			}
-		}
-	}	
+//	MMessageItem& item = *inItem->mItem;
+//	
+//	if (item.mFileNr > 0)
+//	{
+//		MFile file = mList.GetFile(item.mFileNr - 1);
+//
+//		MDocument* doc = MDocument::GetDocumentForFile(file);
+//		if (doc == nil)
+//			doc = MDocument::Create<MTextDocument>(file);
+//		
+//		if (doc != nil and
+//			(doc == mController->GetDocument() or mController->TryCloseDocument(kSaveChangesClosingDocument)))
+//		{
+//			MTextDocument* textDoc = dynamic_cast<MTextDocument*>(doc);
+//			if (textDoc != nil)
+//			{
+//				mController->SetDocument(doc);
+//			
+//				if (item.mMaxOffset > item.mMinOffset)
+//					textDoc->Select(item.mMinOffset, item.mMaxOffset, kScrollToSelection);
+//				else if (item.mLineNr > 0)
+//					textDoc->GoToLine(item.mLineNr - 1);
+//			}
+//		}
+//	}	
 }
 
 void MMessageWindow::InvokeMsg(
