@@ -315,6 +315,7 @@ class MProject : public MDocument
 	std::vector<std::string>	mPkgConfigCFlags;
 	std::vector<std::string>	mPkgConfigLibs;
 	std::string					mCppIncludeDir;		// compiler's c++ include dir
+	std::string					mSysIncludeDir;
 	std::vector<fs::path>		mCLibSearchPaths;	// compiler default search dirs
 	MMessageWindow*				mStdErrWindow;
 	bool						mAllowWindows;

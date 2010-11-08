@@ -21,7 +21,8 @@ void GetPkgConfigPackagesList(
 void GetCompilerPaths(
 	const std::string&			inCompiler,
 	std::string&				outCppIncludeDir,
-	std::vector<fs::path>&			outLibDirs);
+	std::string&				outSysIncludeDir,
+	std::vector<fs::path>&		outLibDirs);
 
 void GetToolConfigResult(
 	const std::string&			inTool,

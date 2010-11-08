@@ -24,6 +24,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include "MFile.h"
 #include "MError.h"
@@ -905,6 +906,20 @@ MFile& MFile::operator=(
 	return *this;
 }
 
+MFile& MFile::operator=(
+	const string&		rhs)
+{
+	if (mImpl != nil)
+		mImpl->Release();
+	
+	mImpl = CreateFileImpForURI(rhs.c_str(), false);
+
+	mReadOnly = false;
+	mModDate = 0;
+
+	return *this;
+}
+
 bool MFile::operator==(
 	const MFile&		rhs) const
 {
@@ -1089,7 +1104,12 @@ size_t MFile::WriteAttribute(
 MFile operator/(const MFile& lhs, const fs::path& rhs)
 {
 	MFile result(lhs);
-	result /= rhs;
+	
+	if (result.mImpl != nil)
+		result /= rhs;
+	else
+		result = rhs;
+	
 	return result;
 }
 
@@ -1103,6 +1123,25 @@ MFile operator/(const MFile& lhs, const fs::path& rhs)
 //	g_free(p);
 //	return result;
 //}
+
+bool IsAbsolutePath(const string& inPath)
+{
+	bool result = false;
+	if (not inPath.empty())
+	{
+		if (inPath[0] == '/')
+			result = true;
+		else if (inPath[0] == '.')
+			result = false;
+		else
+		{
+			const boost::regex re("^(sftp|ssh|file)://.+");
+			
+			result = boost::regex_match(inPath, re);
+		}
+	}
+	return result;
+}
 
 ostream& operator<<(ostream& lhs, const MFile& rhs)
 {

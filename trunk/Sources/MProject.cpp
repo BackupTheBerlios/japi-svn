@@ -928,6 +928,12 @@ bool MProject::LocateFile(
 			outPath = fs::path(mCppIncludeDir) / inFile;
 			found = fs::exists(outPath);
 		}
+
+		if (not found and fs::exists(mSysIncludeDir))
+		{
+			outPath = fs::path(mSysIncludeDir) / inFile;
+			found = fs::exists(outPath);
+		}
 	}
 	
 	if (found)
@@ -1569,7 +1575,7 @@ void MProject::SelectTarget(
 	
 	SetStatus("Checking modification dates", true);
 	
-	GetCompilerPaths(mProjectInfo.mTargets[mCurrentTarget].mCompiler, mCppIncludeDir, mCLibSearchPaths);
+	GetCompilerPaths(mProjectInfo.mTargets[mCurrentTarget].mCompiler, mCppIncludeDir, mSysIncludeDir, mCLibSearchPaths);
 
 	mPkgConfigCFlags.clear();
 	mPkgConfigLibs.clear();

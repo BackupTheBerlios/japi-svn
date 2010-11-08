@@ -27,7 +27,7 @@ using namespace std;
 namespace {
 
 enum {
-	kTextBoxControlID = 'edit'
+	kFileComboControlID = 'file'
 };
 
 }
@@ -39,11 +39,13 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	, mController(inController)
 	, mProject(nil)
 {
-	SetText(kTextBoxControlID,
-		Preferences::GetString("last open include", ""));
+	vector<string> last;
+	
+	Preferences::GetArray("open include", last);
+	SetValues(kFileComboControlID, last);
 
 	Show(inWindow);
-	SetFocus(kTextBoxControlID);
+	SetFocus(kFileComboControlID);
 }
 
 MFindAndOpenDialog::MFindAndOpenDialog(
@@ -53,21 +55,29 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	, mController(nil)
 	, mProject(inProject)
 {
-	SetText(kTextBoxControlID,
-		Preferences::GetString("last open include", ""));
+	vector<string> last;
+	
+	Preferences::GetArray("open include", last);
+	SetValues(kFileComboControlID, last);
 
 	Show(inWindow);
-	SetFocus(kTextBoxControlID);
+	SetFocus(kFileComboControlID);
 }
 
 bool MFindAndOpenDialog::OKClicked()
 {
 	string s;
 
-	GetText(kTextBoxControlID, s);
+	GetText(kFileComboControlID, s);
 
-	Preferences::SetString("last open include", s);
-
+	vector<string> last;
+	Preferences::GetArray("open include", last);
+	last.erase(remove(last.begin(), last.end(), s), last.end());
+	last.insert(last.begin(), s);
+	if (last.size() > 10)
+		last.erase(last.end() - 1);
+	Preferences::SetArray("open include", last);
+	
 	if (mController != nil)
 	{
 		if (not mController->OpenInclude(s))
@@ -80,10 +90,16 @@ bool MFindAndOpenDialog::OKClicked()
 		if (project == nil)
 			project = MProject::Instance();
 
-		fs::path p(s);
+		MFile file(s);
 		
-		if (exists(p) or (project != nil and project->LocateFile(s, true, p)))
-			gApp->OpenOneDocument(MFile(p));
+		if (file.IsLocal() and not file.Exists() and project != nil)
+		{
+			fs::path p(s);
+			if (project->LocateFile(s, true, p))
+				file = p;
+		}
+		
+		gApp->OpenOneDocument(file);
 	}
 	
 	return true;

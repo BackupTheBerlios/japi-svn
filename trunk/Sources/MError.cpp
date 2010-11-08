@@ -35,7 +35,7 @@ MException::MException(
 	vsnprintf(mMessage, sizeof(mMessage), inMsg, vl);
 	va_end(vl);
 
-cerr << endl << endl << "Throwing with msg: " << mMessage << endl << endl;
+	PRINT(("Throwing with msg: %s\n", mMessage));
 }
 
 const char*	MException::what() const throw()

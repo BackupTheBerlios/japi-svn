@@ -113,6 +113,7 @@
       <link>boost_thread</link>
       <link>boost_filesystem</link>
       <link>boost_iostreams</link>
+      <link>boost_regex</link>
       <link>crypto</link>
       <link>pcre</link>
       <link>pcrecpp</link>

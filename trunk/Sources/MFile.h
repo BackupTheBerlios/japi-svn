@@ -114,6 +114,7 @@ class MFile
 							double				inModDate);
 
 	friend fs::path RelativePath(const MFile&, const MFile&);
+	friend MFile operator/(const MFile& lhs, const fs::path& rhs);
 	friend class MFileLoader;
 	friend class MFileSaver;
 
@@ -125,6 +126,7 @@ class MFile
 MFile operator/(const MFile& lhs, const fs::path& rhs);
 
 fs::path RelativePath(const MFile& lhs, const MFile& rhs);
+bool IsAbsolutePath(const std::string& inPath);
 
 std::ostream& operator<<(std::ostream& lhs, const MFile& rhs);
 

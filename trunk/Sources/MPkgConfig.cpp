@@ -119,7 +119,8 @@ void LocateCommand(
 static void RunCommand(
 	const fs::path&		cmd,
 	char*				argv[],
-	string&				outResult)
+	string&				outResult,
+	bool				dumpStdErr = false)
 {
 	// OK, now start it.
 
@@ -153,12 +154,17 @@ static void RunCommand(
 		close(STDIN_FILENO);
 		
 		// redirect errors to /dev/null
-		int sink = open("/dev/null", O_RDWR);
-		if (sink >= 0)
+		if (dumpStdErr)
 		{
-			dup2(sink, STDERR_FILENO);
-			close(sink);
+			int sink = open("/dev/null", O_RDWR);
+			if (sink >= 0)
+			{
+				dup2(sink, STDERR_FILENO);
+				close(sink);
+			}
 		}
+		else
+			dup2(STDOUT_FILENO, STDERR_FILENO);
 		
 		(void)execve(cmd.string().c_str(), argv, environ);
 
@@ -280,6 +286,7 @@ void GetPkgConfigResult(
 void GetCompilerPaths(
 	const string&	inCompiler,
 	string&			outCppIncludeDir,
+	std::string&	outSysIncludeDir,
 	vector<fs::path>&	outLibDirs)
 {
 	fs::path cmd;
@@ -314,6 +321,17 @@ void GetCompilerPaths(
 					p = outCppIncludeDir.find(' ');
 					if (p != string::npos)
 						outCppIncludeDir.erase(p, string::npos);
+				}
+
+				p = line.find("--with-sysroot");
+				if (p != string::npos)
+				{
+					p += sizeof("--with-sysroot");
+					outSysIncludeDir = line.substr(p);
+					p = outSysIncludeDir.find(' ');
+					if (p != string::npos)
+						outSysIncludeDir.erase(p, string::npos);
+					outSysIncludeDir += "usr/include";
 				}
 
 				break;

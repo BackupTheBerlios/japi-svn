@@ -163,8 +163,10 @@ bool MTextController::OpenInclude(
 	MProject* project = MProject::Instance();
 	MFile url;
 
-	if (mDocument != nil)
+	if (mDocument != nil and not IsAbsolutePath(inFileName))
 		url = mDocument->GetFile().GetParent() / inFileName;
+	else
+		url = inFileName;
 	
 	bool result = false;
 	
