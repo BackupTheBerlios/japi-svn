@@ -145,7 +145,8 @@ void InitGlobals()
 		chmod(file.string().c_str(), S_IRUSR | S_IWUSR | S_IXUSR);
 	}
 	
-	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs", gConcurrentJobs);
+	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs",
+		boost::thread::hardware_concurrency());
 }
 
 void SaveGlobals()
