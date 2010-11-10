@@ -27,6 +27,7 @@
 #include <cryptopp/rng.h>
 #include <cryptopp/aes.h>
 #include <cryptopp/des.h>
+#include <cryptopp/md5.h>
 #include <cryptopp/blowfish.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/factory.h>
@@ -116,7 +117,7 @@ const char
 	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
 //	kServerHostKeyAlgorithms[] = "ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
-	kMacAlgorithms[] = "hmac-sha1,hmac-sha256",
+	kMacAlgorithms[] = "hmac-sha1,hmac-md5",
 	kUseCompressionAlgorithms[] = "zlib,none",
 	kDontUseCompressionAlgorithms[] = "none,zlib";
 
@@ -1082,10 +1083,10 @@ void MSshConnection::ProcessKexdhReply(
 		int keyLen = 16;
 
 		if (keyLen < 20 and ChooseProtocol(fMACAlgC2S, kMacAlgorithms) == "hmac-sha1")
-			keyLen = 24;
+			keyLen = 20;
 
 		if (keyLen < 20 and ChooseProtocol(fMACAlgS2C, kMacAlgorithms) == "hmac-sha1")
-			keyLen = 24;
+			keyLen = 20;
 
 		if (keyLen < 24 and ChooseProtocol(fEncryptionAlgC2S, kEncryptionAlgorithms) == "3des-cbc")
 			keyLen = 24;
@@ -1182,7 +1183,7 @@ void MSshConnection::ProcessNewKeys(
 				new HMAC<SHA1>(fKeys[4], 20));
 		else
 			fSigner.reset(
-				new HMAC<SHA256>(fKeys[4]));
+				new HMAC<MD5>(fKeys[4]));
 
 		protocol = ChooseProtocol(fMACAlgS2C, kMacAlgorithms);
 		if (protocol == "hmac-sha1")
@@ -1190,7 +1191,7 @@ void MSshConnection::ProcessNewKeys(
 				new HMAC<SHA1>(fKeys[5], 20));
 		else
 			fVerifier.reset(
-				new HMAC<SHA256>(fKeys[5]));
+				new HMAC<MD5>(fKeys[5]));
 	
 		string compress;
 		if (Preferences::GetInteger("compress-sftp", true))
