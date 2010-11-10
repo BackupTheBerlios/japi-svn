@@ -22,13 +22,10 @@
 #include <sys/ioctl.h>
 #include <boost/bind.hpp>
 
+#include <cryptopp/gfpcrypt.h>
 #include <cryptopp/rng.h>
 #include <cryptopp/aes.h>
 #include <cryptopp/des.h>
-#include <cryptopp/hmac.h>
-#include <cryptopp/sha.h>
-#include <cryptopp/dsa.h>
-#include <cryptopp/rsa.h>
 #include <cryptopp/blowfish.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/factory.h>
@@ -60,7 +57,7 @@ const string
 const int kDefaultCompressionLevel = 3;
 
 const byte
-	k_p[] = {
+	k_p_2[] = {
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34,
 		0xC4, 0xC6, 0x62, 0x8B, 0x80, 0xDC, 0x1C, 0xD1,
@@ -77,10 +74,45 @@ const byte
 		0xAE, 0x9F, 0x24, 0x11, 0x7C, 0x4B, 0x1F, 0xE6,
 		0x49, 0x28, 0x66, 0x51, 0xEC, 0xE6, 0x53, 0x81,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+	},
+	k_p_14[] = {
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34,
+		0xC4, 0xC6, 0x62, 0x8B, 0x80, 0xDC, 0x1C, 0xD1,
+		0x29, 0x02, 0x4E, 0x08, 0x8A, 0x67, 0xCC, 0x74,
+		0x02, 0x0B, 0xBE, 0xA6, 0x3B, 0x13, 0x9B, 0x22,
+		0x51, 0x4A, 0x08, 0x79, 0x8E, 0x34, 0x04, 0xDD,
+		0xEF, 0x95, 0x19, 0xB3, 0xCD, 0x3A, 0x43, 0x1B,
+		0x30, 0x2B, 0x0A, 0x6D, 0xF2, 0x5F, 0x14, 0x37,
+		0x4F, 0xE1, 0x35, 0x6D, 0x6D, 0x51, 0xC2, 0x45,
+		0xE4, 0x85, 0xB5, 0x76, 0x62, 0x5E, 0x7E, 0xC6,
+		0xF4, 0x4C, 0x42, 0xE9, 0xA6, 0x37, 0xED, 0x6B,
+		0x0B, 0xFF, 0x5C, 0xB6, 0xF4, 0x06, 0xB7, 0xED,
+		0xEE, 0x38, 0x6B, 0xFB, 0x5A, 0x89, 0x9F, 0xA5,
+		0xAE, 0x9F, 0x24, 0x11, 0x7C, 0x4B, 0x1F, 0xE6,
+		0x49, 0x28, 0x66, 0x51, 0xEC, 0xE4, 0x5B, 0x3D,
+		0xC2, 0x00, 0x7C, 0xB8, 0xA1, 0x63, 0xBF, 0x05,
+		0x98, 0xDA, 0x48, 0x36, 0x1C, 0x55, 0xD3, 0x9A,
+		0x69, 0x16, 0x3F, 0xA8, 0xFD, 0x24, 0xCF, 0x5F,
+		0x83, 0x65, 0x5D, 0x23, 0xDC, 0xA3, 0xAD, 0x96,
+		0x1C, 0x62, 0xF3, 0x56, 0x20, 0x85, 0x52, 0xBB,
+		0x9E, 0xD5, 0x29, 0x07, 0x70, 0x96, 0x96, 0x6D,
+		0x67, 0x0C, 0x35, 0x4E, 0x4A, 0xBC, 0x98, 0x04,
+		0xF1, 0x74, 0x6C, 0x08, 0xCA, 0x18, 0x21, 0x7C,
+		0x32, 0x90, 0x5E, 0x46, 0x2E, 0x36, 0xCE, 0x3B,
+		0xE3, 0x9E, 0x77, 0x2C, 0x18, 0x0E, 0x86, 0x03,
+		0x9B, 0x27, 0x83, 0xA2, 0xEC, 0x07, 0xA2, 0x8F,
+		0xB5, 0xC5, 0x5D, 0xF0, 0x6F, 0x4C, 0x52, 0xC9,
+		0xDE, 0x2B, 0xCB, 0xF6, 0x95, 0x58, 0x17, 0x18,
+		0x39, 0x95, 0x49, 0x7C, 0xEA, 0x95, 0x6A, 0xE5,
+		0x15, 0xD2, 0x26, 0x18, 0x98, 0xFA, 0x05, 0x10,
+		0x15, 0x72, 0x8E, 0x5A, 0x8A, 0xAC, 0xAA, 0x68,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 	};
 
 const char
-	kKeyExchangeAlgorithms[] = "diffie-hellman-group1-sha1",
+	kKeyExchangeAlgorithms[] = "diffie-hellman-group14-sha1,diffie-hellman-group1-sha1",
+//	kKeyExchangeAlgorithms[] = "diffie-hellman-group1-sha1",
 	kServerHostKeyAlgorithms[] = "ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-sha256",
@@ -98,7 +130,8 @@ const char* LookupToken(
 }
 	
 // implement as globals to keep things simple
-Integer				p, q, g;
+Integer				p2, q2, g2;
+Integer				p14, q14, g14;
 auto_ptr<X917RNG>	rng;
 
 } // end private namespace
@@ -223,9 +256,13 @@ MSshConnection::MSshConnection()
 		
 		rng.reset(new X917RNG(new AESEncryption(seed, 16), seed));
 
-		p = Integer(k_p, sizeof(k_p));
-		g = Integer(2);
-		q = ((p - 1) / g);
+		p2 = Integer(k_p_2, sizeof(k_p_2));
+		g2 = Integer(2);
+		q2 = ((p2 - 1) / g2);
+
+		p14 = Integer(k_p_14, sizeof(k_p_14));
+		g14 = Integer(2);
+		q14 = ((p14 - 1) / g14);
 	}
 	
 	fNext = sFirstConnection;
@@ -577,9 +614,9 @@ void MSshConnection::Send(string inMessage)
 
 void MSshConnection::Send(const MSshPacket& inPacket)
 {
-//#if DEBUG
-//	inPacket.Dump();
-//#endif
+#if DEBUG
+	inPacket.Dump();
+#endif
 	Send(Wrap(inPacket.data));
 }
 
@@ -722,9 +759,9 @@ void MSshConnection::ProcessPacket()
 	MSshPacket in, out;
 	in.data = fInPacket;
 
-//#if DEBUG
-//	in.Dump();
-//#endif
+#if DEBUG
+	in.Dump();
+#endif
 
 	switch (message)
 	{
@@ -918,16 +955,33 @@ void MSshConnection::ProcessKexInit(
 			>> fLangS2C
 			>> first_kex_packet_follows;
 	
-		do
-		{
-			f_x.Randomize(*rng.get(), Integer(2), q - 1);
-			f_e = a_exp_b_mod_c(g, f_x, p);
-		}
-		while (f_e < 1);
+		f_e = 0;
 
-		out << uint8(SSH_MSG_KEXDH_INIT) << f_e;
+		if (ChooseProtocol(fKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
+		{
+			do
+			{
+				f_x.Randomize(*rng.get(), Integer(2), q14 - 1);
+				f_e = a_exp_b_mod_c(g14, f_x, p14);
+			}
+			while (f_e < 1 or f_e >= p14 - 1);
+		}
+		else if (ChooseProtocol(fKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group1-sha1")
+		{
+			do
+			{
+				f_x.Randomize(*rng.get(), Integer(2), q2 - 1);
+				f_e = a_exp_b_mod_c(g2, f_x, p2);
+			}
+			while (f_e < 1 or f_e >= p2 - 1);
+		}
 		
-		fHandler = &MSshConnection::ProcessKexdhReply;
+		if (f_e > 0)
+		{
+			out << uint8(SSH_MSG_KEXDH_INIT) << f_e;
+			fHandler = &MSshConnection::ProcessKexdhReply;
+		}
+		// else we simply ignore this one
 	}
 }
 
@@ -967,8 +1021,8 @@ void MSshConnection::ProcessKexdhReply(
 		MSshPacket packet;
 		packet.data = hostKey;
 		packet >> h_pk_type >> h_p >> h_q >> h_g >> h_y;
-		
-		DSA::Verifier h_key(h_p, h_q, h_g, h_y);
+
+		GDSA<SHA1>::Verifier h_key(h_p, h_q, h_g, h_y);
 		
 		if (h_pk_type != "ssh-dss")
 			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
@@ -981,8 +1035,12 @@ void MSshConnection::ProcessKexdhReply(
 		
 		if (pk_type != "ssh-dss" or pk_rs.length() != 40)
 			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-		
-		Integer K = a_exp_b_mod_c(f, f_x, p);
+
+		Integer K;
+		if (ChooseProtocol(fKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
+			K = a_exp_b_mod_c(f, f_x, p14);
+		else
+			K = a_exp_b_mod_c(f, f_x, p2);
 		
 		fSharedSecret = K;
 		
@@ -1003,9 +1061,18 @@ void MSshConnection::ProcessKexdhReply(
 		
 		if (fSessionId.length() == 0)
 			fSessionId.assign(&H[0], dLen);
-	
+
+//		auto_ptr<PK_MessageAccumulator> m(h_key.NewVerificationAccumulator());
+//		h_key.InputSignature(*m, h_sig, pk_rs.length());
+//		m->Update((const byte*)&H[0], dLen);
+//		
+//		if (not h_key.Verify(m.get()))
+//
 		if (not h_key.VerifyMessage(reinterpret_cast<byte*>(&H[0]), dLen, h_sig, pk_rs.length()))
+		{
+			PRINT(("!! Verification failed"));
 			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
+		}
 
 		out << uint8(SSH_MSG_NEWKEYS);
 		

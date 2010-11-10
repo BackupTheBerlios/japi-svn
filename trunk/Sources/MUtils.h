@@ -232,4 +232,6 @@ void decode_base64(
 void OpenURI(
 	const std::string&	inURI);
 
+void hexdump(std::ostream& os, const void* data, uint32 length);
+
 #endif

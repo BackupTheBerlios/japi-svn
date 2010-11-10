@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 
 #include "MUtils.h"
 #include "MError.h"
@@ -153,30 +154,27 @@ struct MSshPacket
 	template<typename T>
 	MSshPacket&		operator<<(T inValue)
 	{
-		inValue = swap(inValue);
-		data.append(reinterpret_cast<char*>(&inValue), sizeof(T));
+		for (int32 i = sizeof(T) - 1; i >= 0; --i)
+			data.push_back(static_cast<char>(inValue >> (i * 8)));
 		return *this;
 	}
 
 	MSshPacket&		operator<<(bool inValue)
 	{
-		uint8 v = inValue;
-		data.append(reinterpret_cast<char*>(&v), 1);
+		data += static_cast<char>(inValue);
 		return *this;
 	}
 	
 	MSshPacket&		operator<<(std::string inValue)
 	{
-		uint32 l = inValue.length();
-		l = swap(l);
-		data.append(reinterpret_cast<char*>(&l), sizeof(uint32));
+		operator<<(static_cast<uint32>(inValue.length()));
 		data.append(inValue);
 		return *this;
 	}
 	
 	MSshPacket&		operator<<(const char* inValue)
 	{
-		operator<<(std::string(reinterpret_cast<const char*>(inValue)));
+		operator<<(std::string(inValue));
 		return *this;
 	}
 	
@@ -184,18 +182,19 @@ struct MSshPacket
 	{
 		uint32 l = inValue.MinEncodedSize(CryptoPP::Integer::SIGNED);
 		operator<<(l);
-		std::vector<char> b(l);
-		inValue.Encode(reinterpret_cast<byte*>(&b[0]), l, CryptoPP::Integer::SIGNED);
-		data.append(&b[0], l);
+		uint32 s = data.length();
+		data.append(l, 0);
+		inValue.Encode(reinterpret_cast<byte*>(&data[0] + s), l, CryptoPP::Integer::SIGNED);
 		return *this;
 	}
 
 	template<typename T>
 	MSshPacket&		operator>>(T& outValue)
 	{
-		data.copy(reinterpret_cast<char*>(&outValue), sizeof(T), 0);
-		outValue = swap(outValue);
-		data.erase(0, sizeof(T));
+		outValue = 0;
+		for (uint32 i = 0; i < sizeof(T); ++i)
+			outValue = outValue << 8 | static_cast<byte>(data[i]);
+		data.erase(data.begin(), data.begin() + sizeof(T));
 		return *this;
 	}
 
@@ -204,13 +203,11 @@ struct MSshPacket
 		uint32 l;
 		operator>>(l);
 		
-		if (l <= data.size())
-		{
-			outValue.assign(data.begin(), data.begin() + l);
-			data.erase(0, l);
-		}
-		else
+		if (l > data.size())
 			throw MSshPacketError();
+
+		outValue = data.substr(0, l);
+		data.erase(data.begin(), data.begin() + l);
 		return *this;
 	}
 
@@ -228,68 +225,18 @@ struct MSshPacket
 		uint32 l;
 		operator>>(l);
 		
-		if (l <= data.size())
-		{
-			outValue.Decode(reinterpret_cast<const byte*>(data.c_str()),
-				l, CryptoPP::Integer::SIGNED);
-			data.erase(0, l);
-		}
-		else
+		if (l > data.size())
 			throw MSshPacketError();
+
+		outValue.Decode(reinterpret_cast<const byte*>(&data[0]), l, CryptoPP::Integer::SIGNED);
+		data.erase(data.begin(), data.begin() + l);
 		return *this;
 	}
 	
 #if DEBUG
 	void			Dump() const
 					{
-						std::cout << "<< " << data.length() << " bytes" << std::endl;
-					
-						const char kHex[] = "0123456789abcdef";
-						char s[] = "xxxxxxxx  cccc cccc cccc cccc  cccc cccc cccc cccc  |................|";
-						const int kHexOffset[] = { 10, 12, 15, 17, 20, 22, 25, 27, 31, 33, 36, 38, 41, 43, 46, 48 };
-						const int kAsciiOffset = 53;
-						
-						const unsigned char* text = reinterpret_cast<const unsigned char*>(data.c_str());
-						
-						unsigned long offset = 0;
-						
-						while (offset < data.length())
-						{
-							int rr = data.length() - offset;
-							if (rr > 16)
-								rr = 16;
-							
-							char* t = s + 7;
-							long o = offset;
-							
-							while (t >= s)
-							{
-								*t-- = kHex[o % 16];
-								o /= 16;
-							}
-							
-							for (int i = 0; i < rr; ++i)
-							{
-								s[kHexOffset[i] + 0] = kHex[text[i] >> 4];
-								s[kHexOffset[i] + 1] = kHex[text[i] & 0x0f];
-								if (text[i] < 128 and isprint(text[i]))
-									s[kAsciiOffset + i] = text[i];
-								else
-									s[kAsciiOffset + i] = '.';
-							}
-							
-							for (int i = rr; i < 16; ++i)
-							{
-								s[kHexOffset[i] + 0] = ' ';
-								s[kHexOffset[i] + 1] = ' ';
-								s[kAsciiOffset + i] = ' ';
-							}
-							
-							puts(s);
-							
-							text += rr;
-							offset += rr;
-						}
+						hexdump(std::cerr, &data[0], data.length());
 					}
 #endif
 	

@@ -829,11 +829,11 @@ MFileImp* CreateFileImpForURI(
 			result = new MPathImp(fs::system_complete(path));
 		else if (scheme == "sftp" or scheme == "ssh")
 		{
-			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
+			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:(\\d+))?/(.+)");
 			
-			string s1, s2, username, password, host, port, file;
+			string s1, s2, s3, username, password, host, port, file;
 
-			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
+			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &s3, &port, &file))
 			{
 				if (port.empty())
 					port = "22";
@@ -841,6 +841,7 @@ MFileImp* CreateFileImpForURI(
 				if (isAbsoluteURI)
 					file.insert(file.begin(), '/');
 
+cerr << "port: " << port << endl;
 				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
 			}
 			else
