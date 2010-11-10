@@ -23,6 +23,7 @@
 #include <boost/bind.hpp>
 
 #include <cryptopp/gfpcrypt.h>
+#include <cryptopp/rsa.h>
 #include <cryptopp/rng.h>
 #include <cryptopp/aes.h>
 #include <cryptopp/des.h>
@@ -112,8 +113,8 @@ const byte
 
 const char
 	kKeyExchangeAlgorithms[] = "diffie-hellman-group14-sha1,diffie-hellman-group1-sha1",
-//	kKeyExchangeAlgorithms[] = "diffie-hellman-group1-sha1",
-	kServerHostKeyAlgorithms[] = "ssh-dss",
+	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
+//	kServerHostKeyAlgorithms[] = "ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-sha256",
 	kUseCompressionAlgorithms[] = "zlib,none",
@@ -614,9 +615,9 @@ void MSshConnection::Send(string inMessage)
 
 void MSshConnection::Send(const MSshPacket& inPacket)
 {
-#if DEBUG
-	inPacket.Dump();
-#endif
+//#if DEBUG
+//	inPacket.Dump();
+//#endif
 	Send(Wrap(inPacket.data));
 }
 
@@ -759,9 +760,9 @@ void MSshConnection::ProcessPacket()
 	MSshPacket in, out;
 	in.data = fInPacket;
 
-#if DEBUG
-	in.Dump();
-#endif
+//#if DEBUG
+//	in.Dump();
+//#endif
 
 	switch (message)
 	{
@@ -1014,34 +1015,13 @@ void MSshConnection::ProcessKexdhReply(
 			Disconnect();
 			throw;
 		}
-		
-		string h_pk_type;
-		Integer h_p, h_q, h_g, h_y;
-		
-		MSshPacket packet;
-		packet.data = hostKey;
-		packet >> h_pk_type >> h_p >> h_q >> h_g >> h_y;
-
-		GDSA<SHA1>::Verifier h_key(h_p, h_q, h_g, h_y);
-		
-		if (h_pk_type != "ssh-dss")
-			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-		
-		string pk_type, pk_rs;
-		
-		packet.data = signature;
-		packet >> pk_type >> pk_rs;
-		const byte* h_sig = reinterpret_cast<const byte*>(pk_rs.c_str());
-		
-		if (pk_type != "ssh-dss" or pk_rs.length() != 40)
-			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
 
 		Integer K;
 		if (ChooseProtocol(fKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
 			K = a_exp_b_mod_c(f, f_x, p14);
 		else
 			K = a_exp_b_mod_c(f, f_x, p2);
-		
+
 		fSharedSecret = K;
 		
 		MSshPacket h_test;
@@ -1049,11 +1029,10 @@ void MSshConnection::ProcessKexdhReply(
 			<< fMyPayLoad << fHostPayLoad
 			<< hostKey
 			<< f_e << f << K;
-		
+
 		SHA1 hash;
 		uint32 dLen = hash.DigestSize();
-		vector<char>	H(dLen);
-		
+		vector<char> H(dLen);
 		hash.Update(
 			reinterpret_cast<const byte*>(h_test.data.c_str()),
 			h_test.data.length());
@@ -1062,17 +1041,41 @@ void MSshConnection::ProcessKexdhReply(
 		if (fSessionId.length() == 0)
 			fSessionId.assign(&H[0], dLen);
 
-//		auto_ptr<PK_MessageAccumulator> m(h_key.NewVerificationAccumulator());
-//		h_key.InputSignature(*m, h_sig, pk_rs.length());
-//		m->Update((const byte*)&H[0], dLen);
-//		
-//		if (not h_key.Verify(m.get()))
-//
-		if (not h_key.VerifyMessage(reinterpret_cast<byte*>(&H[0]), dLen, h_sig, pk_rs.length()))
+		string h_pk_type;
+		
+		MSshPacket packet;
+		packet.data = hostKey;
+		packet >> h_pk_type;
+
+		auto_ptr<PK_Verifier> h_key;
+
+		if (h_pk_type == "ssh-dss")
 		{
-			PRINT(("!! Verification failed"));
-			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
+			Integer h_p, h_q, h_g, h_y;
+			packet >> h_p >> h_q >> h_g >> h_y;
+
+			h_key.reset(new GDSA<SHA1>::Verifier(h_p, h_q, h_g, h_y));
 		}
+		else if (h_pk_type == "ssh-rsa")
+		{
+			Integer h_e, h_n;
+			packet >> h_e >> h_n;
+
+			h_key.reset(new RSASSA_PKCS1v15_SHA_Verifier(h_n, h_e));
+		}
+		else
+			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
+
+		string pk_type, pk_rs;
+		packet.data = signature;
+		packet >> pk_type >> pk_rs;
+
+		if (pk_type != h_pk_type)
+			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
+		
+		const byte* h_sig = reinterpret_cast<const byte*>(pk_rs.c_str());
+		if (not h_key->VerifyMessage(reinterpret_cast<byte*>(&H[0]), dLen, h_sig, pk_rs.length()))
+			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
 
 		out << uint8(SSH_MSG_NEWKEYS);
 		
