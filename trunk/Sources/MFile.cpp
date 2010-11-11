@@ -350,19 +350,23 @@ void MLocalFileSaver::DoSave()
 		
 		bool save = true;
 		
-		if (fs::exists(path) and fs::last_write_time(path) > mFile.GetModDate())
-			save = eAskOverwriteNewer();
-	
-		fs::ofstream file(path, ios::trunc|ios::binary);
-		
-		if (not file.is_open())
-			THROW(("Could not open file %s for writing", path.leaf().c_str()));
-		
-		eWriteFile(file);
-		
-		eFileWritten();
-		
-		SetFileInfo(false, fs::last_write_time(path));
+		if (not fs::exists(path) or
+		    fs::last_write_time(path) <= mFile.GetModDate() or
+			eAskOverwriteNewer())
+		{
+			fs::ofstream file(path, ios::trunc|ios::binary);
+			
+			if (not file.is_open())
+				THROW(("Could not open file %s for writing", path.leaf().c_str()));
+			
+			eWriteFile(file);
+			
+			file.close();
+			
+			eFileWritten();
+			
+			SetFileInfo(false, fs::last_write_time(path));
+		}
 	}
 	catch (exception& e)
 	{
@@ -841,7 +845,6 @@ MFileImp* CreateFileImpForURI(
 				if (isAbsoluteURI)
 					file.insert(file.begin(), '/');
 
-cerr << "port: " << port << endl;
 				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
 			}
 			else
@@ -1251,20 +1254,11 @@ bool FileNameMatches(
 
 struct MFileIteratorImp
 {
-	struct MInfo
-	{
-		fs::path			mParent;
-		DIR*			mDIR;
-		struct dirent	mEntry;
-	};
-	
 						MFileIteratorImp()
 							: mReturnDirs(false) {}
 	virtual				~MFileIteratorImp() {}
 	
 	virtual	bool		Next(fs::path& outFile) = 0;
-	bool				IsTEXT(
-							const fs::path&	inFile);
 	
 	string				mFilter;
 	bool				mReturnDirs;
@@ -1275,26 +1269,17 @@ struct MSingleFileIteratorImp : public MFileIteratorImp
 						MSingleFileIteratorImp(
 							const fs::path&	inDirectory);
 
-	virtual				~MSingleFileIteratorImp();
-	
 	virtual	bool		Next(
 							fs::path&			outFile);
 	
-	MInfo				mInfo;
+	fs::directory_iterator
+						mIter;
 };
 
 MSingleFileIteratorImp::MSingleFileIteratorImp(
 	const fs::path&	inDirectory)
+	: mIter(inDirectory)
 {
-	mInfo.mParent = inDirectory;
-	mInfo.mDIR = opendir(inDirectory.string().c_str());
-	memset(&mInfo.mEntry, 0, sizeof(mInfo.mEntry));
-}
-
-MSingleFileIteratorImp::~MSingleFileIteratorImp()
-{
-	if (mInfo.mDIR != nil)
-		closedir(mInfo.mDIR);
 }
 
 bool MSingleFileIteratorImp::Next(
@@ -1302,27 +1287,15 @@ bool MSingleFileIteratorImp::Next(
 {
 	bool result = false;
 	
-	while (not result)
+	for (; result == false and mIter != fs::directory_iterator(); ++mIter)
 	{
-		struct dirent* e = nil;
-		
-		if (mInfo.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(mInfo.mDIR, &mInfo.mEntry, &e));
-		
-		if (e == nil)
-			break;
-
-		if (strcmp(e->d_name, ".") == 0 or strcmp(e->d_name, "..") == 0)
-			continue;
-
-		outFile = mInfo.mParent / e->d_name;
-
-		if (is_directory(outFile) and not mReturnDirs)
+		if (fs::is_directory(*mIter) and not mReturnDirs)
 			continue;
 		
-		if (mFilter.length() == 0 or
-			FileNameMatches(mFilter.c_str(), outFile))
+		if (mFilter.empty() or
+			FileNameMatches(mFilter.c_str(), *mIter))
 		{
+			outFile = *mIter;
 			result = true;
 		}
 	}
@@ -1335,31 +1308,15 @@ struct MDeepFileIteratorImp : public MFileIteratorImp
 						MDeepFileIteratorImp(
 							const fs::path&	inDirectory);
 
-	virtual				~MDeepFileIteratorImp();
-
 	virtual	bool		Next(fs::path& outFile);
 
-	stack<MInfo>		mStack;
+	fs::recursive_directory_iterator
+						mIter;
 };
 
 MDeepFileIteratorImp::MDeepFileIteratorImp(const fs::path& inDirectory)
+	: mIter(inDirectory)
 {
-	MInfo info;
-
-	info.mParent = inDirectory;
-	info.mDIR = opendir(inDirectory.string().c_str());
-	memset(&info.mEntry, 0, sizeof(info.mEntry));
-	
-	mStack.push(info);
-}
-
-MDeepFileIteratorImp::~MDeepFileIteratorImp()
-{
-	while (not mStack.empty())
-	{
-		closedir(mStack.top().mDIR);
-		mStack.pop();
-	}
 }
 
 bool MDeepFileIteratorImp::Next(
@@ -1367,47 +1324,15 @@ bool MDeepFileIteratorImp::Next(
 {
 	bool result = false;
 	
-	while (not result and not mStack.empty())
+	for (; result == false and mIter != fs::recursive_directory_iterator(); ++mIter)
 	{
-		struct dirent* e = nil;
-		
-		MInfo& top = mStack.top();
-		
-		if (top.mDIR != nil)
-			THROW_IF_POSIX_ERROR(::readdir_r(top.mDIR, &top.mEntry, &e));
-		
-		if (e == nil)
-		{
-			if (top.mDIR != nil)
-				closedir(top.mDIR);
-			mStack.pop();
-		}
-		else
-		{
-			outFile = top.mParent / e->d_name;
-			
-			struct stat st;
-			if (stat(outFile.string().c_str(), &st) < 0 or S_ISLNK(st.st_mode))
-				continue;
-			
-			if (S_ISDIR(st.st_mode))
-			{
-				if (strcmp(e->d_name, ".") and strcmp(e->d_name, ".."))
-				{
-					MInfo info;
-	
-					info.mParent = outFile;
-					info.mDIR = opendir(outFile.string().c_str());
-					memset(&info.mEntry, 0, sizeof(info.mEntry));
-					
-					mStack.push(info);
-				}
-				continue;
-			}
+		if (fs::is_directory(*mIter) and not mReturnDirs)
+			continue;
 
-			if (mFilter.length() and not FileNameMatches(mFilter.c_str(), outFile))
-				continue;
-
+		if (mFilter.empty() or
+			FileNameMatches(mFilter.c_str(), *mIter))
+		{
+			outFile = *mIter;
 			result = true;
 		}
 	}
@@ -1418,6 +1343,7 @@ bool MDeepFileIteratorImp::Next(
 MFileIterator::MFileIterator(
 	const fs::path&	inDirectory,
 	uint32			inFlags)
+	: mImpl(nil)
 {
 	if (inFlags & kFileIter_Deep)
 		mImpl = new MDeepFileIteratorImp(inDirectory);
@@ -1478,15 +1404,6 @@ fs::path relative_path(const fs::path& inFromDir, const fs::path& inFile)
 			++f;
 		}
 	}
-
-	return result;
-}
-
-bool ChooseDirectory(
-	fs::path&	outDirectory)
-{
-	GtkWidget* dialog = nil;
-	bool result = false;
 
 	try
 	{
@@ -1701,31 +1618,39 @@ void NormalizePath(string& ioPath)
 	unsigned long i = 0;
 	
 	dirs.push(0);
+
+	bool unc = false;
+
+	if (path.length() > 2 and path[0] == '/' and path[1] == '/')
+	{
+		unc = true;
+		++i;
+	}
 	
 	while (i < path.length())
 	{
-		while (i < path.length() && path[i] == '/')
+		while (i < path.length() and path[i] == '/')
 		{
 			++i;
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.top() = i;
 			else
 				dirs.push(i);
 		}
 		
-		if (path[i] == '.' && path[i + 1] == '.' && path[i + 2] == '/')
+		if (path[i] == '.' and path[i + 1] == '.' and path[i + 2] == '/')
 		{
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.pop();
-			if (dirs.size() == 0)
+			if (dirs.empty())
 				--r;
 			i += 2;
 			continue;
 		}
-		else if (path[i] == '.' && path[i + 1] == '/')
+		else if (path[i] == '.' and path[i + 1] == '/')
 		{
 			i += 1;
-			if (dirs.size() > 0)
+			if (not dirs.empty())
 				dirs.top() = i;
 			else
 				dirs.push(i);
@@ -1741,13 +1666,13 @@ void NormalizePath(string& ioPath)
 		dirs.push(i);
 	}
 	
-	if (dirs.size() > 0 && dirs.top() == path.length())
+	if (not dirs.empty() and dirs.top() == path.length())
 		ioPath.assign("/");
 	else
 		ioPath.erase(ioPath.begin(), ioPath.end());
 	
 	bool dir = false;
-	while (dirs.size() > 0)
+	while (not dirs.empty())
 	{
 		unsigned long l, n;
 		n = path.find('/', dirs.top());
@@ -1773,6 +1698,9 @@ void NormalizePath(string& ioPath)
 		while (++r < 0)
 			ioPath.insert(0, "../");
 	}
-	else if (path.length() > 0 && path[0] == '/' && ioPath[0] != '/')
+	else if (path.length() > 0 and path[0] == '/' and ioPath[0] != '/')
 		ioPath.insert(0, "/");
+
+	if (unc and ioPath[0] == '/')
+		ioPath.insert(ioPath.begin(), '/');
 }
