@@ -551,19 +551,27 @@ void MSftpFileLoader::SFTPChannelEvent(
 			eReadFile(data);
 
 			mSFTPChannel->CloseFile();
-			
-			delete this;
 			break;
 		}
 		
 		case SFTP_FILE_CLOSED:
 			eFileLoaded();
 			mSFTPChannel->Close();
+			delete this;
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
 			eError("SSH Channel Timeout");
+			break;
+		
+		case SFTP_ERROR:
+			mSFTPChannel->Close();
+			delete this;
+			break;
+		
+		default:
+			PRINT(("Unhandled event %d", inMessage));
 			break;
 	}
 }
@@ -836,18 +844,18 @@ namespace
 {
 
 MFileImp* CreateFileImpForURI(
-	const char*			inURI,
+	const string&		inURI,
 	bool				isAbsoluteURI)
 {
-	THROW_IF_NIL(inURI);
-	
 	MFileImp* result = nil;
 
-	pcrecpp::RE re("^(\\w+)://(.+)");
-	string scheme, path;
-	
-	if (re.FullMatch(inURI, &scheme, &path))
+	boost::regex re("^(sftp|ssh|file)://(.+)");
+	boost::smatch m;
+	if (boost::regex_match(inURI, m, re))
 	{
+		string scheme = m[1];
+		string path = m[2];
+		
 		URLDecode(path);
 		
 		if (scheme == "file")
@@ -869,7 +877,7 @@ MFileImp* CreateFileImpForURI(
 				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
 			}
 			else
-				THROW(("Malformed URL: '%s'", inURI));
+				THROW(("Malformed URL: '%s'", inURI.c_str()));
 		}
 		else
 			THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
@@ -894,7 +902,7 @@ MFile::MFile(
 MFile::MFile(
 	const string&		inURI,
 	bool				isAbsoluteURI)
-	: mImpl(CreateFileImpForURI(inURI.c_str(), isAbsoluteURI))
+	: mImpl(CreateFileImpForURI(inURI, isAbsoluteURI))
 	, mReadOnly(false)
 	, mModDate(0)
 {
@@ -937,7 +945,7 @@ MFile& MFile::operator=(
 	if (mImpl != nil)
 		mImpl->Release();
 	
-	mImpl = CreateFileImpForURI(rhs.c_str(), false);
+	mImpl = CreateFileImpForURI(rhs, false);
 
 	mReadOnly = false;
 	mModDate = 0;
