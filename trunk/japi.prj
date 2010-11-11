@@ -2,7 +2,6 @@
   <pkg-config>
     <pkg tool="pkg-config">gthread-2.0</pkg>
     <pkg tool="pkg-config">gtk+-x11-2.0</pkg>
-    <pkg tool="pkg-config">uuid</pkg>
     <pkg tool="pkg-config">libcanberra</pkg>
   </pkg-config>
   <syspaths>
@@ -116,7 +115,6 @@
       <link>boost_regex</link>
       <link>pcre</link>
       <link>pcrecpp</link>
-      <link>uuid</link>
       <link>tidy</link>
       <link>cryptopp</link>
       <link>zeep</link>
@@ -218,9 +216,9 @@
         <define>NDEBUG</define>
       </defines>
       <cflags>
+        <cflag>-O2</cflag>
         <cflag>-pthread</cflag>
         <cflag>-std=c++0x</cflag>
-        <cflag>-O2</cflag>
       </cflags>
       <warnings>
         <warning>all</warning>

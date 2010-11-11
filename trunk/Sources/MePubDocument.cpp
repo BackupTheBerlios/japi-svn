@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <cstring>
 #include <zlib.h>
-#include <uuid/uuid.h>
 #include <set>
 
 #include <boost/filesystem/operations.hpp>
@@ -31,6 +30,9 @@
 #include "boost/archive/iterators/transform_width.hpp"
 
 #include <boost/foreach.hpp>
+
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <cryptopp/rsa.h>
 #include <cryptopp/aes.h>
@@ -1495,13 +1497,8 @@ string MePubDocument::GetDocumentIDScheme() const
 
 void MePubDocument::GenerateNewDocumentID()
 {
-	uuid_t id;
-	uuid_generate(id);
-	
-	char b[32] = "";
-	uuid_unparse_lower(id, b);
-	mDocumentID = "uuid:";
-	mDocumentID += b;
+	boost::uuids::random_generator gen;
+	mDocumentID = "uuid:" + boost::lexical_cast<string>(gen());
 	mDocumentIDScheme = "uuid";	
 }
 
