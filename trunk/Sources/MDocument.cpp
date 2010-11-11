@@ -91,7 +91,7 @@ void MDocument::DoLoad()
 
 	if (mFile.IsLocal() == false or mFile.Exists())
 	{
-		mFileLoader = mFile.Load();
+		mFileLoader = mFile.Load(*this);
 		
 		SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
 		SetCallback(mFileLoader->eError, this, &MDocument::IOError);
@@ -115,7 +115,7 @@ bool MDocument::DoSave()
 	if (mFileSaver != nil)
 		THROW(("File is already being saved"));
 	
-	mFileSaver = mFile.Save();
+	mFileSaver = mFile.Save(*this);
 	
 	SetCallback(mFileSaver->eProgress, this, &MDocument::IOProgress);
 	SetCallback(mFileSaver->eError, this, &MDocument::IOError);
@@ -150,6 +150,28 @@ bool MDocument::DoSaveAs(
 		mFile = savedFile;
 	
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	FileLoaderDeleted
+
+void MDocument::FileLoaderDeleted(
+	MFileLoader*	inFileLoader)
+{
+	assert(inFileLoader == mFileLoader);
+	if (inFileLoader == mFileLoader)
+		mFileLoader = nil;
+}
+
+// ---------------------------------------------------------------------------
+//	FileSaverDeleted
+
+void MDocument::FileSaverDeleted(
+	MFileSaver*	inFileSaver)
+{
+	assert(inFileSaver == mFileSaver);
+	if (inFileSaver == mFileSaver)
+		mFileSaver = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -343,11 +365,6 @@ string MDocument::GetWindowTitle() const
 
 void MDocument::IOProgress(float inProgress, const string& inMessage)
 {
-	if (inProgress == -1)	// we're done
-	{
-		mFileLoader = nil;
-		mFileSaver = nil;
-	}
 }
 
 // ---------------------------------------------------------------------------
@@ -356,9 +373,6 @@ void MDocument::IOProgress(float inProgress, const string& inMessage)
 void MDocument::IOError(const std::string& inError)
 {
 	DisplayError(inError);
-
-	mFileLoader = nil;
-	mFileSaver = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -375,7 +389,6 @@ bool MDocument::IOAskOverwriteNewer()
 void MDocument::IOFileLoaded()
 {
 	SetModified(false);
-	mFileLoader = nil;
 //	eDocumentLoaded(this);
 }
 
@@ -385,5 +398,4 @@ void MDocument::IOFileLoaded()
 void MDocument::IOFileWritten()
 {
 	SetModified(false);
-	mFileSaver = nil;
 }

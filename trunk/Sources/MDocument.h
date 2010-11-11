@@ -112,6 +112,11 @@ class MDocument
 											eFileSpecChanged;
 	MEventOut<void(const fs::path&)>		eBaseDirChanged;
 
+	virtual void		FileLoaderDeleted(
+							MFileLoader*	inFileLoader);
+	virtual void		FileSaverDeleted(
+							MFileSaver*		inFileSaver);
+
   protected:
 
 	explicit			MDocument(

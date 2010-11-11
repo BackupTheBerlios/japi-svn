@@ -27,6 +27,7 @@
 #include <boost/regex.hpp>
 
 #include "MFile.h"
+#include "MDocument.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MUtils.h"
@@ -209,17 +210,21 @@ void URLDecode(
 // This works strictly asynchronous. 
 
 MFileLoader::MFileLoader(
+	MDocument&			inDocument,
 	MFile&				inFile)
 	: mFile(inFile)
+	, mDocument(inDocument)
 {
 }
 
 MFileLoader::~MFileLoader()
 {
+	mDocument.FileLoaderDeleted(this);
 }
 
 void MFileLoader::Cancel()
 {
+	delete this;
 }
 
 void MFileLoader::SetFileInfo(
@@ -235,6 +240,7 @@ class MLocalFileLoader : public MFileLoader
 {
   public:
 					MLocalFileLoader(
+						MDocument&		inDocument,
 						MFile&			inFile);
 
 	virtual void	DoLoad();
@@ -243,8 +249,9 @@ class MLocalFileLoader : public MFileLoader
 // --------------------------------------------------------------------
 
 MLocalFileLoader::MLocalFileLoader(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileLoader(inFile)
+	: MFileLoader(inDocument, inFile)
 {
 }
 
@@ -303,17 +310,21 @@ void MLocalFileLoader::DoLoad()
 // MFileSaver, used to save data to a file.
 
 MFileSaver::MFileSaver(
+	MDocument&			inDocument,
 	MFile&				inFile)
 	: mFile(inFile)
+	, mDocument(inDocument)
 {
 }
 
 MFileSaver::~MFileSaver()
 {
+	mDocument.FileSaverDeleted(this);
 }
 
 void MFileSaver::Cancel()
 {
+	delete this;
 }
 
 void MFileSaver::SetFileInfo(
@@ -329,7 +340,8 @@ class MLocalFileSaver : public MFileSaver
 {
   public:
 					MLocalFileSaver(
-						MFile&					inFile);
+						MDocument&			inDocument,
+						MFile&				inFile);
 
 	virtual void	DoSave();
 };
@@ -337,8 +349,9 @@ class MLocalFileSaver : public MFileSaver
 // --------------------------------------------------------------------
 
 MLocalFileSaver::MLocalFileSaver(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileSaver(inFile)
+	: MFileSaver(inDocument, inFile)
 {
 }
 
@@ -347,8 +360,6 @@ void MLocalFileSaver::DoSave()
 	try
 	{
 		fs::path path = mFile.GetPath();
-		
-		bool save = true;
 		
 		if (not fs::exists(path) or
 		    fs::last_write_time(path) <= mFile.GetModDate() or
@@ -433,14 +444,14 @@ struct MPathImp : public MFileImp
 								return new MPathImp(mPath / inSubPath);
 							}
 	
-	virtual MFileLoader*	Load(MFile& inFile)
+	virtual MFileLoader*	Load(MDocument& inDocument, MFile& inFile)
 							{
-								return new MLocalFileLoader(inFile);
+								return new MLocalFileLoader(inDocument, inFile);
 							}
 							
-	virtual MFileSaver*		Save(MFile& inFile)
+	virtual MFileSaver*		Save(MDocument& inDocument, MFile& inFile)
 							{
-								return new MLocalFileSaver(inFile);
+								return new MLocalFileSaver(inDocument, inFile);
 							}
 
   private:
@@ -454,6 +465,7 @@ class MSftpFileLoader : public MFileLoader
 {
   public:
 					MSftpFileLoader(
+						MDocument&		inDocument,
 						MFile&			inUrl);
 	
 	virtual void	DoLoad();
@@ -475,8 +487,9 @@ class MSftpFileLoader : public MFileLoader
 };
 
 MSftpFileLoader::MSftpFileLoader(
+	MDocument&		inDocument,
 	MFile&			inUrl)
-	: MFileLoader(inUrl)
+	: MFileLoader(inDocument, inUrl)
 {
 }
 
@@ -496,6 +509,7 @@ void MSftpFileLoader::DoLoad()
 void MSftpFileLoader::Cancel()
 {
 	mSFTPChannel.release();
+	MFileLoader::Cancel();
 }
 
 void MSftpFileLoader::SFTPChannelEvent(
@@ -512,6 +526,11 @@ void MSftpFileLoader::SFTPChannelEvent(
 		case SFTP_FILE_SIZE_KNOWN:
 			eProgress(0.f, _("File size known"));
 			mFileSize = mSFTPChannel->GetFileSize();
+			if (mFileSize == 0)
+			{
+				eFileLoaded();
+				mSFTPChannel->Close();
+			}
 			break;
 		
 		case SFTP_DATA_AVAILABLE:
@@ -533,7 +552,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 
 			mSFTPChannel->CloseFile();
 			
-//			delete this;	// oohh, tricky?
+			delete this;
 			break;
 		}
 		
@@ -564,7 +583,8 @@ class MSftpFileSaver : public MFileSaver
 {
   public:
 					MSftpFileSaver(
-						MFile&					inFile);
+						MDocument&			inDocument,
+						MFile&				inFile);
 
 	virtual void	DoSave();
 
@@ -584,8 +604,9 @@ class MSftpFileSaver : public MFileSaver
 };
 
 MSftpFileSaver::MSftpFileSaver(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileSaver(inFile)
+	: MFileSaver(inDocument, inFile)
 {
 }
 
@@ -754,14 +775,14 @@ struct MSftpImp : public MFileImp
 								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath / inSubPath);
 							}
 	
-	virtual MFileLoader*	Load(MFile& inFile)
+	virtual MFileLoader*	Load(MDocument& inDocument, MFile& inFile)
 							{
-								return new MSftpFileLoader(inFile);
+								return new MSftpFileLoader(inDocument, inFile);
 							}
 							
-	virtual MFileSaver*		Save(MFile& inFile)
+	virtual MFileSaver*		Save(MDocument& inDocument, MFile& inFile)
 							{
-								return new MSftpFileSaver(inFile);
+								return new MSftpFileSaver(inDocument, inFile);
 							}
 
   private:
@@ -1038,16 +1059,18 @@ MFile MFile::GetParent() const
 	return result;
 }
 
-MFileLoader* MFile::Load()
+MFileLoader* MFile::Load(
+	MDocument&			inDocument)
 {
 	THROW_IF_NIL(mImpl);
-	return mImpl->Load(*this);
+	return mImpl->Load(inDocument, *this);
 }
 
-MFileSaver* MFile::Save()
+MFileSaver* MFile::Save(
+	MDocument&			inDocument)
 {
 	THROW_IF_NIL(mImpl);
-	return mImpl->Save(*this);
+	return mImpl->Save(inDocument, *this);
 }
 
 bool MFile::IsValid() const
@@ -1404,6 +1427,14 @@ fs::path relative_path(const fs::path& inFromDir, const fs::path& inFile)
 			++f;
 		}
 	}
+	return result;
+}
+
+bool ChooseDirectory(
+	fs::path&	outDirectory)
+{
+	GtkWidget* dialog = nil;
+	bool result = false;
 
 	try
 	{

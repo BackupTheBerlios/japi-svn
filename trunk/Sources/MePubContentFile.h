@@ -67,8 +67,8 @@ struct MePubContentFile : public MFileImp
 	class MePubFileLoader : public MFileLoader
 	{
 	  public:
-						MePubFileLoader(MFile& inFile, const std::string& inData, double inModDate)
-							: MFileLoader(inFile), data(inData), modDate(inModDate) {}
+						MePubFileLoader(MDocument& inDocument, MFile& inFile, const std::string& inData, double inModDate)
+							: MFileLoader(inDocument, inFile), data(inData), modDate(inModDate) {}
 	
 		void			DoLoad()
 						{
@@ -86,8 +86,8 @@ struct MePubContentFile : public MFileImp
 	class MePubFileSaver : public MFileSaver
 	{
 	  public:
-						MePubFileSaver(MFile& inFile, MePubDocument* inEPub, fs::path inPath)
-							: MFileSaver(inFile), mEPub(inEPub), mPath(inPath) {}
+						MePubFileSaver(MDocument& inDocument, MFile& inFile, MePubDocument* inEPub, fs::path inPath)
+							: MFileSaver(inDocument, inFile), mEPub(inEPub), mPath(inPath) {}
 
 	void				DoSave()
 						{
@@ -103,14 +103,14 @@ struct MePubContentFile : public MFileImp
 		fs::path			mPath;
 	};
 
-	virtual MFileLoader* Load(MFile& inFile)
+	virtual MFileLoader* Load(MDocument& inDocument, MFile& inFile)
 						{
-							return new MePubFileLoader(inFile, mEPub->GetFileData(mPath), mEPub->GetFile().GetModDate());
+							return new MePubFileLoader(inDocument, inFile, mEPub->GetFileData(mPath), mEPub->GetFile().GetModDate());
 						}
 						
-	virtual MFileSaver*	Save(MFile& inFile)
+	virtual MFileSaver*	Save(MDocument& inDocument, MFile& inFile)
 						{
-							return new MePubFileSaver(inFile, mEPub, mPath);
+							return new MePubFileSaver(inDocument, inFile, mEPub, mPath);
 						}
 						
 

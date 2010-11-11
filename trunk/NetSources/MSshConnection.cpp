@@ -115,7 +115,6 @@ const byte
 const char
 	kKeyExchangeAlgorithms[] = "diffie-hellman-group14-sha1,diffie-hellman-group1-sha1",
 	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
-//	kServerHostKeyAlgorithms[] = "ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-md5",
 	kUseCompressionAlgorithms[] = "zlib,none",

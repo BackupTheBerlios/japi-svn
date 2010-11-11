@@ -304,8 +304,6 @@ void MTextDocument::ReadFile(
 	ReInit();
 	Rewrap();
 	UpdateDirtyLines();
-	
-	eSSHProgress(-1.f, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -4887,6 +4885,7 @@ void MTextDocument::IOProgress(
 void MTextDocument::IOFileLoaded()
 {
 	MDocument::IOFileLoaded();
+	eSSHProgress(-1.f, "");
 	
 	MDocState state = {};
 	if (not ReadDocState(state))
