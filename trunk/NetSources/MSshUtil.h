@@ -236,7 +236,7 @@ struct MSshPacket
 #if DEBUG
 	void			Dump() const
 					{
-						hexdump(std::cerr, &data[0], data.length());
+						HexDump(&data[0], data.length(), std::cerr);
 					}
 #endif
 	
