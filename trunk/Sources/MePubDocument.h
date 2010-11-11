@@ -10,7 +10,6 @@
 #include <set>
 
 #include <boost/array.hpp>
-#include <openssl/aes.h>
 
 #include "MDocument.h"
 #include "MProjectItem.h"
@@ -139,7 +138,7 @@ class MePubDocument : public MDocument
 						mLinear;
 	MProjectGroup		mRoot, mTOC;
 	std::string			mDocumentID, mDocumentIDScheme;
-	AES_KEY				mKey;
+	uint8				mKey[16];
 	std::map<std::string,std::string>
 						mDublinCore;
 };

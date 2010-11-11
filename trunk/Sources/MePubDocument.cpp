@@ -32,8 +32,11 @@
 
 #include <boost/foreach.hpp>
 
-#include <openssl/pem.h>
-#include <openssl/aes.h>
+#include <cryptopp/rsa.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/files.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/ccm.h>
 
 #include <zeep/xml/document.hpp>
 
@@ -61,6 +64,7 @@ namespace xml = zeep::xml;
 namespace ba = boost::algorithm;
 namespace io = boost::iostreams;
 namespace bai = boost::archive::iterators;
+namespace cpp = CryptoPP;
 
 // --------------------------------------------------------------------
 
@@ -438,7 +442,7 @@ void deflate(
 
 void DecryptBookKey(
 	const string&	inBase64Key,
-	AES_KEY&		outBookKey)
+	uint8			outBookKey[16])
 {
 	vector<uint8> adeptKey;
 	decode_base64(inBase64Key, adeptKey);
@@ -446,24 +450,17 @@ void DecryptBookKey(
 	if (adeptKey.size() != 128)
 		THROW(("Invalid key length, expected 128 bytes"));
 	
-	static RSA* rsa = nil;
+	static cpp::PK_Decryptor* rsa = nil;
 	if (rsa == nil and fs::exists(gPrefsDir / "adeptkey.der"))
 	{
 		fs::ifstream adeptKeyFile(gPrefsDir / "adeptkey.der", ios::binary);
 		if (adeptKeyFile.is_open())
 		{
-			streambuf* b = adeptKeyFile.rdbuf();
+			cpp::RSA::PrivateKey key;
+			cpp::FileSource src(adeptKeyFile, true);
+			key.BERDecodePrivateKey(src, true, 0);
 			
-			int64 len = b->pubseekoff(0, ios::end);
-			b->pubseekpos(0);
-			
-			vector<char> data(len);
-			b->sgetn(&data[0], len);
-		
-			// put the data into a BIO
-			BIO *mem = BIO_new_mem_buf(&data[0], len);
-			rsa = d2i_RSAPrivateKey_bio(mem, nil);
-			BIO_free(mem);
+			rsa = new cpp::RSAES_PKCS1v15_Decryptor(key);
 		}
 	}
 
@@ -471,24 +468,24 @@ void DecryptBookKey(
 		THROW(("Failed to read private ADEPT key from '%s'",
 			(gPrefsDir / "adeptkey.der").string().c_str()));
 	
-	uint8 b[16];
-	int r = RSA_private_decrypt(128, &adeptKey[0], b, rsa, RSA_PKCS1_PADDING);
-	if (r != 16)
-		THROW(("Error decrypting book key, expected 16, got %d", r));
-	
-	AES_set_decrypt_key(b, 128, &outBookKey);
+	static cpp::AutoSeededRandomPool rng;
+	rsa->Decrypt(rng, &adeptKey[0], 16, outBookKey);
 }
 
 void DecryptFile(
 	string&			ioFile,
-	const AES_KEY&	inKey)
+	uint8			inBookKey[16])
 {
-	vector<char> b(ioFile.length());
-
 	uint8* iv = reinterpret_cast<uint8*>(const_cast<char*>(ioFile.c_str()));
 	uint8* src = iv + 16;
 	
-	AES_cbc_encrypt(src, (uint8*)&b[0], ioFile.length(), &inKey, iv, AES_DECRYPT);
+	cpp::CBC_Mode<cpp::AES>::Decryption dec;
+	dec.SetKeyWithIV(inBookKey, 16, iv);
+
+	string b;
+	cpp::StringSource s(src, ioFile.length() - 16, true, 
+		new cpp::StreamTransformationFilter(dec, new cpp::StringSink(b),
+			cpp::StreamTransformationFilter::NO_PADDING));
 	
 	io::zlib_params params;
 	params.noheader = true;	// don't read header, i.e. true deflate compression
