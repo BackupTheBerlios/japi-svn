@@ -217,7 +217,6 @@ MFileLoader::MFileLoader(
 
 MFileLoader::~MFileLoader()
 {
-PRINT(("Deleting FileLoader"));
 	mDocument.FileLoaderDeleted(this);
 }
 
@@ -1760,6 +1759,8 @@ void NormalizePath(string& ioPath)
 	else if (path.length() > 0 and path[0] == '/' and ioPath[0] != '/')
 		ioPath.insert(0, "/");
 
+#if 0
 	if (unc and ioPath[0] == '/')
 		ioPath.insert(ioPath.begin(), '/');
+#endif
 }

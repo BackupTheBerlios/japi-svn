@@ -276,6 +276,7 @@ MMessageWindow::MMessageWindow(
 	, eInvokeMsg(this, &MMessageWindow::InvokeMsg)
 	, mBaseDirectory("/")
 	, mLastAddition(0)
+	, mLastWasInFileIncluded(false)
 {
 	SetTitle(inTitle);
 	
@@ -419,7 +420,8 @@ void MMessageWindow::AddStdErr(
 {
 	static const boost::regex
 		re1("^([^:]+):((\\d+):)?( (note|warning|(fatal )?error|fout):)?(.+)$"),
-		re2("^In file included from (.+?):(\\d+):.*$");
+		re2("^In file included from (.+?):(\\d+)[,:]$"),
+		re3("^\\s+from (.+?):(\\d+)[,:]$");
 		
 	mText.append(inText, inSize);
 
@@ -462,16 +464,27 @@ void MMessageWindow::AddStdErr(
 
 					string mesg = spec.leaf() + ':' + m[2] + m[4] + m[7];
 					AddMessage(kind, MFile(spec), lineNr, 0, 0, mesg);
+					mLastWasInFileIncluded = false;
 					continue;
 				}
 			}
 			
-			if (boost::regex_match(line, m, re2))
+			if (boost::regex_match(line, m, re2) or
+				(mLastWasInFileIncluded and boost::regex_match(line, m, re3)))
 			{
+				mLastWasInFileIncluded = true;
+
 				string file = m[1];
 				string l_nr = m[2];
+
+PRINT(("file: %s", file.c_str()));
 				
-				spec = mBaseDirectory / file;
+				if (IsAbsolutePath(file))
+					spec = file;
+				else
+					spec = mBaseDirectory / file;
+
+PRINT(("spec: %s", spec.string().c_str()));
 				
 				if (fs::exists(spec))
 				{
@@ -484,6 +497,7 @@ void MMessageWindow::AddStdErr(
 				}
 			}
 
+			mLastWasInFileIncluded = true;
 			AddMessage(kMsgKindNone, MFile(spec), 0, 0, 0, line);
 		}
 		

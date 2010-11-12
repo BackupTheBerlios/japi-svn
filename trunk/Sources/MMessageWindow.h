@@ -115,6 +115,7 @@ class MMessageWindow : public MWindow
 	MMessageList	mList;
 	std::string		mText;
 	double			mLastAddition;
+	bool			mLastWasInFileIncluded;
 //	MTextView*		mTextView;
 //	GtkWidget*		mSelectionPanel;
 };
