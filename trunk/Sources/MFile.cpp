@@ -16,8 +16,6 @@
 #include <cerrno>
 #include <limits>
 
-#include <pcrecpp.h>
-
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -862,12 +860,16 @@ MFileImp* CreateFileImpForURI(
 			result = new MPathImp(fs::system_complete(path));
 		else if (scheme == "sftp" or scheme == "ssh")
 		{
-			pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:(\\d+))?/(.+)");
+			boost::regex re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:(\\d+))?/(.+)");
 			
-			string s1, s2, s3, username, password, host, port, file;
-
-			if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &s3, &port, &file))
+			if (boost::regex_match(path, m, re2))
 			{
+				string username = m[2];
+				string password = m[4];
+				string host = m[5];
+				string port = m[7];
+				string file = m[8];
+
 				if (port.empty())
 					port = "22";
 

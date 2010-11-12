@@ -294,11 +294,14 @@ class MListBase : public MView
 	
   public:
 					MListBase(
-						GtkWidget*	inTreeView);
+						GtkWidget*			inTreeView);
 
 	virtual			~MListBase();
 
 	void			AllowMultipleSelectedItems();
+
+	void			SetReorderable(
+						bool				inReorderable);
 
 	void			SetColumnTitle(
 						uint32				inColumnNr,
@@ -512,7 +515,7 @@ class MList : public MListBase
 	MEventOut<void(row_type*)>				eRowSelected;
 	MEventOut<void(row_type*)>				eRowInvoked;
 	MEventOut<void(row_type*)>				eRowDragged;
-	
+
   protected:
 	
 	virtual void	RowSelected(

@@ -230,6 +230,11 @@ MListBase::~MListBase()
 	cout << "list deleted" << endl;
 }
 
+void MListBase::SetReorderable(bool inReorderable)
+{
+	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(GetGtkWidget()), inReorderable);
+}
+
 void MListBase::CreateTreeStore(
 	std::vector<GType>&		inTypes,
 	std::vector<MGtkRendererInfo>&

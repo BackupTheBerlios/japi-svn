@@ -5,7 +5,7 @@
 
 #include "MJapi.h"
 
-#include <pcre.h>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <cmath>
 
@@ -104,8 +104,8 @@ typedef std::vector<MFile>		MFileTable;
 enum
 {
 	kIconColumn,
-	kFileColumn,
-	kLineColumn,
+//	kFileColumn,
+//	kLineColumn,
 	kMsgColumn,
 	
 	kColumnCount	
@@ -114,8 +114,8 @@ enum
 namespace MMsgColumns
 {
 	struct icon {};
-	struct file {};
-	struct line {};
+//	struct file {};
+//	struct line {};
 	struct msg {};
 }
 
@@ -123,8 +123,8 @@ class MMessageRow
 	: public MListRow<
 			MMessageRow,
 			MMsgColumns::icon,			GdkPixbuf*,
-			MMsgColumns::file,			string,
-			MMsgColumns::line,			string,
+//			MMsgColumns::file,			string,
+//			MMsgColumns::line,			string,
 			MMsgColumns::msg,			string
 		>
 {
@@ -144,20 +144,20 @@ class MMessageRow
 						outIcon = GetBadge(mItem->mKind);
 					}
 
-	void			GetData(
-						const MMsgColumns::file&,
-						string&			outFile)
-					{
-						outFile = mFile;
-					}
-
-	void			GetData(
-						const MMsgColumns::line,
-						string&			outLine)
-					{
-						if (mItem->mLineNr > 0)
-							outLine = boost::lexical_cast<string>(mItem->mLineNr);
-					}
+//	void			GetData(
+//						const MMsgColumns::file&,
+//						string&			outFile)
+//					{
+//						outFile = mFile;
+//					}
+//
+//	void			GetData(
+//						const MMsgColumns::line,
+//						string&			outLine)
+//					{
+//						if (mItem->mLineNr > 0)
+//							outLine = boost::lexical_cast<string>(mItem->mLineNr);
+//					}
 
 	void			GetData(
 						const MMsgColumns::msg&,
@@ -283,12 +283,13 @@ MMessageWindow::MMessageWindow(
 	
 	AddRoute(static_cast<MList<MMessageRow>*>(mListView)->eRowSelected, eSelectMsg);
 	AddRoute(static_cast<MList<MMessageRow>*>(mListView)->eRowInvoked, eInvokeMsg);
+
+	mListView->SetReorderable(false);
 	
-	mListView->SetColumnTitle(kFileColumn, _("File"));
-	mListView->SetColumnTitle(kLineColumn, _("Line"));
-	mListView->SetColumnAlignment(kLineColumn, 1.0f);
-	mListView->SetColumnTitle(kMsgColumn, _("Message"));
-	mListView->SetExpandColumn(kMsgColumn);
+//	mListView->SetColumnTitle(kFileColumn, _("File"));
+//	mListView->SetColumnTitle(kLineColumn, _("Line"));
+//	mListView->SetColumnAlignment(kLineColumn, 1.0f);
+//	mListView->SetColumnTitle(kMsgColumn, _("Message"));
 
 //	// ----------------------------------------------------------------
 //
@@ -406,24 +407,9 @@ void MMessageWindow::AddStdErr(
 	const char*			inText,
 	uint32				inSize)
 {
-	static pcre* pattern = nil;
-	static pcre_extra* info = nil;
-	
-	if (pattern == nil)
-	{
-		const char* errmsg;
-		int errcode, erroffset;
-
-		pattern = pcre_compile2("^([^:]+):((\\d+):)?( (note|warning|error|fout):)?([^:].+)$",
-			PCRE_UTF8 | PCRE_MULTILINE, &errcode, &errmsg, &erroffset, nil);
-		
-		if (pattern == nil or errcode != 0)
-			THROW(("Error compiling regular expression: %s", errmsg));
-		
-		info = pcre_study(pattern, 0, &errmsg);
-		if (errmsg != 0)
-			THROW(("Error studying regular expression: %s", errmsg));
-	}
+	static const boost::regex
+		re1("^([^:]+):((\\d+):)?( (note|warning|(fatal )?error|fout):)?.+$"),
+		re2("^In file included from (.+?):(\\d+):.*$");
 		
 	mText.append(inText, inSize);
 
@@ -437,33 +423,22 @@ void MMessageWindow::AddStdErr(
 			mText.erase(0, n + 1);
 			
 			fs::path spec;
-			int m[33] = {};
+			boost::smatch m;
 
-			if (pcre_exec(pattern, info, line.c_str(), line.length(), 0, PCRE_NOTEMPTY, m, 33) >= 0)
+			if (boost::regex_match(line, m, re1))
 			{
-				string file, warn, l_nr, mesg;
-				
-				if (m[2] >= 0 and m[3] > m[2])
-					file = line.substr(m[2], m[3] - m[2]);
-				
-				if (m[10] >= 0 and m[11] > m[10])
-					warn = line.substr(m[10], m[11] - m[10]);
-
-				if (m[6] >= 0 and m[7] > m[6])
-					l_nr = line.substr(m[6], m[7] - m[6]);
-				
-				if (m[12] >= 0 and m[13] > m[12])
-					mesg = line.substr(m[12], m[13] - m[12]);
-				boost::trim_right(mesg);
+				string file = m[1];
+				string l_nr = m[3];
+				string warn = m[5];
 				
 				spec = mBaseDirectory / file;
 				
 				if (fs::exists(spec))
 				{
 					MMessageKind kind = kMsgKindNone;
-					if (warn.length() > 0)
+					if (not warn.empty())
 					{
-						if (warn == "error" or warn == "fout")
+						if (warn == "error" or warn == "fout" or warn == "fatal error")
 							kind = kMsgKindError;
 						else if (warn == "warning")
 							kind = kMsgKindWarning;
@@ -472,10 +447,27 @@ void MMessageWindow::AddStdErr(
 					}
 					
 					uint32 lineNr = 0;
-					if (l_nr.length() > 0)
-						lineNr = atoi(l_nr.c_str());
-					AddMessage(kind, MFile(spec), lineNr, 0, 0, mesg);
-					
+					if (not l_nr.empty())
+						lineNr = boost::lexical_cast<uint32>(l_nr);
+					AddMessage(kind, MFile(spec), lineNr, 0, 0, line);
+					continue;
+				}
+			}
+			
+			if (boost::regex_match(line, m, re2))
+			{
+				string file = m[1];
+				string l_nr = m[2];
+				
+				spec = mBaseDirectory / file;
+				
+				if (fs::exists(spec))
+				{
+					MMessageKind kind = kMsgKindNone;
+					uint32 lineNr = 0;
+					if (not l_nr.empty())
+						lineNr = boost::lexical_cast<uint32>(l_nr);
+					AddMessage(kind, MFile(spec), lineNr, 0, 0, line);
 					continue;
 				}
 			}
