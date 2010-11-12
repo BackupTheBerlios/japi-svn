@@ -119,17 +119,12 @@ bool MSshAgent::GetFirstIdentity(
 	
 	if (RequestReply(out, mIdentities))
 	{
-//#if DEBUG
-//		mIdentities.Dump();
-//#endif
 		mIdentities >> msg;
 		
 		if (msg == SSH2_AGENT_IDENTITIES_ANSWER)
 		{
 			mIdentities >> mCount;
 
-			PRINT(("++ SSH_AGENT returned %d identities", mCount));
-			
 			if (mCount > 0 and mCount < 1024)
 				result = GetNextIdentity(e, n, outComment);
 		}
@@ -160,7 +155,6 @@ bool MSshAgent::GetNextIdentity(
 		blob >> e >> n;
 
 		result = true;
-		PRINT(("++ returning identity %s", outComment.c_str()));
 	}
 	
 	return result;

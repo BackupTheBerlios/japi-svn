@@ -1,10 +1,9 @@
 ﻿Bugs
 
-- save as => notify doc
-
 Te doen
 
 - ePub
+	- XML dingen als XML bewaren en terug schrijven
 	- zoeken in alle ePub items
 	- revert op ePub werkt nog niet?
 	- guide

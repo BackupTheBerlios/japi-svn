@@ -370,8 +370,6 @@ void MSftpChannelImp3::ProcessReadDir(
 		
 		in >> id >> count;
 		
-		PRINT(("Reading %d items", count));
-		
 		if (id != fRequestId - 1)
 			;
 		
@@ -388,8 +386,6 @@ void MSftpChannelImp3::ProcessReadDir(
 				DirEntry e;
 				in >> e.name >> dummy_s >> flags;
 
-PRINT(("- %s\n", e.name.c_str()));
-				
 				e.type = dummy_s[0];
 				
 					// for now...
@@ -462,8 +458,6 @@ void MSftpChannelImp3::ReadFile(string inPath)
 {
 	assert(fHandle.size() == 0);
 
-	PRINT(("== ReadFile: '%s'", inPath.c_str()));
-	
 	MSshPacket p;
 	p << uint8(SSH_FXP_OPEN) << fRequestId++ << inPath <<
 		uint32(SSH_FXF_READ) << uint32(0);
@@ -672,7 +666,6 @@ MSftpChannel::MSftpChannel(string inIPAddress,
 
 MSftpChannel::~MSftpChannel()
 {
-PRINT(("Deleting MSftpChannel"));
 	delete fImpl;
 }
 

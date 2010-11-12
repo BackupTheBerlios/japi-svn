@@ -319,8 +319,6 @@ MSshConnection* MSshConnection::Get(
 	const string&	inUserName,
 	uint16			inPort)
 {
-	PRINT(("Connecting to %s:%d as user %s", inIPAddress.c_str(), inPort, inUserName.c_str())); 
-
 	string username = inUserName;
 	
 	if (username.length() == 0)
@@ -363,7 +361,6 @@ void MSshConnection::Error(
 {
 	eConnectionMessage(FormatString("Error in SSH connection: ^0", LookupToken(kErrors, inReason)));
 	
-	PRINT(("Error: %s", LookupToken(kErrors, inReason)));
 	Disconnect();
 	
 	fErrCode = inReason;
@@ -433,7 +430,6 @@ void MSshConnection::Disconnect()
 	{
 		fIsConnected = false;
 	
-		PRINT(("Disconnect %s", fIPAddress.c_str()));
 		RemoveRoute(eIdle, gApp->eIdle);
 		
 		close(fSocket);
@@ -521,14 +517,10 @@ void MSshConnection::Idle(
 
 				lResult = recv(fSocket, sReadBuf, sizeof(sReadBuf), 0);
 
-				PRINT(("-- Read %d bytes of data", lResult));
-
 				/* Something wrong... no connection anymore */
 				if (lResult == 0 or lResult < 0)
 				{
 //					assert(errno != EAGAIN);
-					if (errno != EAGAIN)
-						PRINT(("connection error %s", strerror(errno)));
 					Disconnect();
 				}
 				else
@@ -638,8 +630,6 @@ bool MSshConnection::ProcessBuffer()
 			fGotVersionString = true;
 			
 			fInPacket.assign(fBuffer, 0, n);
-			
-			PRINT(("Version string from host: %s", fInPacket.c_str()));
 			
 			if (fBuffer[n] == '\r' and fBuffer[n + 1] == '\n')
 				fBuffer.erase(0, n + 2);
@@ -755,14 +745,8 @@ void MSshConnection::ProcessPacket()
 {
 	uint8 message = fInPacket[0];
 
-	PRINT((">> %s", LookupToken(kTokens, message)));
-
 	MSshPacket in, out;
 	in.data = fInPacket;
-
-//#if DEBUG
-//	in.Dump();
-//#endif
 
 	switch (message)
 	{
@@ -814,9 +798,6 @@ void MSshConnection::ProcessPacket()
 				PRINT(("This message should not have been received: %d", message));
 	}
 
-	if (in.data.length() > 0)
-		PRINT(("Data left in packet %d", message));
-
 	fInPacket.clear();
 	
 	if (out.data.length() > 0)
@@ -835,8 +816,6 @@ void MSshConnection::ProcessDisconnect(
 	
 	in >> message >> fErrCode >> fErrString >> languageTag;
 	
-	PRINT(("Disconnected: %s", fErrString.c_str()));
-
 	Disconnect();
 }
 
@@ -845,7 +824,6 @@ void MSshConnection::ProcessUnimplemented(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	PRINT(("Unimplemented"));
 	Disconnect();
 }
 
@@ -861,9 +839,6 @@ void MSshConnection::ProcessChannelRequest(
 	
 	in >> message >> channel >> request >> wantReply;
 	
-	PRINT(("Channel request for %d: %s%s", channel,
-		request.c_str(), wantReply ? " (wants reply)" : ""));
-	
 	if (wantReply)
 		out << uint8(SSH_MSG_CHANNEL_FAILURE) << channel;
 }
@@ -878,8 +853,7 @@ void MSshConnection::ProcessDebug(
 	string message, langTag;
 	
 	in >> msg >> always_display >> message >> langTag;
-	
-	PRINT(("Debug: %s", message.c_str()));
+	PRINT(("Debug message from server: %s", message.c_str()));
 }
 
 void MSshConnection::ProcessConnect()
@@ -1264,8 +1238,6 @@ void MSshConnection::ProcessUserAuthNone(
 			uint8 msg;
 			
 			in >> msg >> s >> partial;
-			
-			PRINT(("UserAuth failure: %s (%s)", s.c_str(), (partial ? "partial" : "final")));
 			
 			p = "keyboard-interactive,password";
 
@@ -1800,8 +1772,6 @@ void MSshConnection::ProcessConfirmChannel(
 		
 		in >> msg >> my_channel >> fErrCode >> fErrString;
 		
-		PRINT(("Channel open failed: %s", fErrString.c_str()));
-
 		ChannelList::iterator ch = find_if(
 			fChannels.begin(), fChannels.end(),
 			boost::bind(&MSshChannel::GetMyChannelID, _1) == my_channel);
@@ -1823,10 +1793,7 @@ void MSshConnection::ProcessConfirmPTY(
 	MSshPacket&	out)
 {
 	if (inMessage == SSH_MSG_REQUEST_SUCCESS)
-	{
-		PRINT(("Got a pty!"));
 		fHandler = nil;
-	}
 	else
 	{
 #pragma message("tell user about error")
@@ -1844,16 +1811,11 @@ void MSshConnection::ProcessChannel(
 	
 	in >> msg >> channelId;
 	
-	PRINT(("<< %s for channel %d", LookupToken(kTokens, msg), channelId));
-	
 	ChannelList::iterator ch = find_if(fChannels.begin(), fChannels.end(),
 		boost::bind(&MSshChannel::GetMyChannelID, _1) == channelId);
 	
-	if (ch == fChannels.end())
-		PRINT(("Received msg %d for closed channel %d", msg, channelId));
-	else
+	if (ch != fChannels.end())
 	{
-//		assert(ch != fChannels.end() or msg == SSH_MSG_CHANNEL_CLOSE);
 		MSshChannel* channel = *ch;
 		
 		uint32 type;
