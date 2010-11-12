@@ -114,7 +114,6 @@
       <link>boost_iostreams</link>
       <link>boost_regex</link>
       <link>pcre</link>
-      <link>pcrecpp</link>
       <link>tidy</link>
       <link>cryptopp</link>
       <link>zeep</link>

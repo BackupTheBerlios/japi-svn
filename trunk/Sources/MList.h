@@ -225,7 +225,8 @@ class MListRow : public MListRowBase
 						{
 							if (inColumnNr == 0)
 							{
-								typename g_type_mapped<T>::value_type v;
+								typedef typename g_type_mapped<T>::value_type value_type;
+								value_type v = value_type();
 								inProvider->GetData(N(), v);
 								g_value_init(&outValue, g_type_mapped<T>::g_type);
 								g_type_mapped<T>::to_g_value(outValue, v);
@@ -302,6 +303,12 @@ class MListBase : public MView
 
 	void			SetReorderable(
 						bool				inReorderable);
+
+	void			SetHeadersVisible(
+						bool				inHeadersVisible);
+
+	void			RemoveColumn(
+						uint32				inColumnNr);
 
 	void			SetColumnTitle(
 						uint32				inColumnNr,
@@ -457,6 +464,8 @@ class MListBase : public MView
 						MListRowBase*		inRow) = 0;
 
 	GtkTreeStore*	mTreeStore;
+	std::vector<GtkTreeViewColumn*>
+					mColumns;
 	std::vector<GtkCellRenderer*>
 					mRenderers;
 	std::vector<MListColumnEditedListener*>

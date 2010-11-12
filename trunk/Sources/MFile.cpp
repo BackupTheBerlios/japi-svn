@@ -217,6 +217,7 @@ MFileLoader::MFileLoader(
 
 MFileLoader::~MFileLoader()
 {
+PRINT(("Deleting FileLoader"));
 	mDocument.FileLoaderDeleted(this);
 }
 
@@ -478,8 +479,7 @@ class MSftpFileLoader : public MFileLoader
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	unique_ptr<MSftpChannel>
-					mSFTPChannel;
+	MSftpChannel*	mSFTPChannel;
 	int64			mFileSize;
 	string			mData;
 };
@@ -488,12 +488,13 @@ MSftpFileLoader::MSftpFileLoader(
 	MDocument&		inDocument,
 	MFile&			inUrl)
 	: MFileLoader(inDocument, inUrl)
+	, mSFTPChannel(nil)
 {
 }
 
 void MSftpFileLoader::DoLoad()
 {
-	mSFTPChannel.reset(new MSftpChannel(mFile));
+	mSFTPChannel = new MSftpChannel(mFile);
 
 	SetCallback(mSFTPChannel->eChannelEvent,
 		this, &MSftpFileLoader::SFTPChannelEvent);
@@ -506,7 +507,8 @@ void MSftpFileLoader::DoLoad()
 
 void MSftpFileLoader::Cancel()
 {
-	mSFTPChannel.release();
+	if (mSFTPChannel != nil)
+		mSFTPChannel->Close();
 	MFileLoader::Cancel();
 }
 
@@ -555,7 +557,6 @@ void MSftpFileLoader::SFTPChannelEvent(
 		case SFTP_FILE_CLOSED:
 			eFileLoaded();
 			mSFTPChannel->Close();
-			delete this;
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
@@ -565,6 +566,10 @@ void MSftpFileLoader::SFTPChannelEvent(
 		
 		case SFTP_ERROR:
 			mSFTPChannel->Close();
+			break;
+		
+		case SSH_CHANNEL_CLOSED:
+			mSFTPChannel = nil;
 			delete this;
 			break;
 		
@@ -593,6 +598,8 @@ class MSftpFileSaver : public MFileSaver
 						MFile&				inFile);
 
 	virtual void	DoSave();
+	
+	virtual void	Cancel();
 
   private:
 
@@ -602,8 +609,7 @@ class MSftpFileSaver : public MFileSaver
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	unique_ptr<MSftpChannel>
-					mSFTPChannel;
+	MSftpChannel*	mSFTPChannel;
 	int64			mSFTPOffset;
 	int64			mSFTPSize;
 	string			mSFTPData;
@@ -613,12 +619,20 @@ MSftpFileSaver::MSftpFileSaver(
 	MDocument&		inDocument,
 	MFile&			inFile)
 	: MFileSaver(inDocument, inFile)
+	, mSFTPChannel(nil)
 {
+}
+
+void MSftpFileSaver::Cancel()
+{
+	if (mSFTPChannel != nil)
+		mSFTPChannel->Close();
+	MFileSaver::Cancel();
 }
 
 void MSftpFileSaver::DoSave()
 {
-	mSFTPChannel.reset(new MSftpChannel(mFile));
+	mSFTPChannel = new MSftpChannel(mFile);
 
 	{
 		io::filtering_ostream out(io::back_inserter(mSFTPData));
@@ -677,13 +691,17 @@ void MSftpFileSaver::SFTPChannelEvent(
 //			eProgress(-1.f, _("done"));
 			eFileWritten();
 			mSFTPChannel->Close();
-			
 //			SetFileInfo(false, fs::last_write_time(path));
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
 			eError("SSH Channel Timeout");
+			break;
+
+		case SSH_CHANNEL_CLOSED:
+			mSFTPChannel = nil;
+			delete this;
 			break;
 	}
 }

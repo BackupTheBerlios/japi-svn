@@ -1690,7 +1690,7 @@ void MSshConnection::CloseChannel(
 			Send(p);
 		}
 
-		fChannels.erase(ch);
+//		fChannels.erase(ch);
 		
 		if (not fAuthenticated)
 			Disconnect();
@@ -1888,6 +1888,7 @@ void MSshConnection::ProcessChannel(
 				fChannels.erase(ch);
 				channel->HandleChannelEvent(SSH_CHANNEL_CLOSED);
 				channel->SetChannelOpen(false);
+				channel = nil;
 				break;
 			
 			case SSH_MSG_CHANNEL_SUCCESS:
@@ -1899,7 +1900,7 @@ void MSshConnection::ProcessChannel(
 				break;
 		}
 
-		if (channel->GetMyWindowSize() < kWindowSize - 2 * kMaxPacketSize)
+		if (channel != nil and channel->GetMyWindowSize() < kWindowSize - 2 * kMaxPacketSize)
 		{
 			uint32 adjust = kWindowSize - channel->GetMyWindowSize();
 			out << uint8(SSH_MSG_CHANNEL_WINDOW_ADJUST) <<

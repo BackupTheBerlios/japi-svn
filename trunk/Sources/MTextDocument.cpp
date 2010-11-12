@@ -4161,7 +4161,7 @@ void MTextDocument::StdErr(const char* inText, uint32 inSize)
 {
 	if (mStdErrWindow == nil)
 	{
-		mStdErrWindow = new MMessageWindow(_("Output from stderr"));
+		mStdErrWindow = new MMessageWindow(_("Output from stderr"), false);
 		AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 	}
 	else if (not mStdErrWindowSelected)
@@ -4936,7 +4936,7 @@ void MTextDocument::MakeXHTML()
 			messages.AddMessage(kind, GetFile(), p->line, offset, offset + 1, p->message);
 		}
 		
-		MMessageWindow* w = new MMessageWindow(_("Tidy messages"));
+		MMessageWindow* w = new MMessageWindow(_("Tidy messages"), false);
 		w->SetMessages(_("Tidy messages"), messages);
 		w->Show();
 	}

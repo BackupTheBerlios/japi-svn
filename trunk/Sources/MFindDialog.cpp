@@ -309,7 +309,7 @@ void MFindDialog::DoFindCommand(
 
 			if (list.GetCount())
 			{
-				MMessageWindow* w = new MMessageWindow("");
+				MMessageWindow* w = new MMessageWindow("", true);
 				w->SetMessages(
 					FormatString("Found ^0 hits for ^1",
 						list.GetCount(), mFindStrings.front()),
@@ -878,7 +878,7 @@ void MFindDialog::Idle(
 			
 			if (list->GetCount() > 0)
 			{
-				MMessageWindow* w = new MMessageWindow("");
+				MMessageWindow* w = new MMessageWindow("", true);
 				w->SetMessages(
 					FormatString("Found ^0 hits for ^1",
 						list->GetCount(), mFindStrings.front()),

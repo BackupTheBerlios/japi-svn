@@ -1511,7 +1511,7 @@ MMessageWindow* MProject::GetMessageWindow()
 	{
 		if (mStdErrWindow == nil)
 		{
-			mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
+			mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName), false);
 			AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
 		}
 		else

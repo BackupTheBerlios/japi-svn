@@ -144,6 +144,7 @@ bool MDocument::DoSaveAs(
 	if (DoSave())
 	{
 		eFileSpecChanged(this, mFile);
+		mNotifiers.clear();
 		result = true;
 	}
 	else

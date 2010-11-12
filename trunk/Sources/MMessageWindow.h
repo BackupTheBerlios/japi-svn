@@ -62,7 +62,8 @@ class MMessageWindow : public MWindow
 {
   public:
 					MMessageWindow(
-						const std::string&	inTitle);
+						const std::string&	inTitle,
+						bool				inShowFiles);
 	
 	void			ClearList();
 	

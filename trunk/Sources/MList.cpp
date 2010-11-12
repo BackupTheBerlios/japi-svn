@@ -230,9 +230,26 @@ MListBase::~MListBase()
 	cout << "list deleted" << endl;
 }
 
-void MListBase::SetReorderable(bool inReorderable)
+void MListBase::SetReorderable(
+	bool					inReorderable)
 {
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(GetGtkWidget()), inReorderable);
+}
+
+void MListBase::SetHeadersVisible(
+	bool					inHeadersVisible)
+{
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(GetGtkWidget()), inHeadersVisible);
+}
+
+void MListBase::RemoveColumn(
+	uint32					inColumnNr)
+{
+	if (inColumnNr < mColumns.size())
+	{
+		gtk_tree_view_remove_column(GTK_TREE_VIEW(GetGtkWidget()), mColumns[inColumnNr]);
+		mColumns[inColumnNr] = nil;
+	}
 }
 
 void MListBase::CreateTreeStore(
@@ -268,6 +285,8 @@ void MListBase::CreateTreeStore(
 	    
 	    const char* attribute = get<1>(inRenderers[i]);
 	    GtkTreeViewColumn* column = gtk_tree_view_column_new();
+	    mColumns.push_back(column);
+	    
 	    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(column), renderer, TRUE);
 	    gtk_tree_view_column_set_attributes(column, renderer, attribute, i, NULL);
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(GetGtkWidget()), column);

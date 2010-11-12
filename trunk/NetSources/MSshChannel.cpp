@@ -49,13 +49,7 @@ MSshChannel::~MSshChannel()
 void MSshChannel::Close()
 {
 	if (fConnection != nil)
-	{
 		fConnection->CloseChannel(this);
-		fConnection->Release();
-		fConnection = nil;
-	}
-
-	fChannelOpen = false;
 }
 
 void MSshChannel::SetChannelOpen(
@@ -67,6 +61,7 @@ void MSshChannel::SetChannelOpen(
 	{
 		fConnection->Release();
 		fConnection = nil;
+		delete this;
 	}
 }
 

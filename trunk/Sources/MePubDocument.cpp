@@ -716,7 +716,7 @@ void MePubDocument::ImportOEB(
 	
 	if (not problems.empty())
 	{
-		MMessageWindow* w = new MMessageWindow("");
+		MMessageWindow* w = new MMessageWindow("", true);
 		w->SetMessages(_("Problems found in imported OEB"), problems);
 		w->Show();
 	}
@@ -908,7 +908,7 @@ void MePubDocument::ReadFile(
 
 	if (not problems.empty())
 	{
-		MMessageWindow* w = new MMessageWindow("");
+		MMessageWindow* w = new MMessageWindow("", true);
 		w->SetMessages(_("Problems found in ePub file"), problems);
 		w->Show();
 	}

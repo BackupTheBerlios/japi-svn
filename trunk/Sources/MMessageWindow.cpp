@@ -104,8 +104,8 @@ typedef std::vector<MFile>		MFileTable;
 enum
 {
 	kIconColumn,
-//	kFileColumn,
-//	kLineColumn,
+	kFileColumn,
+	kLineColumn,
 	kMsgColumn,
 	
 	kColumnCount	
@@ -114,8 +114,8 @@ enum
 namespace MMsgColumns
 {
 	struct icon {};
-//	struct file {};
-//	struct line {};
+	struct file {};
+	struct line {};
 	struct msg {};
 }
 
@@ -123,8 +123,8 @@ class MMessageRow
 	: public MListRow<
 			MMessageRow,
 			MMsgColumns::icon,			GdkPixbuf*,
-//			MMsgColumns::file,			string,
-//			MMsgColumns::line,			string,
+			MMsgColumns::file,			string,
+			MMsgColumns::line,			string,
 			MMsgColumns::msg,			string
 		>
 {
@@ -144,20 +144,20 @@ class MMessageRow
 						outIcon = GetBadge(mItem->mKind);
 					}
 
-//	void			GetData(
-//						const MMsgColumns::file&,
-//						string&			outFile)
-//					{
-//						outFile = mFile;
-//					}
-//
-//	void			GetData(
-//						const MMsgColumns::line,
-//						string&			outLine)
-//					{
-//						if (mItem->mLineNr > 0)
-//							outLine = boost::lexical_cast<string>(mItem->mLineNr);
-//					}
+	void			GetData(
+						const MMsgColumns::file&,
+						string&			outFile)
+					{
+						outFile = mFile;
+					}
+
+	void			GetData(
+						const MMsgColumns::line,
+						string&			outLine)
+					{
+						if (mItem->mLineNr > 0)
+							outLine = boost::lexical_cast<string>(mItem->mLineNr);
+					}
 
 	void			GetData(
 						const MMsgColumns::msg&,
@@ -268,7 +268,8 @@ uint32 MMessageList::GetCount() const
 }
 
 MMessageWindow::MMessageWindow(
-	const string& 	inTitle)
+	const string& 	inTitle,
+	bool			inShowFiles)
 	: MWindow("message-list-window")
 	, eBaseDirChanged(this, &MMessageWindow::SetBaseDirectory)
 	, eSelectMsg(this, &MMessageWindow::SelectMsg)
@@ -286,10 +287,19 @@ MMessageWindow::MMessageWindow(
 
 	mListView->SetReorderable(false);
 	
-//	mListView->SetColumnTitle(kFileColumn, _("File"));
-//	mListView->SetColumnTitle(kLineColumn, _("Line"));
-//	mListView->SetColumnAlignment(kLineColumn, 1.0f);
-//	mListView->SetColumnTitle(kMsgColumn, _("Message"));
+	if (inShowFiles)
+	{
+		mListView->SetHeadersVisible(inShowFiles);
+		mListView->SetColumnTitle(kFileColumn, _("File"));
+		mListView->SetColumnTitle(kLineColumn, _("Line"));
+		mListView->SetColumnAlignment(kLineColumn, 1.0f);
+		mListView->SetColumnTitle(kMsgColumn, _("Message"));
+	}
+	else
+	{
+		mListView->RemoveColumn(kFileColumn);
+		mListView->RemoveColumn(kLineColumn);
+	}
 
 //	// ----------------------------------------------------------------
 //
@@ -408,7 +418,7 @@ void MMessageWindow::AddStdErr(
 	uint32				inSize)
 {
 	static const boost::regex
-		re1("^([^:]+):((\\d+):)?( (note|warning|(fatal )?error|fout):)?.+$"),
+		re1("^([^:]+):((\\d+):)?( (note|warning|(fatal )?error|fout):)?(.+)$"),
 		re2("^In file included from (.+?):(\\d+):.*$");
 		
 	mText.append(inText, inSize);
@@ -449,7 +459,9 @@ void MMessageWindow::AddStdErr(
 					uint32 lineNr = 0;
 					if (not l_nr.empty())
 						lineNr = boost::lexical_cast<uint32>(l_nr);
-					AddMessage(kind, MFile(spec), lineNr, 0, 0, line);
+
+					string mesg = spec.leaf() + ':' + m[2] + m[4] + m[7];
+					AddMessage(kind, MFile(spec), lineNr, 0, 0, mesg);
 					continue;
 				}
 			}

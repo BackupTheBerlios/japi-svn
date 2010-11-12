@@ -672,6 +672,7 @@ MSftpChannel::MSftpChannel(string inIPAddress,
 
 MSftpChannel::~MSftpChannel()
 {
+PRINT(("Deleting MSftpChannel"));
 	delete fImpl;
 }
 

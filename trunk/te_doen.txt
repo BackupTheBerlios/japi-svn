@@ -1,6 +1,5 @@
 ﻿Bugs
 
-- asynchroon inlezen van bestanden (IOFileLoaded vs Initialize)
 - save as => notify doc
 
 Te doen
