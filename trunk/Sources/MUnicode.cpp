@@ -330,7 +330,7 @@ class MDecoderImpl : public MDecoder
 							uint32 l;
 							traits::ReadUnicode(mBuffer, l, outUnicode);
 							
-							if (l > 0)
+							if (l > 0 and l <= mLength)
 							{
 								mBuffer += l;
 								mLength -= l;
