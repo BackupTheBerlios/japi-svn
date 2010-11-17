@@ -32,6 +32,8 @@ MDocument::MDocument(
 	, mFile(inFile)
 	, mWarnedReadOnly(false)
 	, mDirty(false)
+	, mFileLoader(nil)
+	, mFileSaver(nil)
 	, mNext(nil)
 {
 	mNext = sFirst;
@@ -43,6 +45,12 @@ MDocument::MDocument(
 
 MDocument::~MDocument()
 {
+	if (mFileLoader != nil)
+		mFileLoader->Cancel();
+
+	if (mFileSaver != nil)
+		mFileSaver->Cancel();
+	
 	if (sFirst == this)
 		sFirst = mNext;
 	else
@@ -81,16 +89,19 @@ void MDocument::DoLoad()
 	if (not mFile.IsValid())
 		THROW(("File is not specified"));
 	
+	if (mFileLoader != nil)
+		THROW(("File is already being loaded"));
+
 	if (mFile.IsLocal() == false or mFile.Exists())
 	{
-		MFileLoader *loader = mFile.Load();
+		mFileLoader = mFile.Load(*this);
 		
-		SetCallback(loader->eProgress, this, &MDocument::IOProgress);
-		SetCallback(loader->eError, this, &MDocument::IOError);
-		SetCallback(loader->eReadFile, this, &MDocument::ReadFile);
-		SetCallback(loader->eFileLoaded, this, &MDocument::IOFileLoaded);
+		SetCallback(mFileLoader->eProgress, this, &MDocument::IOProgress);
+		SetCallback(mFileLoader->eError, this, &MDocument::IOError);
+		SetCallback(mFileLoader->eReadFile, this, &MDocument::ReadFile);
+		SetCallback(mFileLoader->eFileLoaded, this, &MDocument::IOFileLoaded);
 		
-		loader->DoLoad();
+		mFileLoader->DoLoad();
 	}
 }
 
@@ -104,15 +115,18 @@ bool MDocument::DoSave()
 	if (not mFile.IsValid())
 		THROW(("File is not specified"));
 	
-	MFileSaver* saver = mFile.Save();
+	if (mFileSaver != nil)
+		THROW(("File is already being saved"));
 	
-	SetCallback(saver->eProgress, this, &MDocument::IOProgress);
-	SetCallback(saver->eError, this, &MDocument::IOError);
-	SetCallback(saver->eAskOverwriteNewer, this, &MDocument::IOAskOverwriteNewer);
-	SetCallback(saver->eWriteFile, this, &MDocument::WriteFile);
-	SetCallback(saver->eFileWritten, this, &MDocument::IOFileWritten);
+	mFileSaver = mFile.Save(*this);
+	
+	SetCallback(mFileSaver->eProgress, this, &MDocument::IOProgress);
+	SetCallback(mFileSaver->eError, this, &MDocument::IOError);
+	SetCallback(mFileSaver->eAskOverwriteNewer, this, &MDocument::IOAskOverwriteNewer);
+	SetCallback(mFileSaver->eWriteFile, this, &MDocument::WriteFile);
+	SetCallback(mFileSaver->eFileWritten, this, &MDocument::IOFileWritten);
 
-	saver->DoSave();
+	mFileSaver->DoSave();
 
 	gApp->AddToRecentMenu(mFile.GetPath());
 		
@@ -133,12 +147,35 @@ bool MDocument::DoSaveAs(
 	if (DoSave())
 	{
 		eFileSpecChanged(this, mFile);
+		mNotifiers.clear();
 		result = true;
 	}
 	else
 		mFile = savedFile;
 	
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+//	FileLoaderDeleted
+
+void MDocument::FileLoaderDeleted(
+	MFileLoader*	inFileLoader)
+{
+	assert(inFileLoader == mFileLoader);
+	if (inFileLoader == mFileLoader)
+		mFileLoader = nil;
+}
+
+// ---------------------------------------------------------------------------
+//	FileSaverDeleted
+
+void MDocument::FileSaverDeleted(
+	MFileSaver*	inFileSaver)
+{
+	assert(inFileSaver == mFileSaver);
+	if (inFileSaver == mFileSaver)
+		mFileSaver = nil;
 }
 
 // ---------------------------------------------------------------------------
@@ -351,8 +388,6 @@ string MDocument::GetDocumentName() const
 
 void MDocument::IOProgress(float inProgress, const string& inMessage)
 {
-	if (inProgress == -1)	// we're done
-		;
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,7 @@ namespace fs = boost::filesystem;
 
 class MFileLoader;
 class MFileSaver;
+class MDocument;
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024
@@ -87,9 +88,11 @@ class MFile
 	
 	MFile				GetParent() const;
 	
-	MFileLoader*		Load();
+	MFileLoader*		Load(
+							MDocument&			inDocument);
 
-	MFileSaver*			Save();
+	MFileSaver*			Save(
+							MDocument&			inDocument);
 
 	bool				IsValid() const;
 
@@ -118,6 +121,7 @@ class MFile
 							std::time_t			inModDate);
 
 	friend fs::path RelativePath(const MFile&, const MFile&);
+	friend MFile operator/(const MFile& lhs, const fs::path& rhs);
 	friend class MFileLoader;
 	friend class MFileSaver;
 
@@ -129,6 +133,7 @@ class MFile
 MFile operator/(const MFile& lhs, const fs::path& rhs);
 
 fs::path RelativePath(const MFile& lhs, const MFile& rhs);
+bool IsAbsolutePath(const std::string& inPath);
 
 std::ostream& operator<<(std::ostream& lhs, const MFile& rhs);
 
@@ -150,6 +155,7 @@ class MFileLoader
 
   protected:
 					MFileLoader(
+						MDocument&			inDocument,
 						MFile&				inFile);
 
 	virtual			~MFileLoader();
@@ -166,6 +172,8 @@ class MFileLoader
 
 	MFileLoader&	operator=(
 						const MFileLoader&	rhs);
+
+	MDocument&		mDocument;
 };
 
 // --------------------------------------------------------------------
@@ -187,6 +195,7 @@ class MFileSaver
 
   protected:
 					MFileSaver(
+						MDocument&			inDocument,
 						MFile&				inFile);
 
 	virtual			~MFileSaver();
@@ -203,6 +212,8 @@ class MFileSaver
 
 	MFileSaver&	operator=(
 						const MFileSaver&	rhs);
+
+	MDocument&		mDocument;
 };
 
 // --------------------------------------------------------------------

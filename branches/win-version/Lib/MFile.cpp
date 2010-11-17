@@ -5,18 +5,14 @@
 
 #include "MLib.h"
 
-//#include <unistd.h>
 #include <cstring>
 
 #include <sys/stat.h>
-//#include <dirent.h>
 #include <stack>
 #include <fstream>
 #include <cassert>
 #include <cerrno>
 #include <limits>
-
-//#include <pcrecpp.h>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -24,24 +20,25 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include "MFile.h"
+#include "MDocument.h"
 #include "MError.h"
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MStrings.h"
-//#include "MJapiApp.h"
 #include "MPreferences.h"
-//#include "MSftpChannel.h"
+#include "MSftpChannel.h"
 
 using namespace std;
 namespace io = boost::iostreams;
 namespace ba = boost::algorithm;
 
+namespace {
+
 int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize);
 int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize);
-
-namespace {
 
 // reserved characters in URL's
 
@@ -110,7 +107,7 @@ void write_attribute(const fs::path& inPath, const char* inName, const void* inD
 
 #include <attr/attributes.h>
 
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 
@@ -124,12 +121,14 @@ ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData
 	return length;
 }
 
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
 	(void)::attr_set(path.c_str(), inName,
 		reinterpret_cast<const char*>(inData), inDataSize, 0);
+	
+	return inDataSize;
 }
 
 #endif
@@ -211,17 +210,21 @@ void URLDecode(
 // This works strictly asynchronous. 
 
 MFileLoader::MFileLoader(
+	MDocument&			inDocument,
 	MFile&				inFile)
 	: mFile(inFile)
+	, mDocument(inDocument)
 {
 }
 
 MFileLoader::~MFileLoader()
 {
+	mDocument.FileLoaderDeleted(this);
 }
 
 void MFileLoader::Cancel()
 {
+	delete this;
 }
 
 void MFileLoader::SetFileInfo(
@@ -237,6 +240,7 @@ class MLocalFileLoader : public MFileLoader
 {
   public:
 					MLocalFileLoader(
+						MDocument&		inDocument,
 						MFile&			inFile);
 
 	virtual void	DoLoad();
@@ -245,8 +249,9 @@ class MLocalFileLoader : public MFileLoader
 // --------------------------------------------------------------------
 
 MLocalFileLoader::MLocalFileLoader(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileLoader(inFile)
+	: MFileLoader(inDocument, inFile)
 {
 }
 
@@ -305,17 +310,21 @@ void MLocalFileLoader::DoLoad()
 // MFileSaver, used to save data to a file.
 
 MFileSaver::MFileSaver(
+	MDocument&			inDocument,
 	MFile&				inFile)
 	: mFile(inFile)
+	, mDocument(inDocument)
 {
 }
 
 MFileSaver::~MFileSaver()
 {
+	mDocument.FileSaverDeleted(this);
 }
 
 void MFileSaver::Cancel()
 {
+	delete this;
 }
 
 void MFileSaver::SetFileInfo(
@@ -331,7 +340,8 @@ class MLocalFileSaver : public MFileSaver
 {
   public:
 					MLocalFileSaver(
-						MFile&					inFile);
+						MDocument&			inDocument,
+						MFile&				inFile);
 
 	virtual void	DoSave();
 };
@@ -339,8 +349,9 @@ class MLocalFileSaver : public MFileSaver
 // --------------------------------------------------------------------
 
 MLocalFileSaver::MLocalFileSaver(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileSaver(inFile)
+	: MFileSaver(inDocument, inFile)
 {
 }
 
@@ -349,8 +360,6 @@ void MLocalFileSaver::DoSave()
 	try
 	{
 		fs::path path = mFile.GetPath();
-		
-		bool save = true;
 		
 		if (not fs::exists(path) or
 		    fs::last_write_time(path) <= mFile.GetModDate() or
@@ -435,21 +444,20 @@ struct MPathImp : public MFileImp
 								return new MPathImp(mPath / inSubPath);
 							}
 	
-	virtual MFileLoader*	Load(MFile& inFile)
+	virtual MFileLoader*	Load(MDocument& inDocument, MFile& inFile)
 							{
-								return new MLocalFileLoader(inFile);
+								return new MLocalFileLoader(inDocument, inFile);
 							}
 							
-	virtual MFileSaver*		Save(MFile& inFile)
+	virtual MFileSaver*		Save(MDocument& inDocument, MFile& inFile)
 							{
-								return new MLocalFileSaver(inFile);
+								return new MLocalFileSaver(inDocument, inFile);
 							}
 
   private:
 	fs::path				mPath;
 };
 
-#if 0
 // --------------------------------------------------------------------
 // SFTP implementations
 
@@ -457,6 +465,7 @@ class MSftpFileLoader : public MFileLoader
 {
   public:
 					MSftpFileLoader(
+						MDocument&		inDocument,
 						MFile&			inUrl);
 	
 	virtual void	DoLoad();
@@ -471,21 +480,22 @@ class MSftpFileLoader : public MFileLoader
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	unique_ptr<MSftpChannel>
-					mSFTPChannel;
+	MSftpChannel*	mSFTPChannel;
 	int64			mFileSize;
 	string			mData;
 };
 
 MSftpFileLoader::MSftpFileLoader(
+	MDocument&		inDocument,
 	MFile&			inUrl)
-	: MFileLoader(inUrl)
+	: MFileLoader(inDocument, inUrl)
+	, mSFTPChannel(nil)
 {
 }
 
 void MSftpFileLoader::DoLoad()
 {
-	mSFTPChannel.reset(new MSftpChannel(mFile));
+	mSFTPChannel = new MSftpChannel(mFile);
 
 	SetCallback(mSFTPChannel->eChannelEvent,
 		this, &MSftpFileLoader::SFTPChannelEvent);
@@ -498,7 +508,9 @@ void MSftpFileLoader::DoLoad()
 
 void MSftpFileLoader::Cancel()
 {
-	mSFTPChannel.release();
+	if (mSFTPChannel != nil)
+		mSFTPChannel->Close();
+	MFileLoader::Cancel();
 }
 
 void MSftpFileLoader::SFTPChannelEvent(
@@ -515,6 +527,11 @@ void MSftpFileLoader::SFTPChannelEvent(
 		case SFTP_FILE_SIZE_KNOWN:
 			eProgress(0.f, _("File size known"));
 			mFileSize = mSFTPChannel->GetFileSize();
+			if (mFileSize == 0)
+			{
+				eFileLoaded();
+				mSFTPChannel->Close();
+			}
 			break;
 		
 		case SFTP_DATA_AVAILABLE:
@@ -535,8 +552,6 @@ void MSftpFileLoader::SFTPChannelEvent(
 			eReadFile(data);
 
 			mSFTPChannel->CloseFile();
-			
-//			delete this;	// oohh, tricky?
 			break;
 		}
 		
@@ -548,6 +563,19 @@ void MSftpFileLoader::SFTPChannelEvent(
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
 			eError("SSH Channel Timeout");
+			break;
+		
+		case SFTP_ERROR:
+			mSFTPChannel->Close();
+			break;
+		
+		case SSH_CHANNEL_CLOSED:
+			mSFTPChannel = nil;
+			delete this;
+			break;
+		
+		default:
+			PRINT(("Unhandled event %d", inMessage));
 			break;
 	}
 }
@@ -567,9 +595,12 @@ class MSftpFileSaver : public MFileSaver
 {
   public:
 					MSftpFileSaver(
-						MFile&					inFile);
+						MDocument&			inDocument,
+						MFile&				inFile);
 
 	virtual void	DoSave();
+	
+	virtual void	Cancel();
 
   private:
 
@@ -579,22 +610,30 @@ class MSftpFileSaver : public MFileSaver
 	void			SFTPChannelMessage(
 						string			inMessage);
 
-	unique_ptr<MSftpChannel>
-					mSFTPChannel;
+	MSftpChannel*	mSFTPChannel;
 	int64			mSFTPOffset;
 	int64			mSFTPSize;
 	string			mSFTPData;
 };
 
 MSftpFileSaver::MSftpFileSaver(
+	MDocument&		inDocument,
 	MFile&			inFile)
-	: MFileSaver(inFile)
+	: MFileSaver(inDocument, inFile)
+	, mSFTPChannel(nil)
 {
+}
+
+void MSftpFileSaver::Cancel()
+{
+	if (mSFTPChannel != nil)
+		mSFTPChannel->Close();
+	MFileSaver::Cancel();
 }
 
 void MSftpFileSaver::DoSave()
 {
-	mSFTPChannel.reset(new MSftpChannel(mFile));
+	mSFTPChannel = new MSftpChannel(mFile);
 
 	{
 		io::filtering_ostream out(io::back_inserter(mSFTPData));
@@ -653,13 +692,17 @@ void MSftpFileSaver::SFTPChannelEvent(
 //			eProgress(-1.f, _("done"));
 			eFileWritten();
 			mSFTPChannel->Close();
-			
 //			SetFileInfo(false, fs::last_write_time(path));
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
 			eProgress(0, _("Timeout"));
 			eError("SSH Channel Timeout");
+			break;
+
+		case SSH_CHANNEL_CLOSED:
+			mSFTPChannel = nil;
+			delete this;
 			break;
 	}
 }
@@ -757,14 +800,14 @@ struct MSftpImp : public MFileImp
 								return new MSftpImp(mUsername, mPassword, mHostname, mPort, mFilePath / inSubPath);
 							}
 	
-	virtual MFileLoader*	Load(MFile& inFile)
+	virtual MFileLoader*	Load(MDocument& inDocument, MFile& inFile)
 							{
-								return new MSftpFileLoader(inFile);
+								return new MSftpFileLoader(inDocument, inFile);
 							}
 							
-	virtual MFileSaver*		Save(MFile& inFile)
+	virtual MFileSaver*		Save(MDocument& inDocument, MFile& inFile)
 							{
-								return new MSftpFileSaver(inFile);
+								return new MSftpFileSaver(inDocument, inFile);
 							}
 
   private:
@@ -772,8 +815,6 @@ struct MSftpImp : public MFileImp
 	uint16					mPort;
 	fs::path				mFilePath;
 };
-
-#endif
 
 // --------------------------------------------------------------------
 
@@ -820,46 +861,47 @@ namespace
 {
 
 MFileImp* CreateFileImpForURI(
-	const char*			inURI,
+	const string&		inURI,
 	bool				isAbsoluteURI)
 {
-	THROW_IF_NIL(inURI);
-	
 	MFileImp* result = nil;
 
-	if (ba::starts_with(inURI, "file://"))
+	boost::regex re("^(sftp|ssh|file)://(.+)");
+	boost::smatch m;
+	if (boost::regex_match(inURI, m, re))
 	{
-		string path(inURI + 7);
+		string scheme = m[1];
+		string path = m[2];
+		
 		URLDecode(path);
-		result = new MPathImp(path);
-	}
-	else if (ba::starts_with(inURI, "ssh://") or ba::starts_with(inURI, "sftp://"))
-	{
-		//URLDecode(path);
-		//
-		//if (scheme == "file")
-		//	result = new MPathImp(fs::system_complete(path));
-		//else if (scheme == "sftp" or scheme == "ssh")
-		//{
-		//	pcrecpp::RE re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:\\d+)?/(.+)");
-		//	
-		//	string s1, s2, username, password, host, port, file;
+		
+		if (scheme == "file")
+			result = new MPathImp(fs::system_complete(path));
+		else if (scheme == "sftp" or scheme == "ssh")
+		{
+			boost::regex re2("^(([-$_.+!*'(),[:alnum:];?&=]+)(:([-$_.+!*'(),[:alnum:];?&=]+))?@)?([-[:alnum:].]+)(:(\\d+))?/(.+)");
+			
+			if (boost::regex_match(path, m, re2))
+			{
+				string username = m[2];
+				string password = m[4];
+				string host = m[5];
+				string port = m[7];
+				string file = m[8];
 
-		//	if (re2.FullMatch(path, &s1, &username, &s2, &password, &host, &port, &file))
-		//	{
-		//		if (port.empty())
-		//			port = "22";
+				if (port.empty())
+					port = "22";
 
-		//		if (isAbsoluteURI)
-		//			file.insert(file.begin(), '/');
+				if (isAbsoluteURI)
+					file.insert(file.begin(), '/');
 
-		//		result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
-		//	}
-		//	else
-		//		THROW(("Malformed URL: '%s'", inURI));
-		//}
-		//else
-		//	THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
+				result = new MSftpImp(username, password, host, boost::lexical_cast<uint16>(port), file);
+			}
+			else
+				THROW(("Malformed URL: '%s'", inURI.c_str()));
+		}
+		else
+			THROW(("Unsupported URL scheme '%s'", scheme.c_str()));
 	}
 	else // assume it is a simple path
 		result = new MPathImp(fs::system_complete(inURI));
@@ -881,7 +923,7 @@ MFile::MFile(
 MFile::MFile(
 	const string&		inURI,
 	bool				isAbsoluteURI)
-	: mImpl(CreateFileImpForURI(inURI.c_str(), isAbsoluteURI))
+	: mImpl(CreateFileImpForURI(inURI, isAbsoluteURI))
 	, mReadOnly(false)
 	, mModDate(0)
 {
@@ -911,6 +953,20 @@ MFile& MFile::operator=(
 		mImpl->Release();
 	
 	mImpl = new MPathImp(rhs);
+
+	mReadOnly = false;
+	mModDate = 0;
+
+	return *this;
+}
+
+MFile& MFile::operator=(
+	const string&		rhs)
+{
+	if (mImpl != nil)
+		mImpl->Release();
+	
+	mImpl = CreateFileImpForURI(rhs, false);
 
 	mReadOnly = false;
 	mModDate = 0;
@@ -987,9 +1043,9 @@ string MFile::GetHost() const
 {
 	string result;
 	
-	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	//if (imp != nil)
-	//	result = imp->GetHost();
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetHost();
 	
 	return result;
 }
@@ -998,9 +1054,9 @@ string MFile::GetUser() const
 {
 	string result;
 	
-	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	//if (imp != nil)
-	//	result = imp->GetUser();
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetUser();
 	
 	return result;
 }
@@ -1009,9 +1065,9 @@ uint16 MFile::GetPort() const
 {
 	uint16 result = 22;
 	
-	//MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
-	//if (imp != nil)
-	//	result = imp->GetPort() ;
+	MSftpImp* imp = dynamic_cast<MSftpImp*>(mImpl);
+	if (imp != nil)
+		result = imp->GetPort() ;
 	
 	return result;
 }
@@ -1032,16 +1088,18 @@ MFile MFile::GetParent() const
 	return result;
 }
 
-MFileLoader* MFile::Load()
+MFileLoader* MFile::Load(
+	MDocument&			inDocument)
 {
 	THROW_IF_NIL(mImpl);
-	return mImpl->Load(*this);
+	return mImpl->Load(inDocument, *this);
 }
 
-MFileSaver* MFile::Save()
+MFileSaver* MFile::Save(
+	MDocument&			inDocument)
 {
 	THROW_IF_NIL(mImpl);
-	return mImpl->Save(*this);
+	return mImpl->Save(inDocument, *this);
 }
 
 bool MFile::IsValid() const
@@ -1060,7 +1118,7 @@ bool MFile::Exists() const
 	return IsLocal() and fs::exists(GetPath());
 }
 
-time_t MFile::GetModDate() const
+std::time_t MFile::GetModDate() const
 {
 	return mModDate;
 }
@@ -1102,7 +1160,12 @@ int32 MFile::WriteAttribute(
 MFile operator/(const MFile& lhs, const fs::path& rhs)
 {
 	MFile result(lhs);
-	result /= rhs;
+	
+	if (result.mImpl != nil)
+		result /= rhs;
+	else
+		result = rhs;
+	
 	return result;
 }
 
@@ -1116,6 +1179,25 @@ MFile operator/(const MFile& lhs, const fs::path& rhs)
 //	g_free(p);
 //	return result;
 //}
+
+bool IsAbsolutePath(const string& inPath)
+{
+	bool result = false;
+	if (not inPath.empty())
+	{
+		if (inPath[0] == '/')
+			result = true;
+		else if (inPath[0] == '.')
+			result = false;
+		else
+		{
+			const boost::regex re("^(sftp|ssh|file)://.+");
+			
+			result = boost::regex_match(inPath, re);
+		}
+	}
+	return result;
+}
 
 ostream& operator<<(ostream& lhs, const MFile& rhs)
 {
@@ -1377,7 +1459,6 @@ fs::path relative_path(const fs::path& inFromDir, const fs::path& inFile)
 
 	return result;
 }
-
 
 void NormalizePath(
 	fs::path&	ioPath)

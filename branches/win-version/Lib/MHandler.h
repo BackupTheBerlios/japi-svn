@@ -7,6 +7,7 @@
 #define MHANDLER_H
 
 #include <list>
+#include <string>
 
 class MMenu;
 

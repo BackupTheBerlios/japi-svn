@@ -18,7 +18,7 @@
 
 class MDocClosedNotifier;
 class MController;
-class MWindow;
+class MDocWindow;
 class MMenu;
 
 class MDocument : public MHandler
@@ -121,6 +121,11 @@ class MDocument : public MHandler
 											eFileSpecChanged;
 	MEventOut<void(const fs::path&)>		eBaseDirChanged;
 
+	virtual void		FileLoaderDeleted(
+							MFileLoader*	inFileLoader);
+	virtual void		FileSaverDeleted(
+							MFileSaver*		inFileSaver);
+
   protected:
 
 	explicit			MDocument(
@@ -156,6 +161,9 @@ class MDocument : public MHandler
 	bool				mDirty;
 
   private:
+	MFileLoader*		mFileLoader;
+	MFileSaver*			mFileSaver;
+
 	MDocument*			mNext;
 	static MDocument*	sFirst;
 };

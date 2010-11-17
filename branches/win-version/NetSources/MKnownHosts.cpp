@@ -18,6 +18,7 @@
 #include "MUtils.h"
 #include "MError.h"
 #include "MAlerts.h"
+#include "MPreferences.h"
 
 #include <cryptopp/base64.h>
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
@@ -128,7 +129,7 @@ void MKnownHosts::CheckHost(
 	MHostMap::iterator i = fKnownHosts.find(inHost);
 	if (i == fKnownHosts.end())
 	{
-		switch (DisplayAlert("unknown-host-alert", inHost, fingerprint))
+		switch (DisplayAlert(nil, "unknown-host-alert", inHost, fingerprint))
 		{
 				// Add
 			case 1:
@@ -148,7 +149,7 @@ void MKnownHosts::CheckHost(
 	}
 	else if (value != (*i).second)
 	{
-		if (DisplayAlert("host-key-changed-alert", inHost, fingerprint) != 2)
+		if (DisplayAlert(nil, "host-key-changed-alert", inHost, fingerprint) != 2)
 			THROW(("User cancelled"));
 		
 		fKnownHosts[inHost] = value;

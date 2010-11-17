@@ -234,8 +234,6 @@ bool MTextView::ScrollToPointer(
 	int32		inX,
 	int32		inY)
 {
-	bool scrolled = false;
-	
 	THROW_IF_NIL(mDocument);
 
 	mDocument->PositionToOffset(inX, inY, mClickCaret);

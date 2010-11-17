@@ -2,7 +2,6 @@
   <pkg-config>
     <pkg tool="pkg-config">gthread-2.0</pkg>
     <pkg tool="pkg-config">gtk+-x11-2.0</pkg>
-    <pkg tool="pkg-config">uuid</pkg>
     <pkg tool="pkg-config">libcanberra</pkg>
   </pkg-config>
   <syspaths>
@@ -10,6 +9,8 @@
     <path>../libzeep</path>
   </syspaths>
   <userpaths>
+    <path>Lib/Gtk</path>
+    <path>Lib</path>
     <path>Sources</path>
     <path>NetSources</path>
   </userpaths>
@@ -19,7 +20,19 @@
   </libpaths>
   <files>
     <group name="MLib">
+      <group name="Gtk">
+        <file>MGtkApplicationImpl.cpp</file>
+        <file>MGtkDevice.cpp</file>
+        <file>MGtkDocClosedNotifier.cpp</file>
+        <file>MGtkFile.cpp</file>
+        <file>MGtkList.cpp</file>
+        <file>MGtkMenu.cpp</file>
+        <file>MGtkSound.cpp</file>
+        <file>MGtkUtils.cpp</file>
+        <file>MGtkWindow.cpp</file>
+      </group>
       <file>MAlerts.cpp</file>
+      <file>MApplication.cpp</file>
       <file>MClipboard.cpp</file>
       <file>MColor.cpp</file>
       <file>MController.cpp</file>
@@ -30,15 +43,10 @@
       <file>MError.cpp</file>
       <file>MFile.cpp</file>
       <file>MHandler.cpp</file>
-      <file>MList.cpp</file>
       <file>MMenu.cpp</file>
       <file>MPreferences.cpp</file>
       <file>MPrinter.cpp</file>
-      <file>MResources.cpp</file>
-      <file>MSaverMixin.cpp</file>
       <file>MStrings.cpp</file>
-      <file>MSound.cpp</file>
-      <file>MTimer.cpp</file>
       <file>MUnicode.cpp</file>
       <file>MUtils.cpp</file>
       <file>MView.cpp</file>

@@ -44,7 +44,8 @@ inline int32 DisplayAlert(
 	MWindow*					inParent,
 	const std::string&			inResourceName)
 {
-	return DisplayAlert(inParent, inResourceName, std::vector<std::string>());
+	std::vector<std::string> args;
+	return DisplayAlert(inParent, inResourceName, args);
 }
 
 template<class T0>

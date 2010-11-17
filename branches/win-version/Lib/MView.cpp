@@ -31,16 +31,16 @@ MView::MView(
 	, mFrame(inBounds)
 	, mViewWidth(inBounds.width)
 	, mViewHeight(inBounds.height)
-	, mParent(nil)
-	, mWillDraw(false)
-	, mActive(eTriStateOn)
-	, mVisible(eTriStateOn)
-	, mEnabled(eTriStateOn)
 	, mBindLeft(true)
 	, mBindTop(true)
 	, mBindRight(false)
 	, mBindBottom(false)
+	, mParent(nil)
 	, mScroller(nil)
+	, mWillDraw(false)
+	, mActive(eTriStateOn)
+	, mVisible(eTriStateOn)
+	, mEnabled(eTriStateOn)
 {
 }
 
@@ -1416,10 +1416,10 @@ MViewScroller::MViewScroller(const string& inID,
 	, mTarget(inTarget)
 	, mHScrollbar(nil)
 	, mVScrollbar(nil)
-	, eVScroll(this, &MViewScroller::VScroll)
-	, eHScroll(this, &MViewScroller::HScroll)
 	, mScrollUnitX(1)
 	, mScrollUnitY(1)
+	, eVScroll(this, &MViewScroller::VScroll)
+	, eHScroll(this, &MViewScroller::HScroll)
 {
 	MRect frame;
 	mTarget->GetFrame(frame);	// our bounds will be the frame of the target
@@ -1558,6 +1558,10 @@ void MViewScroller::VScroll(MScrollMessage inScrollMsg)
 		case kScrollToThumb:
 			dy = mVScrollbar->GetTrackValue() - y;
 			break;
+		
+		default:
+			PRINT(("Unhandled scroll message %d", inScrollMsg));
+			break;
 	}
 
 	if (dy != 0)
@@ -1594,6 +1598,10 @@ void MViewScroller::HScroll(MScrollMessage inScrollMsg)
 
 		case kScrollToThumb:
 			dx = mHScrollbar->GetTrackValue() - x;
+			break;
+		
+		default:
+			PRINT(("Unhandled scroll message %d", inScrollMsg));
 			break;
 	}
 

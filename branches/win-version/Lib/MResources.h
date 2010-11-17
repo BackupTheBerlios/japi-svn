@@ -7,6 +7,7 @@
 #define MRESOURCES_H
 
 #include <istream>
+#include <list>
 
 #include <boost/bind.hpp>
 #include <boost/iterator/iterator_facade.hpp>

@@ -22,13 +22,13 @@ using namespace std;
 int StOKToThrow::sOkToThrow = 0;
 #endif
 
-#ifndef _MSC_VER
-MException::MException(
-	int					inErr)
-{
-	snprintf(mMessage, sizeof(mMessage), "OS error %d", inErr);
-}
-#endif
+//#ifndef _MSC_VER
+//MException::MException(
+//	int					inErr)
+//{
+//	snprintf(mMessage, sizeof(mMessage), "OS error %d", inErr);
+//}
+//#endif
 
 MException::MException(
 	const char*			inMsg,
@@ -47,43 +47,43 @@ const char*	MException::what() const throw()
 	return mMessage;
 }
 
-#ifndef NDEBUG
-
-#ifndef _MSC_VER
-void __m_debug_str(const char* inStr, ...)
-{
-	char msg[1024];
-	
-	va_list vl;
-	va_start(vl, inStr);
-	vsnprintf(msg, sizeof(msg), inStr, vl);
-	va_end(vl);
-	
-	cerr << msg << endl;
-}
-
-void __signal_throw(
-	const char*		inCode,
-	const char*		inFunction,
-	const char*		inFile,
-	int				inLine)
-{
-	cerr << "Throwing in file " << inFile << " line " << inLine
-		<< " \"" << inFunction << "\": " << endl << inCode << endl;
-	
-	if (StOKToThrow::IsOK())
-		return;
-
-	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
-		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-		"Exception thrown in file '%s', line %d, function: '%s'\n\n"
-		"code: %s", inFile, inLine, inFunction, inCode);
-	
-	PlaySound("error");
-	(void)gtk_dialog_run(GTK_DIALOG(dlg));
-	
-	gtk_widget_destroy(dlg);
-}
-#endif
-
-#endif
+//#ifndef NDEBUG
+//
+//#ifndef _MSC_VER
+//void __m_debug_str(const char* inStr, ...)
+//{
+//	char msg[1024];
+//	
+//	va_list vl;
+//	va_start(vl, inStr);
+//	vsnprintf(msg, sizeof(msg), inStr, vl);
+//	va_end(vl);
+//	
+//	cerr << msg << endl;
+//}
+//
+//void __signal_throw(
+//	const char*		inCode,
+//	const char*		inFunction,
+//	const char*		inFile,
+//	int				inLine)
+//{
+//	cerr << "Throwing in file " << inFile << " line " << inLine
+//		<< " \"" << inFunction << "\": " << endl << inCode << endl;
+//	
+//	if (StOKToThrow::IsOK())
+//		return;
+//
+//	GtkWidget* dlg = gtk_message_dialog_new(nil, GTK_DIALOG_MODAL,
+//		GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+//		"Exception thrown in file '%s', line %d, function: '%s'\n\n"
+//		"code: %s", inFile, inLine, inFunction, inCode);
+//	
+//	PlaySound("error");
+//	(void)gtk_dialog_run(GTK_DIALOG(dlg));
+//	
+//	gtk_widget_destroy(dlg);
+//}
+//#endif
+//
+//#endif

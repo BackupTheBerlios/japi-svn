@@ -8,21 +8,14 @@
 #include "MTextController.h"
 #include "MEditWindow.h"
 #include "MTextView.h"
-//#include "MFindDialog.h"
-//#include "MGoToLineDialog.h"
-//#include "MFindAndOpenDialog.h"
-//#include "MMarkMatchingDialog.h"
-//#include "MQuotedRewrapDialog.h"
-//#include "MProject.h"
 #include "MSound.h"
 #include "MTextDocument.h"
 #include "MJapiApp.h"
-//#include "MPrinter.h"
 
 using namespace std;
 
 MTextController::MTextController(
-	MHandler*	inSuper)
+	MWindow*	inSuper)
 	: MController(inSuper)
 {
 }

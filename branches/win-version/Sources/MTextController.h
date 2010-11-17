@@ -23,7 +23,7 @@ class MTextController : public MController
 {
   public:
 						MTextController(
-							MHandler*		inSuper);
+							MWindow*		inSuper);
 
 						~MTextController();
 

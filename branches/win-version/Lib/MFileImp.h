@@ -17,8 +17,8 @@ struct MFileImp
 	virtual MFileImp*		GetParent() const = 0;
 	virtual MFileImp*		GetChild(const fs::path& inSubPath) const = 0;
 	
-	virtual MFileLoader*	Load(MFile& inFile) = 0;
-	virtual MFileSaver*		Save(MFile& inFile) = 0;
+	virtual MFileLoader*	Load(MDocument& inDocument, MFile& inFile) = 0;
+	virtual MFileSaver*		Save(MDocument& inDocument, MFile& inFile) = 0;
 
 							MFileImp()
 								: mRefCount(1)

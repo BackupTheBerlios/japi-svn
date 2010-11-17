@@ -29,28 +29,22 @@ MAuthDialog::MAuthDialog(
 
 	SetTitle(inTitle);
 	
-	SetText('inst', inInstruction);
+	SetText("instruction", inInstruction);
 	
-	uint32 lblID = 'lbl1';
-	uint32 edtID = 'edt1';
-	
-	for (int32 i = 0; i < mFields; ++i)
+	for (int32 id = 1; id <= mFields; ++id)
 	{
-		SetVisible(lblID, true);
-		SetVisible(edtID, true);
+		SetVisible("label-" + boost::lexical_cast<string>(id), true);
+		SetVisible("edit-" + boost::lexical_cast<string>(id), true);
 
-		SetText(lblID, inPrompts[i]);
+		SetText("label-" + boost::lexical_cast<string>(id), inPrompts[id - 1]);
 		
-		SetPasswordField(edtID, inEcho[i]);
-		
-		++lblID;
-		++edtID;
+//		SetPasswordField("edit-" + boost::lexical_cast<string>(id), inEcho[id - 1]);
 	}
 
-	for (int32 i = mFields; i < 5; ++i)
+	for (int32 id = mFields + 1; id <= 5; ++id)
 	{
-		SetVisible(lblID++, false);
-		SetVisible(edtID++, false);
+		SetVisible("label-" + boost::lexical_cast<string>(id), false);
+		SetVisible("edit-" + boost::lexical_cast<string>(id), false);
 	}
 }
 
@@ -58,14 +52,8 @@ bool MAuthDialog::OKClicked()
 {
 	vector<string> args;
 	
-	uint32 edtID = 'edt1';
-	for (int32 i = 0; i < mFields; ++i)
-	{
-		string a;
-		GetText(edtID, a);
-		args.push_back(a);
-		++edtID;
-	}
+	for (int32 id = 1; id <= mFields; ++id)
+		args.push_back(GetText("edit-" + boost::lexical_cast<string>(id)));
 	
 	eAuthInfo(args);
 
