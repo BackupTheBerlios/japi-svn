@@ -72,7 +72,6 @@
         <file>MEditWindow.cpp</file>
         <file>MMessageWindow.cpp</file>
       </group>
-      <file>MGlobals.cpp</file>
       <group name="Dialogs">
         <file>MQuotedRewrapDialog.cpp</file>
         <file>MDiffWindow.cpp</file>
