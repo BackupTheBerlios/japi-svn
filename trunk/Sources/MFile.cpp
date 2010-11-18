@@ -5,11 +5,9 @@
 
 #include "MJapi.h"
 
-#include <unistd.h>
 #include <cstring>
 
 #include <sys/stat.h>
-#include <dirent.h>
 #include <stack>
 #include <fstream>
 #include <cassert>
@@ -30,15 +28,19 @@
 #include "MUnicode.h"
 #include "MUtils.h"
 #include "MStrings.h"
-#include "MJapiApp.h"
 #include "MPreferences.h"
 #include "MSftpChannel.h"
+
+#include "MJapiApp.h"
 
 using namespace std;
 namespace io = boost::iostreams;
 namespace ba = boost::algorithm;
 
 namespace {
+
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize);
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize);
 
 // reserved characters in URL's
 
@@ -107,7 +109,7 @@ void write_attribute(const fs::path& inPath, const char* inName, const void* inD
 
 #include <attr/attributes.h>
 
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 
@@ -121,12 +123,14 @@ ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData
 	return length;
 }
 
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
 	(void)::attr_set(path.c_str(), inName,
 		reinterpret_cast<const char*>(inData), inDataSize, 0);
+	
+	return inDataSize;
 }
 
 #endif
@@ -289,7 +293,7 @@ void MLocalFileLoader::DoLoad()
 			}
 		}
 		
-		fs::ifstream file(path);
+		fs::ifstream file(path, ios::binary);
 		eReadFile(file);
 		
 		SetFileInfo(readOnly, modTime);
@@ -506,14 +510,15 @@ void MSftpFileLoader::DoLoad()
 
 void MSftpFileLoader::Cancel()
 {
-	if (mSFTPChannel != nil)
-		mSFTPChannel->Close();
+	delete mSFTPChannel;
 	MFileLoader::Cancel();
 }
 
 void MSftpFileLoader::SFTPChannelEvent(
 	int		inMessage)
 {
+PRINT(("SFTPChannelEvent %d", inMessage));
+
 	switch (inMessage)
 	{
 		case SFTP_INIT_DONE:
@@ -528,7 +533,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 			if (mFileSize == 0)
 			{
 				eFileLoaded();
-				mSFTPChannel->Close();
+				mSFTPChannel->Close(true);
 			}
 			break;
 		
@@ -555,7 +560,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 		
 		case SFTP_FILE_CLOSED:
 			eFileLoaded();
-			mSFTPChannel->Close();
+			mSFTPChannel->Close(true);
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
@@ -564,7 +569,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 			break;
 		
 		case SFTP_ERROR:
-			mSFTPChannel->Close();
+			Cancel();
 			break;
 		
 		case SSH_CHANNEL_CLOSED:
@@ -596,6 +601,8 @@ class MSftpFileSaver : public MFileSaver
 						MDocument&			inDocument,
 						MFile&				inFile);
 
+					~MSftpFileSaver();
+
 	virtual void	DoSave();
 	
 	virtual void	Cancel();
@@ -622,10 +629,14 @@ MSftpFileSaver::MSftpFileSaver(
 {
 }
 
+MSftpFileSaver::~MSftpFileSaver()
+{
+	PRINT(("Deleting SFTPFileSaver"));
+}
+
 void MSftpFileSaver::Cancel()
 {
-	if (mSFTPChannel != nil)
-		mSFTPChannel->Close();
+	delete mSFTPChannel;
 	MFileSaver::Cancel();
 }
 
@@ -650,6 +661,8 @@ void MSftpFileSaver::DoSave()
 void MSftpFileSaver::SFTPChannelEvent(
 	int				inMessage)
 {
+PRINT(("SFTPChannelEvent %d", inMessage));
+
 	const uint32 kBufferSize = 10240;
 	
 	switch (inMessage)
@@ -689,7 +702,7 @@ void MSftpFileSaver::SFTPChannelEvent(
 		case SFTP_FILE_CLOSED:
 //			eProgress(-1.f, _("done"));
 			eFileWritten();
-			mSFTPChannel->Close();
+			mSFTPChannel->Close(true);
 //			SetFileInfo(false, fs::last_write_time(path));
 			break;
 
@@ -701,6 +714,14 @@ void MSftpFileSaver::SFTPChannelEvent(
 		case SSH_CHANNEL_CLOSED:
 			mSFTPChannel = nil;
 			delete this;
+			break;
+
+		case SFTP_ERROR:
+			Cancel();
+			break;
+
+		default:
+			PRINT(("Unhandled event %d", inMessage));
 			break;
 	}
 }
@@ -1126,12 +1147,12 @@ bool MFile::ReadOnly() const
 	return mReadOnly;
 }
 
-ssize_t MFile::ReadAttribute(
+int32 MFile::ReadAttribute(
 	const char*			inName,
 	void*				outData,
-	size_t				inDataSize) const
+	uint32				inDataSize) const
 {
-	ssize_t result = 0;
+	int32 result = 0;
 	
 	if (IsLocal())
 		result = read_attribute(GetPath(), inName, outData, inDataSize);
@@ -1139,12 +1160,12 @@ ssize_t MFile::ReadAttribute(
 	return result;
 }
 
-size_t MFile::WriteAttribute(
+int32 MFile::WriteAttribute(
 	const char*			inName,
 	const void*			inData,
-	size_t				inDataSize) const
+	uint32				inDataSize) const
 {
-	size_t result = 0;
+	uint32 result = 0;
 	
 	if (IsLocal())
 	{

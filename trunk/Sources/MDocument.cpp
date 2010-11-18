@@ -180,7 +180,8 @@ void MDocument::FileSaverDeleted(
 
 void MDocument::RevertDocument()
 {
-	DoLoad();
+	if (IsSpecified())
+		DoLoad();
 }
 
 // ---------------------------------------------------------------------------
@@ -343,15 +344,14 @@ string MDocument::GetWindowTitle() const
 	{
 		fs::path file = fs::system_complete(mFile.GetPath());
 		
-		result = file.string();
-		NormalizePath(result);
+		NormalizePath(file);
+		result = file.native_file_string();
 		
 		// strip off HOME, if any
-		
-		const char* HOME = getenv("HOME");
-		if (HOME != nil and ba::starts_with(result, HOME))
+		string home = GetHomeDirectory();
+		if (not home.empty() and ba::istarts_with(result, home))
 		{
-			result.erase(0, strlen(HOME));
+			result.erase(0, home.length());
 			result.insert(0, "~");
 		}
 	}

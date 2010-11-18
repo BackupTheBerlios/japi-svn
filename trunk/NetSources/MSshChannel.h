@@ -78,7 +78,8 @@ class MSshChannel
 	void					PushPending(
 								const std::string&	inData);
 
-	void					Close();
+	void					Close(
+								bool			inExpectConfirmation);
 
 	MCallback<void(int)>	eChannelEvent;		// events in the enum range above
 	MCallback<void(std::string)>

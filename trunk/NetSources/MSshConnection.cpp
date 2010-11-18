@@ -748,6 +748,8 @@ void MSshConnection::ProcessPacket()
 	MSshPacket in, out;
 	in.data = fInPacket;
 
+PRINT(("ProcessPacket %d", message));
+
 	switch (message)
 	{
 		case SSH_MSG_DISCONNECT:
@@ -1649,7 +1651,8 @@ void MSshConnection::OpenChannel(
 }
 
 void MSshConnection::CloseChannel(
-	MSshChannel*	inChannel)
+	MSshChannel*	inChannel,
+	bool			inErase)
 {
 	ChannelList::iterator ch = find(fChannels.begin(), fChannels.end(), inChannel);
 
@@ -1662,7 +1665,8 @@ void MSshConnection::CloseChannel(
 			Send(p);
 		}
 
-//		fChannels.erase(ch);
+		if (inErase)
+			fChannels.erase(ch);
 		
 		if (not fAuthenticated)
 			Disconnect();

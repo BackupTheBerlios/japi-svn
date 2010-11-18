@@ -41,15 +41,16 @@ MSshChannel::~MSshChannel()
 {
 	try
 	{
-		Close();
+		Close(false);
 	}
 	catch (...) {}
 }
 
-void MSshChannel::Close()
+void MSshChannel::Close(
+	bool	inExpectConfirmation)
 {
 	if (fConnection != nil)
-		fConnection->CloseChannel(this);
+		fConnection->CloseChannel(this, not inExpectConfirmation);
 }
 
 void MSshChannel::SetChannelOpen(

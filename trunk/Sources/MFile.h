@@ -100,15 +100,15 @@ class MFile
 
 	bool				ReadOnly() const;
 
-	ssize_t				ReadAttribute(
+	int32				ReadAttribute(
 							const char*			inName,
 							void*				outData,
-							size_t				inDataSize) const;
+							uint32				inDataSize) const;
 
-	size_t				WriteAttribute(
+	int32				WriteAttribute(
 							const char*			inName,
 							const void*			inData,
-							size_t				inDataSize) const;
+							uint32				inDataSize) const;
 
   private:
 	

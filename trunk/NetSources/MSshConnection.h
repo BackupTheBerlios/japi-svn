@@ -60,7 +60,8 @@ class MSshConnection
 						MSshChannel*		inChannel);
 
 	void			CloseChannel(
-						MSshChannel*		inChannel);
+						MSshChannel*		inChannel,
+						bool				inErase);
 						
 	void			SendChannelData(
 						MSshChannel*		inChannel,

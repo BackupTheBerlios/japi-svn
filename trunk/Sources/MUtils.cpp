@@ -165,6 +165,15 @@ string GetUserName(bool inShortName)
 	return result;
 }
 
+string GetHomeDirectory()
+{
+	string result;
+	const char* HOME = getenv("HOME");
+	if (HOME != nil)
+		result = HOME;
+	return result;
+}
+
 string GetDateTime()
 {
 	// had to remove this, because it depends on wchar_t in libstdc++...

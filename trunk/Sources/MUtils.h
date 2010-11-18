@@ -207,6 +207,8 @@ uint32 StringToNum(
 std::string	GetUserName(
 	bool			inShortName = false);
 
+std::string GetHomeDirectory();
+
 std::string	GetDateTime();
 
 double GetLocalTime();

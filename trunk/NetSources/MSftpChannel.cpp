@@ -148,6 +148,10 @@ struct MSftpChannelImp3 : public MSftpChannelImp
 								MSshPacket&	in,
 								MSshPacket&	out);
 
+	void					CheckForError(
+								uint8		inMessage,
+								MSshPacket&	in);
+
 	// action interface
 	virtual void			SetCWD(string inPath);
 	virtual void			OpenDir();
@@ -285,6 +289,24 @@ void MSftpChannelImp3::HandlePacket(
 		(this->*fHandler)(inMessage, in, out);
 	else
 		PRINT(("Handler was nil, packet %d dropped", inMessage));
+}
+
+void MSftpChannelImp3::CheckForError(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	if (inMessage == SSH_FXP_STATUS)
+	{
+		uint32 id, error_code;
+		string message;
+		in >> id >> error_code >> message;
+		if (error_code > SSH_FX_EOF)
+		{
+PRINT(("error code: %d, status message: %s", error_code, message.c_str()));
+			fChannel.HandleChannelEvent(SFTP_ERROR);
+			THROW(("Error in SFTP transfer: %s", message.c_str()));
+		}
+	}
 }
 
 void MSftpChannelImp3::SetCWD(string inPath)
@@ -445,12 +467,7 @@ void MSftpChannelImp3::ProcessMkDir(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	if (inMessage == SSH_FXP_STATUS)
-	{
-		if (fChannel.GetStatusCode() != SSH_FX_OK)
-			fChannel.HandleChannelEvent(SFTP_ERROR);
-	}
-	
+	CheckForError(inMessage, in);
 	fHandler = nil;
 }
 
@@ -470,21 +487,16 @@ void MSftpChannelImp3::ProcessOpenFile(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	if (inMessage == SSH_FXP_HANDLE)
-	{
-		uint32 id;
-		in >> id >> fHandle;
-		
-		assert(id == fRequestId - 1);
-		
-		out << uint8(SSH_FXP_FSTAT) << fRequestId++ << fHandle;
-		fHandler = &MSftpChannelImp3::ProcessFStat;
-	}
-	else
-	{
-		assert(inMessage == SSH_FXP_STATUS);
-		fHandler = nil;
-	}
+	if (inMessage != SSH_FXP_HANDLE)
+		CheckForError(inMessage, in);
+
+	uint32 id;
+	in >> id >> fHandle;
+	
+	assert(id == fRequestId - 1);
+	
+	out << uint8(SSH_FXP_FSTAT) << fRequestId++ << fHandle;
+	fHandler = &MSftpChannelImp3::ProcessFStat;
 }
 
 void MSftpChannelImp3::ProcessFStat(
@@ -560,23 +572,17 @@ void MSftpChannelImp3::ProcessCreateFile(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	if (inMessage == SSH_FXP_HANDLE)
-	{
-		uint32 id;
-		in >> id >> fHandle;
-		
-		assert(id == fRequestId - 1);
-		
-		fOffset = 0;
-		fHandler = &MSftpChannelImp3::ProcessWrite;
-		
-		fChannel.HandleChannelEvent(SFTP_CAN_SEND_DATA);
-	}
-	else
-	{
-		assert(inMessage == SSH_FXP_STATUS);
-		fHandler = nil;
-	}
+	CheckForError(inMessage, in);
+
+	uint32 id;
+	in >> id >> fHandle;
+	
+	assert(id == fRequestId - 1);
+	
+	fOffset = 0;
+	fHandler = &MSftpChannelImp3::ProcessWrite;
+	
+	fChannel.HandleChannelEvent(SFTP_CAN_SEND_DATA);
 }
 
 void MSftpChannelImp3::SendData(const string& inData)
@@ -612,7 +618,7 @@ void MSftpChannelImp3::ProcessClose(
 	MSshPacket&	in,
 	MSshPacket&	out)
 {
-	assert(inMessage == SSH_FXP_STATUS);
+	CheckForError(inMessage, in);
 	assert(fChannel.GetStatusCode() == 0);
 	
 	fHandler = nil;
