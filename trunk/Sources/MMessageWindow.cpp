@@ -477,15 +477,11 @@ void MMessageWindow::AddStdErr(
 				string file = m[1];
 				string l_nr = m[2];
 
-PRINT(("file: %s", file.c_str()));
-				
 				if (IsAbsolutePath(file))
 					spec = file;
 				else
 					spec = mBaseDirectory / file;
 
-PRINT(("spec: %s", spec.string().c_str()));
-				
 				if (fs::exists(spec))
 				{
 					MMessageKind kind = kMsgKindNone;

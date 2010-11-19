@@ -17,6 +17,8 @@
 #include "MP2PEvents.h"
 #include "MUtils.h"
 
+#include <boost/asio.hpp>
+
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/integer.h>
 #include <cryptopp/modes.h>
@@ -47,8 +49,8 @@ class MSshConnection
 	uint16			PortNumber() const		{ return fPortNumber; }
 	double			OpenedAt() const		{ return fOpenedAt; }
 	
-	bool			IsConnected() const		{ return fIsConnected; }
-	bool			Busy() const			{ return fBusy; }
+//	bool			IsConnected() const		{ return fIsConnected; }
+//	bool			Busy() const			{ return fBusy; }
 
 	void			Disconnect();
 	
@@ -122,8 +124,8 @@ class MSshConnection
 	/* Idle loop for processing from the socket */
 	MEventIn<void(double)>					eIdle;
 
-	void			Idle (
-						double				inSystemTime);
+//	void			Idle (
+//						double				inSystemTime);
 	
 	void			Send(
 						std::string			inMessage);
@@ -138,6 +140,13 @@ class MSshConnection
 	void			ProcessPacket();
 
 	// protocol handlers
+
+	void			HandleProtocolVersionExchange(
+						const boost::system::error_code& err);
+	void			HandleKexInitRequest(
+						const boost::system::error_code& err);
+	void			HandleKexInitResponse(
+						const boost::system::error_code& err);
 	
 	void			(MSshConnection::*fHandler)(
 						uint8				inMessage,
@@ -260,14 +269,12 @@ class MSshConnection
 	std::string					fPassword;
 	std::string					fIPAddress;
 	uint16						fPortNumber;
-	int							fSocket;
-	bool						fIsConnected;
-	bool						fBusy;
-	bool						fInhibitIdle;
-	bool						fGotVersionString;
-	std::string					fBuffer;
-	std::string					fInPacket, fOutPacket;
-	uint32						fPacketLength;
+	boost::asio::ip::tcp::resolver
+								mResolver;
+	boost::asio::ip::tcp::socket
+								mSocket;
+	boost::asio::streambuf		mRequest;
+	boost::asio::streambuf		mResponse;
 	uint32						fPasswordAttempts;
 
 	std::unique_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;

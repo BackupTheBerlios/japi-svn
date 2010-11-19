@@ -24,7 +24,7 @@
 
 #include <cryptopp/gfpcrypt.h>
 #include <cryptopp/rsa.h>
-#include <cryptopp/rng.h>
+#include <cryptopp/osrng.h>
 #include <cryptopp/aes.h>
 #include <cryptopp/des.h>
 #include <cryptopp/md5.h>
@@ -131,9 +131,10 @@ const char* LookupToken(
 }
 	
 // implement as globals to keep things simple
-Integer				p2, q2, g2;
-Integer				p14, q14, g14;
-auto_ptr<X917RNG>	rng;
+Integer					p2(k_p_2, sizeof(k_p_2)), g2(2), q2((p2 - 1) / g2);
+Integer					p14(k_p_14, sizeof(k_p_14)), g14(2), q14((p14 - 1) / g14);
+
+AutoSeededRandomPool	rng;
 
 } // end private namespace
 
@@ -240,32 +241,6 @@ MSshConnection::MSshConnection()
 
 	AddRoute(gApp->eIdle, eIdle);
 
-	static bool sInited = false;
-	if (not sInited)
-	{
-		byte seed[16];
-		
-		ifstream f("/dev/random");
-		if (f.is_open())
-			f.read(reinterpret_cast<char*>(seed), sizeof(seed));
-		else
-		{
-			srand(int(time(nil) % 134567));
-			for (int i = 0; i < 16; ++i)
-				seed[i] = rand();
-		}
-		
-		rng.reset(new X917RNG(new AESEncryption(seed, 16), seed));
-
-		p2 = Integer(k_p_2, sizeof(k_p_2));
-		g2 = Integer(2);
-		q2 = ((p2 - 1) / g2);
-
-		p14 = Integer(k_p_14, sizeof(k_p_14));
-		g14 = Integer(2);
-		q14 = ((p14 - 1) / g14);
-	}
-	
 	fNext = sFirstConnection;
 	sFirstConnection = this;
 }
@@ -613,6 +588,46 @@ void MSshConnection::Send(const MSshPacket& inPacket)
 	Send(Wrap(inPacket.data));
 }
 
+void MSshConnection::HandleResolve(
+	const boost::system::error_code& err,
+	tcp::resolver::iterator endpoint_iterator)
+{
+    if (err)
+    	Error(SSH_DISCONNECT_CONNECTION_LOST);
+
+	// Attempt a connection to the first endpoint in the list. Each endpoint
+	// will be tried until we successfully establish a connection.
+	tcp::endpoint endpoint = *endpoint_iterator;
+	mSocket.async_connect(endpoint,
+		boost::bind(&MSshConnection::HandleConnect, this,
+			boost::asio::placeholders::error, ++endpoint_iterator));
+}
+
+void MSshConnection::HandleConnect(const boost::system::error_code& err,
+      tcp::resolver::iterator endpoint_iterator)
+{
+    if (!err)
+    {
+		// The connection was successful. Receive initial string
+    	boost::asio::async_read_until(mSocket, mResponse, "\r\n",
+			boost::bind(&MSshConnection::HandleProtocolVersionExchange, this,
+				boost::asio::placeholders::error));
+    }
+    else if (endpoint_iterator != tcp::resolver::iterator())
+    {
+      // The connection failed. Try the next endpoint in the list.
+      mSocket.close();
+      tcp::endpoint endpoint = *endpoint_iterator;
+      mSocket.async_connect(endpoint,
+          boost::bind(&MSshConnection::HandleConnect, this,
+            boost::asio::placeholders::error, ++endpoint_iterator));
+    }
+    else
+    	throw MSshException(err);
+}
+
+
+
 bool MSshConnection::ProcessBuffer()
 {
 	bool result = true;
@@ -874,7 +889,7 @@ void MSshConnection::ProcessConnect()
 	data << uint8(SSH_MSG_KEXINIT);
 	
 	for (uint32 i = 0; i < 16; ++i)
-		data << rng->GenerateByte();
+		data << rng.GenerateByte();
 
 	string compress;
 	if (Preferences::GetInteger("compress-sftp", true))
@@ -938,7 +953,7 @@ void MSshConnection::ProcessKexInit(
 		{
 			do
 			{
-				f_x.Randomize(*rng.get(), Integer(2), q14 - 1);
+				f_x.Randomize(rng, Integer(2), q14 - 1);
 				f_e = a_exp_b_mod_c(g14, f_x, p14);
 			}
 			while (f_e < 1 or f_e >= p14 - 1);
@@ -947,7 +962,7 @@ void MSshConnection::ProcessKexInit(
 		{
 			do
 			{
-				f_x.Randomize(*rng.get(), Integer(2), q2 - 1);
+				f_x.Randomize(rng, Integer(2), q2 - 1);
 				f_e = a_exp_b_mod_c(g2, f_x, p2);
 			}
 			while (f_e < 1 or f_e >= p2 - 1);
@@ -1889,7 +1904,7 @@ string MSshConnection::Wrap(string inData)
 	
 	do
 	{
-		inData += rng->GenerateByte();
+		inData += rng.GenerateByte();
 		++padding;
 	}
 	while (inData.size() < blockSize or padding < 4 or
