@@ -110,6 +110,10 @@ class MSshConnection
 	void			HandleConnect(
 						const boost::system::error_code& err,
 						boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
+	void			HandleProtocolVersionExchangeRequest(
+						const boost::system::error_code& err);
+	void			HandleProtocolVersionExchangeResponse(
+						const boost::system::error_code& err);
 	void			HandleProtocolVersionExchange(
 						const boost::system::error_code& err);
 	void			HandleKexInitRequest(

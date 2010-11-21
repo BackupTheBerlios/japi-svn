@@ -671,9 +671,12 @@ void MSshConnection::HandleConnect(const boost::system::error_code& err,
 {
     if (!err)
     {
-		// The connection was successful. Receive initial string
-    	boost::asio::async_read_until(mSocket, mResponse, "\r\n",
-			boost::bind(&MSshConnection::HandleProtocolVersionExchange, this,
+    	ostream out(&mRequest);
+    	out << kVersionString << "\r\n";
+    	
+		// The connection was successful. send protocol string
+    	boost::asio::async_write(mSocket, mRequest,
+			boost::bind(&MSshConnection::HandleProtocolVersionExchangeRequest, this,
 				boost::asio::placeholders::error));
     }
     else if (endpoint_iterator != tcp::resolver::iterator())
@@ -690,7 +693,19 @@ void MSshConnection::HandleConnect(const boost::system::error_code& err,
 //    	THROW((err.message().c_str()));
 }
 
-void MSshConnection::HandleProtocolVersionExchange(
+void MSshConnection::HandleProtocolVersionExchangeRequest(
+	const boost::system::error_code& err)
+{
+    if (err)
+    	Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+
+	// The connection was successful. Receive initial string
+	boost::asio::async_read_until(mSocket, mResponse, "\r\n",
+		boost::bind(&MSshConnection::HandleProtocolVersionExchangeResponse, this,
+			boost::asio::placeholders::error));
+}
+
+void MSshConnection::HandleProtocolVersionExchangeResponse(
 	const boost::system::error_code& err)
 {
     if (err)
