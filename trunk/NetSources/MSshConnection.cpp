@@ -672,7 +672,7 @@ void MSshConnection::HandleConnect(const boost::system::error_code& err,
     if (!err)
     {
     	ostream out(&mRequest);
-    	out << kVersionString << "\r\n";
+    	out << kSSHVersionString << "\r\n";
     	
 		// The connection was successful. send protocol string
     	boost::asio::async_write(mSocket, mRequest,
