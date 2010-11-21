@@ -140,11 +140,11 @@ bool MSshAgent::GetNextIdentity(
 {
 	bool result = false;
 	
-	while (result == false and mCount-- > 0 and mIdentities.data.length() > 0)
+	while (result == false and mCount-- > 0 and not mIdentities.empty())
 	{
 		MSshPacket blob;
 
-		mIdentities >> blob.data >> outComment;
+		mIdentities >> blob >> outComment;
 		
 		string type;
 		blob >> type;
@@ -164,41 +164,41 @@ bool MSshAgent::RequestReply(
 	MSshPacket&		out,
 	MSshPacket&		in)
 {
-	net_swapper swap;
-	
-	uint32 l = out.data.length();
-	l = swap(l);
-	
 	bool result = false;
 	
-	if (write(mSock, &l, sizeof(l)) == sizeof(l) and
-		write(mSock, out.data.c_str(), out.data.length()) == int32(out.data.length()) and
-		read(mSock, &l, sizeof(l)) == sizeof(l))
-	{
-		l = swap(l);
-		
-		if (l < 256 * 1024)
-		{
-			char b[1024];
-
-			uint32 k = l;
-			if (k > sizeof(b))
-				k = sizeof(b);
-			
-			while (l > 0)
-			{
-				if (read(mSock, b, k) != k)
-					break;
-				
-				in.data.append(b, k);
-				
-				l -= k;
-			}
-			
-			result = (l == 0);
-		}
-	}
-	
+//	net_swapper swap;
+//	
+//	uint32 l = out.size();
+//	l = swap(l);
+//	
+//	if (write(mSock, &l, sizeof(l)) == sizeof(l) and
+//		write(mSock, out.peek(), out.size()) == int32(out.size()) and
+//		read(mSock, &l, sizeof(l)) == sizeof(l))
+//	{
+//		l = swap(l);
+//		
+//		if (l < 256 * 1024)
+//		{
+//			char b[1024];
+//
+//			uint32 k = l;
+//			if (k > sizeof(b))
+//				k = sizeof(b);
+//			
+//			while (l > 0)
+//			{
+//				if (read(mSock, b, k) != k)
+//					break;
+//				
+//				in.data.append(b, k);
+//				
+//				l -= k;
+//			}
+//			
+//			result = (l == 0);
+//		}
+//	}
+//	
 	return result;
 }
 

@@ -50,6 +50,7 @@
       <file>MSshAgent.cpp</file>
       <file>MSshChannel.cpp</file>
       <file>MSshConnection.cpp</file>
+      <file>MSshPacket.cpp</file>
     </group>
     <group name="Sources">
       <file>MJapiApp.cpp</file>

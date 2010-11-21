@@ -33,7 +33,7 @@ MKnownHosts& MKnownHosts::Instance()
 }
 
 MKnownHosts::MKnownHosts()
-	: fUpdated(false)
+	: mUpdated(false)
 {
 	try
 	{
@@ -64,11 +64,11 @@ MKnownHosts::MKnownHosts()
 			
 			while ((p = host.find(',')) != string::npos)
 			{
-				fKnownHosts[host.substr(0, p)] = key;
+				mKnownHosts[host.substr(0, p)] = key;
 				host.erase(0, p + 1);
 			}
 			
-			fKnownHosts[host] = key;
+			mKnownHosts[host] = key;
 		}
 	}
 	catch (...) {}
@@ -76,14 +76,14 @@ MKnownHosts::MKnownHosts()
 
 MKnownHosts::~MKnownHosts()
 {
-	if (fUpdated)
+	if (mUpdated)
 	{
 		try
 		{
 			fs::ofstream file(gPrefsDir / "known_hosts");
 			
-			for (MHostMap::iterator k = fKnownHosts.begin();
-				k != fKnownHosts.end(); ++k)
+			for (MHostMap::iterator k = mKnownHosts.begin();
+				k != mKnownHosts.end(); ++k)
 			{
 				file << (*k).first << " ssh-dss " << (*k).second << endl;
 			}
@@ -126,15 +126,15 @@ void MKnownHosts::CheckHost(
 		fingerprint += kHexChars[b & 0x0f];
 	}
 	
-	MHostMap::iterator i = fKnownHosts.find(inHost);
-	if (i == fKnownHosts.end())
+	MHostMap::iterator i = mKnownHosts.find(inHost);
+	if (i == mKnownHosts.end())
 	{
 		switch (DisplayAlert("unknown-host-alert", inHost, fingerprint))
 		{
 				// Add
 			case 1:
-				fKnownHosts[inHost] = value;
-				fUpdated = true;
+				mKnownHosts[inHost] = value;
+				mUpdated = true;
 				break;
 			
 				// Cancel
@@ -152,8 +152,8 @@ void MKnownHosts::CheckHost(
 		if (DisplayAlert("host-key-changed-alert", inHost, fingerprint) != 2)
 			THROW(("User cancelled"));
 		
-		fKnownHosts[inHost] = value;
-		fUpdated = true;
+		mKnownHosts[inHost] = value;
+		mUpdated = true;
 	}
 }
 

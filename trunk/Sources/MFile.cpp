@@ -497,7 +497,7 @@ MSftpFileLoader::MSftpFileLoader(
 
 void MSftpFileLoader::DoLoad()
 {
-	mSFTPChannel = new MSftpChannel(mFile);
+	mSFTPChannel = MSftpChannel::Open(mFile);
 
 	SetCallback(mSFTPChannel->eChannelEvent,
 		this, &MSftpFileLoader::SFTPChannelEvent);
@@ -533,7 +533,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 			if (mFileSize == 0)
 			{
 				eFileLoaded();
-				mSFTPChannel->Close(true);
+				mSFTPChannel->Close();
 			}
 			break;
 		
@@ -560,7 +560,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 		
 		case SFTP_FILE_CLOSED:
 			eFileLoaded();
-			mSFTPChannel->Close(true);
+			mSFTPChannel->Close();
 			break;
 
 		case SSH_CHANNEL_TIMEOUT:
@@ -642,7 +642,7 @@ void MSftpFileSaver::Cancel()
 
 void MSftpFileSaver::DoSave()
 {
-	mSFTPChannel = new MSftpChannel(mFile);
+	mSFTPChannel = MSftpChannel::Open(mFile);
 
 	{
 		io::filtering_ostream out(io::back_inserter(mSFTPData));
@@ -702,7 +702,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 		case SFTP_FILE_CLOSED:
 //			eProgress(-1.f, _("done"));
 			eFileWritten();
-			mSFTPChannel->Close(true);
+			mSFTPChannel->Close();
 //			SetFileInfo(false, fs::last_write_time(path));
 			break;
 

@@ -41,50 +41,29 @@ class MSshConnection
 						const std::string&	inUserName,
 						uint16				inPort);
 
+	void			Disconnect();
+	
+	MSshChannel*	OpenChannel();
+
 	void			Reference();
 	void			Release();
 
-	std::string		UserName() const		{ return fUserName; }
-	std::string		IPAddress() const		{ return fIPAddress; }
-	uint16			PortNumber() const		{ return fPortNumber; }
-	double			OpenedAt() const		{ return fOpenedAt; }
-	
-//	bool			IsConnected() const		{ return fIsConnected; }
-//	bool			Busy() const			{ return fBusy; }
+//	std::string		UserName() const		{ return mUserName; }
+//	std::string		IPAddress() const		{ return mIPAddress; }
+//	uint16			PortNumber() const		{ return mPortNumber; }
 
-	void			Disconnect();
-	
-	void			ResetTimer();
-	
 	std::string		GetEncryptionParams() const;
 	
-	void			OpenChannel(
-						MSshChannel*		inChannel);
-
-	void			CloseChannel(
-						MSshChannel*		inChannel,
-						bool				inErase);
-						
-	void			SendChannelData(
-						MSshChannel*		inChannel,
-						uint32				inType,
-						std::string			inData);
-
-	void			SendWindowResize(
-						MSshChannel*		inChannel,
-						uint32				inColumns,
-						uint32				inRows);
-
-	std::string		GetErrorString() const	{ return fErrString; }
-	uint32			GetErrorCode() const	{ return fErrCode; }
-	
-	MEventOut<void(int)>			eConnectionEvent;
-	MEventOut<void(std::string)>	eConnectionMessage;
-	MEventOut<void(std::string)>	eConnectionBanner;
+	MEventOut<void(int)>				eConnectionEvent;
+	MEventOut<void(const std::string&)>	eConnectionMessage;
+	MEventOut<void(const std::string&)>	eConnectionBanner;
 	
   private:
 
-					MSshConnection();
+					MSshConnection(
+						const std::string&	inIPAddress,
+						const std::string&	inUserName,
+						uint16				inPort);
 
 					MSshConnection(
 						const MSshConnection&);
@@ -92,18 +71,6 @@ class MSshConnection
 						const MSshConnection&);
 
 	virtual 		~MSshConnection();
-
-	bool			Connect(
-						std::string			inIPAddress,
-						std::string			inUserName,
-						uint16				inPortNr);
-
-	std::string		Wrap(
-						std::string inData);
-
-	std::vector<std::string>
-					Split(
-						std::string inData) const;
 
 	std::string		ChooseProtocol(
 						const std::string&	inServer,
@@ -121,17 +88,8 @@ class MSshConnection
 	void			AdjustHostWindowSize(
 						int32				inDelta);
 
-	/* Idle loop for processing from the socket */
-	MEventIn<void(double)>					eIdle;
-
-//	void			Idle (
-//						double				inSystemTime);
-	
-	void			Send(
-						std::string			inMessage);
-
-	void			Send(
-						const MSshPacket&	inMessage);
+//	void			Send(
+//						std::string			inMessage);
 
 	void			Error(
 						int					inReason);
@@ -140,15 +98,28 @@ class MSshConnection
 	void			ProcessPacket();
 
 	// protocol handlers
+	typedef void (MSshConnection::*ASIOHandler)(const boost::system::error_code&);
 
+	void			Send(
+						MSshPacket&			inMessage,
+						ASIOHandler			inHandler = nil);
+
+	void			HandleResolve(
+						const boost::system::error_code& err,
+						boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
+	void			HandleConnect(
+						const boost::system::error_code& err,
+						boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
 	void			HandleProtocolVersionExchange(
 						const boost::system::error_code& err);
 	void			HandleKexInitRequest(
 						const boost::system::error_code& err);
 	void			HandleKexInitResponse(
 						const boost::system::error_code& err);
+	void			HandleDataRequest(
+						const boost::system::error_code& err);
 	
-	void			(MSshConnection::*fHandler)(
+	void			(MSshConnection::*mHandler)(
 						uint8				inMessage,
 						MSshPacket&			in,
 						MSshPacket&			out);
@@ -265,75 +236,73 @@ class MSshConnection
 						std::vector<std::string>
 											inPassword);
 
-	std::string					fUserName;
-	std::string					fPassword;
-	std::string					fIPAddress;
-	uint16						fPortNumber;
+	std::string					mUserName;
+	std::string					mPassword;
+	std::string					mIPAddress;
+	uint16						mPortNumber;
 	boost::asio::ip::tcp::resolver
 								mResolver;
 	boost::asio::ip::tcp::socket
 								mSocket;
 	boost::asio::streambuf		mRequest;
 	boost::asio::streambuf		mResponse;
-	uint32						fPasswordAttempts;
+	uint32						mPasswordAttempts;
 
-	std::unique_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;
-	std::unique_ptr<CryptoPP::StreamTransformation>			fDecryptorCBC;
-	std::unique_ptr<CryptoPP::BufferedTransformation>		fDecryptor;
-	std::unique_ptr<CryptoPP::BlockCipher>					fEncryptorCipher;
-	std::unique_ptr<CryptoPP::StreamTransformation>			fEncryptorCBC;
-	std::unique_ptr<CryptoPP::BufferedTransformation>		fEncryptor;
-	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fSigner;
-	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fVerifier;
-	std::unique_ptr<ZLibHelper>								fCompressor;
-	std::unique_ptr<ZLibHelper>								fDecompressor;
+	std::unique_ptr<CryptoPP::BlockCipher>					mDecryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			mDecryptorCBC;
+	std::unique_ptr<CryptoPP::BlockCipher>					mEncryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			mEncryptorCBC;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mSigner;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mVerifier;
+//	std::unique_ptr<ZLibHelper>								mCompressor;
+//	std::unique_ptr<ZLibHelper>								mDecompressor;
 	
 	CryptoPP::Integer			f_x;
 	CryptoPP::Integer			f_e;
-	std::string					fSessionId;
-	CryptoPP::Integer			fSharedSecret;
-	std::string					fHostVersion;
-	std::string					fMyPayLoad;
-	std::string					fHostPayLoad;
-	std::string					fMyKexinitMessage;
-	std::string					fHostKexinitMessage;
+	std::string					mSessionId;
+	CryptoPP::Integer			mSharedSecret;
+	std::string					mHostVersion;
+	std::string					mMyPayLoad;
+	std::string					mHostPayLoad;
+	std::string					mMyKexinitMessage;
+	std::string					mHostKexinitMessage;
 
-	std::string					fKexAlg;
-	std::string					fServerHostKeyAlg;
-	std::string					fEncryptionAlgC2S;
-	std::string					fEncryptionAlgS2C;
-	std::string					fMACAlgC2S;
-	std::string					fMACAlgS2C;
-	std::string					fCompressionAlgC2S;
-	std::string					fCompressionAlgS2C;
-	std::string					fLangC2S;
-	std::string					fLangS2C;
+	std::string					mKexAlg;
+	std::string					mServerHostKeyAlg;
+	std::string					mEncryptionAlgC2S;
+	std::string					mEncryptionAlgS2C;
+	std::string					mMACAlgC2S;
+	std::string					mMACAlgS2C;
+	std::string					mCompressionAlgC2S;
+	std::string					mCompressionAlgS2C;
+	std::string					mLangC2S;
+	std::string					mLangS2C;
 	
-	byte*						fKeys[6];
+	byte*						mKeys[6];
 	
-	uint32						fOutSequenceNr;
-	uint32						fInSequenceNr;
+	uint32						mOutSequenceNr;
+	uint32						mInSequenceNr;
 	
-	bool						fAuthenticated;
+	bool						mAuthenticated;
 
-//	std::unique_ptr<MCertificate>	fCertificate;
-	std::unique_ptr<MSshAgent>	fSshAgent;
+//	std::unique_ptr<MCertificate>	mCertificate;
+	std::unique_ptr<MSshAgent>	mSshAgent;
 
 	MEventIn<void(MCertificate*)>	eCertificateDeleted;
 
 	void						CertificateDeleted(
 									MCertificate*	inCertificate);
 	
-	int32						fRefCount;
-	ChannelList					fChannels;
-	ChannelList					fOpeningChannels;
-	std::string					fErrString;
-	uint32						fErrCode;
-	double						fOpenedAt;
+	int32						mRefCount;
+	ChannelList					mChannels;
+	ChannelList					mOpeningChannels;
+	std::string					mErrString;
+	uint32						mErrCode;
+	double						mOpenedAt;
 	static uint32				sNextChannelId;
 
 	static MSshConnection*		sFirstConnection;
-	MSshConnection*				fNext;
+	MSshConnection*				mNext;
 };
 
 #endif // MSSHCONNECTION_H

@@ -42,44 +42,43 @@ enum MSshChannelEvent {
 class MSshChannel
 {
   public:
-	uint32					GetMyChannelID() const		{ return fMyChannelID; }
+	uint32					GetMyChannelID() const		{ return mMyChannelID; }
 	
 	void					SetMyChannelID(
-								uint32	inChannelID)	{ fMyChannelID = inChannelID; }
+								uint32	inChannelID)	{ mMyChannelID = inChannelID; }
 
-	uint32					GetHostChannelID() const	{ return fHostChannelID; }
+	uint32					GetHostChannelID() const	{ return mHostChannelID; }
 	
 	void					SetHostChannelID(
-								uint32	inChannelID)	{ fHostChannelID = inChannelID; }
+								uint32	inChannelID)	{ mHostChannelID = inChannelID; }
 
-	uint32					GetMaxSendPacketSize() const{ return fMaxSendPacketSize; }
+	uint32					GetMaxSendPacketSize() const{ return mMaxSendPacketSize; }
 	
 	void					SetMaxSendPacketSize(
-								uint32	inSize)			{ fMaxSendPacketSize = inSize; }
+								uint32	inSize)			{ mMaxSendPacketSize = inSize; }
 
-	uint32					GetMyWindowSize() const		{ return fMyWindowSize; }
+	uint32					GetMyWindowSize() const		{ return mMyWindowSize; }
 	
 	void					SetMyWindowSize(
-								uint32	inSize)			{ fMyWindowSize = inSize; }
+								uint32	inSize)			{ mMyWindowSize = inSize; }
 
-	uint32					GetHostWindowSize() const	{ return fHostWindowSize; }
+	uint32					GetHostWindowSize() const	{ return mHostWindowSize; }
 	
 	void					SetHostWindowSize(
-								uint32	inSize)			{ fHostWindowSize = inSize; }
+								uint32	inSize)			{ mHostWindowSize = inSize; }
 
-	bool					IsChannelOpen() const		{ return fChannelOpen; }
+	bool					IsChannelOpen() const		{ return mChannelOpen; }
 	
 	void					SetChannelOpen(
 								bool	inChannelOpen);
 
 	bool					PopPending(
-								std::string&	outData);
+								MSshPacket& outData);
 	
 	void					PushPending(
-								const std::string&	inData);
+								const MSshPacket& inData);
 
-	void					Close(
-								bool			inExpectConfirmation);
+	void					Close();
 
 	MCallback<void(int)>	eChannelEvent;		// events in the enum range above
 	MCallback<void(std::string)>
@@ -93,11 +92,11 @@ class MSshChannel
 
 	// these are called by the connection class:
 	virtual void			HandleData(
-								std::string		inData) = 0;
+								MSshPacket&		inData) = 0;
 
 	virtual void			HandleExtraData(
 								int				inType,
-								std::string		inData) = 0;
+								MSshPacket&		inData) = 0;
 
 	virtual void			HandleChannelEvent(
 								int				inEventMessage);
@@ -111,19 +110,18 @@ class MSshChannel
 
 	// To send data through the channel using SSH_MSG_CHANNEL_DATA messages
 	virtual void			Send(
-								std::string		inData);
+								MSshPacket&		inData,
+								uint32			inType = 0);
 
-	virtual void			SendExtra(
-								uint32			inType,
-								std::string		inData);
+	void					SendWindowResize(
+								uint32			inColumns,
+								uint32			inRows);
 	
 	std::string				GetEncryptionParams() const;
 	
   protected:
 							MSshChannel(
-								std::string		inIPAddress,
-								std::string		inUserName,
-								uint16			inPort);
+								MSshConnection&	inConnection);
 
 	virtual					~MSshChannel();
 
@@ -135,14 +133,14 @@ class MSshChannel
 	
   private:
 
-	MSshConnection*			fConnection;
-	uint32					fMyChannelID;
-	uint32					fHostChannelID;
-	uint32					fMaxSendPacketSize;
-	uint32					fMyWindowSize;
-	uint32					fHostWindowSize;
-	bool					fChannelOpen;
-	std::deque<std::string>	fPending;
+	MSshConnection&			mConnection;
+	uint32					mMyChannelID;
+	uint32					mHostChannelID;
+	uint32					mMaxSendPacketSize;
+	uint32					mMyWindowSize;
+	uint32					mHostWindowSize;
+	bool					mChannelOpen;
+	std::deque<MSshPacket>	mPending;
 };
 
 #endif // MSSHCHANNEL_H

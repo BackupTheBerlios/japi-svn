@@ -29,18 +29,22 @@ enum MSftpEvent {
 class MSftpChannel : public MSshChannel
 {
   public:
-							MSftpChannel(
+
+	static MSftpChannel*	Open(
 								std::string		inIPAddress,
 								std::string		inUserName,
 								uint16 inPort);
 
-							MSftpChannel(
-								const MFile&	inURL);
+	static MSftpChannel*	Open(
+								const MFile&	inURL)
+							{
+								return Open(inURL.GetHost(), inURL.GetUser(), inURL.GetPort());
+							}
 
 	virtual					~MSftpChannel();
 
-	virtual void			Send(
-								std::string		inData);
+//	virtual void			Send(
+//								std::string		inData);
 
 	virtual const char*		GetRequest() const { return "subsystem"; }
 	virtual const char*		GetCommand() const { return "sftp"; }
@@ -80,33 +84,34 @@ class MSftpChannel : public MSshChannel
 
 	std::string				GetData() const;
 	
-	uint32					GetStatusCode() const	{ return fStatusCode; }
+//	uint32					GetStatusCode() const	{ return mStatusCode; }
 
   protected:
+
+							MSftpChannel(
+								MSshConnection&	inConnection);
 	
 	friend struct MSftpChannelImp;
 	friend struct MSftpChannelImp3;
 
 	virtual void			HandleData(
-								std::string		inData);
+								MSshPacket&		inData);
 
 	virtual void			HandleExtraData(
 								int				inType,
-								std::string		inData);
+								MSshPacket&		inData);
 
 	void					HandleStatus(
 								MSshPacket		in);
-	
-//	virtual void			Send(std::string inData)	{ MSshChannel::Send(inData); }
 
 	virtual void			HandleChannelEvent(
 								int			 inEvent);
 
-	struct MSftpChannelImp*	fImpl;
-	std::string				fPacket;
-	std::string				fLeftOver;
-	uint32					fPacketLength;
-	uint32					fStatusCode;
+	struct MSftpChannelImp*	mImpl;
+//	MSshPacket				mPacket;
+//	MSshPacket				mLeftOver;
+//	uint32					mPacketLength;
+//	uint32					mStatusCode;
 };
 
 #endif // MSFTPCHANNEL_H

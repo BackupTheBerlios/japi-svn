@@ -28,8 +28,8 @@ class MKnownHosts
 	virtual			~MKnownHosts();
 
 	typedef std::map<std::string,std::string>	MHostMap;
-	MHostMap		fKnownHosts;
-	bool			fUpdated;
+	MHostMap		mKnownHosts;
+	bool			mUpdated;
 };
 
 #endif // MKNOWNHOSTS_H
