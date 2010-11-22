@@ -13,18 +13,23 @@
 #include <fcntl.h>
 #include <cctype>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #include "MKnownHosts.h"
 #include "MGlobals.h"
 #include "MUtils.h"
 #include "MError.h"
 #include "MAlerts.h"
+#include "MSshPacket.h"
 
 #include <cryptopp/base64.h>
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/md5.h>
 
 using namespace std;
+namespace ba = boost::algorithm;
 
 MKnownHosts& MKnownHosts::Instance()
 {
@@ -44,31 +49,19 @@ MKnownHosts::MKnownHosts()
 			string line;
 			getline(file, line);
 			
-			if (line.length() < 1 or line[0] == '#')
+			vector<string> fields;
+			ba::split(fields, line, ba::is_space());
+			
+			if (fields.size() < 3)
 				continue;
 			
-			string host, key;
+			MKnownHost host = {
+				fields[0],
+				fields[1],
+				fields[2]
+			};
 			
-			string::size_type p = line.find(' ');
-			if (p == string::npos)
-				continue;
-			
-			host = line.substr(0, p);
-			line.erase(0, p + 1);
-			
-			p = line.find(' ');
-			if (p == string::npos or line.substr(0, p) != "ssh-dss")
-				continue;
-			
-			key = line.substr(p + 1);
-			
-			while ((p = host.find(',')) != string::npos)
-			{
-				mKnownHosts[host.substr(0, p)] = key;
-				host.erase(0, p + 1);
-			}
-			
-			mKnownHosts[host] = key;
+			mKnownHosts.push_back(host);
 		}
 	}
 	catch (...) {}
@@ -82,23 +75,21 @@ MKnownHosts::~MKnownHosts()
 		{
 			fs::ofstream file(gPrefsDir / "known_hosts");
 			
-			for (MHostMap::iterator k = mKnownHosts.begin();
-				k != mKnownHosts.end(); ++k)
-			{
-				file << (*k).first << " ssh-dss " << (*k).second << endl;
-			}
+			foreach (auto known, mKnownHosts)
+				file << known.host << ' ' << known.alg << ' ' << known.key << endl;
 		}
 		catch (...) {}
 	}
 }
 
 void MKnownHosts::CheckHost(
-	const string&	inHost,
-	const string&	inHostKey)
+	const string&		inHost,
+	const string&		inAlgorithm,
+	const MSshPacket&	inHostKey)
 {
 	string value;
 	CryptoPP::Base64Encoder e(new CryptoPP::StringSink(value), false);
-	e.Put(reinterpret_cast<const byte*>(inHostKey.c_str()), inHostKey.length());
+	e.Put(inHostKey.peek(), inHostKey.size());
 	e.MessageEnd();
 
 	string fingerprint;
@@ -111,13 +102,12 @@ void MKnownHosts::CheckHost(
 	uint32 dLen = hash.DigestSize();
 	vector<char>	H(dLen);
 	
-	hash.Update(reinterpret_cast<const byte*>(inHostKey.c_str()),
-		inHostKey.length());
+	hash.Update(inHostKey.peek(), inHostKey.size());
 	hash.Final(reinterpret_cast<byte*>(&H[0]));
 	
 	for (uint32 i = 0; i < dLen; ++i)
 	{
-		if (fingerprint.length())
+		if (not fingerprint.empty())
 			fingerprint += ':';
 		
 		char b = H[i];
@@ -126,14 +116,15 @@ void MKnownHosts::CheckHost(
 		fingerprint += kHexChars[b & 0x0f];
 	}
 	
-	MHostMap::iterator i = mKnownHosts.find(inHost);
+	MKnownHost host = { inHost, inAlgorithm, value };
+	MKnownHostsList::iterator i = find(mKnownHosts.begin(), mKnownHosts.end(), host);
 	if (i == mKnownHosts.end())
 	{
 		switch (DisplayAlert("unknown-host-alert", inHost, fingerprint))
 		{
 				// Add
 			case 1:
-				mKnownHosts[inHost] = value;
+				mKnownHosts.push_back(host);
 				mUpdated = true;
 				break;
 			
@@ -147,12 +138,12 @@ void MKnownHosts::CheckHost(
 				break;
 		}
 	}
-	else if (value != (*i).second)
+	else if (value != i->key)
 	{
 		if (DisplayAlert("host-key-changed-alert", inHost, fingerprint) != 2)
 			THROW(("User cancelled"));
 		
-		mKnownHosts[inHost] = value;
+		i->key = value;
 		mUpdated = true;
 	}
 }

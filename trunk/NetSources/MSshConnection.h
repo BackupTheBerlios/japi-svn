@@ -43,7 +43,10 @@ class MSshConnection
 
 	void			Disconnect();
 	
-	MSshChannel*	OpenChannel();
+//	MSshChannel*	OpenChannel();
+
+	void			OpenChannel(
+						MSshChannel*	inChannel);
 
 	void			Reference();
 	void			Release();
@@ -82,7 +85,7 @@ class MSshConnection
 						byte*				inHash,
 						int					inNr,
 						int					inLength,
-						std::vector<byte>&	outKey);
+						byte*&				outKey);
 	
 	void			AdjustMyWindowSize(
 						int32				inDelta);
@@ -266,7 +269,7 @@ class MSshConnection
 	std::string					mLangC2S;
 	std::string					mLangS2C;
 	
-	std::vector<byte>			mKeys[6];
+	byte*						mKeys[6];
 	
 	uint32						mOutSequenceNr;
 	uint32						mInSequenceNr;
