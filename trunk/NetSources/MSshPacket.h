@@ -12,6 +12,7 @@
 #define MSSHPACKET_H
 
 #include <iostream>
+#include <vector>
 
 #include <cryptopp/integer.h>
 
@@ -20,7 +21,8 @@ class MSshPacket
   public:
 					MSshPacket();
 					MSshPacket(const MSshPacket& inPacket);
-					MSshPacket(std::streambuf& inBuffer);
+//					MSshPacket(const std::string& inData);
+					MSshPacket(const std::vector<byte>& inData);
 
 	MSshPacket&		operator=(const MSshPacket& inPacket);
 
@@ -37,7 +39,8 @@ class MSshPacket
 	MSshPacket&		operator<<(uint16 inValue);
 	MSshPacket&		operator<<(int32 inValue);
 	MSshPacket&		operator<<(uint32 inValue);
-	MSshPacket&		operator<<(std::string inValue);
+	MSshPacket&		operator<<(const std::string& inValue);
+	MSshPacket&		operator<<(const std::vector<byte>& inValue);
 	MSshPacket&		operator<<(const char* inValue);
 	MSshPacket&		operator<<(const CryptoPP::Integer& inValue);
 	MSshPacket&		operator<<(const MSshPacket& inPacket);

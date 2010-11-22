@@ -102,18 +102,18 @@ using namespace std;
 //	// action interface
 //	
 //	virtual void			SetCWD(
-//								string			inPath) = 0;
+//								const string&			inPath) = 0;
 //
 //	virtual void			OpenDir() = 0;
 //
 //	virtual void			MkDir(
-//								string			inPath) = 0;
+//								const string&			inPath) = 0;
 //
 //	virtual void			ReadFile(
-//								string			inPath) = 0;
+//								const string&			inPath) = 0;
 //
 //	virtual void			WriteFile(
-//								string			inPath) = 0;
+//								const string&			inPath) = 0;
 //
 //	virtual void			SendData(
 //								const string&	inData) = 0;
@@ -155,11 +155,11 @@ using namespace std;
 //								MSshPacket&	in);
 //
 //	// action interface
-//	virtual void			SetCWD(string inPath);
+//	virtual void			SetCWD(const string& inPath);
 //	virtual void			OpenDir();
-//	virtual void			MkDir(string inPath);
-//	virtual void			ReadFile(string inPath);
-//	virtual void			WriteFile(string inPath);
+//	virtual void			MkDir(const string& inPath);
+//	virtual void			ReadFile(const string& inPath);
+//	virtual void			WriteFile(const string& inPath);
 //	virtual void			SendData(const string& inData);
 //	virtual void			CloseFile();
 //
@@ -311,7 +311,7 @@ using namespace std;
 //	}
 //}
 //
-//void MSftpChannelImp3::SetCWD(string inPath)
+//void MSftpChannelImp3::SetCWD(const string& inPath)
 //{
 //	if (inPath.length() == 0)
 //		inPath = ".";
@@ -456,7 +456,7 @@ using namespace std;
 //	}
 //}
 //
-//void MSftpChannelImp3::MkDir(string inPath)
+//void MSftpChannelImp3::MkDir(const string& inPath)
 //{
 //	MSshPacket out;
 //	out << uint8(SSH_FXP_MKDIR) << mRequestId++ << inPath << uint32(0);
@@ -473,7 +473,7 @@ using namespace std;
 //	mHandler = nil;
 //}
 //
-//void MSftpChannelImp3::ReadFile(string inPath)
+//void MSftpChannelImp3::ReadFile(const string& inPath)
 //{
 //	assert(mHandle.size() == 0);
 //
@@ -559,7 +559,7 @@ using namespace std;
 //		mChannel.HandleChannelEvent(SFTP_ERROR);	
 //}
 //
-//void MSftpChannelImp3::WriteFile(string inPath)
+//void MSftpChannelImp3::WriteFile(const string& inPath)
 //{
 //	assert(mHandle.size() == 0);
 //	MSshPacket out;
@@ -655,8 +655,8 @@ using namespace std;
 */
 
 MSftpChannel* MSftpChannel::Open(
-	string		inIPAddress,
-	string		inUserName,
+	const string&		inIPAddress,
+	const string&		inUserName,
 	uint16		inPort)
 {
 	MSshConnection* connection = MSshConnection::Get(inIPAddress, inUserName, inPort);
@@ -817,7 +817,7 @@ void MSftpChannel::HandleStatus(MSshPacket in)
 //		eChannelMessage(msg);
 }
 
-void MSftpChannel::SetCWD(std::string inDir)
+void MSftpChannel::SetCWD(const string& inDir)
 {
 //	mImpl->SetCWD(inDir);
 }
@@ -849,17 +849,17 @@ bool MSftpChannel::NextFile(uint32& ioCookie, string& outName,
 //	return true;
 }
 
-void MSftpChannel::MkDir(string inPath)
+void MSftpChannel::MkDir(const string& inPath)
 {
 //	mImpl->MkDir(inPath);
 }
 
-void MSftpChannel::ReadFile(string inPath, bool inTextMode)
+void MSftpChannel::ReadFile(const string& inPath, bool inTextMode)
 {
 //	mImpl->ReadFile(inPath);
 }
 
-void MSftpChannel::WriteFile(string inPath, bool inTextMode)
+void MSftpChannel::WriteFile(const string& inPath, bool inTextMode)
 {
 //	mImpl->WriteFile(inPath);
 }

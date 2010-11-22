@@ -29,6 +29,8 @@ MSshChannel::MSshChannel(
 	, mHostWindowSize(0)
 	, mChannelOpen(false)
 {
+	AddRoute(eConnectionEvent, mConnection.eConnectionEvent);
+	AddRoute(eConnectionMessage, mConnection.eConnectionMessage);
 //	mConnection.OpenChannel(this);
 }
 
@@ -106,7 +108,7 @@ void MSshChannel::ConnectionEvent(
 }
 
 void MSshChannel::ConnectionMessage(
-	string	inMessage)
+	const string&	inMessage)
 {
 	eChannelMessage(inMessage);
 }

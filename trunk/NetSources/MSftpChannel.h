@@ -31,9 +31,9 @@ class MSftpChannel : public MSshChannel
   public:
 
 	static MSftpChannel*	Open(
-								std::string		inIPAddress,
-								std::string		inUserName,
-								uint16 inPort);
+								const std::string&	inIPAddress,
+								const std::string&	inUserName,
+								uint16				inPort);
 
 	static MSftpChannel*	Open(
 								const MFile&	inURL)
@@ -50,7 +50,7 @@ class MSftpChannel : public MSshChannel
 	virtual const char*		GetCommand() const { return "sftp"; }
 	
 	void					SetCWD(
-								std::string inDir);
+								const std::string& inDir);
 
 	std::string				GetCWD() const;
 
@@ -64,14 +64,17 @@ class MSftpChannel : public MSshChannel
 								char&			outType);
 
 	void					MkDir(
-								std::string		inPath);
+								const std::string&
+												inPath);
 
 	void					ReadFile(
-								std::string		inPath,
+								const std::string&
+												inPath,
 								bool			inTextMode);
 
 	void					WriteFile(
-								std::string		inPath,
+								const std::string&
+												inPath,
 								bool			inTextMode);
 
 	void					SendData(

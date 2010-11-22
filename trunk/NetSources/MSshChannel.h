@@ -81,13 +81,13 @@ class MSshChannel
 	void					Close();
 
 	MCallback<void(int)>	eChannelEvent;		// events in the enum range above
-	MCallback<void(std::string)>
+	MCallback<void(const std::string&)>
 							eChannelMessage;	// for error strings and such
-	MCallback<void(std::string)>
+	MCallback<void(const std::string&)>
 							eChannelBanner;		// sent by the authentication protocol
 
 	MEventIn<void(int)>		eConnectionEvent;
-	MEventIn<void(std::string)>
+	MEventIn<void(const std::string&)>
 							eConnectionMessage;
 
 	// these are called by the connection class:
@@ -129,7 +129,8 @@ class MSshChannel
 								int				inEvent);
 
 	void					ConnectionMessage(
-								std::string		inMessage);
+								const std::string&
+												inMessage);
 	
   private:
 

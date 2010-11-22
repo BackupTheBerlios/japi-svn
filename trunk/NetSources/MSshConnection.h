@@ -77,10 +77,12 @@ class MSshConnection
 						const std::string&	inClient) const;
 
 	void			DeriveKey(
-						char*				inHash,
+						const CryptoPP::Integer&
+											inSharedSecret,
+						byte*				inHash,
 						int					inNr,
 						int					inLength,
-						byte*&				outKey);
+						std::vector<byte>&	outKey);
 	
 	void			AdjustMyWindowSize(
 						int32				inDelta);
@@ -94,15 +96,23 @@ class MSshConnection
 	void			Error(
 						int					inReason);
 
-	bool			ProcessBuffer();
-	void			ProcessPacket();
+	void			ProcessPacket(
+						uint8				inMessage,
+						MSshPacket&			in);
 
 	// protocol handlers
-	typedef void (MSshConnection::*ASIOHandler)(const boost::system::error_code&);
-
+	typedef void (MSshConnection::*MPacketHandler)(
+						uint8				inMessage,
+						MSshPacket&			in);
+	
 	void			Send(
 						MSshPacket&			inMessage,
-						ASIOHandler			inHandler = nil);
+						MPacketHandler		inHandler = nil);
+	void			PacketSent(
+						const boost::system::error_code& err);
+
+	void			Receive(
+						const boost::system::error_code& err);
 
 	void			HandleResolve(
 						const boost::system::error_code& err,
@@ -114,81 +124,58 @@ class MSshConnection
 						const boost::system::error_code& err);
 	void			HandleProtocolVersionExchangeResponse(
 						const boost::system::error_code& err);
-	void			HandleProtocolVersionExchange(
-						const boost::system::error_code& err);
-	void			HandleKexInitRequest(
-						const boost::system::error_code& err);
-	void			HandleKexInitResponse(
-						const boost::system::error_code& err);
-	void			HandleDataRequest(
-						const boost::system::error_code& err);
-	
-	void			(MSshConnection::*mHandler)(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-	
-	void			ProcessConnect();
 
 	void			ProcessDisconnect(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
+
+	void			ProtocolVersionExchange(
+						uint8				inMessage,
+						MSshPacket&			in);
 
 	void			ProcessKexInit(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessKexdhReply(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessNewKeys(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessKeybInteract(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthInit(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthNone(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthPassword(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthKeyboardInteractive(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthPublicKey(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthSuccess(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessChannelRequest(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			TryNextIdentity();
 
@@ -200,28 +187,23 @@ class MSshConnection
 
 	void			ProcessConfirmChannel(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessConfirmPTY(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessChannel(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessDebug(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUnimplemented(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 	
 //	void			ProcessChannelOpen(
 //						uint8				inMessage,
@@ -250,6 +232,9 @@ class MSshConnection
 								mSocket;
 	boost::asio::streambuf		mRequest;
 	boost::asio::streambuf		mResponse;
+	std::vector<byte>			mPacket;
+	uint32						mPacketLength;
+	MPacketHandler				mHandler;
 	uint32						mPasswordAttempts;
 
 	std::unique_ptr<CryptoPP::BlockCipher>					mDecryptorCipher;
@@ -263,8 +248,7 @@ class MSshConnection
 	
 	CryptoPP::Integer			f_x;
 	CryptoPP::Integer			f_e;
-	std::string					mSessionId;
-	CryptoPP::Integer			mSharedSecret;
+	std::vector<byte>			mSessionId;
 	std::string					mHostVersion;
 	std::string					mMyPayLoad;
 	std::string					mHostPayLoad;
@@ -282,7 +266,7 @@ class MSshConnection
 	std::string					mLangC2S;
 	std::string					mLangS2C;
 	
-	byte*						mKeys[6];
+	std::vector<byte>			mKeys[6];
 	
 	uint32						mOutSequenceNr;
 	uint32						mInSequenceNr;

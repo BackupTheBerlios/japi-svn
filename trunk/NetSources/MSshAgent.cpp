@@ -12,7 +12,7 @@
 
 #include <cryptopp/integer.h>
 
-#include "MSshUtil.h"
+#include "MSsh.h"
 #include "MSshAgent.h"
 
 using namespace std;

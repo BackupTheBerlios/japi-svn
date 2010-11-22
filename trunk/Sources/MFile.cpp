@@ -480,7 +480,7 @@ class MSftpFileLoader : public MFileLoader
 						int				inMessage);
 
 	void			SFTPChannelMessage(
-						string			inMessage);
+						const string&	inMessage);
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mFileSize;
@@ -574,7 +574,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 		
 		case SSH_CHANNEL_CLOSED:
 			mSFTPChannel = nil;
-			delete this;
+//			delete this;
 			break;
 		
 		default:
@@ -584,7 +584,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 }
 
 void MSftpFileLoader::SFTPChannelMessage(
-	string	 	inMessage)
+	const string& 	inMessage)
 {
 	float fraction = 0;
 	if (mFileSize > 0)
@@ -613,7 +613,7 @@ class MSftpFileSaver : public MFileSaver
 						int				inMessage);
 
 	void			SFTPChannelMessage(
-						string			inMessage);
+						const string&	inMessage);
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mSFTPOffset;
@@ -713,7 +713,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 
 		case SSH_CHANNEL_CLOSED:
 			mSFTPChannel = nil;
-			delete this;
+//			delete this;
 			break;
 
 		case SFTP_ERROR:
@@ -727,7 +727,7 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 }
 
 void MSftpFileSaver::SFTPChannelMessage(
-	string	 	inMessage)
+	const string& 	inMessage)
 {
 	float fraction = 0;
 	if (mSFTPSize > 0)

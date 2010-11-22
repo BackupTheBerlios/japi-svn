@@ -17,6 +17,7 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/copy.hpp>
 
 #include <cryptopp/gfpcrypt.h>
 #include <cryptopp/rsa.h>
@@ -47,6 +48,7 @@ using namespace std;
 using namespace CryptoPP;
 namespace ba = boost::algorithm;
 using boost::asio::ip::tcp;
+namespace io = boost::iostreams;
 
 uint32 MSshConnection::sNextChannelId;
 MSshConnection*	MSshConnection::sFirstConnection;
@@ -89,7 +91,8 @@ const byte
 	};
 
 const char
-	kKeyExchangeAlgorithms[] = "diffie-hellman-group14-sha1,diffie-hellman-group1-sha1",
+//	kKeyExchangeAlgorithms[] = "diffie-hellman-group14-sha1,diffie-hellman-group1-sha1",
+	kKeyExchangeAlgorithms[] = "diffie-hellman-group1-sha1",
 	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-md5",
@@ -97,8 +100,8 @@ const char
 	kDontUseCompressionAlgorithms[] = "none,zlib";
 
 // implement as globals to keep things simple
-Integer					p2(k_p_2, sizeof(k_p_2)), g2(2), q2((p2 - 1) / g2);
-Integer					p14(k_p_14, sizeof(k_p_14)), g14(2), q14((p14 - 1) / g14);
+Integer					p2(k_p_2, sizeof(k_p_2)), q2((p2 - 1) / 2);
+Integer					p14(k_p_14, sizeof(k_p_14)), q14((p14 - 1) / 2);
 
 AutoSeededRandomPool	rng;
 
@@ -217,8 +220,7 @@ MSshConnection::MSshConnection(
 	const string&	inIPAddress,
 	const string&	inUserName,
 	uint16			inPortNr)
-	: mHandler(nil)
-	, eRecvAuthInfo(this, &MSshConnection::RecvAuthInfo)
+	: eRecvAuthInfo(this, &MSshConnection::RecvAuthInfo)
 	, eRecvPassword(this, &MSshConnection::RecvPassword)
 	, mUserName(inUserName)
 	, mIPAddress(inIPAddress)
@@ -227,9 +229,10 @@ MSshConnection::MSshConnection(
 //	, mBusy(false)
 //	, mInhibitIdle(false)
 //	, mGotVersionString(false)
-//	, mPacketLength(0)
 	, mResolver(MIOService::Instance())
 	, mSocket(MIOService::Instance())
+	, mPacketLength(0)
+	, mHandler(nil)
 	, mPasswordAttempts(0)
 	, mDecryptorCipher(nil)
 	, mDecryptorCBC(nil)
@@ -244,11 +247,10 @@ MSshConnection::MSshConnection(
 	, mRefCount(1)
 	, mOpenedAt(GetLocalTime())
 {
-	for (int i = 0; i < 6; ++i)
-		mKeys[i] = nil;
-
 	mNext = sFirstConnection;
 	sFirstConnection = this;
+
+	eConnectionMessage(_("Looking up address"));
 
 	tcp::resolver::query query(inIPAddress, boost::lexical_cast<string>(inPortNr));
     mResolver.async_resolve(query,
@@ -277,18 +279,6 @@ MSshConnection::~MSshConnection()
 			c = next;
 		}
 	}
-	
-	for (int i = 0; i < 6; ++i)
-		delete[] mKeys[i];
-
-//	try
-//	{
-//		RemoveRoute(gApp->eIdle, eIdle);
-//		
-//		if (mIsConnected)
-//			Disconnect();
-//	}
-//	catch (...) {}
 }
 
 void MSshConnection::Reference()
@@ -321,7 +311,8 @@ MSshConnection* MSshConnection::Get(
 			connection->mUserName == username and
 			connection->mPortNumber == inPort)
 		{
-			break;
+			if (connection->mSocket.is_open())
+				break;
 		}
 		
 		connection = connection->mNext;
@@ -358,7 +349,7 @@ void MSshConnection::Error(
 	};
 
 	string reason = "Reason unknown, code is " + boost::lexical_cast<string>(inReason);
-	if (inReason < sizeof(kErrors) / sizeof(char*))
+	if (static_cast<uint32>(inReason) < sizeof(kErrors) / sizeof(char*))
 		reason = kErrors[inReason];
 
 	eConnectionMessage(FormatString("Error in SSH connection: ^0", reason));
@@ -366,81 +357,16 @@ void MSshConnection::Error(
 	Disconnect();
 	
 	mErrCode = inReason;
+	
+	throw logic_error("Error in SSH");
 }
-
-//bool MSshConnection::Connect(
-//	string		inIPAddress,
-//	string		inUserName,
-//	uint16		inPortNr)
-//{
-//	return true;
-//	
-//	/* Create socket */
-//	mSocket = socket(AF_INET, SOCK_STREAM, 0);
-//	if (mSocket < 0)
-//	{
-//		assert (false);
-//		return false;
-//	}
-//	
-//	eConnectionMessage(_("Looking up address"));
-//
-//	/* First do some ip address configuration */
-//	sockaddr_in lAddr = {};
-//
-//	lAddr.sin_family = AF_INET;
-//	lAddr.sin_port = htons(inPortNr);
-//	lAddr.sin_addr.s_addr = inet_addr(inIPAddress.c_str());
-//
-//	/* Do DNS check. */
-//	if (lAddr.sin_addr.s_addr == INADDR_NONE)
-//	{
-//		hostent* lHost = gethostbyname(inIPAddress.c_str());
-//		if (lHost == nil)
-//			return false;
-//
-//		assert(lHost->h_addrtype == AF_INET);
-//		assert(lHost->h_length == sizeof(in_addr));
-//		lAddr.sin_addr = *reinterpret_cast<in_addr*>(lHost->h_addr);
-//	}
-//
-//	/* Set the sockets on non-blocking */
-//	unsigned long lValue = 1;
-//	ioctl(mSocket, FIONBIO, &lValue);
-//
-//	eConnectionMessage(_("Connecting…"));
-//
-//	/* Connect the control port. */
-//	int lResult = connect(mSocket, (sockaddr*) &lAddr, sizeof(lAddr));
-//	if (lResult < 0)
-//	{
-//		int err = errno;
-//		if (err != EAGAIN and err != EINPROGRESS)
-//			return false;
-//	}
-//
-//	/* Even if the connection IS established we still Finish the connect non-blocking */
-//	mBusy = true;
-//	return true;
-//}
 
 void MSshConnection::Disconnect()
 {
-//	if (mIsConnected)
-//	{
-//		mIsConnected = false;
-//	
-//		RemoveRoute(eIdle, gApp->eIdle);
-//		
-//		close(mSocket);
-//	
-//		mBusy = false;
-
 	mSocket.close();
 		
-		eConnectionMessage(_("Connection closed"));
-		eConnectionEvent(SSH_CHANNEL_CLOSED);
-//	}
+	eConnectionMessage(_("Connection closed"));
+	eConnectionEvent(SSH_CHANNEL_CLOSED);
 
 	for_each(mChannels.begin(), mChannels.end(),
 		boost::bind(&MSshChannel::SetChannelOpen, _1, false));
@@ -457,153 +383,9 @@ void MSshConnection::CertificateDeleted(
 //	}
 }
 
-//void MSshConnection::Idle(
-//	double	inSystemTime)
-//{
-//	if (mInhibitIdle)
-//		return;
-//	
-//	MValueChanger<bool> saveFlag(mInhibitIdle, true);
-//	
-//	// avoid being deleted while processing this command
-//	Reference();
-//	
-//	try
-//	{
-//		/* Idle processing... */
-//	
-//		if (mSocket < 0)
-//			return;
-//	
-//		static fd_set sRead, sWrite, sExcept;
-//		static timeval sTime = {0,0};
-//	
-//		/* Check of action on the socket */
-//		FD_ZERO(&sRead);
-//		FD_ZERO(&sWrite);
-//		FD_ZERO(&sExcept);
-//	
-//		/* Setting the check flags */
-//		if (mIsConnected == false )
-//		{
-//			FD_SET(mSocket, &sWrite);
-//			FD_SET(mSocket, &sExcept);
-//		}
-//		else
-//			FD_SET(mSocket, &sRead);
-//	
-//		/* Select */
-//		int lResult = select(static_cast<int>(mSocket + 1), &sRead, &sWrite, &sExcept, &sTime);
-//		
-//		/* Something happened. */
-//		if (lResult > 0)
-//		{
-//			if (FD_ISSET(mSocket, &sExcept))
-//			{
-//				mBusy = false;
-//				Error(SSH_DISCONNECT_CONNECTION_LOST);
-//			}
-//	
-//			if (FD_ISSET(mSocket, &sRead))
-//			{
-////				mIsConnected = true;
-////				mBusy = false;
-//
-//				static char sReadBuf[2 * kMaxPacketSize + 256];
-//				int lResult;
-//
-//				lResult = recv(mSocket, sReadBuf, sizeof(sReadBuf), 0);
-//
-//				/* Something wrong... no connection anymore */
-//				if (lResult == 0 or lResult < 0)
-//				{
-////					assert(errno != EAGAIN);
-//					Disconnect();
-//				}
-//				else
-//					mBuffer.append(sReadBuf, static_cast<string::size_type>(lResult));
-//			}
-//	
-//			if (FD_ISSET(mSocket, &sWrite))
-//			{
-//				// don't ask me...
-////				delay(0.1);
-//				
-//				mIsConnected = true;
-//				mBusy = false;
-//	
-//				string cmd = kSSHVersionString;
-//				cmd += "\r\n";
-//				
-//				int lRes = send(mSocket, cmd.c_str(), cmd.length(), 0);
-//				if (lRes != static_cast<int>(cmd.length()))
-//					Disconnect();
-//			}
-//		}
-//		
-//		/* Process data from socket .. if needed */
-//		while (not mBuffer.empty())
-//		{
-//			if (not ProcessBuffer())
-//				break;
-//			eConnectionEvent(SSH_CHANNEL_PACKET_DONE);
-//		}
-//		
-//		// see if there's data to be sent
-//		ChannelList::iterator ch;
-//	
-//		for (ch = mChannels.begin(); ch != mChannels.end(); ++ch)
-//		{
-//			MSshPacket p;
-//
-//			if ((*ch)->PopPending(p.data))
-//				Send(p);
-//		}
-//
-//		// if there's a time out, let the user decide what to do		
-//		if ((mBusy or not mIsConnected) and GetLocalTime() > mOpenedAt + 30)
-//		{
-//			eConnectionEvent(SSH_CHANNEL_TIMEOUT);
-//			
-//			if (GetLocalTime() > mOpenedAt + 45)
-//				Disconnect();
-//		}
-//	}
-//	catch (Exception e)
-//	{
-//		Disconnect();
-//		eConnectionMessage(e.what());
-//		PRINT(("Catched cryptlib exception: %s", e.what()));
-//	}
-//	catch (exception e)
-//	{
-//		Disconnect();
-//		eConnectionMessage(e.what());
-//		PRINT(("Catched exception: %s", e.what()));
-//	}
-//	catch (...)
-//	{
-//		Disconnect();
-//		eConnectionMessage("exception");
-//		PRINT(("Catched unhandled exception"));
-//	}
-//	
-//	Release();
-//	
-//	if (mRefCount <= 0 and not mIsConnected and not mBusy)
-//		delete this;
-//}
-
-//void MSshConnection::Send(string inMessage)
-//{
-//	const char* msg = reinterpret_cast<const char*>(inMessage.c_str());
-//	int lResult = send(mSocket, msg, inMessage.length(), 0);
-//	if (lResult != static_cast<int>(inMessage.length()))
-//		Error(SSH_DISCONNECT_CONNECTION_LOST);
-//}
-
-void MSshConnection::Send(MSshPacket& inPacket,
-	ASIOHandler inHandler)
+void MSshConnection::Send(
+	MSshPacket&		inPacket,
+	MPacketHandler	inHandler)
 {
 	uint32 blockSize = 8;
 
@@ -615,6 +397,7 @@ void MSshConnection::Send(MSshPacket& inPacket,
 	
 	inPacket.Wrap(blockSize, rng);
 
+cerr << " >> Send:" << endl;
 HexDump(inPacket.peek(), inPacket.size(), cerr);
 	
 	ostream out(&mRequest);
@@ -644,11 +427,223 @@ HexDump(inPacket.peek(), inPacket.size(), cerr);
 
 	++mOutSequenceNr;
 	
-	if (inHandler == nil)
-		inHandler = &MSshConnection::HandleDataRequest;
-	
+	mHandler = inHandler;
 	boost::asio::async_write(mSocket, mRequest,
-		boost::bind(inHandler, this, boost::asio::placeholders::error));
+		boost::bind(&MSshConnection::PacketSent, this, boost::asio::placeholders::error));
+}
+
+void MSshConnection::PacketSent(
+	const boost::system::error_code& err)
+{
+    if (err)
+    	Error(SSH_DISCONNECT_CONNECTION_LOST);
+}
+
+void MSshConnection::Receive(
+	const boost::system::error_code& err)
+{
+    if (err)
+    	Error(SSH_DISCONNECT_CONNECTION_LOST);
+
+	for (;;)
+    {
+		uint32 blockSize = 8;
+		if (mDecryptorCipher)
+			blockSize = mDecryptorCipher->BlockSize();
+	    
+	    if (mResponse.size() < blockSize)
+	    	break;
+
+		istream in(&mResponse);
+
+    	vector<byte> b(blockSize);
+	    while (mResponse.size() >= blockSize and mPacket.size() < mPacketLength + sizeof(uint32))
+	    {
+	    	in.read(reinterpret_cast<char*>(&b[0]), blockSize);
+	    	
+	    	if (mDecryptorCBC)
+	    	{
+	    		// decrypt
+	    	}
+			else
+				mPacket.insert(mPacket.end(), b.begin(), b.end());
+			
+			// If this is the first block for a new packet
+			// we determine the expected payload and padding length
+			if (mPacket.size() == blockSize)
+			{
+				mPacketLength = 0;
+				for (uint32 i = 0; i < 4; ++i)
+					mPacketLength = mPacketLength << 8 | mPacket[i];
+			}
+	    }
+
+		// if we have the entire packet, check the checksum
+		if (mPacket.size() == mPacketLength + sizeof(uint32))
+		{
+			if (mVerifier)
+			{
+				if (mResponse.size() < mVerifier->DigestSize())
+					break;
+				
+				for (int32 i = 3; i >= 0; --i)
+				{
+					byte b = mInSequenceNr >> (i * 8);
+					mVerifier->Update(&b, 1);
+				}
+				mVerifier->Update(&mPacket[0], mPacket.size());
+				
+				vector<byte> b2(mVerifier->DigestSize());
+				in.read(reinterpret_cast<char*>(&b2[0]), mVerifier->DigestSize());
+				
+				if (not mVerifier->Verify(&b2[0]))
+					Error(SSH_DISCONNECT_MAC_ERROR);
+			}
+			
+			++mInSequenceNr;
+				
+				// and strip off the packet header and trailer
+
+//				uint8 paddingLength = mPacket[4];
+//
+//				mPacket.erase(0, 5);
+//				mPacket.erase(mPacket.length() - paddingLength, paddingLength);
+
+				// decompress now
+				
+//				if (mDecompressor.get() != nil)
+//					mDecompressor->Process(mPacket);
+				
+			try
+			{
+				MSshPacket in(mPacket);
+				ProcessPacket(mPacket[5], in);
+			}
+			catch (exception& e)
+			{
+				Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+				eConnectionMessage(e.what());
+			}
+			
+			mPacket.clear();
+			mPacketLength = 0;
+		}
+    }
+
+	uint32 blockSize = 8;
+	if (mDecryptorCipher)
+		blockSize = mDecryptorCipher->BlockSize();
+
+	boost::asio::async_read(mSocket, mResponse,
+		boost::asio::transfer_at_least(blockSize),
+		boost::bind(&MSshConnection::Receive, this, boost::asio::placeholders::error));	
+
+//	if (mDecryptorCipher)
+//	{
+////		// receive a packet
+////		uint32 blockSize = mDecryptorCipher->BlockSize();
+////		
+////		if (mPacket.size() != blockSize + sizeof(uint32))
+////		{
+////			mPacket.size() 
+////			boost::asio::async_read(mSocket, mResponse,
+////				boost::asio::transfer_at_least(mResponse.size() - blockSize),
+////				boost::bind(&MSshConnection::ReceiveFirst, this, boost::asio::placeholders::error));
+////		}
+////		else
+////		{
+////			istream in(&mResponse);
+////			
+////			mPacket.clear();
+////			mPacket.insert(mPacket.end(), blockSize, 0);
+////			in.read(reinterpret_cast<char*>(&mPacket[0]), blockSize);
+////			
+////			// find out the expected packet length
+////			
+////			mPacketLength = 0;
+////			for (uint32 i = 0; i < 4; ++i)
+////				mPacketLength = mPacketLength << 8 | mPacket[i];
+////			
+////			boost::asio::async_read(mSocket, mResponse,
+////				boost::asio::transfer_at_least(mPacketLength - blockSize),
+////				boost::bind(&MSshConnection::ReceiveNext, this, boost::asio::placeholders::error));
+////		}		
+//	}
+//	else
+//	{
+//		uint32 blockSize = 8;
+//		
+//		// find out the expected packet length
+//		mPacketLength = 0;
+//		for (uint32 i = 0; i < 4; ++i)
+//			mPacketLength = mPacketLength << 8 | mPacket[i];
+//		
+//		mPacket.insert(mPacket.end(), mPacketLength - blockSize - sizeof(uint32), 0);
+//		
+//		boost::asio::async_read(mSocket,
+//			boost::asio::buffer(&mPacket[blockSize + sizeof(uint32)], mPacketLength - blockSize - sizeof(uint32)),
+//			boost::asio::transfer_at_least(mPacketLength - blockSize - sizeof(uint32)),
+//			boost::bind(&MSshConnection::ReceiveNext, this, boost::asio::placeholders::error));
+//	}
+}
+
+void MSshConnection::ProcessPacket(
+	uint8				inMessage,
+	MSshPacket&			in)
+{
+PRINT(("ProcessPacket %d", inMessage));
+cerr << " << Received:" << endl;
+HexDump(in.peek(), in.size(), cerr);
+
+	switch (inMessage)
+	{
+		case SSH_MSG_DISCONNECT:
+			ProcessDisconnect(inMessage, in);
+			break;
+		
+		case SSH_MSG_DEBUG:
+			ProcessDebug(inMessage, in);
+			break;
+		
+		case SSH_MSG_IGNORE:
+			break;
+		
+		case SSH_MSG_UNIMPLEMENTED:
+			ProcessUnimplemented(inMessage, in);
+			break;
+		
+		case SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
+		case SSH_MSG_CHANNEL_OPEN_FAILURE:
+			ProcessConfirmChannel(inMessage, in);
+			break;
+
+		case SSH_MSG_CHANNEL_WINDOW_ADJUST:
+		case SSH_MSG_CHANNEL_DATA:
+		case SSH_MSG_CHANNEL_EXTENDED_DATA:
+		case SSH_MSG_CHANNEL_EOF:
+		case SSH_MSG_CHANNEL_CLOSE:
+		case SSH_MSG_CHANNEL_SUCCESS:
+		case SSH_MSG_CHANNEL_FAILURE:
+			if (mAuthenticated)
+				ProcessChannel(inMessage, in);
+			else
+				Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+			break;
+
+		case SSH_MSG_CHANNEL_REQUEST:
+			ProcessChannelRequest(inMessage, in);
+			break;
+		
+//		case SSH_MSG_CHANNEL_OPEN:
+//			ProcessChannelOpen(inMessage, in);
+//			break;
+		
+		default:
+			if (mHandler != nil)
+				(this->*mHandler)(inMessage, in);
+			else
+				PRINT(("This message should not have been received: %d", inMessage));
+	}
 }
 
 void MSshConnection::HandleResolve(
@@ -671,6 +666,8 @@ void MSshConnection::HandleConnect(const boost::system::error_code& err,
 {
     if (!err)
     {
+		eConnectionMessage(_("Connected"));
+
     	ostream out(&mRequest);
     	out << kSSHVersionString << "\r\n";
     	
@@ -711,8 +708,13 @@ void MSshConnection::HandleProtocolVersionExchangeResponse(
     if (err)
     	Error(SSH_DISCONNECT_PROTOCOL_ERROR);
 
+	eConnectionMessage(_("Exchanging protocol version"));
+
 	istream response_stream(&mResponse);
-	response_stream >> mHostVersion;
+	getline(response_stream, mHostVersion);
+	mHostVersion.erase(mHostVersion.end() - 2, mHostVersion.end());
+
+	cerr << '\'' << mHostVersion << '\'' << endl;
 	
 	if (not ba::starts_with(mHostVersion, "SSH-2.0"))
 		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
@@ -746,319 +748,300 @@ void MSshConnection::HandleProtocolVersionExchangeResponse(
 	mMyPayLoad.assign(reinterpret_cast<const char*>(out.peek()), out.size());
 
 	// Send the packet to the server
-	Send(out, &MSshConnection::HandleKexInitRequest);
-}
-
-void MSshConnection::HandleKexInitRequest(
-	const boost::system::error_code& err)
-{
-    if (err)
-    	Error(SSH_DISCONNECT_CONNECTION_LOST);
-
-	cout << "HandleKexInitRequest" << endl;
-    
-	boost::asio::async_read(mSocket, mResponse, boost::asio::transfer_at_least(1),
-		boost::bind(&MSshConnection::HandleKexInitResponse, this,
-			boost::asio::placeholders::error));
-}
-
-void MSshConnection::HandleKexInitResponse(
-	const boost::system::error_code& err)
-{
-    if (err)
-    	Error(SSH_DISCONNECT_CONNECTION_LOST);
-
-	cout << "HandleKexInitResponse" << endl;
-
-//	// capture the packet contents for the host payload
-//
-//	uint32 l = mResponse.in_avail();
-//	vector<char> hostPayLoad(l);
-//	mResponse.sgetn(&hostPayLoad[0], l);
-//	mResponse.pubseekpos(0);
-//
-//	// Now handle the packet
-//	
-//	MSshIStream in(mResponse);
-//	
-//	uint8 msg;
-//	in >> msg;
-//	
-//	if (msg != SSH_MSG_KEXINIT)
-//		throw logic_error("protocol error"); // (SSH_DISCONNECT_PROTOCOL_ERROR);
-//
-//	uint8 b;
-//	bool first_kex_packet_follows;
-//	
-//	for (uint32 i = 0; i < 16; ++i)
-//		in >> b;
-//		
-//	in	>> mKexAlg
-//		>> mServerHostKeyAlg
-//		>> mEncryptionAlgC2S
-//		>> mEncryptionAlgS2C
-//		>> mMACAlgC2S
-//		>> mMACAlgS2C
-//		>> mCompressionAlgC2S
-//		>> mCompressionAlgS2C
-//		>> mLangC2S
-//		>> mLangS2C
-//		>> first_kex_packet_follows;
-//
-//	cout << "HandleKexInit: " << endl
-//		 << mKexAlg << endl
-//		 << mServerHostKeyAlg << endl
-//		 << mEncryptionAlgC2S << endl
-//		 << mEncryptionAlgS2C << endl
-//		 << mMACAlgC2S << endl
-//		 << mMACAlgS2C << endl
-//		 << mCompressionAlgC2S << endl
-//		 << mCompressionAlgS2C << endl
-//		 << mLangC2S << endl
-//		 << mLangS2C << endl
-//		 << endl;
-//
-//	if (first_kex_packet_follows)
-//		cout << "first_kex_packet_follows" << endl;
-//
-//	
-////	f_e = 0;
-////
-////	if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
-////	{
-////		do
-////		{
-////			f_x.Randomize(*rng.get(), Integer(2), q14 - 1);
-////			f_e = a_exp_b_mod_c(g14, f_x, p14);
-////		}
-////		while (f_e < 1 or f_e >= p14 - 1);
-////	}
-////	else if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group1-sha1")
-////	{
-////		do
-////		{
-////			f_x.Randomize(*rng.get(), Integer(2), q2 - 1);
-////			f_e = a_exp_b_mod_c(g2, f_x, p2);
-////		}
-////		while (f_e < 1 or f_e >= p2 - 1);
-////	}
-////	
-////	if (f_e > 0)
-////	{
-////		out << uint8(SSH_MSG_KEXDH_INIT) << f_e;
-////		mHandler = &MSshConnection::ProcessKexdhReply;
-////	}
-//
-//	cerr << "HandleKexInit" << endl;
-//
-//	done = true;
-}
-
-void MSshConnection::HandleDataRequest(
-	const boost::system::error_code& err)
-{
-	PRINT(("HandleDataRequest"));
-}
-
-bool MSshConnection::ProcessBuffer()
-{
-	bool result = true;
-
-//	net_swapper swap;
-//	
-//	if (not mGotVersionString)
-//	{
-//		string::size_type n = mBuffer.find('\r');
-//		if (n == string::npos)
-//			n = mBuffer.find('\n');
-//
-//		if (n != string::npos)
-//		{
-//			mGotVersionString = true;
-//			
-//			mInPacket.assign(mBuffer, 0, n);
-//			
-//			if (mBuffer[n] == '\r' and mBuffer[n + 1] == '\n')
-//				mBuffer.erase(0, n + 2);
-//			else
-//				mBuffer.erase(0, n + 1);
-//			
-//			ProcessConnect();
-//			mInPacket.clear();
-//		}
-//		
-//		result = mBuffer.length() > 0;
-//	}
-//	else
-//	{
-//		uint32 blockSize = 8;
-//		
-//		if (mDecryptorCipher.get())
-//			blockSize = mDecryptorCipher->BlockSize();
-//		
-//			// first check if we need to add more data 
-//		while (mBuffer.size() >= blockSize and
-//			mInPacket.size() < mPacketLength + sizeof(uint32))
-//		{
-//			if (mDecryptorCBC.get())
-//			{
-//				mDecryptor->Put(
-//					reinterpret_cast<const byte*>(mBuffer.c_str()), blockSize);
-//				mDecryptor->Flush(true);
-//			}
-//			else
-//				mInPacket.append(mBuffer.begin(), mBuffer.begin() + blockSize);
-//			mBuffer.erase(0, blockSize);
-//			
-//			// If this is the first block for a new packet
-//			// we determine the expected payload and padding length
-//			if (mInPacket.size() == blockSize)
-//			{
-//				mPacketLength = swap(
-//					*reinterpret_cast<const uint32*>(mInPacket.c_str()));
-//			}
-//		}
-//
-//		// if we have the entire packet, check the checksum
-//		if (mInPacket.size() == mPacketLength + sizeof(uint32))
-//		{
-//			bool validMac = false;
-//			bool done = false;
-//			
-//			if (mVerifier.get() == nil)
-//			{
-//				validMac = true;
-//				done = true;
-//			}
-//			else if (mBuffer.length() >= mVerifier->DigestSize())
-//			{
-//				done = true;
-//				
-//				uint32 seqNr = swap(mInSequenceNr);
-//				
-//				mVerifier->Update(reinterpret_cast<byte*>(&seqNr), 4);
-//				mVerifier->Update(reinterpret_cast<const byte*>(mInPacket.c_str()), mInPacket.length());
-//				
-//				validMac = mVerifier->Verify(reinterpret_cast<const byte*>(mBuffer.c_str()));
-//
-//				mBuffer.erase(0, mVerifier->DigestSize());
-//				
-//				if (not validMac)
-//					Error(SSH_DISCONNECT_MAC_ERROR);
-//			}
-//			
-//			if (done and validMac)
-//			{
-//				++mInSequenceNr;
-//				
-//				// and strip off the packet header and trailer
-//
-//				uint8 paddingLength = mInPacket[4];
-//
-//				mInPacket.erase(0, 5);
-//				mInPacket.erase(mInPacket.length() - paddingLength, paddingLength);
-//
-//				// decompress now
-//				
-//				if (mDecompressor.get() != nil)
-//					mDecompressor->Process(mInPacket);
-//				
-//				try
-//				{
-//					ProcessPacket();
-//				}
-//				catch (MSshPacket::MSshPacketError& e)
-//				{
-//					Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-//					eConnectionMessage(e.what());
-//				}
-//				catch (exception& e)
-//				{
-//					Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-//					eConnectionMessage(e.what());
-//				}
-//			}
-//			else
-//				result = false;
-//		}
-//		else
-//			result = false;
-//	}
+	Send(out, &MSshConnection::ProcessKexInit);
 	
-	return result;
+	// start the read loop
+	boost::asio::async_read(mSocket, mResponse, boost::asio::transfer_at_least(8),
+		boost::bind(&MSshConnection::Receive, this, boost::asio::placeholders::error));
 }
 
-void MSshConnection::ProcessPacket()
-{//
-//	uint8 message = mInPacket[0];
+void MSshConnection::ProcessKexInit(
+	uint8			inMessage,
+	MSshPacket&		in)
+{
+	eConnectionMessage(_("Exchanging keys"));
+
+	// capture the packet contents for the host payload
+	mHostPayLoad.assign(reinterpret_cast<const char*>(in.peek()), in.size());
+
+	// Now handle the packet
+	uint8 msg;
+	in >> msg;
+	
+	if (msg != SSH_MSG_KEXINIT)
+		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+
+	uint8 b;
+	bool first_kex_packet_follows;
+	
+	for (uint32 i = 0; i < 16; ++i)
+		in >> b;
+		
+	in	>> mKexAlg
+		>> mServerHostKeyAlg
+		>> mEncryptionAlgC2S
+		>> mEncryptionAlgS2C
+		>> mMACAlgC2S
+		>> mMACAlgS2C
+		>> mCompressionAlgC2S
+		>> mCompressionAlgS2C
+		>> mLangC2S
+		>> mLangS2C
+		>> first_kex_packet_follows;
+
+	f_e = 0;
+
+	if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
+	{
+		do
+		{
+			f_x.Randomize(rng, 2, q14 - 1);
+			f_e = a_exp_b_mod_c(2, f_x, p14);
+		}
+		while (f_e < 1 or f_e >= p14 - 1);
+	}
+	else if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group1-sha1")
+	{
+		do
+		{
+			f_x.Randomize(rng, 2, q2 - 1);
+			f_e = a_exp_b_mod_c(2, f_x, p2);
+		}
+		while (f_e < 1 or f_e >= p2 - 1);
+	}
+	else
+		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+	
+	MSshPacket out;
+	out << uint8(SSH_MSG_KEXDH_INIT) << f_e;
+	Send(out, &MSshConnection::ProcessKexdhReply);
+}
+
+void MSshConnection::ProcessKexdhReply(
+	uint8			inMessage,
+	MSshPacket&		in)
+{
+	uint8 msg;
+	in >> msg;
+	
+	if (msg != SSH_MSG_KEXDH_REPLY)
+		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+	
+	MSshPacket hostKey, signature;
+	Integer f;
+
+	in >> hostKey >> f >> signature;
+	
+	string hostName = mIPAddress;
+	if (mPortNumber != 22)
+		hostName = hostName + ':' + boost::lexical_cast<string>(mPortNumber);
+
+	try
+	{
+		string hk(reinterpret_cast<const char*>(hostKey.peek()), hostKey.size());
+		MKnownHosts::Instance().CheckHost(hostName, hk);
+	}
+	catch (...)
+	{
+		Disconnect();
+		throw;
+	}
+
+	Integer K;
+	if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
+		K = a_exp_b_mod_c(f, f_x, p14);
+	else
+		K = a_exp_b_mod_c(f, f_x, p2);
+
+	MSshPacket h_test;
+	h_test << kSSHVersionString << mHostVersion
+		<< mMyPayLoad << mHostPayLoad
+		<< hostKey
+		<< f_e << f << K;
+
+//cerr << "my payload:" << endl;
+//HexDump(&mMyPayLoad[0], mMyPayLoad.size(), cerr);
 //
-//	MSshPacket in, out;
-//	in.data = mInPacket;
+//cerr << "host payload:" << endl;
+//HexDump(&mHostPayLoad[0], mHostPayLoad.size(), cerr);
 //
-//PRINT(("ProcessPacket %d", message));
+//cerr << "host key:" << endl;
+//HexDump(hostKey.peek(), hostKey.size(), cerr);
 //
-//	switch (message)
-//	{
-//		case SSH_MSG_DISCONNECT:
-//			ProcessDisconnect(message, in, out);
-//			break;
-//		
-//		case SSH_MSG_DEBUG:
-//			ProcessDebug(message, in, out);
-//			break;
-//		
-//		case SSH_MSG_IGNORE:
-//			break;
-//		
-//		case SSH_MSG_UNIMPLEMENTED:
-//			ProcessUnimplemented(message, in, out);
-//			break;
-//		
-//		case SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
-//		case SSH_MSG_CHANNEL_OPEN_FAILURE:
-//			ProcessConfirmChannel(message, in, out);
-//			break;
+//HexDump(h_test.peek(), h_test.size(), cerr);
 //
-//		case SSH_MSG_CHANNEL_WINDOW_ADJUST:
-//		case SSH_MSG_CHANNEL_DATA:
-//		case SSH_MSG_CHANNEL_EXTENDED_DATA:
-//		case SSH_MSG_CHANNEL_EOF:
-//		case SSH_MSG_CHANNEL_CLOSE:
-//		case SSH_MSG_CHANNEL_SUCCESS:
-//		case SSH_MSG_CHANNEL_FAILURE:
-//			if (mAuthenticated)
-//				ProcessChannel(message, in, out);
-//			else
-//				Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-//			break;
-//
-//		case SSH_MSG_CHANNEL_REQUEST:
-//			ProcessChannelRequest(message, in, out);
-//			break;
-//		
-////		case SSH_MSG_CHANNEL_OPEN:
-////			ProcessChannelOpen(message, in, out);
-////			break;
-//		
-//		default:
-//			if (mHandler != nil)
-//				(this->*mHandler)(message, in, out);
-//			else
-//				PRINT(("This message should not have been received: %d", message));
-//	}
-//
-//	mInPacket.clear();
+	SHA1 hash;
+	uint32 dLen = hash.DigestSize();
+	vector<byte> H(dLen);
+	hash.Update(h_test.peek(), h_test.size());
+	hash.Final(&H[0]);
+	
+	if (mSessionId.empty())
+		mSessionId = H;
+
+	string h_pk_type;
+	hostKey >> h_pk_type;
+
+	auto_ptr<PK_Verifier> h_key;
+
+	if (h_pk_type == "ssh-dss")
+	{
+		Integer h_p, h_q, h_g, h_y;
+		hostKey >> h_p >> h_q >> h_g >> h_y;
+
+		h_key.reset(new GDSA<SHA1>::Verifier(h_p, h_q, h_g, h_y));
+	}
+	else if (h_pk_type == "ssh-rsa")
+	{
+		Integer h_e, h_n;
+		hostKey >> h_e >> h_n;
+
+		h_key.reset(new RSASSA_PKCS1v15_SHA_Verifier(h_n, h_e));
+	}
+	else
+		Error(SSH_DISCONNECT_KEY_EXCHANGE_FAILED);
+
+	string pk_type;
+	MSshPacket pk_rs;
+	signature >> pk_type >> pk_rs;
+
+	if (pk_type != h_pk_type)
+		Error(SSH_DISCONNECT_KEY_EXCHANGE_FAILED);
+	
+	if (not h_key->VerifyMessage(&H[0], dLen, pk_rs.peek(), pk_rs.size()))
+		Error(SSH_DISCONNECT_KEY_EXCHANGE_FAILED);
+
+	MSshPacket out;
+	out << uint8(SSH_MSG_NEWKEYS);
+	
+	int keyLen = 16;
+
+	if (keyLen < 20 and ChooseProtocol(mMACAlgC2S, kMacAlgorithms) == "hmac-sha1")
+		keyLen = 20;
+
+	if (keyLen < 20 and ChooseProtocol(mMACAlgS2C, kMacAlgorithms) == "hmac-sha1")
+		keyLen = 20;
+
+	if (keyLen < 24 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "3des-cbc")
+		keyLen = 24;
+
+	if (keyLen < 24 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "3des-cbc")
+		keyLen = 24;
+
+	if (keyLen < 24 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "aes192-cbc")
+		keyLen = 24;
+
+	if (keyLen < 24 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "aes192-cbc")
+		keyLen = 24;
+
+	if (keyLen < 32 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "aes256-cbc")
+		keyLen = 32;
+
+	if (keyLen < 32 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "aes256-cbc")
+		keyLen = 32;
+
+	for (int i = 0; i < 6; ++i)
+		DeriveKey(K, &H[0], i, keyLen, mKeys[i]);
+	
+	Send(out, &MSshConnection::ProcessNewKeys);
+}
+
+void MSshConnection::ProcessNewKeys(
+	uint8			inMessage,
+	MSshPacket&		in)
+{
+	if (inMessage != SSH_MSG_NEWKEYS)
+		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
+
+	string protocol;
+	
+	// Client to server encryption
+	protocol = ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms);
+	
+	if (protocol == "3des-cbc")
+		mEncryptorCipher.reset(new DES_EDE3::Encryption(&mKeys[2][0]));
+	else if (protocol == "blowfish-cbc")
+		mEncryptorCipher.reset(new BlowfishEncryption(&mKeys[2][0]));
+	else if (protocol == "aes128-cbc")
+		mEncryptorCipher.reset(new AES::Encryption(&mKeys[2][0], 16));
+	else if (protocol == "aes192-cbc")
+		mEncryptorCipher.reset(new AES::Encryption(&mKeys[2][0], 24));
+	else if (protocol == "aes256-cbc")
+		mEncryptorCipher.reset(new AES::Encryption(&mKeys[2][0], 32));
+
+	mEncryptorCBC.reset(
+		new CBC_Mode_ExternalCipher::Encryption(
+			*mEncryptorCipher.get(), &mKeys[0][0]));
+	
+//		mEncryptor.reset(new StreamTransformationFilter(
+//			*mEncryptorCBC.get(), new StringSink(mOutPacket),
+//			StreamTransformationFilter::NO_PADDING));
+
+	// Server to client encryption
+	protocol = ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms);
+
+	if (protocol == "3des-cbc")
+		mDecryptorCipher.reset(new DES_EDE3_Decryption(&mKeys[3][0]));
+	else if (protocol == "blowfish-cbc")
+		mDecryptorCipher.reset(new BlowfishDecryption(&mKeys[3][0]));
+	else if (protocol == "aes128-cbc")
+		mDecryptorCipher.reset(new AESDecryption(&mKeys[3][0], 16));
+	else if (protocol == "aes192-cbc")
+		mDecryptorCipher.reset(new AESDecryption(&mKeys[3][0], 24));
+	else if (protocol == "aes256-cbc")
+		mDecryptorCipher.reset(new AESDecryption(&mKeys[3][0], 32));
+
+	mDecryptorCBC.reset(
+		new CBC_Mode_ExternalCipher::Decryption(
+			*mDecryptorCipher.get(), &mKeys[1][0]));
+	
+//		mDecryptor.reset(new StreamTransformationFilter(
+//			*mDecryptorCBC.get(), new StringSink(mInPacket),
+//			StreamTransformationFilter::NO_PADDING));
+
+	protocol = ChooseProtocol(mMACAlgC2S, kMacAlgorithms);
+	if (protocol == "hmac-sha1")
+		mSigner.reset(
+			new HMAC<SHA1>(&mKeys[4][0], 20));
+	else
+		mSigner.reset(
+			new HMAC<Weak::MD5>(&mKeys[4][0]));
+
+	protocol = ChooseProtocol(mMACAlgS2C, kMacAlgorithms);
+	if (protocol == "hmac-sha1")
+		mVerifier.reset(
+			new HMAC<SHA1>(&mKeys[5][0], 20));
+	else
+		mVerifier.reset(
+			new HMAC<Weak::MD5>(&mKeys[5][0]));
+
+	string compress;
+//	if (Preferences::GetInteger("compress-sftp", true))
+//		compress = kUseCompressionAlgorithms;
+//	else
+		compress = kDontUseCompressionAlgorithms;
+
+//	protocol = ChooseProtocol(mCompressionAlgS2C, compress);
+//	if (protocol == "zlib")
+//		mDecompressor.reset(new ZLibHelper(true));
 //	
-//	if (out.data.length() > 0)
-//		Send(out);
-//	
-//	mInPacket.clear();
+//	protocol = ChooseProtocol(mCompressionAlgC2S, compress);
+//	if (protocol == "zlib")
+//		mCompressor.reset(new ZLibHelper(false));
+	
+	if (not mAuthenticated)
+	{
+		MSshPacket out;
+		out << uint8(SSH_MSG_SERVICE_REQUEST) << "ssh-userauth";
+		Send(out, &MSshConnection::ProcessUserAuthInit);
+	}
+	else
+		mHandler = nil;
 }
 
 void MSshConnection::ProcessDisconnect(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	uint8 message;
 	string languageTag;
@@ -1070,16 +1053,14 @@ void MSshConnection::ProcessDisconnect(
 
 void MSshConnection::ProcessUnimplemented(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	Disconnect();
 }
 
 void MSshConnection::ProcessChannelRequest(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	uint8 message;
 	uint32 channel;
@@ -1089,13 +1070,16 @@ void MSshConnection::ProcessChannelRequest(
 	in >> message >> channel >> request >> wantReply;
 	
 	if (wantReply)
+	{
+		MSshPacket out;
 		out << uint8(SSH_MSG_CHANNEL_FAILURE) << channel;
+		Send(out);
+	}
 }
 
 void MSshConnection::ProcessDebug(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	uint8 msg;
 	bool always_display;
@@ -1105,344 +1089,9 @@ void MSshConnection::ProcessDebug(
 	PRINT(("Debug message from server: %s", message.c_str()));
 }
 
-void MSshConnection::ProcessConnect()
-{//
-//	if (mInPacket.substr(0, 4) != "SSH-")
-//		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-//
-//	eConnectionMessage(_("Exchanging keys"));
-//	
-//	mHostVersion = mInPacket;
-//
-//	// create and send our KEXINIT packet
-//
-//	MSshPacket data;
-//	
-//	data << uint8(SSH_MSG_KEXINIT);
-//	
-//	for (uint32 i = 0; i < 16; ++i)
-//		data << rng.GenerateByte();
-//
-//	string compress;
-//	if (Preferences::GetInteger("compress-sftp", true))
-//		compress = kUseCompressionAlgorithms;
-//	else
-//		compress = kDontUseCompressionAlgorithms;
-//
-//	data << kKeyExchangeAlgorithms
-//		<< kServerHostKeyAlgorithms
-//		<< kEncryptionAlgorithms
-//		<< kEncryptionAlgorithms
-//		<< kMacAlgorithms
-//		<< kMacAlgorithms
-//		<< compress
-//		<< compress
-//		<< ""
-//		<< ""
-//		<< false
-//		<< uint32(0);
-//
-//	mMyPayLoad = data.data;
-//	mHandler = &MSshConnection::ProcessKexInit;
-//
-//	Send(data);
-}
-
-void MSshConnection::ProcessKexInit(
-	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
-{//
-//	if (inMessage != SSH_MSG_KEXINIT)
-//		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-//	else
-//	{
-//		mHostPayLoad = mInPacket;
-//		
-//		uint8 msg, b;
-//		bool first_kex_packet_follows;
-//	
-//		in >> msg;
-//
-//		for (uint32 i = 0; i < 16; ++i)
-//			in >> b;
-//		
-//		in	>> mKexAlg
-//			>> mServerHostKeyAlg
-//			>> mEncryptionAlgC2S
-//			>> mEncryptionAlgS2C
-//			>> mMACAlgC2S
-//			>> mMACAlgS2C
-//			>> mCompressionAlgC2S
-//			>> mCompressionAlgS2C
-//			>> mLangC2S
-//			>> mLangS2C
-//			>> first_kex_packet_follows;
-//	
-//		f_e = 0;
-//
-//		if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
-//		{
-//			do
-//			{
-//				f_x.Randomize(rng, Integer(2), q14 - 1);
-//				f_e = a_exp_b_mod_c(g14, f_x, p14);
-//			}
-//			while (f_e < 1 or f_e >= p14 - 1);
-//		}
-//		else if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group1-sha1")
-//		{
-//			do
-//			{
-//				f_x.Randomize(rng, Integer(2), q2 - 1);
-//				f_e = a_exp_b_mod_c(g2, f_x, p2);
-//			}
-//			while (f_e < 1 or f_e >= p2 - 1);
-//		}
-//		
-//		if (f_e > 0)
-//		{
-//			out << uint8(SSH_MSG_KEXDH_INIT) << f_e;
-//			mHandler = &MSshConnection::ProcessKexdhReply;
-//		}
-//		// else we simply ignore this one
-//	}
-}
-
-void MSshConnection::ProcessKexdhReply(
-	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
-{//
-//	try
-//	{
-//		if (inMessage != SSH_MSG_KEXDH_REPLY)
-//			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-//
-//		uint8 msg;
-//		string hostKey, signature;
-//		Integer f;
-//	
-//		in >> msg >> hostKey >> f >> signature;
-//		
-//		string hostName = mIPAddress;
-//		if (mPortNumber != 22)
-//			hostName = hostName + ':' + NumToString(mPortNumber);
-//
-//		try
-//		{
-//			MKnownHosts::Instance().CheckHost(hostName, hostKey);
-//		}
-//		catch (...)
-//		{
-//			Disconnect();
-//			throw;
-//		}
-//
-//		Integer K;
-//		if (ChooseProtocol(mKexAlg, kKeyExchangeAlgorithms) == "diffie-hellman-group14-sha1")
-//			K = a_exp_b_mod_c(f, f_x, p14);
-//		else
-//			K = a_exp_b_mod_c(f, f_x, p2);
-//
-//		mSharedSecret = K;
-//		
-//		MSshPacket h_test;
-//		h_test << kSSHVersionString << mHostVersion
-//			<< mMyPayLoad << mHostPayLoad
-//			<< hostKey
-//			<< f_e << f << K;
-//
-//		SHA1 hash;
-//		uint32 dLen = hash.DigestSize();
-//		vector<char> H(dLen);
-//		hash.Update(
-//			reinterpret_cast<const byte*>(h_test.data.c_str()),
-//			h_test.data.length());
-//		hash.Final(reinterpret_cast<byte*>(&H[0]));
-//		
-//		if (mSessionId.length() == 0)
-//			mSessionId.assign(&H[0], dLen);
-//
-//		string h_pk_type;
-//		
-//		MSshPacket packet;
-//		packet.data = hostKey;
-//		packet >> h_pk_type;
-//
-//		auto_ptr<PK_Verifier> h_key;
-//
-//		if (h_pk_type == "ssh-dss")
-//		{
-//			Integer h_p, h_q, h_g, h_y;
-//			packet >> h_p >> h_q >> h_g >> h_y;
-//
-//			h_key.reset(new GDSA<SHA1>::Verifier(h_p, h_q, h_g, h_y));
-//		}
-//		else if (h_pk_type == "ssh-rsa")
-//		{
-//			Integer h_e, h_n;
-//			packet >> h_e >> h_n;
-//
-//			h_key.reset(new RSASSA_PKCS1v15_SHA_Verifier(h_n, h_e));
-//		}
-//		else
-//			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-//
-//		string pk_type, pk_rs;
-//		packet.data = signature;
-//		packet >> pk_type >> pk_rs;
-//
-//		if (pk_type != h_pk_type)
-//			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-//		
-//		const byte* h_sig = reinterpret_cast<const byte*>(pk_rs.c_str());
-//		if (not h_key->VerifyMessage(reinterpret_cast<byte*>(&H[0]), dLen, h_sig, pk_rs.length()))
-//			throw uint32(SSH_DISCONNECT_PROTOCOL_ERROR);
-//
-//		out << uint8(SSH_MSG_NEWKEYS);
-//		
-//		int keyLen = 16;
-//
-//		if (keyLen < 20 and ChooseProtocol(mMACAlgC2S, kMacAlgorithms) == "hmac-sha1")
-//			keyLen = 20;
-//
-//		if (keyLen < 20 and ChooseProtocol(mMACAlgS2C, kMacAlgorithms) == "hmac-sha1")
-//			keyLen = 20;
-//
-//		if (keyLen < 24 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "3des-cbc")
-//			keyLen = 24;
-//
-//		if (keyLen < 24 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "3des-cbc")
-//			keyLen = 24;
-//
-//		if (keyLen < 24 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "aes192-cbc")
-//			keyLen = 24;
-//
-//		if (keyLen < 24 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "aes192-cbc")
-//			keyLen = 24;
-//
-//		if (keyLen < 32 and ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms) == "aes256-cbc")
-//			keyLen = 32;
-//
-//		if (keyLen < 32 and ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms) == "aes256-cbc")
-//			keyLen = 32;
-//
-//		for (int i = 0; i < 6; ++i)
-//		{
-//			delete[] mKeys[i];
-//			DeriveKey(&H[0], i, keyLen, mKeys[i]);
-//		}
-//		
-//		mHandler = &MSshConnection::ProcessNewKeys;
-//	}
-//	catch (uint32 err)
-//	{
-//		Error(err);
-//		out.data.clear();
-//		mHandler = nil;
-//	}
-}
-
-void MSshConnection::ProcessNewKeys(
-	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
-{
-	if (inMessage != SSH_MSG_NEWKEYS)
-		Error(SSH_DISCONNECT_PROTOCOL_ERROR);
-	else
-	{
-		string protocol;
-		
-		// Client to server encryption
-		protocol = ChooseProtocol(mEncryptionAlgC2S, kEncryptionAlgorithms);
-		
-		if (protocol == "3des-cbc")
-			mEncryptorCipher.reset(new DES_EDE3::Encryption(mKeys[2]));
-		else if (protocol == "blowfish-cbc")
-			mEncryptorCipher.reset(new BlowfishEncryption(mKeys[2]));
-		else if (protocol == "aes128-cbc")
-			mEncryptorCipher.reset(new AES::Encryption(mKeys[2], 16));
-		else if (protocol == "aes192-cbc")
-			mEncryptorCipher.reset(new AES::Encryption(mKeys[2], 24));
-		else if (protocol == "aes256-cbc")
-			mEncryptorCipher.reset(new AES::Encryption(mKeys[2], 32));
-
-		mEncryptorCBC.reset(
-			new CBC_Mode_ExternalCipher::Encryption(
-				*mEncryptorCipher.get(), mKeys[0]));
-		
-//		mEncryptor.reset(new StreamTransformationFilter(
-//			*mEncryptorCBC.get(), new StringSink(mOutPacket),
-//			StreamTransformationFilter::NO_PADDING));
-
-		// Server to client encryption
-		protocol = ChooseProtocol(mEncryptionAlgS2C, kEncryptionAlgorithms);
-
-		if (protocol == "3des-cbc")
-			mDecryptorCipher.reset(new DES_EDE3_Decryption(mKeys[3]));
-		else if (protocol == "blowfish-cbc")
-			mDecryptorCipher.reset(new BlowfishDecryption(mKeys[3]));
-		else if (protocol == "aes128-cbc")
-			mDecryptorCipher.reset(new AESDecryption(mKeys[3], 16));
-		else if (protocol == "aes192-cbc")
-			mDecryptorCipher.reset(new AESDecryption(mKeys[3], 24));
-		else if (protocol == "aes256-cbc")
-			mDecryptorCipher.reset(new AESDecryption(mKeys[3], 32));
-
-		mDecryptorCBC.reset(
-			new CBC_Mode_ExternalCipher::Decryption(
-				*mDecryptorCipher.get(), mKeys[1]));
-		
-//		mDecryptor.reset(new StreamTransformationFilter(
-//			*mDecryptorCBC.get(), new StringSink(mInPacket),
-//			StreamTransformationFilter::NO_PADDING));
-
-		protocol = ChooseProtocol(mMACAlgC2S, kMacAlgorithms);
-		if (protocol == "hmac-sha1")
-			mSigner.reset(
-				new HMAC<SHA1>(mKeys[4], 20));
-		else
-			mSigner.reset(
-				new HMAC<Weak::MD5>(mKeys[4]));
-
-		protocol = ChooseProtocol(mMACAlgS2C, kMacAlgorithms);
-		if (protocol == "hmac-sha1")
-			mVerifier.reset(
-				new HMAC<SHA1>(mKeys[5], 20));
-		else
-			mVerifier.reset(
-				new HMAC<Weak::MD5>(mKeys[5]));
-	
-		string compress;
-//		if (Preferences::GetInteger("compress-sftp", true))
-//			compress = kUseCompressionAlgorithms;
-//		else
-			compress = kDontUseCompressionAlgorithms;
-	
-//		protocol = ChooseProtocol(mCompressionAlgS2C, compress);
-//		if (protocol == "zlib")
-//			mDecompressor.reset(new ZLibHelper(true));
-//		
-//		protocol = ChooseProtocol(mCompressionAlgC2S, compress);
-//		if (protocol == "zlib")
-//			mCompressor.reset(new ZLibHelper(false));
-		
-		if (not mAuthenticated)
-		{
-			out << uint8(SSH_MSG_SERVICE_REQUEST) << "ssh-userauth";
-			mHandler = &MSshConnection::ProcessUserAuthInit;
-		}
-		else
-			mHandler = nil;
-	}
-}
-
 void MSshConnection::ProcessUserAuthInit(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	mHandler = nil;
 	
@@ -1452,16 +1101,16 @@ void MSshConnection::ProcessUserAuthInit(
 	{
 		eConnectionMessage(_("Starting authentication"));
 
+		MSshPacket out;
 		out << uint8(SSH_MSG_USERAUTH_REQUEST)
 			<< mUserName << "ssh-connection" << "none";
-		mHandler = &MSshConnection::ProcessUserAuthNone;
+		Send(out, &MSshConnection::ProcessUserAuthNone);
 	}
 }
 
 void MSshConnection::ProcessUserAuthNone(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	mHandler = nil;
 	
@@ -1523,17 +1172,18 @@ void MSshConnection::ProcessUserAuthNone(
 				MSshPacket blob;
 				blob << "ssh-rsa" << e << n;
 
+				MSshPacket out;
 				out << uint8(SSH_MSG_USERAUTH_REQUEST)
 					<< mUserName << "ssh-connection" << "publickey" << false
 					<< "ssh-rsa" << blob;
-
-				mHandler = &MSshConnection::ProcessUserAuthPublicKey;
+				Send(out, &MSshConnection::ProcessUserAuthPublicKey);
 			}
 			else if (s == "keyboard-interactive")
 			{
+				MSshPacket out;
 				out << uint8(SSH_MSG_USERAUTH_REQUEST)
 					<< mUserName << "ssh-connection" << "keyboard-interactive" << "" << "";
-				mHandler = &MSshConnection::ProcessUserAuthKeyboardInteractive;
+				Send(out, &MSshConnection::ProcessUserAuthKeyboardInteractive);
 			}
 			else if (s == "password")
 				TryPassword();
@@ -1549,7 +1199,7 @@ void MSshConnection::ProcessUserAuthNone(
 }
 
 void MSshConnection::ProcessUserAuthPublicKey(
-	uint8 inMessage, MSshPacket& in, MSshPacket& out)
+	uint8 inMessage, MSshPacket& in)
 {
 	string instruction, title, lang;
 	
@@ -1573,6 +1223,7 @@ void MSshConnection::ProcessUserAuthPublicKey(
 			
 			in >> inMessage >> alg >> blob;
 
+			MSshPacket out;
 			out << mSessionId << uint8(SSH_MSG_USERAUTH_REQUEST)
 				<< mUserName << "ssh-connection" << "publickey" << true
 				<< "ssh-rsa" << blob;
@@ -1586,6 +1237,7 @@ void MSshConnection::ProcessUserAuthPublicKey(
 			out >> sink;
 
 			out << sig;
+			Send(out);
 			break;
 		}
 		
@@ -1602,12 +1254,13 @@ void MSshConnection::ProcessUserAuthPublicKey(
 			
 			if (mSshAgent->GetNextIdentity(e, n, comment))
 			{
-				MSshPacket blob;
+				MSshPacket out, blob;
 				blob << "ssh-rsa" << e << n;
 
 				out << uint8(SSH_MSG_USERAUTH_REQUEST)
 					<< mUserName << "ssh-connection" << "publickey" << false
 					<< "ssh-rsa" << blob;
+				Send(out);
 			}
 			else// if (ChooseProtocol(s, "password") == "password")
 				TryPassword();
@@ -1623,7 +1276,7 @@ void MSshConnection::ProcessUserAuthPublicKey(
 }
 
 void MSshConnection::ProcessUserAuthKeyboardInteractive(
-	uint8 inMessage, MSshPacket& in, MSshPacket& out)
+	uint8 inMessage, MSshPacket& in)
 {
 	string instruction, title, lang, p[5];
 	bool e[5];
@@ -1645,7 +1298,11 @@ void MSshConnection::ProcessUserAuthKeyboardInteractive(
 			in >> msg >> title >> instruction >> lang >> n;
 			
 			if (n == 0)
+			{
+				MSshPacket out;
 				out << uint8(SSH_MSG_USERAUTH_INFO_RESPONSE) << uint32(0);
+				Send(out);
+			}
 			else
 			{
 				if (title.length() == 0)
@@ -1742,9 +1399,7 @@ void MSshConnection::RecvPassword(
 		out << uint8(SSH_MSG_USERAUTH_REQUEST)
 			<< mUserName << "ssh-connection" << "password" << false << inPassword[0];
 		
-		Send(out);
-		
-		mHandler = &MSshConnection::ProcessUserAuthSuccess;
+		Send(out, &MSshConnection::ProcessUserAuthSuccess);
 	}
 	else
 		Disconnect();
@@ -1752,8 +1407,7 @@ void MSshConnection::RecvPassword(
 
 void MSshConnection::ProcessUserAuthSuccess(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	switch (inMessage)
 	{
@@ -1922,8 +1576,7 @@ void MSshConnection::UserAuthFailed()
 
 void MSshConnection::ProcessConfirmChannel(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	if (inMessage == SSH_MSG_CHANNEL_OPEN_CONFIRMATION)
 	{
@@ -1967,6 +1620,7 @@ void MSshConnection::ProcessConfirmChannel(
 				mHandler = &MSshConnection::ProcessConfirmPTY;
 			}
 
+			MSshPacket out;
 			out << uint8(SSH_MSG_CHANNEL_REQUEST)
 				<< channel->GetHostChannelID()
 				<< channel->GetRequest()
@@ -1974,6 +1628,7 @@ void MSshConnection::ProcessConfirmChannel(
 			
 			if (strlen(channel->GetCommand()) > 0)
 				out << channel->GetCommand();
+			Send(out);
 		}
 	}
 	else if (inMessage == SSH_MSG_CHANNEL_OPEN_FAILURE)
@@ -2000,8 +1655,7 @@ void MSshConnection::ProcessConfirmChannel(
 
 void MSshConnection::ProcessConfirmPTY(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	if (inMessage == SSH_MSG_REQUEST_SUCCESS)
 		mHandler = nil;
@@ -2014,8 +1668,7 @@ void MSshConnection::ProcessConfirmPTY(
 
 void MSshConnection::ProcessChannel(
 	uint8		inMessage,
-	MSshPacket&	in,
-	MSshPacket&	out)
+	MSshPacket&	in)
 {
 	uint8 msg;
 	uint32 channelId;
@@ -2081,10 +1734,12 @@ void MSshConnection::ProcessChannel(
 
 		if (channel != nil and channel->GetMyWindowSize() < kWindowSize - 2 * kMaxPacketSize)
 		{
+			MSshPacket out;
 			uint32 adjust = kWindowSize - channel->GetMyWindowSize();
 			out << uint8(SSH_MSG_CHANNEL_WINDOW_ADJUST) <<
 				channel->GetHostChannelID() << adjust;
 			channel->SetMyWindowSize(channel->GetMyWindowSize() + adjust);
+			Send(out);
 		}
 	}
 }
@@ -2175,39 +1830,40 @@ string MSshConnection::ChooseProtocol(
 }
 
 void MSshConnection::DeriveKey(
-	char*		inHash,
-	int			inNr,
-	int			inLength,
-	byte*&		outKey)
+	const CryptoPP::Integer&
+					inSharedSecret,
+	byte*			inHash,
+	int				inNr,
+	int				inLength,
+	vector<byte>&	outKey)
 {
-//	MSshPacket p;
-//	p << mSharedSecret;
-//	
-//	SHA1 hash;
-//	uint32 dLen = hash.DigestSize();
-//	vector<char> H(dLen);
-//	
-//	char ch = 'A' + inNr;
-//	
-//	hash.Update(reinterpret_cast<const byte*>(p.data.c_str()), p.data.length());
-//	hash.Update(reinterpret_cast<const byte*>(inHash), 20);
-//	hash.Update(reinterpret_cast<const byte*>(&ch), 1);
-//	hash.Update(reinterpret_cast<const byte*>(mSessionId.c_str()), mSessionId.length());
-//	hash.Final(reinterpret_cast<byte*>(&H[0]));
-//
-//	string result(&H[0], hash.DigestSize());
-//	
-//	for (inLength -= dLen; inLength > 0; inLength -= dLen)
-//	{
-//		hash.Update(reinterpret_cast<const byte*>(p.data.c_str()), p.data.length());
-//		hash.Update(reinterpret_cast<const byte*>(inHash), 20);
-//		hash.Update(reinterpret_cast<const byte*>(result.c_str()), result.length());
-//		hash.Final(reinterpret_cast<byte*>(&H[0]));
-//		result += string(&H[0], hash.DigestSize());
-//	}
-//	
-//	outKey = new byte[result.length()];
-//	copy(result.begin(), result.end(), outKey);
+	MSshPacket p;
+	p << inSharedSecret;
+	
+	SHA1 hash;
+	uint32 dLen = hash.DigestSize();
+	vector<byte> H(dLen);
+	
+	byte ch = 'A' + inNr;
+	
+	hash.Update(p.peek(), p.size());
+	hash.Update(inHash, 20);
+	hash.Update(&ch, 1);
+	hash.Update(&mSessionId[0], mSessionId.size());
+	hash.Final(&H[0]);
+
+	outKey = H;
+	
+	for (inLength -= dLen; inLength > 0; inLength -= dLen)
+	{
+		hash.Update(p.peek(), p.size());
+		hash.Update(inHash, 20);
+		hash.Update(&outKey[0], outKey.size());
+
+		hash.Final(&H[0]);
+
+		outKey.insert(outKey.end(), H.begin(), H.end());
+	}
 }
 
 string MSshConnection::GetEncryptionParams() const
