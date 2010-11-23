@@ -75,12 +75,15 @@ using namespace std;
 //struct MSftpChannelImp
 //{
 //							MSftpChannelImp(
-//								MSftpChannel&	inChannel);
+//								MSftpChannel&	inChannel,
+//								uint32 inMaxPacketSize);
+//
 //	virtual					~MSftpChannelImp();
 //	
 //	static MSftpChannelImp*	CreateImpl(
 //								MSshPacket&		in,
 //								MSshPacket&		out,
+//								uint32			inMaxPacketSize,
 //								MSftpChannel&	inChannel);
 //	
 //	virtual void			Init(
@@ -91,16 +94,9 @@ using namespace std;
 //								MSshPacket&		in,
 //								MSshPacket&		out) = 0;
 //	
-////	uint32					GetStatusCode(MSshPacket& inPacket);
+//	uint32					GetStatusCode(MSshPacket& inPacket);
 //	
-//	void					Send(
-//								MSshPacket&		out)
-//							{
-//								mChannel.Send(out);
-//							}
-//
 //	// action interface
-//	
 //	virtual void			SetCWD(
 //								const string&			inPath) = 0;
 //
@@ -142,7 +138,7 @@ using namespace std;
 //
 //struct MSftpChannelImp3 : public MSftpChannelImp
 //{
-//							MSftpChannelImp3(MSftpChannel& inChannel);
+//							MSftpChannelImp3(MSftpChannel& inChannel, uint32 inMaxPacketSize);
 //
 //	virtual void			Init(MSshPacket& out);
 //	virtual void			HandlePacket(
@@ -221,7 +217,7 @@ using namespace std;
 //
 //struct MSftpChannelImp4 : public MSftpChannelImp3
 //{
-//							MSftpChannelImp4(MSftpChannel& inChannel);
+//							MSftpChannelImp4(MSftpChannel& inChannel, uint32 inMaxPacketSize);
 //
 //	virtual void			Init(MSshPacket& out);
 //
@@ -235,7 +231,8 @@ using namespace std;
 //	Implementations
 //*/
 //
-//MSftpChannelImp* MSftpChannelImp::CreateImpl(MSshPacket& in, MSshPacket& out, MSftpChannel& inChannel)
+//MSftpChannelImp* MSftpChannelImp::CreateImpl(MSshPacket& in, MSshPacket& out, 
+//	uint32 inMaxPacketSize, MSftpChannel& inChannel)
 //{
 //	uint32 version;
 //	in >> version;
@@ -245,9 +242,9 @@ using namespace std;
 //	MSftpChannelImp* result = nil;
 //	
 //	if (version == 4)
-//		result = new MSftpChannelImp4(inChannel);
+//		result = new MSftpChannelImp4(inChannel, inMaxPacketSize);
 //	else if (version == 3)
-//		result = new MSftpChannelImp3(inChannel);
+//		result = new MSftpChannelImp3(inChannel, inMaxPacketSize);
 //	else
 //		THROW(("Protocol version %d is not supported", version));
 //	
@@ -255,9 +252,10 @@ using namespace std;
 //}
 //
 //
-//MSftpChannelImp::MSftpChannelImp(MSftpChannel& inChannel)
+//MSftpChannelImp::MSftpChannelImp(MSftpChannel& inChannel, uint32 inMaxPacketSize)
 //	: mChannel(inChannel)
 //	, mRequestId(0)
+//	, mPacketSize(inMaxPacketSize)
 //{
 //}
 //
@@ -269,8 +267,8 @@ using namespace std;
 //	Version 3 protocol
 //*/
 //
-//MSftpChannelImp3::MSftpChannelImp3(MSftpChannel& inChannel)
-//	: MSftpChannelImp(inChannel)
+//MSftpChannelImp3::MSftpChannelImp3(MSftpChannel& inChannel, uint32 inMaxPacketSize)
+//	: MSftpChannelImp(inChannel, inMaxPacketSize)
 //	, mHandler(nil)
 //{
 //}
@@ -313,13 +311,13 @@ using namespace std;
 //
 //void MSftpChannelImp3::SetCWD(const string& inPath)
 //{
-//	if (inPath.length() == 0)
-//		inPath = ".";
-//
 //	MSshPacket out;
-//	out << uint8(SSH_FXP_REALPATH) << mRequestId++ << inPath;
-//	Send(out);
-//
+//	out << uint8(SSH_FXP_REALPATH) << mRequestId++;
+//	if (inPath.empty())
+//		out << ".";
+//	else
+//		out << inPath;
+//	mChannel.Send(out);
 //	mHandler = &MSftpChannelImp3::ProcessRealPath;
 //}
 //
@@ -329,39 +327,9 @@ using namespace std;
 //	
 //	MSshPacket out;
 //	out << uint8(SSH_FXP_OPENDIR) << mRequestId++ << mCurrentDir;
-//	Send(out);
+//	mChannel.Send(out);
 //
 //	mHandler = &MSftpChannelImp3::ProcessOpenDir;
-//}
-//
-//void MSftpChannelImp3::ProcessRealPath(
-//	uint8		inMessage,
-//	MSshPacket&	in,
-//	MSshPacket&	out)
-//{
-//	try
-//	{
-//		if (inMessage != SSH_FXP_NAME)
-//			throw -1;
-//		
-//		uint32 id, count;
-//		string dir;
-//		
-//		in >> id >> count >> dir;
-//		if (id != mRequestId - 1 or count != 1)
-//			throw -1;
-//
-//		mCurrentDir = dir;
-//		mDirList.clear();
-//
-//		mHandler = nil;
-//		mChannel.HandleChannelEvent(SFTP_SETCWD_OK);
-//	}
-//	catch (...)
-//	{
-//		mHandler = nil;
-//		mChannel.HandleChannelEvent(SFTP_ERROR);
-//	}	
 //}
 //
 //void MSftpChannelImp3::ProcessOpenDir(
@@ -460,7 +428,7 @@ using namespace std;
 //{
 //	MSshPacket out;
 //	out << uint8(SSH_FXP_MKDIR) << mRequestId++ << inPath << uint32(0);
-//	Send(out);
+//	mChannel.Send(out);
 //	mHandler = &MSftpChannelImp3::ProcessMkDir;
 //}
 //
@@ -471,34 +439,6 @@ using namespace std;
 //{
 //	CheckForError(inMessage, in);
 //	mHandler = nil;
-//}
-//
-//void MSftpChannelImp3::ReadFile(const string& inPath)
-//{
-//	assert(mHandle.size() == 0);
-//
-//	MSshPacket out;
-//	out << uint8(SSH_FXP_OPEN) << mRequestId++ << inPath <<
-//		uint32(SSH_FXF_READ) << uint32(0);
-//	Send(out);
-//	mHandler = &MSftpChannelImp3::ProcessOpenFile;
-//}
-//
-//void MSftpChannelImp3::ProcessOpenFile(
-//	uint8		inMessage,
-//	MSshPacket&	in,
-//	MSshPacket&	out)
-//{
-//	if (inMessage != SSH_FXP_HANDLE)
-//		CheckForError(inMessage, in);
-//
-//	uint32 id;
-//	in >> id >> mHandle;
-//	
-//	assert(id == mRequestId - 1);
-//	
-//	out << uint8(SSH_FXP_FSTAT) << mRequestId++ << mHandle;
-//	mHandler = &MSftpChannelImp3::ProcessFStat;
 //}
 //
 //void MSftpChannelImp3::ProcessFStat(
@@ -527,71 +467,18 @@ using namespace std;
 //			MSshPacket out;
 //			out << uint8(SSH_FXP_READ) << mRequestId++ <<
 //				mHandle << o << blockSize;
-//			Send(out);
+//			mChannel.Send(out);
 //		}
 //
 //		mHandler = &MSftpChannelImp3::ProcessRead;
 //	}
 //}
 //
-//void MSftpChannelImp3::ProcessRead(
-//	uint8		inMessage,
-//	MSshPacket&	in,
-//	MSshPacket&	out)
-//{
-//	if (inMessage == SSH_FXP_DATA)
-//	{
-//		uint32 id;
-//		in >> id >> mData;
-//		
-//		mOffset += mData.length();
-//
-//		mChannel.HandleChannelEvent(SFTP_DATA_AVAILABLE);
-//		
-//		int64 n = mFileSize - mOffset;
-//		if (n > kMaxPacketSize)
-//			n = kMaxPacketSize;
-//		
-//		if (n <= 0)
-//			mChannel.HandleChannelEvent(SFTP_DATA_DONE);
-//	}
-//	else
-//		mChannel.HandleChannelEvent(SFTP_ERROR);	
-//}
-//
-//void MSftpChannelImp3::WriteFile(const string& inPath)
-//{
-//	assert(mHandle.size() == 0);
-//	MSshPacket out;
-//	out << uint8(SSH_FXP_OPEN) << mRequestId++ << inPath <<
-//		uint32(SSH_FXF_READ | SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC) << uint32(0);
-//	Send(out);
-//	mHandler = &MSftpChannelImp3::ProcessCreateFile;
-//}
-//
-//void MSftpChannelImp3::ProcessCreateFile(
-//	uint8		inMessage,
-//	MSshPacket&	in,
-//	MSshPacket&	out)
-//{
-//	CheckForError(inMessage, in);
-//
-//	uint32 id;
-//	in >> id >> mHandle;
-//	
-//	assert(id == mRequestId - 1);
-//	
-//	mOffset = 0;
-//	mHandler = &MSftpChannelImp3::ProcessWrite;
-//	
-//	mChannel.HandleChannelEvent(SFTP_CAN_SEND_DATA);
-//}
-//
 //void MSftpChannelImp3::SendData(const string& inData)
 //{
 //	MSshPacket out;
 //	out << uint8(SSH_FXP_WRITE) << mRequestId++ << mHandle << mOffset << inData;
-//	Send(out);
+//	mChannel.Send(out);
 //
 //	mOffset += inData.length();
 //	
@@ -610,7 +497,7 @@ using namespace std;
 //{
 //	MSshPacket out;
 //	out << uint8(SSH_FXP_CLOSE) << mRequestId++ << mHandle;
-//	Send(out);
+//	mChannel.Send(out);
 //	mHandle.clear();
 //	mHandler = &MSftpChannelImp3::ProcessClose;
 //}
@@ -621,7 +508,7 @@ using namespace std;
 //	MSshPacket&	out)
 //{
 //	CheckForError(inMessage, in);
-//	assert(mChannel.GetStatusCode() == 0);
+////	assert(mChannel.GetStatusCode() == 0);
 //	
 //	mHandler = nil;
 //	mChannel.HandleChannelEvent(SFTP_FILE_CLOSED);
@@ -631,8 +518,8 @@ using namespace std;
 //	Version 4 protocol
 //*/
 //
-//MSftpChannelImp4::MSftpChannelImp4(MSftpChannel& inChannel)
-//	: MSftpChannelImp3(inChannel)
+//MSftpChannelImp4::MSftpChannelImp4(MSftpChannel& inChannel, uint32 inMaxPacketSize)
+//	: MSftpChannelImp3(inChannel, inMaxPacketSize)
 //{
 //	assert(false);
 //}
@@ -649,10 +536,10 @@ using namespace std;
 //{
 //	assert(false);
 //}
-
-/*
-	The interface implementation
-*/
+//
+///*
+//	The interface implementation
+//*/
 
 MSftpChannel* MSftpChannel::Open(
 	const string&		inIPAddress,
@@ -666,165 +553,133 @@ MSftpChannel* MSftpChannel::Open(
 MSftpChannel::MSftpChannel(
 	MSshConnection&	inConnection)
 	: MSshChannel(inConnection)
-	, mImpl(nil)
-//	, mPacketLength(0)
-//	, mStatusCode(0)
+	, mHandler(0)
+	, mPacketLength(0)
+	, mStatusCode(0)
+	, mRequestId(0)
+	, mPacketSize(0)
+	, mFileSize(0)
+	, mOffset(0)
 {
 }
-
-MSftpChannel::~MSftpChannel()
-{
-//	delete mImpl;
-}
-
-//void MSftpChannel::Send(string inData)
-//{
-//	net_swapper swap;
-//	
-//	// wrap the packet adding the length
-//	uint32 l = inData.length();
-//	l = swap(l);
-//	inData.insert(0, reinterpret_cast<char*>(&l), sizeof(uint32));
-//	
-//	MSshChannel::Send(inData);
-//}
 
 void MSftpChannel::HandleChannelEvent(
-	int		inEvent)
+	uint32			inEvent)
 {
-//	switch (inEvent)
-//	{
-////		case SSH_CHANNEL_OPENED:
-////			mImpl->mPacketSize = GetMaxPacketSize();
-////			break;
-//		
-//		case SSH_CHANNEL_SUCCESS:
-//			if (mImpl == nil)
-//			{
-////#warning("Move to version 4 protocol someday")
-//				MSshPacket out;
-//				out << uint8(SSH_FXP_INIT) << uint32(3);
-//				Send(out);
-//			}
-//			break;
-//	}
+	switch (inEvent)
+	{
+		case SSH_CHANNEL_SUCCESS:
+			MSshPacket out;
+			out << uint8(SSH_FXP_INIT) << uint32(3);
+			Send(out);
+			break;
+	}
 	
 	MSshChannel::HandleChannelEvent(inEvent);
 }
 
-void MSftpChannel::HandleData(
-	MSshPacket&	inData)
-{//
-//	if (mLeftOver.length() > 0)
-//	{
-//		mLeftOver.append(inData);
-//		inData = mLeftOver;
-//		mLeftOver.clear();
-//	}
-//	
-//	while (inData.length() > 0)
-//	{
-//		if (mPacket.length() > 0 or mPacketLength > 0)
-//		{	// continue to receive next packet
-//			assert(mPacketLength > 0);
-//			
-//			uint32 l = mPacketLength;
-//			if (l > inData.length())
-//				l = inData.length();
-//			
-//			mPacket.append(inData, 0, l);
-//			inData.erase(0, l);
-//			
-//			mPacketLength -= l;
-//		}
-//		else if (inData.length() >= sizeof(uint32))
-//		{
-//			MSshPacket in(inData);
-//		
-//			in >> mPacketLength;
-//			
-//			uint32 n = mPacketLength;
-//			if (n > in.data.length())
-//				n = in.data.length();
-//			
-//			if (n > 0)
-//			{
-//				mPacket.assign(inData, 4, n);
-//				inData.erase(0, n + 4);
-//				mPacketLength -= mPacket.length();
-//			}
-//			else
-//			{
-//				inData.erase(0, 4);
-//				mPacket.clear();
-//			}
-//		}
-//		else
-//		{
-//			mLeftOver = inData;
-//			inData.clear();
-//		}
-//
-//		if (mPacket.length() > 0 and mPacketLength == 0)
-//		{
-//			MSshPacket in, out;
-//			in.data = mPacket;
-//			
-//			uint8 msg;
-//			in >> msg;
-//			
-//			if (msg == SSH_FXP_STATUS)
-//				HandleStatus(in);
-//			else
-//				mStatusCode = SSH_FX_OK;
-//			
-//			if (msg == SSH_FXP_VERSION)
-//			{
-//					// we now know what version of the server we're talking to
-//				mImpl = MSftpChannelImp::CreateImpl(in, out, *this);
-//				mImpl->mPacketSize = GetMaxSendPacketSize();
-//				
-//				mImpl->Init(out);
-//			}
-//			else
-//			{
-//				assert(mImpl != nil);
-//				if (mImpl != nil)
-//					mImpl->HandlePacket(msg, in, out);
-//			}
-//			
-//			if (nout out.empty())
-//				Send(out);
-//			
-//			mPacket.clear();
-//			mPacketLength = 0;
-//		}
-//	}
-}
-	
-void MSftpChannel::HandleExtraData(int inType, MSshPacket& inData)
+void MSftpChannel::Send(
+	MSshPacket&		inData)
 {
+	// wrap the packet again...
+	MSshPacket out;
+	out << inData;
+	MSshChannel::Send(out, 0);
 }
 
-void MSftpChannel::HandleStatus(MSshPacket in)
-{//
-//	uint32 id;
-//	string msg, lang;
-//	
-//	in >> id >> mStatusCode >> msg >> lang;
-//	
-//	if (mStatusCode > SSH_FX_EOF)
-//		eChannelMessage(msg);
+void MSftpChannel::Receive(
+	MSshPacket&		inData,
+	int				inType)
+{
+	if (inType != 0)
+		THROW(("Unsupported extra data"));
+	
+	copy(inData.peek(), inData.peek() + inData.size(), back_inserter(mPacket));
+
+	while (not mPacket.empty())
+	{
+		if (mPacketLength >= mPacket.size())
+		{
+			MSshPacket in(mPacket, mPacketLength), out;
+
+HexDump(in.peek(), in.size(), cerr);
+
+			uint8 msg = mPacket.front();
+
+			mPacket.erase(mPacket.begin(), mPacket.begin() + mPacketLength);
+			mPacketLength = 0;
+
+			ProcessPacket(msg, in);
+			continue;
+		}
+		
+		if (mPacketLength == 0 and mPacket.size() >= sizeof(uint32))
+		{
+			for (uint32 i = 0; i < 4; ++i)
+			{
+				mPacketLength = mPacketLength << 8 | mPacket.front();
+				mPacket.pop_front();
+			}
+			
+			continue;
+		}
+		
+		break;
+	}
+}
+
+void MSftpChannel::ProcessPacket(
+	uint8		msg,
+	MSshPacket&	in)
+{
+PRINT(("SFTP Packet %d", msg));
+
+	switch (msg)
+	{
+		case SSH_FXP_STATUS:
+			ProcessStatus(in);
+			break;
+		
+		case SSH_FXP_VERSION:
+			HandleChannelEvent(SFTP_INIT_DONE);
+			break;
+
+		default:
+			if (mHandler != nil)
+				(this->*mHandler)(msg, in);
+			else
+				PRINT(("Unhandled SFTP Message %d", msg));
+			break;
+	}
+}
+
+void MSftpChannel::ProcessStatus(
+	MSshPacket&		in)
+{
+	uint32 id;
+	string msg, lang;
+	
+	in >> id >> mStatusCode >> msg >> lang;
+	
+	if (mStatusCode > SSH_FX_EOF)
+		eChannelMessage(msg);
 }
 
 void MSftpChannel::SetCWD(const string& inDir)
 {
-//	mImpl->SetCWD(inDir);
+	MSshPacket out;
+	out << uint8(SSH_FXP_REALPATH) << ++mRequestId;
+	if (inDir.empty())
+		out << ".";
+	else
+		out << inDir;
+	Send(out);
+	mHandler = &MSftpChannel::ProcessRealPath;
 }
 
 string MSftpChannel::GetCWD() const
 {
-//	return mImpl->mCurrentDir;
+	return mCurrentDir;
 }
 
 void MSftpChannel::OpenDir()
@@ -834,12 +689,12 @@ void MSftpChannel::OpenDir()
 
 bool MSftpChannel::NextFile(uint32& ioCookie, string& outName,
 							uint64& outSize, uint32& outDate, char& outType)
-{//
+{
 //	MSftpChannelImp::DirList& dirList = mImpl->mDirList;
 //
 //	if (ioCookie < 0 or ioCookie >= dirList.size())
-//		return false;
-//	
+		return false;
+	
 //	outName = dirList[ioCookie].name;
 //	outSize = dirList[ioCookie].size;
 //	outDate = dirList[ioCookie].date;
@@ -856,12 +711,21 @@ void MSftpChannel::MkDir(const string& inPath)
 
 void MSftpChannel::ReadFile(const string& inPath, bool inTextMode)
 {
-//	mImpl->ReadFile(inPath);
+	MSshPacket out;
+	out << uint8(SSH_FXP_OPEN) << ++mRequestId << inPath <<
+		uint32(SSH_FXF_READ) << uint32(0);
+	
+	mHandler = &MSftpChannel::ProcessOpenFile;
+	Send(out);
 }
 
 void MSftpChannel::WriteFile(const string& inPath, bool inTextMode)
 {
-//	mImpl->WriteFile(inPath);
+	MSshPacket out;
+	out << uint8(SSH_FXP_OPEN) << ++mRequestId << inPath <<
+		uint32(SSH_FXF_READ | SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC) << uint32(0);
+	mHandler = &MSftpChannel::ProcessCreateFile;
+	Send(out);
 }
 
 void MSftpChannel::SendData(const string& inData)
@@ -871,16 +735,160 @@ void MSftpChannel::SendData(const string& inData)
 
 void MSftpChannel::CloseFile()
 {
-//	mImpl->CloseFile();
+	MSshPacket out;
+	out << uint8(SSH_FXP_CLOSE) << ++mRequestId << mHandle;
+	mHandle.clear();
+	mHandler = &MSftpChannel::ProcessClose;
+	Send(out);
 }
 
 uint64 MSftpChannel::GetFileSize() const
 {
-//	return mImpl->mFileSize;
+	return mFileSize;
 }
 
 string MSftpChannel::GetData() const
 {
-//	return mImpl->mData;
+	return mData;
 }
 
+void MSftpChannel::Match(
+	uint8		inExpected,
+	uint8		inReceived)
+{
+	if (inExpected != inReceived)
+		THROW(("Unexpected SFTP message"));
+}
+
+void MSftpChannel::ProcessRealPath(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	Match(inMessage, SSH_FXP_NAME);
+	
+	uint32 id, count;
+	string dir;
+	
+	in >> id >> count >> dir;
+	if (id == mRequestId - 1 and count == 1)
+	{
+		mCurrentDir = dir;
+		mDirList.clear();
+	
+		HandleChannelEvent(SFTP_SETCWD_OK);
+	}
+
+	mHandler = nil;
+}
+
+void MSftpChannel::ProcessOpenDir(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+}
+
+void MSftpChannel::ProcessReadDir(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+}
+
+void MSftpChannel::ProcessMkDir(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+}
+
+void MSftpChannel::ProcessOpenFile(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	Match(inMessage, SSH_FXP_HANDLE);
+
+	uint32 id;
+	in >> id >> mHandle;
+
+	if (id != mRequestId)
+		THROW(("Invalid request ID"));
+	
+	MSshPacket out;	
+	out << uint8(SSH_FXP_FSTAT) << ++mRequestId << mHandle;
+	mHandler = &MSftpChannel::ProcessFStat;
+	Send(out);
+}
+
+void MSftpChannel::ProcessFStat(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	Match(inMessage, SSH_FXP_ATTRS);
+
+	mFileSize = 0;
+	
+	uint32 id, flags;
+	in >> id >> flags;
+	
+	if (id != mRequestId)
+		THROW(("Invalid request ID"));
+	
+	if (flags & SSH_FILEXFER_ATTR_SIZE)
+		in >> mFileSize;
+	
+	HandleChannelEvent(SFTP_FILE_SIZE_KNOWN);
+	
+	mOffset = 0;
+
+	// we request all packets at once
+	uint32 blockSize = kMaxPacketSize;
+	for (int64 o = 0; o < mFileSize; o += blockSize)
+	{
+		MSshPacket out;
+		out << uint8(SSH_FXP_READ) << ++mRequestId <<
+			mHandle << o << blockSize;
+		Send(out);
+		mHandler = &MSftpChannel::ProcessRead;
+	}
+}
+
+void MSftpChannel::ProcessRead(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	Match(inMessage, SSH_FXP_DATA);
+
+	uint32 id;
+	in >> id >> mData;
+	
+	mOffset += mData.length();
+
+	HandleChannelEvent(SFTP_DATA_AVAILABLE);
+	if (mOffset >= mFileSize)
+		HandleChannelEvent(SFTP_DATA_DONE);
+}
+
+void MSftpChannel::ProcessCreateFile(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	uint32 id;
+	in >> id >> mHandle;
+	
+	mOffset = 0;
+	mHandler = &MSftpChannel::ProcessWrite;
+	HandleChannelEvent(SFTP_CAN_SEND_DATA);
+}
+
+void MSftpChannel::ProcessWrite(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	HandleChannelEvent(SFTP_CAN_SEND_DATA);
+}
+
+void MSftpChannel::ProcessClose(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	mHandler = nil;
+	HandleChannelEvent(SFTP_FILE_CLOSED);
+}

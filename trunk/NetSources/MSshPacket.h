@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 
 #include <cryptopp/integer.h>
 
@@ -23,6 +24,8 @@ class MSshPacket
 					MSshPacket(const MSshPacket& inPacket);
 //					MSshPacket(const std::string& inData);
 					MSshPacket(const std::vector<byte>& inData);
+					MSshPacket(const std::deque<byte>& inData,
+						uint32 inLength);
 
 	MSshPacket&		operator=(const MSshPacket& inPacket);
 
@@ -39,6 +42,8 @@ class MSshPacket
 	MSshPacket&		operator<<(uint16 inValue);
 	MSshPacket&		operator<<(int32 inValue);
 	MSshPacket&		operator<<(uint32 inValue);
+	MSshPacket&		operator<<(int64 inValue);
+	MSshPacket&		operator<<(uint64 inValue);
 	MSshPacket&		operator<<(const std::string& inValue);
 	MSshPacket&		operator<<(const std::vector<byte>& inValue);
 	MSshPacket&		operator<<(const char* inValue);
@@ -52,6 +57,8 @@ class MSshPacket
 	MSshPacket&		operator>>(uint16& inValue);
 	MSshPacket&		operator>>(int32& inValue);
 	MSshPacket&		operator>>(uint32& inValue);
+	MSshPacket&		operator>>(int64& inValue);
+	MSshPacket&		operator>>(uint64& inValue);
 	MSshPacket&		operator>>(std::string& outValue);
 	MSshPacket&		operator>>(CryptoPP::Integer& outValue);
 	MSshPacket&		operator>>(MSshPacket& outPacket);

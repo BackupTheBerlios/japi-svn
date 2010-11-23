@@ -477,7 +477,7 @@ class MSftpFileLoader : public MFileLoader
   private:
 
 	void			SFTPChannelEvent(
-						int				inMessage);
+						uint32			inMessage);
 
 	void			SFTPChannelMessage(
 						const string&	inMessage);
@@ -515,7 +515,7 @@ void MSftpFileLoader::Cancel()
 }
 
 void MSftpFileLoader::SFTPChannelEvent(
-	int		inMessage)
+	uint32		inMessage)
 {
 PRINT(("SFTPChannelEvent %d", inMessage));
 
@@ -576,10 +576,6 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 			mSFTPChannel = nil;
 //			delete this;
 			break;
-		
-		default:
-			PRINT(("Unhandled event %d", inMessage));
-			break;
 	}
 }
 
@@ -610,7 +606,7 @@ class MSftpFileSaver : public MFileSaver
   private:
 
 	void			SFTPChannelEvent(
-						int				inMessage);
+						uint32			inMessage);
 
 	void			SFTPChannelMessage(
 						const string&	inMessage);
@@ -659,7 +655,7 @@ void MSftpFileSaver::DoSave()
 }
 
 void MSftpFileSaver::SFTPChannelEvent(
-	int				inMessage)
+	uint32			inMessage)
 {
 PRINT(("SFTPChannelEvent %d", inMessage));
 
@@ -718,10 +714,6 @@ PRINT(("SFTPChannelEvent %d", inMessage));
 
 		case SFTP_ERROR:
 			Cancel();
-			break;
-
-		default:
-			PRINT(("Unhandled event %d", inMessage));
 			break;
 	}
 }

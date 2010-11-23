@@ -41,14 +41,6 @@ class MSftpChannel : public MSshChannel
 								return Open(inURL.GetHost(), inURL.GetUser(), inURL.GetPort());
 							}
 
-	virtual					~MSftpChannel();
-
-//	virtual void			Send(
-//								std::string		inData);
-
-	virtual const char*		GetRequest() const { return "subsystem"; }
-	virtual const char*		GetCommand() const { return "sftp"; }
-	
 	void					SetCWD(
 								const std::string& inDir);
 
@@ -77,44 +69,117 @@ class MSftpChannel : public MSshChannel
 												inPath,
 								bool			inTextMode);
 
-	void					SendData(
-								const std::string&
-												inData);
-
 	void					CloseFile();
 
 	uint64					GetFileSize() const;
 
+	void					SendData(
+								const std::string&
+												inData);
+
 	std::string				GetData() const;
 	
-//	uint32					GetStatusCode() const	{ return mStatusCode; }
-
   protected:
+
+	virtual void			GetRequestAndCommand(
+								std::string&	outRequest,
+								std::string&	outCommand) const
+							{
+								outRequest = "subsystem";
+								outCommand = "sftp";
+							}
+	
+//	uint32					GetStatusCode() const	{ return mStatusCode; }
 
 							MSftpChannel(
 								MSshConnection&	inConnection);
 	
-	friend struct MSftpChannelImp;
-	friend struct MSftpChannelImp3;
-
-	virtual void			HandleData(
-								MSshPacket&		inData);
-
-	virtual void			HandleExtraData(
-								int				inType,
-								MSshPacket&		inData);
-
-	void					HandleStatus(
-								MSshPacket		in);
-
 	virtual void			HandleChannelEvent(
-								int			 inEvent);
+								uint32			inEvent);
 
-	struct MSftpChannelImp*	mImpl;
-//	MSshPacket				mPacket;
-//	MSshPacket				mLeftOver;
-//	uint32					mPacketLength;
-//	uint32					mStatusCode;
+	virtual void			Send(
+								MSshPacket&		inData);
+
+	virtual void			Receive(
+								MSshPacket&		inData,
+								int				inType);
+
+	void					ProcessPacket(
+								uint8			msg,
+								MSshPacket&		in);
+
+	void					ProcessStatus(
+								MSshPacket&		in);
+
+	void					Match(
+								uint8		inExpected,
+								uint8		inReceived);
+
+	void (MSftpChannel::*mHandler)(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessRealPath(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessOpenDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessReadDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessMkDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessOpenFile(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessFStat(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessRead(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessCreateFile(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessWrite(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessClose(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	struct DirEntry
+	{
+		std::string			name;
+		uint64				size;
+		uint32				date;
+		char				type;
+	};
+
+	typedef std::vector<DirEntry>	DirList;
+
+	std::deque<uint8>		mPacket;
+	uint32					mPacketLength;
+	uint32					mStatusCode;
+	uint32					mRequestId;
+	uint32					mPacketSize;
+	std::string				mHandle;
+	int64					mFileSize;
+	int64					mOffset;
+	DirList					mDirList;
+	std::string				mCurrentDir;
+	std::string				mData;
 };
 
 #endif // MSFTPCHANNEL_H
