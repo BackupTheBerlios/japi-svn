@@ -17,6 +17,8 @@
 #include "MP2PEvents.h"
 #include "MUtils.h"
 
+#include <boost/asio.hpp>
+
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/integer.h>
 #include <cryptopp/modes.h>
@@ -39,75 +41,46 @@ class MSshConnection
 						const std::string&	inUserName,
 						uint16				inPort);
 
-	void			Reference();
-	void			Release();
-
-	std::string		UserName() const		{ return fUserName; }
-	std::string		IPAddress() const		{ return fIPAddress; }
-	uint16			PortNumber() const		{ return fPortNumber; }
-	double			OpenedAt() const		{ return fOpenedAt; }
-	
-	bool			IsConnected() const		{ return fIsConnected; }
-	bool			Busy() const			{ return fBusy; }
-
+	void			Connect();
 	void			Disconnect();
 	
-	void			ResetTimer();
-	
+	void			OpenChannel(
+						MSshChannel*	inChannel);
+
 	std::string		GetEncryptionParams() const;
 	
-	void			OpenChannel(
-						MSshChannel*		inChannel);
+	MEventOut<void(const std::string&)>	eConnectionMessage;
+	MEventOut<void(const std::string&)>	eConnectionBanner;
 
-	void			CloseChannel(
-						MSshChannel*		inChannel);
-						
-	void			SendChannelData(
-						MSshChannel*		inChannel,
-						uint32				inType,
-						std::string			inData);
-
-	void			SendWindowResize(
-						MSshChannel*		inChannel,
-						uint32				inColumns,
-						uint32				inRows);
-
-	std::string		GetErrorString() const	{ return fErrString; }
-	uint32			GetErrorCode() const	{ return fErrCode; }
-	
-	MEventOut<void(int)>			eConnectionEvent;
-	MEventOut<void(std::string)>	eConnectionMessage;
-	MEventOut<void(std::string)>	eConnectionBanner;
+	void			Error(
+						uint32				inReason,
+						const std::string&	inMessage);
 	
   private:
 
-					MSshConnection();
+	friend class MSshChannel;
+
+					MSshConnection(
+						const std::string&	inIPAddress,
+						const std::string&	inUserName,
+						uint16				inPort);
 
 					MSshConnection(
 						const MSshConnection&);
+
 	MSshConnection&	operator=(
 						const MSshConnection&);
 
 	virtual 		~MSshConnection();
-
-	bool			Connect(
-						std::string			inIPAddress,
-						std::string			inUserName,
-						uint16				inPortNr);
-
-	std::string		Wrap(
-						std::string inData);
-
-	std::vector<std::string>
-					Split(
-						std::string inData) const;
 
 	std::string		ChooseProtocol(
 						const std::string&	inServer,
 						const std::string&	inClient) const;
 
 	void			DeriveKey(
-						char*				inHash,
+						const CryptoPP::Integer&
+											inSharedSecret,
+						byte*				inHash,
 						int					inNr,
 						int					inLength,
 						byte*&				outKey);
@@ -118,92 +91,85 @@ class MSshConnection
 	void			AdjustHostWindowSize(
 						int32				inDelta);
 
-	/* Idle loop for processing from the socket */
-	MEventIn<void(double)>					eIdle;
+	// Network IO functions, we're using async boost::asio calls
+	void			HandleResolve(
+						const boost::system::error_code& err,
+						boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
+	void			HandleConnect(
+						const boost::system::error_code& err,
+						boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
+	void			HandleProtocolVersionExchangeRequest(
+						const boost::system::error_code& err);
+	void			HandleProtocolVersionExchangeResponse(
+						const boost::system::error_code& err);
 
-	void			Idle (
-						double				inSystemTime);
-	
+	// To send a MSshPacket
 	void			Send(
-						std::string			inMessage);
+						MSshPacket&			inMessage);
+	void			PacketSent(
+						const boost::system::error_code& err);
 
-	void			Send(
-						const MSshPacket&	inMessage);
+	// Receive is some kind of eventloop, it receives packets from the
+	// network and passes them on to ProcessPacket
+	void			Receive(
+						const boost::system::error_code& err);
 
-	void			Error(
-						int					inReason);
-
-	bool			ProcessBuffer();
-	void			ProcessPacket();
-
-	// protocol handlers
-	
-	void			(MSshConnection::*fHandler)(
+	void			ProcessPacket(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-	
-	void			ProcessConnect();
+						MSshPacket&			in);
 
+	void			ProcessDebug(
+						MSshPacket&			in);
+
+	void			ProcessUnimplemented(
+						MSshPacket&			in);
+	
 	void			ProcessDisconnect(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
+
+	void			ProcessServiceAccept(
+						MSshPacket&			in);
 
 	void			ProcessKexInit(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessKexdhReply(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessNewKeys(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessKeybInteract(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUserAuthInit(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUserAuthNone(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUserAuthPassword(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUserAuthKeyboardInteractive(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUserAuthPublicKey(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			ProcessUserAuthSuccess(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
+
+	void			ProcessUserAuthFailed(
+						MSshPacket&			in);
+	
+	void			ProcessUserAuthInfoRequest(
+						MSshPacket&			in);
+
+	enum MAuthenticationState {
+		SSH_AUTH_STATE_NONE,
+		SSH_AUTH_STATE_PUBLIC_KEY,
+		SSH_AUTH_STATE_KEYBOARD_INTERACTIVE,
+		SSH_AUTH_STATE_PASSWORD
+	};
+
+//	void			ProcessUserAuthNone(
+//						MSshPacket&			in);
+//
+//	void			ProcessUserAuthPassword(
+//						MSshPacket&			in);
+//
+//	void			ProcessUserAuthKeyboardInteractive(
+//						MSshPacket&			in);
+//
+//	void			ProcessUserAuthPublicKey(
+//						MSshPacket&			in);
 
 	void			ProcessChannelRequest(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
+						MSshPacket&			in);
 
 	void			TryNextIdentity();
 
@@ -213,119 +179,88 @@ class MSshConnection
 
 	void			UserAuthFailed();
 
-	void			ProcessConfirmChannel(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessConfirmPTY(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
 	void			ProcessChannel(
 						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessDebug(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-
-	void			ProcessUnimplemented(
-						uint8				inMessage,
-						MSshPacket&			in,
-						MSshPacket&			out);
-	
-//	void			ProcessChannelOpen(
-//						uint8				inMessage,
-//						MSshPacket&			in,
-//						MSshPacket&			out);
+						MSshPacket&			in);
 
 	MEventIn<void(std::vector<std::string>)>	eRecvAuthInfo;
-
 	void			RecvAuthInfo(
 						std::vector<std::string>
 											inAuthInfo);
 
 	MEventIn<void(std::vector<std::string>)>	eRecvPassword;
-	
 	void			RecvPassword(
 						std::vector<std::string>
 											inPassword);
 
-	std::string					fUserName;
-	std::string					fPassword;
-	std::string					fIPAddress;
-	uint16						fPortNumber;
-	int							fSocket;
-	bool						fIsConnected;
-	bool						fBusy;
-	bool						fInhibitIdle;
-	bool						fGotVersionString;
-	std::string					fBuffer;
-	std::string					fInPacket, fOutPacket;
-	uint32						fPacketLength;
-	uint32						fPasswordAttempts;
+	void						Idle(double);
+	MEventIn<void(double)>		eIdle;
 
-	std::unique_ptr<CryptoPP::BlockCipher>					fDecryptorCipher;
-	std::unique_ptr<CryptoPP::StreamTransformation>			fDecryptorCBC;
-	std::unique_ptr<CryptoPP::BufferedTransformation>		fDecryptor;
-	std::unique_ptr<CryptoPP::BlockCipher>					fEncryptorCipher;
-	std::unique_ptr<CryptoPP::StreamTransformation>			fEncryptorCBC;
-	std::unique_ptr<CryptoPP::BufferedTransformation>		fEncryptor;
-	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fSigner;
-	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	fVerifier;
-	std::unique_ptr<ZLibHelper>								fCompressor;
-	std::unique_ptr<ZLibHelper>								fDecompressor;
-	
-	CryptoPP::Integer			f_x;
-	CryptoPP::Integer			f_e;
-	std::string					fSessionId;
-	CryptoPP::Integer			fSharedSecret;
-	std::string					fHostVersion;
-	std::string					fMyPayLoad;
-	std::string					fHostPayLoad;
-	std::string					fMyKexinitMessage;
-	std::string					fHostKexinitMessage;
+	std::string					mUserName;
+	std::string					mIPAddress;
+	uint16						mPortNumber;
 
-	std::string					fKexAlg;
-	std::string					fServerHostKeyAlg;
-	std::string					fEncryptionAlgC2S;
-	std::string					fEncryptionAlgS2C;
-	std::string					fMACAlgC2S;
-	std::string					fMACAlgS2C;
-	std::string					fCompressionAlgC2S;
-	std::string					fCompressionAlgS2C;
-	std::string					fLangC2S;
-	std::string					fLangS2C;
-	
-	byte*						fKeys[6];
-	
-	uint32						fOutSequenceNr;
-	uint32						fInSequenceNr;
-	
-	bool						fAuthenticated;
+	bool						mConnected, mAuthenticated;
+	uint32						mPasswordAttempts;
+	MAuthenticationState		mAuthenticationState;
 
-//	std::unique_ptr<MCertificate>	fCertificate;
-	std::unique_ptr<MSshAgent>	fSshAgent;
+	boost::asio::ip::tcp::resolver
+								mResolver;
+	boost::asio::ip::tcp::socket
+								mSocket;
+	std::deque<boost::asio::streambuf*>
+								mRequests;
+	boost::asio::streambuf		mResponse;
+	std::deque<MSshPacket>		mPending;
+	std::vector<byte>			mPacket;
+	uint32						mPacketLength;
 
-	MEventIn<void(MCertificate*)>	eCertificateDeleted;
+	std::unique_ptr<CryptoPP::BlockCipher>					mDecryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			mDecryptorCBC;
+	std::unique_ptr<CryptoPP::BlockCipher>					mEncryptorCipher;
+	std::unique_ptr<CryptoPP::StreamTransformation>			mEncryptorCBC;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mSigner;
+	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mVerifier;
+//	std::unique_ptr<ZLibHelper>								mCompressor;
+//	std::unique_ptr<ZLibHelper>								mDecompressor;
+	
+	CryptoPP::Integer			m_x;
+	CryptoPP::Integer			m_e;
+	std::vector<byte>			mSessionId;
+	std::string					mHostVersion;
+	std::string					mMyPayLoad;
+	std::string					mHostPayLoad;
+
+	std::string					mKexAlg;
+	std::string					mServerHostKeyAlg;
+	std::string					mEncryptionAlgC2S;
+	std::string					mEncryptionAlgS2C;
+	std::string					mMACAlgC2S;
+	std::string					mMACAlgS2C;
+	std::string					mCompressionAlgC2S;
+	std::string					mCompressionAlgS2C;
+	std::string					mLangC2S;
+	std::string					mLangS2C;
+	
+	byte*						mKeys[6];
+	
+	uint32						mOutSequenceNr;
+	uint32						mInSequenceNr;
+
+//	std::unique_ptr<MCertificate>
+//								mCertificate;
+	std::unique_ptr<MSshAgent>	mSshAgent;
+
+	MEventIn<void(MCertificate*)>
+								eCertificateDeleted;
 
 	void						CertificateDeleted(
 									MCertificate*	inCertificate);
 	
-	int32						fRefCount;
-	ChannelList					fChannels;
-	ChannelList					fOpeningChannels;
-	std::string					fErrString;
-	uint32						fErrCode;
-	double						fOpenedAt;
-	static uint32				sNextChannelId;
+	ChannelList					mChannels, mOpeningChannels;
 
 	static MSshConnection*		sFirstConnection;
-	MSshConnection*				fNext;
+	MSshConnection*				mNext;
 };
 
 #endif // MSSHCONNECTION_H

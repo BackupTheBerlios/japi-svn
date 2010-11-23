@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="NetSource Files">
+      <UniqueIdentifier>{74e06623-8f55-49bf-9c0c-e32802016f3c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Lib\MAcceleratorTable.cpp">
@@ -88,6 +91,27 @@
     </ClCompile>
     <ClCompile Include="..\..\Lib\MCanvas.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MAuthDialog.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MKnownHosts.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MSftpChannel.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MSshAgent.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MSshChannel.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MSshConnection.cpp">
+      <Filter>NetSource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\NetSources\MSshPacket.cpp">
+      <Filter>NetSource Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

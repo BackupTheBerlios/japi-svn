@@ -12,6 +12,7 @@
 #define MSFTPCHANNEL_H
 
 #include "MSshChannel.h"
+#include "MSshPacket.h"
 
 enum MSftpEvent {
 	SFTP_INIT_DONE = 400,
@@ -29,24 +30,20 @@ enum MSftpEvent {
 class MSftpChannel : public MSshChannel
 {
   public:
-							MSftpChannel(
-								std::string		inIPAddress,
-								std::string		inUserName,
-								uint16 inPort);
 
-							MSftpChannel(
-								const MFile&	inURL);
+	static MSftpChannel*	Open(
+								const std::string&	inIPAddress,
+								const std::string&	inUserName,
+								uint16				inPort);
 
-	virtual					~MSftpChannel();
+	static MSftpChannel*	Open(
+								const MFile&	inURL)
+							{
+								return Open(inURL.GetHost(), inURL.GetUser(), inURL.GetPort());
+							}
 
-	virtual void			Send(
-								std::string		inData);
-
-	virtual const char*		GetRequest() const { return "subsystem"; }
-	virtual const char*		GetCommand() const { return "sftp"; }
-	
 	void					SetCWD(
-								std::string inDir);
+								const std::string& inDir);
 
 	std::string				GetCWD() const;
 
@@ -60,53 +57,130 @@ class MSftpChannel : public MSshChannel
 								char&			outType);
 
 	void					MkDir(
-								std::string		inPath);
+								const std::string&
+												inPath);
 
 	void					ReadFile(
-								std::string		inPath,
+								const std::string&
+												inPath,
 								bool			inTextMode);
 
 	void					WriteFile(
-								std::string		inPath,
-								bool			inTextMode);
-
-	void					SendData(
 								const std::string&
-												inData);
+												inPath,
+								bool			inTextMode);
 
 	void					CloseFile();
 
 	uint64					GetFileSize() const;
 
+	void					SendData(
+								const std::string&
+												inData);
+
 	std::string				GetData() const;
 	
-	uint32					GetStatusCode() const	{ return fStatusCode; }
-
   protected:
+
+	virtual void			GetRequestAndCommand(
+								std::string&	outRequest,
+								std::string&	outCommand) const
+							{
+								outRequest = "subsystem";
+								outCommand = "sftp";
+							}
 	
-	friend struct MSftpChannelImp;
-	friend struct MSftpChannelImp3;
+//	uint32					GetStatusCode() const	{ return mStatusCode; }
 
-	virtual void			HandleData(
-								std::string		inData);
-
-	virtual void			HandleExtraData(
-								int				inType,
-								std::string		inData);
-
-	void					HandleStatus(
-								MSshPacket		in);
+							MSftpChannel(
+								MSshConnection&	inConnection);
 	
-//	virtual void			Send(std::string inData)	{ MSshChannel::Send(inData); }
-
 	virtual void			HandleChannelEvent(
-								int			 inEvent);
+								uint32			inEvent);
 
-	struct MSftpChannelImp*	fImpl;
-	std::string				fPacket;
-	std::string				fLeftOver;
-	uint32					fPacketLength;
-	uint32					fStatusCode;
+	virtual void			Send(
+								MSshPacket&		inData);
+
+	virtual void			Receive(
+								MSshPacket&		inData,
+								int				inType);
+
+	void					ProcessPacket(
+								uint8			msg,
+								MSshPacket&		in);
+
+	void					ProcessStatus(
+								MSshPacket&		in);
+
+	void					Match(
+								uint8		inExpected,
+								uint8		inReceived);
+
+	void (MSftpChannel::*mHandler)(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessRealPath(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessOpenDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessReadDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessMkDir(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessOpenFile(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessFStat(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessRead(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessCreateFile(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessWrite(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	void					ProcessClose(
+								uint8		inMessage,
+								MSshPacket&	in);
+
+	struct DirEntry
+	{
+		std::string			name;
+		uint64				size;
+		uint32				date;
+		char				type;
+	};
+
+	typedef std::vector<DirEntry>	DirList;
+
+	std::deque<uint8>		mPacket;
+	uint32					mPacketLength;
+	uint32					mStatusCode;
+	uint32					mRequestId;
+	uint32					mPacketSize;
+	std::string				mHandle;
+	int64					mFileSize;
+	int64					mOffset;
+	DirList					mDirList;
+	std::string				mCurrentDir;
+	std::string				mData;
 };
 
 #endif // MSFTPCHANNEL_H

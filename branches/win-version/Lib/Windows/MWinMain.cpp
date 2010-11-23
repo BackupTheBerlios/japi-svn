@@ -53,7 +53,7 @@ public:
 
 	bool				IsServer() const;
 	void				Send(HCONV inConversation, const wstring& inCommand);
-	void				Open(const fs::path& inFile, int32 inLineNr);
+	void				Open(const string& inFile, int32 inLineNr);
 	void				New();
 	void				Wait();
 
@@ -182,8 +182,8 @@ HDDEDATA MDDEImpl::Callback(UINT uType, UINT uFmt, HCONV hconv,
 
 					if (match.str(1) == L"open")
 					{
-						fs::path file(w2c(match.str(3)));
-						doc = gApp->OpenOneDocument(MFile(file));
+						MFile file(w2c(match.str(3)));
+						doc = gApp->OpenOneDocument(file);
 					}
 					else if (match.str(1) == L"new")
 						doc = gApp->CreateNewDocument();
@@ -219,9 +219,9 @@ void MDDEImpl::DocClosed(HCONV inConversation)
 	}
 }
 
-void MDDEImpl::Open(const fs::path& inFile, int32 inLineNr)
+void MDDEImpl::Open(const string& inFile, int32 inLineNr)
 {
-	Send(mConv, (boost::wformat(L"[open(\"%1%\",%2%)]") % c2w(inFile.native_file_string()) % inLineNr).str());
+	Send(mConv, (boost::wformat(L"[open(\"%1%\",%2%)]") % c2w(inFile) % inLineNr).str());
 }
 
 void MDDEImpl::New()
@@ -268,7 +268,13 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPSTR lpszCmdLine, int n
 		else
 		{
 			foreach (string arg, args)
-				dde.Open(fs::system_complete(arg), 0);
+			{
+				MFile file(arg);
+				if (file.IsLocal())
+					dde.Open(fs::system_complete(arg).native_file_string(), 0);
+				else
+					dde.Open(file.GetURI(), 0);
+			}
 		}
 
 		if (dde.IsServer())

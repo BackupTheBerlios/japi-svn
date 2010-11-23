@@ -252,6 +252,22 @@ MWinException::MWinException(
 //	assert(false);
 //}
 
+string GetUserName(
+	bool			inShortName)
+{
+	assert(inShortName);
+
+	string result = "undefined";
+
+	wchar_t name[1024];
+	DWORD len = sizeof(name);
+
+	if (::GetUserNameW(name, &len))
+		result = w2c(name);
+
+	return result;
+}
+
 string GetHomeDirectory()
 {
 	string result;

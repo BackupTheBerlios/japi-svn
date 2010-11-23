@@ -8,6 +8,13 @@
 
 #include <SDKDDKVer.h>
 
+// Crypto++ Library
+#ifdef _DEBUG
+#  pragma comment ( lib, "cryptlibd" )
+#else
+#  pragma comment ( lib, "cryptlib" )
+#endif
+
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
 #include <Windows.h>

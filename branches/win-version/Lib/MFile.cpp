@@ -31,14 +31,16 @@
 #include "MPreferences.h"
 #include "MSftpChannel.h"
 
+//#include "MJapiApp.h"
+
 using namespace std;
 namespace io = boost::iostreams;
 namespace ba = boost::algorithm;
 
-namespace {
-
 int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize);
 int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize);
+
+namespace {
 
 // reserved characters in URL's
 
@@ -475,10 +477,10 @@ class MSftpFileLoader : public MFileLoader
   private:
 
 	void			SFTPChannelEvent(
-						int				inMessage);
+						uint32			inMessage);
 
 	void			SFTPChannelMessage(
-						string			inMessage);
+						const string&	inMessage);
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mFileSize;
@@ -495,7 +497,7 @@ MSftpFileLoader::MSftpFileLoader(
 
 void MSftpFileLoader::DoLoad()
 {
-	mSFTPChannel = new MSftpChannel(mFile);
+	mSFTPChannel = MSftpChannel::Open(mFile);
 
 	SetCallback(mSFTPChannel->eChannelEvent,
 		this, &MSftpFileLoader::SFTPChannelEvent);
@@ -514,8 +516,10 @@ void MSftpFileLoader::Cancel()
 }
 
 void MSftpFileLoader::SFTPChannelEvent(
-	int		inMessage)
+	uint32		inMessage)
 {
+PRINT(("SFTPChannelEvent %d", inMessage));
+
 	switch (inMessage)
 	{
 		case SFTP_INIT_DONE:
@@ -581,7 +585,7 @@ void MSftpFileLoader::SFTPChannelEvent(
 }
 
 void MSftpFileLoader::SFTPChannelMessage(
-	string	 	inMessage)
+	const string& 	inMessage)
 {
 	float fraction = 0;
 	if (mFileSize > 0)
@@ -605,10 +609,9 @@ class MSftpFileSaver : public MFileSaver
   private:
 
 	void			SFTPChannelEvent(
-						int				inMessage);
-
+						uint32			inMessage);
 	void			SFTPChannelMessage(
-						string			inMessage);
+						const string&	inMessage);
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mSFTPOffset;
@@ -633,7 +636,7 @@ void MSftpFileSaver::Cancel()
 
 void MSftpFileSaver::DoSave()
 {
-	mSFTPChannel = new MSftpChannel(mFile);
+	mSFTPChannel = MSftpChannel::Open(mFile);
 
 	{
 		io::filtering_ostream out(io::back_inserter(mSFTPData));
@@ -650,8 +653,10 @@ void MSftpFileSaver::DoSave()
 }
 
 void MSftpFileSaver::SFTPChannelEvent(
-	int				inMessage)
+	uint32			inMessage)
 {
+PRINT(("SFTPChannelEvent %d", inMessage));
+
 	const uint32 kBufferSize = 10240;
 	
 	switch (inMessage)
@@ -708,7 +713,7 @@ void MSftpFileSaver::SFTPChannelEvent(
 }
 
 void MSftpFileSaver::SFTPChannelMessage(
-	string	 	inMessage)
+	const string& 	inMessage)
 {
 	float fraction = 0;
 	if (mSFTPSize > 0)

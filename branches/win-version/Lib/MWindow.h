@@ -14,6 +14,8 @@
 
 #include "MP2PEvents.h"
 
+#undef GetNextWindow
+
 class MWindowImpl;
 
 enum MWindowFlags

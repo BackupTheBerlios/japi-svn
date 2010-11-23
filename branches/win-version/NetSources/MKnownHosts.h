@@ -12,7 +12,9 @@
 #define MKNOWNHOSTS_H
 
 #include <string>
-#include <map>
+#include <list>
+
+class MSshPacket;
 
 class MKnownHosts
 {
@@ -21,15 +23,28 @@ class MKnownHosts
 	
 	void			CheckHost(
 						const std::string& inHost,
-						const std::string& inHostKey);
+						const std::string& inAlgorithm,
+						const MSshPacket& inHostKey);
 
   private:
 					MKnownHosts();
 	virtual			~MKnownHosts();
 
-	typedef std::map<std::string,std::string>	MHostMap;
-	MHostMap		fKnownHosts;
-	bool			fUpdated;
+	struct MKnownHost
+	{
+		std::string	host;
+		std::string	alg;
+		std::string	key;
+		
+		bool operator==(const MKnownHost& rhs) const
+		{
+			return host == rhs.host and alg == rhs.alg;
+		}
+	};
+
+	typedef std::list<MKnownHost>	MKnownHostsList;
+	MKnownHostsList	mKnownHosts;
+	bool			mUpdated;
 };
 
 #endif // MKNOWNHOSTS_H

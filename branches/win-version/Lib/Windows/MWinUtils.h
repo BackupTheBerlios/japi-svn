@@ -8,6 +8,8 @@
 
 #include <string>
 
+#undef GetUserName
+
 std::wstring c2w(const std::string& s);
 std::string w2c(const std::wstring& s);
 

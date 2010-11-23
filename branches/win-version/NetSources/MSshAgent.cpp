@@ -3,16 +3,19 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "MJapi.h"
+#include "MLib.h"
 
+#if 0
 #include <sys/un.h>
 #include <sys/socket.h>
+#endif
+
 #include <cerrno>
 #include <fcntl.h>
 
 #include <cryptopp/integer.h>
 
-#include "MSshUtil.h"
+#include "MSsh.h"
 #include "MSshAgent.h"
 
 using namespace std;
@@ -71,23 +74,23 @@ MSshAgent* MSshAgent::Create()
 
 	const char* authSock = getenv("SSH_AUTH_SOCK");
 	
-	if (authSock != nil)
-	{
-		struct sockaddr_un addr = {};
-		addr.sun_family = AF_LOCAL;
-		strcpy(addr.sun_path, authSock);
-		
-		int sock = socket(AF_LOCAL, SOCK_STREAM, 0);
-		if (sock >= 0)
-		{
-			if (fcntl(sock, F_SETFD, 1) < 0)
-				close(sock);
-			else if (connect(sock, (const sockaddr*)&addr, sizeof(addr)) < 0)
-				close(sock);
-			else
-				result.reset(new MSshAgent(sock));
-		}
-	}
+	//if (authSock != nil)
+	//{
+	//	struct sockaddr_un addr = {};
+	//	addr.sun_family = AF_LOCAL;
+	//	strcpy(addr.sun_path, authSock);
+	//	
+	//	int sock = socket(AF_LOCAL, SOCK_STREAM, 0);
+	//	if (sock >= 0)
+	//	{
+	//		if (fcntl(sock, F_SETFD, 1) < 0)
+	//			close(sock);
+	//		else if (connect(sock, (const sockaddr*)&addr, sizeof(addr)) < 0)
+	//			close(sock);
+	//		else
+	//			result.reset(new MSshAgent(sock));
+	//	}
+	//}
 
 	return result.release();
 }
@@ -101,7 +104,7 @@ MSshAgent::MSshAgent(
 
 MSshAgent::~MSshAgent()
 {
-	close(mSock);
+	//close(mSock);
 }
 
 bool MSshAgent::GetFirstIdentity(
@@ -119,17 +122,12 @@ bool MSshAgent::GetFirstIdentity(
 	
 	if (RequestReply(out, mIdentities))
 	{
-//#if DEBUG
-//		mIdentities.Dump();
-//#endif
 		mIdentities >> msg;
 		
 		if (msg == SSH2_AGENT_IDENTITIES_ANSWER)
 		{
 			mIdentities >> mCount;
 
-			PRINT(("++ SSH_AGENT returned %d identities", mCount));
-			
 			if (mCount > 0 and mCount < 1024)
 				result = GetNextIdentity(e, n, outComment);
 		}
@@ -145,11 +143,11 @@ bool MSshAgent::GetNextIdentity(
 {
 	bool result = false;
 	
-	while (result == false and mCount-- > 0 and mIdentities.data.length() > 0)
+	while (result == false and mCount-- > 0 and not mIdentities.empty())
 	{
 		MSshPacket blob;
 
-		mIdentities >> blob.data >> outComment;
+		mIdentities >> blob >> outComment;
 		
 		string type;
 		blob >> type;
@@ -160,7 +158,6 @@ bool MSshAgent::GetNextIdentity(
 		blob >> e >> n;
 
 		result = true;
-		PRINT(("++ returning identity %s", outComment.c_str()));
 	}
 	
 	return result;
@@ -170,41 +167,41 @@ bool MSshAgent::RequestReply(
 	MSshPacket&		out,
 	MSshPacket&		in)
 {
-	net_swapper swap;
-	
-	uint32 l = out.data.length();
-	l = swap(l);
-	
 	bool result = false;
 	
-	if (write(mSock, &l, sizeof(l)) == sizeof(l) and
-		write(mSock, out.data.c_str(), out.data.length()) == int32(out.data.length()) and
-		read(mSock, &l, sizeof(l)) == sizeof(l))
-	{
-		l = swap(l);
-		
-		if (l < 256 * 1024)
-		{
-			char b[1024];
-
-			uint32 k = l;
-			if (k > sizeof(b))
-				k = sizeof(b);
-			
-			while (l > 0)
-			{
-				if (read(mSock, b, k) != k)
-					break;
-				
-				in.data.append(b, k);
-				
-				l -= k;
-			}
-			
-			result = (l == 0);
-		}
-	}
-	
+//	net_swapper swap;
+//	
+//	uint32 l = out.size();
+//	l = swap(l);
+//	
+//	if (write(mSock, &l, sizeof(l)) == sizeof(l) and
+//		write(mSock, out.peek(), out.size()) == int32(out.size()) and
+//		read(mSock, &l, sizeof(l)) == sizeof(l))
+//	{
+//		l = swap(l);
+//		
+//		if (l < 256 * 1024)
+//		{
+//			char b[1024];
+//
+//			uint32 k = l;
+//			if (k > sizeof(b))
+//				k = sizeof(b);
+//			
+//			while (l > 0)
+//			{
+//				if (read(mSock, b, k) != k)
+//					break;
+//				
+//				in.data.append(b, k);
+//				
+//				l -= k;
+//			}
+//			
+//			result = (l == 0);
+//		}
+//	}
+//	
 	return result;
 }
 
