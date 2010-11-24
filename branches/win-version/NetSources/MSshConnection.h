@@ -26,7 +26,7 @@
 class MSshChannel;
 class MCertificate;
 class MSshAgent;
-struct MSshPacket;
+class MSshPacket;
 struct ZLibHelper;
 
 class MSshConnection

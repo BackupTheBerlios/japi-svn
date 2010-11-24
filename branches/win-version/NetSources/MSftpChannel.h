@@ -14,19 +14,6 @@
 #include "MSshChannel.h"
 #include "MSshPacket.h"
 
-enum MSftpEvent {
-	SFTP_INIT_DONE = 400,
-	SFTP_SETCWD_OK,
-	SFTP_DIR_LISTING_AVAILABLE,
-	SFTP_MKDIR_OK,
-	SFTP_ERROR,
-	SFTP_FILE_SIZE_KNOWN,
-	SFTP_DATA_AVAILABLE,
-	SFTP_DATA_DONE,
-	SFTP_CAN_SEND_DATA,
-	SFTP_FILE_CLOSED,
-};
-
 class MSftpChannel : public MSshChannel
 {
   public:
@@ -37,54 +24,42 @@ class MSftpChannel : public MSshChannel
 								uint16				inPort);
 
 	static MSftpChannel*	Open(
-								const MFile&	inURL)
+								const MFile&		inURL)
 							{
 								return Open(inURL.GetHost(), inURL.GetUser(), inURL.GetPort());
 							}
 
-	void					SetCWD(
-								const std::string& inDir);
-
-	std::string				GetCWD() const;
-
-	void					OpenDir();
-
-	bool					NextFile(
-								uint32&			ioCookie,
-								std::string&	outName,
-								uint64&			outSize,
-								uint32&			outDate,
-								char&			outType);
-
-	void					MkDir(
-								const std::string&
-												inPath);
-
 	void					ReadFile(
-								const std::string&
-												inPath,
-								bool			inTextMode);
+								const std::string&	inPath);
 
 	void					WriteFile(
-								const std::string&
-												inPath,
-								bool			inTextMode);
+								const std::string&	inPath);
 
-	void					CloseFile();
+	// An SFTPChannelOpened event is sent when SFTP is set up.
+	MEventOut<void()>								eSFTPChannelOpened;
 
-	uint64					GetFileSize() const;
+	// For reading, this object sends out a ReceiveData event
+	// for each block read. First parameter is the data
+	// in the block, second is the offset of this block
+	// and the third the total size of the file.
+	// The file is closed automatically after reading all data.
+	MEventOut<void(const std::string&, int64, int64)>
+													eReceiveData;
 
-	void					SendData(
-								const std::string&
-												inData);
-
-	std::string				GetData() const;
+	// For writing a file, this object sends a SendData event
+	// to collect the data. First parameter is the offset of
+	// the next data block, second parameter indicates the
+	// maximum amount of data to transfer and the third is the
+	// data itself.
+	// The file is closed automatically if the data passed back
+	// is empty.
+	MEventOut<void(int64, uint32, std::string&)>	eSendData;
 	
   protected:
 
 	virtual void			GetRequestAndCommand(
-								std::string&	outRequest,
-								std::string&	outCommand) const
+								std::string&		outRequest,
+								std::string&		outCommand) const
 							{
 								outRequest = "subsystem";
 								outCommand = "sftp";
@@ -93,48 +68,29 @@ class MSftpChannel : public MSshChannel
 //	uint32					GetStatusCode() const	{ return mStatusCode; }
 
 							MSftpChannel(
-								MSshConnection&	inConnection);
+								MSshConnection&		inConnection);
 	
 	virtual void			HandleChannelEvent(
-								uint32			inEvent);
+								uint32				inEvent);
 
 	virtual void			Send(
-								MSshPacket&		inData);
+								MSshPacket&			inData);
 
 	virtual void			Receive(
-								MSshPacket&		inData,
-								int				inType);
+								MSshPacket&			inData,
+								int					inType);
 
 	void					ProcessPacket(
-								uint8			msg,
-								MSshPacket&		in);
-
-	void					ProcessStatus(
-								MSshPacket&		in);
+								uint8				msg,
+								MSshPacket&			in);
 
 	void					Match(
-								uint8		inExpected,
-								uint8		inReceived);
+								uint8			inExpected,
+								uint8			inReceived);
 
 	void (MSftpChannel::*mHandler)(
-								uint8		inMessage,
-								MSshPacket&	in);
-
-	void					ProcessRealPath(
-								uint8		inMessage,
-								MSshPacket&	in);
-
-	void					ProcessOpenDir(
-								uint8		inMessage,
-								MSshPacket&	in);
-
-	void					ProcessReadDir(
-								uint8		inMessage,
-								MSshPacket&	in);
-
-	void					ProcessMkDir(
-								uint8		inMessage,
-								MSshPacket&	in);
+								uint8			inMessage,
+								MSshPacket&		in);
 
 	void					ProcessOpenFile(
 								uint8		inMessage,
@@ -160,27 +116,61 @@ class MSftpChannel : public MSshChannel
 								uint8		inMessage,
 								MSshPacket&	in);
 
-	struct DirEntry
-	{
-		std::string			name;
-		uint64				size;
-		uint32				date;
-		char				type;
-	};
-
-	typedef std::vector<DirEntry>	DirList;
-
 	std::deque<uint8>		mPacket;
 	uint32					mPacketLength;
-	uint32					mStatusCode;
 	uint32					mRequestId;
-	uint32					mPacketSize;
 	std::string				mHandle;
 	int64					mFileSize;
 	int64					mOffset;
-	DirList					mDirList;
-	std::string				mCurrentDir;
 	std::string				mData;
 };
+
+//	void					SetCWD(
+//								const std::string& inDir);
+//
+//	std::string				GetCWD() const;
+//
+//	void					OpenDir();
+//
+//	bool					NextFile(
+//								uint32&			ioCookie,
+//								std::string&	outName,
+//								uint64&			outSize,
+//								uint32&			outDate,
+//								char&			outType);
+//
+//	void					MkDir(
+//								const std::string&
+//												inPath);
+//
+//	void					ProcessRealPath(
+//								uint8		inMessage,
+//								MSshPacket&	in);
+//
+//	void					ProcessOpenDir(
+//								uint8		inMessage,
+//								MSshPacket&	in);
+//
+//	void					ProcessReadDir(
+//								uint8		inMessage,
+//								MSshPacket&	in);
+//
+//	void					ProcessMkDir(
+//								uint8		inMessage,
+//								MSshPacket&	in);
+//
+//	struct DirEntry
+//	{
+//		std::string			name;
+//		uint64				size;
+//		uint32				date;
+//		char				type;
+//	};
+//
+//	typedef std::vector<DirEntry>	DirList;
+//
+//	DirList					mDirList;
+//	std::string				mCurrentDir;
+
 
 #endif // MSFTPCHANNEL_H

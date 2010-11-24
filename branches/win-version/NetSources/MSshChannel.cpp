@@ -55,7 +55,7 @@ void MSshChannel::Open()
 void MSshChannel::Close()
 {
 	MSshPacket out;
-	out << SSH_MSG_CHANNEL_CLOSE << mHostChannelID;
+	out << uint8(SSH_MSG_CHANNEL_CLOSE) << mHostChannelID;
 	mConnection.Send(out);
 }
 
