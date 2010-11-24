@@ -187,6 +187,8 @@ public:
 					GetText() const;
 	virtual void	SetText(const std::string& inText);
 
+	virtual void	SetPasswordChar(uint32 inUnicode);
+
 	virtual bool	DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
 						const std::string& inText);
 

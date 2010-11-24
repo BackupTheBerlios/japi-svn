@@ -37,8 +37,9 @@ MAuthDialog::MAuthDialog(
 		SetVisible("edit-" + boost::lexical_cast<string>(id), true);
 
 		SetText("label-" + boost::lexical_cast<string>(id), inPrompts[id - 1]);
-		
-//		SetPasswordField("edit-" + boost::lexical_cast<string>(id), inEcho[id - 1]);
+
+		if (not inEcho[id - 1])
+			SetPasswordChar("edit-" + boost::lexical_cast<string>(id));
 	}
 
 	for (int32 id = mFields + 1; id <= 5; ++id)

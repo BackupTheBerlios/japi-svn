@@ -367,11 +367,17 @@ MSshPacket& MSshPacket::operator>>(std::string& outValue)
 	uint32 l;
 	operator>>(l);
 	
-	if (l > size())
-		throw MSshPacketError();
+	if (l > 0)
+	{
+		if (l > size())
+			throw MSshPacketError();
 
-	outValue.assign(reinterpret_cast<char*>(&mImpl->mData[0]), l);
-	mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
+		outValue.assign(reinterpret_cast<char*>(&mImpl->mData[0]), l);
+		mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
+	}
+	else
+		outValue.clear();
+
 	return *this;
 }
 

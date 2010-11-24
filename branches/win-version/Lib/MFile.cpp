@@ -478,9 +478,13 @@ class MSftpFileLoader : public MFileLoader
 
 	void			SFTPChannelEvent(
 						uint32			inMessage);
+	MEventIn<void(uint32)>
+					eChannelEvent;
 
 	void			SFTPChannelMessage(
 						const string&	inMessage);
+	MEventIn<void(const string&)>
+					eChannelMessage;
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mFileSize;
@@ -491,6 +495,8 @@ MSftpFileLoader::MSftpFileLoader(
 	MDocument&		inDocument,
 	MFile&			inUrl)
 	: MFileLoader(inDocument, inUrl)
+	, eChannelEvent(this, &MSftpFileLoader::SFTPChannelEvent)
+	, eChannelMessage(this, &MSftpFileLoader::SFTPChannelMessage)
 	, mSFTPChannel(nil)
 {
 }
@@ -499,10 +505,8 @@ void MSftpFileLoader::DoLoad()
 {
 	mSFTPChannel = MSftpChannel::Open(mFile);
 
-	SetCallback(mSFTPChannel->eChannelEvent,
-		this, &MSftpFileLoader::SFTPChannelEvent);
-	SetCallback(mSFTPChannel->eChannelMessage,
-		this, &MSftpFileLoader::SFTPChannelMessage);
+	AddRoute(mSFTPChannel->eChannelEvent, eChannelEvent);
+	AddRoute(mSFTPChannel->eChannelMessage, eChannelMessage);
 	
 	mFileSize = 0;
 	mData.clear();
@@ -610,8 +614,12 @@ class MSftpFileSaver : public MFileSaver
 
 	void			SFTPChannelEvent(
 						uint32			inMessage);
+	MEventIn<void(uint32)>
+					eChannelEvent;
 	void			SFTPChannelMessage(
 						const string&	inMessage);
+	MEventIn<void(const string&)>
+					eChannelMessage;
 
 	MSftpChannel*	mSFTPChannel;
 	int64			mSFTPOffset;
@@ -623,6 +631,8 @@ MSftpFileSaver::MSftpFileSaver(
 	MDocument&		inDocument,
 	MFile&			inFile)
 	: MFileSaver(inDocument, inFile)
+	, eChannelEvent(this, &MSftpFileSaver::SFTPChannelEvent)
+	, eChannelMessage(this, &MSftpFileSaver::SFTPChannelMessage)
 	, mSFTPChannel(nil)
 {
 }
@@ -643,10 +653,8 @@ void MSftpFileSaver::DoSave()
 		eWriteFile(out);
 	}
 
-	SetCallback(mSFTPChannel->eChannelEvent,
-		this, &MSftpFileSaver::SFTPChannelEvent);
-	SetCallback(mSFTPChannel->eChannelMessage,
-		this, &MSftpFileSaver::SFTPChannelMessage);
+	AddRoute(mSFTPChannel->eChannelEvent, eChannelEvent);
+	AddRoute(mSFTPChannel->eChannelMessage, eChannelMessage);
 
 	mSFTPOffset = 0;
 	mSFTPSize = mSFTPData.length();

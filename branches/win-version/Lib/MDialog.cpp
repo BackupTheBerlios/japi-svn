@@ -198,6 +198,13 @@ void MDialog::SetText(const string& inID, const std::string& inText)
 		static_cast<MCaption*>(view)->SetText(inText);
 }
 
+void MDialog::SetPasswordChar(const string& inID, const uint32 inUnicode)
+{
+	MView* view = FindSubViewByID(inID);
+	THROW_IF_NIL(dynamic_cast<MEdittext*>(view));
+	static_cast<MEdittext*>(view)->SetPasswordChar(inUnicode);
+}
+
 int32 MDialog::GetValue(const std::string& inID) const
 {
 	int32 result = -1;

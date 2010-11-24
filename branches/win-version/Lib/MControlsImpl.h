@@ -126,6 +126,8 @@ public:
 	virtual std::string
 					GetText() const = 0;
 
+	virtual void	SetPasswordChar(uint32 inUnicode) = 0;
+
 	static MEdittextImpl*
 					Create(MEdittext* inEdittext);
 };

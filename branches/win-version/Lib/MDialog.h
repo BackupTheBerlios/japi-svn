@@ -52,6 +52,8 @@ class MDialog : public MWindow
 	void			SetEnabled(const std::string& inID, bool inEnabled);
 	void			SetVisible(const std::string& inID, bool inVisible);
 
+	void			SetPasswordChar(const std::string& inID, uint32 inUnicode = 0x2022);
+
 	virtual void	ButtonClicked(const std::string& inID);
 	virtual void	CheckboxChanged(const std::string& inID, bool inValue);
 	virtual void	TextChanged(const std::string& inID, const std::string& inText);

@@ -827,6 +827,11 @@ void MWinEdittextImpl::SetText(const std::string& inText)
 	::UpdateWindow(GetHandle());
 }
 
+void MWinEdittextImpl::SetPasswordChar(uint32 inUnicode)
+{
+	::SendMessage(GetHandle(), EM_SETPASSWORDCHAR, (WPARAM)inUnicode, 0);
+}
+
 bool MWinEdittextImpl::DispatchKeyDown(uint32 inKeyCode, uint32 inModifiers,
 						const std::string& inText)
 {

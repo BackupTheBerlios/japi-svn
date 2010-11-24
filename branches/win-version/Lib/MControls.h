@@ -182,6 +182,8 @@ public:
 	virtual void	SetText(const std::string& inText);
 	virtual std::string
 					GetText() const;
+
+	virtual void	SetPasswordChar(uint32 inUnicode = 0x2022);
 };
 
 // --------------------------------------------------------------------

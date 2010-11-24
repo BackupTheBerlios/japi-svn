@@ -656,13 +656,14 @@ PRINT(("SFTP Packet %d", msg));
 void MSftpChannel::ProcessStatus(
 	MSshPacket&		in)
 {
+	uint8 msg;
 	uint32 id;
-	string msg, lang;
+	string message, lang;
 	
-	in >> id >> mStatusCode >> msg >> lang;
+	in >> msg >> id >> mStatusCode >> message >> lang;
 	
 	if (mStatusCode > SSH_FX_EOF)
-		eChannelMessage(msg);
+		eChannelMessage(message);
 }
 
 void MSftpChannel::SetCWD(const string& inDir)
@@ -805,8 +806,9 @@ void MSftpChannel::ProcessOpenFile(
 {
 	Match(inMessage, SSH_FXP_HANDLE);
 
+	uint8 msg;
 	uint32 id;
-	in >> id >> mHandle;
+	in >> msg >> id >> mHandle;
 
 	if (id != mRequestId)
 		THROW(("Invalid request ID"));
@@ -825,8 +827,9 @@ void MSftpChannel::ProcessFStat(
 
 	mFileSize = 0;
 	
+	uint8 msg;
 	uint32 id, flags;
-	in >> id >> flags;
+	in >> msg >> id >> flags;
 	
 	if (id != mRequestId)
 		THROW(("Invalid request ID"));
@@ -856,8 +859,9 @@ void MSftpChannel::ProcessRead(
 {
 	Match(inMessage, SSH_FXP_DATA);
 
+	uint8 msg;
 	uint32 id;
-	in >> id >> mData;
+	in >> msg >> id >> mData;
 	
 	mOffset += mData.length();
 
@@ -870,8 +874,9 @@ void MSftpChannel::ProcessCreateFile(
 	uint8		inMessage,
 	MSshPacket&	in)
 {
+	uint8 msg;
 	uint32 id;
-	in >> id >> mHandle;
+	in >> msg >> id >> mHandle;
 	
 	mOffset = 0;
 	mHandler = &MSftpChannel::ProcessWrite;

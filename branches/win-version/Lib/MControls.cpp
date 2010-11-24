@@ -230,6 +230,11 @@ string MEdittext::GetText() const
 	return mImpl->GetText();
 }
 
+void MEdittext::SetPasswordChar(uint32 inUnicode)
+{
+	mImpl->SetPasswordChar(inUnicode);
+}
+
 // --------------------------------------------------------------------
 
 MCaption::MCaption(const string& inID, MRect inBounds, const string& inText)
