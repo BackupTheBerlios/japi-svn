@@ -48,6 +48,9 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\boost\include\boost-1_43;$(SolutionDir)..\Lib\Windows;$(SolutionDir)..\Lib;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>
+      </MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -67,6 +70,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\boost\include\boost-1_43;$(SolutionDir)..\Lib\Windows;$(SolutionDir)..\Lib;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

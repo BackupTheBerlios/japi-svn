@@ -12,6 +12,7 @@
 #pragma warning (disable : 4068)	// unknown pragma
 #pragma warning (disable : 4996)	// stl copy is unsafe?
 #include <ciso646>
+#include <sdkddkver.h>
 #endif
 
 #if defined(_DEBUG) && ! defined(DEBUG)

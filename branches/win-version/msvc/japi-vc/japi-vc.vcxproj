@@ -51,7 +51,8 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\japi\Sources;$(SolutionDir)\..\..\libzeep;$(SolutionDir)\..\..\pcre\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>
+      </MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -59,17 +60,17 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp;C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>
-      </IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;pcre.lib;libzeep.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/verbose:lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <CustomBuildStep>
       <Command>C:\strawberry\perl\bin\perl.exe  $(SolutionDir)\..\Resources\MakeRes.pl --rc-dir=$(SolutionDir)\Rsrc --rc-file=MJapi.rc --rc-rsrc=$(SolutionDir)\..\Resources\</Command>
@@ -94,15 +95,16 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp;C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\japi-vc\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;libzeep-vc.lib;pcre.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;pcre.lib;libzeep.lib;cryptlib.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)dpi-aware.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
@@ -133,6 +135,58 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Rsrc\MJapi.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Sources\MDiff.h" />
+    <ClInclude Include="..\..\Sources\MDiffWindow.h" />
+    <ClInclude Include="..\..\Sources\MEditWindow.h" />
+    <ClInclude Include="..\..\Sources\MePubContentFile.h" />
+    <ClInclude Include="..\..\Sources\MePubDocument.h" />
+    <ClInclude Include="..\..\Sources\MePubItem.h" />
+    <ClInclude Include="..\..\Sources\MePubServer.h" />
+    <ClInclude Include="..\..\Sources\MePubWindow.h" />
+    <ClInclude Include="..\..\Sources\MFindAndOpenDialog.h" />
+    <ClInclude Include="..\..\Sources\MFindDialog.h" />
+    <ClInclude Include="..\..\Sources\MGoToLineDialog.h" />
+    <ClInclude Include="..\..\Sources\MGtkWrappers.h" />
+    <ClInclude Include="..\..\Sources\MJapi.h" />
+    <ClInclude Include="..\..\Sources\MJapiApp.h" />
+    <ClInclude Include="..\..\Sources\MLanguage.h" />
+    <ClInclude Include="..\..\Sources\MLanguageCpp.h" />
+    <ClInclude Include="..\..\Sources\MLanguageHTML.h" />
+    <ClInclude Include="..\..\Sources\MLanguagePascal.h" />
+    <ClInclude Include="..\..\Sources\MLanguagePerl.h" />
+    <ClInclude Include="..\..\Sources\MLanguagePython.h" />
+    <ClInclude Include="..\..\Sources\MLanguageTeX.h" />
+    <ClInclude Include="..\..\Sources\MLanguageXML.h" />
+    <ClInclude Include="..\..\Sources\MLibraryInfoDialog.h" />
+    <ClInclude Include="..\..\Sources\MLineInfo.h" />
+    <ClInclude Include="..\..\Sources\MMarkMatchingDialog.h" />
+    <ClInclude Include="..\..\Sources\MMessageWindow.h" />
+    <ClInclude Include="..\..\Sources\MObjectFile.h" />
+    <ClInclude Include="..\..\Sources\MObjectFileImp_elf.h" />
+    <ClInclude Include="..\..\Sources\MObjectFileImp_macho.h" />
+    <ClInclude Include="..\..\Sources\MPatriciaTree.h" />
+    <ClInclude Include="..\..\Sources\MPkgConfig.h" />
+    <ClInclude Include="..\..\Sources\MPrefsDialog.h" />
+    <ClInclude Include="..\..\Sources\MProject.h" />
+    <ClInclude Include="..\..\Sources\MProjectImp.h" />
+    <ClInclude Include="..\..\Sources\MProjectInfoDialog.h" />
+    <ClInclude Include="..\..\Sources\MProjectItem.h" />
+    <ClInclude Include="..\..\Sources\MProjectJob.h" />
+    <ClInclude Include="..\..\Sources\MProjectWindow.h" />
+    <ClInclude Include="..\..\Sources\MQuotedRewrapDialog.h" />
+    <ClInclude Include="..\..\Sources\MSelection.h" />
+    <ClInclude Include="..\..\Sources\MShell.h" />
+    <ClInclude Include="..\..\Sources\MShellImpl.h" />
+    <ClInclude Include="..\..\Sources\MStyles.h" />
+    <ClInclude Include="..\..\Sources\MTextBuffer.h" />
+    <ClInclude Include="..\..\Sources\MTextController.h" />
+    <ClInclude Include="..\..\Sources\MTextDocument.h" />
+    <ClInclude Include="..\..\Sources\MTextLayout.h" />
+    <ClInclude Include="..\..\Sources\MTextView.h" />
+    <ClInclude Include="..\..\Sources\MTimer.h" />
+    <ClInclude Include="..\..\Sources\MXHTMLTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

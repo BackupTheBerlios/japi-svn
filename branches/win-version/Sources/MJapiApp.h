@@ -6,6 +6,12 @@
 #ifndef MJAPIAPP_H
 #define MJAPIAPP_H
 
+#if defined(_MSC_VER)
+#pragma comment (lib, "libzeep")
+#pragma comment (lib, "pcre")
+#pragma comment (lib, "cryptlib")
+#endif
+
 #include <list>
 #include <deque>
 

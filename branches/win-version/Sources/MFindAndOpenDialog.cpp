@@ -23,7 +23,7 @@ using namespace std;
 namespace {
 
 const string
-	kTextBoxControlID = "edit";
+	kFileComboControlID = "edit";
 
 }
 
@@ -34,11 +34,13 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	, mDocument(inDocument)
 //	, mProject(nil)
 {
-	SetText(kTextBoxControlID,
-		Preferences::GetString("last open include", ""));
+	vector<string> last;
+	
+	Preferences::GetArray("open include", last);
+	SetChoices(kFileComboControlID, last);
 
 	Show(inWindow);
-	SetFocus(kTextBoxControlID);
+	SetFocus(kFileComboControlID);
 }
 
 //MFindAndOpenDialog::MFindAndOpenDialog(
@@ -48,43 +50,50 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 //	, mController(nil)
 //	, mProject(inProject)
 //{
-//	SetText(kTextBoxControlID,
-//		Preferences::GetString("last open include", ""));
+//	vector<string> last;
+//	
+//	Preferences::GetArray("open include", last);
+//	SetValues(kFileComboControlID, last);
 //
 //	Show(inWindow);
-//	SetFocus(kTextBoxControlID);
+//	SetFocus(kFileComboControlID);
 //}
 
 bool MFindAndOpenDialog::OKClicked()
 {
-	string s = GetText(kTextBoxControlID);
+	string s = GetText(kFileComboControlID);
 
-	Preferences::SetString("last open include", s);
-
-	bool opened = false;
-
+	vector<string> last;
+	Preferences::GetArray("open include", last);
+	last.erase(remove(last.begin(), last.end(), s), last.end());
+	last.insert(last.begin(), s);
+	if (last.size() > 10)
+		last.erase(last.end() - 1);
+	Preferences::SetArray("open include", last);
+	
 	if (mDocument != nil)
-		opened = mDocument->OpenInclude(s);
-
-	if (not opened)
 	{
-//		MProject* project = mProject;
-//		
-//		if (project == nil)
-//			project = MProject::Instance();
-//		if (project != nil and project->LocateFile(s, true, p))
-//			opened = (gApp->OpenOneDocument(MFile(p)) != nil);
+		if (not mDocument->OpenInclude(s))
+			PlaySound("warning");
 	}
+	//else
+	//{
+	//	MProject* project = mProject;
+	//	
+	//	if (project == nil)
+	//		project = MProject::Instance();
 
-	if (not opened)
-	{
-		fs::path p(s);
-		if (fs::exists(p))
-			opened = (gApp->OpenOneDocument(MFile(p)) != nil);
-	}
-
-	if (not opened)
-		PlaySound("warning");
+	//	MFile file(s);
+	//	
+	//	if (file.IsLocal() and not file.Exists() and project != nil)
+	//	{
+	//		fs::path p(s);
+	//		if (project->LocateFile(s, true, p))
+	//			file = p;
+	//	}
+	//	
+	//	gApp->OpenOneDocument(file);
+	//}
 	
 	return true;
 }

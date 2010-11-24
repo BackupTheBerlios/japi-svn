@@ -5,6 +5,10 @@
 
 #include "MJapi.h"
 
+//#if defined(_MSC_VER)
+//#pragma comment ( lib, "libzeep" )
+//#endif
+
 #include <fcntl.h>
 #include <cerrno>
 #include <signal.h>

@@ -2877,7 +2877,6 @@ bool MTextDocument::CanReplace()
 	return mText.CanReplace(MFindDialog::Instance().GetFindString(),
 		MFindDialog::Instance().GetRegex(),
 		MFindDialog::Instance().GetIgnoreCase(), mSelection);
-	return false;
 }
 
 void MTextDocument::DoMarkLine()
