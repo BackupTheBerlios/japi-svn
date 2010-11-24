@@ -25,6 +25,7 @@
 #include "MPreferences.h"
 #include "MError.h"
 #include "MApplication.h"
+#include "MUtils.h"
 
 #include <zeep/xml/document.hpp>
 #include <zeep/xml/node.hpp>
@@ -34,6 +35,8 @@
 using namespace std;
 namespace xml = zeep::xml;
 namespace fs = boost::filesystem;
+
+fs::path	gPrefsDir;
 
 namespace Preferences
 {
@@ -94,8 +97,11 @@ IniFile::IniFile()
 
 		if (not fs::exists(mPrefsFile))
 		{
-			if (not fs::exists(gPrefsDir))
-				fs::create_directories(gPrefsDir);
+			gPrefsDir = GetPrefsDirectory();
+
+			if (gPrefsDir.is_complete() and not fs::exists(gPrefsDir))
+					fs::create_directories(gPrefsDir);
+
 			mPrefsFile = gPrefsDir / "settings.xml";
 		}
 		

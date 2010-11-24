@@ -12,8 +12,10 @@
 #include "MWinWindowImpl.h"
 #include "MDialog.h"
 #include "MError.h"
+#include "MPreferences.h"
 
 using namespace std;
+namespace fs = boost::filesystem;
 
 #ifdef UNICODE
 #if defined _M_IX86
@@ -39,8 +41,27 @@ MWinApplicationImpl::MWinApplicationImpl(
 void MWinApplicationImpl::Initialise()
 {
 	wchar_t path[MAX_PATH] = {};
+
 	if (::GetModuleFileName(NULL, path, MAX_PATH) > 0)
 		gExecutablePath = w2c(path);
+
+	try
+	{
+		PWSTR prefsPath;
+		if (::SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, NULL, &prefsPath) == S_OK and
+			prefsPath != NULL)
+		{
+			string path = w2c(prefsPath);
+			gPrefsDir = fs::path(path) / "Japi";
+			::CoTaskMemFree(prefsPath);
+		}
+
+		if (gPrefsDir.is_complete() and not fs::exists(gPrefsDir))
+		{
+			fs::create_directories(gPrefsDir);
+		}
+	}
+	catch (...) {}
 
     HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 

@@ -14,6 +14,8 @@ class MApplicationImpl
 					MApplicationImpl()		{}
 	virtual			~MApplicationImpl()		{}
 
+	virtual void	Initialise() = 0;
+
 	virtual int		RunEventLoop() = 0;
 
 	virtual void	Quit() = 0;

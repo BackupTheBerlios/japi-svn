@@ -209,6 +209,8 @@ std::string	GetUserName(
 
 std::string GetHomeDirectory();
 
+std::string GetPrefsDirectory();
+
 std::string	GetDateTime();
 
 double GetLocalTime();

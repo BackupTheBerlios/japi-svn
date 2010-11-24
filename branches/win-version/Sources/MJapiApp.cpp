@@ -107,7 +107,7 @@ MColor			gWhiteSpaceColor;
 
 uint32			gConcurrentJobs = 2;
 
-fs::path		gTemplatesDir, gScriptsDir, gPrefsDir;
+fs::path		gTemplatesDir, gScriptsDir;
 
 // --------------------------------------------------------------------
 
@@ -798,7 +798,7 @@ void MJapiApp::InitGlobals()
 	//	gTemplatesDir = gPrefsDir / "Templates";
 
 	gScriptsDir = gPrefsDir / "Scripts";
-		
+	
 	gPlaySounds = Preferences::GetBoolean("play sounds", gPlaySounds);
 	gAutoIndent = Preferences::GetBoolean("auto indent", gAutoIndent);
 	gSmartIndent = Preferences::GetBoolean("smart indent", gSmartIndent);

@@ -23,7 +23,7 @@ class MWinApplicationImpl : public MApplicationImpl
 	virtual int		RunEventLoop();
 	virtual void	Quit();
 
-	void			Initialise();
+	virtual void	Initialise();
 
   private:
 

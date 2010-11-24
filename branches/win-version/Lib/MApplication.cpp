@@ -266,6 +266,8 @@ void MApplication::DoSelectWindowFromWindowMenu(
 
 int MApplication::RunEventLoop()
 {
+	mImpl->Initialise();
+
 	InitGlobals();
 
 	int result = mImpl->RunEventLoop();

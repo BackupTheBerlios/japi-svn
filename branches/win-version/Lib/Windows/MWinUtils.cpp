@@ -283,6 +283,26 @@ string GetHomeDirectory()
 	return result;
 }
 
+string GetPrefsDirectory()
+{
+	fs::path result;
+
+	try
+	{
+		PWSTR prefsPath;
+		if (::SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, NULL, &prefsPath) == S_OK and
+			prefsPath != NULL)
+		{
+			string path = w2c(prefsPath);
+			result = fs::path(path) / "Japi";
+			::CoTaskMemFree(prefsPath);
+		}
+	}
+	catch (...) {}
+	
+	return result.native_file_string();
+}
+
 void delay(double inSeconds)
 {
 	if (inSeconds > 0.0)
