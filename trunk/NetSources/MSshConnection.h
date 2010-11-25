@@ -26,7 +26,7 @@
 class MSshChannel;
 class MCertificate;
 class MSshAgent;
-struct MSshPacket;
+class MSshPacket;
 struct ZLibHelper;
 
 class MSshConnection
@@ -44,7 +44,11 @@ class MSshConnection
 	void			Connect();
 	void			Disconnect();
 	
+	bool			IsConnected() const					{ return mConnected; }
+	
 	void			OpenChannel(
+						MSshChannel*	inChannel);
+	void			CloseChannel(
 						MSshChannel*	inChannel);
 
 	std::string		GetEncryptionParams() const;
@@ -155,18 +159,6 @@ class MSshConnection
 		SSH_AUTH_STATE_PASSWORD
 	};
 
-//	void			ProcessUserAuthNone(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthPassword(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthKeyboardInteractive(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthPublicKey(
-//						MSshPacket&			in);
-
 	void			ProcessChannelRequest(
 						uint8				inMessage,
 						MSshPacket&			in);
@@ -192,9 +184,6 @@ class MSshConnection
 	void			RecvPassword(
 						std::vector<std::string>
 											inPassword);
-
-	void						Idle(double);
-	MEventIn<void(double)>		eIdle;
 
 	std::string					mUserName;
 	std::string					mIPAddress;
@@ -259,8 +248,14 @@ class MSshConnection
 	
 	ChannelList					mChannels, mOpeningChannels;
 
-	static MSshConnection*		sFirstConnection;
-	MSshConnection*				mNext;
+	static boost::asio::io_service&
+								GetIOService();
+
+	friend class MIdleHandler;
+	static void					Idle(double);
+
+	static std::list<MSshConnection*>
+								sConnectionList;
 };
 
 #endif // MSSHCONNECTION_H

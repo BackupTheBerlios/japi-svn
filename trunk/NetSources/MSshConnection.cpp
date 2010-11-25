@@ -52,8 +52,6 @@ namespace ba = boost::algorithm;
 using boost::asio::ip::tcp;
 namespace io = boost::iostreams;
 
-MSshConnection*	MSshConnection::sFirstConnection;
-
 namespace {
 
 const string
@@ -104,41 +102,6 @@ Integer					p2(k_p_2, sizeof(k_p_2)), q2((p2 - 1) / 2);
 Integer					p14(k_p_14, sizeof(k_p_14)), q14((p14 - 1) / 2);
 
 AutoSeededRandomPool	rng;
-
-class MIOService
-{
-  public:
-	static MIOService&	Instance();
-
-						operator boost::asio::io_service& ()	{ return mIOService; }
-
-  private:
-						MIOService();
-						
-	void				Idle(double);
-	MEventIn<void(double)>
-						eIdle;
-
-	boost::asio::io_service
-						mIOService;
-};
-
-MIOService&	MIOService::Instance()
-{
-	static MIOService* sIOService = new MIOService;
-	return *sIOService;
-}
-
-MIOService::MIOService()
-	: eIdle(this, &MIOService::Idle)
-{
-	AddRoute(gApp->eIdle, eIdle);
-}
-
-void MIOService::Idle(double)
-{
-	mIOService.poll();
-}
 
 } // end private namespace
 
@@ -216,13 +179,16 @@ int ZLibHelper::Process(
 	return err;
 }
 
+// --------------------------------------------------------------------
+
+list<MSshConnection*> MSshConnection::sConnectionList;
+
 MSshConnection::MSshConnection(
 	const string&	inIPAddress,
 	const string&	inUserName,
 	uint16			inPortNr)
 	: eRecvAuthInfo(this, &MSshConnection::RecvAuthInfo)
 	, eRecvPassword(this, &MSshConnection::RecvPassword)
-	, eIdle(this, &MSshConnection::Idle)
 	, mUserName(inUserName)
 	, mIPAddress(inIPAddress)
 	, mPortNumber(inPortNr)
@@ -230,49 +196,29 @@ MSshConnection::MSshConnection(
 	, mAuthenticated(false)
 	, mPasswordAttempts(0)
 	, mAuthenticationState(SSH_AUTH_STATE_NONE)
-	, mResolver(MIOService::Instance())
-	, mSocket(MIOService::Instance())
+	, mResolver(GetIOService())
+	, mSocket(GetIOService())
 	, mPacketLength(0)
-	, mDecryptorCipher(nil)
-	, mDecryptorCBC(nil)
-	, mEncryptorCipher(nil)
-	, mEncryptorCBC(nil)
-	, mSigner(nil)
-	, mVerifier(nil)
 	, mOutSequenceNr(0)
 	, mInSequenceNr(0)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
 {
-	AddRoute(gApp->eIdle, eIdle);
-	
 	foreach (byte*& key, mKeys)
 		key = nil;
 	
-	mNext = sFirstConnection;
-	sFirstConnection = this;
+	sConnectionList.push_back(this);
 }
 
 MSshConnection::~MSshConnection()
 {
 	foreach (byte*& key, mKeys)
 		delete key;
+	
+	sConnectionList.erase(
+		remove(sConnectionList.begin(), sConnectionList.end(), this),
+		sConnectionList.end());
 
-	if (this == sFirstConnection)
-		sFirstConnection = mNext;
-	else
-	{
-		MSshConnection* c = sFirstConnection;
-		while (c != nil)
-		{
-			MSshConnection* next = c->mNext;
-			if (next == this)
-			{
-				c->mNext = mNext;
-				break;
-			}
-			c = next;
-		}
-	}
+	PRINT(("Deleting SSH connection"));
 }
 
 MSshConnection* MSshConnection::Get(
@@ -288,23 +234,69 @@ MSshConnection* MSshConnection::Get(
 	if (inPort == 0)
 		inPort = 22;
 	
-	MSshConnection* connection = sFirstConnection;
-	while (connection != nil)
+	MSshConnection* connection = nil;
+	
+	foreach (MSshConnection* c, sConnectionList)
 	{
-		if (connection->mIPAddress == inIPAddress and
-			connection->mUserName == username and
-			connection->mPortNumber == inPort)
+		if (c->mIPAddress == inIPAddress and
+			c->mUserName == username and
+			c->mPortNumber == inPort)
 		{
+			connection = c;
 			break;
 		}
-		
-		connection = connection->mNext;
 	}
 	
 	if (connection == nil)
 		connection = new MSshConnection(inIPAddress, username, inPort);
 
 	return connection;
+}
+
+class MIdleHandler
+{
+  public:
+			MIdleHandler()
+				: eIdle(this, &MIdleHandler::Idle)
+			{
+			}
+
+	void	Idle(double t)
+			{
+				MSshConnection::Idle(t);
+			}
+		
+	MEventIn<void(double)> eIdle;
+};
+
+boost::asio::io_service& MSshConnection::GetIOService()
+{
+	static boost::asio::io_service* sIOService = nil;
+	static MIdleHandler sIdleHandler;
+	
+	if (sIOService == nil)
+	{
+		sIOService = new boost::asio::io_service;
+		AddRoute(sIdleHandler.eIdle, gApp->eIdle);
+	}
+
+	return *sIOService;
+}
+
+void MSshConnection::Idle(double)
+{
+	foreach (MSshConnection* connection, sConnectionList)
+	{
+		foreach (MSshChannel* channel, connection->mChannels)
+		{
+			MSshPacket p;
+			if (channel->PopPending(p))
+				connection->Send(p);
+		}
+	}
+	
+	GetIOService().reset();
+	GetIOService().poll();
 }
 
 void MSshConnection::Error(
@@ -366,14 +358,16 @@ void MSshConnection::Disconnect()
 	if (mConnected)
 	{
 		mSocket.close();
-			
+		
 		eConnectionMessage(_("Connection closed"));
 	
-//		for_each(mChannels.begin(), mChannels.end(),
-//			boost::bind(&MSshChannel::ConnectionClosed, _1));
-		
 		mConnected = false;
     	mAuthenticated = false;
+
+		for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
+		mChannels.clear();
+		
+		delete this;
 	}
 }
 
@@ -385,16 +379,6 @@ void MSshConnection::CertificateDeleted(
 //		mCertificate.reset(nil);
 //		Disconnect();
 //	}
-}
-
-void MSshConnection::Idle(double)
-{
-	foreach (MSshChannel* channel, mChannels)
-	{
-		MSshPacket p;
-		if (channel->PopPending(p))
-			Send(p);
-	}
 }
 
 void MSshConnection::Send(
@@ -463,7 +447,17 @@ void MSshConnection::Receive(
 	const boost::system::error_code& err)
 {
     if (err)
+    {
+    	// a connection be be closed while we don't expect anything
+    	// in that case we ignore this error.
+    	if (mChannels.empty() and mOpeningChannels.empty())
+    	{
+    		Disconnect();
+    		return;
+    	}
+    	
     	Error(SSH_DISCONNECT_CONNECTION_LOST, err.message());
+    }
 
 	for (;;)
     {
@@ -1098,10 +1092,7 @@ void MSshConnection::ProcessUserAuthFailed(
 				break;
 			
 			case SSH_AUTH_STATE_KEYBOARD_INTERACTIVE:
-				if (ChooseProtocol(s, "keyboard-interactive") == "keyboard-interactive")
-					done = true;
-				else
-					mAuthenticationState = SSH_AUTH_STATE_PASSWORD;
+				mAuthenticationState = SSH_AUTH_STATE_PASSWORD;
 				break;
 			
 			case SSH_AUTH_STATE_PASSWORD:
@@ -1327,6 +1318,23 @@ void MSshConnection::OpenChannel(
 	}
 }
 
+void MSshConnection::CloseChannel(
+	MSshChannel*	inChannel)
+{
+	if (mConnected and inChannel->IsOpen())
+		inChannel->Close();
+	else
+	{
+		mOpeningChannels.erase(
+			remove(mOpeningChannels.begin(), mOpeningChannels.end(), inChannel),
+			mOpeningChannels.end());
+		mChannels.erase(
+			remove(mChannels.begin(), mChannels.end(), inChannel),
+			mChannels.end());
+		delete inChannel;
+	}
+}
+
 void MSshConnection::ProcessChannel(
 	uint8		inMessage,
 	MSshPacket&	in)
@@ -1345,6 +1353,9 @@ void MSshConnection::ProcessChannel(
 	{
 		MSshChannel* channel = *ch;
 		channel->Process(inMessage, in);
+		
+		if (inMessage == SSH_MSG_CHANNEL_CLOSE and not channel->IsOpen())
+			CloseChannel(channel);
 	}
 }
 
