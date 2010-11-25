@@ -508,10 +508,9 @@ void MSshPacket::Compress()
 
 	io::zlib_params params;
 	params.noheader = true;	// don't read header, i.e. true deflate compression
-	io::zlib_compressor z_stream(params);
-	in.push(z_stream);
+	in.push(io::zlib_compressor(params));
 	
-	io::stream<io::array_source> s(reinterpret_cast<const char*>(peek()), size());
+	io::stream<io::array_source> s(&mImpl->mData[0], size());
 	in.push(s);
 	
 	vector<char> data;
