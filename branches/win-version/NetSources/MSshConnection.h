@@ -44,7 +44,11 @@ class MSshConnection
 	void			Connect();
 	void			Disconnect();
 	
+	bool			IsConnected() const					{ return mConnected; }
+	
 	void			OpenChannel(
+						MSshChannel*	inChannel);
+	void			CloseChannel(
 						MSshChannel*	inChannel);
 
 	std::string		GetEncryptionParams() const;
@@ -155,18 +159,6 @@ class MSshConnection
 		SSH_AUTH_STATE_PASSWORD
 	};
 
-//	void			ProcessUserAuthNone(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthPassword(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthKeyboardInteractive(
-//						MSshPacket&			in);
-//
-//	void			ProcessUserAuthPublicKey(
-//						MSshPacket&			in);
-
 	void			ProcessChannelRequest(
 						uint8				inMessage,
 						MSshPacket&			in);
@@ -193,9 +185,6 @@ class MSshConnection
 						std::vector<std::string>
 											inPassword);
 
-	void						Idle(double);
-	MEventIn<void(double)>		eIdle;
-
 	std::string					mUserName;
 	std::string					mIPAddress;
 	uint16						mPortNumber;
@@ -221,8 +210,9 @@ class MSshConnection
 	std::unique_ptr<CryptoPP::StreamTransformation>			mEncryptorCBC;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mSigner;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mVerifier;
-//	std::unique_ptr<ZLibHelper>								mCompressor;
-//	std::unique_ptr<ZLibHelper>								mDecompressor;
+
+	bool						mCompress, mDecompress;
+	bool						mDelayedCompress, mDelayedDecompress;
 	
 	CryptoPP::Integer			m_x;
 	CryptoPP::Integer			m_e;
@@ -259,8 +249,14 @@ class MSshConnection
 	
 	ChannelList					mChannels, mOpeningChannels;
 
-	static MSshConnection*		sFirstConnection;
-	MSshConnection*				mNext;
+	static boost::asio::io_service&
+								GetIOService();
+
+	friend class MIdleHandler;
+	static void					Idle(double);
+
+	static std::list<MSshConnection*>
+								sConnectionList;
 };
 
 #endif // MSSHCONNECTION_H

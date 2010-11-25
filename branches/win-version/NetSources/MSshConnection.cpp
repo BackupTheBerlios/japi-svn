@@ -32,7 +32,6 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/files.h>
 #include <cryptopp/factory.h>
-//#include <zlib.h>
 
 #include "MSsh.h"
 #include "MError.h"
@@ -53,8 +52,6 @@ using namespace CryptoPP;
 namespace ba = boost::algorithm;
 using boost::asio::ip::tcp;
 namespace io = boost::iostreams;
-
-MSshConnection*	MSshConnection::sFirstConnection;
 
 namespace {
 
@@ -98,8 +95,8 @@ const char
 	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-md5",
-	kUseCompressionAlgorithms[] = "zlib,none",
-	kDontUseCompressionAlgorithms[] = "none,zlib";
+	kUseCompressionAlgorithms[] = "zlib@openssh.com,zlib,none",
+	kDontUseCompressionAlgorithms[] = "none,zlib@openssh.com,zlib";
 
 // implement as globals to keep things simple
 Integer					p2(k_p_2, sizeof(k_p_2)), q2((p2 - 1) / 2);
@@ -107,118 +104,11 @@ Integer					p14(k_p_14, sizeof(k_p_14)), q14((p14 - 1) / 2);
 
 AutoSeededRandomPool	rng;
 
-class MIOService
-{
-  public:
-	static MIOService&	Instance();
-
-						operator boost::asio::io_service& ()	{ return mIOService; }
-
-  private:
-						MIOService();
-						
-	void				Idle(double);
-	MEventIn<void(double)>
-						eIdle;
-
-	boost::asio::io_service
-						mIOService;
-};
-
-MIOService&	MIOService::Instance()
-{
-	static MIOService* sIOService = new MIOService;
-	return *sIOService;
-}
-
-MIOService::MIOService()
-	: eIdle(this, &MIOService::Idle)
-{
-	AddRoute(gApp->eIdle, eIdle);
-}
-
-void MIOService::Idle(double)
-{
-	mIOService.poll();
-}
-
 } // end private namespace
 
-#if 0
-struct ZLibHelper
-{
-						ZLibHelper(bool inInflate);
-						~ZLibHelper();
-	
-	int					Process(string& ioData);
-	
-	z_stream_s			mStream;
-	bool				mInflate;
-	static const uint32	kBufferSize;
-	static char			sBuffer[];
-};
+// --------------------------------------------------------------------
 
-const uint32 ZLibHelper::kBufferSize = 1024;
-char ZLibHelper::sBuffer[ZLibHelper::kBufferSize];	
-
-ZLibHelper::ZLibHelper(
-	bool	inInflate)
-	: mInflate(inInflate)
-{
-	memset(&mStream, 0, sizeof(mStream));
-
-	int err;
-
-	if (inInflate)
-		err = inflateInit(&mStream);
-	else
-		err = deflateInit(&mStream, kDefaultCompressionLevel);
-//	if (err != Z_OK)
-//		THROW(("Decompression error: %s", mStream.msg));
-}
-
-ZLibHelper::~ZLibHelper()
-{
-	if (mInflate)
-		inflateEnd(&mStream);
-	else
-		deflateEnd(&mStream);
-}
-
-int ZLibHelper::Process(
-	string&		ioData)
-{
-	string result;
-	
-	mStream.next_in = const_cast<byte*>(reinterpret_cast<const byte*>(ioData.c_str()));
-	mStream.avail_in = ioData.length();
-	mStream.total_in = 0;
-	
-	mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-	mStream.avail_out = kBufferSize;
-	mStream.total_out = 0;
-
-	int err;
-	do
-	{
-		if (mInflate)
-			err = inflate(&mStream, Z_SYNC_FLUSH);
-		else
-			err = deflate(&mStream, Z_SYNC_FLUSH);
-
-		if (kBufferSize - mStream.avail_out > 0)
-		{
-			result.append(sBuffer, kBufferSize - mStream.avail_out);
-			mStream.avail_out = kBufferSize;
-			mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-		}
-	}
-	while (err >= Z_OK);
-	
-	ioData = result;
-	return err;
-}
-#endif
+list<MSshConnection*> MSshConnection::sConnectionList;
 
 MSshConnection::MSshConnection(
 	const string&	inIPAddress,
@@ -226,7 +116,6 @@ MSshConnection::MSshConnection(
 	uint16			inPortNr)
 	: eRecvAuthInfo(this, &MSshConnection::RecvAuthInfo)
 	, eRecvPassword(this, &MSshConnection::RecvPassword)
-	, eIdle(this, &MSshConnection::Idle)
 	, mUserName(inUserName)
 	, mIPAddress(inIPAddress)
 	, mPortNumber(inPortNr)
@@ -234,43 +123,33 @@ MSshConnection::MSshConnection(
 	, mAuthenticated(false)
 	, mPasswordAttempts(0)
 	, mAuthenticationState(SSH_AUTH_STATE_NONE)
-	, mResolver(MIOService::Instance())
-	, mSocket(MIOService::Instance())
+	, mResolver(GetIOService())
+	, mSocket(GetIOService())
 	, mPacketLength(0)
+	, mCompress(false)
+	, mDecompress(false)
+	, mDelayedCompress(false)
+	, mDelayedDecompress(false)
 	, mOutSequenceNr(0)
 	, mInSequenceNr(0)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
 {
-	AddRoute(gApp->eIdle, eIdle);
-	
 	foreach (byte*& key, mKeys)
 		key = nil;
 	
-	mNext = sFirstConnection;
-	sFirstConnection = this;
+	sConnectionList.push_back(this);
 }
 
 MSshConnection::~MSshConnection()
 {
 	foreach (byte*& key, mKeys)
 		delete key;
+	
+	sConnectionList.erase(
+		remove(sConnectionList.begin(), sConnectionList.end(), this),
+		sConnectionList.end());
 
-	if (this == sFirstConnection)
-		sFirstConnection = mNext;
-	else
-	{
-		MSshConnection* c = sFirstConnection;
-		while (c != nil)
-		{
-			MSshConnection* next = c->mNext;
-			if (next == this)
-			{
-				c->mNext = mNext;
-				break;
-			}
-			c = next;
-		}
-	}
+	PRINT(("Deleting SSH connection"));
 }
 
 MSshConnection* MSshConnection::Get(
@@ -286,23 +165,69 @@ MSshConnection* MSshConnection::Get(
 	if (inPort == 0)
 		inPort = 22;
 	
-	MSshConnection* connection = sFirstConnection;
-	while (connection != nil)
+	MSshConnection* connection = nil;
+	
+	foreach (MSshConnection* c, sConnectionList)
 	{
-		if (connection->mIPAddress == inIPAddress and
-			connection->mUserName == username and
-			connection->mPortNumber == inPort)
+		if (c->mIPAddress == inIPAddress and
+			c->mUserName == username and
+			c->mPortNumber == inPort)
 		{
+			connection = c;
 			break;
 		}
-		
-		connection = connection->mNext;
 	}
 	
 	if (connection == nil)
 		connection = new MSshConnection(inIPAddress, username, inPort);
 
 	return connection;
+}
+
+class MIdleHandler
+{
+  public:
+			MIdleHandler()
+				: eIdle(this, &MIdleHandler::Idle)
+			{
+			}
+
+	void	Idle(double t)
+			{
+				MSshConnection::Idle(t);
+			}
+		
+	MEventIn<void(double)> eIdle;
+};
+
+boost::asio::io_service& MSshConnection::GetIOService()
+{
+	static boost::asio::io_service* sIOService = nil;
+	static MIdleHandler sIdleHandler;
+	
+	if (sIOService == nil)
+	{
+		sIOService = new boost::asio::io_service;
+		AddRoute(sIdleHandler.eIdle, gApp->eIdle);
+	}
+
+	return *sIOService;
+}
+
+void MSshConnection::Idle(double)
+{
+	foreach (MSshConnection* connection, sConnectionList)
+	{
+		foreach (MSshChannel* channel, connection->mChannels)
+		{
+			MSshPacket p;
+			if (channel->PopPending(p))
+				connection->Send(p);
+		}
+	}
+	
+	GetIOService().reset();
+	GetIOService().poll();
 }
 
 void MSshConnection::Error(
@@ -364,14 +289,16 @@ void MSshConnection::Disconnect()
 	if (mConnected)
 	{
 		mSocket.close();
-			
+		
 		eConnectionMessage(_("Connection closed"));
 	
-//		for_each(mChannels.begin(), mChannels.end(),
-//			boost::bind(&MSshChannel::ConnectionClosed, _1));
-		
 		mConnected = false;
     	mAuthenticated = false;
+
+		for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
+		mChannels.clear();
+		
+		delete this;
 	}
 }
 
@@ -385,16 +312,6 @@ void MSshConnection::CertificateDeleted(
 //	}
 }
 
-void MSshConnection::Idle(double)
-{
-	foreach (MSshChannel* channel, mChannels)
-	{
-		MSshPacket p;
-		if (channel->PopPending(p))
-			Send(p);
-	}
-}
-
 void MSshConnection::Send(
 	MSshPacket&		inPacket)
 {
@@ -403,8 +320,8 @@ void MSshConnection::Send(
 	if (mEncryptorCipher.get() != nil)
 		blockSize = mEncryptorCipher->BlockSize();
 	
-//	if (mCompressor.get() != nil)
-//		mCompressor->Process(inPacket.data);
+	if (mCompress)
+		inPacket.Compress();
 	
 	inPacket.Wrap(blockSize, rng);
 
@@ -461,7 +378,17 @@ void MSshConnection::Receive(
 	const boost::system::error_code& err)
 {
     if (err)
+    {
+    	// a connection be be closed while we don't expect anything
+    	// in that case we ignore this error.
+    	if (mChannels.empty() and mOpeningChannels.empty())
+    	{
+    		Disconnect();
+    		return;
+    	}
+    	
     	Error(SSH_DISCONNECT_CONNECTION_LOST, err.message());
+    }
 
 	for (;;)
     {
@@ -714,9 +641,9 @@ void MSshConnection::HandleProtocolVersionExchangeResponse(
 		out << rng.GenerateByte();
 
 	string compress;
-//	if (Preferences::GetInteger("compress-sftp", true))
-//		compress = kUseCompressionAlgorithms;
-//	else
+	if (Preferences::GetInteger("compress-sftp", true))
+		compress = kUseCompressionAlgorithms;
+	else
 		compress = kDontUseCompressionAlgorithms;
 
 	out << kKeyExchangeAlgorithms
@@ -969,18 +896,15 @@ void MSshConnection::ProcessNewKeys(
 			new HMAC<Weak::MD5>(mKeys[5]));
 
 	string compress;
-//	if (Preferences::GetInteger("compress-sftp", true))
-//		compress = kUseCompressionAlgorithms;
-//	else
+	if (Preferences::GetInteger("compress-sftp", true))
+		compress = kUseCompressionAlgorithms;
+	else
 		compress = kDontUseCompressionAlgorithms;
 
-//	protocol = ChooseProtocol(mCompressionAlgS2C, compress);
-//	if (protocol == "zlib")
-//		mDecompressor.reset(new ZLibHelper(true));
-//	
-//	protocol = ChooseProtocol(mCompressionAlgC2S, compress);
-//	if (protocol == "zlib")
-//		mCompressor.reset(new ZLibHelper(false));
+	mCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib";
+	mDelayedCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib@openssh.com";
+	mDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib";
+	mDelayedDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib@openssh.com";
 	
 	if (not mAuthenticated)
 	{
@@ -1028,6 +952,8 @@ void MSshConnection::ProcessUserAuthSuccess(
 	MSshPacket&	in)
 {
 	mAuthenticated = true;
+	mCompress = mCompress or mDelayedCompress;
+	mDecompress = mDecompress or mDelayedDecompress;
 	mSshAgent.release();
 
 	eConnectionMessage(_("Authenticated"));
@@ -1322,6 +1248,23 @@ void MSshConnection::OpenChannel(
 	}
 }
 
+void MSshConnection::CloseChannel(
+	MSshChannel*	inChannel)
+{
+	if (mConnected and inChannel->IsOpen())
+		inChannel->Close();
+	else
+	{
+		mOpeningChannels.erase(
+			remove(mOpeningChannels.begin(), mOpeningChannels.end(), inChannel),
+			mOpeningChannels.end());
+		mChannels.erase(
+			remove(mChannels.begin(), mChannels.end(), inChannel),
+			mChannels.end());
+		delete inChannel;
+	}
+}
+
 void MSshConnection::ProcessChannel(
 	uint8		inMessage,
 	MSshPacket&	in)
@@ -1340,6 +1283,9 @@ void MSshConnection::ProcessChannel(
 	{
 		MSshChannel* channel = *ch;
 		channel->Process(inMessage, in);
+		
+		if (inMessage == SSH_MSG_CHANNEL_CLOSE and not channel->IsOpen())
+			CloseChannel(channel);
 	}
 }
 

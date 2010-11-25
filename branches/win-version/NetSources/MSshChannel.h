@@ -31,12 +31,9 @@ const uint32
 enum MSshChannelEvent {
 	SSH_CHANNEL_OPENED,
 	SSH_CHANNEL_CLOSED,
-	SSH_CHANNEL_TIMEOUT,
-	SSH_CHANNEL_USERAUTH_FAILURE,
 	SSH_CHANNEL_ERROR,
 	SSH_CHANNEL_SUCCESS,
-	SSH_CHANNEL_FAILURE,
-	SSH_CHANNEL_PACKET_DONE,	// sent when we've processed a packet
+	SSH_CHANNEL_FAILURE
 };
 
 class MSshChannel
@@ -47,10 +44,9 @@ class MSshChannel
 
 	void					Open();
 	void					Close();
-
-	virtual void			ConnectionOpened();
-	virtual void			ConnectionClosed();
 	
+	bool					IsOpen() const				{ return mChannelOpen; }
+
 	virtual void			Process(
 								uint8				inMessage,
 								MSshPacket&			in);
@@ -73,6 +69,8 @@ class MSshChannel
 	std::string				GetEncryptionParams() const;
 	
   protected:
+	friend class MSshConnection;
+
 							MSshChannel(
 								MSshConnection&	inConnection);
 

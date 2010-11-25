@@ -37,11 +37,7 @@ MSshChannel::MSshChannel(
 
 MSshChannel::~MSshChannel()
 {
-	try
-	{
-		Close();
-	}
-	catch (...) {}
+	PRINT(("Deleting SSH channel %d", mMyChannelID));
 }
 
 void MSshChannel::Open()
@@ -54,19 +50,18 @@ void MSshChannel::Open()
 
 void MSshChannel::Close()
 {
-	MSshPacket out;
-	out << uint8(SSH_MSG_CHANNEL_CLOSE) << mHostChannelID;
-	mConnection.Send(out);
-}
-
-void MSshChannel::ConnectionOpened()
-{
-	
-}
-
-void MSshChannel::ConnectionClosed()
-{
-	
+	PRINT(("Closing SSH channel %d", mMyChannelID));
+	if (mChannelOpen and mConnection.IsConnected())
+	{
+		MSshPacket out;
+		out << uint8(SSH_MSG_CHANNEL_CLOSE) << mHostChannelID;
+		mConnection.Send(out);
+	}
+	else
+	{
+		HandleChannelEvent(SSH_CHANNEL_CLOSED);
+		mConnection.CloseChannel(this);
+	}
 }
 
 void MSshChannel::Process(
