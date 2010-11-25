@@ -210,8 +210,9 @@ class MSshConnection
 	std::unique_ptr<CryptoPP::StreamTransformation>			mEncryptorCBC;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mSigner;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mVerifier;
-//	std::unique_ptr<ZLibHelper>								mCompressor;
-//	std::unique_ptr<ZLibHelper>								mDecompressor;
+
+	bool						mCompress, mDecompress;
+	bool						mDelayedCompress, mDelayedDecompress;
 	
 	CryptoPP::Integer			m_x;
 	CryptoPP::Integer			m_e;

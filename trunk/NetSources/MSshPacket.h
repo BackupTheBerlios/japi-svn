@@ -22,7 +22,6 @@ class MSshPacket
   public:
 					MSshPacket();
 					MSshPacket(const MSshPacket& inPacket);
-//					MSshPacket(const std::string& inData);
 					MSshPacket(const std::vector<byte>& inData);
 					MSshPacket(const std::deque<byte>& inData,
 						uint32 inLength);
@@ -33,7 +32,10 @@ class MSshPacket
 
 	void			Wrap(uint32 inBlockSize,
 						CryptoPP::RandomNumberGenerator& inRNG);
-//	void			Transfer(std::streambuf& inBuffer);
+
+					// zlib compression
+	void			Compress();
+	void			Decompress();
 	
 	MSshPacket&		operator<<(bool inValue);
 	MSshPacket&		operator<<(int8 inValue);

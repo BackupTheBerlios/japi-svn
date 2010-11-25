@@ -11,6 +11,7 @@
 #include "MJapi.h"
 
 #include <vector>
+#include <zlib.h>
 
 #include <boost/iostreams/copy.hpp>
 
@@ -20,6 +21,8 @@
 using namespace std;
 using namespace CryptoPP;
 namespace io = boost::iostreams;
+
+const int kDefaultCompressionLevel = 3;
 
 class MSshPacketError : public std::exception
 {
@@ -36,9 +39,24 @@ struct MSshPacketImpl
 
 	void			Reference();
 	void			Release();
+
+	uint8			pop()
+					{
+						if (mData.empty())
+							throw MSshPacketError();
+						
+						uint8 result = mData.front();
+						mData.erase(mData.begin());
+						return result;
+					}
+					
+	void			push(uint8 inByte)
+					{
+						mData.push_back(inByte);
+					}
 	
 	uint32			mRefCount;
-	vector<byte>	mData;
+	vector<uint8>	mData;
 };
 
 void MSshPacketImpl::Reference()
@@ -65,7 +83,7 @@ MSshPacket::MSshPacket(const MSshPacket& inPacket)
 	mImpl->Reference();
 }
 
-MSshPacket::MSshPacket(const std::vector<byte>& inData)
+MSshPacket::MSshPacket(const vector<uint8>& inData)
 	: mImpl(new MSshPacketImpl)
 {
 	uint32 l = inData.size() - 5;
@@ -79,7 +97,7 @@ MSshPacket::MSshPacket(const std::vector<byte>& inData)
 	assert(size() == l);
 }
 
-MSshPacket::MSshPacket(const std::deque<byte>& inData, uint32 inLength)
+MSshPacket::MSshPacket(const deque<uint8>& inData, uint32 inLength)
 	: mImpl(new MSshPacketImpl)
 {
 	mImpl->mData.reserve(inLength);
@@ -180,21 +198,19 @@ MSshPacket& MSshPacket::operator<<(uint64 inValue)
 MSshPacket& MSshPacket::operator<<(const string& inValue)
 {
 	operator<<(static_cast<uint32>(inValue.length()));
-	copy(inValue.begin(), inValue.end(),
-		std::back_inserter(mImpl->mData));
+	copy(inValue.begin(), inValue.end(), back_inserter(mImpl->mData));
 	return *this;
 }
 
-MSshPacket& MSshPacket::operator<<(const vector<byte>& inValue)
+MSshPacket& MSshPacket::operator<<(const vector<uint8>& inValue)
 {
-	copy(inValue.begin(), inValue.end(),
-		std::back_inserter(mImpl->mData));
+	copy(inValue.begin(), inValue.end(), back_inserter(mImpl->mData));
 	return *this;
 }
 
 MSshPacket& MSshPacket::operator<<(const char* inValue)
 {
-	operator<<(std::string(inValue));
+	operator<<(string(inValue));
 	return *this;
 }
 
@@ -205,7 +221,7 @@ MSshPacket& MSshPacket::operator<<(const CryptoPP::Integer& inValue)
 	uint32 l = inValue.MinEncodedSize(CryptoPP::Integer::SIGNED);
 	operator<<(l);
 	uint32 s = mImpl->mData.size();
-	mImpl->mData.insert(mImpl->mData.end(), l, byte(0));
+	mImpl->mData.insert(mImpl->mData.end(), l, uint8(0));
 	inValue.Encode(&mImpl->mData[0] + s, l, CryptoPP::Integer::SIGNED);
 	
 	assert(n + l + sizeof(uint32) == mImpl->mData.size());
@@ -243,8 +259,7 @@ MSshPacket& MSshPacket::operator>>(int8& outValue)
 	if (size() < 1)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
 	return *this;
 }
 
@@ -253,8 +268,7 @@ MSshPacket& MSshPacket::operator>>(uint8& outValue)
 	if (size() < 1)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
 	return *this;
 }
 
@@ -263,10 +277,8 @@ MSshPacket& MSshPacket::operator>>(int16& outValue)
 	if (size() < 2)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
@@ -275,10 +287,8 @@ MSshPacket& MSshPacket::operator>>(uint16& outValue)
 	if (size() < 2)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
@@ -287,14 +297,10 @@ MSshPacket& MSshPacket::operator>>(int32& outValue)
 	if (size() < 4)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
@@ -303,14 +309,10 @@ MSshPacket& MSshPacket::operator>>(uint32& outValue)
 	if (size() < 4)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-								mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
@@ -319,22 +321,14 @@ MSshPacket& MSshPacket::operator>>(int64& outValue)
 	if (size() < 8)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
@@ -343,26 +337,18 @@ MSshPacket& MSshPacket::operator>>(uint64& outValue)
 	if (size() < 8)
 		throw MSshPacketError();
 	
-	outValue = mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
-	outValue = outValue << 8 | mImpl->mData.front();
-	mImpl->mData.erase(mImpl->mData.begin());
+	outValue = mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
+	outValue = outValue << 8 | mImpl->pop();
 	return *this;
 }
 
-MSshPacket& MSshPacket::operator>>(std::string& outValue)
+MSshPacket& MSshPacket::operator>>(string& outValue)
 {
 	uint32 l;
 	operator>>(l);
@@ -403,7 +389,7 @@ MSshPacket& MSshPacket::operator>>(MSshPacket& p)
 		throw MSshPacketError();
 
 	p.mImpl->mData.clear();
-	copy(mImpl->mData.begin(), mImpl->mData.begin() + l, std::back_inserter(p.mImpl->mData));
+	copy(mImpl->mData.begin(), mImpl->mData.begin() + l, back_inserter(p.mImpl->mData));
 	mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
 
 	return *this;
@@ -435,7 +421,96 @@ void MSshPacket::Wrap(
 	}
 }
 
-const byte* MSshPacket::peek() const
+void MSshPacket::Compress()
+{
+	z_stream_s z_stream = {};
+	int err = deflateInit(&z_stream, kDefaultCompressionLevel);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", z_stream.msg));
+	
+	const int kBufferSize = 1024;
+	uint8 buffer[kBufferSize];
+
+	z_stream.next_in = &mImpl->mData[0];
+	z_stream.avail_in = size();
+	z_stream.total_in = 0;
+	
+	z_stream.next_out = buffer;
+	z_stream.avail_out = kBufferSize;
+	z_stream.total_out = 0;
+	
+	vector<uint8> data;
+	data.reserve(mImpl->mData.size());
+	
+	for (;;)
+	{
+		err = deflate(&z_stream, Z_FINISH);
+		
+		if (z_stream.total_out > 0)
+			copy(buffer, buffer + z_stream.total_out, back_inserter(data));
+		
+		if (err == Z_OK)
+		{
+			z_stream.next_out = buffer;
+			z_stream.avail_out = kBufferSize;
+			z_stream.total_out = 0;
+			continue;
+		}
+		
+		break;
+	}
+	
+	if (err != Z_STREAM_END)
+		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
+	
+	swap(mImpl->mData, data);
+}
+
+void MSshPacket::Decompress()
+{
+	z_stream_s z_stream = {};
+	int err = inflateInit(&z_stream);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", z_stream.msg));
+	
+	const int kBufferSize = 1024;
+	uint8 buffer[kBufferSize];
+
+	z_stream.next_in = &mImpl->mData[0];
+	z_stream.avail_in = size();
+	z_stream.total_in = 0;
+	
+	z_stream.next_out = buffer;
+	z_stream.avail_out = kBufferSize;
+	z_stream.total_out = 0;
+	
+	vector<uint8> data;
+	data.reserve(mImpl->mData.size() * kDefaultCompressionLevel);
+	
+	bool done = false;
+	while (not done and err >= Z_OK)
+	{
+		err = inflate(&z_stream, Z_SYNC_FLUSH);
+		
+		if (err == Z_STREAM_END)
+			done = true;
+		
+		if (z_stream.total_out > 0)
+		{
+			copy(buffer, buffer + z_stream.total_out, back_inserter(data));
+			z_stream.next_out = buffer;
+			z_stream.avail_out = kBufferSize;
+			z_stream.total_out = 0;
+		}
+	}
+	
+	if (err < Z_OK)
+		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
+	
+	swap(mImpl->mData, data);
+}
+
+const uint8* MSshPacket::peek() const
 {
 	return &mImpl->mData[0];
 }

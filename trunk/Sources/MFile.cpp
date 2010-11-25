@@ -540,7 +540,6 @@ void MSftpFileLoader::SFTPChannelEvent(
 	if (inMessage == SSH_CHANNEL_CLOSED)
 	{
 		eFileLoaded();
-
 		mSFTPChannel = nil;
 		delete this;
 	}

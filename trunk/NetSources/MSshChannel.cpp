@@ -58,7 +58,10 @@ void MSshChannel::Close()
 		mConnection.Send(out);
 	}
 	else
+	{
+		HandleChannelEvent(SSH_CHANNEL_CLOSED);
 		mConnection.CloseChannel(this);
+	}
 }
 
 void MSshChannel::Process(

@@ -32,7 +32,6 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/files.h>
 #include <cryptopp/factory.h>
-#include <zlib.h>
 
 #include "MSsh.h"
 #include "MError.h"
@@ -56,8 +55,6 @@ namespace {
 
 const string
 	kSSHVersionString = string("SSH-2.0-") + kAppName + '-' + kVersionString;
-
-const int kDefaultCompressionLevel = 3;
 
 const byte
 	k_p_2[] = {
@@ -94,8 +91,8 @@ const char
 	kServerHostKeyAlgorithms[] = "ssh-rsa,ssh-dss",
 	kEncryptionAlgorithms[] = "aes256-cbc,aes192-cbc,aes128-cbc,blowfish-cbc,3des-cbc",
 	kMacAlgorithms[] = "hmac-sha1,hmac-md5",
-	kUseCompressionAlgorithms[] = "zlib,none",
-	kDontUseCompressionAlgorithms[] = "none,zlib";
+	kUseCompressionAlgorithms[] = "zlib@openssh.com,zlib,none",
+	kDontUseCompressionAlgorithms[] = "none,zlib@openssh.com,zlib";
 
 // implement as globals to keep things simple
 Integer					p2(k_p_2, sizeof(k_p_2)), q2((p2 - 1) / 2);
@@ -104,80 +101,6 @@ Integer					p14(k_p_14, sizeof(k_p_14)), q14((p14 - 1) / 2);
 AutoSeededRandomPool	rng;
 
 } // end private namespace
-
-struct ZLibHelper
-{
-						ZLibHelper(bool inInflate);
-						~ZLibHelper();
-	
-	int					Process(string& ioData);
-	
-	z_stream_s			mStream;
-	bool				mInflate;
-	static const uint32	kBufferSize;
-	static char			sBuffer[];
-};
-
-const uint32 ZLibHelper::kBufferSize = 1024;
-char ZLibHelper::sBuffer[ZLibHelper::kBufferSize];	
-
-ZLibHelper::ZLibHelper(
-	bool	inInflate)
-	: mInflate(inInflate)
-{
-	memset(&mStream, 0, sizeof(mStream));
-
-	int err;
-
-	if (inInflate)
-		err = inflateInit(&mStream);
-	else
-		err = deflateInit(&mStream, kDefaultCompressionLevel);
-//	if (err != Z_OK)
-//		THROW(("Decompression error: %s", mStream.msg));
-}
-
-ZLibHelper::~ZLibHelper()
-{
-	if (mInflate)
-		inflateEnd(&mStream);
-	else
-		deflateEnd(&mStream);
-}
-
-int ZLibHelper::Process(
-	string&		ioData)
-{
-	string result;
-	
-	mStream.next_in = const_cast<byte*>(reinterpret_cast<const byte*>(ioData.c_str()));
-	mStream.avail_in = ioData.length();
-	mStream.total_in = 0;
-	
-	mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-	mStream.avail_out = kBufferSize;
-	mStream.total_out = 0;
-
-	int err;
-	do
-	{
-		if (mInflate)
-			err = inflate(&mStream, Z_SYNC_FLUSH);
-		else
-			err = deflate(&mStream, Z_SYNC_FLUSH);
-
-		if (kBufferSize - mStream.avail_out > 0)
-		{
-			result.append(sBuffer, kBufferSize - mStream.avail_out);
-			mStream.avail_out = kBufferSize;
-			mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-		}
-	}
-	while (err >= Z_OK);
-	
-	ioData = result;
-	return err;
-}
 
 // --------------------------------------------------------------------
 
@@ -199,6 +122,10 @@ MSshConnection::MSshConnection(
 	, mResolver(GetIOService())
 	, mSocket(GetIOService())
 	, mPacketLength(0)
+	, mCompress(false)
+	, mDecompress(false)
+	, mDelayedCompress(false)
+	, mDelayedDecompress(false)
 	, mOutSequenceNr(0)
 	, mInSequenceNr(0)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
@@ -358,17 +285,22 @@ void MSshConnection::Disconnect()
 	if (mConnected)
 	{
 		mSocket.close();
+
+		mConnected = false;
+    	mAuthenticated = false;
 		
 		eConnectionMessage(_("Connection closed"));
 	
-		mConnected = false;
-    	mAuthenticated = false;
-
 		for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
 		mChannels.clear();
-		
-		delete this;
 	}
+	else
+	{
+		for_each(mOpeningChannels.begin(), mOpeningChannels.end(), boost::bind(&MSshChannel::Close, _1));
+		mOpeningChannels.clear();
+	}
+	
+	delete this;
 }
 
 void MSshConnection::CertificateDeleted(
@@ -389,13 +321,13 @@ void MSshConnection::Send(
 	if (mEncryptorCipher.get() != nil)
 		blockSize = mEncryptorCipher->BlockSize();
 	
-//	if (mCompressor.get() != nil)
-//		mCompressor->Process(inPacket.data);
+HexDump(inPacket.peek(), inPacket.size(), cerr);
+	
+	if (mCompress)
+		inPacket.Compress();
 	
 	inPacket.Wrap(blockSize, rng);
 
-HexDump(inPacket.peek(), inPacket.size(), cerr);
-	
 	boost::asio::streambuf* request = new boost::asio::streambuf;
 	ostream out(request);
 	
@@ -710,9 +642,9 @@ void MSshConnection::HandleProtocolVersionExchangeResponse(
 		out << rng.GenerateByte();
 
 	string compress;
-//	if (Preferences::GetInteger("compress-sftp", true))
-//		compress = kUseCompressionAlgorithms;
-//	else
+	if (Preferences::GetInteger("compress-sftp", true))
+		compress = kUseCompressionAlgorithms;
+	else
 		compress = kDontUseCompressionAlgorithms;
 
 	out << kKeyExchangeAlgorithms
@@ -965,18 +897,15 @@ void MSshConnection::ProcessNewKeys(
 			new HMAC<Weak::MD5>(mKeys[5]));
 
 	string compress;
-//	if (Preferences::GetInteger("compress-sftp", true))
-//		compress = kUseCompressionAlgorithms;
-//	else
+	if (Preferences::GetInteger("compress-sftp", true))
+		compress = kUseCompressionAlgorithms;
+	else
 		compress = kDontUseCompressionAlgorithms;
 
-//	protocol = ChooseProtocol(mCompressionAlgS2C, compress);
-//	if (protocol == "zlib")
-//		mDecompressor.reset(new ZLibHelper(true));
-//	
-//	protocol = ChooseProtocol(mCompressionAlgC2S, compress);
-//	if (protocol == "zlib")
-//		mCompressor.reset(new ZLibHelper(false));
+	mCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib";
+	mDelayedCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib@openssh.com";
+	mDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib";
+	mDelayedDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib@openssh.com";
 	
 	if (not mAuthenticated)
 	{
@@ -1024,6 +953,8 @@ void MSshConnection::ProcessUserAuthSuccess(
 	MSshPacket&	in)
 {
 	mAuthenticated = true;
+	mCompress = mCompress or mDelayedCompress;
+	mDecompress = mDecompress or mDelayedDecompress;
 	mSshAgent.release();
 
 	eConnectionMessage(_("Authenticated"));
