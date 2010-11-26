@@ -17,6 +17,40 @@
 
 #include <cryptopp/integer.h>
 
+class MSshPacketZLibBase
+{
+  public:
+					MSshPacketZLibBase();
+	virtual			~MSshPacketZLibBase();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData) = 0;
+
+  protected:
+	struct z_stream_s*
+					mStream;
+};
+
+class MSshPacketCompressor : public MSshPacketZLibBase
+{
+  public:
+					MSshPacketCompressor();
+	virtual			~MSshPacketCompressor();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData);
+};
+
+class MSshPacketDecompressor : public MSshPacketZLibBase
+{
+  public:
+					MSshPacketDecompressor();
+	virtual			~MSshPacketDecompressor();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData);
+};
+
 class MSshPacket
 {
   public:
@@ -34,8 +68,10 @@ class MSshPacket
 						CryptoPP::RandomNumberGenerator& inRNG);
 
 					// zlib compression
-	void			Compress();
-	void			Decompress();
+	void			Compress(
+						MSshPacketCompressor&	inCompressor);
+	void			Decompress(
+						MSshPacketDecompressor&	inDecompressor);
 	
 	MSshPacket&		operator<<(bool inValue);
 	MSshPacket&		operator<<(int8 inValue);

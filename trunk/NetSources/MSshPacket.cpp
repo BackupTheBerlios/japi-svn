@@ -31,6 +31,109 @@ class MSshPacketError : public std::exception
 		{ return "malformed packet"; }
 };
 
+MSshPacketZLibBase::MSshPacketZLibBase()
+{
+	mStream = new z_stream_s;
+	memset(mStream, 0, sizeof(z_stream_s));
+}
+
+MSshPacketZLibBase::~MSshPacketZLibBase()
+{
+	delete mStream;
+}
+	
+MSshPacketCompressor::MSshPacketCompressor()
+{
+	int err = deflateInit(mStream, kDefaultCompressionLevel);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", mStream->msg));
+}
+
+MSshPacketCompressor::~MSshPacketCompressor()
+{
+	deflateEnd(mStream);
+}
+	
+void MSshPacketCompressor::Process(
+	vector<uint8>& ioData)
+{
+	mStream->next_in = &ioData[0];
+	mStream->avail_in = ioData.size();
+	mStream->total_in = 0;
+	
+	vector<uint8> data;
+	uint8 buffer[1024];
+	
+	mStream->next_out = buffer;
+	mStream->avail_out = sizeof(buffer);
+	mStream->total_out = 0;
+
+	int err;
+	do
+	{
+		err = deflate(mStream, Z_SYNC_FLUSH);
+
+		if (sizeof(buffer) - mStream->avail_out > 0)
+		{
+			copy(buffer, buffer + sizeof(buffer) - mStream->avail_out,
+				back_inserter(data));
+			mStream->next_out = buffer;
+			mStream->avail_out = sizeof(buffer);
+		}
+	}
+	while (err >= Z_OK);
+	
+	if (err != Z_BUF_ERROR)
+		THROW(("Compression error %d (%s)", err, mStream->msg));
+	swap(data, ioData);
+}
+
+MSshPacketDecompressor::MSshPacketDecompressor()
+{
+	int err = inflateInit(mStream);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", mStream->msg));
+}
+
+MSshPacketDecompressor::~MSshPacketDecompressor()
+{
+	deflateEnd(mStream);
+}
+
+void MSshPacketDecompressor::Process(
+	vector<uint8>& ioData)
+{
+	mStream->next_in = &ioData[0];
+	mStream->avail_in = ioData.size();
+	mStream->total_in = 0;
+	
+	vector<uint8> data;
+	uint8 buffer[1024];
+	
+	mStream->next_out = buffer;
+	mStream->avail_out = sizeof(buffer);
+	mStream->total_out = 0;
+
+	int err;
+	do
+	{
+		err = inflate(mStream, Z_SYNC_FLUSH);
+
+		if (sizeof(buffer) - mStream->avail_out > 0)
+		{
+			copy(buffer, buffer + sizeof(buffer) - mStream->avail_out,
+				back_inserter(data));
+			mStream->next_out = buffer;
+			mStream->avail_out = sizeof(buffer);
+		}
+	}
+	while (err >= Z_OK);
+	
+	if (err != Z_BUF_ERROR)
+		THROW(("Decompression error %d (%s)", err, mStream->msg));
+	swap(data, ioData);
+}
+
 struct MSshPacketImpl
 {
 					MSshPacketImpl()
@@ -421,93 +524,16 @@ void MSshPacket::Wrap(
 	}
 }
 
-void MSshPacket::Compress()
+void MSshPacket::Compress(
+	MSshPacketCompressor&	inCompressor)
 {
-	z_stream_s z_stream = {};
-	int err = deflateInit(&z_stream, kDefaultCompressionLevel);
-	if (err != Z_OK)
-		THROW(("Compressor error: %s", z_stream.msg));
-	
-	const int kBufferSize = 1024;
-	uint8 buffer[kBufferSize];
-
-	z_stream.next_in = &mImpl->mData[0];
-	z_stream.avail_in = size();
-	z_stream.total_in = 0;
-	
-	z_stream.next_out = buffer;
-	z_stream.avail_out = kBufferSize;
-	z_stream.total_out = 0;
-	
-	vector<uint8> data;
-	data.reserve(mImpl->mData.size());
-	
-	for (;;)
-	{
-		err = deflate(&z_stream, Z_FINISH);
-		
-		if (z_stream.total_out > 0)
-			copy(buffer, buffer + z_stream.total_out, back_inserter(data));
-		
-		if (err == Z_OK)
-		{
-			z_stream.next_out = buffer;
-			z_stream.avail_out = kBufferSize;
-			z_stream.total_out = 0;
-			continue;
-		}
-		
-		break;
-	}
-	
-	if (err != Z_STREAM_END)
-		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
-	
-	swap(mImpl->mData, data);
+	inCompressor.Process(mImpl->mData);
 }
 
-void MSshPacket::Decompress()
+void MSshPacket::Decompress(
+	MSshPacketDecompressor&	inDecompressor)
 {
-	z_stream_s z_stream = {};
-	int err = inflateInit(&z_stream);
-	if (err != Z_OK)
-		THROW(("Compressor error: %s", z_stream.msg));
-	
-	const int kBufferSize = 1024;
-	uint8 buffer[kBufferSize];
-
-	z_stream.next_in = &mImpl->mData[0];
-	z_stream.avail_in = size();
-	z_stream.total_in = 0;
-	
-	z_stream.next_out = buffer;
-	z_stream.avail_out = kBufferSize;
-	z_stream.total_out = 0;
-	
-	vector<uint8> data;
-	data.reserve(mImpl->mData.size() * kDefaultCompressionLevel);
-	
-	bool done = false;
-	while (not done and err >= Z_OK)
-	{
-		err = inflate(&z_stream, Z_SYNC_FLUSH);
-		
-		if (err == Z_STREAM_END)
-			done = true;
-		
-		if (z_stream.total_out > 0)
-		{
-			copy(buffer, buffer + z_stream.total_out, back_inserter(data));
-			z_stream.next_out = buffer;
-			z_stream.avail_out = kBufferSize;
-			z_stream.total_out = 0;
-		}
-	}
-	
-	if (err < Z_OK)
-		THROW(("Deflate error: %s (%d)", z_stream.msg, err));
-	
-	swap(mImpl->mData, data);
+	inDecompressor.Process(mImpl->mData);
 }
 
 const uint8* MSshPacket::peek() const
