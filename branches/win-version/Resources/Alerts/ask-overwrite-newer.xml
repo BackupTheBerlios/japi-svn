@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>The file ^0 was modified on disk after it was last read.
-Click 'Overwrite' to write out the contents of the file.</message>
+	<content>The file ^0 was modified on disk after it was last read.
+Click 'Overwrite' to write out the contents of the file.</content>
 	<buttons>
 		<button title="Cancel" cmd="1" default="true" />
 		<button title="Overwrite" cmd="2"/>

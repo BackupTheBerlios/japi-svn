@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>The project ^0 is still building, do you want to close it anyway?</message>
+	<content>The project ^0 is still building, do you want to close it anyway?</content>
 	<buttons>
 		<button title="Close" cmd="1" default='true'/>
 		<button title="Cancel" cmd="2"/>

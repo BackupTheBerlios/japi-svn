@@ -92,6 +92,11 @@ MSftpChannel::MSftpChannel(
 {
 }
 
+MSftpChannel::~MSftpChannel()
+{
+	eSFTPChannelClosed();
+}
+
 void MSftpChannel::HandleChannelEvent(
 	uint32			inEvent)
 {
@@ -127,7 +132,7 @@ void MSftpChannel::Receive(
 
 	while (not mPacket.empty())
 	{
-		if (mPacketLength >= mPacket.size())
+		if (mPacketLength > 0 and mPacketLength <= mPacket.size())
 		{
 			MSshPacket in(mPacket, mPacketLength), out;
 
@@ -177,7 +182,7 @@ void MSftpChannel::ProcessPacket(
 			
 			if (statusCode > SSH_FX_EOF)
 			{
-				eChannelMessage(message);
+				eChannelError(message);
 				Close();
 				break;
 			}

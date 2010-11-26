@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>The host key for server ^0 (signature: ^1) has changed!!! If you are ABSOLUTELY sure this is correct you can replace the key otherwise click Cancel.</message>
+	<content>The host key for server ^0 (signature: ^1) has changed!!! If you are ABSOLUTELY sure this is correct you can replace the key otherwise click Cancel.</content>
 	<buttons>
  		<button title="Replace Key" cmd="2"/>
 		<button title="Cancel" cmd="1" default="true"/>

@@ -1,8 +1,7 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>An error has occurred:
-
-^0</message>
+	<instruction>An error has occurred</instruction>
+	<content>^0</content>
 	<buttons>
 		<button title="OK" cmd="1" default='true'/>
 	</buttons>

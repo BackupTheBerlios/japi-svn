@@ -74,7 +74,23 @@ int32 DisplayAlert(
 
 	foreach (xml::element& item, *root)
 	{
-		if (item.qname() == "message")
+		if (item.qname() == "content")
+		{
+			// replace parameters
+			char s[] = "^0";
+			string text = _(item.content());
+	
+			foreach (string a, inArguments)
+			{
+				string::size_type p = text.find(s);
+				if (p != string::npos)
+					text.replace(p, 2, a);
+				++s[1];
+			}
+
+			content = c2w(text);
+		}
+		else if (item.qname() == "instruction")
 		{
 			// replace parameters
 			char s[] = "^0";
@@ -120,8 +136,10 @@ int32 DisplayAlert(
 		}
 	}
 
-	config.pszMainInstruction = instruction.c_str();
-	//config.pszContent                   = L"Remember your changed password.";
+	if (not instruction.empty())
+		config.pszMainInstruction = instruction.c_str();
+	if (not content.empty())
+		config.pszContent = content.c_str();
 	config.pButtons = &buttons[0];
 	config.cButtons = buttons.size();
 

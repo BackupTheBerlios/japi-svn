@@ -59,7 +59,9 @@ class MSshChannel
 
 	MEventOut<void(uint32)>	eChannelEvent;		// events in the enum range above
 	MEventOut<void(const std::string&)>
-							eChannelMessage;	// for error strings and such
+							eChannelMessage;	// for status messages
+	MEventOut<void(const std::string&)>
+							eChannelError;		// for error messages
 	MEventOut<void(const std::string&)>
 							eChannelBanner;		// sent by the authentication protocol
 

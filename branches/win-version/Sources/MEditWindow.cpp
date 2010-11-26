@@ -238,7 +238,7 @@ MEditWindow::MEditWindow()
 	bounds.y += bounds.height - kScrollbarWidth;
 	bounds.height = kScrollbarWidth;
 
-	int32 partWidths[4] = { 100, -1 };
+	int32 partWidths[3] = { 80, -1 };
 	mStatusbar = new MStatusbar("status", bounds, 2, partWidths);
 	AddChild(mStatusbar);
 	mStatusbar->GetBounds(bounds);
@@ -404,6 +404,11 @@ void MEditWindow::SSHProgress(
 		//
 		//mSSHProgress->Progress(inFraction, inMessage);
 	}
+	
+	if (inFraction >= 0 and inFraction <= 1)
+		mStatusbar->SetStatusText(0,
+			boost::lexical_cast<string>(static_cast<uint32>(inFraction * 100)) + "%", false);
+	mStatusbar->SetStatusText(1, inMessage, false);
 }
 
 void MEditWindow::AddRoutes(

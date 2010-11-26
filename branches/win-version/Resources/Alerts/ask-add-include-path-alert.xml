@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>Should I add the include path '^0' to the user include paths for this project?</message>
+	<content>Should I add the include path '^0' to the user include paths for this project?</content>
 	<buttons>
 		<button title="Add" cmd="1" default='true'/>
 		<button title="Cancel" cmd="2"/>

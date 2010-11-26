@@ -476,18 +476,21 @@ class MSftpFileLoader : public MFileLoader
 
   private:
 
-	void			SFTPChannelEvent(
-						uint32			inMessage);
-	MEventIn<void(uint32)>
-					eChannelEvent;
-
 	void			SFTPChannelMessage(
 						const string&	inMessage);
 	MEventIn<void(const string&)>
 					eChannelMessage;
 
+	void			SFTPChannelError(
+						const string&	inError);
+	MEventIn<void(const string&)>
+					eChannelError;
+
 	void			SFTPChannelOpened();
 	MEventIn<void()>eSFTPChannelOpened;
+
+	void			SFTPChannelClosed();
+	MEventIn<void()>eSFTPChannelClosed;
 
 	void			ReceiveData(
 						const string&	inData,
@@ -504,9 +507,10 @@ MSftpFileLoader::MSftpFileLoader(
 	MDocument&		inDocument,
 	MFile&			inUrl)
 	: MFileLoader(inDocument, inUrl)
-	, eChannelEvent(this, &MSftpFileLoader::SFTPChannelEvent)
 	, eChannelMessage(this, &MSftpFileLoader::SFTPChannelMessage)
+	, eChannelError(this, &MSftpFileLoader::SFTPChannelError)
 	, eSFTPChannelOpened(this, &MSftpFileLoader::SFTPChannelOpened)
+	, eSFTPChannelClosed(this, &MSftpFileLoader::SFTPChannelClosed)
 	, eReceiveData(this, &MSftpFileLoader::ReceiveData)
 	, mSFTPChannel(nil)
 {
@@ -516,10 +520,11 @@ void MSftpFileLoader::DoLoad()
 {
 	mSFTPChannel = MSftpChannel::Open(mFile);
 
-	AddRoute(mSFTPChannel->eChannelEvent, eChannelEvent);
 	AddRoute(mSFTPChannel->eChannelMessage, eChannelMessage);
+	AddRoute(mSFTPChannel->eChannelError, eChannelError);
 	AddRoute(mSFTPChannel->eReceiveData, eReceiveData);
 	AddRoute(mSFTPChannel->eSFTPChannelOpened, eSFTPChannelOpened);
+	AddRoute(mSFTPChannel->eSFTPChannelClosed, eSFTPChannelClosed);
 }
 
 void MSftpFileLoader::Cancel()
@@ -534,16 +539,10 @@ void MSftpFileLoader::SFTPChannelOpened()
 	mSFTPChannel->ReadFile(mFile.GetPath().string());
 }
 
-void MSftpFileLoader::SFTPChannelEvent(
-	uint32		inMessage)
+void MSftpFileLoader::SFTPChannelClosed()
 {
-	if (inMessage == SSH_CHANNEL_CLOSED)
-	{
-		eFileLoaded();
-
-		mSFTPChannel = nil;
-		delete this;
-	}
+	mSFTPChannel = nil;
+	delete this;
 }
 
 void MSftpFileLoader::ReceiveData(
@@ -558,6 +557,8 @@ void MSftpFileLoader::ReceiveData(
 
 		stringstream data(mData);
 		eReadFile(data);
+
+		eFileLoaded();
 	}
 	else
 	{
@@ -569,10 +570,14 @@ void MSftpFileLoader::ReceiveData(
 void MSftpFileLoader::SFTPChannelMessage(
 	const string& 	inMessage)
 {
-	float fraction = 0;
-	//if (mFileSize > 0)
-	//	fraction = float(mData.size()) / mFileSize;
+	float fraction = -1.0f;
 	eProgress(fraction, inMessage);
+}
+
+void MSftpFileLoader::SFTPChannelError(
+	const string& 	inError)
+{
+	eError(inError);
 }
 
 // --------------------------------------------------------------------
@@ -590,17 +595,21 @@ class MSftpFileSaver : public MFileSaver
 
   private:
 
-	void			SFTPChannelEvent(
-						uint32			inMessage);
-	MEventIn<void(uint32)>
-					eChannelEvent;
 	void			SFTPChannelMessage(
 						const string&	inMessage);
 	MEventIn<void(const string&)>
 					eChannelMessage;
 
+	void			SFTPChannelError(
+						const string&	inError);
+	MEventIn<void(const string&)>
+					eChannelError;
+
 	void			SFTPChannelOpened();
 	MEventIn<void()>eSFTPChannelOpened;
+
+	void			SFTPChannelClosed();
+	MEventIn<void()>eSFTPChannelClosed;
 
 	void			SendData(
 						int64			inOffset,
@@ -618,9 +627,10 @@ MSftpFileSaver::MSftpFileSaver(
 	MDocument&		inDocument,
 	MFile&			inFile)
 	: MFileSaver(inDocument, inFile)
-	, eChannelEvent(this, &MSftpFileSaver::SFTPChannelEvent)
 	, eChannelMessage(this, &MSftpFileSaver::SFTPChannelMessage)
+	, eChannelError(this, &MSftpFileSaver::SFTPChannelError)
 	, eSFTPChannelOpened(this, &MSftpFileSaver::SFTPChannelOpened)
+	, eSFTPChannelClosed(this, &MSftpFileSaver::SFTPChannelClosed)
 	, eSendData(this, &MSftpFileSaver::SendData)
 	, mSFTPChannel(nil)
 {
@@ -637,17 +647,15 @@ void MSftpFileSaver::DoSave()
 {
 	mSFTPChannel = MSftpChannel::Open(mFile);
 
-	{
-		io::filtering_ostream out(io::back_inserter(mSFTPData));
-		eWriteFile(out);
-	}
+	io::filtering_ostream out(io::back_inserter(mSFTPData));
+	eWriteFile(out);
 
-	AddRoute(mSFTPChannel->eChannelEvent, eChannelEvent);
 	AddRoute(mSFTPChannel->eChannelMessage, eChannelMessage);
+	AddRoute(mSFTPChannel->eChannelError, eChannelError);
 	AddRoute(mSFTPChannel->eSFTPChannelOpened, eSFTPChannelOpened);
+	AddRoute(mSFTPChannel->eSFTPChannelClosed, eSFTPChannelClosed);
 	AddRoute(mSFTPChannel->eSendData, eSendData);
 	
-
 	mSFTPOffset = 0;
 }
 
@@ -656,15 +664,10 @@ void MSftpFileSaver::SFTPChannelOpened()
 	mSFTPChannel->WriteFile(mFile.GetPath().string());
 }
 
-void MSftpFileSaver::SFTPChannelEvent(
-	uint32			inMessage)
+void MSftpFileSaver::SFTPChannelClosed()
 {
-	if (inMessage == SSH_CHANNEL_CLOSED)
-	{
-		eFileWritten();
-		mSFTPChannel = nil;
-		delete this;
-	}
+	mSFTPChannel = nil;
+	delete this;
 }
 
 void MSftpFileSaver::SendData(
@@ -673,21 +676,27 @@ void MSftpFileSaver::SendData(
 	string&			outData)
 {
 	uint32 n = inMaxSize;
-	if (n > (mSFTPData.length() - inOffset))
+	if (n > mSFTPData.length() - inOffset)
 		n = mSFTPData.length() - inOffset;
 	if (n > 0)
 	{
 		eProgress(float(inOffset) / mSFTPData.length(), _("Sending data"));
 		outData = mSFTPData.substr(inOffset, n);
 	}
+	else
+		eFileWritten();
+}
+
+void MSftpFileSaver::SFTPChannelError(
+	const string& 	inError)
+{
+	eError(inError);
 }
 
 void MSftpFileSaver::SFTPChannelMessage(
 	const string& 	inMessage)
 {
-	float fraction = 0;
-//	if (mSFTPData.size() > 0)
-//		fraction = float(mSFTPData.size()) / mSFTPSize;
+	float fraction = -1.0f;
 	eProgress(fraction, inMessage);
 }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>Do you want to save the changes made to document ^0?</message>
+	<content>Do you want to save the changes made to document ^0?</content>
 	<buttons>
 		<button title="Save" cmd="3" default='true'/>
 		<button title="Don't save" cmd="1"/>

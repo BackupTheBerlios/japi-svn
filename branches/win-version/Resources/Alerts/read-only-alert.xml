@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>This file is marked Read Only, you will not be able to save the changes you make.</message>
+	<content>This file is marked Read Only, you will not be able to save the changes you make.</content>
 	<buttons>
 		<button title="OK" cmd="1" default='true'/>
 	</buttons>

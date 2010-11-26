@@ -37,6 +37,9 @@ class MSftpChannel : public MSshChannel
 
 	// An SFTPChannelOpened event is sent when SFTP is set up.
 	MEventOut<void()>								eSFTPChannelOpened;
+	// An SFTPChannelClosed event is sent when the underlying channed
+	// is about to be closed, don't use it after this event.
+	MEventOut<void()>								eSFTPChannelClosed;
 
 	// For reading, this object sends out a ReceiveData event
 	// for each block read. First parameter is the data
@@ -69,6 +72,8 @@ class MSftpChannel : public MSshChannel
 
 							MSftpChannel(
 								MSshConnection&		inConnection);
+							
+							~MSftpChannel();
 	
 	virtual void			HandleChannelEvent(
 								uint32				inEvent);

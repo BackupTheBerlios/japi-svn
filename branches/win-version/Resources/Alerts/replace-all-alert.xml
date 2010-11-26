@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>Replace all on multiple files is a potentially dangerous operation. You can choose to save changes to disk immediately or to keep the windows open.</message>
+	<content>Replace all on multiple files is a potentially dangerous operation. You can choose to save changes to disk immediately or to keep the windows open.</content>
 	<buttons>
 		<button title="Save to Disk" cmd="1"/>
 		<button title="Keep Window Open" cmd="2"/>

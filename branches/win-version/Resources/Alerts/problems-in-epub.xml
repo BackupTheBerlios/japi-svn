@@ -1,8 +1,7 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>The ePub file contains the following errors:
-
-^0</message>
+	<instruction>The ePub file contains the following errors</instruction>
+	<content>^0</content>
 	<buttons>
 		<button title="OK" cmd="1"/>
 	</buttons>

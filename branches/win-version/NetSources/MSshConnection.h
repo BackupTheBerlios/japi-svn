@@ -160,6 +160,10 @@ class MSshConnection
 		SSH_AUTH_STATE_PASSWORD
 	};
 
+	void			ProcessChannelOpen(
+						uint8				inMessage,
+						MSshPacket&			in);
+
 	void			ProcessChannelRequest(
 						uint8				inMessage,
 						MSshPacket&			in);

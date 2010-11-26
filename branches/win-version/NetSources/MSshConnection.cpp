@@ -250,6 +250,8 @@ void MSshConnection::Error(
 		"NO MORE AUTH METHODS AVAILABLE",
 		"ILLEGAL USER NAME",
 	};
+	
+	string errorMessage;
 
 	try
 	{
@@ -257,13 +259,14 @@ void MSshConnection::Error(
 		if (inReason < sizeof(kErrors) / sizeof(char*))
 			reason = kErrors[inReason];
 	
-		eConnectionMessage(FormatString("Error in SSH connection: ^0; ^1", reason, inMessage));
+		errorMessage = FormatString("Error in SSH connection: ^0; ^1", reason, inMessage);
+		eConnectionMessage(errorMessage);
 		
 		Disconnect();
 	}
 	catch (...) {}
 	
-	THROW(("SSH Error (%s)", inMessage.c_str()));
+	throw MException(errorMessage.c_str());
 }
 
 void MSshConnection::Connect()
@@ -536,9 +539,9 @@ PRINT(("ProcessPacket %d", inMessage));
 			ProcessUserAuthInfoRequest(in);
 			break;
 		
-//		case SSH_MSG_CHANNEL_OPEN:
-//			ProcessChannelOpen(inMessage, in);
-//			break;
+		case SSH_MSG_CHANNEL_OPEN:
+			ProcessChannelOpen(inMessage, in);
+			break;
 
 		case SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
 		case SSH_MSG_CHANNEL_OPEN_FAILURE:
@@ -557,6 +560,8 @@ PRINT(("ProcessPacket %d", inMessage));
 		
 		default:
 			PRINT(("This message should not have been received: %d", inMessage));
+			Error(SSH_DISCONNECT_PROTOCOL_ERROR, "Unknown message received");
+			break;
 	}
 }
 
@@ -1198,16 +1203,17 @@ void MSshConnection::RecvPassword(
 		Disconnect();
 }
 
-//void MSshConnection::ProcessChannelOpen(
-//	uint8		inMessage,
-//	MSshPacket&	in,
-//	MSshPacket&	out)
-//{
-//	string type;
-//	uint32 channelId, windowSize, maxPacketSize;
-//	
-//	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
-//	
+void MSshConnection::ProcessChannelOpen(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+	MSshPacket out;
+	
+	string type;
+	uint32 channelId, windowSize, maxPacketSize;
+	
+	in >> inMessage >> type >> channelId >> windowSize >> maxPacketSize;
+	
 //	if (type == "auth-agent@openssh.com" and Preferences::GetInteger("advertise_agent", 1))
 //	{
 ////		mAgentChannel.reset(new MSshAgentChannel(*this));
@@ -1230,11 +1236,13 @@ void MSshConnection::RecvPassword(
 //	else
 //	{
 //		PRINT(("Wrong type of channel requested"));
-//		
-//		out << uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << channelId
-//			<< uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << "unsupported" << "en";
+		
+		out << uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << channelId
+			<< uint8(SSH_MSG_CHANNEL_OPEN_FAILURE) << "unsupported" << "en";
 //	}
-//}
+
+	Send(out);
+}
 
 void MSshConnection::OpenChannel(
 	MSshChannel*	inChannel)

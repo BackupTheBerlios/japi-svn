@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes" ?>
 <alert type="warning">
-	<message>Do you want to make clean the current target or all targets?</message>
+	<content>Do you want to make clean the current target or all targets?</content>
 	<buttons>
  		<button title="Current Target" cmd="3"/>
  		<button title="All Targets" cmd="2"/>
