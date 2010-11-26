@@ -27,7 +27,8 @@ class MSshChannel;
 class MCertificate;
 class MSshAgent;
 class MSshPacket;
-struct ZLibHelper;
+class MSshPacketCompressor;
+class MSshPacketDecompressor;
 
 class MSshConnection
 {
@@ -210,8 +211,9 @@ class MSshConnection
 	std::unique_ptr<CryptoPP::StreamTransformation>			mEncryptorCBC;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mSigner;
 	std::unique_ptr<CryptoPP::MessageAuthenticationCode>	mVerifier;
+	std::unique_ptr<MSshPacketCompressor>					mCompressor;
+	std::unique_ptr<MSshPacketDecompressor>					mDecompressor;
 
-	bool						mCompress, mDecompress;
 	bool						mDelayedCompress, mDelayedDecompress;
 	
 	CryptoPP::Integer			m_x;

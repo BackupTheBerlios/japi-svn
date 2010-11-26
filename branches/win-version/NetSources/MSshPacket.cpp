@@ -11,13 +11,8 @@
 #include "MLib.h"
 
 #include <vector>
+#include <zlib.h>
 
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/copy.hpp>
 
 #include "MSshPacket.h"
@@ -27,83 +22,7 @@ using namespace std;
 using namespace CryptoPP;
 namespace io = boost::iostreams;
 
-#if 0
-struct ZLibHelper
-{
-						ZLibHelper(bool inInflate);
-						~ZLibHelper();
-	
-	int					Process(string& ioData);
-	
-	z_stream_s			mStream;
-	bool				mInflate;
-	static const uint32	kBufferSize;
-	static char			sBuffer[];
-};
-
-const uint32 ZLibHelper::kBufferSize = 1024;
-char ZLibHelper::sBuffer[ZLibHelper::kBufferSize];	
-
-ZLibHelper::ZLibHelper(
-	bool	inInflate)
-	: mInflate(inInflate)
-{
-	memset(&mStream, 0, sizeof(mStream));
-
-	int err;
-
-	if (inInflate)
-		err = inflateInit(&mStream);
-	else
-		err = deflateInit(&mStream, kDefaultCompressionLevel);
-//	if (err != Z_OK)
-//		THROW(("Decompression error: %s", mStream.msg));
-}
-
-ZLibHelper::~ZLibHelper()
-{
-	if (mInflate)
-		inflateEnd(&mStream);
-	else
-		deflateEnd(&mStream);
-}
-
-int ZLibHelper::Process(
-	string&		ioData)
-{
-	string result;
-	
-	mStream.next_in = const_cast<byte*>(reinterpret_cast<const byte*>(ioData.c_str()));
-	mStream.avail_in = ioData.length();
-	mStream.total_in = 0;
-	
-	mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-	mStream.avail_out = kBufferSize;
-	mStream.total_out = 0;
-
-	int err;
-	do
-	{
-		if (mInflate)
-			err = inflate(&mStream, Z_SYNC_FLUSH);
-		else
-			err = deflate(&mStream, Z_SYNC_FLUSH);
-
-		if (kBufferSize - mStream.avail_out > 0)
-		{
-			result.append(sBuffer, kBufferSize - mStream.avail_out);
-			mStream.avail_out = kBufferSize;
-			mStream.next_out = reinterpret_cast<byte*>(sBuffer);
-		}
-	}
-	while (err >= Z_OK);
-	
-	ioData = result;
-	return err;
-}
-#endif
-
-
+const int kDefaultCompressionLevel = 3;
 
 class MSshPacketError : public std::exception
 {
@@ -111,6 +30,109 @@ class MSshPacketError : public std::exception
 	virtual const char* what() const throw()
 		{ return "malformed packet"; }
 };
+
+MSshPacketZLibBase::MSshPacketZLibBase()
+{
+	mStream = new z_stream_s;
+	memset(mStream, 0, sizeof(z_stream_s));
+}
+
+MSshPacketZLibBase::~MSshPacketZLibBase()
+{
+	delete mStream;
+}
+	
+MSshPacketCompressor::MSshPacketCompressor()
+{
+	int err = deflateInit(mStream, kDefaultCompressionLevel);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", mStream->msg));
+}
+
+MSshPacketCompressor::~MSshPacketCompressor()
+{
+	deflateEnd(mStream);
+}
+	
+void MSshPacketCompressor::Process(
+	vector<uint8>& ioData)
+{
+	mStream->next_in = &ioData[0];
+	mStream->avail_in = ioData.size();
+	mStream->total_in = 0;
+	
+	vector<uint8> data;
+	uint8 buffer[1024];
+	
+	mStream->next_out = buffer;
+	mStream->avail_out = sizeof(buffer);
+	mStream->total_out = 0;
+
+	int err;
+	do
+	{
+		err = deflate(mStream, Z_SYNC_FLUSH);
+
+		if (sizeof(buffer) - mStream->avail_out > 0)
+		{
+			copy(buffer, buffer + sizeof(buffer) - mStream->avail_out,
+				back_inserter(data));
+			mStream->next_out = buffer;
+			mStream->avail_out = sizeof(buffer);
+		}
+	}
+	while (err >= Z_OK);
+	
+	if (err != Z_BUF_ERROR)
+		THROW(("Compression error %d (%s)", err, mStream->msg));
+	swap(data, ioData);
+}
+
+MSshPacketDecompressor::MSshPacketDecompressor()
+{
+	int err = inflateInit(mStream);
+	if (err != Z_OK)
+		THROW(("Compressor error: %s", mStream->msg));
+}
+
+MSshPacketDecompressor::~MSshPacketDecompressor()
+{
+	deflateEnd(mStream);
+}
+
+void MSshPacketDecompressor::Process(
+	vector<uint8>& ioData)
+{
+	mStream->next_in = &ioData[0];
+	mStream->avail_in = ioData.size();
+	mStream->total_in = 0;
+	
+	vector<uint8> data;
+	uint8 buffer[1024];
+	
+	mStream->next_out = buffer;
+	mStream->avail_out = sizeof(buffer);
+	mStream->total_out = 0;
+
+	int err;
+	do
+	{
+		err = inflate(mStream, Z_SYNC_FLUSH);
+
+		if (sizeof(buffer) - mStream->avail_out > 0)
+		{
+			copy(buffer, buffer + sizeof(buffer) - mStream->avail_out,
+				back_inserter(data));
+			mStream->next_out = buffer;
+			mStream->avail_out = sizeof(buffer);
+		}
+	}
+	while (err >= Z_OK);
+	
+	if (err != Z_BUF_ERROR)
+		THROW(("Decompression error %d (%s)", err, mStream->msg));
+	swap(data, ioData);
+}
 
 struct MSshPacketImpl
 {
@@ -137,7 +159,7 @@ struct MSshPacketImpl
 					}
 	
 	uint32			mRefCount;
-	vector<char>	mData;
+	vector<uint8>	mData;
 };
 
 void MSshPacketImpl::Reference()
@@ -164,7 +186,7 @@ MSshPacket::MSshPacket(const MSshPacket& inPacket)
 	mImpl->Reference();
 }
 
-MSshPacket::MSshPacket(const std::vector<byte>& inData)
+MSshPacket::MSshPacket(const vector<uint8>& inData)
 	: mImpl(new MSshPacketImpl)
 {
 	uint32 l = inData.size() - 5;
@@ -178,7 +200,7 @@ MSshPacket::MSshPacket(const std::vector<byte>& inData)
 	assert(size() == l);
 }
 
-MSshPacket::MSshPacket(const std::deque<byte>& inData, uint32 inLength)
+MSshPacket::MSshPacket(const deque<uint8>& inData, uint32 inLength)
 	: mImpl(new MSshPacketImpl)
 {
 	mImpl->mData.reserve(inLength);
@@ -283,7 +305,7 @@ MSshPacket& MSshPacket::operator<<(const string& inValue)
 	return *this;
 }
 
-MSshPacket& MSshPacket::operator<<(const vector<byte>& inValue)
+MSshPacket& MSshPacket::operator<<(const vector<uint8>& inValue)
 {
 	copy(inValue.begin(), inValue.end(), back_inserter(mImpl->mData));
 	return *this;
@@ -302,8 +324,8 @@ MSshPacket& MSshPacket::operator<<(const CryptoPP::Integer& inValue)
 	uint32 l = inValue.MinEncodedSize(CryptoPP::Integer::SIGNED);
 	operator<<(l);
 	uint32 s = mImpl->mData.size();
-	mImpl->mData.insert(mImpl->mData.end(), l, byte(0));
-	inValue.Encode(reinterpret_cast<byte*>(&mImpl->mData[0] + s), l, CryptoPP::Integer::SIGNED);
+	mImpl->mData.insert(mImpl->mData.end(), l, uint8(0));
+	inValue.Encode(&mImpl->mData[0] + s, l, CryptoPP::Integer::SIGNED);
 	
 	assert(n + l + sizeof(uint32) == mImpl->mData.size());
 	
@@ -429,7 +451,7 @@ MSshPacket& MSshPacket::operator>>(uint64& outValue)
 	return *this;
 }
 
-MSshPacket& MSshPacket::operator>>(std::string& outValue)
+MSshPacket& MSshPacket::operator>>(string& outValue)
 {
 	uint32 l;
 	operator>>(l);
@@ -439,7 +461,7 @@ MSshPacket& MSshPacket::operator>>(std::string& outValue)
 		if (l > size())
 			throw MSshPacketError();
 
-		outValue.assign(&mImpl->mData[0], l);
+		outValue.assign(reinterpret_cast<char*>(&mImpl->mData[0]), l);
 		mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
 	}
 	else
@@ -456,7 +478,7 @@ MSshPacket& MSshPacket::operator>>(CryptoPP::Integer& outValue)
 	if (l > size())
 		throw MSshPacketError();
 
-	outValue.Decode(reinterpret_cast<byte*>(&mImpl->mData[0]), l, CryptoPP::Integer::SIGNED);
+	outValue.Decode(&mImpl->mData[0], l, CryptoPP::Integer::SIGNED);
 	mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
 	return *this;
 }
@@ -470,7 +492,7 @@ MSshPacket& MSshPacket::operator>>(MSshPacket& p)
 		throw MSshPacketError();
 
 	p.mImpl->mData.clear();
-	copy(mImpl->mData.begin(), mImpl->mData.begin() + l, std::back_inserter(p.mImpl->mData));
+	copy(mImpl->mData.begin(), mImpl->mData.begin() + l, back_inserter(p.mImpl->mData));
 	mImpl->mData.erase(mImpl->mData.begin(), mImpl->mData.begin() + l);
 
 	return *this;
@@ -502,46 +524,21 @@ void MSshPacket::Wrap(
 	}
 }
 
-void MSshPacket::Compress()
+void MSshPacket::Compress(
+	MSshPacketCompressor&	inCompressor)
 {
-	io::filtering_streambuf<io::input> in;
-
-	io::zlib_params params;
-	params.noheader = true;	// don't read header, i.e. true deflate compression
-	in.push(io::zlib_compressor(params));
-	
-	io::stream<io::array_source> s(&mImpl->mData[0], size());
-	in.push(s);
-	
-	vector<char> data;
-	io::filtering_ostream out(io::back_inserter(data));
-
-	io::copy(in, out);
-	swap(data, mImpl->mData);
+	inCompressor.Process(mImpl->mData);
 }
 
-void MSshPacket::Decompress()
+void MSshPacket::Decompress(
+	MSshPacketDecompressor&	inDecompressor)
 {
-	io::filtering_streambuf<io::input> in;
-
-	io::zlib_params params;
-	params.noheader = true;	// don't read header, i.e. true deflate compression
-	io::zlib_decompressor z_stream(params);
-	in.push(z_stream);
-	
-	io::stream<io::array_source> s(reinterpret_cast<const char*>(peek()), size());
-	in.push(s);
-	
-	vector<char> data;
-	io::filtering_ostream out(io::back_inserter(data));
-
-	io::copy(in, out);
-	swap(data, mImpl->mData);
+	inDecompressor.Process(mImpl->mData);
 }
 
-const byte* MSshPacket::peek() const
+const uint8* MSshPacket::peek() const
 {
-	return reinterpret_cast<byte*>(&mImpl->mData[0]);
+	return &mImpl->mData[0];
 }
 
 uint32 MSshPacket::size() const

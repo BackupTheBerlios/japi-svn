@@ -107,7 +107,10 @@
     <ClCompile Include="..\..\NetSources\MSshAgent.cpp" />
     <ClCompile Include="..\..\NetSources\MSshChannel.cpp" />
     <ClCompile Include="..\..\NetSources\MSshConnection.cpp" />
-    <ClCompile Include="..\..\NetSources\MSshPacket.cpp" />
+    <ClCompile Include="..\..\NetSources\MSshPacket.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\maarten\projects\zlib-1.2.5\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\maarten\projects\zlib-1.2.5\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="MLib.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>

@@ -239,11 +239,6 @@ void MSshChannel::HandleChannelRequest(
 	MSshPacket&			in,
 	MSshPacket&			out)
 {
-#if DEBUG
-	cerr << "HandleChannelRequest " << inRequest << endl;
-	if (not in.empty())
-		HexDump(in.peek(), in.size(), cerr);
-#endif
 }
 
 void MSshChannel::HandleChannelEvent(

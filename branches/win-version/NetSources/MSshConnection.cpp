@@ -58,8 +58,6 @@ namespace {
 const string
 	kSSHVersionString = string("SSH-2.0-") + kAppName + '-' + kVersionString;
 
-const int kDefaultCompressionLevel = 3;
-
 const byte
 	k_p_2[] = {
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xC9, 0x0F, 0xDA, 0xA2, 0x21, 0x68, 0xC2, 0x34,
@@ -126,8 +124,6 @@ MSshConnection::MSshConnection(
 	, mResolver(GetIOService())
 	, mSocket(GetIOService())
 	, mPacketLength(0)
-	, mCompress(false)
-	, mDecompress(false)
 	, mDelayedCompress(false)
 	, mDelayedDecompress(false)
 	, mOutSequenceNr(0)
@@ -289,17 +285,22 @@ void MSshConnection::Disconnect()
 	if (mConnected)
 	{
 		mSocket.close();
+
+		mConnected = false;
+    	mAuthenticated = false;
 		
 		eConnectionMessage(_("Connection closed"));
 	
-		mConnected = false;
-    	mAuthenticated = false;
-
 		for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
 		mChannels.clear();
-		
-		delete this;
 	}
+	else
+	{
+		for_each(mOpeningChannels.begin(), mOpeningChannels.end(), boost::bind(&MSshChannel::Close, _1));
+		mOpeningChannels.clear();
+	}
+	
+	delete this;
 }
 
 void MSshConnection::CertificateDeleted(
@@ -320,13 +321,11 @@ void MSshConnection::Send(
 	if (mEncryptorCipher.get() != nil)
 		blockSize = mEncryptorCipher->BlockSize();
 	
-	if (mCompress)
-		inPacket.Compress();
+	if (mCompressor)
+		inPacket.Compress(*mCompressor);
 	
 	inPacket.Wrap(blockSize, rng);
 
-HexDump(inPacket.peek(), inPacket.size(), cerr);
-	
 	boost::asio::streambuf* request = new boost::asio::streambuf;
 	ostream out(request);
 	
@@ -452,7 +451,11 @@ void MSshConnection::Receive(
 			try
 			{
 				MSshPacket in(mPacket);
-				ProcessPacket(mPacket[5], in);
+				
+				if (mDecompressor)
+					in.Decompress(*mDecompressor);
+				
+				ProcessPacket(*in.peek(), in);
 			}
 			catch (exception& e)
 			{
@@ -901,10 +904,15 @@ void MSshConnection::ProcessNewKeys(
 	else
 		compress = kDontUseCompressionAlgorithms;
 
-	mCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib";
-	mDelayedCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib@openssh.com";
-	mDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib";
-	mDelayedDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib@openssh.com";
+	if (ChooseProtocol(mCompressionAlgS2C, compress) == "zlib")
+		mCompressor.reset(new MSshPacketCompressor);
+	else
+		mDelayedCompress = ChooseProtocol(mCompressionAlgS2C, compress) == "zlib@openssh.com";
+
+	if (ChooseProtocol(mCompressionAlgC2S, compress) == "zlib")
+		mDecompressor.reset(new MSshPacketDecompressor);
+	else
+		mDelayedDecompress = ChooseProtocol(mCompressionAlgC2S, compress) == "zlib@openssh.com";
 	
 	if (not mAuthenticated)
 	{
@@ -952,8 +960,10 @@ void MSshConnection::ProcessUserAuthSuccess(
 	MSshPacket&	in)
 {
 	mAuthenticated = true;
-	mCompress = mCompress or mDelayedCompress;
-	mDecompress = mDecompress or mDelayedDecompress;
+	if (mDelayedCompress)
+		mCompressor.reset(new MSshPacketCompressor);
+	if (mDelayedDecompress)
+		mDecompressor.reset(new MSshPacketDecompressor);
 	mSshAgent.release();
 
 	eConnectionMessage(_("Authenticated"));

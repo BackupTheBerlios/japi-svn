@@ -63,11 +63,11 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration);C:\Users\maarten\projects\zlib-1.2.5</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;pcre.lib;libzeep.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;pcre.lib;libzeep.lib;cryptlib.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalOptions>/verbose:lib %(AdditionalOptions)</AdditionalOptions>
@@ -98,13 +98,13 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\maarten\projects\boost\lib;C:\Users\Maarten\projects\libzeep\msvc\$(Configuration);C:\Users\maarten\projects\cryptopp-561\cryptopp\Win32\Output\$(Configuration);C:\Users\maarten\projects\pcre-build\$(Configuration);C:\Users\maarten\projects\japi\msvc\$(Configuration);C:\Users\maarten\projects\zlib-1.2.5</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;pcre.lib;libzeep.lib;cryptlib.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>propsys.lib;shlwapi.lib;comctl32.lib;pcre.lib;libzeep.lib;cryptlib.lib;d2d1.lib;dwrite.lib;UxTheme.lib;MLib.lib;MWinLib.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(SolutionDir)dpi-aware.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
