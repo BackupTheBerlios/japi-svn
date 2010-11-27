@@ -48,9 +48,11 @@ class MSshConnection
 	bool			IsConnected() const					{ return mConnected; }
 	
 	void			OpenChannel(
-						MSshChannel*	inChannel);
+						MSshChannel*		inChannel,
+						const uint32		inChannelID);
 	void			CloseChannel(
-						MSshChannel*	inChannel);
+						MSshChannel*		inChannel,
+						const uint32		inChannelID);
 
 	std::string		GetEncryptionParams() const;
 	
@@ -70,12 +72,6 @@ class MSshConnection
 						const std::string&	inUserName,
 						uint16				inPort);
 
-					MSshConnection(
-						const MSshConnection&);
-
-	MSshConnection&	operator=(
-						const MSshConnection&);
-
 	virtual 		~MSshConnection();
 
 	std::string		ChooseProtocol(
@@ -90,12 +86,6 @@ class MSshConnection
 						int					inLength,
 						byte*&				outKey);
 	
-	void			AdjustMyWindowSize(
-						int32				inDelta);
-
-	void			AdjustHostWindowSize(
-						int32				inDelta);
-
 	// Network IO functions, we're using async boost::asio calls
 	void			HandleResolve(
 						const boost::system::error_code& err,
@@ -161,34 +151,30 @@ class MSshConnection
 	};
 
 	void			ProcessChannelOpen(
-						uint8				inMessage,
+						MSshPacket&			in);
+
+	void			ProcessChannelOpenConfirmation(
 						MSshPacket&			in);
 
 	void			ProcessChannelRequest(
-						uint8				inMessage,
 						MSshPacket&			in);
-
-	void			TryNextIdentity();
-
-	void			TryPassword();
-
-	void			UserAuthSuccess();
-
-	void			UserAuthFailed();
 
 	void			ProcessChannel(
-						uint8				inMessage,
 						MSshPacket&			in);
 
-	MEventIn<void(std::vector<std::string>)>	eRecvAuthInfo;
+	MEventIn<void(std::vector<std::string>&)>	eRecvAuthInfo;
 	void			RecvAuthInfo(
-						std::vector<std::string>
+						std::vector<std::string>&
 											inAuthInfo);
 
-	MEventIn<void(std::vector<std::string>)>	eRecvPassword;
+	MEventIn<void(std::vector<std::string>&)>	eRecvPassword;
 	void			RecvPassword(
-						std::vector<std::string>
+						std::vector<std::string>&
 											inPassword);
+
+	MEventIn<void(MCertificate*)>				eCertificateDeleted;
+	void			CertificateDeleted(
+						MCertificate*		inCertificate);
 
 	std::string					mUserName;
 	std::string					mIPAddress;
@@ -246,14 +232,7 @@ class MSshConnection
 //	std::unique_ptr<MCertificate>
 //								mCertificate;
 	std::unique_ptr<MSshAgent>	mSshAgent;
-
-	MEventIn<void(MCertificate*)>
-								eCertificateDeleted;
-
-	void						CertificateDeleted(
-									MCertificate*	inCertificate);
-	
-	ChannelList					mChannels, mOpeningChannels;
+	ChannelList					mChannels;
 
 	static boost::asio::io_service&
 								GetIOService();
@@ -263,6 +242,12 @@ class MSshConnection
 
 	static std::list<MSshConnection*>
 								sConnectionList;
+
+  private:
+					MSshConnection(
+						const MSshConnection&);
+	MSshConnection&	operator=(
+						const MSshConnection&);
 };
 
 #endif // MSSHCONNECTION_H

@@ -692,7 +692,7 @@ MDocument* MJapiApp::OpenOneDocument(
 	if (doc != nil)
 	{
 		DisplayDocument(doc);
-		AddToRecentMenu(inFileRef.GetPath());
+		AddToRecentMenu(inFileRef);
 	}
 	
 	return doc;

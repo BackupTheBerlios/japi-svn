@@ -17,39 +17,8 @@
 
 #include <cryptopp/integer.h>
 
-class MSshPacketZLibBase
-{
-  public:
-					MSshPacketZLibBase();
-	virtual			~MSshPacketZLibBase();
-	
-	virtual void	Process(
-						std::vector<uint8>& ioData) = 0;
-
-  protected:
-	struct z_stream_s*
-					mStream;
-};
-
-class MSshPacketCompressor : public MSshPacketZLibBase
-{
-  public:
-					MSshPacketCompressor();
-	virtual			~MSshPacketCompressor();
-	
-	virtual void	Process(
-						std::vector<uint8>& ioData);
-};
-
-class MSshPacketDecompressor : public MSshPacketZLibBase
-{
-  public:
-					MSshPacketDecompressor();
-	virtual			~MSshPacketDecompressor();
-	
-	virtual void	Process(
-						std::vector<uint8>& ioData);
-};
+class MSshPacketCompressor;
+class MSshPacketDecompressor;
 
 class MSshPacket
 {
@@ -104,9 +73,46 @@ class MSshPacket
 	const byte*		peek() const;
 	uint32			size() const;
 	bool			empty() const;
+	
+	uint8			pop_front();
 
   private:
-	struct MSshPacketImpl* mImpl;
+	std::vector<uint8>
+					mData;
+};
+
+class MSshPacketZLibBase
+{
+  public:
+					MSshPacketZLibBase();
+	virtual			~MSshPacketZLibBase();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData) = 0;
+
+  protected:
+	struct z_stream_s*
+					mStream;
+};
+
+class MSshPacketCompressor : public MSshPacketZLibBase
+{
+  public:
+					MSshPacketCompressor();
+	virtual			~MSshPacketCompressor();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData);
+};
+
+class MSshPacketDecompressor : public MSshPacketZLibBase
+{
+  public:
+					MSshPacketDecompressor();
+	virtual			~MSshPacketDecompressor();
+	
+	virtual void	Process(
+						std::vector<uint8>& ioData);
 };
 
 namespace std {

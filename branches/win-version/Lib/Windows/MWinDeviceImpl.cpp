@@ -603,7 +603,7 @@ wstring MWinDeviceImpl::GetLocale()
 MWinDeviceImpl::MWinDeviceImpl()
 	: mView(nil)
 	, mRenderTarget(nil)
-	, mClipLayer(nil)
+//	, mClipLayer(nil)
 	, mTextFormat(nil)
 	, mTextLayout(nil)
 	, mForeBrush(nil)
@@ -628,7 +628,7 @@ MWinDeviceImpl::MWinDeviceImpl(
 	bool		inOffscreen)
 	: mView(inView)
 	, mRenderTarget(nil)
-	, mClipLayer(nil)
+//	, mClipLayer(nil)
 	, mTextFormat(nil)
 	, mTextLayout(nil)
 	, mForeBrush(nil)
@@ -666,8 +666,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 	// default to this mode:
 	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
-	if (inUpdate)
-		ClipRect(inUpdate);
+//	if (inUpdate)
+//		ClipRect(inUpdate);
 
 	SetForeColor(kBlack);
 	SetBackColor(kWhite);
@@ -698,11 +698,11 @@ MWinDeviceImpl::~MWinDeviceImpl()
 		if (mTextFormat != nil)
 			mTextFormat->Release();
 
-		if (mClipLayer != nil)
-		{
-			mRenderTarget->PopLayer();
-			mClipLayer->Release();
-		}
+//		if (mClipLayer != nil)
+//		{
+//			mRenderTarget->PopLayer();
+//			mClipLayer->Release();
+//		}
 	}
 	catch (...)
 	{
@@ -792,18 +792,19 @@ MColor MWinDeviceImpl::GetBackColor() const
 void MWinDeviceImpl::ClipRect(
 	MRect				inRect)
 {
-	if (mClipLayer != nil)
-	{
-		mRenderTarget->PopLayer();
-		mClipLayer->Release();
-	}
-
-	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateLayer(&mClipLayer));
-
-    // Push the layer with the geometric mask.
-	mRenderTarget->PushLayer(
-		D2D1::LayerParameters(D2D1::RectF(inRect)),
-		mClipLayer);
+//	if (mClipLayer != nil)
+//	{
+//		mRenderTarget->PopLayer();
+//		mClipLayer->Release();
+//	}
+	mClipping.push(inRect);
+//
+//	THROW_IF_HRESULT_ERROR(mRenderTarget->CreateLayer(&mClipLayer));
+//
+//    // Push the layer with the geometric mask.
+//	mRenderTarget->PushLayer(
+//		D2D1::LayerParameters(D2D1::RectF(inRect)),
+//		mClipLayer);
 }
 
 //void MWinDeviceImpl::ClipRegion(
@@ -814,6 +815,9 @@ void MWinDeviceImpl::ClipRect(
 void MWinDeviceImpl::EraseRect(
 	MRect				inRect)
 {
+	if (not mClipping.empty())
+		inRect &= mClipping.top();
+	
 	assert(mBackBrush);
 	assert(mRenderTarget);
 
@@ -823,6 +827,9 @@ void MWinDeviceImpl::EraseRect(
 void MWinDeviceImpl::FillRect(
 	MRect				inRect)
 {
+	if (not mClipping.empty())
+		inRect &= mClipping.top();
+
 	assert(mForeBrush);
 	assert(mRenderTarget);
 

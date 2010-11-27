@@ -22,7 +22,6 @@ extern fs::path gExecutablePath;
 
 class MWindow;
 class MDocument;
-class MFile;
 class MApplicationImpl;
 
 // ===========================================================================
@@ -57,7 +56,7 @@ class MApplication : public MHandler
 							MMenu*				inMenu);
 
 	void				AddToRecentMenu(
-							const fs::path&		inFile);
+							const MFile&		inFile);
 
 	virtual MDocument*	OpenOneDocument(
 							const MFile&		inFileRef);
@@ -113,8 +112,7 @@ class MApplication : public MHandler
 	bool				mQuit;
 	bool				mQuitPending;
 	std::string			mCurrentFolder;
-	std::deque<fs::path>
-						mRecentFiles;
+	std::deque<MFile>	mRecentFiles;
 };
 
 extern MApplication*	gApp;

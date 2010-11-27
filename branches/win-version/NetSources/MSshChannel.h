@@ -28,45 +28,23 @@ const uint32
 	kMaxPacketSize = 0x8000,
 	kWindowSize = 4 * kMaxPacketSize;
 
-enum MSshChannelEvent {
-	SSH_CHANNEL_OPENED,
-	SSH_CHANNEL_CLOSED,
-	SSH_CHANNEL_ERROR,
-	SSH_CHANNEL_SUCCESS,
-	SSH_CHANNEL_FAILURE
-};
-
 class MSshChannel
 {
   public:
 	uint32					GetMyChannelID() const		{ return mMyChannelID; }
 	bool					IsChannelOpen() const		{ return mChannelOpen; }
 
-	void					Open();
-	void					Close();
+	virtual void			Open();
+	virtual void			Opened();
+
+	virtual void			Close();
+	virtual void			Closed();
 	
 	bool					IsOpen() const				{ return mChannelOpen; }
 
-	virtual void			Process(
-								uint8				inMessage,
-								MSshPacket&			in);
-
-	bool					PopPending(
-								MSshPacket&			outData);
-	
-	void					PushPending(
-								const MSshPacket&	inData);
-
-	MEventOut<void(uint32)>	eChannelEvent;		// events in the enum range above
-	MEventOut<void(const std::string&)>
-							eChannelMessage;	// for status messages
-	MEventOut<void(const std::string&)>
-							eChannelError;		// for error messages
-	MEventOut<void(const std::string&)>
-							eChannelBanner;		// sent by the authentication protocol
-
-	MEventIn<void(const std::string&)>
-							eConnectionMessage;
+	virtual void			ChannelMessage(const std::string&);	// for status messages
+	virtual void			ChannelError(const std::string&);	// for error messages
+	virtual void			ChannelBanner(const std::string&);	// sent by the authentication protocol
 
 	std::string				GetEncryptionParams() const;
 	
@@ -82,14 +60,33 @@ class MSshChannel
 								std::string&		outRequest,
 								std::string&		outCommand) const = 0;
 
-	// To send data through the channel using SSH_MSG_CHANNEL_DATA messages
-	virtual void			Send(
-								MSshPacket&			inData,
-								uint32				inType = 0);
+	virtual void			Opened(
+								MSshPacket&			in);
 
-	virtual void			Receive(
+	// To send data through the channel using SSH_MSG_CHANNEL_DATA messages
+	virtual void			SendData(
+								MSshPacket&			inData);
+
+	virtual void			SendExtendedData(
 								MSshPacket&			inData,
-								int					inType = 0) = 0;
+								uint32				inType);
+
+	virtual void			ReceiveData(
+								MSshPacket&			inData);
+
+	virtual void			ReceiveExtendedData(
+								MSshPacket&			inData,
+								uint32				inType);
+
+	virtual void			Process(
+								uint8				inMessage,
+								MSshPacket&			in);
+
+	bool					PopPending(
+								MSshPacket&			outData);
+	
+	void					PushPending(
+								const MSshPacket&	inData);
 
 	void					SendWindowResize(
 								uint32				inColumns,
@@ -100,23 +97,25 @@ class MSshChannel
 								MSshPacket&			in,
 								MSshPacket&			out);
 
-	virtual void			HandleChannelEvent(
-								uint32				inEventMessage);
-
 	void					ConnectionMessage(
 								const std::string&	inMessage);
+
+	MEventIn<void(const std::string&)>
+							eConnectionMessage;
 	
   protected:
+	uint32					mMaxSendPacketSize;
+	bool					mChannelOpen;
 
+  private:
+	  
 	static uint32			sNextChannelId;
 
 	MSshConnection&			mConnection;
 	uint32					mMyChannelID;
 	uint32					mHostChannelID;
-	uint32					mMaxSendPacketSize;
 	uint32					mMyWindowSize;
 	uint32					mHostWindowSize;
-	bool					mChannelOpen;
 	std::deque<MSshPacket>	mPending;
 };
 

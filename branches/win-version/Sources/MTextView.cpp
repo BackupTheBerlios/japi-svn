@@ -368,8 +368,8 @@ void MTextView::Draw(
 		
 		mDocument->SetWrapWidth(bounds.width);
 	}
-	else
-		dev.EraseRect(bounds);
+	else	// then at least erase the update region
+		dev.EraseRect(inUpdate);
 	
 	if (mDocument->GetShowWhiteSpace())
 		dev.SetDrawWhiteSpace(true);
@@ -386,7 +386,12 @@ void MTextView::Draw(
 	{
 		MRect lineRect(0, line * mLineHeight, bounds.width + bounds.x, mLineHeight);
 		if (inUpdate.Intersects(lineRect))
+		{
+			if (not dev.IsPrinting())
+				dev.EraseRect(lineRect);
+
 			DrawLine(line, dev, lineRect);
+		}
 	}
 
 	//if (IsWithinDrag())
@@ -419,7 +424,7 @@ void MTextView::DrawLine(
 	if (not (mDrawForDragImage or inDevice.IsPrinting()))
 	{
 		MDeviceContextSaver save(inDevice);
-		
+
 		bool marked = mDocument->IsLineMarked(inLineNr);
 		bool current = mDocument->OffsetToLine(selection.GetCaret()) == inLineNr and IsActive();
 		bool fill = true;

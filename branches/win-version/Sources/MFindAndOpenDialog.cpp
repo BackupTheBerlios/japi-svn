@@ -76,24 +76,24 @@ bool MFindAndOpenDialog::OKClicked()
 		if (not mDocument->OpenInclude(s))
 			PlaySound("warning");
 	}
-	//else
-	//{
-	//	MProject* project = mProject;
-	//	
-	//	if (project == nil)
-	//		project = MProject::Instance();
-
-	//	MFile file(s);
-	//	
-	//	if (file.IsLocal() and not file.Exists() and project != nil)
-	//	{
-	//		fs::path p(s);
-	//		if (project->LocateFile(s, true, p))
-	//			file = p;
-	//	}
-	//	
-	//	gApp->OpenOneDocument(file);
-	//}
+	else
+	{
+//		MProject* project = mProject;
+//		
+//		if (project == nil)
+//			project = MProject::Instance();
+	
+		MFile file(s);
+		
+//		if (file.IsLocal() and not file.Exists() and project != nil)
+//		{
+//			fs::path p(s);
+//			if (project->LocateFile(s, true, p))
+//				file = p;
+//		}
+		
+		gApp->OpenOneDocument(file);
+	}
 	
 	return true;
 }

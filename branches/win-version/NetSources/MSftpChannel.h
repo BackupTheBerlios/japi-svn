@@ -18,116 +18,104 @@ class MSftpChannel : public MSshChannel
 {
   public:
 
-	static MSftpChannel*	Open(
-								const std::string&	inIPAddress,
-								const std::string&	inUserName,
-								uint16				inPort);
+	void			ReadFile(
+						const std::string&	inPath);
 
-	static MSftpChannel*	Open(
-								const MFile&		inURL)
-							{
-								return Open(inURL.GetHost(), inURL.GetUser(), inURL.GetPort());
-							}
+	void			WriteFile(
+						const std::string&	inPath);
 
-	void					ReadFile(
-								const std::string&	inPath);
+	virtual void	ReceiveData(
+						const std::string&	inData,
+						int64				inOffset,
+						int64				inFileSize)
+					{
+					}
 
-	void					WriteFile(
-								const std::string&	inPath);
+	virtual void	SendData(
+						int64				inOffset,
+						uint32				inMaxBlockSize,
+						std::string&		outData)
+					{
+					}
 
-	// An SFTPChannelOpened event is sent when SFTP is set up.
-	MEventOut<void()>								eSFTPChannelOpened;
-	// An SFTPChannelClosed event is sent when the underlying channed
-	// is about to be closed, don't use it after this event.
-	MEventOut<void()>								eSFTPChannelClosed;
+	virtual void	FileClosed()
+					{
+					}
 
-	// For reading, this object sends out a ReceiveData event
-	// for each block read. First parameter is the data
-	// in the block, second is the offset of this block
-	// and the third the total size of the file.
-	// The file is closed automatically after reading all data.
-	MEventOut<void(const std::string&, int64, int64)>
-													eReceiveData;
-
-	// For writing a file, this object sends a SendData event
-	// to collect the data. First parameter is the offset of
-	// the next data block, second parameter indicates the
-	// maximum amount of data to transfer and the third is the
-	// data itself.
-	// The file is closed automatically if the data passed back
-	// is empty.
-	MEventOut<void(int64, uint32, std::string&)>	eSendData;
-	
   protected:
 
-	virtual void			GetRequestAndCommand(
-								std::string&		outRequest,
-								std::string&		outCommand) const
-							{
-								outRequest = "subsystem";
-								outCommand = "sftp";
-							}
+	  using MSshChannel::SendData;
+
+					MSftpChannel(
+						const std::string&	inHost,
+						const std::string&	inUser,
+						uint16				inPort);
+
+					MSftpChannel(
+						MSshConnection&		inConnection);
+
+	virtual void	SFTPInitialised();
+
+	virtual void	Opened();
+					
+	virtual void	GetRequestAndCommand(
+						std::string&		outRequest,
+						std::string&		outCommand) const
+					{
+						outRequest = "subsystem";
+						outCommand = "sftp";
+					}
 	
-//	uint32					GetStatusCode() const	{ return mStatusCode; }
+	virtual void	Send(
+						MSshPacket&			inData);
 
-							MSftpChannel(
-								MSshConnection&		inConnection);
-							
-							~MSftpChannel();
-	
-	virtual void			HandleChannelEvent(
-								uint32				inEvent);
+	virtual void	ReceiveData(
+						MSshPacket&			inData);
 
-	virtual void			Send(
-								MSshPacket&			inData);
+	void			ProcessPacket(
+						uint8				msg,
+						MSshPacket&			in);
 
-	virtual void			Receive(
-								MSshPacket&			inData,
-								int					inType);
-
-	void					ProcessPacket(
-								uint8				msg,
-								MSshPacket&			in);
-
-	void					Match(
-								uint8			inExpected,
-								uint8			inReceived);
+	void			Match(
+						uint8				inExpected,
+						uint8				inReceived);
 
 	void (MSftpChannel::*mHandler)(
-								uint8			inMessage,
-								MSshPacket&		in);
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessOpenFile(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessOpenFile(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessFStat(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessFStat(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessRead(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessRead(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessCreateFile(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessCreateFile(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessWrite(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessWrite(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	void					ProcessClose(
-								uint8		inMessage,
-								MSshPacket&	in);
+	void			ProcessClose(
+						uint8				inMessage,
+						MSshPacket&			in);
 
-	std::deque<uint8>		mPacket;
-	uint32					mPacketLength;
-	uint32					mRequestId;
-	std::string				mHandle;
-	int64					mFileSize;
-	int64					mOffset;
-	std::string				mData;
+	std::deque<uint8>
+					mPacket;
+	uint32			mPacketLength;
+	uint32			mRequestId;
+	std::string		mHandle;
+	int64			mFileSize;
+	int64			mOffset;
+	std::string		mData;
 };
 
 //	void					SetCWD(

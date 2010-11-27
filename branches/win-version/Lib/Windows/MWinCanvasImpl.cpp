@@ -20,6 +20,7 @@ MWinCanvasImpl::MWinCanvasImpl(
 	MCanvas*		inCanvas)
 	: MCanvasImpl(inCanvas)
 	, mRenderTarget(nil)
+	, mInBeginEndDrawSection(false)
 	, mLastClickTime(0)
 {
 	AddHandler(WM_PAINT,			boost::bind(&MWinCanvasImpl::WMPaint, this, _1, _2, _3, _4, _5));
@@ -162,6 +163,14 @@ bool MWinCanvasImpl::WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM i
 
 		// BeginPaint and call the Node redraw 
 		::BeginPaint(inHWnd, &lPs);
+		
+		// Somehow, we sometimes crash out of the EndDraw
+		if (mInBeginEndDrawSection)
+		{
+			ID2D1RenderTarget* rt = mRenderTarget;
+			mRenderTarget = nil;
+			rt->Release();
+		}
 
 		if (mRenderTarget == nil)
 		{
@@ -185,25 +194,31 @@ bool MWinCanvasImpl::WMPaint(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM i
 			mRenderTarget->SetDpi(96.f, 96.f);
 		}
 
+		HRESULT hr = S_OK;
+
 		try
 		{
 			mRenderTarget->BeginDraw();
+			mInBeginEndDrawSection = true;
 			
 			mCanvas->RedrawAll(update);
 			::ValidateRect(GetHandle(), &lUpdateRect);
 			
-			HRESULT hr = mRenderTarget->EndDraw();
-			if (hr != S_OK)
-				PRINT(("EndDraw returned %lx", hr));
-
-			if (hr == D2DERR_RECREATE_TARGET)
-			{
-				mRenderTarget->Release();
-				mRenderTarget = nil;
-			}
+			hr = mRenderTarget->EndDraw();
+			mInBeginEndDrawSection = false;
 		}
 		catch (...)
 		{
+			hr = D2DERR_RECREATE_TARGET;
+		}
+
+		if (hr != S_OK)
+			PRINT(("EndDraw returned %lx", hr));
+
+		if (hr == D2DERR_RECREATE_TARGET)
+		{
+			mRenderTarget->Release();
+			mRenderTarget = nil;
 		}
 
 		::EndPaint(inHWnd, &lPs);

@@ -4942,32 +4942,31 @@ void MTextDocument::CheckReadOnly()
 bool MTextDocument::OpenInclude(
 	string		inFileName)
 {
-	bool result = false;
 	MFile url;
 
-	//MProject* project = MProject::Instance();
-
-	if (IsSpecified())
+	if (IsAbsolutePath(inFileName))
+		url = inFileName;
+	else
+		url = GetFile().GetParent() / inFileName;
+	
+	bool result = false;
+	
+	if (url.IsValid())
 	{
-		try
-		{
-			url = GetFile().GetParent() / inFileName;
-			if (url.IsValid())
-			{
-				if (url.IsLocal())
-					result = url.Exists();
-				else
-					result = true;
-			}
-		}
-		catch (...) {}
+		if (url.IsLocal())
+			result = url.Exists();
+		else
+			result = true;
 	}
 	
-	//fs::path p;
-	//if (not result and project != nil and project->LocateFile(inFileName, true, p))
+	//if (not result and MProject::Instance() != nil)
 	//{
-	//	result = true;
-	//	url = MFile(p);
+	//	fs::path p;
+	//	if (MProject::Instance()->LocateFile(inFileName, true, p))
+	//	{
+	//		result = true;
+	//		url = MFile(p);
+	//	}
 	//}
 	
 	if (result)

@@ -23,7 +23,7 @@ class MAuthDialog : public MDialog
 							std::string		inPrompts[],
 							bool			inEcho[]);
 
-	MEventOut<void(std::vector<std::string>)>
+	MEventOut<void(std::vector<std::string>&)>
 						eAuthInfo;
 	
   protected:

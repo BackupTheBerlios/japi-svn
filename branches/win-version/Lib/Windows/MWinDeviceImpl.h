@@ -151,10 +151,11 @@ class MWinDeviceImpl : public MDeviceImp
 								uint32				inOffset);
 
 	MView*					mView;
-	HDC						mDC;
+//	HDC						mDC;
 
 	ID2D1RenderTarget*		mRenderTarget;
-	ID2D1Layer*				mClipLayer;
+//	ID2D1Layer*				mClipLayer;
+	std::stack<MRect>		mClipping;
 	IDWriteTextFormat*		mTextFormat;
 	IDWriteTextLayout*		mTextLayout;
 	ID2D1Brush*				mForeBrush;

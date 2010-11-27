@@ -32,7 +32,6 @@ MSshChannel::MSshChannel(
 	, mHostWindowSize(0)
 	, mChannelOpen(false)
 {
-	mConnection.OpenChannel(this);
 }
 
 MSshChannel::~MSshChannel()
@@ -42,45 +41,33 @@ MSshChannel::~MSshChannel()
 
 void MSshChannel::Open()
 {
-	MSshPacket out;
-	out << uint8(SSH_MSG_CHANNEL_OPEN) << "session"
-		<< mMyChannelID << mMyWindowSize << kMaxPacketSize;
-	mConnection.Send(out);
+	mMyWindowSize = kWindowSize;
+	mMyChannelID = sNextChannelId++;
+	mConnection.OpenChannel(this, mMyChannelID);
+}
+
+void MSshChannel::Opened()
+{
+	mChannelOpen = true;
 }
 
 void MSshChannel::Close()
 {
+	ChannelMessage(_("Channel closed"));
 	PRINT(("Closing SSH channel %d", mMyChannelID));
-	if (mChannelOpen and mConnection.IsConnected())
-	{
-		MSshPacket out;
-		out << uint8(SSH_MSG_CHANNEL_CLOSE) << mHostChannelID;
-		mConnection.Send(out);
-	}
-	else
-	{
-		HandleChannelEvent(SSH_CHANNEL_CLOSED);
-		mConnection.CloseChannel(this);
-	}
+	mConnection.CloseChannel(this, mHostChannelID);
 }
 
-void MSshChannel::Process(
-	uint8		inMessage,
+void MSshChannel::Closed()
+{
+	mChannelOpen = false;
+}
+
+void MSshChannel::Opened(
 	MSshPacket&	in)
 {
-PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
+	in >> mHostChannelID >> mHostWindowSize >> mMaxSendPacketSize;
 
-	switch (inMessage)
-	{
-		case SSH_MSG_CHANNEL_OPEN_CONFIRMATION:
-		{
-			in >> mHostChannelID >> mHostWindowSize >> mMaxSendPacketSize;
-			
-			mChannelOpen = true;
-			
-			HandleChannelEvent(SSH_CHANNEL_OPENED);
-			ConnectionMessage(_("Connecting…"));
-			
 //			if (WantPTY())
 //			{
 //				MSshPacket p;
@@ -99,32 +86,29 @@ PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
 //				mHandler = &MSshConnection::ProcessConfirmPTY;
 //			}
 
-			string request, command;
-			GetRequestAndCommand(request, command);
+	string request, command;
+	GetRequestAndCommand(request, command);
 
-			MSshPacket out;
-			out << uint8(SSH_MSG_CHANNEL_REQUEST)
-				<< mHostChannelID
-				<< request
-				<< true;
-			
-			if (not command.empty())
-				out << command;
+	MSshPacket out;
+	out << uint8(SSH_MSG_CHANNEL_REQUEST)
+		<< mHostChannelID
+		<< request
+		<< true;
+	
+	if (not command.empty())
+		out << command;
 
-			mConnection.Send(out);
-			break;
-		}
-		
-		case SSH_MSG_CHANNEL_OPEN_FAILURE:
-		{
-			uint32 errCode;
-			string errString;
+	mConnection.Send(out);
+}
 
-			in >> errCode >> errString;
-			mConnection.Error(errCode, errString);
-			break;
-		}
-			
+void MSshChannel::Process(
+	uint8		inMessage,
+	MSshPacket&	in)
+{
+PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
+
+	switch (inMessage)
+	{
 		case SSH_MSG_CHANNEL_WINDOW_ADJUST:
 		{
 			int32 extra;
@@ -132,13 +116,17 @@ PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
 			mHostWindowSize += extra;
 			break;
 		}
+
+		case SSH_MSG_CHANNEL_SUCCESS:
+			Opened();
+			break;
 		
 		case SSH_MSG_CHANNEL_DATA:
 		{
 			MSshPacket data;
 			in >> data;
 			mMyWindowSize -= data.size();
-			Receive(data);
+			ReceiveData(data);
 			break;
 		}
 
@@ -148,22 +136,17 @@ PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
 			uint32 type;
 			in >> type >> data;
 			mMyWindowSize -= data.size();
-			Receive(data, type);
+			ReceiveExtendedData(data, type);
 			break;
 		}
 		
-		case SSH_MSG_CHANNEL_CLOSE:
-			HandleChannelEvent(SSH_CHANNEL_CLOSED);
-			mChannelOpen = false;
-			break;
-		
-		case SSH_MSG_CHANNEL_SUCCESS:
-			HandleChannelEvent(SSH_CHANNEL_SUCCESS);
-			break;
+		//case SSH_MSG_CHANNEL_SUCCESS:
+		//	HandleChannelEvent(SSH_CHANNEL_SUCCESS);
+		//	break;
 
-		case SSH_MSG_CHANNEL_FAILURE:
-			HandleChannelEvent(SSH_CHANNEL_FAILURE);
-			break;
+		//case SSH_MSG_CHANNEL_FAILURE:
+		//	HandleChannelEvent(SSH_CHANNEL_FAILURE);
+		//	break;
 
 		case SSH_MSG_CHANNEL_REQUEST:
 		{
@@ -195,19 +178,25 @@ PRINT(("Channel message %d for channel %d", inMessage, mMyChannelID));
 	}
 }
 
-void MSshChannel::Send(
+void MSshChannel::SendData(
+	MSshPacket&		inData)
+{
+	assert(inData.size() < mMaxSendPacketSize);
+
+	MSshPacket p;
+	p << uint8(SSH_MSG_CHANNEL_DATA) << mHostChannelID << inData;
+	PushPending(p);
+}
+
+void MSshChannel::SendExtendedData(
 	MSshPacket&		inData,
 	uint32			inType)
 {
 	assert(inData.size() < mMaxSendPacketSize);
 
 	MSshPacket p;
-	if (inType == 0)
-		p << uint8(SSH_MSG_CHANNEL_DATA) << mHostChannelID << inData;
-	else
-		p << uint8(SSH_MSG_CHANNEL_EXTENDED_DATA) << mHostChannelID
-			<< inType << inData;
-		
+	p << uint8(SSH_MSG_CHANNEL_EXTENDED_DATA) << mHostChannelID
+		<< inType << inData;
 	PushPending(p);
 }
 
@@ -231,7 +220,19 @@ string MSshChannel::GetEncryptionParams() const
 void MSshChannel::ConnectionMessage(
 	const string&		inMessage)
 {
-	eChannelMessage(inMessage);
+	ChannelMessage(inMessage);
+}
+
+void MSshChannel::ChannelMessage(const string& inMessage)
+{
+}
+
+void MSshChannel::ChannelError(const string& inError)
+{
+}
+
+void MSshChannel::ChannelBanner(const string& inBanner)
+{
 }
 
 void MSshChannel::HandleChannelRequest(
@@ -241,10 +242,15 @@ void MSshChannel::HandleChannelRequest(
 {
 }
 
-void MSshChannel::HandleChannelEvent(
-	uint32				inEvent)
+void MSshChannel::ReceiveData(
+	MSshPacket&			in)
 {
-	eChannelEvent(inEvent);
+}
+
+void MSshChannel::ReceiveExtendedData(
+	MSshPacket&			in,
+	uint32				inType)
+{
 }
 
 bool MSshChannel::PopPending(

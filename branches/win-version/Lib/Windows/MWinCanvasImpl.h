@@ -49,6 +49,7 @@ class MWinCanvasImpl : public MCanvasImpl, public MWinProcMixin
 
 	ID2D1HwndRenderTarget*
 					mRenderTarget;
+	bool			mInBeginEndDrawSection;
 
 	double			mLastClickTime;
 	uint32			mClickCount;
