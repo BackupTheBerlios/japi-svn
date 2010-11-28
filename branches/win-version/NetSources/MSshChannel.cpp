@@ -66,6 +66,8 @@ void MSshChannel::Closed()
 void MSshChannel::Opened(
 	MSshPacket&	in)
 {
+	mChannelOpen = true;
+
 	in >> mHostChannelID >> mHostWindowSize >> mMaxSendPacketSize;
 
 //			if (WantPTY())

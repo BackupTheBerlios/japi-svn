@@ -293,6 +293,15 @@ void MSshConnection::Disconnect()
 		mSocket.close();
 
 		eConnectionMessage(_("Connection closed"));
+
+		mDecryptorCipher.reset(nil);
+		mDecryptorCBC.reset(nil);
+		mEncryptorCipher.reset(nil);
+		mEncryptorCBC.reset(nil);
+		mSigner.reset(nil);
+		mVerifier.reset(nil);
+		mCompressor.reset(nil);
+		mDecompressor.reset(nil);
 	}
 	
 	for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
@@ -454,8 +463,8 @@ void MSshConnection::Receive(
 			}
 			catch (exception& e)
 			{
-				Error(SSH_DISCONNECT_PROTOCOL_ERROR, e.what());
 				eConnectionMessage(e.what());
+				Error(SSH_DISCONNECT_PROTOCOL_ERROR, e.what());
 			}
 			
 			mPacket.clear();
@@ -552,7 +561,7 @@ PRINT(("ProcessPacket %d", inMessage));
 		
 		default:
 			PRINT(("This message should not have been received: %d", inMessage));
-			Error(SSH_DISCONNECT_PROTOCOL_ERROR, "Unknown message received");
+//			Error(SSH_DISCONNECT_PROTOCOL_ERROR, "Unknown message received");
 			break;
 	}
 }
@@ -1368,7 +1377,7 @@ void MSshConnection::OpenChannel(
 	}
 	else
 	{
-		RemoveRoute(eConnectionMessage, inChannel->eConnectionMessage);
+//		RemoveRoute(eConnectionMessage, inChannel->eConnectionMessage);
 
 		MSshPacket out;
 		out << uint8(SSH_MSG_CHANNEL_OPEN) << "session"

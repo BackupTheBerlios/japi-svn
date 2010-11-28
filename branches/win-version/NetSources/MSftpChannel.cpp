@@ -98,6 +98,8 @@ MSftpChannel::MSftpChannel(
 
 void MSftpChannel::Opened()
 {
+	MSshChannel::Opened();
+
 	MSshPacket out;
 	out << uint8(SSH_FXP_INIT) << uint32(3);
 	Send(out);
@@ -195,7 +197,7 @@ void MSftpChannel::ReadFile(const string& inPath)
 		uint32(SSH_FXF_READ) << uint32(0);
 	
 	mHandler = &MSftpChannel::ProcessOpenFile;
-	SendData(out);
+	Send(out);
 }
 
 void MSftpChannel::ProcessOpenFile(
