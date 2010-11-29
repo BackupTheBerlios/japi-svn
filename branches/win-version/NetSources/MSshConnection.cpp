@@ -119,15 +119,9 @@ MSshConnection::MSshConnection(
 	, mPortNumber(inPortNr)
 	, mConnected(false)
 	, mAuthenticated(false)
-	, mPasswordAttempts(0)
-	, mAuthenticationState(SSH_AUTH_STATE_NONE)
 	, mResolver(GetIOService())
 	, mSocket(GetIOService())
 	, mPacketLength(0)
-	, mDelayedCompress(false)
-	, mDelayedDecompress(false)
-	, mOutSequenceNr(0)
-	, mInSequenceNr(0)
 	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
 {
 	foreach (byte*& key, mKeys)
@@ -222,8 +216,15 @@ void MSshConnection::Idle(double)
 		}
 	}
 	
-	GetIOService().reset();
-	GetIOService().poll();
+	try
+	{
+		GetIOService().reset();
+		GetIOService().poll();
+	}
+	catch (exception& e)
+	{
+		DisplayError(e);
+	}
 }
 
 void MSshConnection::Error(
@@ -288,7 +289,6 @@ void MSshConnection::Disconnect()
 	if (mConnected)
 	{
 		mConnected = false;
-    	mAuthenticated = false;
 		
 		mSocket.close();
 
@@ -344,9 +344,12 @@ void MSshConnection::Send(
 		f.Put(inPacket.peek(), inPacket.size());
 		f.Flush(true);
 		
-		net_swapper swap;
-		uint32 seqNr = swap(mOutSequenceNr);
-		mSigner->Update(reinterpret_cast<byte*>(&seqNr), sizeof(uint32));
+		for (int32 i = 3; i >= 0; --i)
+		{
+			uint8 b = mOutSequenceNr >> (i * 8);
+			mSigner->Update(&b, 1);
+		}
+		
 		mSigner->Update(inPacket.peek(), inPacket.size());
 		
 		vector<byte> buf(mSigner->DigestSize());
@@ -485,7 +488,6 @@ void MSshConnection::ProcessPacket(
 	uint8				inMessage,
 	MSshPacket&			in)
 {
-PRINT(("ProcessPacket %d", inMessage));
 	switch (inMessage)
 	{
 		case SSH_MSG_DISCONNECT:
@@ -586,9 +588,14 @@ void MSshConnection::HandleConnect(const boost::system::error_code& err,
 {
     if (!err)
     {
+		// init some variables for the new connection
     	mConnected = true;
     	mAuthenticated = false;
     	mAuthenticationState = SSH_AUTH_STATE_NONE;
+		mPasswordAttempts = 0;
+		mInSequenceNr = mOutSequenceNr = 0;
+		mPacketLength = 0;
+		mSessionId.clear();
     	
 		eConnectionMessage(_("Connected"));
 

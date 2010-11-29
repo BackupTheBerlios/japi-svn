@@ -30,7 +30,6 @@
 #include "MStrings.h"
 #include "MPreferences.h"
 #include "MSftpChannel.h"
-#include "MSshConnection.h"
 
 //#include "MJapiApp.h"
 
@@ -81,7 +80,7 @@ inline char ConvertHex(
 
 #include <sys/extattr.h>
 
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
@@ -89,7 +88,7 @@ ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData
 		inName, outData, inDataSize);
 }
 
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 	
@@ -143,14 +142,14 @@ int32 write_attribute(const fs::path& inPath, const char* inName, const void* in
 
 #include <sys/xattr.h>
 
-ssize_t read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
+int32 read_attribute(const fs::path& inPath, const char* inName, void* outData, size_t inDataSize)
 {
 	string path = inPath.string();
 
 	return ::getxattr(path.c_str(), inName, outData, inDataSize, 0, 0);
 }
 
-void write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
+int32 write_attribute(const fs::path& inPath, const char* inName, const void* inData, size_t inDataSize)
 {
 	string path = inPath.string();
 

@@ -23,6 +23,8 @@ class MAuthDialog : public MDialog
 							std::string		inPrompts[],
 							bool			inEcho[]);
 
+	virtual				~MAuthDialog();
+
 	MEventOut<void(std::vector<std::string>&)>
 						eAuthInfo;
 	
@@ -36,6 +38,7 @@ class MAuthDialog : public MDialog
 							double	inSystemTime);
 	
 	int32				mFields;
+	bool				mSentCredentials;
 };
 
 #endif // MAUTHDIALOG_H

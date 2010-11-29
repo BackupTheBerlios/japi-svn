@@ -5,12 +5,7 @@
 - MProject tot leven wekken
 - MShell implementeren
 - Functie Popup in Edit Window
-- SFTP implementeren
 - Horizontale schuifbalk
-
-Bugs
-
-- asynchroon inlezen van bestanden (IOFileLoaded vs Initialize)
 
 Te doen
 

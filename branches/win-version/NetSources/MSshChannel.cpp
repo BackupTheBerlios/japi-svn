@@ -36,7 +36,6 @@ MSshChannel::MSshChannel(
 
 MSshChannel::~MSshChannel()
 {
-	PRINT(("Deleting SSH channel %d", mMyChannelID));
 }
 
 void MSshChannel::Open()

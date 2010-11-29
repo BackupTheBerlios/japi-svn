@@ -24,6 +24,7 @@ MAuthDialog::MAuthDialog(
 	bool			inEcho[])
 	: MDialog("auth-dialog")
 	, ePulse(this, &MAuthDialog::Pulse)
+	, mSentCredentials(false)
 {
 	mFields = inFields;
 
@@ -49,6 +50,12 @@ MAuthDialog::MAuthDialog(
 	}
 }
 
+MAuthDialog::~MAuthDialog()
+{
+	if (not mSentCredentials)
+		CancelClicked();
+}
+
 bool MAuthDialog::OKClicked()
 {
 	vector<string> args;
@@ -57,6 +64,7 @@ bool MAuthDialog::OKClicked()
 		args.push_back(GetText("edit-" + boost::lexical_cast<string>(id)));
 	
 	eAuthInfo(args);
+	mSentCredentials = true;
 
 	return true;
 }
@@ -66,6 +74,7 @@ bool MAuthDialog::CancelClicked()
 	vector<string> args;
 	
 	eAuthInfo(args);
+	mSentCredentials = true;
 	
 	return true;
 }
