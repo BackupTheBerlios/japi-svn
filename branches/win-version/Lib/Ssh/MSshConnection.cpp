@@ -619,7 +619,10 @@ void MSshConnection::HandleProtocolVersionExchangeRequest(
     	Error(SSH_DISCONNECT_PROTOCOL_ERROR, err.message());
 
 	// The connection was successful. Receive initial string
-	boost::asio::async_read_until(mSocket, mResponse, "\r\n",
+	// Note that the SSH spec says it should end with \r\n
+	// however, older OpenSSH versions contain a bug and send
+	// only \n terminated version strings.
+	boost::asio::async_read_until(mSocket, mResponse, "\n",
 		boost::bind(&MSshConnection::HandleProtocolVersionExchangeResponse, this,
 			boost::asio::placeholders::error));
 }
@@ -634,7 +637,7 @@ void MSshConnection::HandleProtocolVersionExchangeResponse(
 
 	istream response_stream(&mResponse);
 	getline(response_stream, mHostVersion);
-	mHostVersion.erase(mHostVersion.end() - 1, mHostVersion.end());
+	ba::trim_right(mHostVersion);
 	
 	if (not ba::starts_with(mHostVersion, "SSH-2.0"))
 		Error(SSH_DISCONNECT_PROTOCOL_ERROR, err.message());
