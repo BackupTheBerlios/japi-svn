@@ -72,15 +72,6 @@ using namespace std;
 #define SSH_FXF_TRUNC           0x00000010
 #define SSH_FXF_EXCL            0x00000020
 
-MSftpChannel* MSftpChannel::Open(
-	const string&	inIPAddress,
-	const string&	inUserName,
-	uint16			inPort)
-{
-	MSshConnection* connection = MSshConnection::Get(inIPAddress, inUserName, inPort);
-	return new MSftpChannel(*connection);
-}
-
 MSftpChannel::MSftpChannel(
 	MSshConnection&	inConnection)
 	: MSshChannel(inConnection)
@@ -92,19 +83,30 @@ MSftpChannel::MSftpChannel(
 {
 }
 
-void MSftpChannel::HandleChannelEvent(
-	uint32			inEvent)
+MSftpChannel::MSftpChannel(
+	const string&		inHost,
+	const string&		inUser,
+	uint16				inPort)
+	: MSshChannel(*MSshConnection::Get(inHost, inUser, inPort))
+	, mHandler(0)
+	, mPacketLength(0)
+	, mRequestId(0)
+	, mFileSize(0)
+	, mOffset(0)
 {
-	switch (inEvent)
-	{
-		case SSH_CHANNEL_SUCCESS:
-			MSshPacket out;
-			out << uint8(SSH_FXP_INIT) << uint32(3);
-			Send(out);
-			break;
-	}
-	
-	MSshChannel::HandleChannelEvent(inEvent);
+}
+
+void MSftpChannel::Opened()
+{
+	MSshChannel::Opened();
+
+	MSshPacket out;
+	out << uint8(SSH_FXP_INIT) << uint32(3);
+	Send(out);
+}
+
+void MSftpChannel::SFTPInitialised()
+{
 }
 
 void MSftpChannel::Send(
@@ -113,21 +115,17 @@ void MSftpChannel::Send(
 	// wrap the packet again...
 	MSshPacket out;
 	out << inData;
-	MSshChannel::Send(out, 0);
+	MSshChannel::SendData(out);
 }
 
-void MSftpChannel::Receive(
-	MSshPacket&		inData,
-	int				inType)
+void MSftpChannel::ReceiveData(
+	MSshPacket&		inData)
 {
-	if (inType != 0)
-		THROW(("Unsupported extra data"));
-	
 	copy(inData.peek(), inData.peek() + inData.size(), back_inserter(mPacket));
 
 	while (not mPacket.empty())
 	{
-		if (mPacketLength >= mPacket.size())
+		if (mPacketLength > 0 and mPacketLength <= mPacket.size())
 		{
 			MSshPacket in(mPacket, mPacketLength), out;
 
@@ -163,7 +161,7 @@ void MSftpChannel::ProcessPacket(
 	{
 		if (msg == SSH_FXP_VERSION)
 		{
-			eSFTPChannelOpened();
+			SFTPInitialised();
 			break;
 		}
 
@@ -177,7 +175,7 @@ void MSftpChannel::ProcessPacket(
 			
 			if (statusCode > SSH_FX_EOF)
 			{
-				eChannelMessage(message);
+				ChannelError(message);
 				Close();
 				break;
 			}
@@ -266,7 +264,7 @@ void MSftpChannel::ProcessRead(
 	uint32 id;
 	in >> msg >> id >> mData;
 	
-	eReceiveData(mData, mOffset, mFileSize);
+	ReceiveData(mData, mOffset, mFileSize);
 	mOffset += mData.length();
 	
 	if (mOffset == mFileSize)
@@ -298,7 +296,7 @@ void MSftpChannel::ProcessCreateFile(
 	
 	mOffset = 0;
 	mData.clear();
-	eSendData(mOffset, mMaxSendPacketSize - 4 * sizeof(uint32), mData);
+	SendData(mOffset, mMaxSendPacketSize - 4 * sizeof(uint32), mData);
 
 	MSshPacket out;
 	if (not mData.empty())
@@ -321,7 +319,7 @@ void MSftpChannel::ProcessWrite(
 {
 	mOffset += mData.length();
 	mData.clear();
-	eSendData(mOffset, mMaxSendPacketSize - 4 * sizeof(uint32), mData);
+	SendData(mOffset, mMaxSendPacketSize - 4 * sizeof(uint32), mData);
 	
 	MSshPacket out;
 	if (not mData.empty())
@@ -339,6 +337,7 @@ void MSftpChannel::ProcessClose(
 	uint8		inMessage,
 	MSshPacket&	in)
 {
+	FileClosed();
 	mHandler = nil;
 	Close();
 }
