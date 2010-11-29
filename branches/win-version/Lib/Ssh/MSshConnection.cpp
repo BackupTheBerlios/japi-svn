@@ -122,7 +122,6 @@ MSshConnection::MSshConnection(
 	, mResolver(GetIOService())
 	, mSocket(GetIOService())
 	, mPacketLength(0)
-	, eCertificateDeleted(this, &MSshConnection::CertificateDeleted)
 {
 	foreach (byte*& key, mKeys)
 		key = nil;
@@ -305,16 +304,6 @@ void MSshConnection::Disconnect()
 	}
 	
 	for_each(mChannels.begin(), mChannels.end(), boost::bind(&MSshChannel::Close, _1));
-}
-
-void MSshConnection::CertificateDeleted(
-	MCertificate*	inCertificate)
-{
-//	if (inCertificate == mCertificate.get())
-//	{
-//		mCertificate.reset(nil);
-//		Disconnect();
-//	}
 }
 
 void MSshConnection::Send(
@@ -1030,7 +1019,7 @@ void MSshConnection::ProcessUserAuthSuccess(
 		mCompressor.reset(new MSshPacketCompressor);
 	if (mDelayedDecompress)
 		mDecompressor.reset(new MSshPacketDecompressor);
-	mSshAgent.release();
+	mSshAgent.reset(nil);
 
 	eConnectionMessage(_("Authenticated"));
 	
@@ -1050,31 +1039,13 @@ void MSshConnection::ProcessUserAuthFailed(
 	Integer e, n;
 	string comment;
 	bool done = false;
-	
-//			try
-//			{
-//				if (Preferences::GetInteger("use-certificate", false) != 0)
-//				{
-//					mCertificate.reset(new MCertificate(
-//						Preferences::GetString("auth-certificate", "")));
-//				
-//					AddRoute(MCertificate::eCertificateDeleted, eCertificateDeleted);
-//
-//					if (mCertificate->GetPublicRSAKey(e, n))
-//						p.insert(0, "publickey,");
-//				}
-//			}
-//			catch (exception& e)
-//			{
-//				DisplayError(e);
-//			}
 
 	while (not done)
 	{
 		switch (mAuthenticationState)
 		{
 			case SSH_AUTH_STATE_NONE:
-				mSshAgent.reset(MSshAgent::Create());
+				mSshAgent.reset(new MSshAgent);
 				if (mSshAgent and ChooseProtocol(s, "publickey") == "publickey" and
 					mSshAgent->GetFirstIdentity(e, n, comment))
 				{
@@ -1082,17 +1053,24 @@ void MSshConnection::ProcessUserAuthFailed(
 					done = true;
 				}
 				else
+				{
+					mSshAgent.reset(nil);
 					mAuthenticationState = SSH_AUTH_STATE_KEYBOARD_INTERACTIVE;
+				}
 				break;
 			
 			case SSH_AUTH_STATE_PUBLIC_KEY:
 				if (mSshAgent->GetNextIdentity(e, n, comment))
 					done = true;
 				else
+				{
+					mSshAgent.reset(nil);
 					mAuthenticationState = SSH_AUTH_STATE_KEYBOARD_INTERACTIVE;
+				}
 				break;
 			
 			case SSH_AUTH_STATE_KEYBOARD_INTERACTIVE:
+				mSshAgent.reset(nil);
 				mAuthenticationState = SSH_AUTH_STATE_PASSWORD;
 				break;
 			
@@ -1165,7 +1143,8 @@ void MSshConnection::ProcessUserAuthInfoRequest(
 		eConnectionMessage(_("Public key authentication"));
 	
 		uint8 msg;
-		string alg, blob;
+		string alg;
+		MSshPacket blob;
 	
 		in >> msg >> alg >> blob;
 	
@@ -1174,15 +1153,17 @@ void MSshConnection::ProcessUserAuthInfoRequest(
 			<< mUserName << "ssh-connection" << "publickey" << true
 			<< "ssh-rsa" << blob;
 	
-		string sig;
-			// no matter what, send a bogus sig if needed
-		mSshAgent->SignData(blob, reinterpret_cast<const char*>(out.peek()), sig);
-		
+		vector<uint8> sigdata;
+		(void)mSshAgent->SignData(blob, out, sigdata);
+	
 		// strip off the session id from the beginning of the out packet
 		string sink;
 		out >> sink;
-	
-		out << sig;
+
+		MSshPacket signature;
+		signature << "ssh-rsa" << sigdata;
+		out << signature;
+
 		Send(out);
 	}
 	else if (mAuthenticationState == SSH_AUTH_STATE_KEYBOARD_INTERACTIVE)

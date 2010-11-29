@@ -68,6 +68,7 @@ class MSshPacket
 	MSshPacket&		operator>>(uint64& inValue);
 	MSshPacket&		operator>>(std::string& outValue);
 	MSshPacket&		operator>>(CryptoPP::Integer& outValue);
+	MSshPacket&		operator>>(std::vector<byte>& outValue);
 	MSshPacket&		operator>>(MSshPacket& outPacket);
 	
 	const byte*		peek() const;

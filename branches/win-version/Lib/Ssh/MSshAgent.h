@@ -6,42 +6,74 @@
 #ifndef MSSHAGENT_H
 #define MSSHAGENT_H
 
+#include <vector>
+#include <cryptopp/integer.h>
+
 class MSshPacket;
+
+class MSshAgentImpl
+{
+  public:
+	static MSshAgentImpl*
+						Create();
+
+	virtual				~MSshAgentImpl() {}
+
+	virtual bool		GetFirstIdentity(
+							CryptoPP::Integer&	e,
+							CryptoPP::Integer&	n,
+							std::string&		outComment) = 0;
+	
+	virtual bool		GetNextIdentity(
+							CryptoPP::Integer&	e,
+							CryptoPP::Integer&	n,
+							std::string&		outComment) = 0;
+	
+	virtual bool		SignData(
+							const MSshPacket&	inBlob,
+							const MSshPacket&	inData,
+							std::vector<uint8>&	outSignature) = 0;
+
+  protected:
+						MSshAgentImpl() {}
+};
 
 class MSshAgent
 {
   public:
-	static MSshAgent*	Create();
+						MSshAgent();
+	virtual 			~MSshAgent();
 
 	bool				GetFirstIdentity(
 							CryptoPP::Integer&	e,
 							CryptoPP::Integer&	n,
-							std::string&		outComment);
+							std::string&		outComment)
+						{
+							return mImpl->GetFirstIdentity(e, n, outComment);
+						}
 	
 	bool				GetNextIdentity(
 							CryptoPP::Integer&	e,
 							CryptoPP::Integer&	n,
-							std::string&		outComment);
+							std::string&		outComment)
+						{
+							return mImpl->GetNextIdentity(e, n, outComment);
+						}
 	
 	void				SignData(
-							const std::string&	inBlob,
-							const std::string&	inData,
-							std::string&		outSignature);
+							const MSshPacket&	inBlob,
+							const MSshPacket&	inData,
+							std::vector<uint8>&	outSignature)
+						{
+							mImpl->SignData(inBlob, inData, outSignature);
+						}
 	
-  public:
-						MSshAgent(
-							int			inSock);
+  private:
+						MSshAgent(const MSshAgent&);
+	MSshAgent&			operator=(const MSshAgent&);
 
-						~MSshAgent();	
-
-	bool				RequestReply(
-							MSshPacket&	out,
-							MSshPacket&	in);
-
-	int					mSock;
-	MSshPacket			mIdentities;
-	uint32				mCount;
-	CryptoPP::Integer	e, n;
+	class MSshAgentImpl*
+						mImpl;
 };
 
 #endif

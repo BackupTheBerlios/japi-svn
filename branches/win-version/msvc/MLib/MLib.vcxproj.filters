@@ -92,25 +92,25 @@
     <ClCompile Include="..\..\Lib\MCanvas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MAuthDialog.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MAuthDialog.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MKnownHosts.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MKnownHosts.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MSftpChannel.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MSftpChannel.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MSshAgent.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MSshAgent.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MSshChannel.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MSshChannel.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MSshConnection.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MSshConnection.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\NetSources\MSshPacket.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MSshPacket.cpp">
       <Filter>NetSource Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -262,6 +262,7 @@ MSshPacket& MSshPacket::operator<<(const string& inValue)
 
 MSshPacket& MSshPacket::operator<<(const vector<uint8>& inValue)
 {
+	operator<<(static_cast<uint32>(inValue.size()));
 	copy(inValue.begin(), inValue.end(), back_inserter(mData));
 	return *this;
 }

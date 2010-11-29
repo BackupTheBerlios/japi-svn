@@ -41,7 +41,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\NetSources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\Lib\Ssh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>MLib.h</PrecompiledHeaderFile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -59,7 +59,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\NetSources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\Lib\Ssh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>MLib.h</PrecompiledHeaderFile>
@@ -101,13 +101,13 @@
     <ClCompile Include="..\..\Lib\MUtils.cpp" />
     <ClCompile Include="..\..\Lib\MView.cpp" />
     <ClCompile Include="..\..\Lib\MWindow.cpp" />
-    <ClCompile Include="..\..\NetSources\MAuthDialog.cpp" />
-    <ClCompile Include="..\..\NetSources\MKnownHosts.cpp" />
-    <ClCompile Include="..\..\NetSources\MSftpChannel.cpp" />
-    <ClCompile Include="..\..\NetSources\MSshAgent.cpp" />
-    <ClCompile Include="..\..\NetSources\MSshChannel.cpp" />
-    <ClCompile Include="..\..\NetSources\MSshConnection.cpp" />
-    <ClCompile Include="..\..\NetSources\MSshPacket.cpp">
+    <ClCompile Include="..\..\Lib\Ssh\MAuthDialog.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MKnownHosts.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MSftpChannel.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MSshAgent.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MSshChannel.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MSshConnection.cpp" />
+    <ClCompile Include="..\..\Lib\Ssh\MSshPacket.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\maarten\projects\zlib-1.2.5\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\maarten\projects\zlib-1.2.5\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

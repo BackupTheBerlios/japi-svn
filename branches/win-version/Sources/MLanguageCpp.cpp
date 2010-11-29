@@ -921,7 +921,8 @@ MLanguageCpp::ParseIdentifier(
 			if (*inText == ':')
 			{
 				inText = SkipToChar(inText, '{') - 1;
-				continue;
+				if (*inText == '{')
+					continue;
 			}
 			
 			inText = ParseComment(inText + 1);

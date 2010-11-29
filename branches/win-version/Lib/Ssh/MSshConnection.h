@@ -24,7 +24,6 @@
 #include <cryptopp/modes.h>
 
 class MSshChannel;
-class MCertificate;
 class MSshAgent;
 class MSshPacket;
 class MSshPacketCompressor;
@@ -172,10 +171,6 @@ class MSshConnection
 						std::vector<std::string>&
 											inPassword);
 
-	MEventIn<void(MCertificate*)>				eCertificateDeleted;
-	void			CertificateDeleted(
-						MCertificate*		inCertificate);
-
 	std::string					mUserName;
 	std::string					mIPAddress;
 	uint16						mPortNumber;
@@ -229,8 +224,6 @@ class MSshConnection
 	uint32						mOutSequenceNr;
 	uint32						mInSequenceNr;
 
-//	std::unique_ptr<MCertificate>
-//								mCertificate;
 	std::unique_ptr<MSshAgent>	mSshAgent;
 	ChannelList					mChannels;
 
