@@ -28,13 +28,13 @@
 #include "MDocClosedNotifier.h"
 #include "MFindAndOpenDialog.h"
 #include "MFindDialog.h"
-//#include "MProject.h"
+#include "MProject.h"
 #include "MPrefsDialog.h"
 #include "MStrings.h"
 #include "MAlerts.h"
 //#include "MDiffWindow.h"
 #include "MResources.h"
-//#include "MProjectWindow.h"
+#include "MProjectWindow.h"
 #include "MPrinter.h"
 #include "MSound.h"
 //#include "MePubDocument.h"
@@ -184,9 +184,9 @@ bool MJapiApp::ProcessCommand(
 {
 	bool result = true;
 
-//	MProject* project = MProject::Instance();
-//	if (project != nil and project->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers))
-//		return true;
+	MProject* project = MProject::Instance();
+	if (project != nil and project->ProcessCommand(inCommand, inMenu, inItemIndex, inModifiers))
+		return true;
 
 	switch (inCommand)
 	{
@@ -234,10 +234,10 @@ bool MJapiApp::ProcessCommand(
 			MFindDialog::Instance().FindNext();
 			break;
 		
-		//case cmd_OpenIncludeFile:
-		//	new MFindAndOpenDialog(MProject::Instance(), MWindow::GetFirstWindow());
-		//	break;
-		//
+		case cmd_OpenIncludeFile:
+			new MFindAndOpenDialog(MProject::Instance(), MWindow::GetFirstWindow());
+			break;
+		
 		//case cmd_Worksheet:
 		//	ShowWorksheet();
 		//	break;
@@ -292,9 +292,9 @@ bool MJapiApp::UpdateCommandStatus(
 {
 	bool result = true;
 
-//	MProject* project = MProject::Instance();
-//	if (project != nil and project->UpdateCommandStatus(inCommand, outEnabled, outChecked))
-//		return true;
+	MProject* project = MProject::Instance();
+	if (project != nil and project->UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked))
+		return true;
 
 	switch (inCommand)
 	{
@@ -442,78 +442,87 @@ void MJapiApp::DoSaveAll()
 	}
 }
 
-//void MJapiApp::DoCloseAll(
-//	MCloseReason		inAction)
-//{
-//	// first close all that can be closed
-//
-//	MDocument* doc = MDocument::GetFirstDocument();
-//	
-//	while (doc != nil)
-//	{
-//		MDocument* next = doc->GetNextDocument();
-//		
-//		if (dynamic_cast<MTextDocument*>(doc) != nil and
-//			doc != MTextDocument::GetWorksheet() and
-//			not doc->IsModified())
-//		{
-//			MController* controller = doc->GetFirstController();
-//			if (controller != nil)
-//			{
-//				MWindow* w = controller->GetWindow();
-//				if (controller->TryCloseDocument(inAction))
-//					w->Close();
-//			}
-//			else
-//				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
-//		}
-//		
-//		doc = next;
-//	}
-//	
-//	// then close what remains
-//
-//	doc = MDocument::GetFirstDocument();
-//
-//	while (doc != nil)
-//	{
-//		MDocument* next = doc->GetNextDocument();
-//
-//		MController* controller = doc->GetFirstController();
-//		assert(controller != nil);
-//
-//		if (doc == MTextDocument::GetWorksheet())
-//		{
-//			if (inAction == kSaveChangesQuittingApplication)
-//			{
-//				doc->DoSave();
-//				
-//				if (not controller->TryCloseDocument(inAction))
-//					break;
-//			}
-//		}
-//		else if (dynamic_cast<MTextDocument*>(doc) != nil or
-//			inAction == kSaveChangesQuittingApplication)
-//		{
-//			if (not controller->TryCloseDocument(inAction))
-//				break;
-//		}
-//		
-//		doc = next;
-//	}
-//}
+bool MJapiApp::CloseAll(
+	MCloseReason		inAction)
+{
+	bool result = true;
+	// first close all that can be closed
+
+	MDocument* doc = MDocument::GetFirstDocument();
+	
+	while (doc != nil)
+	{
+		MDocument* next = doc->GetNextDocument();
+		
+		if (dynamic_cast<MTextDocument*>(doc) != nil and
+			doc != MTextDocument::GetWorksheet() and
+			not doc->IsModified())
+		{
+			MController* controller = doc->GetFirstController();
+			if (controller != nil)
+			{
+				MWindow* w = controller->GetWindow();
+				if (controller->TryCloseDocument(inAction))
+					w->Close();
+			}
+			else
+				cerr << _("Weird, document without controller: ") << doc->GetFile() << endl;
+		}
+		
+		doc = next;
+	}
+	
+	// then close what remains
+
+	doc = MDocument::GetFirstDocument();
+
+	while (doc != nil)
+	{
+		MDocument* next = doc->GetNextDocument();
+
+		MController* controller = doc->GetFirstController();
+		assert(controller != nil);
+
+		if (doc == MTextDocument::GetWorksheet())
+		{
+			if (inAction == kSaveChangesQuittingApplication)
+			{
+				doc->DoSave();
+				
+				if (not controller->TryCloseDocument(inAction))
+				{
+					result = false;
+					break;
+				}
+			}
+		}
+		else if (dynamic_cast<MTextDocument*>(doc) != nil or
+			inAction == kSaveChangesQuittingApplication)
+		{
+			if (not controller->TryCloseDocument(inAction))
+			{
+				result = false;
+				break;
+			}
+		}
+		
+		doc = next;
+	}
+
+	return result;
+}
 
 void MJapiApp::DoQuit()
 {
-	//if (MProject::Instance() != nil)
-	//{
-	//	string p = MProject::Instance()->GetPath().string();
-	//	Preferences::SetString("last project", p);
-	//}
+	if (MProject::Instance() != nil)
+	{
+		string p = MProject::Instance()->GetPath().string();
+		Preferences::SetString("last project", p);
+	}
 
 	MApplication::DoQuit();
 	
-	if (MDocument::GetFirstDocument() == nil/* and MProject::Instance() == nil*/)
+	if (MDocument::GetFirstDocument() == nil and MProject::Instance() == nil)
 	{
 		MFindDialog::Instance().Quit();
 //		gtk_main_quit();
@@ -677,15 +686,15 @@ MDocument* MJapiApp::OpenOneDocument(
 	
 	if (doc == nil)
 	{
-		//if (FileNameMatches("*.prj", inFileRef))
-		//{
-		//	if (not inFileRef.IsLocal())
-		//		THROW(("Can only open local project files for now, sorry"));
-		//	OpenProject(inFileRef);
-		//}
+		if (FileNameMatches("*.prj", inFileRef))
+		{
+			if (not inFileRef.IsLocal())
+				THROW(("Can only open local project files for now, sorry"));
+			OpenProject(inFileRef);
+		}
 		//else if (FileNameMatches("*.epub", inFileRef))
 		//	OpenEPub(inFileRef);
-		//else
+		else
 			doc = MDocument::Create<MTextDocument>(this, inFileRef);
 	}
 	
@@ -704,15 +713,16 @@ MDocument* MJapiApp::OpenOneDocument(
 void MJapiApp::OpenProject(
 	const MFile&		inPath)
 {
-	//unique_ptr<MDocument> project(MDocument::Create<MProject>(inPath));
-	//unique_ptr<MProjectWindow> w(new MProjectWindow());
-	//w->Initialize(project.get());
-	//project->SetModified(false);
-	//project.release();
-	//w->Show();
-	//w.release();
-
-	//AddToRecentMenu(inPath);
+	unique_ptr<MDocument> project(MDocument::Create<MProject>(this, inPath));
+	unique_ptr<MProjectWindow> w(new MProjectWindow());
+	w->SetDocument(project.get());
+	project->SetModified(false);
+	project.release();
+	w->Show();
+	w->Select();
+	w.release();
+	
+	AddToRecentMenu(inPath);
 }
 
 // ---------------------------------------------------------------------------
@@ -861,6 +871,13 @@ void MJapiApp::InitGlobals()
 	//}
 	
 	gConcurrentJobs = Preferences::GetInteger("concurrent-jobs", gConcurrentJobs);
+	
+	if (Preferences::GetBoolean("reopen project", true))
+	{
+		MFile pp(fs::path(Preferences::GetString("last project", "")));
+		if (pp.IsLocal() and pp.Exists())
+			OpenProject(pp);
+	}
 }
 
 void MJapiApp::SaveGlobals()

@@ -9,10 +9,10 @@
     <path>../libzeep</path>
   </syspaths>
   <userpaths>
-    <path>Lib/Gtk</path>
+    <path>Lib/Windows</path>
     <path>Lib</path>
     <path>Sources</path>
-    <path>NetSources</path>
+    <path>Lib/Ssh</path>
   </userpaths>
   <libpaths>
     <path>../boost/lib</path>
@@ -20,16 +20,16 @@
   </libpaths>
   <files>
     <group name="MLib">
-      <group name="Gtk">
-        <file>MGtkApplicationImpl.cpp</file>
-        <file>MGtkDevice.cpp</file>
-        <file>MGtkDocClosedNotifier.cpp</file>
-        <file>MGtkFile.cpp</file>
-        <file>MGtkList.cpp</file>
-        <file>MGtkMenu.cpp</file>
-        <file>MGtkSound.cpp</file>
-        <file>MGtkUtils.cpp</file>
-        <file>MGtkWindow.cpp</file>
+      <group name="Windows">
+        <file>MWinkApplicationImpl.cpp</file>
+        <file>MWinDevice.cpp</file>
+        <file>MWinDocClosedNotifier.cpp</file>
+        <file>MWinFile.cpp</file>
+        <file>MWinList.cpp</file>
+        <file>MWinMenu.cpp</file>
+        <file>MWinSound.cpp</file>
+        <file>MWinUtils.cpp</file>
+        <file>MWinWindow.cpp</file>
       </group>
       <file>MAlerts.cpp</file>
       <file>MApplication.cpp</file>

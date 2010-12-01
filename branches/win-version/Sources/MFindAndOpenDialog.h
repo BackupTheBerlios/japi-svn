@@ -14,7 +14,7 @@
 #include "MDialog.h"
 
 class MTextDocument;
-//class MProject;
+class MProject;
 
 class MFindAndOpenDialog : public MDialog
 {
@@ -23,15 +23,15 @@ class MFindAndOpenDialog : public MDialog
 							MTextDocument*		inDocument,
 							MWindow*			inWindow);
 
-//						MFindAndOpenDialog(
-//							MProject*			inProject,
-//							MWindow*			inWindow);
+						MFindAndOpenDialog(
+							MProject*			inProject,
+							MWindow*			inWindow);
 
 	virtual bool		OKClicked();
 	
   private:
 	MTextDocument*		mDocument;
-//	MProject*			mProject;
+	MProject*			mProject;
 };
 
 #endif // MFINDANDOPENDIALOG_H

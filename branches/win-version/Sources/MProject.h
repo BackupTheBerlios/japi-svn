@@ -15,7 +15,7 @@
 
 class MWindow;
 class MMessageWindow;
-class MProjectJob;
+struct MProjectJob;
 
 enum MProjectListPanel
 {
@@ -57,6 +57,8 @@ struct MProjectTarget
 	std::vector<std::string>	mLDFlags;
 	std::vector<std::string>	mWarnings;
 	std::vector<std::string>	mDefines;
+
+	const std::string&			GetName() const			{ return mName; }
 };
 
 // These are the settable fields (using info dialog)
@@ -80,6 +82,7 @@ class MProject : public MDocument
   public:
 
 	explicit			MProject(
+							MHandler*			inSuper,
 							const MFile&		inProjectFile);
 
 	virtual				~MProject();

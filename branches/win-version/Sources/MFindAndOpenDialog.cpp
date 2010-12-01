@@ -12,8 +12,8 @@
 
 #include "MFindAndOpenDialog.h"
 #include "MTextDocument.h"
-//#include "MProjectWindow.h"
-//#include "MProject.h"
+#include "MProjectWindow.h"
+#include "MProject.h"
 #include "MPreferences.h"
 #include "MSound.h"
 #include "MJapiApp.h"
@@ -32,7 +32,7 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	MWindow*			inWindow)
 	: MDialog("find-and-open-dialog")
 	, mDocument(inDocument)
-//	, mProject(nil)
+	, mProject(nil)
 {
 	vector<string> last;
 	
@@ -43,21 +43,21 @@ MFindAndOpenDialog::MFindAndOpenDialog(
 	SetFocus(kFileComboControlID);
 }
 
-//MFindAndOpenDialog::MFindAndOpenDialog(
-//	MProject*			inProject,
-//	MWindow*			inWindow)
-//	: MDialog("find-and-open-dialog")
-//	, mController(nil)
-//	, mProject(inProject)
-//{
-//	vector<string> last;
-//	
-//	Preferences::GetArray("open include", last);
-//	SetValues(kFileComboControlID, last);
-//
-//	Show(inWindow);
-//	SetFocus(kFileComboControlID);
-//}
+MFindAndOpenDialog::MFindAndOpenDialog(
+	MProject*			inProject,
+	MWindow*			inWindow)
+	: MDialog("find-and-open-dialog")
+	, mDocument(nil)
+	, mProject(inProject)
+{
+	vector<string> last;
+	
+	Preferences::GetArray("open include", last);
+	SetChoices(kFileComboControlID, last);
+
+	Show(inWindow);
+	SetFocus(kFileComboControlID);
+}
 
 bool MFindAndOpenDialog::OKClicked()
 {
@@ -78,19 +78,19 @@ bool MFindAndOpenDialog::OKClicked()
 	}
 	else
 	{
-//		MProject* project = mProject;
-//		
-//		if (project == nil)
-//			project = MProject::Instance();
+		MProject* project = mProject;
+		
+		if (project == nil)
+			project = MProject::Instance();
 	
 		MFile file(s);
 		
-//		if (file.IsLocal() and not file.Exists() and project != nil)
-//		{
-//			fs::path p(s);
-//			if (project->LocateFile(s, true, p))
-//				file = p;
-//		}
+		if (file.IsLocal() and not file.Exists() and project != nil)
+		{
+			fs::path p(s);
+			if (project->LocateFile(s, true, p))
+				file = p;
+		}
 		
 		gApp->OpenOneDocument(file);
 	}

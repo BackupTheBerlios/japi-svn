@@ -126,6 +126,11 @@
     <ClCompile Include="..\..\Sources\MLanguageTeX.cpp" />
     <ClCompile Include="..\..\Sources\MLanguageXML.cpp" />
     <ClCompile Include="..\..\Sources\MMarkMatchingDialog.cpp" />
+    <ClCompile Include="..\..\Sources\MPkgConfig.cpp" />
+    <ClCompile Include="..\..\Sources\MProject.cpp" />
+    <ClCompile Include="..\..\Sources\MProjectItem.cpp" />
+    <ClCompile Include="..\..\Sources\MProjectJob.cpp" />
+    <ClCompile Include="..\..\Sources\MProjectWindow.cpp" />
     <ClCompile Include="..\..\Sources\MSelection.cpp" />
     <ClCompile Include="..\..\Sources\MShell.cpp" />
     <ClCompile Include="..\..\Sources\MTextBuffer.cpp" />

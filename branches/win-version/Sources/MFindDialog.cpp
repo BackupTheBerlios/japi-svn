@@ -20,7 +20,7 @@
 //#include "MMessageWindow.h"
 #include "MCommands.h"
 #include "MStrings.h"
-//#include "MProject.h"
+#include "MProject.h"
 #include "MSound.h"
 #include "MAlerts.h"
 #include "MError.h"
@@ -812,23 +812,23 @@ void MFindDialog::GetFilesForFindAll(
 			break;
 		}
 		
-//		case eMMIncludes:
-//		{
-//			MProject* project = MProject::Instance();
-//			if (project != nil)
-//			{
-//				vector<fs::path> includePaths;
-//			
-//				project->GetIncludePaths(includePaths);
-//			
-//				sort(includePaths.begin(), includePaths.end());
-//				includePaths.erase(unique(includePaths.begin(), includePaths.end()), includePaths.end());
-//			
-//				for (vector<fs::path>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
-//					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inFileNameFilter, outFiles);
-//			}
-//			break;
-//		}
+		case eMMIncludes:
+		{
+			MProject* project = MProject::Instance();
+			if (project != nil)
+			{
+				vector<fs::path> includePaths;
+			
+				project->GetIncludePaths(includePaths);
+			
+				sort(includePaths.begin(), includePaths.end());
+				includePaths.erase(unique(includePaths.begin(), includePaths.end()), includePaths.end());
+			
+				for (vector<fs::path>::iterator p = includePaths.begin(); p != includePaths.end(); ++p)
+					GetFilesForFindAll(eMMDirectory, *p, inRecursive, inFileNameFilter, outFiles);
+			}
+			break;
+		}
 	}
 }
 

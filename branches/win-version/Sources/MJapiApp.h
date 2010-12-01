@@ -92,8 +92,8 @@ class MJapiApp : public MApplication
 
 	void				DoSaveAll();
 
-//	void				DoCloseAll(
-//							MCloseReason		inReason);
+	virtual bool		CloseAll(
+							MCloseReason		inReason);
 
 	void				DoOpenTemplate(
 							const std::string&	inTemplate);

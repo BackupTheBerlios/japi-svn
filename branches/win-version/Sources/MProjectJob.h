@@ -6,7 +6,7 @@
 #ifndef MPROJECTJOB_H
 #define MPROJECTJOB_H
 
-struct MProject;
+class MProject;
 class MProjectFile;
 
 // ---------------------------------------------------------------------------

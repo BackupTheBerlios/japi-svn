@@ -252,10 +252,17 @@ void MApplication::UpdateRecentMenu(
 void MApplication::AddToRecentMenu(
 	const MFile&		inFile)
 {
-	mRecentFiles.erase(remove(mRecentFiles.begin(), mRecentFiles.end(), inFile), mRecentFiles.end());
-	mRecentFiles.push_front(inFile);
-	if (mRecentFiles.size() > 10)
-		mRecentFiles.pop_back();
+	if (mRecentFiles.empty() or not (mRecentFiles.front() == inFile))
+	{
+		mRecentFiles.erase(
+			remove(mRecentFiles.begin(), mRecentFiles.end(), inFile),
+			mRecentFiles.end());
+
+		mRecentFiles.push_front(inFile);
+
+		if (mRecentFiles.size() > 10)
+			mRecentFiles.pop_back();
+	}
 }
 
 void MApplication::DoSelectWindowFromWindowMenu(

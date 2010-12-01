@@ -32,7 +32,7 @@
 #include "MSound.h"
 #include "MProjectItem.h"
 #include "MProjectJob.h"
-#include "MProjectInfoDialog.h"
+//#include "MProjectInfoDialog.h"
 #include "MFindAndOpenDialog.h"
 #include "MPkgConfig.h"
 #include "MStrings.h"
@@ -61,7 +61,7 @@ MTargetCPU GetNativeCPU()
 	MTargetCPU arch;
 #if defined(__amd64)
 	arch = eCPU_x86_64;
-#elif defined(__i386__)
+#elif defined(__i386__) || defined(_M_IX86)
 	arch = eCPU_386;
 #elif defined(__powerpc64__) or defined(__PPC64__) or defined(__ppc64__)
 	arch = eCPU_PowerPC_64;
@@ -91,8 +91,9 @@ MProject* MProject::Instance()
 }
 
 MProject::MProject(
+	MHandler*			inSuper,
 	const MFile&		inProjectFile)
-	: MDocument(inProjectFile)
+	: MDocument(inSuper, inProjectFile)
 	, eProjectItemMoved(this, &MProject::ProjectItemMoved)
 	, eMsgWindowClosed(this, &MProject::MsgWindowClosed)
 	, ePoll(this, &MProject::Poll)
@@ -103,7 +104,6 @@ MProject::MProject(
 	, mStdErrWindow(nil)
 	, mAllowWindows(true)
 	, mCurrentTarget(numeric_limits<uint32>::max())	// force an update at first 
-	, mCurrentJob(nil)
 {
 	if (gApp != nil)
 		AddRoute(gApp->eIdle, ePoll);
@@ -802,11 +802,11 @@ void MProject::StartJob(
 	
 	swap(mCurrentJob, job);
 	
-	if (mStdErrWindow != nil)
-	{
-		mStdErrWindow->ClearList();
-		mStdErrWindow->Hide();
-	}
+//	if (mStdErrWindow != nil)
+//	{
+//		mStdErrWindow->ClearList();
+//		mStdErrWindow->Hide();
+//	}
 
 	mCurrentJob->Execute();
 }
@@ -1284,7 +1284,7 @@ MProjectJob* MProject::CreatePreprocessJob(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
+	MTextDocument* output = MDocument::Create<MTextDocument>(gApp, MFile());
 	output->SetFileNameHint(path.filename() + " # preprocessed");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
@@ -1331,7 +1331,7 @@ MProjectJob* MProject::CreateDisassembleJob(
 
 	job->eStdErr.SetProc(this, &MProject::StdErrIn);
 	
-	MTextDocument* output = MDocument::Create<MTextDocument>(MFile());
+	MTextDocument* output = MDocument::Create<MTextDocument>(gApp, MFile());
 	output->SetFileNameHint(path.filename() + " # disassembled");
 	
 	SetCallback(job->eStdOut, output, &MTextDocument::StdOut);
@@ -1398,7 +1398,7 @@ void MProject::Compile(
 
 void MProject::MakeClean()
 {
-	switch (DisplayAlert("make-clean-alert"))
+	switch (DisplayAlert(GetWindow(), "make-clean-alert"))
 	{
 		case 1:
 			break;
@@ -1472,7 +1472,8 @@ bool MProject::Make(
 		mAllowWindows = false;
 		while (mCurrentJob.get() != nil)
 		{
-			usleep(50000);
+//			usleep(50000);
+			boost::this_thread::sleep(boost::posix_time::seconds(1));
 
 			if (mCurrentJob->IsDone())
 			{
@@ -1500,16 +1501,16 @@ void MProject::MsgWindowClosed(
 
 MMessageWindow* MProject::GetMessageWindow()
 {
-	if (mAllowWindows)
-	{
-		if (mStdErrWindow == nil)
-		{
-			mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
-			AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
-		}
-		else
-			mStdErrWindow->Show();
-	}
+//	if (mAllowWindows)
+//	{
+//		if (mStdErrWindow == nil)
+//		{
+//			mStdErrWindow = new MMessageWindow(FormatString("Build messages for ^0", mName));
+//			AddRoute(mStdErrWindow->eWindowClosed, eMsgWindowClosed);
+//		}
+//		else
+//			mStdErrWindow->Show();
+//	}
 	
 	return mStdErrWindow;
 }
@@ -1521,11 +1522,11 @@ void MProject::StdErrIn(
 	const char*			inText,
 	uint32				inLength)
 {
-	MMessageWindow* errWindow = GetMessageWindow();
-	if (errWindow != nil)
-		errWindow->AddStdErr(inText, inLength);
-	else
-		cerr.write(inText, inLength);
+//	MMessageWindow* errWindow = GetMessageWindow();
+//	if (errWindow != nil)
+//		errWindow->AddStdErr(inText, inLength);
+//	else
+//		cerr.write(inText, inLength);
 }
 
 // ---------------------------------------------------------------------------
@@ -1769,7 +1770,7 @@ MProjectItem* MProject::CreateFileItem(
 		{
 			if (FileNameMatches("*.a;*.so;*.dylib", inFile))
 			{
-				int r = DisplayAlert("ask-add-lib-as-link", inFile.filename());
+				int r = DisplayAlert(GetWindow(), "ask-add-lib-as-link", inFile.filename());
 				
 				if (r == 1)
 					projectFile.reset(new MProjectFile(name, nil, inFile.parent_path()));
@@ -1807,7 +1808,7 @@ MProjectItem* MProject::CreateFileItem(
 	{
 		fs::path dir = relative_path(mProjectDir, inFile.parent_path());
 		
-		if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
+		if (DisplayAlert(GetWindow(), "ask-add-include-path-alert", dir.string()) == 1)
 		{
 			if (FileNameMatches("*.a;*.so;*.dylib", inFile))
 				mProjectInfo.mLibSearchPaths.push_back(dir);
@@ -1869,7 +1870,7 @@ void MProject::CreateFileItem(
 			{
 				if (FileNameMatches("*.a;*.so;*.dylib", p))
 				{
-					int r = DisplayAlert("ask-add-lib-as-link", p.filename());
+					int r = DisplayAlert(GetWindow(), "ask-add-lib-as-link", p.filename());
 					
 					if (r == 1)
 						projectFile.reset(new MProjectFile(name, inGroup, p.parent_path()));
@@ -1907,7 +1908,7 @@ void MProject::CreateFileItem(
 		{
 			fs::path dir = relative_path(mProjectDir, p.parent_path());
 			
-			if (DisplayAlert("ask-add-include-path-alert", dir.string()) == 1)
+			if (DisplayAlert(GetWindow(), "ask-add-include-path-alert", dir.string()) == 1)
 			{
 				mProjectInfo.mUserSearchPaths.push_back(dir);
 

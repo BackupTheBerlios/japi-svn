@@ -666,6 +666,8 @@ MWinDeviceImpl::MWinDeviceImpl(
 	// default to this mode:
 	mRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
+	mClipping.push(inUpdate);
+
 //	if (inUpdate)
 //		ClipRect(inUpdate);
 
@@ -1293,6 +1295,13 @@ void MWinDeviceImpl::DrawText(
 {
 	if (mTextLayout != nil)
 	{
+		DWRITE_TEXT_METRICS metrics;
+		mTextLayout->GetMetrics(&metrics);
+
+		MRect r(inX + metrics.left, inY + metrics.top, metrics.width, metrics.height);
+		if (not (mClipping.empty() or mClipping.top().Intersects(r)))
+			return;
+
 		if (mSelectionLength > 0)
 		{
 			ID2D1SolidColorBrush* selectionColorBrush;

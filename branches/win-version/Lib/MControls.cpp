@@ -6,6 +6,7 @@
 #include "MLib.h"
 
 #include "MControlsImpl.h"
+#include "MWindow.h"
 
 using namespace std;
 
@@ -82,6 +83,7 @@ void MControl<IMPL>::HideSelf()
 template<class IMPL>
 void MControl<IMPL>::AddedToWindow()
 {
+	SetSuper(GetWindow());
 	mImpl->AddedToWindow();
 }
 
@@ -282,3 +284,26 @@ void MListHeader::AppendColumn(const string& inLabel, int inWidth)
 {
 	mImpl->AppendColumn(inLabel, inWidth);
 }
+
+// --------------------------------------------------------------------
+
+MNotebook::MNotebook(const string& inID, MRect inBounds)
+	: MControl<MNotebookImpl>(inID, inBounds, MNotebookImpl::Create(this))
+{
+}
+
+void MNotebook::AddPage(const string& inLabel, MView* inPage)
+{
+	mImpl->AddPage(inLabel, inPage);
+}
+
+void MNotebook::SelectPage(uint32 inPage)
+{
+	mImpl->SelectPage(inPage);
+}
+
+uint32 MNotebook::GetSelectedPage() const
+{
+	return mImpl->GetSelectedPage();
+}
+

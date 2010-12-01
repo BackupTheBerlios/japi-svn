@@ -19,6 +19,9 @@ class MListBase;
 class MListRowBase;
 template<class R> class MList;
 class MTimer;
+class MStatusbar;
+class MNotebook;
+class MPopup;
 
 class MProjectWindow : public MDocWindow
 {
@@ -27,7 +30,7 @@ class MProjectWindow : public MDocWindow
 
 					~MProjectWindow();
 
-	virtual void	Initialize(
+	virtual void	SetDocument(
 						MDocument*		inDocument);
 
 	virtual bool	UpdateCommandStatus(
@@ -107,32 +110,37 @@ class MProjectWindow : public MDocWindow
 	MEventIn<void(MRsrcRowItem*)>
 					eDraggedRsrcRow;
 
-	virtual bool	OnKeyPressEvent(
-						GdkEventKey*	inEvent);
-
-	MSlot<bool(GdkEventKey*)>
-					eKeyPressEvent;
+//	virtual bool	OnKeyPressEvent(
+//						GdkEventKey*	inEvent);
+//
+//	MSlot<bool(GdkEventKey*)>
+//					eKeyPressEvent;
 
 	virtual void	DocumentChanged(
 						MDocument*		inDocument);
 
 	void			SaveState();
 
-	void			InitializeTreeView(
-						GtkTreeView*	inGtkTreeView,
-						int32			inPanel);
+//	void			InitializeTreeView(
+//						GtkTreeView*	inGtkTreeView,
+//						int32			inPanel);
 
-	void			TargetChanged();
-	MSlot<void()>	eTargetChanged;
+	void			TargetChanged(
+						const std::string&	inName,
+						int32				inIndex);
+	MEventIn<void(const std::string&,int32)>
+					eTargetChanged;
 
 	void			TargetsChanged();
 	MEventIn<void()>eTargetsChanged;
 	
-	void			InfoClicked();
-	MSlot<void()>	eInfoClicked;
+	void			InfoClicked(const std::string&);
+	MEventIn<void(const std::string&)>
+					eInfoClicked;
 
-	void			MakeClicked();
-	MSlot<void()>	eMakeClicked;
+	void			MakeClicked(const std::string&);
+	MEventIn<void(const std::string&)>
+					eMakeClicked;
 
 //	void			EditedFileGroupName(
 //						MFileRowItem*		inRow,
@@ -151,7 +159,9 @@ class MProjectWindow : public MDocWindow
 //					eEditedRsrcGroupName;
 //
 	MProject*		mProject;
-	GtkWidget*		mStatusPanel;
+	MPopup*			mTargetPopup;
+	MNotebook*		mNotebook;
+	MStatusbar*		mStatusbar;
 	MListBase*		mFileTree;
 	MListBase*		mRsrcTree;
 //	GtkTreeViewColumn*	mFileNameColumn;

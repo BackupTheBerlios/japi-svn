@@ -41,7 +41,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\Lib\Ssh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\boost\include\boost-1_43;$(ProjectDir)..\..\Lib\Ssh;$(ProjectDir)..\..\Lib;$(ProjectDir)..\..\..\libzeep;$(ProjectDir)..\..\..\cryptopp-561;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>MLib.h</PrecompiledHeaderFile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -59,7 +59,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\maarten\projects\boost\include\boost-1_43;C:\Users\maarten\projects\libzeep;C:\Users\maarten\projects\japi\Lib;C:\Users\maarten\projects\cryptopp-561;C:\Users\maarten\projects\japi\Lib\Ssh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\boost\include\boost-1_43;$(ProjectDir)..\..\Lib\Ssh;$(ProjectDir)..\..\Lib;$(ProjectDir)..\..\..\libzeep;$(ProjectDir)..\..\..\cryptopp-561;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>MLib.h</PrecompiledHeaderFile>

@@ -10,7 +10,7 @@
 #include <cerrno>
 #include <signal.h>
 #include <fcntl.h>
-#include <sys/wait.h>
+//#include <sys/wait.h>
 
 #include "MResources.h"
 
@@ -53,81 +53,81 @@ void MProjectExecJob::Execute()
 	}
 #endif
 
-	int ifd[2], ofd[2], efd[2];
-	
-	(void)pipe(ifd);
-	(void)pipe(ofd);
-	(void)pipe(efd);
-	
-	int pid = fork();
-	
-	if (pid == -1)
-	{
-		close(ifd[0]);
-		close(ifd[1]);
-		close(ofd[0]);
-		close(ofd[1]);
-		close(efd[0]);
-		close(efd[1]);
-		
-		THROW(("fork failed"));
-	}
-	
-	if (pid == 0)	// the child
-	{
-		try
-		{
-			setpgid(0, 0);		// detach from the process group, create new
-
-			dup2(ifd[0], STDIN_FILENO);
-			close(ifd[0]);
-			close(ifd[1]);
-
-			dup2(ofd[1], STDOUT_FILENO);
-			close(ofd[0]);
-			close(ofd[1]);
-
-			dup2(efd[1], STDERR_FILENO);
-			close(efd[0]);
-			close(efd[1]);
-
-			vector<const char*> argv;
-			for (vector<string>::iterator a = mArgv.begin(); a != mArgv.end(); ++a)
-				argv.push_back(a->c_str());
-			argv.push_back(nil);
-
-			(void)execve(argv[0],
-				const_cast<char* const*>(&argv[0]),
-				const_cast<char* const*>(environ));
-			cerr << "execution of " << argv[0] << " failed: " << strerror(errno) << endl;
-		}
-		catch (...)
-		{
-			cerr << "Exception catched" << endl;
-		}
-		exit(-1);
-	}
-
-	mPID = pid;
-	
-	close(ifd[0]);
-	close(ifd[1]);
-
-	close(ofd[1]);
-	int flags = fcntl(ofd[0], F_GETFL, 0);
-	fcntl(ofd[0], F_SETFL, flags | O_NONBLOCK);
-
-	mStdOutDone = false;
-	mStdOut = ofd[0];
-
-	close(efd[1]);
-	flags = fcntl(efd[0], F_GETFL, 0);
-	fcntl(efd[0], F_SETFL, flags | O_NONBLOCK);
-
-	mStdErrDone = false;
-	mStdErr = efd[0];
-		
-	mProject->SetStatus(mTitle, true);
+//	int ifd[2], ofd[2], efd[2];
+//	
+//	(void)pipe(ifd);
+//	(void)pipe(ofd);
+//	(void)pipe(efd);
+//	
+//	int pid = fork();
+//	
+//	if (pid == -1)
+//	{
+//		close(ifd[0]);
+//		close(ifd[1]);
+//		close(ofd[0]);
+//		close(ofd[1]);
+//		close(efd[0]);
+//		close(efd[1]);
+//		
+//		THROW(("fork failed"));
+//	}
+//	
+//	if (pid == 0)	// the child
+//	{
+//		try
+//		{
+//			setpgid(0, 0);		// detach from the process group, create new
+//
+//			dup2(ifd[0], STDIN_FILENO);
+//			close(ifd[0]);
+//			close(ifd[1]);
+//
+//			dup2(ofd[1], STDOUT_FILENO);
+//			close(ofd[0]);
+//			close(ofd[1]);
+//
+//			dup2(efd[1], STDERR_FILENO);
+//			close(efd[0]);
+//			close(efd[1]);
+//
+//			vector<const char*> argv;
+//			for (vector<string>::iterator a = mArgv.begin(); a != mArgv.end(); ++a)
+//				argv.push_back(a->c_str());
+//			argv.push_back(nil);
+//
+//			(void)execve(argv[0],
+//				const_cast<char* const*>(&argv[0]),
+//				const_cast<char* const*>(environ));
+//			cerr << "execution of " << argv[0] << " failed: " << strerror(errno) << endl;
+//		}
+//		catch (...)
+//		{
+//			cerr << "Exception catched" << endl;
+//		}
+//		exit(-1);
+//	}
+//
+//	mPID = pid;
+//	
+//	close(ifd[0]);
+//	close(ifd[1]);
+//
+//	close(ofd[1]);
+//	int flags = fcntl(ofd[0], F_GETFL, 0);
+//	fcntl(ofd[0], F_SETFL, flags | O_NONBLOCK);
+//
+//	mStdOutDone = false;
+//	mStdOut = ofd[0];
+//
+//	close(efd[1]);
+//	flags = fcntl(efd[0], F_GETFL, 0);
+//	fcntl(efd[0], F_SETFL, flags | O_NONBLOCK);
+//
+//	mStdErrDone = false;
+//	mStdErr = efd[0];
+//		
+//	mProject->SetStatus(mTitle, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -135,17 +135,17 @@ void MProjectExecJob::Execute()
 
 void MProjectExecJob::Kill()
 {
-	// kill all the processes in the process group
-	kill(-mPID, SIGINT);
-	mPID = -1;
-
-	// avoid the creation of zombies
-	waitpid(mPID, &mStatus, 0);
-
-	mPID = -1;
-
-	close(mStdOut);
-	mStdOut = -1;
+//	// kill all the processes in the process group
+//	kill(-mPID, SIGINT);
+//	mPID = -1;
+//
+//	// avoid the creation of zombies
+//	waitpid(mPID, &mStatus, 0);
+//
+//	mPID = -1;
+//
+//	close(mStdOut);
+//	mStdOut = -1;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,70 +153,70 @@ void MProjectExecJob::Kill()
 
 bool MProjectExecJob::IsDone()
 {
-	if (not mStdOutDone)
-	{
-		char buffer[10240];
-		int r, n;
-		
-		n = 0;
-		while (not mStdOutDone)
-		{
-			r = read(mStdOut, buffer, sizeof(buffer));
-
-			if (r > 0)
-				eStdOut(buffer, r);
-			else if (r == 0 or errno != EAGAIN)
-			{
-				if (mStdOut >= 0)
-					close(mStdOut);
-				mStdOut = -1;
-				mStdOutDone = true;
-			}
-			else
-				break;
-		}
-	}
-	
-	string stderr;
-	
-	if (not mStdErrDone)
-	{
-		char buffer[10240];
-		int r, n;
-		
-		n = 0;
-		while (not mStdErrDone)
-		{
-			r = read(mStdErr, buffer, sizeof(buffer));
-
-			if (r > 0)
-				stderr.append(buffer, buffer + r);
-			else if (r == 0 or errno != EAGAIN)
-			{
-				if (mStdErr >= 0)
-					close(mStdErr);
-				mStdErr = -1;
-				mStdErrDone = true;
-			}
-			else
-				break;
-		}
-	}
-	
-	if (stderr.length())
-		eStdErr(stderr.c_str(), stderr.length());
-
-	if (mStdOutDone and mStdErrDone)
-	{
-		if (mPID >= 0)
-		{
-			waitpid(mPID, &mStatus, 0);	// used to pass in WNOHANG...
-			mPID = -1;
-		}
-		else
-			mStatus = 0;
-	}
-	
+//	if (not mStdOutDone)
+//	{
+//		char buffer[10240];
+//		int r, n;
+//		
+//		n = 0;
+//		while (not mStdOutDone)
+//		{
+//			r = read(mStdOut, buffer, sizeof(buffer));
+//
+//			if (r > 0)
+//				eStdOut(buffer, r);
+//			else if (r == 0 or errno != EAGAIN)
+//			{
+//				if (mStdOut >= 0)
+//					close(mStdOut);
+//				mStdOut = -1;
+//				mStdOutDone = true;
+//			}
+//			else
+//				break;
+//		}
+//	}
+//	
+//	string stderr;
+//	
+//	if (not mStdErrDone)
+//	{
+//		char buffer[10240];
+//		int r, n;
+//		
+//		n = 0;
+//		while (not mStdErrDone)
+//		{
+//			r = read(mStdErr, buffer, sizeof(buffer));
+//
+//			if (r > 0)
+//				stderr.append(buffer, buffer + r);
+//			else if (r == 0 or errno != EAGAIN)
+//			{
+//				if (mStdErr >= 0)
+//					close(mStdErr);
+//				mStdErr = -1;
+//				mStdErrDone = true;
+//			}
+//			else
+//				break;
+//		}
+//	}
+//	
+//	if (stderr.length())
+//		eStdErr(stderr.c_str(), stderr.length());
+//
+//	if (mStdOutDone and mStdErrDone)
+//	{
+////		if (mPID >= 0)
+////		{
+////			waitpid(mPID, &mStatus, 0);	// used to pass in WNOHANG...
+////			mPID = -1;
+////		}
+////		else
+//			mStatus = 0;
+//	}
+//	
 	return mStdOutDone and mStdErrDone;
 }
 
@@ -419,46 +419,46 @@ void MProjectCopyFileJob::Execute()
 
 void MProjectCreateResourceJob::Execute()
 {
-	MResourceFile rsrcFile(mTargetCPU);
-	
-	for (vector<MProjectItem*>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
-	{
-		MProjectResource* rsrc = dynamic_cast<MProjectResource*>(*p);
-		if (rsrc == nil)
-			continue;
-		
-		fs::ifstream f(rsrc->GetPath());
-
-		string name = rsrc->GetResourceName();
-		
-		if (not f.is_open())
-			THROW(("Could not open resource data file %s", name.c_str()));
-		
-		filebuf* b = f.rdbuf();
-	
-		uint32 size = b->pubseekoff(0, ios::end);
-		b->pubseekpos(0);
-	
-		char* data = new char[size + 1];
-		
-		try
-		{
-			b->sgetn(data, size);
-			data[size] = 0;
-		
-			f.close();
-			
-			rsrcFile.Add(name, data, size);
-		}
-		catch (...)
-		{
-			delete[] data;
-			throw;
-		}
-		
-		delete[] data;
-	}
-	
-	rsrcFile.Write(mDstFile);
+//	MResourceFile rsrcFile(mTargetCPU);
+//	
+//	for (vector<MProjectItem*>::iterator p = mSrcFiles.begin(); p != mSrcFiles.end(); ++p)
+//	{
+//		MProjectResource* rsrc = dynamic_cast<MProjectResource*>(*p);
+//		if (rsrc == nil)
+//			continue;
+//		
+//		fs::ifstream f(rsrc->GetPath());
+//
+//		string name = rsrc->GetResourceName();
+//		
+//		if (not f.is_open())
+//			THROW(("Could not open resource data file %s", name.c_str()));
+//		
+//		filebuf* b = f.rdbuf();
+//	
+//		uint32 size = b->pubseekoff(0, ios::end);
+//		b->pubseekpos(0);
+//	
+//		char* data = new char[size + 1];
+//		
+//		try
+//		{
+//			b->sgetn(data, size);
+//			data[size] = 0;
+//		
+//			f.close();
+//			
+//			rsrcFile.Add(name, data, size);
+//		}
+//		catch (...)
+//		{
+//			delete[] data;
+//			throw;
+//		}
+//		
+//		delete[] data;
+//	}
+//	
+//	rsrcFile.Write(mDstFile);
 }
 

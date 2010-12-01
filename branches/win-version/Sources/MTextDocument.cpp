@@ -184,7 +184,7 @@ void MTextDocument::SetFileNameHint(
 bool MTextDocument::DoSave()
 {
 	bool result = MDocument::DoSave();
-	//MProject::RecheckFiles();
+	MProject::RecheckFiles();
 	return result;
 }
 
@@ -386,7 +386,8 @@ void MTextDocument::SetTargetTextView(
 		
 		mTargetTextView = inTextView;
 		
-		AddRoute(eBoundsChanged, inTextView->eBoundsChanged);
+		if (mTargetTextView != nil)
+			AddRoute(eBoundsChanged, inTextView->eBoundsChanged);
 
 		BoundsChanged();
 	}
@@ -4260,18 +4261,18 @@ void MTextDocument::SelectIncludePopupItem(uint32 inItem)
 		
 		if (not found)
 		{
-			//MProject* project = MProject::Instance();
-			//fs::path p;
-			//
-			//if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
-			//	gApp->OpenOneDocument(MFile(p));
-			//else if (mFile.IsValid())
-			//{
-			//	MFile path = mFile.GetParent() / file.name;
-			//	
-			//	if (path.Exists())
-			//		gApp->OpenOneDocument(path);
-			//}
+			MProject* project = MProject::Instance();
+			fs::path p;
+			
+			if (project != nil and project->LocateFile(file.name, file.isQuoted, p))
+				gApp->OpenOneDocument(MFile(p));
+			else if (mFile.IsValid())
+			{
+				MFile path = mFile.GetParent() / file.name;
+				
+				if (path.Exists())
+					gApp->OpenOneDocument(path);
+			}
 		}
 	}
 }
@@ -4286,7 +4287,7 @@ bool MTextDocument::ProcessCommand(
 	uint32			inModifiers)
 {
 	bool result = true;
-	MProject* project = nil; //MProject::Instance();
+	MProject* project = MProject::Instance();
 
 	string s;
 	
@@ -4485,49 +4486,49 @@ bool MTextDocument::ProcessCommand(
 			SelectIncludePopupItem(inItemIndex);
 			break;
 	
-		//case cmd_Preprocess:
-		//	if (project != nil)
-		//	{
-		//		MProjectFile* file = project->GetProjectFileForPath(
-		//			GetFile().GetPath());
-		//		
-		//		if (file != nil)
-		//			project->Preprocess(vector<MProjectFile*>(1, file));
-		//	}
-		//	break;
-		//	
-		//case cmd_CheckSyntax:
-		//	if (project != nil)
-		//	{
-		//		MProjectFile* file = project->GetProjectFileForPath(
-		//			GetFile().GetPath());
-		//		
-		//		if (file != nil)
-		//			project->CheckSyntax(vector<MProjectFile*>(1, file));
-		//	}
-		//	break;
-		//	
-		//case cmd_Compile:
-		//	if (project != nil)
-		//	{
-		//		MProjectFile* file = project->GetProjectFileForPath(
-		//			GetFile().GetPath());
-		//		
-		//		if (file != nil)
-		//			project->Compile(vector<MProjectFile*>(1, file));
-		//	}
-		//	break;
+		case cmd_Preprocess:
+			if (project != nil)
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Preprocess(vector<MProjectFile*>(1, file));
+			}
+			break;
+			
+		case cmd_CheckSyntax:
+			if (project != nil)
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->CheckSyntax(vector<MProjectFile*>(1, file));
+			}
+			break;
+			
+		case cmd_Compile:
+			if (project != nil)
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Compile(vector<MProjectFile*>(1, file));
+			}
+			break;
 
-		//case cmd_Disassemble:
-		//	if (project != nil)
-		//	{
-		//		MProjectFile* file = project->GetProjectFileForPath(
-		//			GetFile().GetPath());
-		//		
-		//		if (file != nil)
-		//			project->Disassemble(vector<MProjectFile*>(1, file));
-		//	}
-		//	break;
+		case cmd_Disassemble:
+			if (project != nil)
+			{
+				MProjectFile* file = project->GetProjectFileForPath(
+					GetFile().GetPath());
+				
+				if (file != nil)
+					project->Disassemble(vector<MProjectFile*>(1, file));
+			}
+			break;
 
 		case cmd_2CharsPerTab:
 			SetCharsPerTab(2);
@@ -4647,7 +4648,7 @@ bool MTextDocument::UpdateCommandStatus(
 {
 	bool result = true;
 
-	//MProject* project = MProject::Instance();
+	MProject* project = MProject::Instance();
 	MLanguage* lang = GetLanguage();
 
 	string title;
@@ -4750,15 +4751,15 @@ bool MTextDocument::UpdateCommandStatus(
 			outChecked = mShowWhiteSpace;
 			break;
 
-		//case cmd_Preprocess:
-		//case cmd_Compile:
-		//case cmd_CheckSyntax:
-		//case cmd_Disassemble:
-		//	outEnabled =
-		//		project != nil and
-		//		GetFile().IsLocal() and
-		//		project->IsFileInProject(GetFile().GetPath());
-		//	break;
+		case cmd_Preprocess:
+		case cmd_Compile:
+		case cmd_CheckSyntax:
+		case cmd_Disassemble:
+			outEnabled =
+				project != nil and
+				GetFile().IsLocal() and
+				project->IsFileInProject(GetFile().GetPath());
+			break;
 		
 		case cmd_2CharsPerTab:
 			outEnabled = true;
@@ -4959,15 +4960,15 @@ bool MTextDocument::OpenInclude(
 			result = true;
 	}
 	
-	//if (not result and MProject::Instance() != nil)
-	//{
-	//	fs::path p;
-	//	if (MProject::Instance()->LocateFile(inFileName, true, p))
-	//	{
-	//		result = true;
-	//		url = MFile(p);
-	//	}
-	//}
+	if (not result and MProject::Instance() != nil)
+	{
+		fs::path p;
+		if (MProject::Instance()->LocateFile(inFileName, true, p))
+		{
+			result = true;
+			url = MFile(p);
+		}
+	}
 	
 	if (result)
 		gApp->OpenOneDocument(url);
@@ -5052,16 +5053,16 @@ void MTextDocument::DoOpenCounterpart()
 		if (ext != nil)
 		{
 			name.erase(name.rfind('.') + 1);
-			//MProject* project = MProject::Instance();
+			MProject* project = MProject::Instance();
 		
-			//if (project != nil)
-			//{
-			//	for (const char** e = ext; result == false and *e != nil; ++e)
-			//		result = project->LocateFile(name + *e, true, p);
+			if (project != nil)
+			{
+				for (const char** e = ext; result == false and *e != nil; ++e)
+					result = project->LocateFile(name + *e, true, p);
 
-			//	if (result)
-			//		gApp->OpenOneDocument(MFile(p));
-			//}
+				if (result)
+					gApp->OpenOneDocument(MFile(p));
+			}
 
 			if (not result)
 			{

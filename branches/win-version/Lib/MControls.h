@@ -13,7 +13,7 @@
 template<class I>
 class MControl : public MView, public MHandler
 {
-public:
+  public:
 	virtual			~MControl();
 
 	virtual void	ResizeFrame(
@@ -29,7 +29,7 @@ public:
 
 	I*				GetImpl() const					{ return mImpl; }
 
-protected:
+  protected:
 
 					MControl(const std::string& inID, MRect inBounds, I* inImpl);
 
@@ -44,7 +44,7 @@ protected:
 
 	virtual void	AddedToWindow();
 
-protected:
+  protected:
 					MControl(const MControl&);
 	MControl&		operator=(const MControl&);
 
@@ -57,7 +57,7 @@ class MButtonImpl;
 
 class MButton : public MControl<MButtonImpl>
 {
-public:
+  public:
 	typedef MButtonImpl		MImpl;
 	
 					MButton(const std::string& inID, MRect inBounds, const std::string& inLabel);
@@ -76,7 +76,7 @@ class MScrollbarImpl;
 
 class MScrollbar : public MControl<MScrollbarImpl>
 {
-public:
+  public:
 	typedef MScrollbarImpl		MImpl;
 
 					MScrollbar(const std::string& inID, MRect inBounds);
@@ -101,7 +101,7 @@ class MStatusbarImpl;
 
 class MStatusbar : public MControl<MStatusbarImpl>
 {
-public:
+  public:
 	typedef MStatusbarImpl		MImpl;
 
 					MStatusbar(const std::string& inID, MRect inBounds, uint32 inPartCount, int32 inPartWidths[]);
@@ -115,7 +115,7 @@ class MComboboxImpl;
 
 class MCombobox : public MControl<MComboboxImpl>
 {
-public:
+  public:
 	typedef MComboboxImpl		MImpl;
 		
 					MCombobox(const std::string& inID, MRect inBounds);
@@ -136,7 +136,7 @@ class MPopupImpl;
 
 class MPopup : public MControl<MPopupImpl>
 {
-public:
+  public:
 	typedef MPopupImpl		MImpl;
 		
 					MPopup(const std::string& inID, MRect inBounds);
@@ -156,7 +156,7 @@ class MCaptionImpl;
 
 class MCaption : public MControl<MCaptionImpl>
 {
-public:
+  public:
 	typedef MCaptionImpl		MImpl;
 		
 					MCaption(const std::string& inID, MRect inBounds,
@@ -171,7 +171,7 @@ class MEdittextImpl;
 
 class MEdittext : public MControl<MEdittextImpl>
 {
-public:
+  public:
 	typedef MEdittextImpl		MImpl;
 		
 					MEdittext(const std::string& inID, MRect inBounds);
@@ -192,7 +192,7 @@ class MSeparatorImpl;
 
 class MSeparator : public MControl<MSeparatorImpl>
 {
-public:
+  public:
 	typedef MSeparatorImpl		MImpl;
 		
 					MSeparator(const std::string& inID, MRect inBounds);
@@ -204,7 +204,7 @@ class MCheckboxImpl;
 
 class MCheckbox : public MControl<MCheckboxImpl>
 {
-public:
+  public:
 	typedef MCheckboxImpl		MImpl;
 		
 					MCheckbox(const std::string& inID, MRect inBounds,
@@ -230,6 +230,26 @@ class MListHeader : public MControl<MListHeaderImpl>
 	MEventOut<void(uint32,uint32)>			eColumnResized;
 
 	void			AppendColumn(const std::string& inLabel, int inWidth = -1);
+};
+
+// --------------------------------------------------------------------
+
+class MNotebookImpl;
+
+class MNotebook : public MControl<MNotebookImpl>
+{
+  public:
+	typedef MNotebookImpl		MImpl;
+		
+					MNotebook(const std::string& inID, MRect inBounds);
+
+	void			AddPage(const std::string& inLabel, MView* inPage);
+
+	void			SelectPage(uint32 inPage);
+	uint32			GetSelectedPage() const;
+
+	MEventOut<void(uint32)>
+					ePageSelected;
 };
 
 #endif

@@ -179,4 +179,19 @@ class MListHeaderImpl : public MControlImpl<MListHeader>
 					Create(MListHeader* inListHeader);
 };
 
+class MNotebookImpl : public MControlImpl<MNotebook>
+{
+public:
+					MNotebookImpl(MNotebook* inNotebook)
+						: MControlImpl(inNotebook)				{}
+
+	virtual void	AddPage(const std::string& inLabel, MView* inPage) = 0;
+
+	virtual void	SelectPage(uint32 inPage) = 0;
+	virtual uint32	GetSelectedPage() const = 0;
+
+	static MNotebookImpl*
+					Create(MNotebook* inNotebook);
+};
+
 #endif

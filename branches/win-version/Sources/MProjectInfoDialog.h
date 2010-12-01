@@ -9,7 +9,7 @@
 #include "MDialog.h"
 
 class MProject;
-class MProjectTarget;
+struct MProjectTarget;
 
 class MProjectInfoDialog : public MDialog
 {
@@ -35,23 +35,23 @@ class MProjectInfoDialog : public MDialog
 	void				UpdateTargetPopup(
 							uint32			inActive);
 
-	void				TargetChanged();
-	MSlot<void()>		eTargetChanged;
-
-	void				DefinesChanged();
-	MSlot<void()>		eDefinesChanged;
-
-	void				WarningsChanged();
-	MSlot<void()>		eWarningsChanged;
-
-	void				SysPathsChanged();
-	MSlot<void()>		eSysPathsChanged;
-
-	void				UserPathsChanged();
-	MSlot<void()>		eUserPathsChanged;
-
-	void				LibPathsChanged();
-	MSlot<void()>		eLibPathsChanged;
+//	void				TargetChanged();
+//	MSlot<void()>		eTargetChanged;
+//
+//	void				DefinesChanged();
+//	MSlot<void()>		eDefinesChanged;
+//
+//	void				WarningsChanged();
+//	MSlot<void()>		eWarningsChanged;
+//
+//	void				SysPathsChanged();
+//	MSlot<void()>		eSysPathsChanged;
+//
+//	void				UserPathsChanged();
+//	MSlot<void()>		eUserPathsChanged;
+//
+//	void				LibPathsChanged();
+//	MSlot<void()>		eLibPathsChanged;
 
 	void				PkgToggled(
 							const std::string&	inPkg,

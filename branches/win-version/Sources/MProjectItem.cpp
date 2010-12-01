@@ -328,52 +328,52 @@ void MProjectFile::CheckCompilationResult()
 	if (not IsCompilable() or not fs::exists(mObjectPath))
 		return;
 	
-	try
-	{
-		// first read object file and fetch __text and __data sizes
-		MObjectFile objectFile(mObjectPath);
-		
-		mTextSize = objectFile.GetTextSize();
-		mDataSize = objectFile.GetDataSize();
-
-		// then read in the .d file and collect the included files
-		fs::ifstream dependsFile(mDependsPath);
-		string text;
-		
-		mIncludedFiles.clear();
-		
-		if (dependsFile.is_open())
-		{
-			char buffer[10240];
-			
-			dependsFile.getline(buffer, sizeof(buffer), ':');
-			
-			while (not dependsFile.eof())
-			{
-				string line;
-				getline(dependsFile, line);
-				
-				if (line.length() > 0 and line[line.length() - 1] == '\\')
-					line.erase(line.end() - 1);
-				
-				text += line;
-			}
-		}
-		
-		path_iterator m1(text), m2;
-		
-		while (m1 != m2)
-		{
-			mIncludedFiles.push_back(*m1);
-			++m1;
-		}
-
-		SetOutOfDate(false);
-	}
-	catch (std::exception& e)
-	{
-		SetOutOfDate(true);
-	}
+//	try
+//	{
+//		// first read object file and fetch __text and __data sizes
+//		MObjectFile objectFile(mObjectPath);
+//		
+//		mTextSize = objectFile.GetTextSize();
+//		mDataSize = objectFile.GetDataSize();
+//
+//		// then read in the .d file and collect the included files
+//		fs::ifstream dependsFile(mDependsPath);
+//		string text;
+//		
+//		mIncludedFiles.clear();
+//		
+//		if (dependsFile.is_open())
+//		{
+//			char buffer[10240];
+//			
+//			dependsFile.getline(buffer, sizeof(buffer), ':');
+//			
+//			while (not dependsFile.eof())
+//			{
+//				string line;
+//				getline(dependsFile, line);
+//				
+//				if (line.length() > 0 and line[line.length() - 1] == '\\')
+//					line.erase(line.end() - 1);
+//				
+//				text += line;
+//			}
+//		}
+//		
+//		path_iterator m1(text), m2;
+//		
+//		while (m1 != m2)
+//		{
+//			mIncludedFiles.push_back(*m1);
+//			++m1;
+//		}
+//
+//		SetOutOfDate(false);
+//	}
+//	catch (std::exception& e)
+//	{
+//		SetOutOfDate(true);
+//	}
 
 	if (savedDataSize != mDataSize or savedTextSize != mTextSize)
 		eStatusChanged(this);

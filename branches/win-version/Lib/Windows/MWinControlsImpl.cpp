@@ -1072,3 +1072,86 @@ MListHeaderImpl* MListHeaderImpl::Create(MListHeader* inListHeader)
 	return new MWinListHeaderImpl(inListHeader);
 }
 
+// --------------------------------------------------------------------
+
+MWinNotebookImpl::MWinNotebookImpl(MNotebook* inControl)
+	: MWinControlImpl(inControl, "")
+{
+}
+
+void MWinNotebookImpl::CreateParams(DWORD& outStyle, DWORD& outExStyle,
+	wstring& outClassName, HMENU& outMenu)
+{
+	MWinControlImpl::CreateParams(outStyle, outExStyle, outClassName, outMenu);
+	
+	outClassName = WC_TABCONTROL;
+	outStyle = WS_CHILD | /*BS_Notebook | BS_TEXT | */WS_TABSTOP;
+}
+
+void MWinNotebookImpl::AddedToWindow()
+{
+	MWinControlImpl::AddedToWindow();
+
+	MRect bounds;
+	MWinProcMixin* parent;
+
+	GetParentAndBounds(parent, bounds);
+	
+	parent->AddNotify(TCN_SELCHANGE, GetHandle(),
+		boost::bind(&MWinNotebookImpl::TCNSelChange, this, _1, _2, _3));
+}
+
+void MWinNotebookImpl::AddPage(const string& inLabel, MView* inPage)
+{
+	wstring s(c2w(inLabel));
+	
+	TCITEM tci = {};
+	tci.mask = TCIF_TEXT;
+	tci.pszText = const_cast<wchar_t*>(s.c_str());
+	
+	::SendMessage(GetHandle(), TCM_INSERTITEM, (WPARAM)mPages.size(), (LPARAM)&tci);
+	
+	mControl->AddChild(inPage);
+	mPages.push_back(inPage);
+	
+	if (mPages.size() > 1)
+		inPage->Hide();
+}
+
+void MWinNotebookImpl::SelectPage(uint32 inPage)
+{
+	if (inPage != ::SendMessage(GetHandle(), TCM_GETCURSEL, 0, 0))
+	{
+		::SendMessage(GetHandle(), TCM_SETCURSEL, (WPARAM)inPage, 0);
+		::UpdateWindow(GetHandle());
+	}
+	
+	if (inPage < mPages.size())
+	{
+		for_each(mPages.begin(), mPages.end(), boost::bind(&MView::Hide, _1));
+		for_each(mPages.begin(), mPages.end(), boost::bind(&MView::Disable, _1));
+		mPages[inPage]->Show();
+		mPages[inPage]->Enable();
+		mControl->ePageSelected(inPage);
+	}
+}
+
+uint32 MWinNotebookImpl::GetSelectedPage() const
+{
+	return ::SendMessage(GetHandle(), TCM_GETCURSEL, 0, 0);
+}
+
+bool MWinNotebookImpl::TCNSelChange(WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	SelectPage(::SendMessage(GetHandle(), TCM_GETCURSEL, 0, 0));
+
+
+	outResult = 0;
+	return true;
+}
+
+MNotebookImpl* MNotebookImpl::Create(MNotebook* inNotebook)
+{
+	return new MWinNotebookImpl(inNotebook);
+}
+

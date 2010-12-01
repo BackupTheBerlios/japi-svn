@@ -97,6 +97,8 @@ MTextView::MTextView(
 
 MTextView::~MTextView()
 {
+	if (mDocument != nil)
+		mDocument->SetTargetTextView(nil);
 }
 
 void MTextView::SetController(MController* inController)
@@ -484,7 +486,8 @@ void MTextView::DrawLine(
 		selection.GetMaxLine() < inLineNr or
 		selection.GetMinLine() > inLineNr)
 	{
-		inDevice.DrawText(x, y);
+		if (not text.empty())
+			inDevice.DrawText(x, y);
 		
 		if (selection.IsEmpty() and not inDevice.IsPrinting())
 		{
@@ -582,7 +585,8 @@ void MTextView::DrawLine(
 			}
 		}
 
-		inDevice.DrawText(x, y);
+		if (not text.empty())
+			inDevice.DrawText(x, y);
 	}
 	
 	//if (IsWithinDrag())

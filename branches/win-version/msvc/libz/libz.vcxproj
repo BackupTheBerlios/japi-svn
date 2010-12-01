@@ -71,9 +71,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\..\zlib-1.2.5\crc32.h" />
     <ClInclude Include="..\..\..\zlib-1.2.5\deflate.h" />
     <ClInclude Include="..\..\..\zlib-1.2.5\gzguts.h" />
