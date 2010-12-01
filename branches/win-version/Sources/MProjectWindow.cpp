@@ -54,14 +54,6 @@ const string
 	kTargetPopupID("target"),
 	kNoteBookID("note-book");
 
-enum
-{
-	ePanelFiles,
-	ePanelLinkOrder,
-	ePanelResources,
-	ePanelCount
-};
-
 }
 
 ////---------------------------------------------------------------------
