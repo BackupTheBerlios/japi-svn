@@ -36,6 +36,9 @@ public:
 	virtual bool	WMGetDlgCode(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWParam, LPARAM inLParam, int& outResult);
 
+	virtual MWinProcMixin*
+					GetWinProcMixin();
+
 protected:
 	std::string		mLabel;
 };
@@ -242,6 +245,8 @@ class MWinListHeaderImpl : public MWinControlImpl<MListHeader>
 
 	virtual void	AppendColumn(const std::string& inLabel, int inWidth);
 
+	virtual bool	HDNBeginDrag(WPARAM inWParam, LPARAM inLParam, int& outResult);
+	virtual bool	HDNBeginTrack(WPARAM inWParam, LPARAM inLParam, int& outResult);
 	virtual bool	HDNTrack(WPARAM inWParam, LPARAM inLParam, int& outResult);
 };
 

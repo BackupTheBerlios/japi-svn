@@ -8,8 +8,18 @@
 
 #include "MControls.h"
 
+class MWinProcMixin;
+
+class MControlImplBase
+{
+  public:
+
+	virtual MWinProcMixin*
+					GetWinProcMixin()							{ return nil; }
+};
+
 template<class CONTROL>
-class MControlImpl
+class MControlImpl : public MControlImplBase
 {
 public:
 					MControlImpl(CONTROL* inControl)

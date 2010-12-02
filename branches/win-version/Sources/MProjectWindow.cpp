@@ -270,7 +270,8 @@ const string
 // MProjectWindow
 
 MProjectWindow::MProjectWindow()
-	: MDocWindow("Untitled", MRect(0, 0, 300, 600), kMPostionDefault, "project-window-menu")
+	: MDocWindow("Untitled", MRect(0, 0, 300, 600),
+		MWindowFlags(kMPostionDefault | kMDialogBackground), "project-window-menu")
 	, eStatus(this, &MProjectWindow::SetStatus)
 	, eSelectFileRow(this, &MProjectWindow::SelectFileRow)
 	, eInvokeFileRow(this, &MProjectWindow::InvokeFileRow)
@@ -353,14 +354,20 @@ MProjectWindow::MProjectWindow()
 	nr.InsetBy(4, 4);
 	nr.y += 25;
 	
-	MRect r(0, 0, 100, 25);
-	
 	MView* page = new MView("page-1", nr);
 	page->SetBindings(true, true, true, true);
-	
-
 	mNotebook->AddPage("Files", page);
+
+	MRect r(nr);
+	r.x = r.y = 0;
+	r.height = 24;
+	MListHeader* header = new MListHeader("list-header-1", r);
+	page->AddChild(header);
 	
+	header->AppendColumn("Files", 200);
+	header->AppendColumn("Text", 60);
+	header->AppendColumn("Data", 60);
+
 	page = new MView("page-2", nr);
 	page->SetBindings(true, true, true, true);
 //	page->AddChild(new MCaption("capt-2", r, "label 2"));

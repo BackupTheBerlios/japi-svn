@@ -23,6 +23,7 @@ enum MWindowFlags
 	kMFixedSize				= (1 << 0),
 	kMAcceptFileDrops		= (1 << 1),
 	kMPostionDefault		= (1 << 2),
+	kMDialogBackground		= (1 << 3),
 };
 
 class MWindow : public MView, public MHandler

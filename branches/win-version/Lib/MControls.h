@@ -10,8 +10,21 @@
 #include "MHandler.h"
 #include "MP2PEvents.h"
 
+class MControlImplBase;
+
+class MControlBase : public MView, public MHandler
+{
+  public:
+					MControlBase(const std::string& inID, MRect inBounds)
+						: MView(inID, inBounds)
+						, MHandler(nil) {}
+
+  virtual MControlImplBase*
+					GetImplBase() const = 0;
+};
+
 template<class I>
-class MControl : public MView, public MHandler
+class MControl : public MControlBase
 {
   public:
 	virtual			~MControl();
@@ -28,6 +41,9 @@ class MControl : public MView, public MHandler
 	virtual void	Focus();
 
 	I*				GetImpl() const					{ return mImpl; }
+
+	virtual MControlImplBase*
+					GetImplBase() const;
 
   protected:
 

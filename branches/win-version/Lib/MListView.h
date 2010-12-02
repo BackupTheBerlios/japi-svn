@@ -9,6 +9,28 @@
 #include "MView.h"
 #include "MHandler.h"
 
+//class MListRowBase
+//{
+//};
+//
+//template<typename KEY, typename VALUE_TYPE>
+//struct MListColumn
+//{
+//	typedef typename	KEY			key_type;
+//	typedef typename	VALUE_TYPE	value_type;
+//};
+//
+//
+//template<typename COLUMNS>
+//class MListRow
+//{
+//  public:
+//
+//	template<typename KEY, typename VALUE_TYPE>
+//	void			GetValue(VALUE_TYPE& outValue) const;
+//};
+//
+
 class MListView : public MView, public MHandler
 {
   public:

@@ -88,7 +88,11 @@ void MWinWindowImpl::RegisterParams(UINT& outStyle, int& outWndExtra,
 	//outIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	//outSmallIcon = ::LoadIcon(inst, MAKEINTRESOURCE(ID_DEF_DOC_ICON));
 	outCursor = ::LoadCursor(NULL, IDC_ARROW);
-	outBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	
+	if (mFlags & kMDialogBackground)
+		outBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	else
+		outBackground = (HBRUSH)(COLOR_WINDOW + 1);
 }
 
 void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
@@ -119,7 +123,8 @@ void MWinWindowImpl::Create(MRect inBounds, const wstring& inTitle)
 	AddHandler(WM_SIZE,				boost::bind(&MWinWindowImpl::WMSize, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_SIZING,			boost::bind(&MWinWindowImpl::WMSizing, this, _1, _2, _3, _4, _5));
 //	AddHandler(WM_PAINT,			boost::bind(&MWinWindowImpl::WMPaint, this, _1, _2, _3, _4, _5));
-//	AddHandler(WM_ERASEBKGND,		boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
+	if (mFlags & kMDialogBackground)
+		AddHandler(WM_ERASEBKGND,	boost::bind(&MWinWindowImpl::WMEraseBkgnd, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_INITMENU,			boost::bind(&MWinWindowImpl::WMInitMenu, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_COMMAND,			boost::bind(&MWinWindowImpl::WMCommand, this, _1, _2, _3, _4, _5));
 	AddHandler(WM_MENUCOMMAND,		boost::bind(&MWinWindowImpl::WMMenuCommand, this, _1, _2, _3, _4, _5));
@@ -721,17 +726,34 @@ bool MWinWindowImpl::WMPaint(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, 
 	return true;
 }
 
-bool MWinWindowImpl::WMEraseBkgnd(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
+bool MWinWindowImpl::WMEraseBkgnd(HWND inHWnd, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& outResult)
 {
+	outResult = 0;
 	bool result = false;
-	//if (mRenderTarget != nil)
-	//{
-	//	outResult = 1;
-	//	result = true;
-	//}
+	
+	/* Get the 'dirty' rect */
+	RECT lUpdateRect;
+	if ((mFlags & kMDialogBackground) and ::GetUpdateRect(inHWnd, &lUpdateRect, FALSE) == TRUE)
+	{
+		// Fill a PAINTSTRUCT. No background erase
+		PAINTSTRUCT lPs;
+		lPs.hdc = ::GetDC(inHWnd);
+		lPs.fErase = FALSE;
+		lPs.rcPaint = lUpdateRect;
+
+		// BeginPaint and call the Node redraw 
+		::BeginPaint(inHWnd, &lPs);
+	
+		::FillRect(lPs.hdc, &lUpdateRect, ::GetSysColorBrush(COLOR_BTNFACE));
+	
+		::EndPaint(inHWnd, &lPs);
+	
+		outResult = 1;
+		result = true;
+	}
+	
 	return result;
 }
-
 
 bool MWinWindowImpl::WMInitMenu(HWND /*inHWnd*/, UINT /*inUMsg*/, WPARAM /*inWParam*/, LPARAM /*inLParam*/, int& /*outResult*/)
 {

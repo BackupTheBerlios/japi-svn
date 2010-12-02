@@ -12,8 +12,7 @@ using namespace std;
 
 template<class IMPL>
 MControl<IMPL>::MControl(const string& inID, MRect inBounds, IMPL* inImpl)
-	: MView(inID, inBounds)
-	, MHandler(nil)
+	: MControlBase(inID, inBounds)
 	, mImpl(inImpl)
 {
 }
@@ -85,6 +84,13 @@ void MControl<IMPL>::AddedToWindow()
 {
 	SetSuper(GetWindow());
 	mImpl->AddedToWindow();
+}
+
+template<class IMPL>
+MControlImplBase* MControl<IMPL>::GetImplBase() const
+{
+	MControlImplBase* impl = mImpl;
+	return impl;
 }
 
 // --------------------------------------------------------------------

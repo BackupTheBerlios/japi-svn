@@ -305,6 +305,12 @@ bool MJapiApp::UpdateCommandStatus(
 		case cmd_Worksheet:
 			outEnabled = true;
 			break;
+
+#if DEBUG
+		case 'test':
+			outEnabled = true;
+			break;
+#endif
 		
 		default:
 			result = MApplication::UpdateCommandStatus(inCommand, inMenu, inItemIndex, outEnabled, outChecked);

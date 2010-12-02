@@ -142,21 +142,18 @@ void MWinControlImpl<CONTROL>::GetParentAndBounds(MWinProcMixin*& outParent, MRe
 	{
 		view->ConvertToParent(outBounds.x, outBounds.y);
 		
-		// for now we don't support embedding of controls in controls...
+		MControlBase* ctl = dynamic_cast<MControlBase*>(parent);
+		
+		if (ctl != nil)
+		{
+			MControlImplBase* impl = ctl->GetImplBase();
 
-		//MControl* ctl = dynamic_cast<MControl*>(parent);
-		//
-		//if (ctl != nil)
-		//{
-		//	MWinControlImpl* impl =
-		//		dynamic_cast<MWinControlImpl*>(ctl->GetImpl());
-		//	
-		//	if (impl != nil)
-		//	{
-		//		outParent = impl;
-		//		break;
-		//	}
-		//}
+			if (impl != nil and impl->GetWinProcMixin() != nil)
+			{
+				outParent = impl->GetWinProcMixin();
+				break;
+			}
+		}
 		
 		MWindow* window = dynamic_cast<MWindow*>(parent);
 		if (window != nil)
@@ -230,6 +227,13 @@ bool MWinControlImpl<CONTROL>::WMSetFocus(HWND inHWnd, UINT inUMsg, WPARAM inWPa
 		w->SetFocus(mControl);
 	
 	return false;
+}
+
+template<class CONTROL>
+MWinProcMixin* MWinControlImpl<CONTROL>::GetWinProcMixin()
+{
+	MWinProcMixin* mixin = this;
+	return mixin;
 }
 
 // --------------------------------------------------------------------
@@ -998,11 +1002,11 @@ void MWinListHeaderImpl::CreateHandle(MWinProcMixin* inParent, MRect inBounds,
         // client area, and then request size and position values 
         // from the header control. 
 
-		MRect bounds;
-		mControl->GetBounds(bounds);
-		mControl->ConvertToWindow(bounds.x, bounds.y);
+//		MRect bounds;
+//		mControl->GetBounds(bounds);
+//		mControl->ConvertToWindow(bounds.x, bounds.y);
 
-		RECT rc = { bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height };
+		RECT rc = { inBounds.x, inBounds.y, inBounds.x + inBounds.width, inBounds.y + inBounds.height };
  
         HDLAYOUT hdl;
         WINDOWPOS wp; 
@@ -1025,6 +1029,10 @@ void MWinListHeaderImpl::CreateHandle(MWinProcMixin* inParent, MRect inBounds,
 
 		inParent->AddNotify(HDN_TRACK, GetHandle(),
 			boost::bind(&MWinListHeaderImpl::HDNTrack, this, _1, _2, _3));
+		inParent->AddNotify(HDN_BEGINTRACK, GetHandle(),
+			boost::bind(&MWinListHeaderImpl::HDNBeginTrack, this, _1, _2, _3));
+		inParent->AddNotify(HDN_BEGINDRAG, GetHandle(),
+			boost::bind(&MWinListHeaderImpl::HDNBeginDrag, this, _1, _2, _3));
 	}
 }
 
@@ -1054,8 +1062,20 @@ void MWinListHeaderImpl::AppendColumn(const string& inLabel, int inWidth)
 		item.cxy = inWidth;
 	}
 	
-	int insertAfter = 0;
+	int insertAfter = ::SendMessage(GetHandle(), HDM_GETITEMCOUNT, 0, 0);
 	::SendMessage(GetHandle(), HDM_INSERTITEM, (WPARAM)&insertAfter, (LPARAM)&item);
+}
+
+bool MWinListHeaderImpl::HDNBeginTrack(WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	outResult = 1;
+	return true;
+}
+
+bool MWinListHeaderImpl::HDNBeginDrag(WPARAM inWParam, LPARAM inLParam, int& outResult)
+{
+	outResult = 1;
+	return true;
 }
 
 bool MWinListHeaderImpl::HDNTrack(WPARAM inWParam, LPARAM inLParam, int& outResult)
@@ -1064,7 +1084,7 @@ bool MWinListHeaderImpl::HDNTrack(WPARAM inWParam, LPARAM inLParam, int& outResu
 
 	mControl->eColumnResized(nmh.iItem, nmh.pitem->cxy);
 
-	return false;
+	return true;
 }
 
 MListHeaderImpl* MListHeaderImpl::Create(MListHeader* inListHeader)
