@@ -5,39 +5,125 @@
 
 #include "MLib.h"
 
-//#include <iostream>
-//#include <cassert>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
-#include "MListViewImpl.h"
+#include "MListView.h"
+#include "MControls.h"
 
 using namespace std;
 
-MListView::MListView(const string& inID, MRect inBounds)
+//---------------------------------------------------------------------
+
+class MListViewImpl : public MView, public MHandler
+{
+  public:
+					MListViewImpl(MListView& inList, const string& inID,
+						MRect inBounds);
+					~MListViewImpl();
+	
+  private:
+	MListView&		mList;
+};
+
+MListViewImpl::MListViewImpl(MListView& inList, const string& inID, MRect inBounds)
+	: MView(inID, inBounds)
+	, MHandler(&mList)
+	, mList(inList)
+{
+}
+
+MListViewImpl::~MListViewImpl()
+{
+}
+
+//---------------------------------------------------------------------
+class MListColumn
+{
+  public:
+					MListColumn(MListView& inList, const string& inTitle, int32 inWidth);
+					~MListColumn();
+	
+  private:
+	MListView&		mList;
+	string			mTitle;
+	int32			mWidth;
+};
+
+MListColumn::MListColumn(MListView& inList, const string& inTitle, int32 inWidth)
+	: mList(inList)
+	, mTitle(inTitle)
+	, mWidth(inWidth)
+{
+}
+
+MListColumn::~MListColumn()
+{
+}
+
+//---------------------------------------------------------------------
+
+MListView::MListView(const string& inID, MRect inBounds, MListViewFlags inFlags)
 	: MView(inID, inBounds)
 	, MHandler(nil)
-	, mImpl(MListViewImpl::Create(this))
+	, mHeader(nil)
+	, mScroller(nil)
+	, mImpl(nil)
+	, mFlags(inFlags)
 {
+	if (inFlags & lvHeader)
+	{
+		MRect r(inBounds);
+		r.height = 24;
+		mHeader = new MListHeader(inID + "-header", r);
+		AddChild(mHeader);
+		mHeader->SetBindings(true, true, true, false);
+		
+		inBounds.y += r.height - 1;
+		inBounds.height -= r.height - 1;
+	}
+	
+	mImpl = new MListViewImpl(*this, inID + "-impl", inBounds);
+	mScroller = new MViewScroller(inID + "-scroller", mImpl, false, true);
+	mScroller->SetBindings(true, true, true, true);
+	AddChild(mScroller);
+	
+	mImpl->SetViewSize(100, 1000);
 }
 
 MListView::~MListView()
 {
+	delete mHeader;
+	delete mScroller;
 	delete mImpl;
+	foreach (MListColumn* column, mColumns)
+		delete column;
 }
 
 void MListView::ResizeFrame(int32 inXDelta, int32 inYDelta,
 	int32 inWidthDelta, int32 inHeightDelta)
 {
 	MView::ResizeFrame(inXDelta, inYDelta, inWidthDelta, inHeightDelta);
-	mImpl->FrameResized();
+//	mImpl->FrameResized();
 }
 
 void MListView::AddedToWindow()
 {
 	MView::AddedToWindow();
-	mImpl->AddedToWindow();
+//	mImpl->AddedToWindow();
+//
+//	mImpl->AppendColumn("Een", 100);
+//	mImpl->AppendColumn("Twee", 100);
+}
 
-	mImpl->AppendColumn("Een", 100);
-	mImpl->AppendColumn("Twee", 100);
+void MListView::AddColumn(
+	const string&		inTitle,
+	MColumnType			inColumnType,
+	int32				inWidth,
+	int32				inAfter)
+{
+	mHeader->AppendColumn(inTitle, inWidth);
+	mColumns.push_back(new MListColumn(*this, inTitle, inWidth));
 }
 
 ////---------------------------------------------------------------------

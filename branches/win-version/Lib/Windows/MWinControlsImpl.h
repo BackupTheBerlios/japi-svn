@@ -256,9 +256,10 @@ class MWinNotebookImpl : public MWinControlImpl<MNotebook>
 					MWinNotebookImpl(MNotebook* inControl);
 
 	virtual void	AddedToWindow();
+	virtual void	FrameResized();
 
 	virtual void	AddPage(const std::string& inLabel, MView* inPage);
-
+	
 	virtual void	SelectPage(uint32 inPage);
 	virtual uint32	GetSelectedPage() const;
 

@@ -310,7 +310,7 @@ void MWinWindowImpl::UpdateNow()
 void MWinWindowImpl::ScrollRect(MRect inRect, int32 inDeltaH, int32 inDeltaV)
 {
 	RECT r = { inRect.x, inRect.y, inRect.x + inRect.width, inRect.y + inRect.height };
-	//::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
+//	::ScrollWindowEx(GetHandle(), inDeltaH, inDeltaV, &r, &r, nil, nil, SW_INVALIDATE);
 	::InvalidateRect(GetHandle(), &r, false);
 }
 	

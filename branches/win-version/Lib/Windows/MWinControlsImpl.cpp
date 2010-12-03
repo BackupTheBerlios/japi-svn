@@ -469,7 +469,7 @@ bool MWinScrollbarImpl::WMScroll(HWND inHandle, UINT inUMsg, WPARAM inWParam, LP
 				break;
 			}
 		}
-		mControl->GetWindow()->UpdateNow();
+//		mControl->GetWindow()->UpdateNow();
 	}
 
 	return result;
@@ -1119,6 +1119,60 @@ void MWinNotebookImpl::AddedToWindow()
 	
 	parent->AddNotify(TCN_SELCHANGE, GetHandle(),
 		boost::bind(&MWinNotebookImpl::TCNSelChange, this, _1, _2, _3));
+}
+
+void MWinNotebookImpl::FrameResized()
+{
+	MWinControlImpl<MNotebook>::FrameResized();
+
+	MRect bounds;
+	MWinProcMixin* parent;
+
+	GetParentAndBounds(parent, bounds);
+
+	RECT rc = { 0, 0, bounds.width, bounds.height };
+	TabCtrl_AdjustRect(GetHandle(), false, &rc);
+	
+	foreach (MView* page, mPages)
+	{
+		MRect frame;
+		page->GetFrame(frame);
+
+		int32 dx, dy, dw, dh;
+		dx = rc.left - frame.x;
+		dy = rc.top - frame.y;
+		dw = rc.right - rc.left - frame.width;
+		dh = rc.bottom - rc.top - frame.height;
+
+		page->ResizeFrame(dx, dy, dw, dh);
+	}
+	
+//	
+//
+// HDWP hdwp; 
+//                RECT rc; 
+//
+//                // Calculate the display rectangle, assuming the 
+//                // tab control is the size of the client area. 
+//                SetRect(&rc, 0, 0, 
+//                        GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)); 
+//                TabCtrl_AdjustRect(g_hwndTab, FALSE, &rc); 
+//
+//                // Size the tab control to fit the client area. 
+//                hdwp = BeginDeferWindowPos(2); 
+//                DeferWindowPos(hdwp, g_hwndTab, NULL, 0, 0, 
+//                    GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), 
+//                    SWP_NOMOVE | SWP_NOZORDER 
+//                    ); 
+//
+//                // Position and size the static control to fit the 
+//                // tab control's display area, and make sure the 
+//                // static control is in front of the tab control. 
+//                DeferWindowPos(hdwp, 
+//                    g_hwndDisplay, HWND_TOP, rc.left, rc.top, 
+//                    rc.right - rc.left, rc.bottom - rc.top, 0 
+//                    ); 
+//                EndDeferWindowPos(hdwp);
 }
 
 void MWinNotebookImpl::AddPage(const string& inLabel, MView* inPage)

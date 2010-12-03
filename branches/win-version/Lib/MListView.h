@@ -9,50 +9,67 @@
 #include "MView.h"
 #include "MHandler.h"
 
-//class MListRowBase
-//{
-//};
-//
-//template<typename KEY, typename VALUE_TYPE>
-//struct MListColumn
-//{
-//	typedef typename	KEY			key_type;
-//	typedef typename	VALUE_TYPE	value_type;
-//};
-//
-//
-//template<typename COLUMNS>
-//class MListRow
-//{
-//  public:
-//
-//	template<typename KEY, typename VALUE_TYPE>
-//	void			GetValue(VALUE_TYPE& outValue) const;
-//};
-//
+class MListRow
+{
+  public:
+					MListRow();
+	virtual			~MListRow();
+	
+	virtual void	GetData(
+						uint32				inColumnNr,
+						std::string&		outValue);
+
+};
+
+class MListViewImpl;
+class MListColumn;
+class MListHeader;
+
+enum MListViewFlags
+{
+	lvHeader		= (1 << 0),
+	
+};
+
+enum MColumnType
+{
+	MTextColumn,
+	MNumberColumn,
+};
 
 class MListView : public MView, public MHandler
 {
   public:
 					MListView(
 						const std::string&	inID,
-						MRect				inBounds);
+						MRect				inBounds,
+						MListViewFlags		inFlags);
 
 					~MListView();
 
 	virtual void	ResizeFrame(
-						int32			inXDelta,
-						int32			inYDelta,
-						int32			inWidthDelta,
-						int32			inHeightDelta);
+						int32				inXDelta,
+						int32				inYDelta,
+						int32				inWidthDelta,
+						int32				inHeightDelta);
 			
 	virtual void	AddedToWindow();
 
-  protected:
-	class MListViewImpl*
-					mImpl;
-};
+	virtual void	AddColumn(
+						const std::string&	inTitle,
+						MColumnType			inColumnType,
+						int32				inWidth,
+						int32				inAfter = -1);
 
+  protected:
+	
+	MListHeader*	mHeader;
+	MViewScroller*	mScroller;
+	MListViewImpl*	mImpl;
+	std::vector<MListColumn*>
+					mColumns;
+	MListViewFlags	mFlags;
+};
 
 //#include <string>
 //#include <vector>

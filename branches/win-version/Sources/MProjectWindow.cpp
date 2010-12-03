@@ -21,8 +21,7 @@
 #include "MProjectInfoDialog.h"
 #include "MLibraryInfoDialog.h"
 #include "MControls.h"
-
-//#include "MList.h"
+#include "MListView.h"
 
 namespace ba = boost::algorithm;
 
@@ -344,7 +343,7 @@ MProjectWindow::MProjectWindow()
 	nr.x -= 1;
 	nr.height -= topHeight + statusbarHeight;
 	nr.width += 5;
-	nr.height += 4;
+	nr.height += 8;
 	
 	mNotebook = new MNotebook(kNoteBookID, nr);
 	AddChild(mNotebook);
@@ -358,15 +357,14 @@ MProjectWindow::MProjectWindow()
 	page->SetBindings(true, true, true, true);
 	mNotebook->AddPage("Files", page);
 
-	MRect r(nr);
-	r.x = r.y = 0;
-	r.height = 24;
-	MListHeader* header = new MListHeader("list-header-1", r);
-	page->AddChild(header);
+	MRect r(0, 0, nr.width, nr.height);
+	mFileTree = new MListView("files", r, lvHeader);
+	page->AddChild(mFileTree);
+	mFileTree->SetBindings(true, true, true, true);
 	
-	header->AppendColumn("Files", 200);
-	header->AppendColumn("Text", 60);
-	header->AppendColumn("Data", 60);
+	mFileTree->AddColumn("Files", MTextColumn, 200);
+	mFileTree->AddColumn("Text", MNumberColumn, 60);
+	mFileTree->AddColumn("Data", MNumberColumn, 60);
 
 	page = new MView("page-2", nr);
 	page->SetBindings(true, true, true, true);
